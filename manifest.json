@@ -1,0 +1,25 @@
+{
+  "name": "dbPlanner",
+  "short_name": "dbPlanner",
+  "description": "A local-first project planner — Gantt chart, task dependencies and auto-scheduling tracked entirely on your own machine.",
+  "start_url": "./dbplanner.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f6f8",
+  "theme_color": "#f5f6f8",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
