@@ -191,7 +191,7 @@ button:focus:not(:focus-visible) { outline: none; }
    not Task view's full column set (see the .view-tasks override below),
    since it exists to label the chart's rows, not to be a spreadsheet. */
 .grid-header, .grid-row {
-  display: grid; grid-template-columns: 30px minmax(80px,1fr) 64px 64px;
+  display: grid; grid-template-columns: 30px minmax(80px,1fr) 116px 116px;
   align-items: center; gap: 6px; padding: 0 10px; height: var(--row-h);
 }
 .grid-resize-handle {
@@ -208,12 +208,17 @@ button:focus:not(:focus-visible) { outline: none; }
    suppresses the scrollbar UI and direct user-initiated scrolling. */
 .main.view-tasks .grid-rows { overflow-y: auto; }
 .main.view-tasks .grid-pane { width: auto; flex: 1; border-right: none; }
-.main.view-tasks .grid-header, .main.view-tasks .grid-row { grid-template-columns: 34px minmax(160px,1fr) 74px 74px 46px 44px 1fr 56px; }
+.main.view-tasks .grid-header, .main.view-tasks .grid-row { grid-template-columns: 34px minmax(160px,1fr) 116px 116px 78px 40px 1fr 56px; }
+.main.view-tasks .grid-header > div, .main.view-tasks .grid-row > div { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .main.view-tasks .gantt-pane-outer { display: none; }
 .grid-row { border-bottom: 1px solid var(--border); font-size: 12.5px; cursor: default; }
 .grid-row:hover { background: var(--panel-2); }
 .grid-row.selected { background: color-mix(in srgb, var(--accent) 10%, var(--panel)); }
 .grid-name { display: flex; align-items: center; gap: 4px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.name-text.editable, .grid-cell-dim.editable { cursor: text; }
+.name-text.editable:hover, .grid-cell-dim.editable:hover { background: var(--panel-2); border-radius: 4px; }
+input.inline-edit { width: 100%; min-width: 0; padding: 3px 6px; border: 1px solid var(--accent); border-radius: 4px; background: var(--panel); color: var(--text); font-size: 12.5px; font-family: inherit; }
+.grid-name input.inline-edit { flex: 1; }
 .grid-name .chevron { width: 14px; height: 14px; border: none; background: none; color: var(--text-faint); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 10px; }
 .grid-name .chevron.empty { visibility: hidden; }
 .grid-name .name-text { overflow: hidden; text-overflow: ellipsis; }
@@ -222,7 +227,7 @@ button:focus:not(:focus-visible) { outline: none; }
 .grid-name .cycle-warn { color: var(--danger); flex-shrink: 0; }
 .grid-name .constraint-icon { color: var(--text-faint); flex-shrink: 0; font-size: 10px; }
 .grid-name .constraint-icon.violated { color: var(--danger); }
-.grid-cell-dim { color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.grid-cell-dim { color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-height: 1em; align-self: stretch; display: flex; align-items: center; }
 .grid-actions { display: flex; gap: 2px; justify-content: flex-end; }
 .grid-actions .icon-btn { width: 24px; height: 24px; font-size: 12px; opacity: 0; }
 .grid-row:hover .grid-actions .icon-btn { opacity: 1; }
@@ -301,6 +306,8 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 
 .pred-row { display: grid; grid-template-columns: 1fr 68px 60px 26px; gap: 6px; align-items: center; margin-bottom: 6px; }
 .pred-row select, .pred-row input { padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel); font-size: 12.5px; }
+.pred-row input.pred-id-input::-webkit-outer-spin-button, .pred-row input.pred-id-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.pred-row input.pred-id-input { -moz-appearance: textfield; }
 .pred-remove { border: none; background: none; color: var(--text-faint); width: 24px; height: 24px; border-radius: 5px; }
 .pred-remove:hover { background: var(--panel-2); color: var(--danger); }
 .pred-empty { font-size: 12px; color: var(--text-faint); padding: 4px 0; }
@@ -402,11 +409,11 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
   <div class="modal">
     <div class="modal-header"><h2 id="taskModalTitle">Task<span id="taskModalIdBadge" class="id-badge"></span></h2><button onclick="closeTaskModal()">&times;</button></div>
     <div class="modal-body">
-      <div class="field"><label>Name</label><input type="text" id="taskNameInput" placeholder="Task name"></div>
+      <div class="field"><label>Task Name</label><input type="text" id="taskNameInput" placeholder="Task name"></div>
       <div class="checkbox-row"><input type="checkbox" id="taskMilestoneInput" onchange="onMilestoneToggle()"><label for="taskMilestoneInput">Milestone (zero-duration)</label></div>
       <div class="field-row">
         <div class="field"><label>Start</label><input type="date" id="taskStartInput" onchange="onTaskStartChange()"></div>
-        <div class="field" id="taskEndField"><label>End</label><input type="date" id="taskEndInput" onchange="onTaskEndChange()"></div>
+        <div class="field" id="taskEndField"><label>Finish</label><input type="date" id="taskEndInput" onchange="onTaskEndChange()"></div>
       </div>
       <div class="field-row" id="taskDurProgRow">
         <div class="field" id="taskDurationField"><label>Duration (days)</label><input type="number" min="1" id="taskDurationInput" onchange="onTaskDurationChange()"></div>
@@ -592,7 +599,7 @@ let theme = 'light';
 let colorScheme = 'standard';
 let zoom = 'week';
 let currentView = 'tasks';
-let gridPaneWidth = 360;
+let gridPaneWidth = 400;
 const GRID_PANE_MIN_WIDTH = 240, GRID_PANE_MAX_WIDTH = 720;
 let showCriticalPath = false;
 let selectedTaskId = null;
@@ -622,7 +629,7 @@ function dayNumber(iso) { const [y, m, d] = iso.split('-').map(Number); return M
 function dayNumberToIso(n) { const d = new Date(n * DAY_MS); return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}`; }
 function addDays(iso, n) { return dayNumberToIso(dayNumber(iso) + n); }
 function durationDays(startIso, endIso) { return dayNumber(endIso) - dayNumber(startIso) + 1; }
-function fmtDate(iso) { if (!iso) return ''; return parseLocalDate(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); }
+function fmtDate(iso) { if (!iso) return ''; const d = parseLocalDate(iso); return `${pad2(d.getDate())}.${pad2(d.getMonth() + 1)}.${d.getFullYear()}`; }
 function fmtDateY(iso) { if (!iso) return ''; return parseLocalDate(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }); }
 
 function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
@@ -646,7 +653,7 @@ function load() {
       colorScheme = THEME_SCHEMES.some(s => s.id === data.colorScheme) ? data.colorScheme : 'standard';
       zoom = ZOOMS.some(z => z.id === data.zoom) ? data.zoom : 'week';
       currentView = data.view === 'gantt' ? 'gantt' : 'tasks';
-      gridPaneWidth = Number.isFinite(data.gridPaneWidth) ? Math.max(GRID_PANE_MIN_WIDTH, Math.min(GRID_PANE_MAX_WIDTH, data.gridPaneWidth)) : 360;
+      gridPaneWidth = Number.isFinite(data.gridPaneWidth) ? Math.max(GRID_PANE_MIN_WIDTH, Math.min(GRID_PANE_MAX_WIDTH, data.gridPaneWidth)) : 400;
     }
   } catch (e) { console.warn('dbPlanner: failed to load', e); }
   normalizeData();
@@ -978,7 +985,7 @@ function renderMainViewTabs() {
   document.getElementById('criticalPathBtn').classList.toggle('hidden', currentView !== 'gantt');
   document.getElementById('ganttControlsDivider').classList.toggle('hidden', currentView !== 'gantt');
 }
-function setView(id) { currentView = id; save(); render(); }
+function setView(id) { currentView = id; editingCell = null; save(); render(); }
 
 function updateProjectNameUI() {
   const el = document.getElementById('projectNameInput');
@@ -1019,8 +1026,8 @@ function statusColorVar(t) {
 function renderGrid() {
   const full = currentView === 'tasks';
   document.getElementById('gridHeader').innerHTML = full
-    ? '<div style="text-align:center">ID</div><div>Name</div><div>Start</div><div>End</div><div>Dur</div><div>%</div><div>Predecessors</div><div></div>'
-    : '<div style="text-align:center">ID</div><div>Name</div><div>Start</div><div>End</div>';
+    ? '<div style="text-align:center">ID</div><div>Task Name</div><div>Start</div><div>Finish</div><div>Duration</div><div>%</div><div>Predecessors</div><div></div>'
+    : '<div style="text-align:center">ID</div><div>Task Name</div><div>Start</div><div>Finish</div>';
   const list = visibleTaskList();
   const el = document.getElementById('gridRows');
   if (list.length === 0) {
@@ -1042,6 +1049,22 @@ function renderGrid() {
       const lag = p.lag ? (p.lag > 0 ? `+${p.lag}` : `${p.lag}`) : '';
       return `${taskDisplayId(p.id)}${p.type}${lag}`;
     }).filter(Boolean).join(', ');
+    const editing = (field) => full && editingCell && editingCell.id === t.id && editingCell.field === field;
+    const nameCell = editing('name')
+      ? `<input type="text" class="inline-edit" value="${escapeHtml(t.name)}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" onblur="commitInlineEdit('${t.id}','name',this.value)">`
+      : `<span class="name-text${summary ? ' summary' : ''}${full ? ' editable' : ''}" title="${escapeHtml(t.name)}"${full ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','name')"` : ''}>${escapeHtml(t.name)}</span>`;
+    const startCell = editing('start')
+      ? `<input type="date" class="inline-edit" value="${eff.start || ''}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" onblur="commitInlineEdit('${t.id}','start',this.value)">`
+      : `<div class="grid-cell-dim${full && !summary ? ' editable' : ''}"${full && !summary ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','start')"` : ''}>${fmtDate(eff.start)}</div>`;
+    const finishCell = editing('finish')
+      ? `<input type="date" class="inline-edit" value="${eff.end || ''}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" onblur="commitInlineEdit('${t.id}','finish',this.value)">`
+      : `<div class="grid-cell-dim${full && !summary && !t.milestone ? ' editable' : ''}"${full && !summary && !t.milestone ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','finish')"` : ''}>${fmtDate(eff.end)}</div>`;
+    const durationCell = editing('duration')
+      ? `<input type="number" min="1" step="1" class="inline-edit" value="${eff.start && eff.end ? durationDays(eff.start, eff.end) : ''}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" onblur="commitInlineEdit('${t.id}','duration',this.value)">`
+      : `<div class="grid-cell-dim${!summary && !t.milestone ? ' editable' : ''}"${!summary && !t.milestone ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','duration')"` : ''}>${eff.start && eff.end ? durationDays(eff.start, eff.end) : ''}</div>`;
+    const predCell = editing('predecessors')
+      ? `<input type="text" class="inline-edit" placeholder="e.g. 3FS+2, 5SS" value="${escapeHtml(predLabel)}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" onblur="commitInlineEdit('${t.id}','predecessors',this.value)">`
+      : `<div class="grid-cell-dim${!summary ? ' editable' : ''}" title="${escapeHtml(predLabel)}"${!summary ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','predecessors')"` : ''}>${escapeHtml(predLabel)}</div>`;
     return `<div class="grid-row${t.id === selectedTaskId ? ' selected' : ''}" data-id="${t.id}" onclick="selectTask('${t.id}')" ondblclick="openTaskModal('${t.id}')">
       <div class="grid-cell-dim" style="text-align:center">${taskDisplayId(t.id)}</div>
       <div class="grid-name" style="padding-left:${depth * 16}px">
@@ -1049,14 +1072,14 @@ function renderGrid() {
         ${t.milestone ? '<i class="fa-solid fa-diamond milestone-dot" style="font-size:9px"></i>' : ''}
         ${cyclic.has(t.id) ? '<i class="fa-solid fa-triangle-exclamation cycle-warn" title="Circular dependency — not auto-scheduled"></i>' : ''}
         ${t.constraintType !== 'ASAP' ? `<i class="fa-solid fa-thumbtack constraint-icon${constraintViolated(t) ? ' violated' : ''}" title="${escapeHtml(constraintTypeInfo(t.constraintType).label)}${t.constraintDate ? ' (' + fmtDate(t.constraintDate) + ')' : ''}${constraintViolated(t) ? ' — constraint not met' : ''}"></i>` : ''}
-        <span class="name-text${summary ? ' summary' : ''}" title="${escapeHtml(t.name)}">${escapeHtml(t.name)}</span>
+        ${nameCell}
       </div>
-      <div class="grid-cell-dim">${fmtDate(eff.start)}</div>
-      <div class="grid-cell-dim">${fmtDate(eff.end)}</div>
+      ${startCell}
+      ${finishCell}
       ${full ? `
-      <div class="grid-cell-dim">${eff.start && eff.end ? durationDays(eff.start, eff.end) : ''}</div>
+      ${durationCell}
       <div class="grid-cell-dim">${Math.round(eff.progress)}%</div>
-      <div class="grid-cell-dim" title="${escapeHtml(predLabel)}">${escapeHtml(predLabel)}</div>
+      ${predCell}
       <div class="grid-actions">
         <button class="icon-btn" onclick="event.stopPropagation();openTaskModal('${t.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>
         <button class="icon-btn btn-danger" onclick="event.stopPropagation();deleteTaskFlow('${t.id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
@@ -1066,6 +1089,90 @@ function renderGrid() {
 }
 function selectTask(id) { selectedTaskId = id; render(); }
 function toggleCollapse(id) { const t = byId(id); t.collapsed = !t.collapsed; save(); render(); }
+
+// Inline grid editing (Task view only) — one cell at a time, tracked here
+// rather than on the task itself since it's pure UI state, never persisted.
+let editingCell = null; // { id, field }
+
+function startInlineEdit(id, field) {
+  const t = byId(id);
+  if (!t) return;
+  if (field !== 'name' && hasChildren(id)) return; // summary rows: dates/duration/predecessors are computed rollups, edit via children instead
+  if ((field === 'finish' || field === 'duration') && t.milestone) return; // milestones are zero-duration by definition
+  editingCell = { id, field };
+  selectedTaskId = id; // clicking a cell stops propagation to the row's own onclick=selectTask, so set it here too — otherwise only the clicked cell looks "active" and the rest of the row (start/finish/duration/…) never gets the row-selected highlight
+  render();
+  requestAnimationFrame(() => {
+    const input = document.querySelector('.inline-edit');
+    if (input) { input.focus(); if (input.select) input.select(); }
+  });
+}
+
+function cancelInlineEdit() { editingCell = null; render(); }
+
+function onInlineEditKeydown(e) {
+  if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); }
+  else if (e.key === 'Escape') { e.preventDefault(); cancelInlineEdit(); }
+}
+
+function commitInlineEdit(id, field, rawValue) {
+  // Guards against a stray blur firing after Escape already cleared editingCell.
+  if (!editingCell || editingCell.id !== id || editingCell.field !== field) return;
+  editingCell = null;
+  const t = byId(id);
+  if (!t) { render(); return; }
+  const val = (rawValue || '').trim();
+  if (field === 'name') {
+    if (val) t.name = val;
+  } else if (field === 'start') {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(val)) {
+      t.startDate = val;
+      if (t.milestone) t.endDate = val;
+      applyConstraints(id);
+    }
+  } else if (field === 'finish') {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(val) && !t.milestone) {
+      t.endDate = val;
+      applyConstraints(id);
+    }
+  } else if (field === 'duration') {
+    const d = parseInt(val, 10);
+    if (Number.isFinite(d) && d >= 1 && !t.milestone) {
+      t.endDate = addDays(t.startDate, d - 1);
+      applyConstraints(id);
+    }
+  } else if (field === 'predecessors') {
+    const parsed = parsePredecessorString(val, id);
+    if (parsed !== null) { t.predecessors = parsed; applyConstraints(id); }
+  }
+  save();
+  render();
+}
+
+// Parses MS-Project-style compact refs like "3FS+2, 5SS, 7" (a bare ID
+// defaults to FS with no lag) into predecessor objects, resolving display
+// IDs back to stable task IDs and rejecting the same cases the predecessor
+// modal rejects (self, summary tasks, unknown IDs). All-or-nothing: if any
+// token is invalid the whole edit is rejected (returns null) rather than
+// silently dropping just that token, so a typo can't wipe out the rest of
+// an already-valid predecessor list.
+function parsePredecessorString(str, taskId) {
+  const result = [];
+  const seen = new Set();
+  for (const tok of str.split(',').map(s => s.trim()).filter(Boolean)) {
+    const m = tok.match(/^(\d+)\s*(FS|SS|FF|SF)?\s*([+-]\d+)?$/i);
+    if (!m) { showToast(`Can't parse "${tok}" — predecessors unchanged`, true); return null; }
+    const n = parseInt(m[1], 10);
+    const targetId = taskIdByDisplayId(n);
+    if (!targetId) { showToast(`No task #${n} — predecessors unchanged`, true); return null; }
+    if (targetId === taskId) { showToast("A task can't depend on itself — predecessors unchanged", true); return null; }
+    if (hasChildren(targetId)) { showToast("Can't depend on a summary task — predecessors unchanged", true); return null; }
+    if (seen.has(targetId)) continue;
+    seen.add(targetId);
+    result.push({ id: targetId, type: (m[2] || 'FS').toUpperCase(), lag: m[3] ? parseInt(m[3], 10) : 0 });
+  }
+  return result;
+}
 
 function renderGanttHeaderTicks(range, px) {
   const z = currentZoom();
@@ -1349,6 +1456,7 @@ function deleteTaskFlow(id) {
 
 /* ============================== Task modal ================================ */
 function openTaskModal(id, isNew) {
+  editingCell = null;
   editingTaskId = id;
   const t = byId(id);
   document.getElementById('taskModalTitle').firstChild.textContent = isNew ? 'New Task' : 'Edit Task';
@@ -1430,7 +1538,7 @@ function renderPredecessorRows() {
     const shown = p.id ? taskDisplayId(p.id) : '';
     return `
     <div class="pred-row">
-      <input type="number" min="1" step="1" placeholder="Task ID" value="${shown === '?' ? '' : shown}" title="${p.id ? escapeHtml(byId(p.id) ? byId(p.id).name : '') : 'Enter a task ID'}" onchange="onPredecessorIdChange(${i}, this.value)">
+      <input type="number" class="pred-id-input" min="1" step="1" placeholder="Task ID" value="${shown === '?' ? '' : shown}" title="${p.id ? escapeHtml(byId(p.id) ? byId(p.id).name : '') : 'Enter a task ID'}" onchange="onPredecessorIdChange(${i}, this.value)">
       <select onchange="editingPredecessors[${i}].type=this.value">
         ${DEP_TYPES.map(dt => `<option value="${dt}"${dt === p.type ? ' selected' : ''}>${dt}</option>`).join('')}
       </select>
