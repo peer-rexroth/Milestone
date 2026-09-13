@@ -7,104 +7,37 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="icon" href="icons/icon-192.png">
-<meta name="theme-color" content="#f5f6f8">
+<meta name="theme-color" content="#f6f8fa">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
+/* Fixed palette — GitHub's own light/dark (dark = GitHub Dimmed). This app
+   used to support 5 switchable color schemes plus a light/dark toggle
+   (ported from this author's Pulse/mytasks apps); the 5-scheme picker was
+   removed by request in favor of always looking like GitHub, but the plain
+   day/night toggle came back — so there's just this one pair of blocks
+   instead of the old data-theme × data-scheme attribute matrix. Light
+   (GitHub's own light palette) is the default (:root); [data-theme="dark"]
+   overrides it with GitHub Dimmed. */
 :root {
-  --bg: #f5f6f8; --panel: #ffffff; --panel-2: #fafbfc; --border: #e2e5ea;
-  --text: #1c2128; --text-dim: #5b6472; --text-faint: #9aa3b0;
-  --accent: #3b6fe0; --danger: #e5484d;
-  --task-blue: #3b6fe0; --task-teal: #12968c; --task-purple: #8354d1; --task-amber: #b5790a;
-  --task-pink: #c23b7a; --task-green: #268a5e; --task-red: #c33a3a; --task-grey: #5b6472;
-  --status-not-started: #8b93a1; --status-complete: #3457c9;
+  --bg: #f6f8fa; --panel: #ffffff; --panel-2: #eaeef2; --border: rgba(31,35,40,0.12);
+  --text: #1f2328; --text-dim: #656d76; --text-faint: #8c959f;
+  --accent: #0969da; --danger: #cf222e;
+  --task-blue: #0969da; --task-teal: #1b7c83; --task-purple: #8250df; --task-amber: #9a6700;
+  --task-pink: #ce2c85; --task-green: #1a7f37; --task-red: #cf222e; --task-grey: #656d76;
+  --status-not-started: #8c959f; --status-complete: #0969da;
   --radius: 10px;
   --shadow: 0 1px 2px rgba(20,20,30,.04), 0 4px 16px rgba(20,20,30,.06);
   --row-h: 32px;
 }
 html[data-theme="dark"] {
-  --bg: #14161a; --panel: #1b1e24; --panel-2: #21242b; --border: #2c3038;
-  --text: #e7e9ec; --text-dim: #9aa1ac; --text-faint: #6b7280;
-  --accent: #6c93f0; --danger: #f28b8b;
-  --task-blue: #7ea1f5; --task-teal: #5cd0c4; --task-purple: #b295ec; --task-amber: #eabb5d;
-  --task-pink: #ec8fc0; --task-green: #6fd39a; --task-red: #f28f8f; --task-grey: #a7aeb9;
-  --status-not-started: #9aa1ac; --status-complete: #8fa8f2;
-  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.35);
-}
-
-/* Color scheme system — ported from this author's Pulse/mytasks apps (same
-   two-axis design: data-theme light/dark, data-scheme picks a palette).
-   Unlike Pulse's *-bg token pairs, tints here are computed on the fly with
-   color-mix() instead of porting a second bg token per color — Chrome/Edge
-   only (this app's stated target, same as the File System Access sync
-   feature below), which keeps the whole scheme port to one solid hex per
-   token instead of two. */
-html[data-scheme="modern"] {
-  --bg: #f8f8f8; --panel: #ffffff; --panel-2: #e8e8e8; --border: rgba(59,59,59,0.12);
-  --text: #3b3b3b; --text-dim: #3b3b3b; --text-faint: #8a8a8a;
-  --accent: #005fb8; --danger: #cd3131;
-  --task-blue: #005fb8; --task-teal: #0598bc; --task-purple: #af00db; --task-amber: #bf8803;
-  --task-pink: #be1986; --task-green: #388a34; --task-red: #cd3131; --task-grey: #3b3b3b;
-  --status-not-started: #8a8a8a; --status-complete: #005fb8;
-}
-html[data-scheme="modern"][data-theme="dark"] {
-  --bg: #181818; --panel: #1f1f1f; --panel-2: #2a2d2e; --border: rgba(204,204,204,0.10);
-  --text: #cccccc; --text-dim: #9d9d9d; --text-faint: #6a6a6a;
-  --accent: #3794ff; --danger: #f14c4c;
-  --task-blue: #3794ff; --task-teal: #29b8db; --task-purple: #c586c0; --task-amber: #cca700;
-  --task-pink: #db6986; --task-green: #89d185; --task-red: #f14c4c; --task-grey: #9d9d9d;
-  --status-not-started: #6a6a6a; --status-complete: #3794ff;
-}
-html[data-scheme="dracula"] {
-  --bg: #f5efd7; --panel: #fffbeb; --panel-2: #cfcfde; --border: rgba(31,31,31,0.12);
-  --text: #1f1f1f; --text-dim: #6c664b; --text-faint: #a39d7a;
-  --accent: #644ac9; --danger: #cb3a2a;
-  --task-blue: #644ac9; --task-teal: #036a96; --task-purple: #a3144d; --task-amber: #a34d14;
-  --task-pink: #98427a; --task-green: #14710a; --task-red: #cb3a2a; --task-grey: #6c664b;
-  --status-not-started: #a39d7a; --status-complete: #644ac9;
-}
-html[data-scheme="dracula"][data-theme="dark"] {
-  --bg: #21222c; --panel: #282a36; --panel-2: #44475a; --border: rgba(248,248,242,0.10);
-  --text: #f8f8f2; --text-dim: #6272a4; --text-faint: #4d5673;
-  --accent: #bd93f9; --danger: #ff5555;
-  --task-blue: #bd93f9; --task-teal: #8be9fd; --task-purple: #ff79c6; --task-amber: #ffb86c;
-  --task-pink: #de74a7; --task-green: #50fa7b; --task-red: #ff5555; --task-grey: #6272a4;
-  --status-not-started: #4d5673; --status-complete: #bd93f9;
-}
-html[data-scheme="github"] {
-  --bg: #f6f8fa; --panel: #ffffff; --panel-2: #eaeef2; --border: rgba(31,35,40,0.12);
-  --text: #1f2328; --text-dim: #656d76; --text-faint: #8c959f;
-  --accent: #0969da; --danger: #cf222e;
-  --task-blue: #0969da; --task-teal: #1b7c83; --task-purple: #8250df; --task-amber: #9a6700;
-  --task-pink: #ce2c85; --task-green: #1a7f37; --task-red: #cf222e; --task-grey: #656d76;
-  --status-not-started: #8c959f; --status-complete: #0969da;
-}
-html[data-scheme="github"][data-theme="dark"] {
-  --bg: #161b22; --panel: #0d1117; --panel-2: #21262d; --border: rgba(230,237,243,0.10);
-  --text: #e6edf3; --text-dim: #9198a1; --text-faint: #6e7681;
-  --accent: #4493f8; --danger: #f85149;
-  --task-blue: #4493f8; --task-teal: #39c5cf; --task-purple: #a371f7; --task-amber: #d29922;
-  --task-pink: #e85aad; --task-green: #3fb950; --task-red: #f85149; --task-grey: #9198a1;
-  --status-not-started: #6e7681; --status-complete: #4493f8;
-}
-html[data-scheme="githubdimmed"] {
-  --bg: #f6f8fa; --panel: #ffffff; --panel-2: #eaeef2; --border: rgba(31,35,40,0.12);
-  --text: #1f2328; --text-dim: #656d76; --text-faint: #8c959f;
-  --accent: #0969da; --danger: #cf222e;
-  --task-blue: #0969da; --task-teal: #1b7c83; --task-purple: #8250df; --task-amber: #9a6700;
-  --task-pink: #ce2c85; --task-green: #1a7f37; --task-red: #cf222e; --task-grey: #656d76;
-  --status-not-started: #8c959f; --status-complete: #0969da;
-}
-html[data-scheme="githubdimmed"][data-theme="dark"] {
   --bg: #262c36; --panel: #212830; --panel-2: #2d3640; --border: rgba(209,215,224,0.10);
   --text: #d1d7e0; --text-dim: #9198a1; --text-faint: #6b7280;
   --accent: #478be6; --danger: #e5534b;
   --task-blue: #478be6; --task-teal: #4cb6c4; --task-purple: #986ee2; --task-amber: #c69026;
   --task-pink: #c96b96; --task-green: #57ab5a; --task-red: #e5534b; --task-grey: #9198a1;
   --status-not-started: #6b7280; --status-complete: #478be6;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.35);
 }
-html[data-scheme="dracula"] .brand svg { filter: drop-shadow(0 0 6px var(--accent)); }
-html[data-scheme="github"] .btn-primary,
-html[data-scheme="githubdimmed"] .btn-primary { background: var(--task-green); border-color: var(--task-green); }
 
 * { box-sizing: border-box; }
 body { margin: 0; }
@@ -152,7 +85,7 @@ button { cursor: pointer; }
 .btn:hover { background: var(--panel-2); }
 .btn:disabled { opacity: .45; cursor: default; }
 .btn:disabled:hover { background: var(--panel); }
-.btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn-primary { background: var(--task-green); border-color: var(--task-green); color: #fff; }
 .btn-primary:hover { filter: brightness(1.06); }
 .btn-danger { color: var(--danger); }
 .icon-btn {
@@ -191,7 +124,7 @@ button:focus:not(:focus-visible) { outline: none; }
    not Task view's full column set (see the .view-tasks override below),
    since it exists to label the chart's rows, not to be a spreadsheet. */
 .grid-header, .grid-row {
-  display: grid; grid-template-columns: 30px minmax(80px,1fr) 116px 116px;
+  display: grid; grid-template-columns: 30px 24px minmax(80px,1fr) 116px 116px;
   align-items: center; gap: 6px; padding: 0 10px; height: var(--row-h);
 }
 .grid-resize-handle {
@@ -208,7 +141,7 @@ button:focus:not(:focus-visible) { outline: none; }
    suppresses the scrollbar UI and direct user-initiated scrolling. */
 .main.view-tasks .grid-rows { overflow-y: auto; }
 .main.view-tasks .grid-pane { width: auto; flex: 1; border-right: none; }
-.main.view-tasks .grid-header, .main.view-tasks .grid-row { grid-template-columns: 34px minmax(160px,1fr) 116px 116px 78px 40px 1fr 56px; }
+.main.view-tasks .grid-header, .main.view-tasks .grid-row { grid-template-columns: 34px 24px minmax(160px,1fr) 116px 116px 78px 40px 1fr 56px; }
 .main.view-tasks .grid-header > div, .main.view-tasks .grid-row > div { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .main.view-tasks .gantt-pane-outer { display: none; }
 .grid-row { border-bottom: 1px solid var(--border); font-size: 12.5px; cursor: default; }
@@ -228,6 +161,10 @@ input.inline-edit { width: 100%; min-width: 0; padding: 3px 6px; border: 1px sol
 .grid-name .constraint-icon { color: var(--text-faint); flex-shrink: 0; font-size: 10px; }
 .grid-name .constraint-icon.violated { color: var(--danger); }
 .grid-cell-dim { color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-height: 1em; align-self: stretch; display: flex; align-items: center; }
+.grid-cell-dim.summary { font-weight: 600; color: var(--text); }
+.task-mode-cell { cursor: pointer; font-size: 12px; justify-content: center; }
+.task-mode-cell .fa-hand { color: var(--task-amber); }
+.task-mode-cell .fa-gears { color: var(--text-faint); }
 .grid-actions { display: flex; gap: 2px; justify-content: flex-end; }
 .grid-actions .icon-btn { width: 24px; height: 24px; font-size: 12px; opacity: 0; }
 .grid-row:hover .grid-actions .icon-btn { opacity: 1; }
@@ -316,14 +253,6 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 .successor-row .succ-meta { color: var(--text-faint); font-size: 11.5px; }
 .id-badge { font-size: 12px; font-weight: 600; color: var(--text-faint); margin-left: 8px; vertical-align: middle; }
 
-.scheme-option { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px; border: none; background: transparent; border-radius: 8px; text-align: left; }
-.scheme-option:hover { background: var(--panel-2); }
-.scheme-option.active { background: color-mix(in srgb, var(--accent) 10%, var(--panel)); }
-.scheme-dots { display: flex; gap: 3px; }
-.scheme-dot { width: 10px; height: 10px; border-radius: 50%; }
-.scheme-label { font-size: 13px; font-weight: 600; }
-.scheme-desc { font-size: 11px; color: var(--text-faint); }
-
 .help-body, .about-body { display: flex; flex-direction: column; gap: 14px; font-size: 13px; line-height: 1.5; }
 .help-section-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
 .help-tip { font-size: 12px; color: var(--text-faint); border-top: 1px solid var(--border); padding-top: 10px; }
@@ -373,10 +302,6 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
     </div>
   </div>
   <input type="file" id="fileInput" accept="application/json" class="hidden" onchange="handleFileImport(event)">
-  <div class="dropdown-wrap">
-    <button class="icon-btn" id="paletteBtn" onclick="togglePaletteMenu()" title="Color scheme"><i class="fa-solid fa-palette"></i></button>
-    <div class="dropdown-menu" id="paletteMenu"></div>
-  </div>
   <button class="icon-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Toggle light/dark"></button>
   <button class="icon-btn" onclick="openHelpModal()" title="Help"><i class="fa-regular fa-circle-question"></i></button>
   <button class="icon-btn" onclick="openAboutModal()" title="About"><i class="fa-solid fa-circle-info"></i></button>
@@ -507,7 +432,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
     <div class="modal-header"><h2>Help</h2><button onclick="closeHelpModal()">&times;</button></div>
     <div class="modal-body help-body">
       <div><div class="help-section-title">The basics</div>Add tasks with the + Add Task button. Each task has a start/end date, a % complete, and can be a milestone (a zero-duration diamond). Use Indent/Outdent to build a work breakdown structure — a parent task's own dates and progress roll up automatically from its children.</div>
-      <div><div class="help-section-title">Dependencies</div>Open a task and add a predecessor to link it to another task (Finish-to-Start, Start-to-Start, Finish-to-Finish or Start-to-Finish, with an optional lag in days). Moving a task forward automatically pushes any dependent tasks forward too — it never pulls a task earlier on its own. A circular dependency is flagged with a warning icon and stops auto-scheduling for the tasks involved.</div>
+      <div><div class="help-section-title">Dependencies</div>Open a task and add a predecessor to link it to another task (Finish-to-Start, Start-to-Start, Finish-to-Finish or Start-to-Finish). Give it a lead or lag in days: a positive number delays the dependent task (lag), a negative number lets it overlap and start early (lead) — e.g. "3FS+2" waits 2 extra days after task 3 finishes, "3FS-2" starts 2 days before task 3 finishes. Moving a task forward automatically pushes any dependent tasks forward too — it never pulls a task earlier on its own. A circular dependency is flagged with a warning icon and stops auto-scheduling for the tasks involved.</div>
       <div><div class="help-section-title">The Gantt chart</div>Drag a bar to reschedule it, drag its edges to resize, or drag the small circle on its right edge onto another task to create a dependency. Click a bar or row to edit it. The route icon in the toolbar highlights the critical path — the chain of tasks with zero slack that determines the overall project end date.</div>
       <div><div class="help-section-title">Data &amp; sync</div>Everything lives in this browser's local storage — nothing ever leaves your machine unless you export it or link a file. Data → Export/Import moves a full JSON snapshot in or out; Local Backups keeps a rolling daily snapshot. The file-link button next to Data lets you sync to a plain JSON file, which works well inside an iCloud Drive/OneDrive/Dropbox folder for keeping your own devices in step.</div>
       <div class="help-tip">Nothing here ever leaves your machine unless you explicitly export or link a file.</div>
@@ -557,14 +482,6 @@ const TASK_COLORS = [
   { id: 'red', label: 'Red' }, { id: 'grey', label: 'Grey' }
 ];
 
-const THEME_SCHEMES = [
-  { id: 'standard', name: 'Standard', desc: "dbPlanner's own default", swatches: ['#3b6fe0', '#12968c', '#8354d1'] },
-  { id: 'modern', name: 'Modern', desc: 'VS Code Light/Dark Modern', swatches: ['#005fb8', '#0598bc', '#af00db'] },
-  { id: 'dracula', name: 'Dracula', desc: 'Dracula / Alucard', swatches: ['#644ac9', '#036a96', '#a3144d'] },
-  { id: 'github', name: 'GitHub', desc: 'GitHub Primer', swatches: ['#0969da', '#1b7c83', '#8250df'] },
-  { id: 'githubdimmed', name: 'GitHub Dimmed', desc: 'GitHub Dark Dimmed', swatches: ['#0969da', '#1b7c83', '#8250df'] }
-];
-
 const DEP_TYPES = ['FS', 'SS', 'FF', 'SF'];
 const DEP_TYPE_LABELS = { FS: 'Finish→Start', SS: 'Start→Start', FF: 'Finish→Finish', SF: 'Start→Finish' };
 
@@ -596,7 +513,6 @@ let project = { name: 'My Project', updatedAt: 0 };
 let tasks = [];
 let deletedTaskIds = [];
 let theme = 'light';
-let colorScheme = 'standard';
 let zoom = 'week';
 let currentView = 'tasks';
 let gridPaneWidth = 400;
@@ -629,6 +545,7 @@ function dayNumber(iso) { const [y, m, d] = iso.split('-').map(Number); return M
 function dayNumberToIso(n) { const d = new Date(n * DAY_MS); return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}`; }
 function addDays(iso, n) { return dayNumberToIso(dayNumber(iso) + n); }
 function durationDays(startIso, endIso) { return dayNumber(endIso) - dayNumber(startIso) + 1; }
+function fmtDuration(n) { return `${n} day${n === 1 ? '' : 's'}`; }
 function fmtDate(iso) { if (!iso) return ''; const d = parseLocalDate(iso); return `${pad2(d.getDate())}.${pad2(d.getMonth() + 1)}.${d.getFullYear()}`; }
 function fmtDateY(iso) { if (!iso) return ''; return parseLocalDate(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }); }
 
@@ -638,7 +555,7 @@ function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c
 function byId(id) { return tasks.find(t => t.id === id); }
 
 /* ============================ Persistence =============================== */
-function localPayload() { return { version: APP_VERSION, project, tasks, deletedTaskIds, theme, colorScheme, zoom, view: currentView, gridPaneWidth }; }
+function localPayload() { return { version: APP_VERSION, project, tasks, deletedTaskIds, theme, zoom, view: currentView, gridPaneWidth }; }
 function syncPayload() { return { version: APP_VERSION, project, tasks, deletedTaskIds }; }
 
 function load() {
@@ -650,7 +567,6 @@ function load() {
       tasks = Array.isArray(data.tasks) ? data.tasks : [];
       deletedTaskIds = Array.isArray(data.deletedTaskIds) ? data.deletedTaskIds : [];
       theme = data.theme === 'dark' ? 'dark' : 'light';
-      colorScheme = THEME_SCHEMES.some(s => s.id === data.colorScheme) ? data.colorScheme : 'standard';
       zoom = ZOOMS.some(z => z.id === data.zoom) ? data.zoom : 'week';
       currentView = data.view === 'gantt' ? 'gantt' : 'tasks';
       gridPaneWidth = Number.isFinite(data.gridPaneWidth) ? Math.max(GRID_PANE_MIN_WIDTH, Math.min(GRID_PANE_MAX_WIDTH, data.gridPaneWidth)) : 400;
@@ -693,6 +609,7 @@ function normalizeData() {
     const cinfo = constraintTypeInfo(t.constraintType);
     if (!cinfo.hasDate) t.constraintDate = null;
     else if (!/^\d{4}-\d{2}-\d{2}$/.test(t.constraintDate || '')) t.constraintDate = t.startDate;
+    if (t.taskMode !== 'manual') t.taskMode = 'auto';
   }
 
   // Break parentId cycles and drop dangling references before anything
@@ -861,7 +778,10 @@ function constraintViolated(task) {
 // Only ever pushes a dependent task LATER, never pulls one earlier — a
 // manual placement ahead of its own constraint is left alone (surfaced as
 // a visual warning, not silently corrected) so a deliberate early start
-// is never overwritten by this cascade.
+// is never overwritten by this cascade. A task in taskMode 'manual' (MS
+// Project's Manually Scheduled) is skipped the same way a cyclic one is —
+// its own dates are never rewritten by the cascade, though it still keeps
+// whatever dates it has for its own successors' constraintStart() to read.
 function cascadeSchedule(changedId) {
   const cyclic = taskCycleSet();
   const succ = successorsMap();
@@ -872,7 +792,7 @@ function cascadeSchedule(changedId) {
     const id = queue.shift();
     if (cyclic.has(id) || hasChildren(id)) continue;
     const task = byId(id);
-    if (!task) continue;
+    if (!task || task.taskMode === 'manual') continue;
     const cs = constraintStart(task);
     if (cs && dayNumber(cs) > dayNumber(task.startDate)) {
       const dur = durationDays(task.startDate, task.endDate);
@@ -889,9 +809,9 @@ function cascadeSchedule(changedId) {
 // first or it would sit wherever it already was, dependency ignored.
 function applyConstraints(taskId) {
   const cyclic = taskCycleSet();
-  if (!cyclic.has(taskId) && !hasChildren(taskId)) {
-    const task = byId(taskId);
-    const cs = task && constraintStart(task);
+  const task = byId(taskId);
+  if (!cyclic.has(taskId) && !hasChildren(taskId) && task && task.taskMode !== 'manual') {
+    const cs = constraintStart(task);
     if (cs && dayNumber(cs) > dayNumber(task.startDate)) {
       const dur = durationDays(task.startDate, task.endDate);
       task.startDate = cs;
@@ -971,7 +891,6 @@ function render() {
   renderGantt();
   updateFileSyncUI();
   updateThemeToggleUI();
-  renderPaletteMenu();
   updateSelectionUI();
 }
 
@@ -1026,8 +945,8 @@ function statusColorVar(t) {
 function renderGrid() {
   const full = currentView === 'tasks';
   document.getElementById('gridHeader').innerHTML = full
-    ? '<div style="text-align:center">ID</div><div>Task Name</div><div>Start</div><div>Finish</div><div>Duration</div><div>%</div><div>Predecessors</div><div></div>'
-    : '<div style="text-align:center">ID</div><div>Task Name</div><div>Start</div><div>Finish</div>';
+    ? '<div></div><div title="Task Mode"></div><div>Task Name</div><div>Start</div><div>Finish</div><div>Duration</div><div>%</div><div>Predecessors</div><div></div>'
+    : '<div></div><div title="Task Mode"></div><div>Task Name</div><div>Start</div><div>Finish</div>';
   const list = visibleTaskList();
   const el = document.getElementById('gridRows');
   if (list.length === 0) {
@@ -1053,20 +972,30 @@ function renderGrid() {
     const nameCell = editing('name')
       ? `<input type="text" class="inline-edit" value="${escapeHtml(t.name)}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" onblur="commitInlineEdit('${t.id}','name',this.value)">`
       : `<span class="name-text${summary ? ' summary' : ''}${full ? ' editable' : ''}" title="${escapeHtml(t.name)}"${full ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','name')"` : ''}>${escapeHtml(t.name)}</span>`;
+    const summaryCls = summary ? ' summary' : '';
     const startCell = editing('start')
       ? `<input type="date" class="inline-edit" value="${eff.start || ''}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" onblur="commitInlineEdit('${t.id}','start',this.value)">`
-      : `<div class="grid-cell-dim${full && !summary ? ' editable' : ''}"${full && !summary ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','start')"` : ''}>${fmtDate(eff.start)}</div>`;
+      : `<div class="grid-cell-dim${summaryCls}${full && !summary ? ' editable' : ''}"${full && !summary ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','start')"` : ''}>${fmtDate(eff.start)}</div>`;
     const finishCell = editing('finish')
       ? `<input type="date" class="inline-edit" value="${eff.end || ''}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" onblur="commitInlineEdit('${t.id}','finish',this.value)">`
-      : `<div class="grid-cell-dim${full && !summary && !t.milestone ? ' editable' : ''}"${full && !summary && !t.milestone ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','finish')"` : ''}>${fmtDate(eff.end)}</div>`;
+      : `<div class="grid-cell-dim${summaryCls}${full && !summary && !t.milestone ? ' editable' : ''}"${full && !summary && !t.milestone ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','finish')"` : ''}>${fmtDate(eff.end)}</div>`;
     const durationCell = editing('duration')
       ? `<input type="number" min="1" step="1" class="inline-edit" value="${eff.start && eff.end ? durationDays(eff.start, eff.end) : ''}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" onblur="commitInlineEdit('${t.id}','duration',this.value)">`
-      : `<div class="grid-cell-dim${!summary && !t.milestone ? ' editable' : ''}"${!summary && !t.milestone ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','duration')"` : ''}>${eff.start && eff.end ? durationDays(eff.start, eff.end) : ''}</div>`;
+      : `<div class="grid-cell-dim${summaryCls}${!summary && !t.milestone ? ' editable' : ''}"${!summary && !t.milestone ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','duration')"` : ''}>${eff.start && eff.end ? fmtDuration(durationDays(eff.start, eff.end)) : ''}</div>`;
     const predCell = editing('predecessors')
-      ? `<input type="text" class="inline-edit" placeholder="e.g. 3FS+2, 5SS" value="${escapeHtml(predLabel)}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" onblur="commitInlineEdit('${t.id}','predecessors',this.value)">`
-      : `<div class="grid-cell-dim${!summary ? ' editable' : ''}" title="${escapeHtml(predLabel)}"${!summary ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','predecessors')"` : ''}>${escapeHtml(predLabel)}</div>`;
+      ? `<input type="text" class="inline-edit" placeholder="e.g. 3FS+2 (lag), 5SS-1 (lead)" title="Positive = lag (delay), negative = lead (overlap)" value="${escapeHtml(predLabel)}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" onblur="commitInlineEdit('${t.id}','predecessors',this.value)">`
+      : `<div class="grid-cell-dim${summaryCls}${!summary ? ' editable' : ''}" title="${escapeHtml(predLabel)}"${!summary ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','predecessors')"` : ''}>${escapeHtml(predLabel)}</div>`;
+    // MS Project-style Task Mode indicator: manually scheduled (hand icon)
+    // vs auto scheduled (gears icon), click to toggle — see toggleTaskMode().
+    // Summary tasks are always effectively auto (their dates are computed
+    // rollups, not stored — see effectiveDates()), so the icon there is
+    // just informational, not clickable.
+    const modeCell = summary
+      ? `<div class="grid-cell-dim task-mode-cell" style="text-align:center" title="Summary tasks are always auto-scheduled"><i class="fa-solid fa-gears" style="opacity:.35"></i></div>`
+      : `<div class="grid-cell-dim task-mode-cell" style="text-align:center" title="${t.taskMode === 'manual' ? 'Manually Scheduled — click to switch to Auto Scheduled' : 'Auto Scheduled — click to switch to Manually Scheduled'}" onclick="event.stopPropagation();toggleTaskMode('${t.id}')"><i class="fa-solid fa-${t.taskMode === 'manual' ? 'hand' : 'gears'}"></i></div>`;
     return `<div class="grid-row${t.id === selectedTaskId ? ' selected' : ''}" data-id="${t.id}" onclick="selectTask('${t.id}')" ondblclick="openTaskModal('${t.id}')">
       <div class="grid-cell-dim" style="text-align:center">${taskDisplayId(t.id)}</div>
+      ${modeCell}
       <div class="grid-name" style="padding-left:${depth * 16}px">
         <button class="chevron${summary ? '' : ' empty'}" onclick="event.stopPropagation();toggleCollapse('${t.id}')"><i class="fa-solid fa-chevron-${t.collapsed ? 'right' : 'down'}"></i></button>
         ${t.milestone ? '<i class="fa-solid fa-diamond milestone-dot" style="font-size:9px"></i>' : ''}
@@ -1078,7 +1007,7 @@ function renderGrid() {
       ${finishCell}
       ${full ? `
       ${durationCell}
-      <div class="grid-cell-dim">${Math.round(eff.progress)}%</div>
+      <div class="grid-cell-dim${summaryCls}">${Math.round(eff.progress)}%</div>
       ${predCell}
       <div class="grid-actions">
         <button class="icon-btn" onclick="event.stopPropagation();openTaskModal('${t.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>
@@ -1089,6 +1018,18 @@ function renderGrid() {
 }
 function selectTask(id) { selectedTaskId = id; render(); }
 function toggleCollapse(id) { const t = byId(id); t.collapsed = !t.collapsed; save(); render(); }
+// MS Project's Task Mode: 'manual' tasks keep whatever dates they're given
+// and are skipped entirely by cascadeSchedule()/applyConstraints() (see
+// those functions' own comments) — switching a task back to 'auto' snaps
+// it into place immediately, the same "recalculate on re-link" behavior
+// real MS Project shows when you flip a task's mode back.
+function toggleTaskMode(id) {
+  const t = byId(id);
+  if (!t || hasChildren(id)) return;
+  t.taskMode = t.taskMode === 'manual' ? 'auto' : 'manual';
+  if (t.taskMode === 'auto') applyConstraints(id);
+  save(); render();
+}
 
 // Inline grid editing (Task view only) — one cell at a time, tracked here
 // rather than on the task itself since it's pure UI state, never persisted.
@@ -1100,7 +1041,6 @@ function startInlineEdit(id, field) {
   if (field !== 'name' && hasChildren(id)) return; // summary rows: dates/duration/predecessors are computed rollups, edit via children instead
   if ((field === 'finish' || field === 'duration') && t.milestone) return; // milestones are zero-duration by definition
   editingCell = { id, field };
-  selectedTaskId = id; // clicking a cell stops propagation to the row's own onclick=selectTask, so set it here too — otherwise only the clicked cell looks "active" and the rest of the row (start/finish/duration/…) never gets the row-selected highlight
   render();
   requestAnimationFrame(() => {
     const input = document.querySelector('.inline-edit');
@@ -1389,7 +1329,7 @@ function addTask() {
     id: genId(), name: '', parentId, order,
     startDate: todayStr(), endDate: todayStr(), progress: 0, milestone: false,
     color: null, notes: '', predecessors: [], collapsed: false, updatedAt: Date.now(),
-    constraintType: 'ASAP', constraintDate: null
+    constraintType: 'ASAP', constraintDate: null, taskMode: 'auto'
   };
   tasks.push(t);
   normalizeData(); save(); render();
@@ -1542,7 +1482,7 @@ function renderPredecessorRows() {
       <select onchange="editingPredecessors[${i}].type=this.value">
         ${DEP_TYPES.map(dt => `<option value="${dt}"${dt === p.type ? ' selected' : ''}>${dt}</option>`).join('')}
       </select>
-      <input type="number" value="${p.lag || 0}" title="Lag (days)" onchange="editingPredecessors[${i}].lag=parseInt(this.value)||0">
+      <input type="number" value="${p.lag || 0}" placeholder="Lead/Lag" title="Lead/Lag (days) — positive delays the start (lag), negative overlaps it (lead)" onchange="editingPredecessors[${i}].lag=parseInt(this.value)||0">
       <button class="pred-remove" onclick="removePredecessorRow(${i})"><i class="fa-solid fa-xmark"></i></button>
     </div>`;
   }).join('');
@@ -1640,7 +1580,7 @@ function openConfirmModal({ title, body, action, confirmLabel }) {
 function closeConfirmModal() { document.getElementById('confirmModalBg').classList.remove('open'); modalTarget = null; }
 function confirmModalAction() { if (modalTarget && modalTarget.action) modalTarget.action(); closeConfirmModal(); }
 
-/* ============================== Theme / scheme ============================ */
+/* ================================= Theme ==================================== */
 function applyTheme() { document.documentElement.setAttribute('data-theme', theme); }
 function toggleTheme() { theme = theme === 'dark' ? 'light' : 'dark'; applyTheme(); updateThemeToggleUI(); save(); }
 function updateThemeToggleUI() {
@@ -1648,18 +1588,6 @@ function updateThemeToggleUI() {
   btn.innerHTML = theme === 'dark' ? '<i class="fa-solid fa-sun"></i>' : '<i class="fa-solid fa-moon"></i>';
   btn.title = theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
 }
-function applyColorScheme() { if (colorScheme === 'standard') document.documentElement.removeAttribute('data-scheme'); else document.documentElement.setAttribute('data-scheme', colorScheme); }
-function setColorScheme(id) { colorScheme = id; applyColorScheme(); save(); renderPaletteMenu(); closePaletteMenu(); }
-function renderPaletteMenu() {
-  const el = document.getElementById('paletteMenu');
-  el.innerHTML = THEME_SCHEMES.map(s => `
-    <button class="scheme-option${s.id === colorScheme ? ' active' : ''}" onclick="setColorScheme('${s.id}')">
-      <div class="scheme-dots">${s.swatches.map(hex => `<div class="scheme-dot" style="background:${hex}"></div>`).join('')}</div>
-      <div><div class="scheme-label">${s.name}</div><div class="scheme-desc">${s.desc}</div></div>
-    </button>`).join('');
-}
-function togglePaletteMenu() { positionDropdown('paletteBtn', 'paletteMenu'); document.getElementById('paletteMenu').classList.toggle('open'); closeDataMenu(); }
-function closePaletteMenu() { document.getElementById('paletteMenu').classList.remove('open'); }
 
 /* ============================== Data dropdown ============================= */
 function positionDropdown(btnId, menuId) {
@@ -1669,7 +1597,7 @@ function positionDropdown(btnId, menuId) {
   menu.style.right = (window.innerWidth - rect.right) + 'px';
   menu.style.left = 'auto';
 }
-function toggleDataMenu() { positionDropdown('dataMenuBtn', 'dataMenu'); document.getElementById('dataMenu').classList.toggle('open'); closePaletteMenu(); }
+function toggleDataMenu() { positionDropdown('dataMenuBtn', 'dataMenu'); document.getElementById('dataMenu').classList.toggle('open'); }
 function closeDataMenu() { document.getElementById('dataMenu').classList.remove('open'); }
 
 /* ============================ Merge (sync/import) ========================= */
@@ -1990,14 +1918,13 @@ function wireScrollSync() {
 function wireGlobalEvents() {
   document.addEventListener('click', (e) => {
     if (!e.target.closest('#dataMenuBtn') && !e.target.closest('#dataMenu')) closeDataMenu();
-    if (!e.target.closest('#paletteBtn') && !e.target.closest('#paletteMenu')) closePaletteMenu();
   });
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
     for (const id of ['taskModalBg', 'confirmModalBg', 'importModalBg', 'backupsModalBg', 'fileSyncModalBg', 'helpModalBg', 'aboutModalBg']) {
       document.getElementById(id).classList.remove('open');
     }
-    closeDataMenu(); closePaletteMenu();
+    closeDataMenu();
   });
   document.getElementById('projectNameInput').addEventListener('change', (e) => renameProject(e.target.value));
   document.getElementById('toastUndoBtn').addEventListener('click', triggerToastUndo);
@@ -2006,7 +1933,7 @@ function wireGlobalEvents() {
 
 document.addEventListener('DOMContentLoaded', () => {
   load();
-  applyTheme(); applyColorScheme(); applyGridPaneWidth();
+  applyTheme(); applyGridPaneWidth();
   document.title = project.name + ' · dbPlanner';
   wireGlobalEvents();
   wireScrollSync();

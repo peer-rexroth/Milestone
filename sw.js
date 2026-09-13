@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dbplanner-cache-v1';
+const CACHE_NAME = 'dbplanner-cache-v2';
 const APP_SHELL = [
   'dbplanner.html',
   'manifest.json',

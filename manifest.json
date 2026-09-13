@@ -5,8 +5,8 @@
   "start_url": "./dbplanner.html",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#f5f6f8",
-  "theme_color": "#f5f6f8",
+  "background_color": "#f6f8fa",
+  "theme_color": "#f6f8fa",
   "orientation": "any",
   "icons": [
     {
