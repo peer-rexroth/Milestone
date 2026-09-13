@@ -63,6 +63,17 @@ A **task**:
 
 **Critical path** (`computeCriticalPath()`) is a standard forward/backward CPM pass (earliest start/finish, then latest start/finish from the project end, slack = latest − earliest, critical when slack ≤ 0) over leaf tasks only. **Known v1 simplification**: every dependency is treated as Finish-to-Start for this specific slack calculation, regardless of its real type — SS/FF/SF links still drive the actual forward-scheduling cascade above correctly, just not this slack math. Good enough for highlighting the dominant chain; a mixed-type project's critical path may be approximate.
 
+### Task constraints
+
+`CONSTRAINT_TYPES` ports Microsoft Project's 8 primary constraint types (ASAP/ALAP/MSO/MFO/SNET/SNLT/FNET/FNLT), each entry carrying `hasDate`, `basis` (`'start'` or `'finish'` — which of the task's own dates the constraint date binds), and `bound` (`'lower'`, `'upper'`, or `'exact'`). A task stores `constraintType` (default `'ASAP'`) and `constraintDate` (`null` unless `hasDate`).
+
+How each `bound` interacts with the forward-only cascade above is the crux of this port, since dbPlanner has no bidirectional scheduler to fully enforce an upper bound or a true backward ALAP pass:
+
+- **`lower`** (SNET/FNET) and **`exact`** (MSO/MFO) fold directly into `constraintStart(task)` as one more candidate alongside every predecessor's own earliest-start push — whichever candidate is latest wins, the same mechanism that already resolves multiple predecessors against each other. This is why an MSO/SNET date can still end up pushed later than the pin: a predecessor genuinely demanding a later start always wins, exactly like real MS Project's own "meet as many constraints as possible" behavior when a schedule is over-constrained.
+- **`exact`** additionally gets pinned immediately in `saveTaskFromModal()` the moment the constraint is set (the task's stored dates are set to the constraint date right then, preserving duration) — this is what makes "Must Start/Finish On" actually *move* a task instead of merely capping it, the one behavior `constraintStart()`'s lower-bound treatment alone wouldn't produce.
+- **`upper`** (SNLT/FNLT) is deliberately **not** enforced by the cascade at all — this app's scheduling engine only ever pushes a date later (see `cascadeSchedule()`'s own comment above), so there is no code path that could honor an upper bound without contradicting that rule. Instead, `constraintViolated(task)` checks whether the task's *current* dates still satisfy its constraint (exact: date must match exactly; upper: current date must not exceed it) and the grid surfaces a mismatch via a small thumbtack icon next to the task name, turning `--danger`-colored when violated — the same "surface it, don't silently override a deliberate placement" stance already established for a manual placement ahead of a predecessor. Real MS Project does the same thing here: an over-constrained schedule gets a conflict indicator, not a silent reversal of whichever constraint lost.
+- **ALAP** is treated identically to ASAP for actual date computation in this version — both are lower-bounded only by predecessors, with no backward slack-filling pass. A true ALAP (schedule as late as possible without delaying a successor) would need the same latest-start machinery `computeCriticalPath()` already computes for leaf tasks, just applied continuously rather than only behind the critical-path toggle; deferred as a genuine v1 scope cut rather than built halfway. No violation warning is shown for ALAP since there's nothing here to violate yet.
+
 ### Gantt rendering
 
 Position math is plain day-number arithmetic (`dayNumber()`/`dayNumberToIso()`, UTC-based via `Date.UTC()`) rather than local-time `Date` arithmetic — the same reasoning Pulse's own Dashboard Gantt chart uses: two devices in different timezones must compute the identical pixel position from the same ISO date string, which a local-time parse doesn't reliably guarantee across a DST boundary. Display-facing formatting (`fmtDate()`/`fmtDateY()`) still parses as local time, matching how every other date renders in this app.
@@ -95,5 +106,7 @@ Same shape as Pulse/mytasks, sized down for a single-entity (`tasks`, not items+
 ## Known v1 limitations
 
 - Critical path slack treats every dependency as Finish-to-Start (see "Scheduling engine" above).
+- ALAP behaves identically to ASAP — no backward slack-filling pass yet (see "Task constraints" above).
+- SNLT/FNLT (Start/Finish No Later Than) are flagged when violated, never enforced — this app's cascade is forward-push-only.
 - No automated test suite yet.
 - No RBAC/roles, no daily-backup-to-a-linked-folder, no multi-file sync split — all deliberately out of scope for a single-user, single-project local planner (unlike Pulse, which is a multi-role team dashboard).

@@ -137,6 +137,13 @@ button { cursor: pointer; }
 .topbar-divider { width: 1px; height: 22px; background: var(--border); }
 .topbar-spacer { flex: 1 1 auto; }
 
+.subbar {
+  display: flex; align-items: center; gap: 10px; height: 46px; padding: 0 14px;
+  background: var(--panel-2); border-bottom: 1px solid var(--border);
+  flex-shrink: 0; overflow-x: auto;
+}
+.subbar > * { flex-shrink: 0; }
+
 .btn {
   display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px;
   border: 1px solid var(--border); background: var(--panel); color: var(--text);
@@ -186,6 +193,15 @@ button:focus:not(:focus-visible) { outline: none; }
 }
 .grid-header { font-size: 11px; font-weight: 700; color: var(--text-faint); text-transform: uppercase; letter-spacing: .03em; border-bottom: 1px solid var(--border); flex-shrink: 0; }
 .grid-rows { flex: 1; overflow: hidden; position: relative; }
+/* Task view: the grid is the only pane, so it scrolls on its own.
+   Gantt view: the grid's scrollTop is instead driven programmatically from
+   the Gantt pane's real scroll container, so the two stay pixel-aligned
+   (see wireScrollSync()) — overflow:hidden still permits that, it only
+   suppresses the scrollbar UI and direct user-initiated scrolling. */
+.main.view-tasks .grid-rows { overflow-y: auto; }
+.main.view-tasks .grid-pane { width: auto; flex: 1; border-right: none; }
+.main.view-tasks .grid-header, .main.view-tasks .grid-row { grid-template-columns: 34px minmax(160px,1fr) 74px 74px 46px 44px 1fr 56px; }
+.main.view-tasks .gantt-pane-outer { display: none; }
 .grid-row { border-bottom: 1px solid var(--border); font-size: 12.5px; cursor: default; }
 .grid-row:hover { background: var(--panel-2); }
 .grid-row.selected { background: color-mix(in srgb, var(--accent) 10%, var(--panel)); }
@@ -196,6 +212,8 @@ button:focus:not(:focus-visible) { outline: none; }
 .grid-name .name-text.summary { font-weight: 600; }
 .grid-name .milestone-dot { color: var(--task-purple); flex-shrink: 0; }
 .grid-name .cycle-warn { color: var(--danger); flex-shrink: 0; }
+.grid-name .constraint-icon { color: var(--text-faint); flex-shrink: 0; font-size: 10px; }
+.grid-name .constraint-icon.violated { color: var(--danger); }
 .grid-cell-dim { color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .grid-actions { display: flex; gap: 2px; justify-content: flex-end; }
 .grid-actions .icon-btn { width: 24px; height: 24px; font-size: 12px; opacity: 0; }
@@ -318,11 +336,8 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
   </div>
   <input id="projectNameInput" type="text" title="Project name">
   <div class="topbar-divider"></div>
-  <button class="btn" id="addTaskBtn" onclick="addTask()"><i class="fa-solid fa-plus"></i>Add Task</button>
-  <button class="icon-btn" id="indentBtn" onclick="indentSelected()" title="Indent (make sub-task)"><i class="fa-solid fa-indent"></i></button>
-  <button class="icon-btn" id="outdentBtn" onclick="outdentSelected()" title="Outdent"><i class="fa-solid fa-outdent"></i></button>
-  <button class="icon-btn btn-danger" id="deleteTaskBtn" onclick="deleteSelected()" title="Delete task"><i class="fa-solid fa-trash"></i></button>
-  <div class="topbar-divider"></div>
+  <div class="view-tabs" id="mainViewTabs"></div>
+  <div class="topbar-divider" id="ganttControlsDivider"></div>
   <div class="view-tabs" id="zoomTabs"></div>
   <button class="icon-btn" id="criticalPathBtn" onclick="toggleCriticalPath()" title="Highlight critical path"><i class="fa-solid fa-route"></i></button>
   <div class="topbar-spacer"></div>
@@ -348,11 +363,16 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
   <button class="icon-btn" onclick="openAboutModal()" title="About"><i class="fa-solid fa-circle-info"></i></button>
 </div>
 
-<div class="main">
+<div class="subbar">
+  <button class="btn" id="addTaskBtn" onclick="addTask()"><i class="fa-solid fa-plus"></i>Add Task</button>
+  <button class="icon-btn" id="indentBtn" onclick="indentSelected()" title="Indent (make sub-task)"><i class="fa-solid fa-indent"></i></button>
+  <button class="icon-btn" id="outdentBtn" onclick="outdentSelected()" title="Outdent"><i class="fa-solid fa-outdent"></i></button>
+  <button class="icon-btn btn-danger" id="deleteTaskBtn" onclick="deleteSelected()" title="Delete task"><i class="fa-solid fa-trash"></i></button>
+</div>
+
+<div class="main" id="main">
   <div class="grid-pane">
-    <div class="grid-header">
-      <div>Name</div><div>Start</div><div>End</div><div>Dur</div><div>%</div><div>Predecessors</div><div></div>
-    </div>
+    <div class="grid-header" id="gridHeader"></div>
     <div class="grid-rows" id="gridRows"></div>
   </div>
   <div class="gantt-pane-outer" id="ganttPaneOuter">
@@ -378,6 +398,16 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
       <div class="field-row" id="taskDurProgRow">
         <div class="field" id="taskDurationField"><label>Duration (days)</label><input type="number" min="1" id="taskDurationInput" onchange="onTaskDurationChange()"></div>
         <div class="field"><label>% Complete</label><input type="number" min="0" max="100" id="taskProgressInput"></div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Constraint</label>
+          <select id="taskConstraintTypeInput" onchange="onConstraintTypeChange()"></select>
+        </div>
+        <div class="field" id="taskConstraintDateField">
+          <label id="taskConstraintDateLabel">Constraint date</label>
+          <input type="date" id="taskConstraintDateInput">
+        </div>
       </div>
       <div class="field">
         <label>Color</label>
@@ -514,6 +544,29 @@ const THEME_SCHEMES = [
 const DEP_TYPES = ['FS', 'SS', 'FF', 'SF'];
 const DEP_TYPE_LABELS = { FS: 'Finish→Start', SS: 'Start→Start', FF: 'Finish→Finish', SF: 'Start→Finish' };
 
+// Microsoft Project's 8 primary constraint types. `basis` says whether the
+// constraint date binds the task's start or its finish; `bound` says
+// whether it's a lower bound (folds into the forward-scheduling cascade
+// exactly like a predecessor's own earliest-start push — see
+// constraintStart() below), an upper bound (never auto-enforced by this
+// app's forward-only cascade, only flagged when violated — see
+// constraintViolated(), the same "surface it, don't silently override a
+// deliberate placement" stance the cascade already takes for manual
+// placement ahead of a predecessor), or exact (pinned immediately when set
+// — see saveTaskFromModal() — and thereafter treated as a lower bound with
+// violation flagged if a predecessor later forces it past that date).
+const CONSTRAINT_TYPES = [
+  { id: 'ASAP', label: 'As Soon As Possible', hasDate: false },
+  { id: 'ALAP', label: 'As Late As Possible', hasDate: false },
+  { id: 'MSO', label: 'Must Start On', hasDate: true, basis: 'start', bound: 'exact' },
+  { id: 'MFO', label: 'Must Finish On', hasDate: true, basis: 'finish', bound: 'exact' },
+  { id: 'SNET', label: 'Start No Earlier Than', hasDate: true, basis: 'start', bound: 'lower' },
+  { id: 'SNLT', label: 'Start No Later Than', hasDate: true, basis: 'start', bound: 'upper' },
+  { id: 'FNET', label: 'Finish No Earlier Than', hasDate: true, basis: 'finish', bound: 'lower' },
+  { id: 'FNLT', label: 'Finish No Later Than', hasDate: true, basis: 'finish', bound: 'upper' }
+];
+function constraintTypeInfo(id) { return CONSTRAINT_TYPES.find(c => c.id === id) || CONSTRAINT_TYPES[0]; }
+
 /* =============================== State ================================= */
 let project = { name: 'My Project', updatedAt: 0 };
 let tasks = [];
@@ -521,6 +574,7 @@ let deletedTaskIds = [];
 let theme = 'light';
 let colorScheme = 'standard';
 let zoom = 'week';
+let currentView = 'tasks';
 let showCriticalPath = false;
 let selectedTaskId = null;
 
@@ -558,7 +612,7 @@ function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c
 function byId(id) { return tasks.find(t => t.id === id); }
 
 /* ============================ Persistence =============================== */
-function localPayload() { return { version: APP_VERSION, project, tasks, deletedTaskIds, theme, colorScheme, zoom }; }
+function localPayload() { return { version: APP_VERSION, project, tasks, deletedTaskIds, theme, colorScheme, zoom, view: currentView }; }
 function syncPayload() { return { version: APP_VERSION, project, tasks, deletedTaskIds }; }
 
 function load() {
@@ -572,6 +626,7 @@ function load() {
       theme = data.theme === 'dark' ? 'dark' : 'light';
       colorScheme = THEME_SCHEMES.some(s => s.id === data.colorScheme) ? data.colorScheme : 'standard';
       zoom = ZOOMS.some(z => z.id === data.zoom) ? data.zoom : 'week';
+      currentView = data.view === 'gantt' ? 'gantt' : 'tasks';
     }
   } catch (e) { console.warn('dbPlanner: failed to load', e); }
   normalizeData();
@@ -607,6 +662,10 @@ function normalizeData() {
     if (typeof t.collapsed !== 'boolean') t.collapsed = false;
     if (t.color && !TASK_COLORS.some(c => c.id === t.color)) t.color = null;
     if (typeof t.notes !== 'string') t.notes = '';
+    if (!CONSTRAINT_TYPES.some(c => c.id === t.constraintType)) t.constraintType = 'ASAP';
+    const cinfo = constraintTypeInfo(t.constraintType);
+    if (!cinfo.hasDate) t.constraintDate = null;
+    else if (!/^\d{4}-\d{2}-\d{2}$/.test(t.constraintDate || '')) t.constraintDate = t.startDate;
   }
 
   // Break parentId cycles and drop dangling references before anything
@@ -726,7 +785,33 @@ function constraintStart(task) {
     else c = addDays(pred.endDate, 1 + lag); // FS, default
     if (cs === null || dayNumber(c) > dayNumber(cs)) cs = c;
   }
+  // A task's own MSO/SNET/MFO/FNET constraint is a lower bound exactly like
+  // a predecessor's earliest-start push — whichever candidate is latest
+  // wins. SNLT/FNLT (upper bounds) and ALAP are deliberately NOT folded in
+  // here: this app's cascade only ever pushes a date later, so an upper
+  // bound can't be "enforced" by it — see constraintViolated() instead,
+  // the same "flag it, don't silently override" treatment real MS Project
+  // gives an over-constrained schedule via its own conflict indicator.
+  const cinfo = constraintTypeInfo(task.constraintType);
+  if (task.constraintDate && (cinfo.bound === 'lower' || cinfo.bound === 'exact')) {
+    const c = cinfo.basis === 'finish' ? addDays(task.constraintDate, -(dur - 1)) : task.constraintDate;
+    if (cs === null || dayNumber(c) > dayNumber(cs)) cs = c;
+  }
   return cs;
+}
+// Does this task's *current* stored dates actually satisfy its own
+// constraint? MSO/MFO (exact) and SNLT/FNLT (upper bounds) are never
+// force-corrected by the scheduling engine — see constraintStart() above —
+// so this is what surfaces a mismatch instead, the same role
+// taskCycleSet()'s warning icon plays for a circular dependency.
+function constraintViolated(task) {
+  if (!task.constraintDate) return false;
+  const cinfo = constraintTypeInfo(task.constraintType);
+  const actual = cinfo.basis === 'finish' ? task.endDate : task.startDate;
+  const want = dayNumber(task.constraintDate), have = dayNumber(actual);
+  if (cinfo.bound === 'exact') return have !== want;
+  if (cinfo.bound === 'upper') return have > want;
+  return false; // lower bounds are enforced by constraintStart()'s cascade, never violated in steady state
 }
 // Only ever pushes a dependent task LATER, never pulls one earlier — a
 // manual placement ahead of its own constraint is left alone (surfaced as
@@ -833,6 +918,7 @@ function currentZoom() { return ZOOMS.find(z => z.id === zoom) || ZOOMS[1]; }
 function render() {
   resetEffectiveCache();
   updateProjectNameUI();
+  renderMainViewTabs();
   renderZoomTabs();
   updateCriticalPathUI();
   renderGrid();
@@ -842,6 +928,18 @@ function render() {
   renderPaletteMenu();
   updateSelectionUI();
 }
+
+const MAIN_VIEWS = [{ id: 'tasks', label: 'Tasks' }, { id: 'gantt', label: 'Gantt' }];
+function renderMainViewTabs() {
+  document.getElementById('mainViewTabs').innerHTML = MAIN_VIEWS.map(v =>
+    `<button class="view-tab${v.id === currentView ? ' active' : ''}" onclick="setView('${v.id}')">${v.label}</button>`).join('');
+  document.getElementById('main').classList.toggle('view-tasks', currentView === 'tasks');
+  document.getElementById('main').classList.toggle('view-gantt', currentView === 'gantt');
+  document.getElementById('zoomTabs').classList.toggle('hidden', currentView !== 'gantt');
+  document.getElementById('criticalPathBtn').classList.toggle('hidden', currentView !== 'gantt');
+  document.getElementById('ganttControlsDivider').classList.toggle('hidden', currentView !== 'gantt');
+}
+function setView(id) { currentView = id; save(); render(); }
 
 function updateProjectNameUI() {
   const el = document.getElementById('projectNameInput');
@@ -880,6 +978,10 @@ function statusColorVar(t) {
 }
 
 function renderGrid() {
+  const showId = currentView === 'tasks';
+  document.getElementById('gridHeader').innerHTML =
+    (showId ? '<div style="text-align:center">ID</div>' : '') +
+    '<div>Name</div><div>Start</div><div>End</div><div>Dur</div><div>%</div><div>Predecessors</div><div></div>';
   const list = visibleTaskList();
   const el = document.getElementById('gridRows');
   if (list.length === 0) {
@@ -887,7 +989,7 @@ function renderGrid() {
     return;
   }
   const cyclic = taskCycleSet();
-  el.innerHTML = list.map(({ task: t, depth }) => {
+  el.innerHTML = list.map(({ task: t, depth }, idx) => {
     const eff = effectiveDates(t.id);
     const summary = hasChildren(t.id);
     const predLabel = t.predecessors.map(p => {
@@ -895,10 +997,12 @@ function renderGrid() {
       return pt ? escapeHtml(pt.name.slice(0, 10)) + (pt.name.length > 10 ? '…' : '') + (p.lag ? ` ${p.lag > 0 ? '+' : ''}${p.lag}d` : '') : '';
     }).filter(Boolean).join(', ');
     return `<div class="grid-row${t.id === selectedTaskId ? ' selected' : ''}" data-id="${t.id}" onclick="selectTask('${t.id}')" ondblclick="openTaskModal('${t.id}')">
+      ${showId ? `<div class="grid-cell-dim" style="text-align:center">${idx + 1}</div>` : ''}
       <div class="grid-name" style="padding-left:${depth * 16}px">
         <button class="chevron${summary ? '' : ' empty'}" onclick="event.stopPropagation();toggleCollapse('${t.id}')"><i class="fa-solid fa-chevron-${t.collapsed ? 'right' : 'down'}"></i></button>
         ${t.milestone ? '<i class="fa-solid fa-diamond milestone-dot" style="font-size:9px"></i>' : ''}
         ${cyclic.has(t.id) ? '<i class="fa-solid fa-triangle-exclamation cycle-warn" title="Circular dependency — not auto-scheduled"></i>' : ''}
+        ${t.constraintType !== 'ASAP' ? `<i class="fa-solid fa-thumbtack constraint-icon${constraintViolated(t) ? ' violated' : ''}" title="${escapeHtml(constraintTypeInfo(t.constraintType).label)}${t.constraintDate ? ' (' + fmtDate(t.constraintDate) + ')' : ''}${constraintViolated(t) ? ' — constraint not met' : ''}"></i>` : ''}
         <span class="name-text${summary ? ' summary' : ''}" title="${escapeHtml(t.name)}">${escapeHtml(t.name)}</span>
       </div>
       <div class="grid-cell-dim">${fmtDate(eff.start)}</div>
@@ -1130,7 +1234,8 @@ function addTask() {
   const t = {
     id: genId(), name: '', parentId, order,
     startDate: todayStr(), endDate: todayStr(), progress: 0, milestone: false,
-    color: null, notes: '', predecessors: [], collapsed: false, updatedAt: Date.now()
+    color: null, notes: '', predecessors: [], collapsed: false, updatedAt: Date.now(),
+    constraintType: 'ASAP', constraintDate: null
   };
   tasks.push(t);
   normalizeData(); save(); render();
@@ -1208,6 +1313,10 @@ function openTaskModal(id, isNew) {
   document.getElementById('taskProgressInput').value = t.progress;
   document.getElementById('taskNotesInput').value = t.notes;
   renderColorSwatches(t.color);
+  const typeSel = document.getElementById('taskConstraintTypeInput');
+  typeSel.innerHTML = CONSTRAINT_TYPES.map(c => `<option value="${c.id}"${c.id === t.constraintType ? ' selected' : ''}>${c.label}</option>`).join('');
+  document.getElementById('taskConstraintDateInput').value = t.constraintDate || t.startDate;
+  onConstraintTypeChange();
   editingPredecessors = t.predecessors.map(p => ({ ...p }));
   renderPredecessorRows();
   onMilestoneToggle();
@@ -1217,6 +1326,11 @@ function openTaskModal(id, isNew) {
 function closeTaskModal() {
   document.getElementById('taskModalBg').classList.remove('open');
   editingTaskId = null;
+}
+function onConstraintTypeChange() {
+  const cinfo = constraintTypeInfo(document.getElementById('taskConstraintTypeInput').value);
+  document.getElementById('taskConstraintDateField').classList.toggle('hidden', !cinfo.hasDate);
+  if (cinfo.hasDate) document.getElementById('taskConstraintDateLabel').textContent = cinfo.basis === 'finish' ? 'Finish by/on' : 'Start by/on';
 }
 function onMilestoneToggle() {
   const on = document.getElementById('taskMilestoneInput').checked;
@@ -1288,6 +1402,17 @@ function saveTaskFromModal() {
   t.notes = document.getElementById('taskNotesInput').value;
   t.color = document.getElementById('taskColorSwatches').dataset.value || null;
   t.predecessors = editingPredecessors.filter(p => p.id);
+  t.constraintType = document.getElementById('taskConstraintTypeInput').value;
+  const cinfo = constraintTypeInfo(t.constraintType);
+  t.constraintDate = cinfo.hasDate ? (document.getElementById('taskConstraintDateInput').value || t.startDate) : null;
+  // "Must Start/Finish On" is a hard pin — apply it immediately, the same
+  // moment the constraint is set, rather than waiting for the cascade
+  // below to merely treat it as a lower bound (see constraintStart()).
+  if (cinfo.bound === 'exact') {
+    const dur = durationDays(t.startDate, t.endDate);
+    if (cinfo.basis === 'finish') { t.endDate = t.constraintDate; t.startDate = addDays(t.constraintDate, -(dur - 1)); }
+    else { t.startDate = t.constraintDate; t.endDate = t.milestone ? t.constraintDate : addDays(t.constraintDate, dur - 1); }
+  }
   t.updatedAt = Date.now();
   normalizeData();
   applyConstraints(t.id);
@@ -1635,7 +1760,10 @@ function wireScrollSync() {
   const gridRows = document.getElementById('gridRows');
   const ganttOuter = document.getElementById('ganttPaneOuter');
   let syncing = false;
-  gridRows.addEventListener('wheel', (e) => { ganttOuter.scrollTop += e.deltaY; e.preventDefault(); }, { passive: false });
+  gridRows.addEventListener('wheel', (e) => {
+    if (currentView !== 'gantt') return; // Tasks view: grid scrolls natively, nothing to forward
+    ganttOuter.scrollTop += e.deltaY; e.preventDefault();
+  }, { passive: false });
   ganttOuter.addEventListener('scroll', () => {
     if (syncing) return; syncing = true;
     gridRows.scrollTop = ganttOuter.scrollTop;
