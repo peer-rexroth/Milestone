@@ -186,11 +186,19 @@ button:focus:not(:focus-visible) { outline: none; }
 
 /* ── Main layout ────────────────────────────────────────────────────── */
 .main { flex: 1; min-height: 0; display: flex; overflow: hidden; }
-.grid-pane { width: 480px; flex-shrink: 0; display: flex; flex-direction: column; border-right: 1px solid var(--border); background: var(--panel); }
+.grid-pane { width: var(--grid-pane-width, 360px); flex-shrink: 0; display: flex; flex-direction: column; border-right: 1px solid var(--border); background: var(--panel); position: relative; }
+/* Gantt view's own label sidebar — deliberately just ID/Name/Start/End,
+   not Task view's full column set (see the .view-tasks override below),
+   since it exists to label the chart's rows, not to be a spreadsheet. */
 .grid-header, .grid-row {
-  display: grid; grid-template-columns: minmax(160px,1fr) 74px 74px 46px 44px 1fr 56px;
+  display: grid; grid-template-columns: 30px minmax(80px,1fr) 64px 64px;
   align-items: center; gap: 6px; padding: 0 10px; height: var(--row-h);
 }
+.grid-resize-handle {
+  position: absolute; top: 0; right: -3px; bottom: 0; width: 6px; cursor: ew-resize; z-index: 6;
+}
+.grid-resize-handle:hover, .grid-resize-handle.resizing { background: color-mix(in srgb, var(--accent) 40%, transparent); }
+.main.view-tasks .grid-resize-handle { display: none; }
 .grid-header { font-size: 11px; font-weight: 700; color: var(--text-faint); text-transform: uppercase; letter-spacing: .03em; border-bottom: 1px solid var(--border); flex-shrink: 0; }
 .grid-rows { flex: 1; overflow: hidden; position: relative; }
 /* Task view: the grid is the only pane, so it scrolls on its own.
@@ -371,9 +379,10 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 </div>
 
 <div class="main" id="main">
-  <div class="grid-pane">
+  <div class="grid-pane" id="gridPane">
     <div class="grid-header" id="gridHeader"></div>
     <div class="grid-rows" id="gridRows"></div>
+    <div class="grid-resize-handle" id="gridResizeHandle" title="Drag to resize"></div>
   </div>
   <div class="gantt-pane-outer" id="ganttPaneOuter">
     <div class="gantt-content" id="ganttContent">
@@ -575,6 +584,8 @@ let theme = 'light';
 let colorScheme = 'standard';
 let zoom = 'week';
 let currentView = 'tasks';
+let gridPaneWidth = 360;
+const GRID_PANE_MIN_WIDTH = 240, GRID_PANE_MAX_WIDTH = 720;
 let showCriticalPath = false;
 let selectedTaskId = null;
 
@@ -612,7 +623,7 @@ function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c
 function byId(id) { return tasks.find(t => t.id === id); }
 
 /* ============================ Persistence =============================== */
-function localPayload() { return { version: APP_VERSION, project, tasks, deletedTaskIds, theme, colorScheme, zoom, view: currentView }; }
+function localPayload() { return { version: APP_VERSION, project, tasks, deletedTaskIds, theme, colorScheme, zoom, view: currentView, gridPaneWidth }; }
 function syncPayload() { return { version: APP_VERSION, project, tasks, deletedTaskIds }; }
 
 function load() {
@@ -627,6 +638,7 @@ function load() {
       colorScheme = THEME_SCHEMES.some(s => s.id === data.colorScheme) ? data.colorScheme : 'standard';
       zoom = ZOOMS.some(z => z.id === data.zoom) ? data.zoom : 'week';
       currentView = data.view === 'gantt' ? 'gantt' : 'tasks';
+      gridPaneWidth = Number.isFinite(data.gridPaneWidth) ? Math.max(GRID_PANE_MIN_WIDTH, Math.min(GRID_PANE_MAX_WIDTH, data.gridPaneWidth)) : 360;
     }
   } catch (e) { console.warn('dbPlanner: failed to load', e); }
   normalizeData();
@@ -978,10 +990,10 @@ function statusColorVar(t) {
 }
 
 function renderGrid() {
-  const showId = currentView === 'tasks';
-  document.getElementById('gridHeader').innerHTML =
-    (showId ? '<div style="text-align:center">ID</div>' : '') +
-    '<div>Name</div><div>Start</div><div>End</div><div>Dur</div><div>%</div><div>Predecessors</div><div></div>';
+  const full = currentView === 'tasks';
+  document.getElementById('gridHeader').innerHTML = full
+    ? '<div style="text-align:center">ID</div><div>Name</div><div>Start</div><div>End</div><div>Dur</div><div>%</div><div>Predecessors</div><div></div>'
+    : '<div style="text-align:center">ID</div><div>Name</div><div>Start</div><div>End</div>';
   const list = visibleTaskList();
   const el = document.getElementById('gridRows');
   if (list.length === 0) {
@@ -997,7 +1009,7 @@ function renderGrid() {
       return pt ? escapeHtml(pt.name.slice(0, 10)) + (pt.name.length > 10 ? '…' : '') + (p.lag ? ` ${p.lag > 0 ? '+' : ''}${p.lag}d` : '') : '';
     }).filter(Boolean).join(', ');
     return `<div class="grid-row${t.id === selectedTaskId ? ' selected' : ''}" data-id="${t.id}" onclick="selectTask('${t.id}')" ondblclick="openTaskModal('${t.id}')">
-      ${showId ? `<div class="grid-cell-dim" style="text-align:center">${idx + 1}</div>` : ''}
+      <div class="grid-cell-dim" style="text-align:center">${idx + 1}</div>
       <div class="grid-name" style="padding-left:${depth * 16}px">
         <button class="chevron${summary ? '' : ' empty'}" onclick="event.stopPropagation();toggleCollapse('${t.id}')"><i class="fa-solid fa-chevron-${t.collapsed ? 'right' : 'down'}"></i></button>
         ${t.milestone ? '<i class="fa-solid fa-diamond milestone-dot" style="font-size:9px"></i>' : ''}
@@ -1007,13 +1019,14 @@ function renderGrid() {
       </div>
       <div class="grid-cell-dim">${fmtDate(eff.start)}</div>
       <div class="grid-cell-dim">${fmtDate(eff.end)}</div>
+      ${full ? `
       <div class="grid-cell-dim">${eff.start && eff.end ? durationDays(eff.start, eff.end) : ''}</div>
       <div class="grid-cell-dim">${Math.round(eff.progress)}%</div>
       <div class="grid-cell-dim" title="${escapeHtml(predLabel)}">${escapeHtml(predLabel)}</div>
       <div class="grid-actions">
         <button class="icon-btn" onclick="event.stopPropagation();openTaskModal('${t.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>
         <button class="icon-btn btn-danger" onclick="event.stopPropagation();deleteTaskFlow('${t.id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
-      </div>
+      </div>` : ''}
     </div>`;
   }).join('');
 }
@@ -1756,6 +1769,30 @@ function openAboutModal() {
 }
 function closeAboutModal() { document.getElementById('aboutModalBg').classList.remove('open'); }
 
+function applyGridPaneWidth() { document.documentElement.style.setProperty('--grid-pane-width', gridPaneWidth + 'px'); }
+function wireGridResize() {
+  const handle = document.getElementById('gridResizeHandle');
+  handle.addEventListener('mousedown', (event) => {
+    if (event.button !== 0 || currentView !== 'gantt') return;
+    event.preventDefault();
+    const startX = event.clientX, startWidth = gridPaneWidth;
+    handle.classList.add('resizing');
+    function move(e) {
+      const w = Math.max(GRID_PANE_MIN_WIDTH, Math.min(GRID_PANE_MAX_WIDTH, startWidth + (e.clientX - startX)));
+      gridPaneWidth = w;
+      applyGridPaneWidth();
+    }
+    function up() {
+      window.removeEventListener('mousemove', move);
+      window.removeEventListener('mouseup', up);
+      handle.classList.remove('resizing');
+      save();
+    }
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', up);
+  });
+}
+
 function wireScrollSync() {
   const gridRows = document.getElementById('gridRows');
   const ganttOuter = document.getElementById('ganttPaneOuter');
@@ -1791,10 +1828,11 @@ function wireGlobalEvents() {
 
 document.addEventListener('DOMContentLoaded', () => {
   load();
-  applyTheme(); applyColorScheme();
+  applyTheme(); applyColorScheme(); applyGridPaneWidth();
   document.title = project.name + ' · dbPlanner';
   wireGlobalEvents();
   wireScrollSync();
+  wireGridResize();
   render();
   initFileSync();
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
