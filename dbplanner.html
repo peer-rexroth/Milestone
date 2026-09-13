@@ -304,6 +304,10 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 .pred-remove { border: none; background: none; color: var(--text-faint); width: 24px; height: 24px; border-radius: 5px; }
 .pred-remove:hover { background: var(--panel-2); color: var(--danger); }
 .pred-empty { font-size: 12px; color: var(--text-faint); padding: 4px 0; }
+.successor-row { display: flex; align-items: baseline; gap: 6px; font-size: 12.5px; padding: 3px 0; }
+.successor-row .succ-id { font-weight: 600; color: var(--text-dim); flex-shrink: 0; }
+.successor-row .succ-meta { color: var(--text-faint); font-size: 11.5px; }
+.id-badge { font-size: 12px; font-weight: 600; color: var(--text-faint); margin-left: 8px; vertical-align: middle; }
 
 .scheme-option { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px; border: none; background: transparent; border-radius: 8px; text-align: left; }
 .scheme-option:hover { background: var(--panel-2); }
@@ -396,7 +400,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 <!-- Task modal -->
 <div class="modal-bg" id="taskModalBg" onclick="if(event.target===this) closeTaskModal()">
   <div class="modal">
-    <div class="modal-header"><h2 id="taskModalTitle">Task</h2><button onclick="closeTaskModal()">&times;</button></div>
+    <div class="modal-header"><h2 id="taskModalTitle">Task<span id="taskModalIdBadge" class="id-badge"></span></h2><button onclick="closeTaskModal()">&times;</button></div>
     <div class="modal-body">
       <div class="field"><label>Name</label><input type="text" id="taskNameInput" placeholder="Task name"></div>
       <div class="checkbox-row"><input type="checkbox" id="taskMilestoneInput" onchange="onMilestoneToggle()"><label for="taskMilestoneInput">Milestone (zero-duration)</label></div>
@@ -427,6 +431,10 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
         <label>Predecessors</label>
         <div id="predecessorRows"></div>
         <button class="btn" type="button" onclick="addPredecessorRow()" style="align-self:flex-start"><i class="fa-solid fa-plus"></i>Add predecessor</button>
+      </div>
+      <div class="field">
+        <label>Successors</label>
+        <div id="successorsList"></div>
       </div>
     </div>
     <div class="modal-footer">
@@ -738,6 +746,24 @@ function visibleTaskList() {
   })(null, 0);
   return out;
 }
+// A task's displayed ID is its 1-based position in the FULL outline order —
+// deliberately independent of collapse state, matching real MS Project:
+// collapsing a parent hides its descendants' rows but never renumbers
+// what's still visible. This is what makes an ID a stable reference for
+// predecessor/successor pickers regardless of what's expanded elsewhere.
+let _idIndexCache = null, _idReverseCache = null;
+function resetIdCache() { _idIndexCache = null; _idReverseCache = null; }
+function ensureIdCache() {
+  if (_idIndexCache) return;
+  _idIndexCache = new Map(); _idReverseCache = new Map();
+  let n = 0;
+  (function walk(parentId) {
+    for (const t of childrenOf(parentId)) { n++; _idIndexCache.set(t.id, n); _idReverseCache.set(n, t.id); walk(t.id); }
+  })(null);
+}
+function taskDisplayId(id) { ensureIdCache(); return _idIndexCache.get(id) || '?'; }
+function taskIdByDisplayId(n) { ensureIdCache(); return _idReverseCache.get(n) || null; }
+
 const _effCache = new Map();
 function effectiveDates(id) {
   if (_effCache.has(id)) return _effCache.get(id);
@@ -929,6 +955,7 @@ function currentZoom() { return ZOOMS.find(z => z.id === zoom) || ZOOMS[1]; }
 
 function render() {
   resetEffectiveCache();
+  resetIdCache();
   updateProjectNameUI();
   renderMainViewTabs();
   renderZoomTabs();
@@ -1001,15 +1028,22 @@ function renderGrid() {
     return;
   }
   const cyclic = taskCycleSet();
-  el.innerHTML = list.map(({ task: t, depth }, idx) => {
+  el.innerHTML = list.map(({ task: t, depth }) => {
     const eff = effectiveDates(t.id);
     const summary = hasChildren(t.id);
+    // Compact MS-Project-style reference — "3FS+2", "5SS" — an ID plus
+    // dependency type plus signed lag, not the predecessor's name, so it
+    // stays meaningful (and short enough for this column) however that
+    // task gets renamed later, and matches how real MS Project's own
+    // Predecessors column reads.
     const predLabel = t.predecessors.map(p => {
       const pt = byId(p.id);
-      return pt ? escapeHtml(pt.name.slice(0, 10)) + (pt.name.length > 10 ? '…' : '') + (p.lag ? ` ${p.lag > 0 ? '+' : ''}${p.lag}d` : '') : '';
+      if (!pt) return '';
+      const lag = p.lag ? (p.lag > 0 ? `+${p.lag}` : `${p.lag}`) : '';
+      return `${taskDisplayId(p.id)}${p.type}${lag}`;
     }).filter(Boolean).join(', ');
     return `<div class="grid-row${t.id === selectedTaskId ? ' selected' : ''}" data-id="${t.id}" onclick="selectTask('${t.id}')" ondblclick="openTaskModal('${t.id}')">
-      <div class="grid-cell-dim" style="text-align:center">${idx + 1}</div>
+      <div class="grid-cell-dim" style="text-align:center">${taskDisplayId(t.id)}</div>
       <div class="grid-name" style="padding-left:${depth * 16}px">
         <button class="chevron${summary ? '' : ' empty'}" onclick="event.stopPropagation();toggleCollapse('${t.id}')"><i class="fa-solid fa-chevron-${t.collapsed ? 'right' : 'down'}"></i></button>
         ${t.milestone ? '<i class="fa-solid fa-diamond milestone-dot" style="font-size:9px"></i>' : ''}
@@ -1317,7 +1351,8 @@ function deleteTaskFlow(id) {
 function openTaskModal(id, isNew) {
   editingTaskId = id;
   const t = byId(id);
-  document.getElementById('taskModalTitle').textContent = isNew ? 'New Task' : 'Edit Task';
+  document.getElementById('taskModalTitle').firstChild.textContent = isNew ? 'New Task' : 'Edit Task';
+  document.getElementById('taskModalIdBadge').textContent = '#' + taskDisplayId(id);
   document.getElementById('taskNameInput').value = t.name === 'Untitled Task' && isNew ? '' : t.name;
   document.getElementById('taskMilestoneInput').checked = t.milestone;
   document.getElementById('taskStartInput').value = t.startDate;
@@ -1332,6 +1367,7 @@ function openTaskModal(id, isNew) {
   onConstraintTypeChange();
   editingPredecessors = t.predecessors.map(p => ({ ...p }));
   renderPredecessorRows();
+  renderSuccessorsList(id);
   onMilestoneToggle();
   document.getElementById('taskModalBg').classList.add('open');
   setTimeout(() => document.getElementById('taskNameInput').focus(), 30);
@@ -1380,29 +1416,63 @@ function renderColorSwatches(selected) {
     TASK_COLORS.map(c => `<div class="swatch${selected === c.id ? ' selected' : ''}" style="background:var(--task-${c.id})" onclick="pickTaskColor('${c.id}')" title="${c.label}"></div>`).join('');
 }
 function pickTaskColor(id) { renderColorSwatches(id); document.getElementById('taskColorSwatches').dataset.value = id || ''; }
+// Predecessor selection is a plain numeric ID field, not a dropdown — an
+// explicit user request, and also just how real MS Project's own
+// Predecessors column works: type the task's number directly rather than
+// hunting it in a list. onPredecessorIdChange() resolves the typed number
+// against taskIdByDisplayId() (the reverse of taskDisplayId() — see that
+// function's own comment for why an ID is a stable, collapse-independent
+// reference) on blur/Enter, not on every keystroke.
 function renderPredecessorRows() {
   const el = document.getElementById('predecessorRows');
   if (editingPredecessors.length === 0) { el.innerHTML = '<div class="pred-empty">No predecessors — this task is scheduled independently.</div>'; return; }
-  const candidates = tasks.filter(t => t.id !== editingTaskId && !hasChildren(t.id));
-  el.innerHTML = editingPredecessors.map((p, i) => `
+  el.innerHTML = editingPredecessors.map((p, i) => {
+    const shown = p.id ? taskDisplayId(p.id) : '';
+    return `
     <div class="pred-row">
-      <select onchange="editingPredecessors[${i}].id=this.value">
-        ${candidates.map(c => `<option value="${c.id}"${c.id === p.id ? ' selected' : ''}>${escapeHtml(c.name)}</option>`).join('')}
-      </select>
+      <input type="number" min="1" step="1" placeholder="Task ID" value="${shown === '?' ? '' : shown}" title="${p.id ? escapeHtml(byId(p.id) ? byId(p.id).name : '') : 'Enter a task ID'}" onchange="onPredecessorIdChange(${i}, this.value)">
       <select onchange="editingPredecessors[${i}].type=this.value">
         ${DEP_TYPES.map(dt => `<option value="${dt}"${dt === p.type ? ' selected' : ''}>${dt}</option>`).join('')}
       </select>
       <input type="number" value="${p.lag || 0}" title="Lag (days)" onchange="editingPredecessors[${i}].lag=parseInt(this.value)||0">
       <button class="pred-remove" onclick="removePredecessorRow(${i})"><i class="fa-solid fa-xmark"></i></button>
-    </div>`).join('');
+    </div>`;
+  }).join('');
+}
+function onPredecessorIdChange(i, value) {
+  value = value.trim();
+  if (value === '') { editingPredecessors[i].id = null; renderPredecessorRows(); return; }
+  const n = parseInt(value, 10);
+  const targetId = Number.isFinite(n) ? taskIdByDisplayId(n) : null;
+  let error = null;
+  if (!targetId) error = `No task #${value}`;
+  else if (targetId === editingTaskId) error = "A task can't depend on itself";
+  else if (hasChildren(targetId)) error = "Can't depend on a summary task — pick one of its own leaf tasks";
+  else if (editingPredecessors.some((p, idx) => idx !== i && p.id === targetId)) error = 'Already added';
+  if (error) { showToast(error, true); editingPredecessors[i].id = null; }
+  else editingPredecessors[i].id = targetId;
+  renderPredecessorRows();
 }
 function addPredecessorRow() {
-  const candidates = tasks.filter(t => t.id !== editingTaskId && !hasChildren(t.id) && !editingPredecessors.some(p => p.id === t.id));
-  if (candidates.length === 0) { showToast('No other tasks available to link', true); return; }
-  editingPredecessors.push({ id: candidates[0].id, type: 'FS', lag: 0 });
+  if (!tasks.some(t => t.id !== editingTaskId && !hasChildren(t.id))) { showToast('No other tasks available to link', true); return; }
+  editingPredecessors.push({ id: null, type: 'FS', lag: 0 });
   renderPredecessorRows();
 }
 function removePredecessorRow(i) { editingPredecessors.splice(i, 1); renderPredecessorRows(); }
+
+// Read-only — a successor is derived from every OTHER task's own
+// predecessors list, never edited from this side, matching how the grid's
+// own Predecessors column is likewise never a successor's business to write.
+function renderSuccessorsList(taskId) {
+  const succ = (successorsMap()[taskId] || []).sort((a, b) => taskDisplayId(a.id) - taskDisplayId(b.id));
+  const el = document.getElementById('successorsList');
+  if (succ.length === 0) { el.innerHTML = '<div class="pred-empty">No successors — nothing depends on this task yet.</div>'; return; }
+  el.innerHTML = succ.map(s => {
+    const st = byId(s.id);
+    const lag = s.lag ? ` ${s.lag > 0 ? '+' : ''}${s.lag}d` : '';
+    return `<div class="successor-row"><span class="succ-id">#${taskDisplayId(s.id)}</span><span>${escapeHtml(st ? st.name : '')}</span><span class="succ-meta">${s.type}${lag}</span></div>`;
+  }).join('');
+}
 
 function saveTaskFromModal() {
   const t = byId(editingTaskId); if (!t) return;
