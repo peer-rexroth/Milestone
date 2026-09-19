@@ -454,13 +454,12 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
   <div class="modal narrow">
     <div class="modal-header"><h2 id="planModalTitle">New plan</h2><button onclick="closePlanModal()">&times;</button></div>
     <div class="modal-body">
-      <div class="field"><label for="planNameInput">Plan name</label><input type="text" id="planNameInput" maxlength="80" onkeydown="if(event.key==='Enter'){event.preventDefault();submitPlanModal(false)}"></div>
+      <div class="field"><label for="planNameInput">Plan name</label><input type="text" id="planNameInput" maxlength="80" onkeydown="if(event.key==='Enter'){event.preventDefault();submitPlanModal()}"></div>
       <p id="planModalHint" style="font-size:12.5px;color:var(--text-dim);margin:0;line-height:1.5"></p>
     </div>
     <div class="modal-footer">
       <button class="btn" onclick="closePlanModal()">Cancel</button>
-      <button class="btn" id="planFileBtn" onclick="submitPlanModal(true)"><i class="fa-solid fa-file-circle-plus"></i>Create with file…</button>
-      <button class="btn btn-primary" id="planSubmitBtn" onclick="submitPlanModal(false)">Create</button>
+      <button class="btn btn-primary" id="planSubmitBtn" onclick="submitPlanModal()">Create…</button>
     </div>
   </div>
 </div>
@@ -486,12 +485,13 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
   </div>
 </div>
 
-<!-- File sync modal -->
-<div class="modal-bg" id="fileSyncModalBg" onclick="if(event.target===this) closeFileSyncModal()">
+<!-- File sync modal. Linking a file is mandatory, so this can't be dismissed: no close button, no "Not now",
+     backdrop clicks and Escape ignore it. It only opens while the current plan has no usable file. -->
+<div class="modal-bg" id="fileSyncModalBg">
   <div class="modal narrow">
-    <div class="modal-header"><h2>Link a File</h2><button onclick="closeFileSyncModal()">&times;</button></div>
+    <div class="modal-header"><h2 id="fileSyncModalTitle">Link a file to continue</h2></div>
     <div class="modal-body">
-      <p style="font-size:13px;color:var(--text-dim);margin:0">Keep Milestone's data in a plain JSON file on your disk — in a folder synced by iCloud Drive/OneDrive/Dropbox, it becomes a simple way to share this project across your own devices.</p>
+      <p id="fileSyncModalText" style="font-size:13px;color:var(--text-dim);margin:0;line-height:1.5"></p>
       <button class="btn btn-primary" onclick="linkNewFile()"><i class="fa-solid fa-file-circle-plus"></i>Create new file</button>
       <button class="btn" onclick="linkExistingFile()"><i class="fa-solid fa-folder-open"></i>Open existing file</button>
       <details class="file-sync-help">
@@ -499,7 +499,6 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
         <div class="file-sync-help-body">Make sure the file lives inside a folder your cloud provider (iCloud Drive, OneDrive, Dropbox, …) actually syncs — picking a file only stores it locally. Milestone rereads it every 45s and on every save, and merges changes so two devices editing at once won't lose work.</div>
       </details>
     </div>
-    <div class="modal-footer"><button class="btn" onclick="closeFileSyncModal()">Not now</button></div>
   </div>
 </div>
 
@@ -512,9 +511,9 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
       <div><div class="help-section-title">Task Mode</div>Every task is either Manually Scheduled (pushpin) or Auto Scheduled (chart icon) — click the icon in the Task Mode column, or use the Task Mode field in a task's dialog. An Auto task follows its predecessors and constraints. A Manual task stays exactly where you put it: predecessors never move it, its Start, Finish and Duration can be free text such as "TBD", and a warning triangle appears if it starts earlier than its predecessors allow. Manual tasks are drawn with a dashed bar, and are left out of the critical path. Switching a task to Auto moves it to the earliest date its links allow. The "New tasks" button at the right of the toolbar chooses the mode new tasks start in (Manual, like MS Project, by default).</div>
       <div><div class="help-section-title">Dependencies</div>Open a task and add a predecessor to link it to another task (Finish-to-Start, Start-to-Start, Finish-to-Finish or Start-to-Finish). Give it a lead or lag in days: a positive number delays the dependent task (lag), a negative number lets it overlap and start early (lead) — e.g. "3FS+2" waits 2 extra days after task 3 finishes, "3FS-2" starts 2 days before task 3 finishes. Moving a task forward automatically pushes any dependent tasks forward too — it never pulls a task earlier on its own. A circular dependency is flagged with a warning icon and stops auto-scheduling for the tasks involved.</div>
       <div><div class="help-section-title">The Gantt chart</div>Drag a bar to reschedule it, drag its edges to resize, or drag the small circle on its right edge onto another task to create a dependency. Click a bar or row to edit it. The route icon in the toolbar highlights the critical path — the chain of tasks with zero slack that determines the overall project end date.</div>
-      <div><div class="help-section-title">Plans</div>The plan name at the top left is a switcher: click it to move between plans, start a new one, open an existing file as a plan, or rename, duplicate or delete the current plan. Each plan has its own tasks, its own daily backups and — optionally — its own linked file, so switching plans also switches which file is kept in sync. Deleting a plan only removes it from this browser; its file is never touched.</div>
-      <div><div class="help-section-title">Data &amp; sync</div>Everything lives in this browser's local storage — nothing ever leaves your machine unless you export it or link a file. Data → Export/Import moves a full JSON snapshot of the current plan in or out; Local Backups keeps a rolling daily snapshot. The file-link button next to Data lets you sync to a plain JSON file, which works well inside an iCloud Drive/OneDrive/Dropbox folder for keeping your own devices in step.</div>
-      <div class="help-tip">Nothing here ever leaves your machine unless you explicitly export or link a file.</div>
+      <div><div class="help-section-title">Plans</div>The plan name at the top left is a switcher: click it to move between plans, start a new one, open an existing file as a plan, or rename, duplicate or delete the current plan. Each plan has its own tasks, its own daily backups and — optionally — its own linked file, so switching plans also switches which file is kept in sync. Deleting a plan only removes it from this browser; its file is never touched. Every plan must live in a file (Chrome/Edge), so New plan and Duplicate ask you where to save it.</div>
+      <div><div class="help-section-title">Data &amp; sync</div>Everything lives in this browser's local storage — nothing ever leaves your machine except into the files you choose. Every plan is kept in a plain JSON file on your disk (linking one is required, in Chrome/Edge): every change is saved to it automatically, and inside an iCloud Drive/OneDrive/Dropbox folder it keeps your own devices in step. If the file is moved or deleted, Milestone asks you to create or find it again. Data → Export/Import moves a full JSON snapshot of the current plan in or out; Local Backups keeps a rolling daily snapshot.</div>
+      <div class="help-tip">Nothing here ever leaves your machine except into the files you choose.</div>
     </div>
     <div class="modal-footer"><button class="btn" onclick="closeHelpModal()">Close</button></div>
   </div>
@@ -649,7 +648,7 @@ let planSwitching = false;
 let planModalMode = 'new';       // 'new' | 'rename'
 
 let syncFileHandle = null;
-let fileSyncStatus = 'unlinked'; // unsupported | unlinked | checking | linked | lapsed
+let fileSyncStatus = 'unlinked'; // unsupported | unlinked | checking | linked | lapsed | missing
 let lastSyncedSnapshot = null;
 let lastSyncedAt = 0;
 let fileSyncWriteInFlight = false;
@@ -2261,7 +2260,25 @@ async function _fsMigrateLegacy() {
 }
 
 function fileSyncSupported() { return typeof window.showOpenFilePicker === 'function'; }
-function openFileSyncModal() { document.getElementById('fileSyncModalBg').classList.add('open'); }
+// Linking is mandatory wherever the browser can do it (Chrome/Edge). Elsewhere there is no way to write a file, so
+// the app stays usable as browser-only rather than being locked out.
+function fileLinkRequired() { return fileSyncSupported() && (fileSyncStatus === 'unlinked' || fileSyncStatus === 'missing'); }
+function openFileSyncModal() {
+  const missing = fileSyncStatus === 'missing';
+  document.getElementById('fileSyncModalTitle').textContent = missing ? 'Linked file not found' : 'Link a file to continue';
+  document.getElementById('fileSyncModalText').textContent = missing
+    ? `“${syncFileHandle ? syncFileHandle.name : 'The file'}” was moved, renamed or deleted. Create a new file for “${project.name}” (its current tasks are saved into it), or open the file where it went.`
+    : `Every plan is kept in a JSON file on your disk. Create a new file for “${project.name}”, or open an existing one. In a folder synced by iCloud Drive, OneDrive or Dropbox it also keeps your own devices in step.`;
+  document.getElementById('fileSyncModalBg').classList.add('open');
+}
+// Called once a plan has finished loading and its file has been looked for.
+function enforceFileLink() { if (fileLinkRequired()) openFileSyncModal(); }
+function markFileMissing() {
+  stopFileSyncPolling();
+  fileSyncStatus = 'missing';
+  updateFileSyncUI();
+  enforceFileLink();
+}
 function closeFileSyncModal() { document.getElementById('fileSyncModalBg').classList.remove('open'); }
 
 const FILE_PICKER_TYPES = [{ description: 'Milestone data', accept: { 'application/json': ['.json'] } }];
@@ -2280,8 +2297,8 @@ async function findPlanForHandle(handle, exceptId) {
   }
   return null;
 }
-async function refuseIfFileBelongsToAnotherPlan(handle) {
-  const other = await findPlanForHandle(handle, currentPlanId);
+async function refuseIfFileBelongsToAnotherPlan(handle, forNewPlan) {
+  const other = await findPlanForHandle(handle, forNewPlan ? null : currentPlanId);
   if (!other) return false;
   showToast(`That file is already linked to the plan “${other.name}”`, true);
   return true;
@@ -2349,6 +2366,7 @@ async function writeSyncFile() {
     lastSyncedAt = Date.now();
     fileSyncStatus = 'linked';
   } catch (e) {
+    if (e && e.name === 'NotFoundError') { if (epoch === planEpoch) markFileMissing(); return; }
     console.warn('Milestone: sync write failed', e);
     if (epoch === planEpoch) showToast('File sync write failed', true);
   }
@@ -2395,7 +2413,10 @@ async function pollFileSync() {
       render();
       showToast('Synced changes from another device');
     }
-  } catch (e) { console.warn('Milestone: poll failed', e); }
+  } catch (e) {
+    if (e && e.name === 'NotFoundError') { if (epoch === planEpoch) markFileMissing(); return; }
+    console.warn('Milestone: poll failed', e);
+  }
 }
 async function reconnectFile() {
   const handle = syncFileHandle;
@@ -2409,17 +2430,6 @@ async function reconnectFile() {
   } catch (e) { showToast('Reconnect failed', true); }
   if (epoch === planEpoch) updateFileSyncUI();
 }
-async function unlinkFile() {
-  const planId = currentPlanId;
-  syncFileHandle = null; lastSyncedSnapshot = null; lastSyncedAt = 0;
-  fileSyncStatus = 'unlinked';
-  stopFileSyncPolling();
-  await _fsDel(planHandleKey(planId));
-  setPlanFileName(planId, null);
-  updateFileSyncUI();
-  showToast('File unlinked');
-}
-
 // Before plans there was one handle under _FS_KEY. Hand it to the migrated "Plan 1" once (copy, not move: the old
 // entry stays as a rollback copy), and never again — otherwise unlinking Plan 1 would resurrect it on the next load.
 async function _fsMigrateLegacyKey() {
@@ -2455,16 +2465,18 @@ async function activatePlanFile(interactive) {
         fileSyncStatus = 'linked';
         await pollFileSync();
         if (epoch !== planEpoch) return;
-        lastSyncedSnapshot = JSON.stringify(syncPayload());
-        startFileSyncPolling();
-        render();
+        if (fileSyncStatus === 'linked') {   // (the poll may just have found the file missing)
+          lastSyncedSnapshot = JSON.stringify(syncPayload());
+          startFileSyncPolling();
+          render();
+        }
       } else { fileSyncStatus = 'lapsed'; }
     } else { fileSyncStatus = 'unlinked'; }
   } catch (e) {
     console.warn('Milestone: file sync setup failed', e);
     if (epoch === planEpoch) { fileSyncStatus = 'unlinked'; syncFileHandle = null; }
   }
-  if (epoch === planEpoch) updateFileSyncUI();
+  if (epoch === planEpoch) { updateFileSyncUI(); enforceFileLink(); }
 }
 async function initFileSync() {
   if (fileSyncSupported()) { await _fsMigrateLegacy(); await _fsMigrateLegacyKey(); }
@@ -2472,23 +2484,24 @@ async function initFileSync() {
 }
 function onFileSyncBtnClick() {
   if (fileSyncStatus === 'unsupported' || fileSyncStatus === 'checking') return;
-  if (fileSyncStatus === 'unlinked') openFileSyncModal();
+  if (fileSyncStatus === 'unlinked' || fileSyncStatus === 'missing') openFileSyncModal();
   else if (fileSyncStatus === 'lapsed') reconnectFile();
-  else unlinkFile();
+  // linked: nothing to do — a plan can't be unlinked
 }
 function updateFileSyncUI() {
   const btn = document.getElementById('fileSyncBtn');
   if (fileSyncStatus === 'unsupported') { btn.classList.add('hidden'); return; }
   btn.classList.remove('hidden');
-  btn.style.color = '';
+  btn.style.color = ''; btn.style.cursor = '';
   if (fileSyncStatus === 'checking') { btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; btn.title = 'Checking this plan’s linked file…'; }
-  else if (fileSyncStatus === 'unlinked') { btn.innerHTML = '<i class="fa-solid fa-link"></i>Link file'; btn.title = 'Sync this plan to a JSON file on disk'; }
+  else if (fileSyncStatus === 'unlinked') { btn.innerHTML = '<i class="fa-solid fa-link"></i>Link file'; btn.title = 'Choose the file this plan is saved to'; }
+  else if (fileSyncStatus === 'missing') { btn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>File missing'; btn.style.color = 'var(--danger)'; btn.title = 'The linked file was moved or deleted — click to fix'; }
   else if (fileSyncStatus === 'lapsed') { btn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>Reconnect'; btn.style.color = 'var(--danger)'; btn.title = 'Permission was lost — click to reconnect'; }
-  else { btn.innerHTML = `<i class="fa-solid fa-check" style="color:var(--task-green)"></i>${escapeHtml(syncFileHandle ? syncFileHandle.name : 'Linked')}`; btn.title = 'Linked — click to unlink'; }
+  else { btn.innerHTML = `<i class="fa-solid fa-check" style="color:var(--task-green)"></i>${escapeHtml(syncFileHandle ? syncFileHandle.name : 'Linked')}`; btn.title = syncFileHandle ? `This plan is saved to ${syncFileHandle.name}` : 'Linked'; btn.style.cursor = 'default'; }
 }
 
 /* ================================== Plans =================================== */
-// A plan is one project with its own tasks, daily backups and (optionally) its own linked file. Only the current plan
+// A plan is one project with its own tasks, daily backups and its own linked file (mandatory wherever files are supported). Only the current plan
 // is in memory; switching writes it out (browser copy, then file), swaps in the other plan and re-points file sync.
 function uniquePlanName(base) {
   const names = new Set((readPlansIndex() || { plans: [] }).plans.map(p => p.name));
@@ -2574,9 +2587,11 @@ function openPlanModal(mode) {
   planModalMode = mode;
   const isNew = mode === 'new';
   document.getElementById('planModalTitle').textContent = isNew ? 'New plan' : 'Rename plan';
-  document.getElementById('planSubmitBtn').textContent = isNew ? 'Create' : 'Rename';
-  document.getElementById('planFileBtn').classList.toggle('hidden', !isNew || !fileSyncSupported());
-  document.getElementById('planModalHint').textContent = isNew ? 'A new plan starts empty and is kept in this browser. You can link a file to it later, or create it together with a file now.' : '';
+  const needsFile = fileSyncSupported();
+  document.getElementById('planSubmitBtn').textContent = isNew ? (needsFile ? 'Create…' : 'Create') : 'Rename';
+  document.getElementById('planModalHint').textContent = !isNew ? '' : needsFile
+    ? 'Every plan lives in a file on your disk. After you name it, you’ll choose where to save it.'
+    : 'A new plan starts empty and is kept in this browser (this browser can’t save to files).';
   document.getElementById('planModalHint').classList.toggle('hidden', !isNew);
   const input = document.getElementById('planNameInput');
   input.value = isNew ? uniquePlanName('New plan') : project.name;
@@ -2584,32 +2599,33 @@ function openPlanModal(mode) {
   requestAnimationFrame(() => { input.focus(); input.select(); });
 }
 function closePlanModal() { document.getElementById('planModalBg').classList.remove('open'); }
-async function submitPlanModal(withFile) {
+async function submitPlanModal() {
   const name = document.getElementById('planNameInput').value.trim();
   if (planModalMode === 'rename') { closePlanModal(); renameProject(name); return; }
   const finalName = name || uniquePlanName('New plan');
-  if (withFile) { await createPlanWithFile(finalName); return; }
+  if (fileSyncSupported()) { await createLinkedPlan(finalName, null); return; }
   closePlanModal();
-  await switchPlan(createPlanRecord(finalName, null));
+  await switchPlan(createPlanRecord(finalName, null));   // browsers that can't write files: browser-only
 }
-// The file picker must open straight from the click (it needs that user gesture), so it comes first; only once the
-// user has picked a file is the plan created and written into it.
-async function createPlanWithFile(name) {
+// Create a plan together with its file. The save picker must open straight from the click (it needs that user
+// gesture), so it comes first; only once a file is chosen is the plan created, written into it and opened.
+// `data` is null for an empty plan, or a payload to start from (Duplicate).
+async function createLinkedPlan(name, data) {
   let handle;
   try { handle = await window.showSaveFilePicker({ suggestedName: fileBase(name) + '.json', types: FILE_PICKER_TYPES }); }
-  catch (e) { if (e.name !== 'AbortError') showToast('Could not create file', true); return; }
-  if (await refuseIfFileBelongsToAnotherPlan(handle)) return;
+  catch (e) { if (e.name !== 'AbortError') showToast('Could not create file', true); return false; }
+  if (await refuseIfFileBelongsToAnotherPlan(handle, true)) return false;
   closePlanModal();
   try {
-    const id = createPlanRecord(name, null);
+    const id = createPlanRecord(name, data);
     const rec = JSON.parse(localStorage.getItem(planDataKey(id)));
     const w = await handle.createWritable();
     await w.write(JSON.stringify(rec, null, 2));
     await w.close();
     await _fsPut(planHandleKey(id), handle);
     setPlanFileName(id, handle.name);
-    await switchPlan(id);
-  } catch (e) { console.warn('Milestone: could not create plan file', e); showToast('Could not create file', true); }
+    return await switchPlan(id);
+  } catch (e) { console.warn('Milestone: could not create plan file', e); showToast('Could not create file', true); return false; }
 }
 
 async function openFileAsPlan() {
@@ -2642,9 +2658,10 @@ async function openFileAsPlan() {
 async function duplicatePlan() {
   closePlanMenu();
   if (planSwitching) return;
+  const name = uniquePlanName(`${project.name} copy`);
   const copy = JSON.parse(JSON.stringify(syncPayload()));
-  const id = createPlanRecord(uniquePlanName(`${project.name} copy`), copy);
-  if (await switchPlan(id)) showToast('Duplicated — the copy isn’t linked to a file yet');
+  if (fileSyncSupported()) { if (await createLinkedPlan(name, copy)) showToast('Duplicated'); return; }
+  if (await switchPlan(createPlanRecord(name, copy))) showToast('Duplicated');
 }
 function deleteCurrentPlan() {
   closePlanMenu();
@@ -2746,8 +2763,9 @@ function wireGlobalEvents() {
     // Escape closes whatever overlay is open first; only when there is none — and
     // the user isn't typing in a field, where Escape already means "cancel this
     // edit" — does it clear the task selection.
-    const modalIds = ['taskModalBg', 'confirmModalBg', 'planModalBg', 'importModalBg', 'backupsModalBg', 'fileSyncModalBg', 'helpModalBg', 'aboutModalBg'];
+    const modalIds = ['taskModalBg', 'confirmModalBg', 'planModalBg', 'importModalBg', 'backupsModalBg', 'helpModalBg', 'aboutModalBg'];
     const overlayOpen = modalIds.some(id => document.getElementById(id).classList.contains('open'))
+      || document.getElementById('fileSyncModalBg').classList.contains('open')   // mandatory: Escape can't close it
       || document.getElementById('dataMenu').classList.contains('open')
       || document.getElementById('planMenu').classList.contains('open')
       || document.getElementById('taskModeMenu').classList.contains('open');
