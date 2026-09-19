@@ -103,6 +103,15 @@ Empty grid cells (no predecessors yet, blank duration) used to collapse to zero 
 
 `addTask()` inserts the new task **directly below the selected one** (an explicit user request): right after a leaf task as its sibling, or as the *first sub-task* of a summary task (expanding it if it was collapsed so the new row isn't hidden); with nothing selected it's appended to the end of the top level. The new task becomes the selection, which is what makes repeated Add Task stack downward — without that, every add would land directly under the *same* selected row and the run would come out reversed. The level's siblings are then renumbered `0..n` with the new task in its slot; only siblings whose `order` actually moved get a fresh `updatedAt`, since `order` is a merged field and an un-stamped renumber would never reach another device (the same rule `reorderItem()` follows in Pulse).
 
+### Clone task (`cloneTask(id)`)
+
+A **Clone** button on every task row (Tasks view; it appears on hover between Edit and Delete — the row-actions column is 82px for the three buttons) and one in the sub-bar (`#cloneTaskBtn`, acts on the selected task, disabled without a selection). It copies the task **and everything below it, at every depth**:
+
+- **Exact copy**: each task is a `JSON` deep copy (dates, %, actual dates, mode, constraint, colour, resource, milestone flag, custom fields, free-text dates …) with a **fresh id**; sub-tasks get their cloned parent's id. Only the top task's name gets ` (copy)`; the sub-tasks keep theirs. `updatedAt` = now, so a sync sees new tasks.
+- **Placement**: directly under the original at the same level (its sibling, `order + 1`); that level is renumbered, and only siblings whose order really moved get a fresh `updatedAt`. The clone is selected, added to `filterPinned` (an active filter can't hide it), and keeps `collapsed` as the original had it. The dialog is *not* opened.
+- **Dependencies**: a link **between cloned tasks** is re-pointed at the clones (type and lag kept, at any depth); a link to a task **outside** the clone is kept, so the copy is scheduled exactly like the original; nothing outside the clone starts depending on it. (Summary tasks can't have predecessors — `normalizeData()` strips them — so only leaf tasks carry links.) No cascade runs: the clone sits on the same dates.
+- **Undo** (toast): removes every clone, tombstones their ids (`deletedTaskIds`, so a sync can't resurrect them), restores the moved siblings' order and the previous selection.
+
 ### Task fields and columns
 
 Besides name, dates, duration, %, predecessors and a colour, a task has **stored** fields `resource` (free text, ≤200 chars), `actualStart` and `actualFinish` (real dates or null; sanitised by `normalizeData()` via `parseUserDate`), and **computed** ones that are never stored:
