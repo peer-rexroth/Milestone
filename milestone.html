@@ -129,6 +129,26 @@ button:focus:not(:focus-visible) { outline: none; }
 .dropdown-item:hover { background: var(--panel-2); }
 .dropdown-item i { width: 15px; color: var(--text-dim); }
 .dropdown-sep { height: 1px; background: var(--border); margin: 6px 2px; }
+/* ---- status pill (the Status column) ---- */
+.status-pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 600; line-height: 16px; }
+.status-pill.st-complete { color: var(--task-green); background: color-mix(in srgb, var(--task-green) 14%, var(--panel)); }
+.status-pill.st-on-schedule { color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--panel)); }
+.status-pill.st-late { color: var(--danger); background: color-mix(in srgb, var(--danger) 14%, var(--panel)); }
+.status-pill.st-future-task { color: var(--text-dim); background: var(--panel-2); }
+/* ---- column chooser ---- */
+.cols-menu { width: 290px; padding: 6px; z-index: 90; }
+.cols-head { display: flex; align-items: center; justify-content: space-between; padding: 4px 6px 2px; font-size: 13px; }
+.cols-hint { padding: 0 6px 6px; font-size: 11.5px; color: var(--text-faint); }
+.cols-row { display: flex; align-items: center; gap: 4px; }
+.cols-check { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; padding: 5px 6px; border-radius: 6px; font-size: 13px; cursor: pointer; }
+.cols-check:hover { background: var(--panel-2); }
+.cols-check input { width: 14px; height: 14px; margin: 0; flex-shrink: 0; }
+.cols-check.locked { color: var(--text-dim); cursor: default; }
+.cols-tag { margin-left: auto; font-size: 11px; color: var(--text-faint); }
+.cols-move { display: flex; gap: 2px; }
+.cols-move button { width: 22px; height: 22px; padding: 0; border: none; border-radius: 5px; background: transparent; color: var(--text-dim); font-size: 10px; }
+.cols-move button:hover:not(:disabled) { background: var(--panel-2); color: var(--text); }
+.cols-move button:disabled { opacity: .3; cursor: default; }
 /* ---- column filters ---- */
 .col-head { display: flex; align-items: center; gap: 3px; min-width: 0; }
 .col-head > span { overflow: hidden; text-overflow: ellipsis; }
@@ -207,7 +227,7 @@ button:focus:not(:focus-visible) { outline: none; }
    suppresses the scrollbar UI and direct user-initiated scrolling. */
 .main.view-tasks .grid-rows { overflow-y: auto; }
 .main.view-tasks .grid-pane { width: auto; flex: 1; border-right: none; }
-.main.view-tasks .grid-header, .main.view-tasks .grid-row { grid-template-columns: 34px 24px minmax(160px,1fr) 116px 116px 96px 54px 1fr 56px; }   /* Duration and % are wider than their text needs, to make room for the filter button */
+.main.view-tasks .grid-header, .main.view-tasks .grid-row { grid-template-columns: var(--task-cols, 34px 24px minmax(160px,1fr) 116px 116px 96px 54px 1fr 56px); }   /* --task-cols is built from the visible columns in renderGrid() */
 .main.view-tasks .grid-header > div, .main.view-tasks .grid-row > div { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .main.view-tasks .gantt-pane-outer { display: none; }
 .grid-row { border-bottom: 1px solid var(--border); font-size: 12.5px; cursor: default; }
@@ -345,9 +365,6 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 .pred-remove { border: none; background: none; color: var(--text-faint); width: 24px; height: 24px; border-radius: 5px; }
 .pred-remove:hover { background: var(--panel-2); color: var(--danger); }
 .pred-empty { font-size: 12px; color: var(--text-faint); padding: 4px 0; }
-.successor-row { display: flex; align-items: baseline; gap: 6px; font-size: 12.5px; padding: 3px 0; }
-.successor-row .succ-id { font-weight: 600; color: var(--text-dim); flex-shrink: 0; }
-.successor-row .succ-meta { color: var(--text-faint); font-size: 11.5px; }
 .id-badge { font-size: 12px; font-weight: 600; color: var(--text-faint); margin-left: 8px; vertical-align: middle; }
 
 .help-body, .about-body { display: flex; flex-direction: column; gap: 14px; font-size: 13px; line-height: 1.5; }
@@ -417,10 +434,12 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
   <button class="icon-btn btn-danger" id="deleteTaskBtn" onclick="deleteSelected()" title="Delete task"><i class="fa-solid fa-trash"></i></button>
   <div class="filter-bar hidden" id="filterBar"></div>
   <span class="subbar-spacer"></span>
+  <button class="btn" id="columnsBtn" onclick="toggleColumnsMenu()" title="Choose which columns the task list shows"><i class="fa-solid fa-table-columns"></i>Columns</button>
   <button class="btn" id="newTaskModeBtn" onclick="openTaskModeMenu(event,'new')" title="Scheduling mode given to newly added tasks"></button>
 </div>
 <div class="dropdown-menu" id="taskModeMenu"></div>
 <div class="dropdown-menu filter-menu" id="filterMenu"></div>
+<div class="dropdown-menu cols-menu" id="columnsMenu"></div>
 
 <div class="main" id="main">
   <div class="grid-pane" id="gridPane">
@@ -455,6 +474,11 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
         <div class="field"><label>% Complete</label><input type="number" min="0" max="100" id="taskProgressInput"></div>
       </div>
       <div class="field-row">
+        <div class="field"><label>Actual Start</label><input type="date" id="taskActualStartInput"></div>
+        <div class="field"><label>Actual Finish</label><input type="date" id="taskActualFinishInput"></div>
+      </div>
+      <div class="pred-empty hidden" id="taskActualsNote"></div>
+      <div class="field-row">
         <div class="field">
           <label>Constraint</label>
           <select id="taskConstraintTypeInput" onchange="onConstraintTypeChange()"></select>
@@ -468,15 +492,12 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
         <label>Color</label>
         <div class="color-swatches" id="taskColorSwatches"></div>
       </div>
+      <div class="field"><label>Resource</label><input type="text" id="taskResourceInput" maxlength="200" placeholder="Who does the work — e.g. Anna, Ben"></div>
       <div class="field"><label>Notes</label><textarea id="taskNotesInput" rows="2" placeholder="Optional notes"></textarea></div>
       <div class="field">
         <label>Predecessors</label>
         <div id="predecessorRows"></div>
         <button class="btn" type="button" onclick="addPredecessorRow()" style="align-self:flex-start"><i class="fa-solid fa-plus"></i>Add predecessor</button>
-      </div>
-      <div class="field">
-        <label>Successors</label>
-        <div id="successorsList"></div>
       </div>
     </div>
     <div class="modal-footer">
@@ -522,6 +543,10 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
       <div class="field" id="excelScopeBlock"><label>Which tasks</label>
         <label class="checkbox-row"><input type="radio" name="excelScope" value="all" checked><span id="excelScopeAll"></span></label>
         <label class="checkbox-row"><input type="radio" name="excelScope" value="filtered"><span id="excelScopeFiltered"></span></label>
+      </div>
+      <div class="field"><label>Columns</label>
+        <label class="checkbox-row"><input type="radio" name="excelCols" value="shown" checked><span>As shown in the task list</span></label>
+        <label class="checkbox-row"><input type="radio" name="excelCols" value="all"><span>All columns (also WBS, Actual Start/Finish, Resource)</span></label>
       </div>
       <label class="checkbox-row"><input type="checkbox" id="excelGantt" checked>Add a Gantt chart sheet</label>
     </div>
@@ -575,6 +600,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
     <div class="modal-body help-body">
       <div><div class="help-section-title">The basics</div>Add tasks with the + Add Task button. Each task has a start/end date, a % complete, and can be a milestone (a zero-duration diamond). Use Indent/Outdent to build a work breakdown structure — a parent task's own dates and progress roll up automatically from its children. Drag a task's line up or down to reorder it (a parent brings its sub-tasks along). Add Task inserts below the selected task, or at the bottom when nothing is selected; press Escape to clear the selection.</div>
       <div><div class="help-section-title">Filtering</div>Click the funnel in a column header (Task Mode, Task Name, Start, Finish, Duration, %, Predecessors) for an Excel-style filter. Each column offers what fits its data: dates get rules (equals, before, after, between, or relative to today such as this week, next month or year to date) and a Year › Month › Day list; text columns get contains / begins with / ends with / equals and their negatives; numbers get equals, greater or less than, and between. Every column also has a list of its values to tick, with a search box and (Blanks) for tasks that have no value. Filters on several columns combine, so a task must match all of them. A group stays visible while any sub-task inside it matches, and stays open while a filter is on. The bar under the toolbar shows what is filtered and how many tasks are showing; click × on a chip, or Clear all, to remove it. Filters are only for looking — they aren't saved, and a task you add or edit stays visible until you filter again.</div>Click the funnel next to Start or Finish (in either view) for an Excel-style filter: pick a rule (equals, before, after, between, or relative to today such as this week, next month or year to date), or tick individual dates in the Year › Month › Day list — type in the search box to narrow it, and use (Blanks) for tasks without a real date. The two columns combine, so a task must match both. A group stays visible while any sub-task inside it matches, and stays open while a filter is on. The bar under the toolbar shows what is filtered and how many tasks are showing; click × on a chip, or Clear all, to remove it. Filters are only for looking — they aren't saved, and a task you add or edit stays visible until you filter again.</div>
+      <div><div class="help-section-title">Columns and extra fields</div>Besides name, dates, duration, % and predecessors, a task can carry a <strong>Resource</strong> (who does the work), an <strong>Actual Start</strong> and <strong>Actual Finish</strong> (what really happened, kept separate from the plan), and has a <strong>WBS</strong> code such as 2.1.3 that is worked out from the outline. <strong>Remaining Duration</strong> (the duration still to go, from % complete) and <strong>Status</strong> (Complete, On Schedule, Late or Future Task, judged against today) are worked out for you too. Those six aren't shown by default: click <strong>Columns</strong> in the toolbar (Tasks view) to tick the columns you want and reorder them; your choice is remembered on this device. Click a Resource or actual-date cell to edit it, or use the task dialog. A group shows the actual dates of the tasks in it (its earliest actual start, and an actual finish once everything in it has finished).</div>
       <div><div class="help-section-title">Task Mode</div>Every task is either Manually Scheduled (pushpin) or Auto Scheduled (chart icon) — click the icon in the Task Mode column, or use the Task Mode field in a task's dialog. An Auto task follows its predecessors and constraints. A Manual task stays exactly where you put it: predecessors never move it, its Start, Finish and Duration can be free text such as "TBD", and a warning triangle appears if it starts earlier than its predecessors allow. Manual tasks are drawn with a dashed bar, and are left out of the critical path. Switching a task to Auto moves it to the earliest date its links allow. The "New tasks" button at the right of the toolbar chooses the mode new tasks start in (Manual, like MS Project, by default).</div>
       <div><div class="help-section-title">Dependencies</div>Open a task and add a predecessor to link it to another task (Finish-to-Start, Start-to-Start, Finish-to-Finish or Start-to-Finish). Give it a lead or lag in days: a positive number delays the dependent task (lag), a negative number lets it overlap and start early (lead) — e.g. "3FS+2" waits 2 extra days after task 3 finishes, "3FS-2" starts 2 days before task 3 finishes. Moving a task forward automatically pushes any dependent tasks forward too — it never pulls a task earlier on its own. A circular dependency is flagged with a warning icon and stops auto-scheduling for the tasks involved.</div>
       <div><div class="help-section-title">The Gantt chart</div>Drag a bar to reschedule it, drag its edges to resize, or drag the small circle on its right edge onto another task to create a dependency. Click a bar or row to edit it. The Week / Month / Year buttons change the scale: Year (the default) shows quarters, and Week is labelled by calendar week (CW, weeks start on Monday, ISO 8601). The route icon in the toolbar highlights the critical path — the chain of tasks with zero slack that determines the overall project end date.</div>
@@ -644,6 +670,25 @@ const ZOOMS = [
   { id: 'month', label: 'Month', pxPerDay: 5  },
   { id: 'year',  label: 'Year',  pxPerDay: 1.5 }   // ~46px a month, ~137px a quarter
 ];
+// The columns of the Tasks view's list (the Gantt view's side list stays a fixed ID/Mode/Name/Start/Finish). The ID column is
+// always first and the row actions always last; everything in between can be shown, hidden and reordered (Columns button).
+// `dflt` = shown until the user says otherwise. Insertion order = the default order. Task Name can't be hidden.
+const TASK_COLS = {
+  mode:         { label: 'Task Mode',     width: '24px',              dflt: true },
+  wbs:          { label: 'WBS',           width: '64px',              dflt: false },
+  name:         { label: 'Task Name',     width: 'minmax(160px,1fr)', dflt: true, locked: true },
+  start:        { label: 'Start',         width: '116px',             dflt: true },
+  end:          { label: 'Finish',        width: '116px',             dflt: true },
+  actualStart:  { label: 'Actual Start',  width: '116px',             dflt: false },
+  actualFinish: { label: 'Actual Finish', width: '116px',             dflt: false },
+  duration:     { label: 'Duration',      width: '96px',              dflt: true },
+  progress:     { label: '% Complete',    width: '54px',              dflt: true },
+  remaining:    { label: 'Remaining Duration', width: '96px',         dflt: false },
+  status:       { label: 'Status',        width: '104px',             dflt: false },
+  preds:        { label: 'Predecessors',  width: '1fr',               dflt: true },
+  resource:     { label: 'Resource',      width: 'minmax(110px,1fr)', dflt: false }
+};
+const DEFAULT_COL_ORDER = Object.keys(TASK_COLS);
 const DEFAULT_ZOOM = 'year';        // the standard Gantt scale
 const ZOOM_DEFAULT_REV = 1;         // bump to reset everybody's saved scale to DEFAULT_ZOOM once (see loadPrefs)
 const CAL_WEEK_LABEL = 'CW';   // week scale is labelled by ISO calendar week: "CW 37"
@@ -699,6 +744,8 @@ let tasks = [];
 let deletedTaskIds = [];
 let theme = 'light';
 let zoom = DEFAULT_ZOOM;
+let colOrder = [...DEFAULT_COL_ORDER];                                       // every optional column, in the user's order
+let colHidden = new Set(DEFAULT_COL_ORDER.filter(c => !TASK_COLS[c].dflt));   // ...and which of them are hidden
 let currentView = 'tasks';
 let gridPaneWidth = 400;
 const GRID_PANE_MIN_WIDTH = 240, GRID_PANE_MAX_WIDTH = 720;
@@ -746,7 +793,7 @@ function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c
 function byId(id) { return tasks.find(t => t.id === id); }
 
 /* ============================ Persistence =============================== */
-function prefsPayload() { return { theme, zoom, zoomRev: ZOOM_DEFAULT_REV, view: currentView, gridPaneWidth }; }
+function prefsPayload() { return { theme, zoom, zoomRev: ZOOM_DEFAULT_REV, view: currentView, gridPaneWidth, cols: { order: colOrder, hidden: [...colHidden] } }; }
 function syncPayload() { return { version: APP_VERSION, project, tasks, deletedTaskIds }; }
 
 function planDataKey(id) { return PLAN_DATA_PREFIX + id; }
@@ -809,6 +856,40 @@ function loadPrefs() {
   zoom = (d.zoomRev === ZOOM_DEFAULT_REV && ZOOMS.some(z => z.id === d.zoom)) ? d.zoom : DEFAULT_ZOOM;
   currentView = d.view === 'gantt' ? 'gantt' : 'tasks';
   gridPaneWidth = Number.isFinite(d.gridPaneWidth) ? Math.max(GRID_PANE_MIN_WIDTH, Math.min(GRID_PANE_MAX_WIDTH, d.gridPaneWidth)) : 400;
+  // Task list columns. A column the saved prefs don't know yet (added by a later version) is appended and follows its default.
+  const known = id => !!TASK_COLS[id], sc = d.cols && typeof d.cols === 'object' ? d.cols : {};
+  const savedOrder = Array.isArray(sc.order) ? sc.order.filter(known) : null;
+  colOrder = savedOrder ? [...new Set([...savedOrder, ...DEFAULT_COL_ORDER])] : [...DEFAULT_COL_ORDER];
+  colHidden = new Set(Array.isArray(sc.hidden) ? sc.hidden.filter(known) : []);
+  for (const id of DEFAULT_COL_ORDER) if ((!savedOrder || !savedOrder.includes(id)) && !TASK_COLS[id].dflt) colHidden.add(id);
+  colHidden.delete('name');
+}
+function visibleTaskCols() { return colOrder.filter(id => !colHidden.has(id) || TASK_COLS[id].locked); }
+function toggleColumn(id, show) { if (TASK_COLS[id].locked) return; if (show) colHidden.delete(id); else colHidden.add(id); save(); render(); renderColumnsMenu(); }
+function moveColumn(id, dir) {
+  const i = colOrder.indexOf(id), j = i + dir;
+  if (i < 0 || j < 0 || j >= colOrder.length) return;
+  [colOrder[i], colOrder[j]] = [colOrder[j], colOrder[i]];
+  save(); render(); renderColumnsMenu();
+}
+function resetColumns() { colOrder = [...DEFAULT_COL_ORDER]; colHidden = new Set(DEFAULT_COL_ORDER.filter(c => !TASK_COLS[c].dflt)); save(); render(); renderColumnsMenu(); }
+function toggleColumnsMenu() {
+  const menu = document.getElementById('columnsMenu');
+  if (menu.classList.contains('open')) { closeColumnsMenu(); return; }
+  closeDataMenu(); closePlanMenu(); closeFilterMenu(); closeTaskModeMenu();
+  renderColumnsMenu(); positionDropdown('columnsBtn', 'columnsMenu'); menu.classList.add('open');
+}
+function closeColumnsMenu() { document.getElementById('columnsMenu').classList.remove('open'); }
+function renderColumnsMenu() {
+  const shown = new Set(visibleTaskCols());
+  document.getElementById('columnsMenu').innerHTML =
+    `<div class="cols-head"><strong>Columns</strong><button class="btn-link" onclick="resetColumns()">Reset to default</button></div>` +
+    `<div class="cols-hint">Tick the columns the task list shows; use the arrows to reorder them.</div>` +
+    colOrder.map((id, i) => {
+      const c = TASK_COLS[id];
+      return `<div class="cols-row"><label class="cols-check${c.locked ? ' locked' : ''}"><input type="checkbox" data-col="${id}"${shown.has(id) ? ' checked' : ''}${c.locked ? ' disabled' : ''} onchange="toggleColumn('${id}', this.checked)"><span>${c.label}</span>${c.locked ? '<span class="cols-tag">always shown</span>' : ''}</label>` +
+        `<span class="cols-move"><button aria-label="Move ${c.label} up" onclick="moveColumn('${id}',-1)"${i === 0 ? ' disabled' : ''}><i class="fa-solid fa-chevron-up"></i></button><button aria-label="Move ${c.label} down" onclick="moveColumn('${id}',1)"${i === colOrder.length - 1 ? ' disabled' : ''}><i class="fa-solid fa-chevron-down"></i></button></span></div>`;
+    }).join('');
 }
 function loadPlanData(id) {
   const idx = readPlansIndex();
@@ -871,6 +952,8 @@ function normalizeData() {
     if (typeof t.collapsed !== 'boolean') t.collapsed = false;
     if (t.color && !TASK_COLORS.some(c => c.id === t.color)) t.color = null;
     if (typeof t.notes !== 'string') t.notes = '';
+    t.resource = typeof t.resource === 'string' ? t.resource.slice(0, 200) : '';
+    for (const f of ['actualStart', 'actualFinish']) t[f] = parseUserDate(typeof t[f] === 'string' ? t[f] : '');   // a real date or null
     if (!CONSTRAINT_TYPES.some(c => c.id === t.constraintType)) t.constraintType = 'ASAP';
     const cinfo = constraintTypeInfo(t.constraintType);
     if (!cinfo.hasDate) t.constraintDate = null;
@@ -948,7 +1031,8 @@ function visibleTaskList() {
 // what's still visible. This is what makes an ID a stable reference for
 // predecessor/successor pickers regardless of what's expanded elsewhere.
 let _idIndexCache = null, _idReverseCache = null;
-function resetIdCache() { _idIndexCache = null; _idReverseCache = null; }
+let _wbsCache = null;
+function resetIdCache() { _idIndexCache = null; _idReverseCache = null; _wbsCache = null; }
 function ensureIdCache() {
   if (_idIndexCache) return;
   _idIndexCache = new Map(); _idReverseCache = new Map();
@@ -959,6 +1043,63 @@ function ensureIdCache() {
 }
 function taskDisplayId(id) { ensureIdCache(); return _idIndexCache.get(id) || '?'; }
 function taskIdByDisplayId(n) { ensureIdCache(); return _idReverseCache.get(n) || null; }
+// WBS code: the task's place in the outline as "1", "1.1", "1.2", "2", "2.1.3" — calculated from the hierarchy (like
+// MS Project's default), so it renumbers itself when tasks are reordered or indented. Like the ID it ignores collapsing
+// and filtering. Read-only: there is nothing to store.
+function wbsCode(id) {
+  if (!_wbsCache) {
+    _wbsCache = new Map();
+    (function walk(pid, prefix) { childrenOf(pid).forEach((t, i) => { const code = prefix ? `${prefix}.${i + 1}` : String(i + 1); _wbsCache.set(t.id, code); walk(t.id, code); }); })(null, '');
+  }
+  return _wbsCache.get(id) || '';
+}
+// Remaining Duration: what is left of the duration — duration × (1 − % complete), in days, one decimal ("2.5 days"); a
+// milestone has none and a task whose duration is free text ("TBD") has no number to work from. Computed, not stored.
+function remainingDays(id) {
+  const t = byId(id), e = effectiveDates(id);
+  if (!t || t.milestone || !e.start || !e.end || t.durText != null) return null;
+  const p = Math.min(100, Math.max(0, e.progress));
+  return Math.round(durationDays(e.start, e.end) * (100 - p) / 100 * 10) / 10;
+}
+function fmtRemaining(v) { return v === 1 ? '1 day' : `${v} days`; }
+// Status, judged against today (as MS Project does against its status date):
+//   Complete     100% done, or an actual finish recorded
+//   Late         not complete and past its finish, or it should have started by now and hasn't
+//   Future Task  not started, and its start is still ahead
+//   On Schedule  everything else (under way, or starting today)
+// "Started" means some progress or an actual start. A task with no dates to judge against has no status.
+const STATUS_ORDER = ['Late', 'On Schedule', 'Future Task', 'Complete'];
+function taskStatus(id) {
+  const t = byId(id), e = effectiveDates(id), act = actualDates(id), today = todayStr();
+  if (!t) return null;
+  if (e.progress >= 100 || act.end) return 'Complete';
+  if (!e.start) return null;
+  const started = e.progress > 0 || !!act.start;
+  if (e.end < today || (!started && e.start < today)) return 'Late';
+  if (!started && e.start > today) return 'Future Task';
+  return 'On Schedule';
+}
+// Actual Start / Actual Finish as shown: a task's own; a group rolls up (earliest actual start of anything below it;
+// an actual finish only once EVERYTHING below has finished, then the latest).
+const _actCache = new Map();
+function actualDates(id) {
+  if (_actCache.has(id)) return _actCache.get(id);
+  const t = byId(id), kids = childrenOf(id);
+  let r;
+  if (!t) r = { start: null, end: null };
+  else if (!kids.length) r = { start: t.actualStart || null, end: t.actualFinish || null };
+  else {
+    let start = null, end = null, allDone = true;
+    for (const k of kids) {
+      const a = actualDates(k.id);
+      if (a.start && (!start || a.start < start)) start = a.start;
+      if (!a.end) allDone = false; else if (!end || a.end > end) end = a.end;
+    }
+    r = { start, end: allDone ? end : null };
+  }
+  _actCache.set(id, r);
+  return r;
+}
 
 const _effCache = new Map();
 function effectiveDates(id) {
@@ -994,7 +1135,7 @@ function effectiveDates(id) {
   _effCache.set(id, result);
   return result;
 }
-function resetEffectiveCache() { _effCache.clear(); _filterShow.clear(); }
+function resetEffectiveCache() { _effCache.clear(); _actCache.clear(); _filterShow.clear(); }
 
 /* ======================== Scheduling & critical path ===================== */
 function successorsMap() {
@@ -1198,6 +1339,7 @@ function renderMainViewTabs() {
   document.getElementById('main').classList.toggle('view-tasks', currentView === 'tasks');
   document.getElementById('main').classList.toggle('view-gantt', currentView === 'gantt');
   document.getElementById('zoomTabs').classList.toggle('hidden', currentView !== 'gantt');
+  document.getElementById('columnsBtn').classList.toggle('hidden', currentView !== 'tasks');   // the Gantt view's list is fixed
   document.getElementById('criticalPathBtn').classList.toggle('hidden', currentView !== 'gantt');
   document.getElementById('ganttControlsDivider').classList.toggle('hidden', currentView !== 'gantt');
 }
@@ -1250,13 +1392,19 @@ function statusColorVar(t) {
 // sub-tasks match, so a match keeps its context; tasks added or edited since the filter was applied stay visible too
 // (filterPinned) instead of vanishing under your cursor.
 const FILTER_COLS = {
-  mode:     { label: 'Task Mode',    kind: 'list' },
-  name:     { label: 'Task Name',    kind: 'text' },
-  start:    { label: 'Start',        kind: 'date' },
-  end:      { label: 'Finish',       kind: 'date' },
-  duration: { label: 'Duration',     kind: 'number' },
-  progress: { label: '% Complete',   kind: 'number' },
-  preds:    { label: 'Predecessors', kind: 'text' }
+  mode:         { label: 'Task Mode',     kind: 'list' },
+  wbs:          { label: 'WBS',           kind: 'text' },
+  name:         { label: 'Task Name',     kind: 'text' },
+  start:        { label: 'Start',         kind: 'date' },
+  end:          { label: 'Finish',        kind: 'date' },
+  actualStart:  { label: 'Actual Start',  kind: 'date' },
+  actualFinish: { label: 'Actual Finish', kind: 'date' },
+  duration:     { label: 'Duration',      kind: 'number' },
+  progress:     { label: '% Complete',    kind: 'number' },
+  remaining:    { label: 'Remaining Duration', kind: 'number' },
+  status:       { label: 'Status',        kind: 'list' },
+  preds:        { label: 'Predecessors',  kind: 'text' },
+  resource:     { label: 'Resource',      kind: 'text' }
 };
 function newColFilters() { return Object.fromEntries(Object.keys(FILTER_COLS).map(c => [c, null])); }
 let colFilters = newColFilters();
@@ -1297,6 +1445,12 @@ function filterColValue(t, col) {
     case 'duration': { const e = effectiveDates(t.id); return (t.durText == null && e.start && e.end) ? durationDays(e.start, e.end) : null; }
     case 'progress': return Math.round(effectiveDates(t.id).progress);
     case 'preds': return predecessorLabel(t) || null;
+    case 'wbs': return wbsCode(t.id) || null;
+    case 'remaining': return remainingDays(t.id);
+    case 'status': return taskStatus(t.id);
+    case 'actualStart': return actualDates(t.id).start;
+    case 'actualFinish': return actualDates(t.id).end;
+    case 'resource': return (t.resource || '').trim() || null;
   }
   return null;
 }
@@ -1306,10 +1460,12 @@ function filterValueLabel(col, v) {
     case 'start': case 'end': return fmtDate(v);
     case 'duration': return fmtDuration(v);
     case 'progress': return v + '%';
+    case 'remaining': return fmtRemaining(v);
   }
   return String(v);
 }
-function filterCompare(kind) {
+function filterCompare(kind, col) {
+  if (col === 'status') return (a, b) => STATUS_ORDER.indexOf(a) - STATUS_ORDER.indexOf(b);   // Late, On Schedule, Future Task, Complete
   return kind === 'number' ? (a, b) => a - b : kind === 'date' ? (a, b) => (a < b ? -1 : a > b ? 1 : 0) : (a, b) => String(a).localeCompare(String(b), undefined, { sensitivity: 'base', numeric: true });
 }
 
@@ -1434,7 +1590,7 @@ function openColumnFilter(event, col) {
   event.stopPropagation();
   const menu = document.getElementById('filterMenu');
   if (menu.classList.contains('open') && filterDraft && filterDraft.col === col) { closeFilterMenu(); return; }
-  closeDataMenu(); closePlanMenu(); closeTaskModeMenu();
+  closeDataMenu(); closePlanMenu(); closeColumnsMenu(); closeTaskModeMenu();
   const kind = FILTER_COLS[col].kind;
   // The list offers the values that exist in this column among the tasks every *other* column's filter lets through.
   const others = Object.keys(FILTER_COLS).filter(c => c !== col), found = new Set();
@@ -1444,7 +1600,7 @@ function openColumnFilter(event, col) {
     const v = filterColValue(t, col);
     if (v === null) hasBlank = true; else found.add(v);
   }
-  const all = [...found].sort(filterCompare(kind)), spec = colFilters[col], asRule = spec && spec.type === 'rule';
+  const all = [...found].sort(filterCompare(kind, col)), spec = colFilters[col], asRule = spec && spec.type === 'rule';
   filterDraft = {
     col, kind, all, index: new Map(all.map((v, i) => [v, i])), hasBlank,
     rule: asRule ? spec.rule : '', a: asRule && spec.a !== undefined ? String(spec.a) : '', b: asRule && spec.b !== undefined ? String(spec.b) : '',
@@ -1599,9 +1755,16 @@ function predecessorLabel(t) {
 
 function renderGrid() {
   const full = currentView === 'tasks';
-  document.getElementById('gridHeader').innerHTML = full
-    ? `<div></div>${colHeadHtml('', 'mode')}${colHeadHtml('Task Name', 'name')}${colHeadHtml('Start', 'start')}${colHeadHtml('Finish', 'end')}${colHeadHtml('Duration', 'duration')}${colHeadHtml('%', 'progress')}${colHeadHtml('Predecessors', 'preds')}<div></div>`
-    : `<div></div>${colHeadHtml('', 'mode')}${colHeadHtml('Task Name', 'name')}${colHeadHtml('Start', 'start')}${colHeadHtml('Finish', 'end')}`;
+  // Tasks view: the user's visible columns in the user's order (ID first, row actions last). The Gantt view's side list is a fixed four.
+  const cols = full ? visibleTaskCols() : ['mode', 'name', 'start', 'end'];
+  const HEAD = {
+    mode: colHeadHtml('', 'mode'), wbs: colHeadHtml('WBS', 'wbs'), name: colHeadHtml('Task Name', 'name'), start: colHeadHtml('Start', 'start'), end: colHeadHtml('Finish', 'end'),
+    actualStart: colHeadHtml('Actual Start', 'actualStart'), actualFinish: colHeadHtml('Actual Finish', 'actualFinish'), duration: colHeadHtml('Duration', 'duration'),
+    progress: colHeadHtml('%', 'progress'), remaining: colHeadHtml('Remaining', 'remaining'), status: colHeadHtml('Status', 'status'),
+    preds: colHeadHtml('Predecessors', 'preds'), resource: colHeadHtml('Resource', 'resource')
+  };
+  document.getElementById('main').style.setProperty('--task-cols', ['34px', ...cols.map(c => TASK_COLS[c].width), '56px'].join(' '));
+  document.getElementById('gridHeader').innerHTML = `<div></div>${cols.map(c => HEAD[c]).join('')}${full ? '<div></div>' : ''}`;
   const list = visibleTaskList();
   const el = document.getElementById('gridRows');
   if (list.length === 0 && filtersActive() && tasks.length) { el.innerHTML = filterEmptyHtml(); return; }
@@ -1656,24 +1819,34 @@ function renderGrid() {
     const mi = taskModeInfo(t.taskMode);
     const modeCell = `<div class="grid-cell-dim task-mode-cell" style="text-align:center" title="${mi.label} — click to change" onclick="openTaskModeMenu(event,'${t.id}')"><i class="fa-solid ${mi.icon} mode-${t.taskMode}"></i></div>`;
     const mismatchDate = scheduleMismatch(t);
-    return `<div class="grid-row${t.id === selectedTaskId ? ' selected' : ''}" data-id="${t.id}" onclick="selectTask('${t.id}')" ondblclick="openTaskModal('${t.id}')" draggable="${editingCell && editingCell.id === t.id ? 'false' : 'true'}" ondragstart="dragStartTask(event,'${t.id}')" ondragend="dragEndTask()" ondragover="dragOverTask(event,'${t.id}')" ondrop="dropOnTask(event,'${t.id}')">
-      <div class="grid-cell-dim" style="text-align:center">${taskDisplayId(t.id)}</div>
-      ${modeCell}
-      <div class="grid-name" style="padding-left:${depth * 16}px">
+    const act = actualDates(t.id), canEditActual = full && !summary;   // a group's actual dates are rolled up, so not editable
+    const actualCell = (field, iso) => editing(field)
+      ? `<input type="date" class="inline-edit" value="${iso || ''}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" ${blurAttr(field)}>`
+      : `<div class="grid-cell-dim${summaryCls}${canEditActual ? ' editable' : ''}"${canEditActual ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','${field}')"` : ''}>${iso ? fmtDate(iso) : ''}</div>`;
+    const resourceCell = editing('resource')
+      ? `<input type="text" class="inline-edit" maxlength="200" value="${escapeHtml(t.resource)}" placeholder="e.g. Anna, Ben" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" ${blurAttr('resource')}>`
+      : `<div class="grid-cell-dim${summaryCls}${full ? ' editable' : ''}" title="${escapeHtml(t.resource)}"${full ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','resource')"` : ''}>${escapeHtml(t.resource)}</div>`;
+    const cells = {
+      mode: modeCell,
+      wbs: `<div class="grid-cell-dim${summaryCls}">${escapeHtml(wbsCode(t.id))}</div>`,
+      name: `<div class="grid-name" style="padding-left:${depth * 16}px">
         <button class="chevron${summary ? '' : ' empty'}" onclick="event.stopPropagation();toggleCollapse('${t.id}')"><i class="fa-solid fa-chevron-${t.collapsed && !filtersActive() ? 'right' : 'down'}"></i></button>
         ${t.milestone ? '<i class="fa-solid fa-diamond milestone-dot" style="font-size:9px"></i>' : ''}
         ${cyclic.has(t.id) ? '<i class="fa-solid fa-triangle-exclamation cycle-warn" title="Circular dependency — not auto-scheduled"></i>' : ''}
         ${mismatchDate ? `<i class="fa-solid fa-triangle-exclamation mismatch-warn" title="Manually scheduled and starts before its predecessors allow — Auto Scheduled it would start ${fmtDate(mismatchDate)}"></i>` : ''}
         ${t.constraintType !== 'ASAP' ? `<i class="fa-solid fa-calendar-day constraint-icon${constraintViolated(t) ? ' violated' : ''}" title="${escapeHtml(constraintTypeInfo(t.constraintType).label)}${t.constraintDate ? ' (' + fmtDate(t.constraintDate) + ')' : ''}${manual ? ' — ignored while manually scheduled' : ''}${constraintViolated(t) ? ' — constraint not met' : ''}"></i>` : ''}
         ${nameCell}
-      </div>
-      ${startCell}
-      ${finishCell}
-      ${full ? `
-      ${durationCell}
-      <div class="grid-cell-dim${summaryCls}">${Math.round(eff.progress)}%</div>
-      ${predCell}
-      <div class="grid-actions">
+      </div>`,
+      start: startCell, end: finishCell, actualStart: actualCell('actualStart', act.start), actualFinish: actualCell('actualFinish', act.end),
+      duration: durationCell, progress: `<div class="grid-cell-dim${summaryCls}">${Math.round(eff.progress)}%</div>`,
+      remaining: `<div class="grid-cell-dim${summaryCls}">${remainingDays(t.id) == null ? '' : fmtRemaining(remainingDays(t.id))}</div>`,
+      status: `<div class="grid-cell-dim${summaryCls}">${taskStatus(t.id) ? `<span class="status-pill st-${taskStatus(t.id).toLowerCase().replace(' ', '-')}">${taskStatus(t.id)}</span>` : ''}</div>`,
+      preds: predCell, resource: resourceCell
+    };
+    return `<div class="grid-row${t.id === selectedTaskId ? ' selected' : ''}" data-id="${t.id}" onclick="selectTask('${t.id}')" ondblclick="openTaskModal('${t.id}')" draggable="${editingCell && editingCell.id === t.id ? 'false' : 'true'}" ondragstart="dragStartTask(event,'${t.id}')" ondragend="dragEndTask()" ondragover="dragOverTask(event,'${t.id}')" ondrop="dropOnTask(event,'${t.id}')">
+      <div class="grid-cell-dim" style="text-align:center">${taskDisplayId(t.id)}</div>
+      ${cols.map(c => cells[c]).join('')}
+      ${full ? `<div class="grid-actions">
         <button class="icon-btn" onclick="event.stopPropagation();openTaskModal('${t.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>
         <button class="icon-btn btn-danger" onclick="event.stopPropagation();deleteTaskFlow('${t.id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
       </div>` : ''}
@@ -1882,7 +2055,7 @@ function startInlineEdit(id, field) {
   if (!t) return;
   // Auto summary rows roll their dates up from their children, so only the
   // name is editable there; a manually scheduled summary owns its own dates.
-  if (hasChildren(id) && field !== 'name' && !(t.taskMode === 'manual' && ['start', 'finish', 'duration'].includes(field))) return;
+  if (hasChildren(id) && field !== 'name' && field !== 'resource' && !(t.taskMode === 'manual' && ['start', 'finish', 'duration'].includes(field))) return;
   if ((field === 'finish' || field === 'duration') && t.milestone) return; // milestones are zero-duration by definition
   editingCell = { id, field };
   render();
@@ -1971,6 +2144,14 @@ function commitInlineEdit(id, field, rawValue) {
       if (Number.isFinite(d) && d >= 1 && !t.milestone) t.endDate = addDays(t.startDate, d - 1);
     }
     applyConstraints(id);
+  } else if (field === 'resource') {
+    t.resource = val.slice(0, 200);
+  } else if (field === 'actualStart' || field === 'actualFinish') {
+    const iso = val ? parseUserDate(val) : null;                 // a native date input emits ISO; blank clears the date
+    const aS = field === 'actualStart' ? iso : t.actualStart, aF = field === 'actualFinish' ? iso : t.actualFinish;
+    if (val && !iso) showToast(`"${val}" isn't a date`, true);
+    else if (aS && aF && dayNumber(aF) < dayNumber(aS)) showToast("Actual Finish can't be before Actual Start", true);
+    else t[field] = iso;
   } else if (field === 'predecessors') {
     const parsed = parsePredecessorString(val, id);
     if (parsed !== null) { t.predecessors = parsed; applyConstraints(id); }
@@ -2274,7 +2455,8 @@ function addTask() {
     id: genId(), name: '', parentId, order: insertAt,
     startDate: todayStr(), endDate: todayStr(), progress: 0, milestone: false,
     color: null, notes: '', predecessors: [], collapsed: false, updatedAt: Date.now(),
-    constraintType: 'ASAP', constraintDate: null, taskMode: project.newTaskMode === 'auto' ? 'auto' : 'manual'
+    constraintType: 'ASAP', constraintDate: null, taskMode: project.newTaskMode === 'auto' ? 'auto' : 'manual',
+    resource: '', actualStart: null, actualFinish: null
   };
   tasks.push(t);
   filterPinned.add(t.id);   // a filter must not hide the task you just added
@@ -2353,7 +2535,7 @@ function openTaskModal(id, isNew) {
   editingTaskId = id;
   const t = byId(id);
   document.getElementById('taskModalTitle').firstChild.textContent = isNew ? 'New Task' : 'Edit Task';
-  document.getElementById('taskModalIdBadge').textContent = '#' + taskDisplayId(id);
+  document.getElementById('taskModalIdBadge').textContent = `#${taskDisplayId(id)} · WBS ${wbsCode(id)}`;
   document.getElementById('taskNameInput').value = t.name === 'Untitled Task' && isNew ? '' : t.name;
   document.getElementById('taskModeInput').value = t.taskMode;
   modalOrigDates = { start: t.startDate, end: t.endDate };
@@ -2367,6 +2549,14 @@ function openTaskModal(id, isNew) {
   document.getElementById('taskDurationInput').value = durationDays(t.startDate, t.endDate);
   document.getElementById('taskProgressInput').value = t.progress;
   document.getElementById('taskNotesInput').value = t.notes;
+  document.getElementById('taskResourceInput').value = t.resource || '';
+  const group = hasChildren(id), act = actualDates(id);   // a group's actual dates are rolled up from its tasks, so read-only
+  document.getElementById('taskActualStartInput').value = act.start || '';
+  document.getElementById('taskActualFinishInput').value = act.end || '';
+  document.getElementById('taskActualStartInput').disabled = group; document.getElementById('taskActualFinishInput').disabled = group;
+  const actNote = document.getElementById('taskActualsNote');
+  actNote.textContent = group ? 'A group shows the actual dates of the tasks in it: the earliest actual start, and an actual finish once every task has finished.' : '';
+  actNote.classList.toggle('hidden', !group);
   renderColorSwatches(t.color);
   const typeSel = document.getElementById('taskConstraintTypeInput');
   typeSel.innerHTML = CONSTRAINT_TYPES.map(c => `<option value="${c.id}"${c.id === t.constraintType ? ' selected' : ''}>${c.label}</option>`).join('');
@@ -2374,7 +2564,6 @@ function openTaskModal(id, isNew) {
   onConstraintTypeChange();
   editingPredecessors = t.predecessors.map(p => ({ ...p }));
   renderPredecessorRows();
-  renderSuccessorsList(id);
   onMilestoneToggle();
   document.getElementById('taskModalBg').classList.add('open');
   setTimeout(() => document.getElementById('taskNameInput').focus(), 30);
@@ -2467,22 +2656,10 @@ function addPredecessorRow() {
 }
 function removePredecessorRow(i) { editingPredecessors.splice(i, 1); renderPredecessorRows(); }
 
-// Read-only — a successor is derived from every OTHER task's own
-// predecessors list, never edited from this side, matching how the grid's
-// own Predecessors column is likewise never a successor's business to write.
-function renderSuccessorsList(taskId) {
-  const succ = (successorsMap()[taskId] || []).sort((a, b) => taskDisplayId(a.id) - taskDisplayId(b.id));
-  const el = document.getElementById('successorsList');
-  if (succ.length === 0) { el.innerHTML = '<div class="pred-empty">No successors — nothing depends on this task yet.</div>'; return; }
-  el.innerHTML = succ.map(s => {
-    const st = byId(s.id);
-    const lag = s.lag ? ` ${s.lag > 0 ? '+' : ''}${s.lag}d` : '';
-    return `<div class="successor-row"><span class="succ-id">#${taskDisplayId(s.id)}</span><span>${escapeHtml(st ? st.name : '')}</span><span class="succ-meta">${s.type}${lag}</span></div>`;
-  }).join('');
-}
-
 function saveTaskFromModal() {
   const t = byId(editingTaskId); if (!t) return;
+  const isGroup = hasChildren(t.id), aStart = document.getElementById('taskActualStartInput').value || null, aEnd = document.getElementById('taskActualFinishInput').value || null;
+  if (!isGroup && aStart && aEnd && dayNumber(aEnd) < dayNumber(aStart)) { showToast("Actual Finish can't be before Actual Start", true); return; }   // before anything is changed
   filterPinned.add(t.id);
   const name = document.getElementById('taskNameInput').value.trim() || 'Untitled Task';
   t.name = name;
@@ -2497,6 +2674,8 @@ function saveTaskFromModal() {
   t.taskMode = document.getElementById('taskModeInput').value === 'auto' ? 'auto' : 'manual';
   t.progress = Math.max(0, Math.min(100, parseInt(document.getElementById('taskProgressInput').value) || 0));
   t.notes = document.getElementById('taskNotesInput').value;
+  t.resource = document.getElementById('taskResourceInput').value.trim().slice(0, 200);
+  if (!isGroup) { t.actualStart = aStart; t.actualFinish = aEnd; }
   t.color = document.getElementById('taskColorSwatches').dataset.value || null;
   t.predecessors = editingPredecessors.filter(p => p.id);
   t.constraintType = document.getElementById('taskConstraintTypeInput').value;
@@ -2777,41 +2956,62 @@ function buildXlsx(opts) {
   const scopeText = opts.scope === 'filtered' && filtersActive() ? `${rowsIn.length} of ${tasks.length} tasks (filtered)` : `${rowsIn.length} task${rowsIn.length === 1 ? '' : 's'}`;
   const titleStyle = book.style({ bold: true, size: 16 }), subStyle = book.style({ size: 10, color: DIM });
   const headStyle = book.style({ bold: true, color: 'FFFFFF', fill: HEAD, h: 'center', wrap: true, border: box });
-  const tasksSheet = xlsxSheet(sst, { tab: '0969DA', grid: false, selected: true, freeze: { cols: 3, rows: 4 }, fitWidth: 1, fitHeight: 0 });
+  const tasksSheet = xlsxSheet(sst, { tab: '0969DA', grid: false, selected: true, freeze: null, fitWidth: 1, fitHeight: 0 });
 
-  // ---------------- Tasks sheet: A ID, B Mode, C Task Name, D Start, E Finish, F Duration, G % Complete, H Predecessors, I Notes
-  const heads = ['ID', 'Mode', 'Task Name', 'Start', 'Finish', 'Duration', '% Complete', 'Predecessors', 'Notes'], widths = [6, 10, 46, 13, 13, 12, 13, 18, 46];
-  widths.forEach((w, i) => tasksSheet.width(i + 1, i + 1, w));
-  tasksSheet.cell(1, 1, project.name, titleStyle); tasksSheet.merge(1, 1, 1, heads.length); tasksSheet.height(1, 28);
-  tasksSheet.cell(2, 1, `Exported ${fmtDate(todayStr())} · ${scopeText}`, subStyle); tasksSheet.merge(2, 1, 2, heads.length); tasksSheet.height(2, 16);
+  // ---------------- Tasks sheet: ID, then the task list's own visible columns in the user's order (or all of them), then Notes
+  const XCOLS = {
+    id: ['ID', 6], mode: ['Mode', 10], wbs: ['WBS', 9], name: ['Task Name', 46], start: ['Start', 13], end: ['Finish', 13], actualStart: ['Actual Start', 13],
+    actualFinish: ['Actual Finish', 13], duration: ['Duration', 12], progress: ['% Complete', 13], remaining: ['Remaining Duration', 13], status: ['Status', 13], preds: ['Predecessors', 18], resource: ['Resource', 22], notes: ['Notes', 46]
+  };
+  const keys = opts.columns === 'all' ? ['id', ...DEFAULT_COL_ORDER, 'notes'] : ['id', ...visibleTaskCols(), 'notes'];
+  const ncol = keys.length, colOf = k => keys.indexOf(k) + 1, lastCol = xlsxCol(ncol);
+  keys.forEach((k, i) => tasksSheet.width(i + 1, i + 1, XCOLS[k][1]));
+  tasksSheet.opts.freeze = { cols: colOf('name'), rows: 4 };       // frozen through the Task Name column, wherever it sits
+  tasksSheet.cell(1, 1, project.name, titleStyle); tasksSheet.merge(1, 1, 1, ncol); tasksSheet.height(1, 28);
+  tasksSheet.cell(2, 1, `Exported ${fmtDate(todayStr())} · ${scopeText}`, subStyle); tasksSheet.merge(2, 1, 2, ncol); tasksSheet.height(2, 16);
   tasksSheet.height(3, 6);
-  heads.forEach((h, i) => tasksSheet.cell(4, i + 1, h, headStyle)); tasksSheet.height(4, 26);
+  keys.forEach((k, i) => tasksSheet.cell(4, i + 1, XCOLS[k][0], headStyle)); tasksSheet.height(4, 26);
   const HR = 4;
   rowsIn.forEach(({ task: t, depth }, i) => {
-    const r = HR + 1 + i, eff = effectiveDates(t.id), summary = hasChildren(t.id), manual = t.taskMode === 'manual';
+    const r = HR + 1 + i, eff = effectiveDates(t.id), summary = hasChildren(t.id), manual = t.taskMode === 'manual', act = actualDates(t.id);
     const ownDates = !summary || manual, startIso = ownDates ? t.startDate : eff.start, endIso = ownDates ? t.endDate : eff.end;
     const base = { border: box, fill: summary ? SUM : null, bold: summary };
     const S = o => book.style(Object.assign({}, base, o));
-    tasksSheet.cell(r, 1, taskDisplayId(t.id), S({ h: 'center', color: DIM, bold: false }));
-    tasksSheet.cell(r, 2, manual ? 'Manual' : 'Auto', S({ h: 'center', color: manual ? '9A6700' : DIM, bold: false }));
-    tasksSheet.cell(r, 3, (t.milestone ? '◆ ' : '') + t.name, S({ h: 'left', indent: depth }));
     const dateCell = (c, text, iso) => text != null ? tasksSheet.cell(r, c, text, S({ h: 'center', italic: true, color: DIM, bold: false }))
       : iso ? tasksSheet.cell(r, c, xlsxSerial(iso), S({ h: 'center', num: dateFmt })) : tasksSheet.cell(r, c, null, S({}));
-    dateCell(4, t.startText, startIso); dateCell(5, t.endText, endIso);
-    const durNum = !isUnscheduled(t) && startIso && endIso ? durationDays(startIso, endIso) : null;
-    if (t.durText != null) tasksSheet.cell(r, 6, t.durText, S({ h: 'center', italic: true, color: DIM, bold: false }));
-    else if (durNum != null) tasksSheet.cell(r, 6, durNum, S({ h: 'center', num: durFmt }));
-    else tasksSheet.cell(r, 6, null, S({}));
-    tasksSheet.cell(r, 7, Math.round(eff.progress) / 100, S({ h: 'center', num: '0%' }));
-    tasksSheet.cell(r, 8, predecessorLabel(t) || null, S({ h: 'left' }));
     const notes = (t.notes || '').trim();
-    tasksSheet.cell(r, 9, notes || null, S({ h: 'left', wrap: true, bold: false, color: DIM }));
+    for (const k of keys) {
+      const c = colOf(k);
+      switch (k) {
+        case 'id': tasksSheet.cell(r, c, taskDisplayId(t.id), S({ h: 'center', color: DIM, bold: false })); break;
+        case 'mode': tasksSheet.cell(r, c, manual ? 'Manual' : 'Auto', S({ h: 'center', color: manual ? '9A6700' : DIM, bold: false })); break;
+        case 'wbs': tasksSheet.cell(r, c, wbsCode(t.id), S({ h: 'left' })); break;
+        case 'name': tasksSheet.cell(r, c, (t.milestone ? '◆ ' : '') + t.name, S({ h: 'left', indent: depth })); break;
+        case 'start': dateCell(c, t.startText, startIso); break;
+        case 'end': dateCell(c, t.endText, endIso); break;
+        case 'actualStart': dateCell(c, null, act.start); break;
+        case 'actualFinish': dateCell(c, null, act.end); break;
+        case 'duration': {
+          const durNum = !isUnscheduled(t) && startIso && endIso ? durationDays(startIso, endIso) : null;
+          if (t.durText != null) tasksSheet.cell(r, c, t.durText, S({ h: 'center', italic: true, color: DIM, bold: false }));
+          else if (durNum != null) tasksSheet.cell(r, c, durNum, S({ h: 'center', num: durFmt }));
+          else tasksSheet.cell(r, c, null, S({}));
+          break;
+        }
+        case 'progress': tasksSheet.cell(r, c, Math.round(eff.progress) / 100, S({ h: 'center', num: '0%' })); break;
+        case 'remaining': { const rem = remainingDays(t.id); tasksSheet.cell(r, c, rem, S({ h: 'center', num: Number.isInteger(rem) ? durFmt : '0.0" days"' })); break; }
+        case 'status': { const st = taskStatus(t.id); tasksSheet.cell(r, c, st, S({ h: 'center', bold: true, color: { 'Complete': '1A7F37', 'On Schedule': '0969DA', 'Late': 'CF222E', 'Future Task': DIM }[st] || DIM })); break; }
+        case 'preds': tasksSheet.cell(r, c, predecessorLabel(t) || null, S({ h: 'left' })); break;
+        case 'resource': tasksSheet.cell(r, c, (t.resource || '').trim() || null, S({ h: 'left' })); break;
+        case 'notes': tasksSheet.cell(r, c, notes || null, S({ h: 'left', wrap: true, bold: false, color: DIM })); break;
+      }
+    }
     const noteLines = notes ? notes.split('\n').reduce((n, line) => n + Math.max(1, Math.ceil(line.length / 50)), 0) : 1;
     tasksSheet.height(r, Math.min(409, Math.max(19, 14 * noteLines + 5)));   // 409pt is Excel's maximum row height
   });
   const last = HR + Math.max(1, rowsIn.length);
-  tasksSheet.opts.filter = `A${HR}:I${last}`;
-  if (rowsIn.length) tasksSheet.dataBar(`G${HR + 1}:G${last}`, '63BE7B');
+  tasksSheet.opts.filter = `A${HR}:${lastCol}${last}`;
+  if (rowsIn.length && keys.includes('progress')) { const pc = xlsxCol(colOf('progress')); tasksSheet.dataBar(`${pc}${HR + 1}:${pc}${last}`, '63BE7B'); }
   const sheets = [{ name: 'Tasks', sheet: tasksSheet, filter: tasksSheet.opts.filter, titles: `Tasks!$${HR}:$${HR}` }];
 
   // ---------------- Gantt sheet: A ID, B Task Name, C Start, D Finish, then one column per calendar week (or month)
@@ -2911,17 +3111,18 @@ function openExcelExport() {
   document.getElementById('excelScopeAll').textContent = `All ${tasks.length} tasks`;
   document.getElementById('excelScopeFiltered').textContent = `Only the ${shown} task${shown === 1 ? '' : 's'} matching the current filter`;
   document.querySelector('input[name="excelScope"][value="all"]').checked = true;
+  document.querySelector('input[name="excelCols"][value="shown"]').checked = true;
   document.getElementById('excelModalBg').classList.add('open');
 }
 function closeExcelModal() { document.getElementById('excelModalBg').classList.remove('open'); }
 function runExcelExport() {
   const scope = (document.querySelector('input[name="excelScope"]:checked') || {}).value === 'filtered' ? 'filtered' : 'all';
-  const gantt = document.getElementById('excelGantt').checked;
+  const gantt = document.getElementById('excelGantt').checked, columns = (document.querySelector('input[name="excelCols"]:checked') || {}).value === 'all' ? 'all' : 'shown';
   closeExcelModal();
   try {
-    resetEffectiveCache();
+    resetEffectiveCache(); resetIdCache();
     const n = exportTaskRows(scope).length;
-    downloadBlob(buildXlsx({ scope, gantt }), `${fileBase(project.name)}-${todayStr()}.xlsx`);
+    downloadBlob(buildXlsx({ scope, gantt, columns }), `${fileBase(project.name)}-${todayStr()}.xlsx`);
     showToast(`Exported ${n} task${n === 1 ? '' : 's'} to Excel`);
   } catch (e) { console.error('Milestone: Excel export failed', e); showToast('Excel export failed', true); }
 }
@@ -3300,7 +3501,7 @@ function createPlanRecord(name, data) {
 function resetTransientUI() {
   selectedTaskId = null; editingCell = null; editingPredecessors = [];
   colFilters = newColFilters(); filterPinned.clear(); closeFilterMenu();   // filters belong to the plan you were looking at
-  closeTaskModal(); closeImportModal(); closeDataMenu(); closeTaskModeMenu();
+  closeTaskModal(); closeImportModal(); closeDataMenu(); closeColumnsMenu(); closeTaskModeMenu();
   clearTimeout(toastTimer); toastUndoAction = null;
   document.getElementById('toast').classList.remove('show');   // an Undo for the old plan must not act on the new one
 }
@@ -3534,6 +3735,7 @@ function wireGlobalEvents() {
   document.addEventListener('click', (e) => {
     if (!e.target.closest('#dataMenuBtn') && !e.target.closest('#dataMenu')) closeDataMenu();
     if (!e.target.closest('#planMenuBtn') && !e.target.closest('#planMenu')) closePlanMenu();
+    if (e.target.isConnected && !e.target.closest('#columnsMenu') && !e.target.closest('#columnsBtn')) closeColumnsMenu();   // (isConnected: the menu re-renders on every click)
     // isConnected: clicking an expand arrow re-renders the list, detaching the very button that was clicked before this
     // runs, and a detached node is no longer "inside" #filterMenu — without the check the panel closed on every expand.
     if (e.target.isConnected && !e.target.closest('#filterMenu') && !e.target.closest('.col-filter-btn')) closeFilterMenu();
@@ -3550,12 +3752,14 @@ function wireGlobalEvents() {
       || document.getElementById('dataMenu').classList.contains('open')
       || document.getElementById('planMenu').classList.contains('open')
       || document.getElementById('filterMenu').classList.contains('open')
+      || document.getElementById('columnsMenu').classList.contains('open')
       || document.getElementById('taskModeMenu').classList.contains('open');
     // e.target, not document.activeElement: an inline editor's own Escape handler re-renders and destroys the
     // focused field before this runs, so by now activeElement is already <body>.
     const typing = /^(INPUT|TEXTAREA|SELECT)$/.test((e.target || {}).tagName || '');
     for (const id of modalIds) document.getElementById(id).classList.remove('open');
-    closeDataMenu(); closePlanMenu(); closeFilterMenu(); closeTaskModeMenu();
+    closeDataMenu(); closePlanMenu(); closeFilterMenu(); closeColumnsMenu(); closeTaskModeMenu();
+    if (!overlayOpen && editingCell) { cancelInlineEdit(); return; }   // an inline editor that hasn't received focus yet (it gets it a frame after it appears)
     if (!overlayOpen && !typing && selectedTaskId) { selectedTaskId = null; render(); }
   });
   document.getElementById('toastUndoBtn').addEventListener('click', triggerToastUndo);
