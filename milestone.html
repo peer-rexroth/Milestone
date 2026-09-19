@@ -144,8 +144,29 @@ button:focus:not(:focus-visible) { outline: none; }
 .status-pill.st-on-schedule { color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--panel)); }
 .status-pill.st-late { color: var(--danger); background: color-mix(in srgb, var(--danger) 14%, var(--panel)); }
 .status-pill.st-future-task { color: var(--text-dim); background: var(--panel-2); }
+/* ---- task dialog tabs and the Custom fields tab ---- */
+.modal-tabs { display: flex; gap: 2px; padding: 0 14px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.modal-tab { display: inline-flex; align-items: center; gap: 6px; padding: 9px 12px; margin-bottom: -1px; border: none; border-bottom: 2px solid transparent; background: transparent; font-size: 13px; font-weight: 600; color: var(--text-dim); }
+.modal-tab:hover { color: var(--text); }
+.modal-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab-badge { min-width: 18px; padding: 0 5px; border-radius: 999px; background: color-mix(in srgb, var(--accent) 16%, var(--panel)); color: var(--accent); font-size: 11px; line-height: 17px; text-align: center; }
+.tab-pane { display: flex; flex-direction: column; gap: 12px; }
+.cf-hint { font-size: 12.5px; color: var(--text-dim); line-height: 1.5; }
+.cf-section + .cf-section { margin-top: 12px; }
+.cf-title { margin-bottom: 6px; font-size: 11.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-faint); }
+.cf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.cf-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+.cf-flags { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; }
+.cf-label { display: flex; align-items: center; gap: 4px; }
+.cf-flag { display: flex; align-items: center; gap: 4px; font-size: 13px; }
+.cf-flag label { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; padding: 4px 2px; cursor: pointer; }
+.cf-flag input { width: 15px; height: 15px; margin: 0; }
+.cf-rename, .cols-rename { flex-shrink: 0; width: 20px; height: 20px; padding: 0; border: none; border-radius: 4px; background: transparent; color: var(--text-faint); font-size: 9px; }
+.cf-rename:hover, .cols-rename:hover { background: var(--panel-2); color: var(--text); }
+.custom-flag { justify-content: center; }
+.custom-flag i { color: var(--task-green); }
 /* ---- column chooser ---- */
-.cols-menu { width: 290px; padding: 6px; z-index: 90; }
+.cols-menu { width: 300px; padding: 6px; z-index: 90; overflow-y: auto; }   /* 31 columns: it scrolls (maxHeight is set when it opens) */
 .cols-head { display: flex; align-items: center; justify-content: space-between; padding: 4px 6px 2px; font-size: 13px; }
 .cols-hint { padding: 0 6px 6px; font-size: 11.5px; color: var(--text-faint); }
 .cols-row { display: flex; align-items: center; gap: 4px; }
@@ -160,7 +181,12 @@ button:focus:not(:focus-visible) { outline: none; }
 .cols-move button:disabled { opacity: .3; cursor: default; }
 /* ---- column filters ---- */
 .col-head { display: flex; align-items: center; gap: 3px; min-width: 0; }
-.col-head > span { overflow: hidden; text-overflow: ellipsis; }
+.col-head > span { overflow: hidden; text-overflow: ellipsis; line-height: 1.2; min-width: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+/* Tasks view: a header may run to two lines — a two-word name breaks after its first word, and anything longer than two lines is
+   cut with an ellipsis. That is what lets Task Mode and the actual dates be narrow columns; the header row is taller to make room.
+   (The Gantt view's side list keeps its one-line 32px header, which has to line up with the chart's timescale.) */
+.main.view-tasks .grid-header { height: 42px; }
+.main.view-tasks .grid-header > .col-head { white-space: normal; }
 .col-filter-btn { flex-shrink: 0; width: 18px; height: 18px; padding: 0; border: none; border-radius: 4px; background: transparent; color: var(--text-faint); font-size: 9px; opacity: .55; }
 .grid-header:hover .col-filter-btn { opacity: 1; }
 .col-filter-btn:hover { background: var(--panel-2); color: var(--text); opacity: 1; }
@@ -473,7 +499,12 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 <div class="modal-bg" id="taskModalBg" onclick="if(event.target===this) closeTaskModal()">
   <div class="modal roomy">
     <div class="modal-header"><h2 id="taskModalTitle">Task<span id="taskModalIdBadge" class="id-badge"></span></h2><button onclick="closeTaskModal()">&times;</button></div>
+    <div class="modal-tabs" role="tablist">
+      <button type="button" class="modal-tab active" id="taskTabBtnGeneral" role="tab" aria-selected="true" onclick="setTaskModalTab('general')">General</button>
+      <button type="button" class="modal-tab" id="taskTabBtnCustom" role="tab" aria-selected="false" onclick="setTaskModalTab('custom')">Custom fields<span class="tab-badge hidden" id="taskCustomBadge"></span></button>
+    </div>
     <div class="modal-body">
+      <div class="tab-pane" id="taskTabGeneral">
       <div class="field"><label>Task Name</label><input type="text" id="taskNameInput" placeholder="Task name"></div>
       <div class="field-row">
         <div class="field"><label>Task Mode</label><select id="taskModeInput"><option value="manual">Manually Scheduled</option><option value="auto">Auto Scheduled</option></select></div>
@@ -517,6 +548,11 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
         <label>Predecessors</label>
         <div id="predecessorRows"></div>
         <button class="btn" type="button" onclick="addPredecessorRow()" style="align-self:flex-start"><i class="fa-solid fa-plus"></i>Add predecessor</button>
+      </div>
+      </div>
+      <div class="tab-pane hidden" id="taskTabCustom">
+        <div class="cf-hint">Your own fields for this task. Rename them with the pencil — names are kept with this plan. They stay out of the task list until you tick them under <strong>Columns</strong>.</div>
+        <div id="taskCustomFields"></div>
       </div>
     </div>
     <div class="modal-footer">
@@ -565,7 +601,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
       </div>
       <div class="field"><label>Columns</label>
         <label class="checkbox-row"><input type="radio" name="excelCols" value="shown" checked><span>As shown in the task list</span></label>
-        <label class="checkbox-row"><input type="radio" name="excelCols" value="all"><span>All columns (also WBS, Actual Start/Finish, Resource)</span></label>
+        <label class="checkbox-row"><input type="radio" name="excelCols" value="all"><span>All columns (also WBS, Actual Start/Finish, Resource and the custom fields in use)</span></label>
       </div>
       <label class="checkbox-row"><input type="checkbox" id="excelGantt" checked>Add a Gantt chart sheet</label>
     </div>
@@ -612,6 +648,22 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
   </div>
 </div>
 
+<!-- Rename custom field (opens above the task dialog, so it sits after it in the page) -->
+<div class="modal-bg" id="fieldNameModalBg" onclick="if(event.target===this) closeFieldNameModal()">
+  <div class="modal narrow">
+    <div class="modal-header"><h2 id="fieldNameTitle">Rename field</h2><button onclick="closeFieldNameModal()">&times;</button></div>
+    <div class="modal-body">
+      <div class="field"><label for="fieldNameInput">Name</label><input type="text" id="fieldNameInput" maxlength="40" onkeydown="if(event.key==='Enter'){event.preventDefault();saveFieldName()}"></div>
+      <p id="fieldNameHint" style="font-size:12.5px;color:var(--text-dim);margin:0;line-height:1.5"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" id="fieldNameResetBtn" onclick="saveFieldName(true)" style="margin-right:auto">Use default name</button>
+      <button class="btn" onclick="closeFieldNameModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveFieldName()">Save</button>
+    </div>
+  </div>
+</div>
+
 <!-- Help modal -->
 <div class="modal-bg" id="helpModalBg" onclick="if(event.target===this) closeHelpModal()">
   <div class="modal wide">
@@ -620,6 +672,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
       <div><div class="help-section-title">The basics</div>Add tasks with the + Add Task button. Each task has a start/end date, a % complete, and can be a milestone (a zero-duration diamond). Use Indent/Outdent to build a work breakdown structure — a parent task's own dates and progress roll up automatically from its children. Drag a task's line up or down to reorder it (a parent brings its sub-tasks along). Add Task inserts below the selected task, or at the bottom when nothing is selected; press Escape to clear the selection. The double arrow above the ID numbers steps through the outline: click it to collapse every group, then again to open the first level, again for the next level, and so on until everything is open — then it starts over.</div>
       <div><div class="help-section-title">Filtering</div>Click the funnel in a column header (Task Mode, Task Name, Start, Finish, Duration, %, Predecessors) for an Excel-style filter. Each column offers what fits its data: dates get rules (equals, before, after, between, or relative to today such as this week, next month or year to date) and a Year › Month › Day list; text columns get contains / begins with / ends with / equals and their negatives; numbers get equals, greater or less than, and between. Every column also has a list of its values to tick, with a search box and (Blanks) for tasks that have no value. Filters on several columns combine, so a task must match all of them. A group stays visible while any sub-task inside it matches, and stays open while a filter is on. The bar under the toolbar shows what is filtered and how many tasks are showing; click × on a chip, or Clear all, to remove it. Filters are only for looking — they aren't saved, and a task you add or edit stays visible until you filter again.</div>Click the funnel next to Start or Finish (in either view) for an Excel-style filter: pick a rule (equals, before, after, between, or relative to today such as this week, next month or year to date), or tick individual dates in the Year › Month › Day list — type in the search box to narrow it, and use (Blanks) for tasks without a real date. The two columns combine, so a task must match both. A group stays visible while any sub-task inside it matches, and stays open while a filter is on. The bar under the toolbar shows what is filtered and how many tasks are showing; click × on a chip, or Clear all, to remove it. Filters are only for looking — they aren't saved, and a task you add or edit stays visible until you filter again.</div>
       <div><div class="help-section-title">Columns and extra fields</div>Besides name, dates, duration, % and predecessors, a task can carry a <strong>Resource</strong> (who does the work), an <strong>Actual Start</strong> and <strong>Actual Finish</strong> (what really happened, kept separate from the plan), and has a <strong>WBS</strong> code such as 2.1.3 that is worked out from the outline (shown by default). <strong>Remaining Duration</strong> (the duration still to go, from % complete) and <strong>Status</strong> (Complete, On Schedule, Late or Future Task, judged against today) are worked out for you too. Resource, Actual Start/Finish, Remaining Duration and Status aren't shown by default: click <strong>Columns</strong> in the toolbar (Tasks view) to tick the columns you want and reorder them; your choice is remembered on this device. Click a Resource or actual-date cell to edit it, or use the task dialog. A group shows the actual dates of the tasks in it (its earliest actual start, and an actual finish once everything in it has finished).</div>
+      <div><div class="help-section-title">Custom fields</div>Every task can carry up to 20 fields of your own: <strong>Text1–5</strong>, <strong>Number1–5</strong>, <strong>Date1–5</strong> and <strong>Flag1–5</strong> (a yes/no tick). Fill them in on the task dialog's <strong>Custom fields</strong> tab, or — once you have ticked them under <strong>Columns</strong>, where they start hidden — straight in the list (click a cell; a flag toggles). Use the pencil beside a field to rename it, for instance Text1 to <em>Cost centre</em>: the name is saved with the plan, so another plan can call the same field something else. Custom fields can be filtered like any column and are included in the Excel export.</div>
       <div><div class="help-section-title">Task Mode</div>Every task is either Manually Scheduled (pushpin) or Auto Scheduled (chart icon) — click the icon in the Task Mode column, or use the Task Mode field in a task's dialog. An Auto task follows its predecessors and constraints. A Manual task stays exactly where you put it: predecessors never move it, its Start, Finish and Duration can be free text such as "TBD", and a warning triangle appears if it starts earlier than its predecessors allow. Manual tasks are drawn with a dashed bar, and are left out of the critical path. Switching a task to Auto moves it to the earliest date its links allow. The "New tasks" button at the right of the toolbar chooses the mode new tasks start in (Auto Scheduled by default).</div>
       <div><div class="help-section-title">Dependencies</div>Open a task and add a predecessor to link it to another task (Finish-to-Start, Start-to-Start, Finish-to-Finish or Start-to-Finish). Give it a lead or lag in days: a positive number delays the dependent task (lag), a negative number lets it overlap and start early (lead) — e.g. "3FS+2" waits 2 extra days after task 3 finishes, "3FS-2" starts 2 days before task 3 finishes. Moving a task forward automatically pushes any dependent tasks forward too — it never pulls a task earlier on its own. A circular dependency is flagged with a warning icon and stops auto-scheduling for the tasks involved.</div>
       <div><div class="help-section-title">The Gantt chart</div>Drag a bar to reschedule it, drag its edges to resize, or drag the small circle on its right edge onto another task to create a dependency. Click a bar or row to edit it. The Week / Month / Year buttons change the scale: Year (the default) shows quarters, and Week is labelled by calendar week (CW, weeks start on Monday, ISO 8601). The route icon in the toolbar highlights the critical path — the chain of tasks with zero slack that determines the overall project end date.</div>
@@ -693,20 +746,38 @@ const ZOOMS = [
 // always first and the row actions always last; everything in between can be shown, hidden and reordered (Columns button).
 // `dflt` = shown until the user says otherwise. Insertion order = the default order. Task Name can't be hidden.
 const TASK_COLS = {
-  mode:         { label: 'Task Mode',     width: '98px',              dflt: true },   // wide enough for its header (Tasks view); the Gantt side list keeps a 24px icon column
+  mode:         { label: 'Task Mode',     width: '64px',              dflt: true },   // its header is two lines (Task / Mode) in the Tasks view; the Gantt side list keeps a 24px icon column
   wbs:          { label: 'WBS',           width: '64px',              dflt: true },
   name:         { label: 'Task Name',     width: 'minmax(160px,1fr)', dflt: true, locked: true },
   start:        { label: 'Start',         width: '116px',             dflt: true },
   end:          { label: 'Finish',        width: '116px',             dflt: true },
-  actualStart:  { label: 'Actual Start',  width: '116px',             dflt: false },
-  actualFinish: { label: 'Actual Finish', width: '116px',             dflt: false },
+  actualStart:  { label: 'Actual Start',  width: '92px',              dflt: false },   // header: Actual / Start
+  actualFinish: { label: 'Actual Finish', width: '92px',              dflt: false },   // header: Actual / Finish
   duration:     { label: 'Duration',      width: '96px',              dflt: true },
   progress:     { label: '% Complete',    width: '54px',              dflt: true },
+  preds:        { label: 'Predecessors',  width: '1fr',               dflt: true },
   remaining:    { label: 'Remaining Duration', width: '96px',         dflt: false },
   status:       { label: 'Status',        width: '104px',             dflt: false },
-  preds:        { label: 'Predecessors',  width: '1fr',               dflt: true },
   resource:     { label: 'Resource',      width: 'minmax(110px,1fr)', dflt: false }
 };
+// ---- Custom fields: Text1-5, Number1-5, Date1-5, Flag1-5. A task keeps its values in `task.custom` ({ text1: 'x', number2: 4.5,
+// date3: '2026-09-01', flag4: true } — only fields that have a value are present). The field NAMES live on the plan
+// (`project.fieldNames`, only the ones that differ from the default), so they are saved, exported and synced with the plan and
+// two plans can name the same field differently. They are ordinary columns in the registry, hidden until ticked in Columns.
+const CUSTOM_KINDS = [
+  { kind: 'text',   label: 'Text',   filter: 'text',   width: '130px' },
+  { kind: 'number', label: 'Number', filter: 'number', width: '96px' },
+  { kind: 'date',   label: 'Date',   filter: 'date',   width: '116px' },
+  { kind: 'flag',   label: 'Flag',   filter: 'list',   width: '80px' }
+];
+const CUSTOM_FIELDS = {};
+for (const k of CUSTOM_KINDS) for (let i = 1; i <= 5; i++) CUSTOM_FIELDS[k.kind + i] = { id: k.kind + i, kind: k.kind, defaultName: k.label + i };
+function isCustomField(id) { return Object.prototype.hasOwnProperty.call(CUSTOM_FIELDS, id); }
+function customFieldName(id) { const n = project && project.fieldNames && project.fieldNames[id]; return n || CUSTOM_FIELDS[id].defaultName; }
+for (const f of Object.values(CUSTOM_FIELDS)) {
+  const k = CUSTOM_KINDS.find(x => x.kind === f.kind);
+  TASK_COLS[f.id] = { get label() { return customFieldName(f.id); }, width: k.width, dflt: false, custom: true };   // the label is looked up lazily: it depends on the plan
+}
 const DEFAULT_COL_ORDER = Object.keys(TASK_COLS);
 // Bump COLS_REV when a column becomes shown-by-default: an install's saved choice already lists it as hidden (the defaults
 // are written by its first save), so loadPrefs() switches the columns listed here on ONCE for anyone still on an older revision.
@@ -901,19 +972,23 @@ function toggleColumnsMenu() {
   const menu = document.getElementById('columnsMenu');
   if (menu.classList.contains('open')) { closeColumnsMenu(); return; }
   closeDataMenu(); closePlanMenu(); closeFilterMenu(); closeTaskModeMenu();
-  renderColumnsMenu(); positionDropdown('columnsBtn', 'columnsMenu'); menu.classList.add('open');
+  renderColumnsMenu(); positionDropdown('columnsBtn', 'columnsMenu');
+  menu.style.maxHeight = Math.max(260, window.innerHeight - document.getElementById('columnsBtn').getBoundingClientRect().bottom - 16) + 'px';
+  menu.classList.add('open');
 }
 function closeColumnsMenu() { document.getElementById('columnsMenu').classList.remove('open'); }
 function renderColumnsMenu() {
-  const shown = new Set(visibleTaskCols());
-  document.getElementById('columnsMenu').innerHTML =
+  const shown = new Set(visibleTaskCols()), menu = document.getElementById('columnsMenu'), scroll = menu.scrollTop;
+  menu.innerHTML =
     `<div class="cols-head"><strong>Columns</strong><button class="btn-link" onclick="resetColumns()">Reset to default</button></div>` +
     `<div class="cols-hint">Tick the columns the task list shows; use the arrows to reorder them.</div>` +
     colOrder.map((id, i) => {
-      const c = TASK_COLS[id];
-      return `<div class="cols-row"><label class="cols-check${c.locked ? ' locked' : ''}"><input type="checkbox" data-col="${id}"${shown.has(id) ? ' checked' : ''}${c.locked ? ' disabled' : ''} onchange="toggleColumn('${id}', this.checked)"><span>${c.label}</span>${c.locked ? '<span class="cols-tag">always shown</span>' : ''}</label>` +
-        `<span class="cols-move"><button aria-label="Move ${c.label} up" onclick="moveColumn('${id}',-1)"${i === 0 ? ' disabled' : ''}><i class="fa-solid fa-chevron-up"></i></button><button aria-label="Move ${c.label} down" onclick="moveColumn('${id}',1)"${i === colOrder.length - 1 ? ' disabled' : ''}><i class="fa-solid fa-chevron-down"></i></button></span></div>`;
+      const c = TASK_COLS[id], lab = escapeHtml(c.label);
+      return `<div class="cols-row"><label class="cols-check${c.locked ? ' locked' : ''}"><input type="checkbox" data-col="${id}"${shown.has(id) ? ' checked' : ''}${c.locked ? ' disabled' : ''} onchange="toggleColumn('${id}', this.checked)"><span>${lab}</span>${c.locked ? '<span class="cols-tag">always shown</span>' : ''}</label>` +
+        (c.custom ? `<button class="cols-rename" title="Rename this field (kept with this plan)" aria-label="Rename ${lab}" onclick="openFieldNameModal('${id}')"><i class="fa-solid fa-pen"></i></button>` : '') +
+        `<span class="cols-move"><button aria-label="Move ${lab} up" onclick="moveColumn('${id}',-1)"${i === 0 ? ' disabled' : ''}><i class="fa-solid fa-chevron-up"></i></button><button aria-label="Move ${lab} down" onclick="moveColumn('${id}',1)"${i === colOrder.length - 1 ? ' disabled' : ''}><i class="fa-solid fa-chevron-down"></i></button></span></div>`;
     }).join('');
+  menu.scrollTop = scroll;   // 31 rows: re-rendering after a tick or a move must not jump back to the top
 }
 function loadPlanData(id) {
   const idx = readPlansIndex();
@@ -953,6 +1028,27 @@ function save() {
 }
 function isFreshLocalState() { return tasks.length === 0 && (project.updatedAt || 0) === 0; }
 
+// Sanitises a task's custom values (or returns null when there are none): only known fields, each of the right type, and
+// nothing empty — so absent = no value, and a text field holding only spaces counts as empty.
+function cleanCustomValues(src) {
+  if (!src || typeof src !== 'object' || Array.isArray(src)) return null;
+  const out = {};
+  for (const [id, f] of Object.entries(CUSTOM_FIELDS)) {
+    const v = src[id];
+    if (v === undefined || v === null || v === '' || v === false) continue;
+    if (f.kind === 'text') { const t = String(v).trim().slice(0, 255); if (t) out[id] = t; }
+    else if (f.kind === 'number') { const n = typeof v === 'number' ? v : Number(String(v).replace(',', '.')); if (Number.isFinite(n)) out[id] = n; }
+    else if (f.kind === 'date') { const d = parseUserDate(typeof v === 'string' ? v : ''); if (d) out[id] = d; }
+    else if (v === true || v === 'true' || v === 1) out[id] = true;   // flag: stored only when set
+  }
+  return Object.keys(out).length ? out : null;
+}
+function customValue(t, id) { return t.custom ? t.custom[id] : undefined; }
+function setCustomValue(t, id, value) {           // null/''/false clears
+  const c = Object.assign({}, t.custom);
+  if (value === null || value === undefined || value === '' || value === false) delete c[id]; else c[id] = value;
+  if (Object.keys(c).length) t.custom = c; else delete t.custom;
+}
 function normalizeData() {
   const ids = new Set(tasks.map(t => t.id));
   const seenIds = new Set();
@@ -976,6 +1072,7 @@ function normalizeData() {
     if (typeof t.collapsed !== 'boolean') t.collapsed = false;
     if (t.color && !TASK_COLORS.some(c => c.id === t.color)) t.color = null;
     t.resource = typeof t.resource === 'string' ? t.resource.slice(0, 200) : '';
+    { const cv = cleanCustomValues(t.custom); if (cv) t.custom = cv; else delete t.custom; }
     for (const f of ['actualStart', 'actualFinish']) t[f] = parseUserDate(typeof t[f] === 'string' ? t[f] : '');   // a real date or null
     if (t.milestone) t.actualFinish = t.actualStart;   // a milestone happens on one date: its actual finish is its actual start
     if (!CONSTRAINT_TYPES.some(c => c.id === t.constraintType)) t.constraintType = 'ASAP';
@@ -1027,6 +1124,14 @@ function normalizeData() {
   if (!project || typeof project !== 'object') project = { name: 'My Project', updatedAt: 0 };
   if (typeof project.name !== 'string' || !project.name.trim()) project.name = 'My Project';
   if (typeof project.updatedAt !== 'number') project.updatedAt = 0;
+  {   // custom field names: only known fields, trimmed, and only those that differ from the default
+    const names = {};
+    if (project.fieldNames && typeof project.fieldNames === 'object') for (const [id, f] of Object.entries(CUSTOM_FIELDS)) {
+      const n = typeof project.fieldNames[id] === 'string' ? project.fieldNames[id].trim().slice(0, 40) : '';
+      if (n && n !== f.defaultName) names[id] = n;
+    }
+    if (Object.keys(names).length) project.fieldNames = names; else delete project.fieldNames;
+  }
   // New tasks are Auto Scheduled unless the project says otherwise. Every project saved while the default was Manual has
   // 'manual' stored (the default is written on the first save), so a project without the current revision marker is switched to
   // Auto ONCE; a choice made afterwards (the "New tasks" button) keeps the marker and is never overridden.
@@ -1439,6 +1544,7 @@ const FILTER_COLS = {
   preds:        { label: 'Predecessors',  kind: 'text' },
   resource:     { label: 'Resource',      kind: 'text' }
 };
+for (const f of Object.values(CUSTOM_FIELDS)) FILTER_COLS[f.id] = { get label() { return customFieldName(f.id); }, kind: CUSTOM_KINDS.find(x => x.kind === f.kind).filter };
 function newColFilters() { return Object.fromEntries(Object.keys(FILTER_COLS).map(c => [c, null])); }
 let colFilters = newColFilters();
 let filterPinned = new Set();
@@ -1484,10 +1590,17 @@ function filterColValue(t, col) {
     case 'actualStart': return actualDates(t.id).start;
     case 'actualFinish': return actualDates(t.id).end;
     case 'resource': return (t.resource || '').trim() || null;
+    default:
+      if (isCustomField(col)) {
+        const v = customValue(t, col);
+        if (CUSTOM_FIELDS[col].kind === 'flag') return v ? 'Yes' : 'No';
+        return v === undefined ? null : v;
+      }
   }
   return null;
 }
 function filterValueLabel(col, v) {
+  if (FILTER_COLS[col].kind === 'date') return fmtDate(v);
   switch (col) {
     case 'mode': return taskModeInfo(v).label;
     case 'start': case 'end': return fmtDate(v);
@@ -1498,7 +1611,8 @@ function filterValueLabel(col, v) {
   return String(v);
 }
 function filterCompare(kind, col) {
-  if (col === 'status') return (a, b) => STATUS_ORDER.indexOf(a) - STATUS_ORDER.indexOf(b);   // Late, On Schedule, Future Task, Complete
+  if (col === 'status') return (a, b) => STATUS_ORDER.indexOf(a) - STATUS_ORDER.indexOf(b);
+  if (col && isCustomField(col) && CUSTOM_FIELDS[col].kind === 'flag') return (a, b) => (a === b ? 0 : a === 'Yes' ? -1 : 1);   // Yes, No   // Late, On Schedule, Future Task, Complete
   return kind === 'number' ? (a, b) => a - b : kind === 'date' ? (a, b) => (a < b ? -1 : a > b ? 1 : 0) : (a, b) => String(a).localeCompare(String(b), undefined, { sensitivity: 'base', numeric: true });
 }
 
@@ -1602,13 +1716,13 @@ function describeSpec(col, spec) {
 function colHeadHtml(label, col) {
   const spec = colFilters[col], name = FILTER_COLS[col].label;
   const title = spec ? `Filtered: ${describeSpec(col, spec)}` : `Filter ${name}`;
-  return `<div class="col-head"${label ? '' : ` title="${name}"`}><span>${label}</span><button class="col-filter-btn${spec ? ' active' : ''}" data-col="${col}" onclick="openColumnFilter(event,'${col}')" title="${escapeHtml(title)}"><i class="fa-solid fa-filter"></i></button></div>`;
+  return `<div class="col-head"${label ? '' : ` title="${escapeHtml(name)}"`}><span>${escapeHtml(label).replace(/\n/g, '<br>')}</span><button class="col-filter-btn${spec ? ' active' : ''}" data-col="${col}" onclick="openColumnFilter(event,'${col}')" title="${escapeHtml(title)}"><i class="fa-solid fa-filter"></i></button></div>`;
 }
 function renderFilterBar() {
   const el = document.getElementById('filterBar');
   if (!filtersActive()) { el.classList.add('hidden'); el.innerHTML = ''; return; }
   const chips = Object.keys(FILTER_COLS).filter(c => colFilters[c]).map(c =>
-    `<span class="filter-chip"><i class="fa-solid fa-filter"></i>${FILTER_COLS[c].label}: ${escapeHtml(describeSpec(c, colFilters[c]))}<button onclick="clearColFilter('${c}')" title="Remove this filter"><i class="fa-solid fa-xmark"></i></button></span>`).join('');
+    `<span class="filter-chip"><i class="fa-solid fa-filter"></i>${escapeHtml(FILTER_COLS[c].label)}: ${escapeHtml(describeSpec(c, colFilters[c]))}<button onclick="clearColFilter('${c}')" title="Remove this filter"><i class="fa-solid fa-xmark"></i></button></span>`).join('');
   el.innerHTML = `${chips}<span class="filter-count">${tasks.filter(filterShows).length} of ${tasks.length} tasks</span><button class="btn-link" onclick="clearAllFilters()">Clear all</button>`;
   el.classList.remove('hidden');
 }
@@ -1649,7 +1763,7 @@ function openColumnFilter(event, col) {
     (groups.length ? groups.map(g => `<optgroup label="${g}">${rules.filter(r => r.group === g).map(opt).join('')}</optgroup>`).join('') : rules.map(opt).join('')) +
     `</select><div class="filter-rule-inputs" id="filterRuleInputs"></div></div>`;
   menu.innerHTML =
-    `<div class="filter-head"><strong>Filter ${FILTER_COLS[col].label}</strong><button class="btn-link" id="filterClearBtn" onclick="clearColFilter('${col}')"${spec ? '' : ' disabled'}>Clear filter</button></div>` +
+    `<div class="filter-head"><strong>Filter ${escapeHtml(FILTER_COLS[col].label)}</strong><button class="btn-link" id="filterClearBtn" onclick="clearColFilter('${col}')"${spec ? '' : ' disabled'}>Clear filter</button></div>` +
     ruleSelect +
     `<div class="filter-section filter-list"><input type="search" id="filterSearch" placeholder="Search" autocomplete="off" oninput="onFilterSearch(this.value)"><div class="filter-tree" id="filterTree"></div></div>` +
     `<div class="filter-actions"><button class="btn" onclick="closeFilterMenu()">Cancel</button><button class="btn btn-primary" id="filterOkBtn" onclick="applyFilterDraft()">OK</button></div>`;
@@ -1791,10 +1905,11 @@ function renderGrid() {
   // Tasks view: the user's visible columns in the user's order (ID first, row actions last). The Gantt view's side list is a fixed four.
   const cols = full ? visibleTaskCols() : ['mode', 'name', 'start', 'end'];
   const HEAD = {
-    mode: colHeadHtml(full ? 'Task Mode' : '', 'mode'), wbs: colHeadHtml('WBS', 'wbs'), name: colHeadHtml('Task Name', 'name'), start: colHeadHtml('Start', 'start'), end: colHeadHtml('Finish', 'end'),
-    actualStart: colHeadHtml('Actual Start', 'actualStart'), actualFinish: colHeadHtml('Actual Finish', 'actualFinish'), duration: colHeadHtml('Duration', 'duration'),
-    progress: colHeadHtml('%', 'progress'), remaining: colHeadHtml('Remaining', 'remaining'), status: colHeadHtml('Status', 'status'),
-    preds: colHeadHtml('Predecessors', 'preds'), resource: colHeadHtml('Resource', 'resource')
+    mode: colHeadHtml(full ? 'Task\nMode' : '', 'mode'), wbs: colHeadHtml('WBS', 'wbs'), name: colHeadHtml('Task Name', 'name'), start: colHeadHtml('Start', 'start'), end: colHeadHtml('Finish', 'end'),
+    actualStart: colHeadHtml('Actual\nStart', 'actualStart'), actualFinish: colHeadHtml('Actual\nFinish', 'actualFinish'), duration: colHeadHtml('Duration', 'duration'),
+    progress: colHeadHtml('%', 'progress'), remaining: colHeadHtml('Remaining\nDuration', 'remaining'), status: colHeadHtml('Status', 'status'),
+    preds: colHeadHtml('Predecessors', 'preds'), resource: colHeadHtml('Resource', 'resource'),
+    ...Object.fromEntries(Object.keys(CUSTOM_FIELDS).map(id => [id, colHeadHtml(customFieldName(id), id)]))
   };
   document.getElementById('main').style.setProperty('--task-cols', ['34px', ...cols.map(c => TASK_COLS[c].width), '56px'].join(' '));
   document.getElementById('gridHeader').innerHTML = `<div class="id-head"><button class="id-toggle" id="collapseToggleBtn" onclick="toggleAllCollapsed()"><i class="fa-solid fa-angles-up"></i></button></div>${cols.map(c => HEAD[c]).join('')}${full ? '<div></div>' : ''}`;
@@ -1874,7 +1989,8 @@ function renderGrid() {
       duration: durationCell, progress: `<div class="grid-cell-dim${summaryCls}">${Math.round(eff.progress)}%</div>`,
       remaining: `<div class="grid-cell-dim${summaryCls}">${remainingDays(t.id) == null ? '' : fmtRemaining(remainingDays(t.id))}</div>`,
       status: `<div class="grid-cell-dim${summaryCls}">${statusPillHtml(taskStatus(t.id))}</div>`,
-      preds: predCell, resource: resourceCell
+      preds: predCell, resource: resourceCell,
+      ...Object.fromEntries(cols.filter(isCustomField).map(id => [id, customCellHtml(t, id, summaryCls, editing(id), blurAttr(id))]))
     };
     return `<div class="grid-row${t.id === selectedTaskId ? ' selected' : ''}" data-id="${t.id}" onclick="selectTask('${t.id}')" ondblclick="openTaskModal('${t.id}')" draggable="${editingCell && editingCell.id === t.id ? 'false' : 'true'}" ondragstart="dragStartTask(event,'${t.id}')" ondragend="dragEndTask()" ondragover="dragOverTask(event,'${t.id}')" ondrop="dropOnTask(event,'${t.id}')">
       <div class="grid-cell-dim" style="text-align:center">${taskDisplayId(t.id)}</div>
@@ -2018,6 +2134,24 @@ function moveTask(id, targetId, zone) {
   selectedTaskId = id;
   normalizeData(); save(); render();
 }
+// A custom-field cell. Text / Number / Date edit in place (a click opens the editor); a Flag toggles on click. Any task can have
+// them — groups and milestones included — and nothing is rolled up.
+function customCellHtml(t, id, summaryCls, editingNow, blur) {
+  const kind = CUSTOM_FIELDS[id].kind, v = customValue(t, id), name = customFieldName(id);
+  if (kind === 'flag') return `<div class="grid-cell-dim custom-flag editable${summaryCls}" title="${escapeHtml(name)}: ${v ? 'Yes' : 'No'} — click to change" onclick="event.stopPropagation();toggleCustomFlag('${t.id}','${id}')">${v ? '<i class="fa-solid fa-check"></i>' : ''}</div>`;
+  if (editingNow) {
+    const val = v === undefined ? '' : v, stop = 'onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)"';
+    return kind === 'date' ? `<input type="date" class="inline-edit" value="${val}" ${stop} ${blur}>`
+      : `<input type="text"${kind === 'number' ? ' inputmode="decimal" placeholder="number"' : ' maxlength="255"'} class="inline-edit" value="${escapeHtml(String(val))}" ${stop} ${blur}>`;   // a number is typed like in a spreadsheet (12,5 or 12.5) and checked on commit — a native number box would refuse to let you type the invalid part at all
+  }
+  const shown = v === undefined ? '' : kind === 'date' ? fmtDate(v) : String(v);
+  return `<div class="grid-cell-dim editable${summaryCls}" title="${escapeHtml(shown)}" onclick="event.stopPropagation();startInlineEdit('${t.id}','${id}')">${escapeHtml(shown)}</div>`;
+}
+function toggleCustomFlag(id, field) {
+  const t = byId(id); if (!t || !isCustomField(field)) return;
+  setCustomValue(t, field, !customValue(t, field));
+  t.updatedAt = Date.now(); filterPinned.add(id); save(); render();
+}
 function toggleCollapse(id) {
   if (filtersActive()) { showToast('Groups stay open while a filter is on'); return; }
   const t = byId(id); t.collapsed = !t.collapsed; save(); render();
@@ -2123,7 +2257,7 @@ function startInlineEdit(id, field) {
   if (!t) return;
   // Auto summary rows roll their dates up from their children, so only the
   // name is editable there; a manually scheduled summary owns its own dates.
-  if (hasChildren(id) && field !== 'name' && field !== 'resource' && !(t.taskMode === 'manual' && ['start', 'finish', 'duration'].includes(field))) return;
+  if (hasChildren(id) && field !== 'name' && field !== 'resource' && !isCustomField(field) && !(t.taskMode === 'manual' && ['start', 'finish', 'duration'].includes(field))) return;
   if ((field === 'finish' || field === 'duration' || field === 'actualFinish') && t.milestone) return; // milestones are zero-duration by definition
   editingCell = { id, field };
   render();
@@ -2212,6 +2346,16 @@ function commitInlineEdit(id, field, rawValue) {
       if (Number.isFinite(d) && d >= 1 && !t.milestone) t.endDate = addDays(t.startDate, d - 1);
     }
     applyConstraints(id);
+  } else if (isCustomField(field)) {
+    const kind = CUSTOM_FIELDS[field].kind;
+    if (kind === 'text') setCustomValue(t, field, val.slice(0, 255));
+    else if (kind === 'number') {
+      const n = Number(val.replace(',', '.'));
+      if (val === '') setCustomValue(t, field, null); else if (Number.isFinite(n)) setCustomValue(t, field, n); else showToast(`"${val}" isn't a number`, true);
+    } else if (kind === 'date') {
+      const iso = val ? parseUserDate(val) : null;
+      if (!val) setCustomValue(t, field, null); else if (iso) setCustomValue(t, field, iso); else showToast(`"${val}" isn't a date`, true);
+    }
   } else if (field === 'resource') {
     t.resource = val.slice(0, 200);
   } else if (field === 'actualStart' || field === 'actualFinish') {
@@ -2632,6 +2776,8 @@ function openTaskModal(id, isNew) {
   editingPredecessors = t.predecessors.map(p => ({ ...p }));
   renderPredecessorRows();
   onMilestoneToggle();
+  renderCustomFieldsTab(t.custom || {});
+  setTaskModalTab('general');   // it always opens on the General tab
   updateModalComputed();
   document.getElementById('taskModalBg').classList.add('open');
   setTimeout(() => document.getElementById('taskNameInput').focus(), 30);
@@ -2650,6 +2796,7 @@ function onConstraintTypeChange() {
 function updateModalComputed() {
   const t = editingTaskId && byId(editingTaskId);
   if (!t) return;
+  updateCustomBadge();
   const $ = id => document.getElementById(id), v = id => $(id).value;
   let remaining, status;
   if (hasChildren(t.id)) { remaining = remainingDays(t.id); status = taskStatus(t.id); }
@@ -2664,6 +2811,73 @@ function updateModalComputed() {
   $('taskWbsInfo').textContent = wbsCode(t.id);
   $('taskRemainingInfo').textContent = remaining == null ? '—' : fmtRemaining(remaining);
   $('taskStatusInfo').innerHTML = statusPillHtml(status) || '—';
+}
+// Renaming a custom field. The name is stored on the PLAN (project.fieldNames), so it is saved, exported and synced with it and
+// another plan keeps its own. It has to be unique among the custom fields and the standard columns, or two columns would
+// look the same.
+let fieldNameTarget = null;
+function openFieldNameModal(id) {
+  fieldNameTarget = id;
+  const f = CUSTOM_FIELDS[id], overridden = !!(project.fieldNames && project.fieldNames[id]);
+  document.getElementById('fieldNameTitle').textContent = `Rename “${customFieldName(id)}”`;
+  document.getElementById('fieldNameInput').value = customFieldName(id);
+  document.getElementById('fieldNameHint').textContent = `Default name: ${f.defaultName}. The name is kept with this plan (“${project.name}”); other plans have their own.`;
+  document.getElementById('fieldNameResetBtn').disabled = !overridden;
+  document.getElementById('fieldNameModalBg').classList.add('open');
+  // A timer, not requestAnimationFrame: the dialog fades in, and an element can't take focus while it is still invisible —
+  // at the first animation frame it still is, so the cursor never arrived (the task dialog uses a timer for the same reason).
+  setTimeout(() => { const i = document.getElementById('fieldNameInput'); i.focus(); i.select(); }, 40);
+}
+function closeFieldNameModal() { document.getElementById('fieldNameModalBg').classList.remove('open'); fieldNameTarget = null; }
+function saveFieldName(useDefault) {
+  const id = fieldNameTarget; if (!id) return;
+  let name = useDefault ? '' : document.getElementById('fieldNameInput').value.trim().slice(0, 40);
+  if (name === CUSTOM_FIELDS[id].defaultName) name = '';                    // typing the default name is the same as resetting it
+  if (name) {
+    const taken = [...Object.keys(TASK_COLS).filter(c => c !== id).map(c => TASK_COLS[c].label), 'ID'].some(l => l.toLowerCase() === name.toLowerCase());
+    if (taken) { showToast(`“${name}” is already the name of another column`, true); return; }
+  }
+  const names = Object.assign({}, project.fieldNames);
+  if (name) names[id] = name; else delete names[id];
+  project.fieldNames = names; project.updatedAt = Date.now();
+  const inDialog = document.getElementById('taskModalBg').classList.contains('open'), inMenu = document.getElementById('columnsMenu').classList.contains('open');
+  const typed = inDialog ? readCustomInputs() : null;                       // keep what is typed in the dialog while its labels change
+  closeFieldNameModal(); save(); render();
+  if (inMenu) renderColumnsMenu();
+  if (inDialog) renderCustomFieldsTab(typed);
+}
+function setTaskModalTab(tab) {
+  const custom = tab === 'custom';
+  document.getElementById('taskTabGeneral').classList.toggle('hidden', custom);
+  document.getElementById('taskTabCustom').classList.toggle('hidden', !custom);
+  for (const [id, on] of [['taskTabBtnGeneral', !custom], ['taskTabBtnCustom', custom]]) {
+    document.getElementById(id).classList.toggle('active', on); document.getElementById(id).setAttribute('aria-selected', on);
+  }
+}
+// The Custom fields tab: Text, Number, Date and Flag sections, five fields each, labelled with the plan's own names.
+// `values` is what to show (the task's stored values, or — after a rename — what is currently typed).
+function renderCustomFieldsTab(values) {
+  const field = id => {
+    const f = CUSTOM_FIELDS[id], v = values[id], name = escapeHtml(customFieldName(id));
+    const pencil = `<button type="button" class="cf-rename" title="Rename this field" aria-label="Rename ${name}" onclick="openFieldNameModal('${id}')"><i class="fa-solid fa-pen"></i></button>`;
+    if (f.kind === 'flag') return `<div class="cf-flag"><label><input type="checkbox" id="cf_${id}"${v ? ' checked' : ''}><span>${name}</span></label>${pencil}</div>`;
+    const input = f.kind === 'date' ? `<input type="date" id="cf_${id}" value="${escapeHtml(v || '')}">`
+      : f.kind === 'number' ? `<input type="number" step="any" id="cf_${id}" value="${v === undefined || v === '' ? '' : escapeHtml(String(v))}">`
+      : `<input type="text" id="cf_${id}" maxlength="255" value="${escapeHtml(v || '')}">`;
+    return `<div class="field"><label class="cf-label" for="cf_${id}"><span>${name}</span>${pencil}</label>${input}</div>`;
+  };
+  document.getElementById('taskCustomFields').innerHTML = CUSTOM_KINDS.map(k =>
+    `<div class="cf-section"><div class="cf-title">${k.label}</div><div class="${k.kind === 'flag' ? 'cf-flags' : k.kind === 'text' ? 'cf-grid' : 'cf-grid cf-grid-3'}">${Object.keys(CUSTOM_FIELDS).filter(id => CUSTOM_FIELDS[id].kind === k.kind).map(field).join('')}</div></div>`).join('');
+  updateCustomBadge();
+}
+function readCustomInputs() {
+  const out = {};
+  for (const id of Object.keys(CUSTOM_FIELDS)) { const el = document.getElementById('cf_' + id); if (el) out[id] = el.type === 'checkbox' ? el.checked : el.value; }
+  return out;
+}
+function updateCustomBadge() {
+  const n = Object.values(readCustomInputs()).filter(v => v === true || (typeof v === 'string' && v.trim() !== '')).length, b = document.getElementById('taskCustomBadge');
+  b.textContent = n; b.classList.toggle('hidden', !n);
 }
 function onMilestoneToggle() {
   const on = document.getElementById('taskMilestoneInput').checked;
@@ -2749,7 +2963,7 @@ function saveTaskFromModal() {
   const t = byId(editingTaskId); if (!t) return;
   const isGroup = hasChildren(t.id), ms = document.getElementById('taskMilestoneInput').checked, aStart = document.getElementById('taskActualStartInput').value || null;
   const aEnd = ms ? aStart : (document.getElementById('taskActualFinishInput').value || null);
-  if (!isGroup && aStart && aEnd && dayNumber(aEnd) < dayNumber(aStart)) { showToast("Actual Finish can't be before Actual Start", true); return; }   // before anything is changed
+  if (!isGroup && aStart && aEnd && dayNumber(aEnd) < dayNumber(aStart)) { setTaskModalTab('general'); showToast("Actual Finish can't be before Actual Start", true); return; }   // before anything is changed
   filterPinned.add(t.id);
   const name = document.getElementById('taskNameInput').value.trim() || 'Untitled Task';
   t.name = name;
@@ -2765,6 +2979,7 @@ function saveTaskFromModal() {
   t.progress = Math.max(0, Math.min(100, parseInt(document.getElementById('taskProgressInput').value) || 0));
   t.resource = document.getElementById('taskResourceInput').value.trim().slice(0, 200);
   if (!isGroup) { t.actualStart = aStart; t.actualFinish = aEnd; }
+  { const cv = cleanCustomValues(readCustomInputs()); if (cv) t.custom = cv; else delete t.custom; }
   t.color = document.getElementById('taskColorSwatches').dataset.value || null;
   t.predecessors = editingPredecessors.filter(p => p.id);
   t.constraintType = document.getElementById('taskConstraintTypeInput').value;
@@ -3052,7 +3267,10 @@ function buildXlsx(opts) {
     id: ['ID', 6], mode: ['Mode', 10], wbs: ['WBS', 9], name: ['Task Name', 46], start: ['Start', 13], end: ['Finish', 13], actualStart: ['Actual Start', 13],
     actualFinish: ['Actual Finish', 13], duration: ['Duration', 12], progress: ['% Complete', 13], remaining: ['Remaining Duration', 13], status: ['Status', 13], preds: ['Predecessors', 18], resource: ['Resource', 22]
   };
-  const keys = opts.columns === 'all' ? ['id', ...DEFAULT_COL_ORDER] : ['id', ...visibleTaskCols()];
+  for (const id of Object.keys(CUSTOM_FIELDS)) XCOLS[id] = [customFieldName(id), { text: 22, number: 13, date: 13, flag: 9 }[CUSTOM_FIELDS[id].kind]];
+  // "All columns" adds the custom fields that are in use (renamed, or holding a value somewhere) — not twenty empty columns.
+  const customInUse = id => !!(project.fieldNames && project.fieldNames[id]) || tasks.some(t => customValue(t, id) !== undefined);
+  const keys = opts.columns === 'all' ? ['id', ...DEFAULT_COL_ORDER.filter(id => !isCustomField(id) || customInUse(id))] : ['id', ...visibleTaskCols()];
   const ncol = keys.length, colOf = k => keys.indexOf(k) + 1, lastCol = xlsxCol(ncol);
   keys.forEach((k, i) => tasksSheet.width(i + 1, i + 1, XCOLS[k][1]));
   tasksSheet.opts.freeze = { cols: colOf('name'), rows: 4 };       // frozen through the Task Name column, wherever it sits
@@ -3091,6 +3309,14 @@ function buildXlsx(opts) {
         case 'status': { const st = taskStatus(t.id); tasksSheet.cell(r, c, st, S({ h: 'center', bold: true, color: { 'Complete': '1A7F37', 'On Schedule': '0969DA', 'Late': 'CF222E', 'Future Task': DIM }[st] || DIM })); break; }
         case 'preds': tasksSheet.cell(r, c, predecessorLabel(t) || null, S({ h: 'left' })); break;
         case 'resource': tasksSheet.cell(r, c, (t.resource || '').trim() || null, S({ h: 'left' })); break;
+        default:
+          if (isCustomField(k)) {
+            const kind = CUSTOM_FIELDS[k].kind, v = customValue(t, k);
+            if (kind === 'date') dateCell(c, null, v || null);
+            else if (kind === 'number') tasksSheet.cell(r, c, v === undefined ? null : v, S({ h: 'center' }));
+            else if (kind === 'flag') tasksSheet.cell(r, c, v ? 'Yes' : 'No', S({ h: 'center' }));
+            else tasksSheet.cell(r, c, v || null, S({ h: 'left' }));
+          }
       }
     }
     tasksSheet.height(r, 19);
@@ -3661,7 +3887,7 @@ function openPlanModal(mode) {
   const input = document.getElementById('planNameInput');
   input.value = isNew ? uniquePlanName('New plan') : project.name;
   document.getElementById('planModalBg').classList.add('open');
-  requestAnimationFrame(() => { input.focus(); input.select(); });
+  setTimeout(() => { input.focus(); input.select(); }, 40);   // (not requestAnimationFrame: the dialog is still invisible then, so it can't take focus)
 }
 function closePlanModal() { document.getElementById('planModalBg').classList.remove('open'); }
 async function submitPlanModal() {
@@ -3829,6 +4055,7 @@ function wireGlobalEvents() {
   });
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
+    if (document.getElementById('fieldNameModalBg').classList.contains('open')) { closeFieldNameModal(); return; }   // only the topmost dialog: the task dialog underneath keeps its unsaved edits
     // Escape closes whatever overlay is open first; only when there is none — and
     // the user isn't typing in a field, where Escape already means "cancel this
     // edit" — does it clear the task selection.
