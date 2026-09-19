@@ -155,8 +155,8 @@ button:focus:not(:focus-visible) { outline: none; }
 .grid-row { border-bottom: 1px solid var(--border); font-size: 12.5px; cursor: default; }
 .grid-row:hover { background: var(--panel-2); }
 .grid-row.selected { background: color-mix(in srgb, var(--accent) 10%, var(--panel)); }
-.task-drag-handle { cursor: grab; }
-.task-drag-handle:active { cursor: grabbing; }
+.grid-row[draggable="true"] { cursor: grab; }
+.grid-row[draggable="true"]:active { cursor: grabbing; }
 .grid-row.dragging { opacity: .4; }
 .grid-row.drop-before { box-shadow: inset 0 2px 0 var(--accent); }
 .grid-row.drop-after { box-shadow: inset 0 -2px 0 var(--accent); }
@@ -472,7 +472,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
   <div class="modal wide">
     <div class="modal-header"><h2>Help</h2><button onclick="closeHelpModal()">&times;</button></div>
     <div class="modal-body help-body">
-      <div><div class="help-section-title">The basics</div>Add tasks with the + Add Task button. Each task has a start/end date, a % complete, and can be a milestone (a zero-duration diamond). Use Indent/Outdent to build a work breakdown structure — a parent task's own dates and progress roll up automatically from its children. Drag a task by its ID number to reorder it (a parent brings its sub-tasks along). Add Task inserts below the selected task, or at the bottom when nothing is selected; press Escape to clear the selection.</div>
+      <div><div class="help-section-title">The basics</div>Add tasks with the + Add Task button. Each task has a start/end date, a % complete, and can be a milestone (a zero-duration diamond). Use Indent/Outdent to build a work breakdown structure — a parent task's own dates and progress roll up automatically from its children. Drag a task's line up or down to reorder it (a parent brings its sub-tasks along). Add Task inserts below the selected task, or at the bottom when nothing is selected; press Escape to clear the selection.</div>
       <div><div class="help-section-title">Task Mode</div>Every task is either Manually Scheduled (pushpin) or Auto Scheduled (chart icon) — click the icon in the Task Mode column, or use the Task Mode field in a task's dialog. An Auto task follows its predecessors and constraints. A Manual task stays exactly where you put it: predecessors never move it, its Start, Finish and Duration can be free text such as "TBD", and a warning triangle appears if it starts earlier than its predecessors allow. Manual tasks are drawn with a dashed bar, and are left out of the critical path. Switching a task to Auto moves it to the earliest date its links allow. The "New tasks" button at the right of the toolbar chooses the mode new tasks start in (Manual, like MS Project, by default).</div>
       <div><div class="help-section-title">Dependencies</div>Open a task and add a predecessor to link it to another task (Finish-to-Start, Start-to-Start, Finish-to-Finish or Start-to-Finish). Give it a lead or lag in days: a positive number delays the dependent task (lag), a negative number lets it overlap and start early (lead) — e.g. "3FS+2" waits 2 extra days after task 3 finishes, "3FS-2" starts 2 days before task 3 finishes. Moving a task forward automatically pushes any dependent tasks forward too — it never pulls a task earlier on its own. A circular dependency is flagged with a warning icon and stops auto-scheduling for the tasks involved.</div>
       <div><div class="help-section-title">The Gantt chart</div>Drag a bar to reschedule it, drag its edges to resize, or drag the small circle on its right edge onto another task to create a dependency. Click a bar or row to edit it. The route icon in the toolbar highlights the critical path — the chain of tasks with zero slack that determines the overall project end date.</div>
@@ -1100,8 +1100,8 @@ function renderGrid() {
     const mi = taskModeInfo(t.taskMode);
     const modeCell = `<div class="grid-cell-dim task-mode-cell" style="text-align:center" title="${mi.label} — click to change" onclick="openTaskModeMenu(event,'${t.id}')"><i class="fa-solid ${mi.icon} mode-${t.taskMode}"></i></div>`;
     const mismatchDate = scheduleMismatch(t);
-    return `<div class="grid-row${t.id === selectedTaskId ? ' selected' : ''}" data-id="${t.id}" onclick="selectTask('${t.id}')" ondblclick="openTaskModal('${t.id}')" ondragover="dragOverTask(event,'${t.id}')" ondrop="dropOnTask(event,'${t.id}')">
-      <div class="grid-cell-dim task-drag-handle" draggable="true" ondragstart="dragStartTask(event,'${t.id}')" ondragend="dragEndTask()" title="Drag to reorder" style="text-align:center">${taskDisplayId(t.id)}</div>
+    return `<div class="grid-row${t.id === selectedTaskId ? ' selected' : ''}" data-id="${t.id}" onclick="selectTask('${t.id}')" ondblclick="openTaskModal('${t.id}')" draggable="${editingCell && editingCell.id === t.id ? 'false' : 'true'}" ondragstart="dragStartTask(event,'${t.id}')" ondragend="dragEndTask()" ondragover="dragOverTask(event,'${t.id}')" ondrop="dropOnTask(event,'${t.id}')">
+      <div class="grid-cell-dim" style="text-align:center">${taskDisplayId(t.id)}</div>
       ${modeCell}
       <div class="grid-name" style="padding-left:${depth * 16}px">
         <button class="chevron${summary ? '' : ' empty'}" onclick="event.stopPropagation();toggleCollapse('${t.id}')"><i class="fa-solid fa-chevron-${t.collapsed ? 'right' : 'down'}"></i></button>
@@ -1127,8 +1127,8 @@ function renderGrid() {
 function selectTask(id) { selectedTaskId = id; render(); }
 
 /* ---------------------- Drag-and-drop task reordering ---------------------- */
-// The ID cell is the drag handle (as MS Project's row number is); every row is a
-// drop target. Top half of a row = insert before it, bottom half = insert after
+// The whole row is the drag handle (and every row is a drop target), except while
+// one of its cells is being edited. Top half of a row = insert before it, bottom half = insert after
 // it — except that "after" an *expanded summary* is the slot directly under its
 // header, i.e. its first sub-task. Drop indicators are plain classes toggled on
 // the live row, never a re-render, which would destroy the drag mid-flight.
