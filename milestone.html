@@ -262,7 +262,7 @@ button:focus:not(:focus-visible) { outline: none; }
    suppresses the scrollbar UI and direct user-initiated scrolling. */
 .main.view-tasks .grid-rows { overflow-y: auto; }
 .main.view-tasks .grid-pane { width: auto; flex: 1; border-right: none; }
-.main.view-tasks .grid-header, .main.view-tasks .grid-row { grid-template-columns: var(--task-cols, 34px 24px minmax(160px,1fr) 116px 116px 96px 54px 1fr 82px); }   /* --task-cols is built from the visible columns in renderGrid() */
+.main.view-tasks .grid-header, .main.view-tasks .grid-row { grid-template-columns: var(--task-cols, 34px 24px minmax(160px,1fr) 116px 116px 96px 54px 1fr 88px); }   /* --task-cols is built from the visible columns in renderGrid() */
 .main.view-tasks .grid-header > div, .main.view-tasks .grid-row > div { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .main.view-tasks .gantt-pane-outer { display: none; }
 /* Tasks view: a fine vertical line between the columns, in the same colour as the divider between list and chart in the Gantt view.
@@ -334,6 +334,8 @@ input.inline-edit[type=date]::-webkit-calendar-picker-indicator { margin: 0 0 0 
 .inline-date-hidden { position: absolute; right: 0; bottom: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 .grid-actions { display: flex; gap: 2px; justify-content: flex-end; }
 .grid-actions .icon-btn { width: 24px; height: 24px; font-size: 12px; opacity: 0; }
+.main.view-tasks .grid-actions { justify-content: flex-start; padding-left: 2px; }   /* the first icon's glyph starts at 2 + 6 = 8px, under the header label */
+.main.view-tasks .grid-header > .actions-head { padding-left: 8px; }
 .grid-row:hover .grid-actions .icon-btn { opacity: 1; }
 
 .empty-state { padding: 60px 24px; text-align: center; color: var(--text-dim); }
@@ -1955,7 +1957,7 @@ function predecessorLabel(t) {
 }
 
 // Positions of the column lines (Tasks view): the middle of every gap between two tracks, read from the resolved grid tracks of the
-// header and of the first row (they can differ by a scrollbar): on the boundary between two tracks (the last pixel of the left cell). No line before the row-actions column at the far right.
+// header and of the first row (they can differ by a scrollbar): on every boundary between two tracks (the last pixel of the left cell), the one before the row-actions column included.
 function updateColumnLines() {
   const main = document.getElementById('main');
   const set = (suffix, el) => {
@@ -1965,7 +1967,7 @@ function updateColumnLines() {
       const tracks = cs.gridTemplateColumns.split(' ').map(parseFloat).filter(Number.isFinite);
       const gap = parseFloat(cs.columnGap) || 0, pad = parseFloat(cs.paddingLeft) || 0;
       const xs = []; let x = pad;
-      for (let i = 0; i < tracks.length - 2; i++) { x += tracks[i]; xs.push(Math.floor(x + gap / 2 - 0.5)); x += gap; }
+      for (let i = 0; i < tracks.length - 1; i++) { x += tracks[i]; xs.push(Math.floor(x + gap / 2 - 0.5)); x += gap; }
       if (xs.length) {
         images = xs.map(() => 'linear-gradient(var(--border), var(--border))').join(', ');
         positions = xs.map(v => `${v}px 0`).join(', ');
@@ -1991,8 +1993,8 @@ function renderGrid() {
     preds: colHeadHtml('Predecessors', 'preds'), resource: colHeadHtml('Resource', 'resource'),
     ...Object.fromEntries(Object.keys(CUSTOM_FIELDS).map(id => [id, colHeadHtml(customFieldName(id), id)]))
   };
-  document.getElementById('main').style.setProperty('--task-cols', ['34px', ...cols.map(c => TASK_COLS[c].width), '82px'].join(' '));
-  document.getElementById('gridHeader').innerHTML = `<div class="id-head"><button class="id-toggle" id="collapseToggleBtn" onclick="toggleAllCollapsed()"><i class="fa-solid fa-angles-up"></i></button></div>${cols.map(c => HEAD[c]).join('')}${full ? '<div></div>' : ''}`;
+  document.getElementById('main').style.setProperty('--task-cols', ['34px', ...cols.map(c => TASK_COLS[c].width), '88px'].join(' '));
+  document.getElementById('gridHeader').innerHTML = `<div class="id-head"><button class="id-toggle" id="collapseToggleBtn" onclick="toggleAllCollapsed()"><i class="fa-solid fa-angles-up"></i></button></div>${cols.map(c => HEAD[c]).join('')}${full ? '<div class="actions-head">Actions</div>' : ''}`;
   const list = visibleTaskList();
   const el = document.getElementById('gridRows');
   if (list.length === 0 && filtersActive() && tasks.length) { el.innerHTML = filterEmptyHtml(); return; }
