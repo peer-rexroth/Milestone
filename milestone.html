@@ -316,6 +316,15 @@ input.inline-edit { width: 100%; min-width: 0; padding: 3px 6px; border: 1px sol
 .dropdown-item.active { background: color-mix(in srgb, var(--accent) 10%, var(--panel)); }
 .dropdown-item .mode-check { margin-left: auto; color: var(--accent); }
 .subbar-spacer { flex: 1 1 auto; }
+.dropdown-item .item-hint { margin-left: auto; padding-left: 14px; color: var(--text-faint); font-size: 11.5px; }
+.cal-days { display: flex; flex-wrap: wrap; gap: 6px; }
+.cal-day { position: relative; cursor: pointer; }
+.cal-day input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.cal-day span { display: inline-block; min-width: 44px; padding: 6px 0; text-align: center; border: 1px solid var(--border); border-radius: 6px; background: var(--panel); color: var(--text-dim); font-size: 12.5px; font-weight: 600; }
+.cal-day input:checked + span { background: var(--accent); border-color: var(--accent); color: #fff; }
+.cal-day input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.cal-hint { font-size: 12.5px; color: var(--text-dim); margin: 12px 0 0; line-height: 1.5; }
+.gantt-nonwork { position: absolute; top: 0; background: color-mix(in srgb, var(--text) 5%, transparent); pointer-events: none; }
 .grid-name .mismatch-warn { color: var(--task-amber); flex-shrink: 0; font-size: 11px; }
 .inline-wrap { position: relative; display: flex; align-items: center; }
 .inline-wrap .inline-edit { padding-right: 20px; }
@@ -548,7 +557,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
       </div>
       <div class="pred-empty hidden" id="taskTextDatesNote"></div>
       <div class="field-row" id="taskDurProgRow">
-        <div class="field" id="taskDurationField"><label>Duration (days)</label><input type="number" min="1" id="taskDurationInput" onchange="onTaskDurationChange()"></div>
+        <div class="field" id="taskDurationField"><label title="Working days, counted on the plan's working calendar">Duration (days)</label><input type="number" min="1" id="taskDurationInput" onchange="onTaskDurationChange()"></div>
         <div class="field"><label>% Complete</label><input type="number" min="0" max="100" id="taskProgressInput"></div>
       </div>
       <div class="field-row">
@@ -695,6 +704,21 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
   </div>
 </div>
 
+<div class="modal-bg" id="calendarModalBg" onclick="if(event.target===this) closeCalendarModal()">
+  <div class="modal narrow">
+    <div class="modal-header"><h2>Working calendar</h2><button onclick="closeCalendarModal()">&times;</button></div>
+    <div class="modal-body">
+      <div class="field"><label>Working days of “<span id="calendarPlanName"></span>”</label>
+        <div class="cal-days" id="calendarDays"></div></div>
+      <p class="cal-hint">Durations, lags and dependencies count working days only. Auto Scheduled tasks start and finish on working days; Manually Scheduled tasks keep the dates you give them. Days off are shaded in the Gantt chart. Dates already in the plan are not moved when you change this, and other plans keep their own calendar.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeCalendarModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCalendar()">Save</button>
+    </div>
+  </div>
+</div>
+
 <!-- Help modal -->
 <div class="modal-bg" id="helpModalBg" onclick="if(event.target===this) closeHelpModal()">
   <div class="modal wide">
@@ -702,7 +726,8 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
     <div class="modal-body help-body">
       <div><div class="help-section-title">The basics</div>Add tasks with the + Add Task button. Each task has a start/end date, a % complete, and can be a milestone (a zero-duration diamond). Use Indent/Outdent to build a work breakdown structure — a parent task's own dates and progress roll up automatically from its children. Drag a task's line up or down to reorder it (a parent brings its sub-tasks along). Add Task inserts below the selected task, or at the bottom when nothing is selected; press Escape to clear the selection. The <strong>Clone</strong> button (on a task's line, and in the toolbar for the selected task) makes an exact copy right below it — including all its sub-tasks and their sub-tasks — and Undo takes it back. The double arrow above the ID numbers steps through the outline: click it to collapse every group, then again to open the first level, again for the next level, and so on until everything is open — then it starts over.</div>
       <div><div class="help-section-title">Filtering</div>Click the funnel in a column header (Task Mode, Task Name, Start, Finish, Duration, %, Predecessors) for an Excel-style filter. Each column offers what fits its data: dates get rules (equals, before, after, between, or relative to today such as this week, next month or year to date) and a Year › Month › Day list; text columns get contains / begins with / ends with / equals and their negatives; numbers get equals, greater or less than, and between. Every column also has a list of its values to tick, with a search box and (Blanks) for tasks that have no value. Filters on several columns combine, so a task must match all of them. A group stays visible while any sub-task inside it matches, and stays open while a filter is on. The bar under the toolbar shows what is filtered and how many tasks are showing; click × on a chip, or Clear all, to remove it. Filters are only for looking — they aren't saved, and a task you add or edit stays visible until you filter again.</div>Click the funnel next to Start or Finish (in either view) for an Excel-style filter: pick a rule (equals, before, after, between, or relative to today such as this week, next month or year to date), or tick individual dates in the Year › Month › Day list — type in the search box to narrow it, and use (Blanks) for tasks without a real date. The two columns combine, so a task must match both. A group stays visible while any sub-task inside it matches, and stays open while a filter is on. The bar under the toolbar shows what is filtered and how many tasks are showing; click × on a chip, or Clear all, to remove it. Filters are only for looking — they aren't saved, and a task you add or edit stays visible until you filter again.</div>
-      <div><div class="help-section-title">Columns and extra fields</div>Besides name, dates, duration, % and predecessors, a task can carry a <strong>Resource</strong> (who does the work), an <strong>Actual Start</strong> and <strong>Actual Finish</strong> (what really happened, kept separate from the plan; recording an Actual Finish marks the task 100% complete and fills an empty Actual Start), and has a <strong>WBS</strong> code such as 2.1.3 that is worked out from the outline (shown by default). <strong>Remaining Duration</strong> (the duration still to go, from % complete) and <strong>Status</strong> (Complete, On Schedule, Late or Future Task, judged against today) are worked out for you too. Resource, Actual Start/Finish, Remaining Duration and Status aren't shown by default: click <strong>Columns</strong> in the toolbar (Tasks view) to tick the columns you want and reorder them; your choice is remembered on this device. Click a Resource or actual-date cell to edit it, or use the task dialog. A group shows the actual dates of the tasks in it (its earliest actual start, and an actual finish once everything in it has finished). The tasks that <strong>depend</strong> on a task are scheduled from what really happened: from its actual dates once it has them, and a task that has started but not finished is expected to finish its planned duration after the day it really started (a late start pushes its successors later).</div>
+      <div><div class="help-section-title">Working calendar</div>Each plan has its own working days — Monday to Friday unless you change it (plan menu → <strong>Working calendar…</strong>). Durations, lags and dependencies count working days only, so a 5-day task that starts on a Monday finishes on that Friday and its successor starts the next Monday. Auto Scheduled tasks start and finish on working days (a date you type or drag to on a day off moves to the nearest working day); Manually Scheduled tasks keep exactly the dates you give them. Days off are shaded in the Gantt chart. Changing the calendar never moves dates that are already in the plan.</div>
+      <div><div class="help-section-title">Columns and extra fields</div>Besides name, dates, duration, % and predecessors, a task can carry a <strong>Resource</strong> (who does the work), an <strong>Actual Start</strong> and <strong>Actual Finish</strong> (what really happened, kept separate from the plan; recording an Actual Finish marks the task 100% complete and fills an empty Actual Start), and has a <strong>WBS</strong> code such as 2.1.3 that is worked out from the outline (shown by default). <strong>Remaining Duration</strong> (the duration still to go, from % complete) and <strong>Status</strong> (Complete, On Schedule, Late or Future Task, judged against today) are worked out for you too. Resource, Actual Start/Finish, Remaining Duration and Status aren't shown by default: click <strong>Columns</strong> in the toolbar (Tasks view) to tick the columns you want and reorder them; your choice is remembered on this device. Click a Resource or actual-date cell to edit it, or use the task dialog. A group shows the actual dates of the tasks in it (its earliest actual start, and an actual finish once everything in it has finished). The tasks that <strong>depend</strong> on a task are scheduled from what really happened: from its actual dates once it has them, and a task that has started but not finished is expected to finish its planned duration after the day it really started (a late start pushes its successors later). A task that has itself already started or finished (it has an actual date) is not rescheduled any more: its planned dates stay as they are, and a warning triangle appears if its predecessors say it couldn't have started yet.</div>
       <div><div class="help-section-title">Custom fields</div>Every task can carry up to 20 fields of your own: <strong>Text1–5</strong>, <strong>Number1–5</strong>, <strong>Date1–5</strong> and <strong>Flag1–5</strong> (a yes/no tick). Fill them in on the task dialog's <strong>Custom fields</strong> tab, or — once you have ticked them under <strong>Columns</strong>, where they start hidden — straight in the list (click a cell; a flag toggles). Use the pencil beside a field to rename it, for instance Text1 to <em>Cost centre</em>: the name is saved with the plan, so another plan can call the same field something else. Custom fields can be filtered like any column and are included in the Excel export.</div>
       <div><div class="help-section-title">Task Mode</div>Every task is either Manually Scheduled (pushpin) or Auto Scheduled (chart icon) — click the icon in the Task Mode column, or use the Task Mode field in a task's dialog. An Auto task follows its predecessors and constraints. A Manual task stays exactly where you put it: predecessors never move it, its Start, Finish and Duration can be free text such as "TBD", and a warning triangle appears if it starts earlier than its predecessors allow. Manual tasks are drawn with a dashed bar, and are left out of the critical path. Switching a task to Auto moves it to the earliest date its links allow. The "New tasks" button at the right of the toolbar chooses the mode new tasks start in (Auto Scheduled by default).</div>
       <div><div class="help-section-title">Dependencies</div>Open a task and add a predecessor to link it to another task (Finish-to-Start, Start-to-Start, Finish-to-Finish or Start-to-Finish). Give it a lead or lag in days: a positive number delays the dependent task (lag), a negative number lets it overlap and start early (lead) — e.g. "3FS+2" waits 2 extra days after task 3 finishes, "3FS-2" starts 2 days before task 3 finishes. Moving a task forward automatically pushes any dependent tasks forward too — it never pulls a task earlier on its own. A circular dependency is flagged with a warning icon and stops auto-scheduling for the tasks involved.</div>
@@ -909,7 +934,54 @@ function parseLocalDate(iso) { return new Date(iso + 'T00:00:00'); }
 function dayNumber(iso) { const [y, m, d] = iso.split('-').map(Number); return Math.floor(Date.UTC(y, m - 1, d) / DAY_MS); }
 function dayNumberToIso(n) { const d = new Date(n * DAY_MS); return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}`; }
 function addDays(iso, n) { return dayNumberToIso(dayNumber(iso) + n); }
-function durationDays(startIso, endIso) { return dayNumber(endIso) - dayNumber(startIso) + 1; }
+/* ============================ Working calendar ==============================
+   Per plan: project.workDays lists the weekdays (0 = Sunday … 6 = Saturday) on which work happens; absent = Monday–Friday.
+   Durations, lags and dependencies count WORKING days; Auto Scheduled tasks start and finish on working days. Everything is
+   done on UTC day numbers, so two devices in different timezones agree. */
+const DEFAULT_WORK_DAYS = [1, 2, 3, 4, 5];
+let calListRef, calSet = new Set(DEFAULT_WORK_DAYS);
+function workDaySet() {   // cached by the identity of project.workDays (it is only ever replaced, never edited in place)
+  const list = project && Array.isArray(project.workDays) && project.workDays.length ? project.workDays : null;
+  if (list !== calListRef) { calListRef = list; calSet = new Set(list || DEFAULT_WORK_DAYS); }
+  return calSet;
+}
+function weekdayOf(n) { return ((n + 4) % 7 + 7) % 7; }   // day number -> 0 = Sunday (1970-01-01 was a Thursday)
+function isWorkNum(n) { return workDaySet().has(weekdayOf(n)); }
+function nextWorkNum(n) { while (!isWorkNum(n)) n++; return n; }   // on or after
+function prevWorkNum(n) { while (!isWorkNum(n)) n--; return n; }   // on or before
+function addWorkNum(n, k) {   // n is a working day; move |k| working days forward (k > 0) or back (k < 0)
+  if (!k) return n;
+  const dir = k > 0 ? 1 : -1, per = workDaySet().size;
+  let left = Math.abs(k);
+  const weeks = Math.floor(left / per); n += dir * weeks * 7; left -= weeks * per;   // a whole week of working days is exactly 7 calendar days
+  while (left > 0) { n += dir; if (isWorkNum(n)) left--; }
+  return n;
+}
+function countWorkNum(a, b) {   // working days in [a, b], both ends included
+  if (b < a) return 0;
+  const weeks = Math.floor((b - a + 1) / 7);
+  let c = weeks * workDaySet().size;
+  for (let n = a + weeks * 7; n <= b; n++) if (isWorkNum(n)) c++;
+  return c;
+}
+function isWorkDay(iso) { return isWorkNum(dayNumber(iso)); }
+function nextWorkDay(iso) { return dayNumberToIso(nextWorkNum(dayNumber(iso))); }
+function prevWorkDay(iso) { return dayNumberToIso(prevWorkNum(dayNumber(iso))); }
+// Move k working days from iso — first to the working day on or after it, then k working days (k may be negative, a lead).
+function shiftWork(iso, k) { return dayNumberToIso(addWorkNum(nextWorkNum(dayNumber(iso)), k)); }
+// A task's duration = the working days from start to finish inclusive (never less than 1, even for a legacy task that sits
+// entirely on non-working days). finishFor() is its inverse: the finish of a task that starts on/after `startIso`.
+function durationDays(startIso, endIso) { return Math.max(1, countWorkNum(dayNumber(startIso), dayNumber(endIso))); }
+function finishFor(startIso, dur) { return shiftWork(startIso, Math.max(1, dur) - 1); }
+const WEEKDAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], WEEKDAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
+function currentWorkDays() { return [...workDaySet()].sort((a, b) => a - b); }
+function calendarLabel(days = currentWorkDays()) {
+  const key = days.join('');
+  if (key === '12345') return 'Mon–Fri';
+  if (key === '123456') return 'Mon–Sat';
+  if (key === '0123456') return 'Every day';
+  return WEEKDAY_ORDER.filter(d => days.includes(d)).map(d => WEEKDAY_NAMES[d]).join(', ');
+}
 function fmtDuration(n) { return `${n} day${n === 1 ? '' : 's'}`; }
 function fmtDate(iso) { if (!iso) return ''; const d = parseLocalDate(iso); return `${pad2(d.getDate())}.${pad2(d.getMonth() + 1)}.${d.getFullYear()}`; }
 function fmtDateY(iso) { if (!iso) return ''; return parseLocalDate(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }); }
@@ -1157,6 +1229,11 @@ function normalizeData() {
   if (!project || typeof project !== 'object') project = { name: 'My Project', updatedAt: 0 };
   if (typeof project.name !== 'string' || !project.name.trim()) project.name = 'My Project';
   if (typeof project.updatedAt !== 'number') project.updatedAt = 0;
+  {   // the working calendar: distinct weekdays 0-6; nothing stored when it is the default Mon-Fri (or unusable)
+    const wd = Array.isArray(project.workDays) ? [...new Set(project.workDays.map(Number).filter(n => Number.isInteger(n) && n >= 0 && n <= 6))].sort((a, b) => a - b) : [];
+    if (wd.length && wd.join() !== DEFAULT_WORK_DAYS.join()) { if (!Array.isArray(project.workDays) || project.workDays.join() !== wd.join()) project.workDays = wd; }
+    else delete project.workDays;
+  }
   {   // custom field names: only known fields, trimmed, and only those that differ from the default
     const names = {};
     if (project.fieldNames && typeof project.fieldNames === 'object') for (const [id, f] of Object.entries(CUSTOM_FIELDS)) {
@@ -1334,7 +1411,7 @@ function taskCycleSet() {
 function linkStart(pred) { return pred.actualStart || pred.startDate; }
 function linkEnd(pred) {
   if (pred.actualFinish) return pred.actualFinish;
-  if (pred.actualStart) return addDays(pred.actualStart, durationDays(pred.startDate, pred.endDate) - 1);
+  if (pred.actualStart) return finishFor(pred.actualStart, durationDays(pred.startDate, pred.endDate));
   return pred.endDate;
 }
 // Recording an Actual Finish completes the task (MS Project does the same): 100% complete, and an empty Actual Start is
@@ -1355,10 +1432,11 @@ function constraintStart(task, includeConstraint = true) {
     if (!pred || isUnscheduled(pred)) continue;
     const lag = p.lag || 0;
     let c;
-    if (p.type === 'SS') c = addDays(linkStart(pred), lag);
-    else if (p.type === 'FF') c = addDays(linkEnd(pred), lag - (dur - 1));
-    else if (p.type === 'SF') c = addDays(linkStart(pred), lag - (dur - 1));
-    else c = addDays(linkEnd(pred), 1 + lag); // FS, default
+    // Lags and leads are WORKING days (a lead is negative); every result is a working day.
+    if (p.type === 'SS') c = shiftWork(linkStart(pred), lag);
+    else if (p.type === 'FF') c = shiftWork(shiftWork(linkEnd(pred), lag), -(dur - 1));
+    else if (p.type === 'SF') c = shiftWork(shiftWork(linkStart(pred), lag), -(dur - 1));
+    else c = shiftWork(addDays(linkEnd(pred), 1), lag); // FS, default: the working day after the predecessor's finish, plus the lag
     if (cs === null || dayNumber(c) > dayNumber(cs)) cs = c;
   }
   // A task's own MSO/SNET/MFO/FNET constraint is a lower bound exactly like
@@ -1370,7 +1448,7 @@ function constraintStart(task, includeConstraint = true) {
   // gives an over-constrained schedule via its own conflict indicator.
   const cinfo = constraintTypeInfo(task.constraintType);
   if (includeConstraint && task.constraintDate && (cinfo.bound === 'lower' || cinfo.bound === 'exact')) {
-    const c = cinfo.basis === 'finish' ? addDays(task.constraintDate, -(dur - 1)) : task.constraintDate;
+    const c = cinfo.basis === 'finish' ? shiftWork(task.constraintDate, -(dur - 1)) : shiftWork(task.constraintDate, 0);
     if (cs === null || dayNumber(c) > dayNumber(cs)) cs = c;
   }
   return cs;
@@ -1389,13 +1467,34 @@ function constraintViolated(task) {
   if (cinfo.bound === 'upper') return have > want;
   return false; // lower bounds are enforced by constraintStart()'s cascade, never violated in steady state
 }
-// MS Project's schedule warning for a manually scheduled task: its links say
-// it can't start before this date, but it's placed earlier. Returns that
-// date (what Auto Scheduled would use), or null when nothing's inconsistent.
+// An Auto Scheduled task starts and finishes on working days: a start on a day off moves to the next working day, a finish on a
+// day off back to the previous one (never before the start). Manual tasks keep exactly the dates they were given. Returns true
+// when something moved.
+function snapToWorkDays(t) {
+  if (t.taskMode === 'manual' || hasChildren(t.id) || isUnscheduled(t)) return false;
+  const s0 = t.startDate, e0 = t.endDate;
+  if (!isWorkDay(t.startDate)) t.startDate = nextWorkDay(t.startDate);
+  if (t.milestone) t.endDate = t.startDate;
+  else {
+    if (!isWorkDay(t.endDate)) t.endDate = prevWorkDay(t.endDate);
+    if (dayNumber(t.endDate) < dayNumber(t.startDate)) t.endDate = t.startDate;
+  }
+  return t.startDate !== s0 || t.endDate !== e0;
+}
+// A task that has started or finished (it has an Actual Start / Actual Finish) is history: what happened is recorded in its actual
+// dates, and scheduling never moves its planned dates any more (see cascadeSchedule / applyConstraints / rescheduleAsAuto) — only
+// its not-yet-started successors follow it, off those actual dates. The user can still edit its planned dates by hand.
+function isStarted(t) { return !!(t.actualStart || t.actualFinish); }
+// MS Project's schedule warning: a task that is NOT going to be moved by the scheduler — a manually scheduled one, or one that has
+// already started — sits earlier than its links allow. Returns the date its predecessors say it could start at the earliest (what
+// Auto Scheduling would use), or null when nothing's inconsistent. A started task is judged on the day it REALLY started.
 function scheduleMismatch(t) {
-  if (t.taskMode !== 'manual' || hasChildren(t.id) || isUnscheduled(t)) return null;
+  if (hasChildren(t.id) || isUnscheduled(t)) return null;
+  const started = isStarted(t);
+  if (t.taskMode !== 'manual' && !started) return null;
   const cs = constraintStart(t, false);
-  return cs && dayNumber(cs) > dayNumber(t.startDate) ? cs : null;
+  const have = started ? (t.actualStart || t.startDate) : t.startDate;
+  return cs && dayNumber(cs) > dayNumber(have) ? cs : null;
 }
 // Only ever pushes a dependent task LATER, never pulls one earlier — a
 // manual placement ahead of its own constraint is left alone (surfaced as
@@ -1414,12 +1513,12 @@ function cascadeSchedule(changedId) {
     const id = queue.shift();
     if (cyclic.has(id) || hasChildren(id)) continue;
     const task = byId(id);
-    if (!task || task.taskMode === 'manual') continue;
+    if (!task || task.taskMode === 'manual' || isStarted(task)) continue;   // a manual task and a task that has already started keep their planned dates
     const cs = constraintStart(task);
     if (cs && dayNumber(cs) > dayNumber(task.startDate)) {
       const dur = durationDays(task.startDate, task.endDate);
       task.startDate = cs;
-      task.endDate = addDays(cs, dur - 1);
+      task.endDate = finishFor(cs, dur);
       task.updatedAt = Date.now();
       for (const s of (succ[id] || [])) queue.push(s.id);
     }
@@ -1432,12 +1531,12 @@ function cascadeSchedule(changedId) {
 function applyConstraints(taskId) {
   const cyclic = taskCycleSet();
   const task = byId(taskId);
-  if (!cyclic.has(taskId) && !hasChildren(taskId) && task && task.taskMode !== 'manual') {
+  if (!cyclic.has(taskId) && !hasChildren(taskId) && task && task.taskMode !== 'manual' && !isStarted(task)) {
     const cs = constraintStart(task);
     if (cs && dayNumber(cs) > dayNumber(task.startDate)) {
       const dur = durationDays(task.startDate, task.endDate);
       task.startDate = cs;
-      task.endDate = addDays(cs, dur - 1);
+      task.endDate = finishFor(cs, dur);
       task.updatedAt = Date.now();
     }
   }
@@ -2062,7 +2161,7 @@ function renderGrid() {
         <button class="chevron${summary ? '' : ' empty'}" onclick="event.stopPropagation();toggleCollapse('${t.id}')"><i class="fa-solid fa-chevron-${t.collapsed && !filtersActive() ? 'right' : 'down'}"></i></button>
         ${t.milestone ? '<i class="fa-solid fa-diamond milestone-dot" style="font-size:9px"></i>' : ''}
         ${cyclic.has(t.id) ? '<i class="fa-solid fa-triangle-exclamation cycle-warn" title="Circular dependency — not auto-scheduled"></i>' : ''}
-        ${mismatchDate ? `<i class="fa-solid fa-triangle-exclamation mismatch-warn" title="Manually scheduled and starts before its predecessors allow — Auto Scheduled it would start ${fmtDate(mismatchDate)}"></i>` : ''}
+        ${mismatchDate ? `<i class="fa-solid fa-triangle-exclamation mismatch-warn" title="${t.taskMode === 'manual' ? `Manually scheduled and starts before its predecessors allow — Auto Scheduled it would start ${fmtDate(mismatchDate)}` : `Started before its predecessors allow — they say no earlier than ${fmtDate(mismatchDate)}. Tasks that have started or finished are not rescheduled`}"></i>` : ''}
         ${t.constraintType !== 'ASAP' ? `<i class="fa-solid fa-calendar-day constraint-icon${constraintViolated(t) ? ' violated' : ''}" title="${escapeHtml(constraintTypeInfo(t.constraintType).label)}${t.constraintDate ? ' (' + fmtDate(t.constraintDate) + ')' : ''}${manual ? ' — ignored while manually scheduled' : ''}${constraintViolated(t) ? ' — constraint not met' : ''}"></i>` : ''}
         ${nameCell}
       </div>`,
@@ -2281,14 +2380,15 @@ function updateCollapseButtons() {
 // against, so it keeps its dates.
 function rescheduleAsAuto(t) {
   t.startText = t.endText = t.durText = null;
-  if (!hasChildren(t.id) && !taskCycleSet().has(t.id)) {
+  if (!hasChildren(t.id) && !taskCycleSet().has(t.id) && !isStarted(t)) {
     const cs = constraintStart(t);
     if (cs) {
       const dur = t.milestone ? 1 : durationDays(t.startDate, t.endDate);
       t.startDate = cs;
-      t.endDate = addDays(cs, dur - 1);
+      t.endDate = finishFor(cs, dur);
     }
   }
+  snapToWorkDays(t);   // no links to place it by: it still has to start and finish on working days
   t.updatedAt = Date.now();
   cascadeSchedule(t.id);
 }
@@ -2417,15 +2517,16 @@ function commitInlineEdit(id, field, rawValue) {
       // Anything that isn't a date — including blank — is kept as free text.
       if (isStart) t.startText = val.slice(0, 60); else t.endText = val.slice(0, 60);
     }
+    if (snapToWorkDays(t)) showToast(`Moved to a working day — this plan works ${calendarLabel()}`);
     applyConstraints(id);
   } else if (field === 'duration') {
     if (manual) {
       const n = /^\d+$/.test(val) ? parseInt(val, 10) : NaN;
-      if (Number.isFinite(n) && n >= 1 && !isUnscheduled(t) && !t.milestone) { t.endDate = addDays(t.startDate, n - 1); t.durText = null; }
+      if (Number.isFinite(n) && n >= 1 && !isUnscheduled(t) && !t.milestone) { t.endDate = finishFor(t.startDate, n); t.durText = null; }
       else t.durText = val.slice(0, 60);
     } else {
       const d = parseInt(val, 10);
-      if (Number.isFinite(d) && d >= 1 && !t.milestone) t.endDate = addDays(t.startDate, d - 1);
+      if (Number.isFinite(d) && d >= 1 && !t.milestone) { snapToWorkDays(t); t.endDate = finishFor(t.startDate, d); }
     }
     applyConstraints(id);
   } else if (isCustomField(field)) {
@@ -2572,6 +2673,14 @@ function renderGantt() {
     const top = idx * ROW_H;
     html += `<div class="gantt-row-bg${t.id === selectedTaskId ? ' selected' : ''}" style="top:${top}px;width:${totalW}px" data-row-id="${t.id}"></div>`;
   });
+  if (px >= 4 && workDaySet().size < 7) {   // shade the days off (not at Year zoom: 1.5px a day would just be noise)
+    for (let n = dateRange.start; n < dateRange.end;) {
+      if (isWorkNum(n)) { n++; continue; }
+      let m = n; while (m + 1 < dateRange.end && !isWorkNum(m + 1)) m++;
+      html += `<div class="gantt-nonwork" style="left:${(n - dateRange.start) * px}px;width:${(m - n + 1) * px}px;height:${totalH}px"></div>`;
+      n = m + 1;
+    }
+  }
   html += `<div class="gantt-today-line" style="left:${todayLeft}px;height:${totalH}px" title="Today"></div>`;
 
   list.forEach(({ task: t }, idx) => {
@@ -2668,6 +2777,11 @@ function onDragMouseMove(event) {
     newStart = addDays(dragState.origStart, deltaDays);
     if (dayNumber(newStart) > dayNumber(newEnd)) newStart = newEnd;
   }
+  if (t.taskMode !== 'manual') {   // an Auto Scheduled task lands on working days
+    if (dragState.mode === 'move') { newStart = nextWorkDay(newStart); newEnd = t.milestone ? newStart : finishFor(newStart, durationDays(dragState.origStart, dragState.origEnd)); }
+    else if (dragState.mode === 'resize-right') { newEnd = prevWorkDay(newEnd); if (dayNumber(newEnd) < dayNumber(newStart)) newEnd = newStart; }
+    else { newStart = nextWorkDay(newStart); if (dayNumber(newStart) > dayNumber(newEnd)) newStart = newEnd; }
+  }
   const geom = barGeom[t.id];
   if (!geom) return;
   const left = (dayNumber(newStart) - dateRange.start) * px;
@@ -2750,9 +2864,10 @@ function addTask() {
     parentId = sel.parentId || null;
     insertAt = childrenOf(parentId).findIndex(s => s.id === sel.id) + 1;
   }
+  const firstDay = project.newTaskMode === 'manual' ? todayStr() : nextWorkDay(todayStr());   // an Auto task starts on a working day
   const t = {
     id: genId(), name: '', parentId, order: insertAt,
-    startDate: todayStr(), endDate: todayStr(), progress: 0, milestone: false,
+    startDate: firstDay, endDate: firstDay, progress: 0, milestone: false,
     color: null, predecessors: [], collapsed: false, updatedAt: Date.now(),
     constraintType: 'ASAP', constraintDate: null, taskMode: project.newTaskMode === 'manual' ? 'manual' : 'auto',
     resource: '', actualStart: null, actualFinish: null
@@ -2943,6 +3058,25 @@ function updateModalComputed() {
 // another plan keeps its own. It has to be unique among the custom fields and the standard columns, or two columns would
 // look the same.
 let fieldNameTarget = null;
+function openCalendarModal() {
+  closePlanMenu();
+  document.getElementById('calendarPlanName').textContent = project.name;
+  const on = workDaySet();
+  document.getElementById('calendarDays').innerHTML = WEEKDAY_ORDER.map(d =>
+    `<label class="cal-day"><input type="checkbox" value="${d}"${on.has(d) ? ' checked' : ''}><span>${WEEKDAY_NAMES[d]}</span></label>`).join('');
+  document.getElementById('calendarModalBg').classList.add('open');
+  setTimeout(() => { const i = document.querySelector('#calendarDays input'); if (i) i.focus(); }, 40);
+}
+function closeCalendarModal() { document.getElementById('calendarModalBg').classList.remove('open'); }
+function saveCalendar() {
+  const days = [...document.querySelectorAll('#calendarDays input:checked')].map(i => Number(i.value)).sort((a, b) => a - b);
+  if (!days.length) { showToast('Pick at least one working day', true); return; }
+  if (days.join() === currentWorkDays().join()) { closeCalendarModal(); return; }
+  project.workDays = days; project.updatedAt = Date.now();
+  normalizeData();   // drops it again if it is the default
+  save(); render(); closeCalendarModal();
+  showToast(`Working calendar: ${calendarLabel()}`);
+}
 function openFieldNameModal(id) {
   fieldNameTarget = id;
   const f = CUSTOM_FIELDS[id], overridden = !!(project.fieldNames && project.fieldNames[id]);
@@ -3025,8 +3159,10 @@ function onMilestoneToggle() {
   document.getElementById('taskActualFinishField').classList.toggle('hidden', on);   // a milestone has one date, planned and actual
   if (on) document.getElementById('taskEndInput').value = document.getElementById('taskStartInput').value;
 }
+const dialogIsAuto = () => document.getElementById('taskModeInput').value === 'auto';
 function onTaskStartChange() {
-  const s = document.getElementById('taskStartInput').value; if (!s) return;
+  let s = document.getElementById('taskStartInput').value; if (!s) return;
+  if (dialogIsAuto() && !isWorkDay(s)) { s = nextWorkDay(s); document.getElementById('taskStartInput').value = s; }   // an Auto task starts on a working day
   const endEl = document.getElementById('taskEndInput');
   if (document.getElementById('taskMilestoneInput').checked) endEl.value = s;
   else if (!endEl.value || dayNumber(endEl.value) < dayNumber(s)) endEl.value = s;
@@ -3035,13 +3171,15 @@ function onTaskStartChange() {
 function onTaskEndChange() {
   const s = document.getElementById('taskStartInput').value;
   const endEl = document.getElementById('taskEndInput');
+  if (endEl.value && dialogIsAuto() && !isWorkDay(endEl.value)) endEl.value = prevWorkDay(endEl.value);   // ...and finishes on one
   if (dayNumber(endEl.value) < dayNumber(s)) endEl.value = s;
   updateDurationDisplay();
 }
 function onTaskDurationChange() {
   const d = Math.max(1, parseInt(document.getElementById('taskDurationInput').value) || 1);
-  const s = document.getElementById('taskStartInput').value;
-  document.getElementById('taskEndInput').value = addDays(s, d - 1);
+  let s = document.getElementById('taskStartInput').value;
+  if (dialogIsAuto() && !isWorkDay(s)) { s = nextWorkDay(s); document.getElementById('taskStartInput').value = s; }
+  document.getElementById('taskEndInput').value = finishFor(s, d);
 }
 function updateDurationDisplay() {
   const s = document.getElementById('taskStartInput').value, e = document.getElementById('taskEndInput').value;
@@ -3115,6 +3253,7 @@ function saveTaskFromModal() {
   if (t.startDate !== modalOrigDates.start || t.endDate !== modalOrigDates.end) t.durText = null;
   const switchingToAuto = t.taskMode === 'manual' && document.getElementById('taskModeInput').value === 'auto';
   t.taskMode = document.getElementById('taskModeInput').value === 'auto' ? 'auto' : 'manual';
+  snapToWorkDays(t);   // (a no-op for Manual tasks)
   t.progress = Math.max(0, Math.min(100, parseInt(document.getElementById('taskProgressInput').value) || 0));
   t.resource = document.getElementById('taskResourceInput').value.trim().slice(0, 200);
   const previousFinish = t.actualFinish;
@@ -3130,8 +3269,8 @@ function saveTaskFromModal() {
   // below to merely treat it as a lower bound (see constraintStart()).
   if (cinfo.bound === 'exact' && t.taskMode !== 'manual') {
     const dur = durationDays(t.startDate, t.endDate);
-    if (cinfo.basis === 'finish') { t.endDate = t.constraintDate; t.startDate = addDays(t.constraintDate, -(dur - 1)); }
-    else { t.startDate = t.constraintDate; t.endDate = t.milestone ? t.constraintDate : addDays(t.constraintDate, dur - 1); }
+    if (cinfo.basis === 'finish') { t.endDate = shiftWork(t.constraintDate, 0); t.startDate = shiftWork(t.endDate, -(dur - 1)); }
+    else { t.startDate = shiftWork(t.constraintDate, 0); t.endDate = t.milestone ? t.startDate : finishFor(t.startDate, dur); }
   }
   t.updatedAt = Date.now();
   normalizeData();
@@ -3395,11 +3534,12 @@ function exportTaskRows(scope) {                 // [{ task, depth }] in outline
 function buildXlsx(opts) {
   const rowsIn = exportTaskRows(opts.scope), sst = xlsxSharedStrings(), book = xlsxStyleBook();
   const GRID = 'D8DEE4', HEAD = '24292F', SUM = 'F6F8FA', DIM = '656D76';
+  const HEAD_FILL = '00205B';   // Midnight Blue, PANTONE 281 C — the colour of every header cell (task sheet columns, Gantt month band and week/day columns); HEAD stays the dark grey of the summary bars
   const box = { left: ['thin', GRID], right: ['thin', GRID], top: ['thin', GRID], bottom: ['thin', GRID] };
   const dateFmt = 'dd\\.mm\\.yyyy', durFmt = '[=1]0" day";0" days"';
   const scopeText = opts.scope === 'filtered' && filtersActive() ? `${rowsIn.length} of ${tasks.length} tasks (filtered)` : `${rowsIn.length} task${rowsIn.length === 1 ? '' : 's'}`;
   const titleStyle = book.style({ bold: true, size: 16 }), subStyle = book.style({ size: 10, color: DIM });
-  const headStyle = book.style({ bold: true, color: 'FFFFFF', fill: HEAD, h: 'center', wrap: true, border: box });
+  const headStyle = book.style({ bold: true, color: 'FFFFFF', fill: HEAD_FILL, h: 'center', wrap: true, border: box });
   const tasksSheet = xlsxSheet(sst, { tab: '0969DA', grid: false, selected: true, freeze: null, fitWidth: 1, fitHeight: 0 });
 
   // ---------------- Tasks sheet: ID, then the task list's own visible columns in the user's order (or all of them)
@@ -3494,7 +3634,7 @@ function buildXlsx(opts) {
     g.height(3, 18); g.height(4, weekly ? 40 : 22);
     // header: the month (or year) merged over its columns, then CW n (or the month name); this week's column is highlighted
     const isStart = i => i === 0 || periods[i].group !== periods[i - 1].group;
-    const groupStyle = book.style({ bold: true, color: 'FFFFFF', fill: '424A53', h: 'center', border: box });
+    const groupStyle = book.style({ bold: true, color: 'FFFFFF', fill: HEAD_FILL, h: 'center', border: box });
     for (let i = 0; i < periods.length;) {
       let j = i; while (j + 1 < periods.length && periods[j + 1].group === periods[i].group) j++;
       for (let c = i; c <= j; c++) g.cell(3, FIRST + c, c === i ? periods[i].top : null, groupStyle);
@@ -3503,7 +3643,7 @@ function buildXlsx(opts) {
     }
     periods.forEach((p, i) => {
       const today = todayD >= p.s && todayD <= p.e;
-      g.cell(4, FIRST + i, p.bottom, book.style({ bold: true, size: 8, color: today ? '1F2328' : 'FFFFFF', fill: today ? 'FFD33D' : HEAD, h: 'center', rotate: weekly ? 90 : 0, border: box }));
+      g.cell(4, FIRST + i, p.bottom, book.style({ bold: true, size: 8, color: today ? '1F2328' : 'FFFFFF', fill: today ? 'FFD33D' : HEAD_FILL, h: 'center', rotate: weekly ? 90 : 0, border: box }));
     });
     scheduled.forEach(({ task: t, depth }, idx) => {
       const r = 5 + idx, eff = effectiveDates(t.id), summary = hasChildren(t.id);
@@ -4008,6 +4148,7 @@ function renderPlanMenu() {
     (fileSyncSupported() ? `<button class="dropdown-item" id="planOpenFileItem" onclick="openFileAsPlan()"><i class="fa-solid fa-folder-open"></i>Open file as plan…</button>` : '') +
     `<div class="dropdown-sep"></div>` +
     `<button class="dropdown-item" id="planRenameItem" onclick="openPlanModal('rename')"><i class="fa-solid fa-pen"></i>Rename plan…</button>` +
+    `<button class="dropdown-item" id="planCalendarItem" onclick="openCalendarModal()"><i class="fa-regular fa-calendar-days"></i>Working calendar…<span class="item-hint">${escapeHtml(calendarLabel())}</span></button>` +
     `<button class="dropdown-item" id="planDuplicateItem" onclick="duplicatePlan()"><i class="fa-regular fa-copy"></i>Duplicate plan</button>` +
     (fileSyncSupported() ? `<button class="dropdown-item" id="planDisconnectItem" onclick="disconnectFile()"${syncFileHandle ? '' : ' disabled title="This plan isn’t linked to a file"'}><i class="fa-solid fa-link-slash"></i>Disconnect file…</button>` : '') +
     `<button class="dropdown-item" id="planDeleteItem" onclick="deleteCurrentPlan()"${idx.plans.length < 2 ? ' disabled title="You need at least one plan"' : ''}><i class="fa-solid fa-trash"></i>Delete plan…</button>`;
@@ -4199,7 +4340,7 @@ function wireGlobalEvents() {
     // Escape closes whatever overlay is open first; only when there is none — and
     // the user isn't typing in a field, where Escape already means "cancel this
     // edit" — does it clear the task selection.
-    const modalIds = ['taskModalBg', 'confirmModalBg', 'planModalBg', 'excelModalBg', 'importModalBg', 'backupsModalBg', 'helpModalBg', 'aboutModalBg'];
+    const modalIds = ['taskModalBg', 'confirmModalBg', 'calendarModalBg', 'planModalBg', 'excelModalBg', 'importModalBg', 'backupsModalBg', 'helpModalBg', 'aboutModalBg'];
     const overlayOpen = modalIds.some(id => document.getElementById(id).classList.contains('open'))
       || document.getElementById('fileSyncModalBg').classList.contains('open')   // mandatory: Escape can't close it
       || document.getElementById('dataMenu').classList.contains('open')
