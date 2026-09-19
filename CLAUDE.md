@@ -97,6 +97,10 @@ Typing into the inline Predecessors cell reuses the same compact `3FS+2` syntax 
 
 Empty grid cells (no predecessors yet, blank duration) used to collapse to zero height under `align-items: center`'s default content-sizing, making an empty Predecessors cell unclickable — `.grid-cell-dim` now sets `min-height: 1em; align-self: stretch; display: flex; align-items: center` so a cell with no text still occupies its full row height.
 
+### Where Add Task puts the new task
+
+`addTask()` inserts the new task **directly below the selected one** (an explicit user request): right after a leaf task as its sibling, or as the *first sub-task* of a summary task (expanding it if it was collapsed so the new row isn't hidden); with nothing selected it's appended to the end of the top level. The new task becomes the selection, which is what makes repeated Add Task stack downward — without that, every add would land directly under the *same* selected row and the run would come out reversed. The level's siblings are then renumbered `0..n` with the new task in its slot; only siblings whose `order` actually moved get a fresh `updatedAt`, since `order` is a merged field and an un-stamped renumber would never reach another device (the same rule `reorderItem()` follows in Pulse).
+
 ### Task constraints
 
 `CONSTRAINT_TYPES` ports Microsoft Project's 8 primary constraint types (ASAP/ALAP/MSO/MFO/SNET/SNLT/FNET/FNLT), each entry carrying `hasDate`, `basis` (`'start'` or `'finish'` — which of the task's own dates the constraint date binds), and `bound` (`'lower'`, `'upper'`, or `'exact'`). A task stores `constraintType` (default `'ASAP'`) and `constraintDate` (`null` unless `hasDate`).

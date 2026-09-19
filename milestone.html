@@ -60,7 +60,7 @@ button { cursor: pointer; }
 }
 .topbar > * { flex-shrink: 0; }
 .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 21px; letter-spacing: -0.02em; color: var(--text); }
-.brand svg { width: 26px; height: 26px; color: var(--accent); }
+.brand svg { width: 36px; height: 36px; color: var(--accent); }
 #projectNameInput {
   border: none; background: transparent; font-weight: 600; font-size: 14px;
   padding: 4px 8px; border-radius: 6px; color: var(--text-dim); min-width: 120px; max-width: 320px;
@@ -1532,17 +1532,34 @@ function onLinkHandleMouseDown(event, fromId) {
 }
 
 /* ============================== Task CRUD ================================ */
+// The new task goes directly below the selected one: right after a leaf task
+// (as its sibling), or as the first sub-task of a summary task. With nothing
+// selected it's appended at the end of the top level. The new task then
+// becomes the selection, so repeated Add Task keeps stacking downward instead
+// of each new task jumping in above the previous one.
 function addTask() {
-  const parentId = selectedTaskId && !hasChildren(selectedTaskId) ? byId(selectedTaskId).parentId : (selectedTaskId || null);
-  const siblings = childrenOf(parentId);
-  const order = siblings.length ? Math.max(...siblings.map(s => s.order)) + 1 : 0;
+  const sel = selectedTaskId ? byId(selectedTaskId) : null;
+  let parentId = null, insertAt = childrenOf(null).length;
+  if (sel && hasChildren(sel.id)) {
+    parentId = sel.id; insertAt = 0;
+    if (sel.collapsed) { sel.collapsed = false; sel.updatedAt = Date.now(); } // otherwise the new task would be hidden
+  } else if (sel) {
+    parentId = sel.parentId || null;
+    insertAt = childrenOf(parentId).findIndex(s => s.id === sel.id) + 1;
+  }
   const t = {
-    id: genId(), name: '', parentId, order,
+    id: genId(), name: '', parentId, order: insertAt,
     startDate: todayStr(), endDate: todayStr(), progress: 0, milestone: false,
     color: null, notes: '', predecessors: [], collapsed: false, updatedAt: Date.now(),
     constraintType: 'ASAP', constraintDate: null, taskMode: project.newTaskMode === 'auto' ? 'auto' : 'manual'
   };
   tasks.push(t);
+  // Renumber the level's siblings with the new task in its slot; only tasks
+  // whose order actually moved get a fresh updatedAt, so a merge sees a real change.
+  const sibs = childrenOf(parentId).filter(s => s.id !== t.id);
+  sibs.splice(insertAt, 0, t);
+  sibs.forEach((s, i) => { if (s.order !== i) { s.order = i; if (s !== t) s.updatedAt = Date.now(); } });
+  selectedTaskId = t.id;
   normalizeData(); save(); render();
   openTaskModal(t.id, true);
 }
