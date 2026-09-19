@@ -481,7 +481,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
       </div>
       <div class="field-row">
         <div class="field"><label>Actual Start</label><input type="date" id="taskActualStartInput"></div>
-        <div class="field"><label>Actual Finish</label><input type="date" id="taskActualFinishInput"></div>
+        <div class="field" id="taskActualFinishField"><label>Actual Finish</label><input type="date" id="taskActualFinishInput"></div>
       </div>
       <div class="pred-empty hidden" id="taskActualsNote"></div>
       <div class="field-row-3 calc-row" title="Worked out by Milestone — not entered">
@@ -964,6 +964,7 @@ function normalizeData() {
     if (typeof t.notes !== 'string') t.notes = '';
     t.resource = typeof t.resource === 'string' ? t.resource.slice(0, 200) : '';
     for (const f of ['actualStart', 'actualFinish']) t[f] = parseUserDate(typeof t[f] === 'string' ? t[f] : '');   // a real date or null
+    if (t.milestone) t.actualFinish = t.actualStart;   // a milestone happens on one date: its actual finish is its actual start
     if (!CONSTRAINT_TYPES.some(c => c.id === t.constraintType)) t.constraintType = 'ASAP';
     const cinfo = constraintTypeInfo(t.constraintType);
     if (!cinfo.hasDate) t.constraintDate = null;
@@ -1833,10 +1834,10 @@ function renderGrid() {
     const mi = taskModeInfo(t.taskMode);
     const modeCell = `<div class="grid-cell-dim task-mode-cell" style="text-align:center" title="${mi.label} — click to change" onclick="openTaskModeMenu(event,'${t.id}')"><i class="fa-solid ${mi.icon} mode-${t.taskMode}"></i></div>`;
     const mismatchDate = scheduleMismatch(t);
-    const act = actualDates(t.id), canEditActual = full && !summary;   // a group's actual dates are rolled up, so not editable
+    const act = actualDates(t.id), canEditActual = full && !summary;   // a group's actual dates are rolled up, so not editable (a milestone's Actual Finish follows its Actual Start)
     const actualCell = (field, iso) => editing(field)
       ? `<input type="date" class="inline-edit" value="${iso || ''}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" ${blurAttr(field)}>`
-      : `<div class="grid-cell-dim${summaryCls}${canEditActual ? ' editable' : ''}"${canEditActual ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','${field}')"` : ''}>${iso ? fmtDate(iso) : ''}</div>`;
+      : `<div class="grid-cell-dim${summaryCls}${canEditActual && !(t.milestone && field === 'actualFinish') ? ' editable' : ''}"${canEditActual && !(t.milestone && field === 'actualFinish') ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','${field}')"` : ''}>${iso ? fmtDate(iso) : ''}</div>`;
     const resourceCell = editing('resource')
       ? `<input type="text" class="inline-edit" maxlength="200" value="${escapeHtml(t.resource)}" placeholder="e.g. Anna, Ben" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" ${blurAttr('resource')}>`
       : `<div class="grid-cell-dim${summaryCls}${full ? ' editable' : ''}" title="${escapeHtml(t.resource)}"${full ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','resource')"` : ''}>${escapeHtml(t.resource)}</div>`;
@@ -2070,7 +2071,7 @@ function startInlineEdit(id, field) {
   // Auto summary rows roll their dates up from their children, so only the
   // name is editable there; a manually scheduled summary owns its own dates.
   if (hasChildren(id) && field !== 'name' && field !== 'resource' && !(t.taskMode === 'manual' && ['start', 'finish', 'duration'].includes(field))) return;
-  if ((field === 'finish' || field === 'duration') && t.milestone) return; // milestones are zero-duration by definition
+  if ((field === 'finish' || field === 'duration' || field === 'actualFinish') && t.milestone) return; // milestones are zero-duration by definition
   editingCell = { id, field };
   render();
   requestAnimationFrame(() => {
@@ -2162,10 +2163,10 @@ function commitInlineEdit(id, field, rawValue) {
     t.resource = val.slice(0, 200);
   } else if (field === 'actualStart' || field === 'actualFinish') {
     const iso = val ? parseUserDate(val) : null;                 // a native date input emits ISO; blank clears the date
-    const aS = field === 'actualStart' ? iso : t.actualStart, aF = field === 'actualFinish' ? iso : t.actualFinish;
+    const aS = field === 'actualStart' ? iso : t.actualStart, aF = t.milestone ? aS : (field === 'actualFinish' ? iso : t.actualFinish);
     if (val && !iso) showToast(`"${val}" isn't a date`, true);
     else if (aS && aF && dayNumber(aF) < dayNumber(aS)) showToast("Actual Finish can't be before Actual Start", true);
-    else t[field] = iso;
+    else { t[field] = iso; if (t.milestone) t.actualFinish = t.actualStart; }
   } else if (field === 'predecessors') {
     const parsed = parsePredecessorString(val, id);
     if (parsed !== null) { t.predecessors = parsed; applyConstraints(id); }
@@ -2605,7 +2606,8 @@ function updateModalComputed() {
     const progress = Math.max(0, Math.min(100, parseInt(v('taskProgressInput')) || 0));
     const untouched = start === modalOrigDates.start && end === modalOrigDates.end, scheduled = !!start && !(isUnscheduled(t) && untouched);
     remaining = milestone || !scheduled || (t.durText != null && untouched) ? null : remainingOf(durationDays(start, end), progress);
-    status = statusOf({ start: scheduled ? start : null, end: scheduled ? end : null, progress, actualStart: v('taskActualStartInput') || null, actualEnd: v('taskActualFinishInput') || null });
+    const aS = v('taskActualStartInput') || null;
+    status = statusOf({ start: scheduled ? start : null, end: scheduled ? end : null, progress, actualStart: aS, actualEnd: milestone ? aS : (v('taskActualFinishInput') || null) });
   }
   $('taskWbsInfo').textContent = wbsCode(t.id);
   $('taskRemainingInfo').textContent = remaining == null ? '—' : fmtRemaining(remaining);
@@ -2615,6 +2617,7 @@ function onMilestoneToggle() {
   const on = document.getElementById('taskMilestoneInput').checked;
   document.getElementById('taskEndField').classList.toggle('hidden', on);
   document.getElementById('taskDurationField').classList.toggle('hidden', on);
+  document.getElementById('taskActualFinishField').classList.toggle('hidden', on);   // a milestone has one date, planned and actual
   if (on) document.getElementById('taskEndInput').value = document.getElementById('taskStartInput').value;
 }
 function onTaskStartChange() {
@@ -2692,7 +2695,8 @@ function removePredecessorRow(i) { editingPredecessors.splice(i, 1); renderPrede
 
 function saveTaskFromModal() {
   const t = byId(editingTaskId); if (!t) return;
-  const isGroup = hasChildren(t.id), aStart = document.getElementById('taskActualStartInput').value || null, aEnd = document.getElementById('taskActualFinishInput').value || null;
+  const isGroup = hasChildren(t.id), ms = document.getElementById('taskMilestoneInput').checked, aStart = document.getElementById('taskActualStartInput').value || null;
+  const aEnd = ms ? aStart : (document.getElementById('taskActualFinishInput').value || null);
   if (!isGroup && aStart && aEnd && dayNumber(aEnd) < dayNumber(aStart)) { showToast("Actual Finish can't be before Actual Start", true); return; }   // before anything is changed
   filterPinned.add(t.id);
   const name = document.getElementById('taskNameInput').value.trim() || 'Untitled Task';
