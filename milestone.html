@@ -28,8 +28,12 @@
   --radius: 10px;
   --shadow: 0 1px 2px rgba(20,20,30,.04), 0 4px 16px rgba(20,20,30,.06);
   --row-h: 32px;
+  /* Tells the browser how to draw its own controls — the date picker's icon and popup, select menus, checkboxes, number
+     spinners, scrollbars. Without it they are always drawn for a light page (a black calendar icon on the dark theme). */
+  color-scheme: light;
 }
 html[data-theme="dark"] {
+  color-scheme: dark;
   --bg: #262c36; --panel: #212830; --panel-2: #2d3640; --border: rgba(209,215,224,0.10);
   --text: #d1d7e0; --text-dim: #9198a1; --text-faint: #6b7280;
   --accent: #478be6; --danger: #e5534b;
@@ -129,6 +133,11 @@ button:focus:not(:focus-visible) { outline: none; }
 .dropdown-item:hover { background: var(--panel-2); }
 .dropdown-item i { width: 15px; color: var(--text-dim); }
 .dropdown-sep { height: 1px; background: var(--border); margin: 6px 2px; }
+/* ---- the collapse/expand-all toggle in the ID column's header ---- */
+.id-head { display: flex; align-items: center; justify-content: flex-start; }   /* the toggle sits at the left edge of the ID column */
+.id-toggle { width: 22px; height: 22px; padding: 0; border: none; border-radius: 5px; background: transparent; color: var(--text-dim); font-size: 11px; }
+.id-toggle:hover:not(:disabled) { background: var(--panel-2); color: var(--text); }
+.id-toggle:disabled { opacity: .35; cursor: default; }
 /* ---- status pill (the Status column) ---- */
 .status-pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 600; line-height: 16px; }
 .status-pill.st-complete { color: var(--task-green); background: color-mix(in srgb, var(--task-green) 14%, var(--panel)); }
@@ -258,6 +267,7 @@ input.inline-edit { width: 100%; min-width: 0; padding: 3px 6px; border: 1px sol
 .mode-manual { color: var(--task-amber); }
 .mode-auto { color: var(--text-faint); }
 .task-mode-cell:hover { background: var(--panel-2); border-radius: 4px; }
+.main.view-tasks .task-mode-cell { justify-content: flex-start; padding-left: 6px; }   /* under the left-aligned header label, like every other column */
 .dropdown-item.active { background: color-mix(in srgb, var(--accent) 10%, var(--panel)); }
 .dropdown-item .mode-check { margin-left: auto; color: var(--accent); }
 .subbar-spacer { flex: 1 1 auto; }
@@ -503,7 +513,6 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
         <label>Color</label>
         <div class="color-swatches" id="taskColorSwatches"></div>
       </div>
-      <div class="field"><label>Notes</label><textarea id="taskNotesInput" rows="2" placeholder="Optional notes"></textarea></div>
       <div class="field">
         <label>Predecessors</label>
         <div id="predecessorRows"></div>
@@ -608,10 +617,10 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
   <div class="modal wide">
     <div class="modal-header"><h2>Help</h2><button onclick="closeHelpModal()">&times;</button></div>
     <div class="modal-body help-body">
-      <div><div class="help-section-title">The basics</div>Add tasks with the + Add Task button. Each task has a start/end date, a % complete, and can be a milestone (a zero-duration diamond). Use Indent/Outdent to build a work breakdown structure — a parent task's own dates and progress roll up automatically from its children. Drag a task's line up or down to reorder it (a parent brings its sub-tasks along). Add Task inserts below the selected task, or at the bottom when nothing is selected; press Escape to clear the selection.</div>
+      <div><div class="help-section-title">The basics</div>Add tasks with the + Add Task button. Each task has a start/end date, a % complete, and can be a milestone (a zero-duration diamond). Use Indent/Outdent to build a work breakdown structure — a parent task's own dates and progress roll up automatically from its children. Drag a task's line up or down to reorder it (a parent brings its sub-tasks along). Add Task inserts below the selected task, or at the bottom when nothing is selected; press Escape to clear the selection. The double arrow above the ID numbers steps through the outline: click it to collapse every group, then again to open the first level, again for the next level, and so on until everything is open — then it starts over.</div>
       <div><div class="help-section-title">Filtering</div>Click the funnel in a column header (Task Mode, Task Name, Start, Finish, Duration, %, Predecessors) for an Excel-style filter. Each column offers what fits its data: dates get rules (equals, before, after, between, or relative to today such as this week, next month or year to date) and a Year › Month › Day list; text columns get contains / begins with / ends with / equals and their negatives; numbers get equals, greater or less than, and between. Every column also has a list of its values to tick, with a search box and (Blanks) for tasks that have no value. Filters on several columns combine, so a task must match all of them. A group stays visible while any sub-task inside it matches, and stays open while a filter is on. The bar under the toolbar shows what is filtered and how many tasks are showing; click × on a chip, or Clear all, to remove it. Filters are only for looking — they aren't saved, and a task you add or edit stays visible until you filter again.</div>Click the funnel next to Start or Finish (in either view) for an Excel-style filter: pick a rule (equals, before, after, between, or relative to today such as this week, next month or year to date), or tick individual dates in the Year › Month › Day list — type in the search box to narrow it, and use (Blanks) for tasks without a real date. The two columns combine, so a task must match both. A group stays visible while any sub-task inside it matches, and stays open while a filter is on. The bar under the toolbar shows what is filtered and how many tasks are showing; click × on a chip, or Clear all, to remove it. Filters are only for looking — they aren't saved, and a task you add or edit stays visible until you filter again.</div>
-      <div><div class="help-section-title">Columns and extra fields</div>Besides name, dates, duration, % and predecessors, a task can carry a <strong>Resource</strong> (who does the work), an <strong>Actual Start</strong> and <strong>Actual Finish</strong> (what really happened, kept separate from the plan), and has a <strong>WBS</strong> code such as 2.1.3 that is worked out from the outline. <strong>Remaining Duration</strong> (the duration still to go, from % complete) and <strong>Status</strong> (Complete, On Schedule, Late or Future Task, judged against today) are worked out for you too. Those six aren't shown by default: click <strong>Columns</strong> in the toolbar (Tasks view) to tick the columns you want and reorder them; your choice is remembered on this device. Click a Resource or actual-date cell to edit it, or use the task dialog. A group shows the actual dates of the tasks in it (its earliest actual start, and an actual finish once everything in it has finished).</div>
-      <div><div class="help-section-title">Task Mode</div>Every task is either Manually Scheduled (pushpin) or Auto Scheduled (chart icon) — click the icon in the Task Mode column, or use the Task Mode field in a task's dialog. An Auto task follows its predecessors and constraints. A Manual task stays exactly where you put it: predecessors never move it, its Start, Finish and Duration can be free text such as "TBD", and a warning triangle appears if it starts earlier than its predecessors allow. Manual tasks are drawn with a dashed bar, and are left out of the critical path. Switching a task to Auto moves it to the earliest date its links allow. The "New tasks" button at the right of the toolbar chooses the mode new tasks start in (Manual, like MS Project, by default).</div>
+      <div><div class="help-section-title">Columns and extra fields</div>Besides name, dates, duration, % and predecessors, a task can carry a <strong>Resource</strong> (who does the work), an <strong>Actual Start</strong> and <strong>Actual Finish</strong> (what really happened, kept separate from the plan), and has a <strong>WBS</strong> code such as 2.1.3 that is worked out from the outline (shown by default). <strong>Remaining Duration</strong> (the duration still to go, from % complete) and <strong>Status</strong> (Complete, On Schedule, Late or Future Task, judged against today) are worked out for you too. Resource, Actual Start/Finish, Remaining Duration and Status aren't shown by default: click <strong>Columns</strong> in the toolbar (Tasks view) to tick the columns you want and reorder them; your choice is remembered on this device. Click a Resource or actual-date cell to edit it, or use the task dialog. A group shows the actual dates of the tasks in it (its earliest actual start, and an actual finish once everything in it has finished).</div>
+      <div><div class="help-section-title">Task Mode</div>Every task is either Manually Scheduled (pushpin) or Auto Scheduled (chart icon) — click the icon in the Task Mode column, or use the Task Mode field in a task's dialog. An Auto task follows its predecessors and constraints. A Manual task stays exactly where you put it: predecessors never move it, its Start, Finish and Duration can be free text such as "TBD", and a warning triangle appears if it starts earlier than its predecessors allow. Manual tasks are drawn with a dashed bar, and are left out of the critical path. Switching a task to Auto moves it to the earliest date its links allow. The "New tasks" button at the right of the toolbar chooses the mode new tasks start in (Auto Scheduled by default).</div>
       <div><div class="help-section-title">Dependencies</div>Open a task and add a predecessor to link it to another task (Finish-to-Start, Start-to-Start, Finish-to-Finish or Start-to-Finish). Give it a lead or lag in days: a positive number delays the dependent task (lag), a negative number lets it overlap and start early (lead) — e.g. "3FS+2" waits 2 extra days after task 3 finishes, "3FS-2" starts 2 days before task 3 finishes. Moving a task forward automatically pushes any dependent tasks forward too — it never pulls a task earlier on its own. A circular dependency is flagged with a warning icon and stops auto-scheduling for the tasks involved.</div>
       <div><div class="help-section-title">The Gantt chart</div>Drag a bar to reschedule it, drag its edges to resize, or drag the small circle on its right edge onto another task to create a dependency. Click a bar or row to edit it. The Week / Month / Year buttons change the scale: Year (the default) shows quarters, and Week is labelled by calendar week (CW, weeks start on Monday, ISO 8601). The route icon in the toolbar highlights the critical path — the chain of tasks with zero slack that determines the overall project end date.</div>
       <div><div class="help-section-title">Plans</div>The plan name at the top left is a switcher: click it to move between plans, start a new one, open an existing file as a plan, or rename, duplicate or delete the current plan. Each plan has its own tasks, its own daily backups and — optionally — its own linked file, so switching plans also switches which file is kept in sync. Deleting a plan only removes it from this browser; its file is never touched. Every plan must live in a file (Chrome/Edge), so New plan and Duplicate ask you where to save it.</div>
@@ -684,8 +693,8 @@ const ZOOMS = [
 // always first and the row actions always last; everything in between can be shown, hidden and reordered (Columns button).
 // `dflt` = shown until the user says otherwise. Insertion order = the default order. Task Name can't be hidden.
 const TASK_COLS = {
-  mode:         { label: 'Task Mode',     width: '24px',              dflt: true },
-  wbs:          { label: 'WBS',           width: '64px',              dflt: false },
+  mode:         { label: 'Task Mode',     width: '98px',              dflt: true },   // wide enough for its header (Tasks view); the Gantt side list keeps a 24px icon column
+  wbs:          { label: 'WBS',           width: '64px',              dflt: true },
   name:         { label: 'Task Name',     width: 'minmax(160px,1fr)', dflt: true, locked: true },
   start:        { label: 'Start',         width: '116px',             dflt: true },
   end:          { label: 'Finish',        width: '116px',             dflt: true },
@@ -699,6 +708,10 @@ const TASK_COLS = {
   resource:     { label: 'Resource',      width: 'minmax(110px,1fr)', dflt: false }
 };
 const DEFAULT_COL_ORDER = Object.keys(TASK_COLS);
+// Bump COLS_REV when a column becomes shown-by-default: an install's saved choice already lists it as hidden (the defaults
+// are written by its first save), so loadPrefs() switches the columns listed here on ONCE for anyone still on an older revision.
+const COLS_REV = 1;
+const COLS_REV_SHOWN = { 1: ['wbs'] };
 const DEFAULT_ZOOM = 'year';        // the standard Gantt scale
 const ZOOM_DEFAULT_REV = 1;         // bump to reset everybody's saved scale to DEFAULT_ZOOM once (see loadPrefs)
 const CAL_WEEK_LABEL = 'CW';   // week scale is labelled by ISO calendar week: "CW 37"
@@ -803,7 +816,7 @@ function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c
 function byId(id) { return tasks.find(t => t.id === id); }
 
 /* ============================ Persistence =============================== */
-function prefsPayload() { return { theme, zoom, zoomRev: ZOOM_DEFAULT_REV, view: currentView, gridPaneWidth, cols: { order: colOrder, hidden: [...colHidden] } }; }
+function prefsPayload() { return { theme, zoom, zoomRev: ZOOM_DEFAULT_REV, view: currentView, gridPaneWidth, cols: { order: colOrder, hidden: [...colHidden], rev: COLS_REV } }; }
 function syncPayload() { return { version: APP_VERSION, project, tasks, deletedTaskIds }; }
 
 function planDataKey(id) { return PLAN_DATA_PREFIX + id; }
@@ -872,6 +885,7 @@ function loadPrefs() {
   colOrder = savedOrder ? [...new Set([...savedOrder, ...DEFAULT_COL_ORDER])] : [...DEFAULT_COL_ORDER];
   colHidden = new Set(Array.isArray(sc.hidden) ? sc.hidden.filter(known) : []);
   for (const id of DEFAULT_COL_ORDER) if ((!savedOrder || !savedOrder.includes(id)) && !TASK_COLS[id].dflt) colHidden.add(id);
+  for (let r = (Number(sc.rev) || 0) + 1; r <= COLS_REV; r++) for (const id of (COLS_REV_SHOWN[r] || [])) colHidden.delete(id);
   colHidden.delete('name');
 }
 function visibleTaskCols() { return colOrder.filter(id => !colHidden.has(id) || TASK_COLS[id].locked); }
@@ -961,7 +975,6 @@ function normalizeData() {
     if (typeof t.updatedAt !== 'number') t.updatedAt = 0;
     if (typeof t.collapsed !== 'boolean') t.collapsed = false;
     if (t.color && !TASK_COLORS.some(c => c.id === t.color)) t.color = null;
-    if (typeof t.notes !== 'string') t.notes = '';
     t.resource = typeof t.resource === 'string' ? t.resource.slice(0, 200) : '';
     for (const f of ['actualStart', 'actualFinish']) t[f] = parseUserDate(typeof t[f] === 'string' ? t[f] : '');   // a real date or null
     if (t.milestone) t.actualFinish = t.actualStart;   // a milestone happens on one date: its actual finish is its actual start
@@ -1014,7 +1027,11 @@ function normalizeData() {
   if (!project || typeof project !== 'object') project = { name: 'My Project', updatedAt: 0 };
   if (typeof project.name !== 'string' || !project.name.trim()) project.name = 'My Project';
   if (typeof project.updatedAt !== 'number') project.updatedAt = 0;
-  if (project.newTaskMode !== 'auto') project.newTaskMode = 'manual';
+  // New tasks are Auto Scheduled unless the project says otherwise. Every project saved while the default was Manual has
+  // 'manual' stored (the default is written on the first save), so a project without the current revision marker is switched to
+  // Auto ONCE; a choice made afterwards (the "New tasks" button) keeps the marker and is never overridden.
+  if (project.modeRev !== 1) { project.newTaskMode = 'auto'; project.modeRev = 1; }
+  if (project.newTaskMode !== 'manual') project.newTaskMode = 'auto';
 }
 
 /* =========================== Hierarchy helpers =========================== */
@@ -1341,6 +1358,7 @@ function render() {
   renderGrid();
   renderGantt();
   renderFilterBar();
+  updateCollapseButtons();
   updateFileSyncUI();
   updateThemeToggleUI();
   updateNewTaskModeUI();
@@ -1773,13 +1791,13 @@ function renderGrid() {
   // Tasks view: the user's visible columns in the user's order (ID first, row actions last). The Gantt view's side list is a fixed four.
   const cols = full ? visibleTaskCols() : ['mode', 'name', 'start', 'end'];
   const HEAD = {
-    mode: colHeadHtml('', 'mode'), wbs: colHeadHtml('WBS', 'wbs'), name: colHeadHtml('Task Name', 'name'), start: colHeadHtml('Start', 'start'), end: colHeadHtml('Finish', 'end'),
+    mode: colHeadHtml(full ? 'Task Mode' : '', 'mode'), wbs: colHeadHtml('WBS', 'wbs'), name: colHeadHtml('Task Name', 'name'), start: colHeadHtml('Start', 'start'), end: colHeadHtml('Finish', 'end'),
     actualStart: colHeadHtml('Actual Start', 'actualStart'), actualFinish: colHeadHtml('Actual Finish', 'actualFinish'), duration: colHeadHtml('Duration', 'duration'),
     progress: colHeadHtml('%', 'progress'), remaining: colHeadHtml('Remaining', 'remaining'), status: colHeadHtml('Status', 'status'),
     preds: colHeadHtml('Predecessors', 'preds'), resource: colHeadHtml('Resource', 'resource')
   };
   document.getElementById('main').style.setProperty('--task-cols', ['34px', ...cols.map(c => TASK_COLS[c].width), '56px'].join(' '));
-  document.getElementById('gridHeader').innerHTML = `<div></div>${cols.map(c => HEAD[c]).join('')}${full ? '<div></div>' : ''}`;
+  document.getElementById('gridHeader').innerHTML = `<div class="id-head"><button class="id-toggle" id="collapseToggleBtn" onclick="toggleAllCollapsed()"><i class="fa-solid fa-angles-up"></i></button></div>${cols.map(c => HEAD[c]).join('')}${full ? '<div></div>' : ''}`;
   const list = visibleTaskList();
   const el = document.getElementById('gridRows');
   if (list.length === 0 && filtersActive() && tasks.length) { el.innerHTML = filterEmptyHtml(); return; }
@@ -2003,6 +2021,41 @@ function moveTask(id, targetId, zone) {
 function toggleCollapse(id) {
   if (filtersActive()) { showToast('Groups stay open while a filter is on'); return; }
   const t = byId(id); t.collapsed = !t.collapsed; save(); render();
+}
+// One toggle (the ID column's header cell, right above the first task) that steps through the outline levels as a cycle:
+// everything open -> collapse all -> open the first level of groups -> the next level -> ... -> everything open -> around
+// again. Level L means "groups nested fewer than L deep are open, deeper ones are closed": L = 0 is all collapsed and
+// L = levels is all expanded. Like the arrow on a single group this is view state: it isn't stamped with updatedAt, so it
+// never travels to another device as if it were an edit. Not while a filter is on (the list shows groups open then), where
+// the button is disabled.
+function groupTasks() { const parents = new Set(tasks.map(t => t.parentId).filter(Boolean)); return tasks.filter(t => parents.has(t.id)); }
+function collapseState() {
+  const byId = new Map(tasks.map(t => [t.id, t]));
+  const depth = t => { let d = 0; for (let q = t.parentId && byId.get(t.parentId); q; q = q.parentId && byId.get(q.parentId)) d++; return d; };
+  const groups = groupTasks().map(t => ({ t, depth: depth(t) }));
+  if (!groups.length) return { groups, levels: 0, current: null, next: null };
+  const levels = Math.max(...groups.map(g => g.depth)) + 1;   // every depth below the deepest group has a group in it, so each level is a distinct state
+  let current = null;                                          // null = a mix the cycle doesn't produce (some group opened or closed by hand)
+  for (let L = 0; L <= levels && current === null; L++) if (groups.every(g => g.t.collapsed === (g.depth >= L))) current = L;
+  return { groups, levels, current, next: current === null || current >= levels ? 0 : current + 1 };
+}
+function toggleAllCollapsed() {
+  if (filtersActive()) { showToast('Groups stay open while a filter is on'); return; }
+  const { groups, next } = collapseState();
+  if (next === null) return;
+  groups.forEach(g => { g.t.collapsed = g.depth >= next; });
+  save(); render();
+}
+function updateCollapseButtons() {
+  const btn = document.getElementById('collapseToggleBtn');
+  if (!btn) return;
+  const { groups, levels, next } = collapseState(), filtering = filtersActive();
+  btn.disabled = filtering || !groups.length;
+  btn.dataset.next = next === null ? '' : next;
+  btn.firstElementChild.className = `fa-solid fa-angles-${next === 0 ? 'up' : 'down'}`;   // up arrows: the next click collapses; down arrows: it opens more
+  const what = next === 0 ? 'Collapse all groups' : next >= levels ? 'Expand all groups' : `Expand to level ${next}`;
+  btn.title = what + (filtering ? ' — not while a filter is on' : '');
+  btn.setAttribute('aria-label', btn.title);
 }
 // Switching a task to Auto Scheduled re-plans it the way MS Project does:
 // free-text dates are dropped and, if it has links or a constraint, it moves
@@ -2469,8 +2522,8 @@ function addTask() {
   const t = {
     id: genId(), name: '', parentId, order: insertAt,
     startDate: todayStr(), endDate: todayStr(), progress: 0, milestone: false,
-    color: null, notes: '', predecessors: [], collapsed: false, updatedAt: Date.now(),
-    constraintType: 'ASAP', constraintDate: null, taskMode: project.newTaskMode === 'auto' ? 'auto' : 'manual',
+    color: null, predecessors: [], collapsed: false, updatedAt: Date.now(),
+    constraintType: 'ASAP', constraintDate: null, taskMode: project.newTaskMode === 'manual' ? 'manual' : 'auto',
     resource: '', actualStart: null, actualFinish: null
   };
   tasks.push(t);
@@ -2563,7 +2616,6 @@ function openTaskModal(id, isNew) {
   document.getElementById('taskEndInput').value = t.endDate;
   document.getElementById('taskDurationInput').value = durationDays(t.startDate, t.endDate);
   document.getElementById('taskProgressInput').value = t.progress;
-  document.getElementById('taskNotesInput').value = t.notes;
   document.getElementById('taskResourceInput').value = t.resource || '';
   const group = hasChildren(id), act = actualDates(id);   // a group's actual dates are rolled up from its tasks, so read-only
   document.getElementById('taskActualStartInput').value = act.start || '';
@@ -2711,7 +2763,6 @@ function saveTaskFromModal() {
   const switchingToAuto = t.taskMode === 'manual' && document.getElementById('taskModeInput').value === 'auto';
   t.taskMode = document.getElementById('taskModeInput').value === 'auto' ? 'auto' : 'manual';
   t.progress = Math.max(0, Math.min(100, parseInt(document.getElementById('taskProgressInput').value) || 0));
-  t.notes = document.getElementById('taskNotesInput').value;
   t.resource = document.getElementById('taskResourceInput').value.trim().slice(0, 200);
   if (!isGroup) { t.actualStart = aStart; t.actualFinish = aEnd; }
   t.color = document.getElementById('taskColorSwatches').dataset.value || null;
@@ -2996,12 +3047,12 @@ function buildXlsx(opts) {
   const headStyle = book.style({ bold: true, color: 'FFFFFF', fill: HEAD, h: 'center', wrap: true, border: box });
   const tasksSheet = xlsxSheet(sst, { tab: '0969DA', grid: false, selected: true, freeze: null, fitWidth: 1, fitHeight: 0 });
 
-  // ---------------- Tasks sheet: ID, then the task list's own visible columns in the user's order (or all of them), then Notes
+  // ---------------- Tasks sheet: ID, then the task list's own visible columns in the user's order (or all of them)
   const XCOLS = {
     id: ['ID', 6], mode: ['Mode', 10], wbs: ['WBS', 9], name: ['Task Name', 46], start: ['Start', 13], end: ['Finish', 13], actualStart: ['Actual Start', 13],
-    actualFinish: ['Actual Finish', 13], duration: ['Duration', 12], progress: ['% Complete', 13], remaining: ['Remaining Duration', 13], status: ['Status', 13], preds: ['Predecessors', 18], resource: ['Resource', 22], notes: ['Notes', 46]
+    actualFinish: ['Actual Finish', 13], duration: ['Duration', 12], progress: ['% Complete', 13], remaining: ['Remaining Duration', 13], status: ['Status', 13], preds: ['Predecessors', 18], resource: ['Resource', 22]
   };
-  const keys = opts.columns === 'all' ? ['id', ...DEFAULT_COL_ORDER, 'notes'] : ['id', ...visibleTaskCols(), 'notes'];
+  const keys = opts.columns === 'all' ? ['id', ...DEFAULT_COL_ORDER] : ['id', ...visibleTaskCols()];
   const ncol = keys.length, colOf = k => keys.indexOf(k) + 1, lastCol = xlsxCol(ncol);
   keys.forEach((k, i) => tasksSheet.width(i + 1, i + 1, XCOLS[k][1]));
   tasksSheet.opts.freeze = { cols: colOf('name'), rows: 4 };       // frozen through the Task Name column, wherever it sits
@@ -3017,7 +3068,6 @@ function buildXlsx(opts) {
     const S = o => book.style(Object.assign({}, base, o));
     const dateCell = (c, text, iso) => text != null ? tasksSheet.cell(r, c, text, S({ h: 'center', italic: true, color: DIM, bold: false }))
       : iso ? tasksSheet.cell(r, c, xlsxSerial(iso), S({ h: 'center', num: dateFmt })) : tasksSheet.cell(r, c, null, S({}));
-    const notes = (t.notes || '').trim();
     for (const k of keys) {
       const c = colOf(k);
       switch (k) {
@@ -3041,11 +3091,9 @@ function buildXlsx(opts) {
         case 'status': { const st = taskStatus(t.id); tasksSheet.cell(r, c, st, S({ h: 'center', bold: true, color: { 'Complete': '1A7F37', 'On Schedule': '0969DA', 'Late': 'CF222E', 'Future Task': DIM }[st] || DIM })); break; }
         case 'preds': tasksSheet.cell(r, c, predecessorLabel(t) || null, S({ h: 'left' })); break;
         case 'resource': tasksSheet.cell(r, c, (t.resource || '').trim() || null, S({ h: 'left' })); break;
-        case 'notes': tasksSheet.cell(r, c, notes || null, S({ h: 'left', wrap: true, bold: false, color: DIM })); break;
       }
     }
-    const noteLines = notes ? notes.split('\n').reduce((n, line) => n + Math.max(1, Math.ceil(line.length / 50)), 0) : 1;
-    tasksSheet.height(r, Math.min(409, Math.max(19, 14 * noteLines + 5)));   // 409pt is Excel's maximum row height
+    tasksSheet.height(r, 19);
   });
   const last = HR + Math.max(1, rowsIn.length);
   tasksSheet.opts.filter = `A${HR}:${lastCol}${last}`;
