@@ -151,8 +151,9 @@ button:focus:not(:focus-visible) { outline: none; }
 .filter-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px 8px; font-size: 13px; }
 .filter-section { padding: 6px 12px 10px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 6px; }
 .filter-label { font-size: 11.5px; font-weight: 600; color: var(--text-dim); }
-.filter-menu select, .filter-menu input[type=date], .filter-menu input[type=search] { width: 100%; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel); color: var(--text); font-size: 12.5px; }
+.filter-menu select, .filter-menu input[type=date], .filter-menu input[type=text], .filter-menu input[type=number], .filter-menu input[type=search] { width: 100%; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel); color: var(--text); font-size: 12.5px; }
 .filter-rule-inputs { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-dim); }
+.filter-rule-inputs input { flex: 1; min-width: 0; }
 .filter-rule-inputs:empty { display: none; }
 .filter-list { min-height: 0; flex: 1; }
 .filter-tree { overflow-y: auto; max-height: 240px; min-height: 90px; padding: 2px 0; }
@@ -206,7 +207,7 @@ button:focus:not(:focus-visible) { outline: none; }
    suppresses the scrollbar UI and direct user-initiated scrolling. */
 .main.view-tasks .grid-rows { overflow-y: auto; }
 .main.view-tasks .grid-pane { width: auto; flex: 1; border-right: none; }
-.main.view-tasks .grid-header, .main.view-tasks .grid-row { grid-template-columns: 34px 24px minmax(160px,1fr) 116px 116px 78px 40px 1fr 56px; }
+.main.view-tasks .grid-header, .main.view-tasks .grid-row { grid-template-columns: 34px 24px minmax(160px,1fr) 116px 116px 96px 54px 1fr 56px; }   /* Duration and % are wider than their text needs, to make room for the filter button */
 .main.view-tasks .grid-header > div, .main.view-tasks .grid-row > div { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .main.view-tasks .gantt-pane-outer { display: none; }
 .grid-row { border-bottom: 1px solid var(--border); font-size: 12.5px; cursor: default; }
@@ -556,7 +557,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
     <div class="modal-header"><h2>Help</h2><button onclick="closeHelpModal()">&times;</button></div>
     <div class="modal-body help-body">
       <div><div class="help-section-title">The basics</div>Add tasks with the + Add Task button. Each task has a start/end date, a % complete, and can be a milestone (a zero-duration diamond). Use Indent/Outdent to build a work breakdown structure — a parent task's own dates and progress roll up automatically from its children. Drag a task's line up or down to reorder it (a parent brings its sub-tasks along). Add Task inserts below the selected task, or at the bottom when nothing is selected; press Escape to clear the selection.</div>
-      <div><div class="help-section-title">Filtering by date</div>Click the funnel next to Start or Finish (in either view) for an Excel-style filter: pick a rule (equals, before, after, between, or relative to today such as this week, next month or year to date), or tick individual dates in the Year › Month › Day list — type in the search box to narrow it, and use (Blanks) for tasks without a real date. The two columns combine, so a task must match both. A group stays visible while any sub-task inside it matches, and stays open while a filter is on. The bar under the toolbar shows what is filtered and how many tasks are showing; click × on a chip, or Clear all, to remove it. Filters are only for looking — they aren't saved, and a task you add or edit stays visible until you filter again.</div>
+      <div><div class="help-section-title">Filtering</div>Click the funnel in a column header (Task Mode, Task Name, Start, Finish, Duration, %, Predecessors) for an Excel-style filter. Each column offers what fits its data: dates get rules (equals, before, after, between, or relative to today such as this week, next month or year to date) and a Year › Month › Day list; text columns get contains / begins with / ends with / equals and their negatives; numbers get equals, greater or less than, and between. Every column also has a list of its values to tick, with a search box and (Blanks) for tasks that have no value. Filters on several columns combine, so a task must match all of them. A group stays visible while any sub-task inside it matches, and stays open while a filter is on. The bar under the toolbar shows what is filtered and how many tasks are showing; click × on a chip, or Clear all, to remove it. Filters are only for looking — they aren't saved, and a task you add or edit stays visible until you filter again.</div>Click the funnel next to Start or Finish (in either view) for an Excel-style filter: pick a rule (equals, before, after, between, or relative to today such as this week, next month or year to date), or tick individual dates in the Year › Month › Day list — type in the search box to narrow it, and use (Blanks) for tasks without a real date. The two columns combine, so a task must match both. A group stays visible while any sub-task inside it matches, and stays open while a filter is on. The bar under the toolbar shows what is filtered and how many tasks are showing; click × on a chip, or Clear all, to remove it. Filters are only for looking — they aren't saved, and a task you add or edit stays visible until you filter again.</div>
       <div><div class="help-section-title">Task Mode</div>Every task is either Manually Scheduled (pushpin) or Auto Scheduled (chart icon) — click the icon in the Task Mode column, or use the Task Mode field in a task's dialog. An Auto task follows its predecessors and constraints. A Manual task stays exactly where you put it: predecessors never move it, its Start, Finish and Duration can be free text such as "TBD", and a warning triangle appears if it starts earlier than its predecessors allow. Manual tasks are drawn with a dashed bar, and are left out of the critical path. Switching a task to Auto moves it to the earliest date its links allow. The "New tasks" button at the right of the toolbar chooses the mode new tasks start in (Manual, like MS Project, by default).</div>
       <div><div class="help-section-title">Dependencies</div>Open a task and add a predecessor to link it to another task (Finish-to-Start, Start-to-Start, Finish-to-Finish or Start-to-Finish). Give it a lead or lag in days: a positive number delays the dependent task (lag), a negative number lets it overlap and start early (lead) — e.g. "3FS+2" waits 2 extra days after task 3 finishes, "3FS-2" starts 2 days before task 3 finishes. Moving a task forward automatically pushes any dependent tasks forward too — it never pulls a task earlier on its own. A circular dependency is flagged with a warning icon and stops auto-scheduling for the tasks involved.</div>
       <div><div class="help-section-title">The Gantt chart</div>Drag a bar to reschedule it, drag its edges to resize, or drag the small circle on its right edge onto another task to create a dependency. Click a bar or row to edit it. The Week / Month / Year buttons change the scale: Year (the default) shows quarters, and Week is labelled by calendar week (CW, weeks start on Monday, ISO 8601). The route icon in the toolbar highlights the critical path — the chain of tasks with zero slack that determines the overall project end date.</div>
@@ -1221,35 +1222,81 @@ function statusColorVar(t) {
 }
 
 /* ============================ Column filters ============================= */
-// Excel-style filters on the Start and Finish columns (both views; the two combine with AND). Pure view state, like the
-// selection: not saved, not synced, cleared when the plan is switched. A `spec` is either
-//   { type: 'rule',   rule, a, b }        e.g. between 01.09.2026 and 30.09.2026, or "this month" (evaluated against today)
-//   { type: 'values', dates: Set, blanks } the checked dates of the Year > Month > Day list, plus "(Blanks)"
-// Rows are filtered by the dates they *display* (effectiveDates: a summary shows its roll-up); a task with no real date
-// (free-text "TBD") counts as blank. A summary stays visible while any of its sub-tasks match, so a match keeps its
-// context; tasks added or edited since the filter was applied stay visible too (filterPinned) instead of vanishing
-// under your cursor.
-let colFilters = { start: null, end: null };
+// Excel-style filters on every data column of the task list (both views; the columns combine with AND). Each column gets
+// the filter Excel would give its data type (`kind`): date rules + a Year > Month > Day list (Start, Finish), text rules +
+// a value list (Task Name, Predecessors), number rules + a value list (Duration, %), and just a value list (Task Mode).
+// Pure view state, like the selection: not saved, not synced, cleared when the plan is switched. A `spec` is either
+//   { type: 'rule',   rule, a, b }          e.g. between 01.09.2026 and 30.09.2026, "this month", contains "test", > 5
+//   { type: 'values', values: Set, blanks }  the ticked values of the list, plus "(Blanks)"
+// Rows are filtered by what they *display* (a summary shows its roll-up); a task with no real value — a manual task with
+// a free-text "TBD" date, an empty name, no predecessors — is a blank. A summary stays visible while any of its
+// sub-tasks match, so a match keeps its context; tasks added or edited since the filter was applied stay visible too
+// (filterPinned) instead of vanishing under your cursor.
+const FILTER_COLS = {
+  mode:     { label: 'Task Mode',    kind: 'list' },
+  name:     { label: 'Task Name',    kind: 'text' },
+  start:    { label: 'Start',        kind: 'date' },
+  end:      { label: 'Finish',       kind: 'date' },
+  duration: { label: 'Duration',     kind: 'number' },
+  progress: { label: '% Complete',   kind: 'number' },
+  preds:    { label: 'Predecessors', kind: 'text' }
+};
+function newColFilters() { return Object.fromEntries(Object.keys(FILTER_COLS).map(c => [c, null])); }
+let colFilters = newColFilters();
 let filterPinned = new Set();
 let filterDraft = null;
 const _filterShow = new Map();
-const FILTER_COLS = { start: 'Start', end: 'Finish' };
-const FILTER_RULES = [
-  { id: 'equals',  label: 'Equals…',  inputs: 1, group: 'Compare' },
-  { id: 'before',  label: 'Before…',  inputs: 1, group: 'Compare' },
-  { id: 'after',   label: 'After…',   inputs: 1, group: 'Compare' },
-  { id: 'between', label: 'Between…', inputs: 2, group: 'Compare' },
-  { id: 'today', label: 'Today', group: 'Relative to today' }, { id: 'tomorrow', label: 'Tomorrow', group: 'Relative to today' }, { id: 'yesterday', label: 'Yesterday', group: 'Relative to today' },
-  { id: 'nextWeek', label: 'Next week', group: 'Relative to today' }, { id: 'thisWeek', label: 'This week', group: 'Relative to today' }, { id: 'lastWeek', label: 'Last week', group: 'Relative to today' },
-  { id: 'nextMonth', label: 'Next month', group: 'Relative to today' }, { id: 'thisMonth', label: 'This month', group: 'Relative to today' }, { id: 'lastMonth', label: 'Last month', group: 'Relative to today' },
-  { id: 'nextQuarter', label: 'Next quarter', group: 'Relative to today' }, { id: 'thisQuarter', label: 'This quarter', group: 'Relative to today' }, { id: 'lastQuarter', label: 'Last quarter', group: 'Relative to today' },
-  { id: 'nextYear', label: 'Next year', group: 'Relative to today' }, { id: 'thisYear', label: 'This year', group: 'Relative to today' }, { id: 'lastYear', label: 'Last year', group: 'Relative to today' },
-  { id: 'ytd', label: 'Year to date', group: 'Relative to today' }
+const REL = 'Relative to today';
+const DATE_RULES = [
+  { id: 'equals',  label: 'Equals…',  inputs: 1, group: 'Compare' }, { id: 'before', label: 'Before…', inputs: 1, group: 'Compare' },
+  { id: 'after',   label: 'After…',   inputs: 1, group: 'Compare' }, { id: 'between', label: 'Between…', inputs: 2, group: 'Compare' },
+  { id: 'today', label: 'Today', group: REL }, { id: 'tomorrow', label: 'Tomorrow', group: REL }, { id: 'yesterday', label: 'Yesterday', group: REL },
+  { id: 'nextWeek', label: 'Next week', group: REL }, { id: 'thisWeek', label: 'This week', group: REL }, { id: 'lastWeek', label: 'Last week', group: REL },
+  { id: 'nextMonth', label: 'Next month', group: REL }, { id: 'thisMonth', label: 'This month', group: REL }, { id: 'lastMonth', label: 'Last month', group: REL },
+  { id: 'nextQuarter', label: 'Next quarter', group: REL }, { id: 'thisQuarter', label: 'This quarter', group: REL }, { id: 'lastQuarter', label: 'Last quarter', group: REL },
+  { id: 'nextYear', label: 'Next year', group: REL }, { id: 'thisYear', label: 'This year', group: REL }, { id: 'lastYear', label: 'Last year', group: REL },
+  { id: 'ytd', label: 'Year to date', group: REL }
 ];
-function filtersActive() { return !!(colFilters.start || colFilters.end); }
-function filterColDate(t, col) { const e = effectiveDates(t.id); return (col === 'start' ? e.start : e.end) || null; }
+const TEXT_RULES = [
+  { id: 'eq', label: 'Equals…', inputs: 1 }, { id: 'ne', label: 'Does not equal…', inputs: 1 },
+  { id: 'begins', label: 'Begins with…', inputs: 1 }, { id: 'ends', label: 'Ends with…', inputs: 1 },
+  { id: 'contains', label: 'Contains…', inputs: 1 }, { id: 'notcontains', label: 'Does not contain…', inputs: 1 }
+];
+const NUMBER_RULES = [
+  { id: 'eq', label: 'Equals…', inputs: 1 }, { id: 'ne', label: 'Does not equal…', inputs: 1 },
+  { id: 'gt', label: 'Greater than…', inputs: 1 }, { id: 'ge', label: 'Greater than or equal to…', inputs: 1 },
+  { id: 'lt', label: 'Less than…', inputs: 1 }, { id: 'le', label: 'Less than or equal to…', inputs: 1 },
+  { id: 'between', label: 'Between…', inputs: 2 }
+];
+function rulesFor(kind) { return kind === 'date' ? DATE_RULES : kind === 'text' ? TEXT_RULES : kind === 'number' ? NUMBER_RULES : []; }
+function filtersActive() { return Object.values(colFilters).some(Boolean); }
 
-// [firstDay, lastDay] as day numbers for a rule (weeks run Monday-Sunday, like the calendar-week scale).
+// The value a row *shows* in a column (null = blank). Duration and % mirror the grid cells exactly.
+function filterColValue(t, col) {
+  switch (col) {
+    case 'mode': return t.taskMode === 'manual' ? 'manual' : 'auto';
+    case 'name': return (t.name || '').trim() || null;
+    case 'start': case 'end': { const e = effectiveDates(t.id); return (col === 'start' ? e.start : e.end) || null; }
+    case 'duration': { const e = effectiveDates(t.id); return (t.durText == null && e.start && e.end) ? durationDays(e.start, e.end) : null; }
+    case 'progress': return Math.round(effectiveDates(t.id).progress);
+    case 'preds': return predecessorLabel(t) || null;
+  }
+  return null;
+}
+function filterValueLabel(col, v) {
+  switch (col) {
+    case 'mode': return taskModeInfo(v).label;
+    case 'start': case 'end': return fmtDate(v);
+    case 'duration': return fmtDuration(v);
+    case 'progress': return v + '%';
+  }
+  return String(v);
+}
+function filterCompare(kind) {
+  return kind === 'number' ? (a, b) => a - b : kind === 'date' ? (a, b) => (a < b ? -1 : a > b ? 1 : 0) : (a, b) => String(a).localeCompare(String(b), undefined, { sensitivity: 'base', numeric: true });
+}
+
+// [firstDay, lastDay] as day numbers for a date rule (weeks run Monday-Sunday, like the calendar-week scale).
 function ruleRange(rule, a, b) {
   const today = dayNumber(todayStr());
   const monday = today - (((today + 3) % 7) + 7) % 7;
@@ -1282,15 +1329,42 @@ function ruleRange(rule, a, b) {
   }
   return [-Infinity, Infinity];
 }
-function specMatches(spec, iso) {
+function specMatches(spec, v, col) {
   if (!spec) return true;
-  if (spec.type === 'values') return iso === null ? !!spec.blanks : spec.dates.has(iso);
-  if (iso === null) return false;                         // a rule never matches a blank date (as in Excel)
-  const [lo, hi] = ruleRange(spec.rule, spec.a, spec.b), d = dayNumber(iso);
-  return d >= lo && d <= hi;
+  if (spec.type === 'values') return v === null ? !!spec.blanks : spec.values.has(v);
+  const kind = FILTER_COLS[col].kind;
+  if (kind === 'date') {
+    if (v === null) return false;                       // a date rule never matches a blank (as in Excel)
+    const [lo, hi] = ruleRange(spec.rule, spec.a, spec.b), d = dayNumber(v);
+    return d >= lo && d <= hi;
+  }
+  if (kind === 'text') {                                // case-insensitive, like Excel; the negative rules keep blanks
+    const s = v === null ? '' : String(v).toLowerCase(), q = String(spec.a).toLowerCase();
+    switch (spec.rule) {
+      case 'eq': return s === q;
+      case 'ne': return s !== q;
+      case 'begins': return s.startsWith(q);
+      case 'ends': return s.endsWith(q);
+      case 'contains': return s.includes(q);
+      case 'notcontains': return !s.includes(q);
+    }
+    return true;
+  }
+  const a = Number(spec.a), b = Number(spec.b);         // number
+  if (spec.rule === 'ne') return v !== a;               // a blank is "not equal" too
+  if (v === null) return false;
+  switch (spec.rule) {
+    case 'eq': return v === a;
+    case 'gt': return v > a;
+    case 'ge': return v >= a;
+    case 'lt': return v < a;
+    case 'le': return v <= a;
+    case 'between': return v >= Math.min(a, b) && v <= Math.max(a, b);
+  }
+  return true;
 }
 function filterPasses(t) {
-  for (const col of Object.keys(FILTER_COLS)) if (!specMatches(colFilters[col], filterColDate(t, col))) return false;
+  for (const col of Object.keys(FILTER_COLS)) if (!specMatches(colFilters[col], filterColValue(t, col), col)) return false;
   return true;
 }
 function filterShows(t) {
@@ -1300,33 +1374,40 @@ function filterShows(t) {
   _filterShow.set(t.id, shown);
   return shown;
 }
-function describeSpec(spec) {
+const NUMBER_OP_TEXT = { eq: '=', ne: '≠', gt: '>', ge: '≥', lt: '<', le: '≤' };
+function describeSpec(col, spec) {
+  const kind = FILTER_COLS[col].kind;
   if (spec.type === 'rule') {
-    const r = FILTER_RULES.find(x => x.id === spec.rule);
-    if (spec.rule === 'between') return `between ${fmtDate(spec.a)} and ${fmtDate(spec.b)}`;
-    if (r.inputs === 1) return `${r.label.replace('…', '').toLowerCase()} ${fmtDate(spec.a)}`;
-    return r.label.toLowerCase();
+    const r = rulesFor(kind).find(x => x.id === spec.rule);
+    const word = r.label.replace('…', '').toLowerCase();
+    if (kind === 'date') {
+      if (spec.rule === 'between') return `between ${fmtDate(spec.a)} and ${fmtDate(spec.b)}`;
+      return r.inputs === 1 ? `${word} ${fmtDate(spec.a)}` : word;
+    }
+    if (kind === 'text') return `${word} “${spec.a}”`;
+    return spec.rule === 'between' ? `between ${spec.a} and ${spec.b}` : `${NUMBER_OP_TEXT[spec.rule]} ${spec.a}`;
   }
-  const dates = [...spec.dates], parts = [];
-  if (dates.length === 1) parts.push(fmtDate(dates[0])); else if (dates.length > 1) parts.push(`${dates.length} dates`);
+  const vals = [...spec.values], parts = [];
+  if (vals.length === 1) parts.push(filterValueLabel(col, vals[0]));
+  else if (vals.length > 1) parts.push(`${vals.length} ${kind === 'date' ? 'dates' : 'values'}`);
   if (spec.blanks) parts.push('(Blanks)');
   return parts.join(' + ') || 'nothing';
 }
 function colHeadHtml(label, col) {
-  const spec = colFilters[col];
-  const title = spec ? `Filtered: ${describeSpec(spec)}` : `Filter ${label}`;
-  return `<div class="col-head"><span>${label}</span><button class="col-filter-btn${spec ? ' active' : ''}" onclick="openColumnFilter(event,'${col}')" title="${escapeHtml(title)}"><i class="fa-solid fa-filter"></i></button></div>`;
+  const spec = colFilters[col], name = FILTER_COLS[col].label;
+  const title = spec ? `Filtered: ${describeSpec(col, spec)}` : `Filter ${name}`;
+  return `<div class="col-head"${label ? '' : ` title="${name}"`}><span>${label}</span><button class="col-filter-btn${spec ? ' active' : ''}" data-col="${col}" onclick="openColumnFilter(event,'${col}')" title="${escapeHtml(title)}"><i class="fa-solid fa-filter"></i></button></div>`;
 }
 function renderFilterBar() {
   const el = document.getElementById('filterBar');
   if (!filtersActive()) { el.classList.add('hidden'); el.innerHTML = ''; return; }
   const chips = Object.keys(FILTER_COLS).filter(c => colFilters[c]).map(c =>
-    `<span class="filter-chip"><i class="fa-solid fa-filter"></i>${FILTER_COLS[c]}: ${escapeHtml(describeSpec(colFilters[c]))}<button onclick="clearColFilter('${c}')" title="Remove this filter"><i class="fa-solid fa-xmark"></i></button></span>`).join('');
+    `<span class="filter-chip"><i class="fa-solid fa-filter"></i>${FILTER_COLS[c].label}: ${escapeHtml(describeSpec(c, colFilters[c]))}<button onclick="clearColFilter('${c}')" title="Remove this filter"><i class="fa-solid fa-xmark"></i></button></span>`).join('');
   el.innerHTML = `${chips}<span class="filter-count">${tasks.filter(filterShows).length} of ${tasks.length} tasks</span><button class="btn-link" onclick="clearAllFilters()">Clear all</button>`;
   el.classList.remove('hidden');
 }
 function clearColFilter(col) { colFilters[col] = null; filterPinned.clear(); closeFilterMenu(); render(); }
-function clearAllFilters() { colFilters = { start: null, end: null }; filterPinned.clear(); closeFilterMenu(); render(); }
+function clearAllFilters() { colFilters = newColFilters(); filterPinned.clear(); closeFilterMenu(); render(); }
 function filterEmptyHtml() {
   return `<div class="empty-state"><i class="fa-solid fa-filter"></i>No tasks match the filter.<button class="btn" onclick="clearAllFilters()">Clear all filters</button></div>`;
 }
@@ -1337,32 +1418,36 @@ function openColumnFilter(event, col) {
   const menu = document.getElementById('filterMenu');
   if (menu.classList.contains('open') && filterDraft && filterDraft.col === col) { closeFilterMenu(); return; }
   closeDataMenu(); closePlanMenu(); closeTaskModeMenu();
-  // The list offers the dates that exist in this column among the tasks the *other* column's filter lets through.
-  const other = col === 'start' ? 'end' : 'start', found = new Set();
+  const kind = FILTER_COLS[col].kind;
+  // The list offers the values that exist in this column among the tasks every *other* column's filter lets through.
+  const others = Object.keys(FILTER_COLS).filter(c => c !== col), found = new Set();
   let hasBlank = false;
   for (const t of tasks) {
-    if (!specMatches(colFilters[other], filterColDate(t, other))) continue;
-    const d = filterColDate(t, col);
-    if (d) found.add(d); else hasBlank = true;
+    if (!others.every(o => specMatches(colFilters[o], filterColValue(t, o), o))) continue;
+    const v = filterColValue(t, col);
+    if (v === null) hasBlank = true; else found.add(v);
   }
-  const all = [...found].sort(), spec = colFilters[col];
+  const all = [...found].sort(filterCompare(kind)), spec = colFilters[col], asRule = spec && spec.type === 'rule';
   filterDraft = {
-    col, all, hasBlank,
-    rule: spec && spec.type === 'rule' ? spec.rule : '', a: spec && spec.type === 'rule' ? (spec.a || '') : '', b: spec && spec.type === 'rule' ? (spec.b || '') : '',
-    dates: new Set(spec && spec.type === 'values' ? spec.dates : all), blanks: spec && spec.type === 'values' ? !!spec.blanks : hasBlank,
+    col, kind, all, index: new Map(all.map((v, i) => [v, i])), hasBlank,
+    rule: asRule ? spec.rule : '', a: asRule && spec.a !== undefined ? String(spec.a) : '', b: asRule && spec.b !== undefined ? String(spec.b) : '',
+    values: new Set(spec && spec.type === 'values' ? spec.values : all), blanks: spec && spec.type === 'values' ? !!spec.blanks : hasBlank,
     expanded: new Set(), search: '', pre: null
   };
-  for (const iso of all) filterDraft.expanded.add('y:' + iso.slice(0, 4));   // years open, so the months show; months stay collapsed until you open one
-  const groups = [...new Set(FILTER_RULES.map(r => r.group))];
-  menu.innerHTML =
-    `<div class="filter-head"><strong>Filter ${FILTER_COLS[col]}</strong><button class="btn-link" id="filterClearBtn" onclick="clearColFilter('${col}')"${spec ? '' : ' disabled'}>Clear filter</button></div>` +
-    `<div class="filter-section"><label class="filter-label" for="filterRuleSel">Date filter</label>` +
+  if (kind === 'date') for (const iso of all) filterDraft.expanded.add('y:' + iso.slice(0, 4));   // years open, so the months show; months stay collapsed until you open one
+  const rules = rulesFor(kind), groups = [...new Set(rules.map(r => r.group).filter(Boolean))];
+  const opt = r => `<option value="${r.id}">${r.label}</option>`;
+  const ruleSelect = !rules.length ? '' :
+    `<div class="filter-section"><label class="filter-label" for="filterRuleSel">${kind === 'date' ? 'Date filter' : kind === 'text' ? 'Text filter' : 'Number filter'}</label>` +
     `<select id="filterRuleSel" onchange="onFilterRuleChange(this.value)"><option value="">Choose a rule…</option>` +
-    groups.map(g => `<optgroup label="${g}">${FILTER_RULES.filter(r => r.group === g).map(r => `<option value="${r.id}">${r.label}</option>`).join('')}</optgroup>`).join('') +
-    `</select><div class="filter-rule-inputs" id="filterRuleInputs"></div></div>` +
-    `<div class="filter-section filter-list"><input type="search" id="filterSearch" placeholder="Search dates" autocomplete="off" oninput="onFilterSearch(this.value)"><div class="filter-tree" id="filterTree"></div></div>` +
+    (groups.length ? groups.map(g => `<optgroup label="${g}">${rules.filter(r => r.group === g).map(opt).join('')}</optgroup>`).join('') : rules.map(opt).join('')) +
+    `</select><div class="filter-rule-inputs" id="filterRuleInputs"></div></div>`;
+  menu.innerHTML =
+    `<div class="filter-head"><strong>Filter ${FILTER_COLS[col].label}</strong><button class="btn-link" id="filterClearBtn" onclick="clearColFilter('${col}')"${spec ? '' : ' disabled'}>Clear filter</button></div>` +
+    ruleSelect +
+    `<div class="filter-section filter-list"><input type="search" id="filterSearch" placeholder="Search" autocomplete="off" oninput="onFilterSearch(this.value)"><div class="filter-tree" id="filterTree"></div></div>` +
     `<div class="filter-actions"><button class="btn" onclick="closeFilterMenu()">Cancel</button><button class="btn btn-primary" id="filterOkBtn" onclick="applyFilterDraft()">OK</button></div>`;
-  document.getElementById('filterRuleSel').value = filterDraft.rule;
+  if (rules.length) document.getElementById('filterRuleSel').value = filterDraft.rule;
   renderFilterRuleInputs(); renderFilterTree();
   const rect = event.currentTarget.getBoundingClientRect();
   menu.style.top = (rect.bottom + 4) + 'px';
@@ -1373,9 +1458,10 @@ function openColumnFilter(event, col) {
 function closeFilterMenu() { document.getElementById('filterMenu').classList.remove('open'); filterDraft = null; }
 function filterDateText(iso) { return `${fmtDate(iso)} ${monthNameOf(iso)} ${iso.slice(0, 4)}`.toLowerCase(); }
 function monthNameOf(iso) { return new Date(Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, 1)).toLocaleDateString(undefined, { month: 'long', timeZone: 'UTC' }); }
+function filterSearchText(v) { return filterDraft.kind === 'date' ? filterDateText(v) : filterValueLabel(filterDraft.col, v).toLowerCase(); }
 function filterLeaves() {
   const q = filterDraft.search.trim().toLowerCase();
-  return q ? filterDraft.all.filter(iso => filterDateText(iso).includes(q)) : filterDraft.all;
+  return q ? filterDraft.all.filter(v => filterSearchText(v).includes(q)) : filterDraft.all;
 }
 function filterShowBlank() {
   const q = filterDraft.search.trim().toLowerCase();
@@ -1383,15 +1469,22 @@ function filterShowBlank() {
 }
 function filterOkEnabled() {
   const d = filterDraft;
-  if (d.rule) { const r = FILTER_RULES.find(x => x.id === d.rule); return r.inputs === 0 || r.inputs === undefined ? true : r.inputs === 1 ? !!d.a : !!(d.a && d.b); }
-  return d.dates.size > 0 || d.blanks;
+  if (d.rule) {
+    const r = rulesFor(d.kind).find(x => x.id === d.rule);
+    const ok = v => d.kind === 'number' ? (v !== '' && Number.isFinite(Number(v))) : d.kind === 'text' ? v.trim() !== '' : !!v;
+    return !r.inputs ? true : r.inputs === 1 ? ok(d.a) : ok(d.a) && ok(d.b);
+  }
+  return d.values.size > 0 || d.blanks;
 }
 function updateFilterOk() { document.getElementById('filterOkBtn').disabled = !filterOkEnabled(); }
 function onFilterRuleChange(v) { if (!filterDraft) return; filterDraft.rule = v; renderFilterRuleInputs(); renderFilterTree(); }
 function renderFilterRuleInputs() {
-  const d = filterDraft, r = FILTER_RULES.find(x => x.id === d.rule), el = document.getElementById('filterRuleInputs');
-  const inp = (id, val, aria) => `<input type="date" id="${id}" value="${escapeHtml(val)}" aria-label="${aria}" oninput="onFilterDateInput('${id === 'filterDateA' ? 'a' : 'b'}', this.value)">`;
-  el.innerHTML = !r || !r.inputs ? '' : r.inputs === 1 ? inp('filterDateA', d.a, 'Date') : `${inp('filterDateA', d.a, 'From')}<span>and</span>${inp('filterDateB', d.b, 'To')}`;
+  const d = filterDraft, el = document.getElementById('filterRuleInputs');
+  if (!el) { updateFilterOk(); return; }
+  const r = rulesFor(d.kind).find(x => x.id === d.rule);
+  const type = d.kind === 'date' ? 'date' : d.kind === 'number' ? 'number" step="any' : 'text';
+  const inp = (which, aria) => `<input type="${type}" id="filterInput${which.toUpperCase()}" value="${escapeHtml(d[which])}" aria-label="${aria}" placeholder="${d.kind === 'text' ? 'Text' : d.kind === 'number' ? 'Number' : ''}" oninput="onFilterDateInput('${which}', this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();applyFilterDraft()}">`;
+  el.innerHTML = !r || !r.inputs ? '' : r.inputs === 1 ? inp('a', 'Value') : `${inp('a', 'From')}<span>and</span>${inp('b', 'To')}`;
   updateFilterOk();
 }
 function onFilterDateInput(which, v) { if (!filterDraft) return; filterDraft[which] = v; updateFilterOk(); }
@@ -1401,50 +1494,55 @@ function onFilterSearch(v) {
   const d = filterDraft, q = v.trim();
   d.search = v;
   if (q) {                                     // as in Excel: typing selects exactly the matches
-    if (!d.pre) d.pre = { dates: new Set(d.dates), blanks: d.blanks };
-    d.rule = ''; document.getElementById('filterRuleSel').value = ''; renderFilterRuleInputs();
-    d.dates = new Set(filterLeaves()); d.blanks = filterShowBlank();
-  } else if (d.pre) { d.dates = d.pre.dates; d.blanks = d.pre.blanks; d.pre = null; }
+    if (!d.pre) d.pre = { values: new Set(d.values), blanks: d.blanks };
+    d.rule = ''; if (document.getElementById('filterRuleSel')) document.getElementById('filterRuleSel').value = ''; renderFilterRuleInputs();
+    d.values = new Set(filterLeaves()); d.blanks = filterShowBlank();
+  } else if (d.pre) { d.values = d.pre.values; d.blanks = d.pre.blanks; d.pre = null; }
   renderFilterTree();
 }
 function filterToggleExpand(key) { if (!filterDraft) return; const s = filterDraft.expanded; if (s.has(key)) s.delete(key); else s.add(key); renderFilterTree(); }
 function filterToggle(key, checked) {
   const d = filterDraft;
   if (!d) return;
-  if (d.rule) { d.rule = ''; document.getElementById('filterRuleSel').value = ''; renderFilterRuleInputs(); }   // ticking dates switches back to a list filter
-  const leaves = filterLeaves();
+  if (d.rule) { d.rule = ''; document.getElementById('filterRuleSel').value = ''; renderFilterRuleInputs(); }   // ticking values switches back to a list filter
+  const leaves = filterLeaves(), set = v => { if (checked) d.values.add(v); else d.values.delete(v); };
   if (key === 'blank') d.blanks = checked;
-  else {
-    const prefix = key === 'all' ? '' : key.startsWith('y:') ? key.slice(2) + '-' : key.startsWith('m:') ? key.slice(2) + '-' : key.slice(2);
-    for (const iso of leaves) if (iso.startsWith(prefix)) { if (checked) d.dates.add(iso); else d.dates.delete(iso); }
-    if (key === 'all' && filterShowBlank()) d.blanks = checked;
+  else if (key === 'all') { leaves.forEach(set); if (filterShowBlank()) d.blanks = checked; }
+  else if (key.startsWith('v:')) set(d.all[+key.slice(2)]);
+  else {                                                // date tree: y:2026 / m:2026-09 / d:2026-09-07
+    const prefix = key.startsWith('d:') ? key.slice(2) : key.slice(2) + '-';
+    for (const iso of leaves) if (iso.startsWith(prefix)) set(iso);
   }
   renderFilterTree();
 }
 function renderFilterTree() {
   const d = filterDraft, leaves = filterLeaves(), searching = !!d.search.trim(), showBlank = filterShowBlank();
-  const state = arr => { const n = arr.filter(x => d.dates.has(x)).length; return n === 0 ? 'none' : n === arr.length ? 'all' : 'mixed'; };
+  const state = arr => { const n = arr.filter(x => d.values.has(x)).length; return n === 0 ? 'none' : n === arr.length ? 'all' : 'mixed'; };
   const cb = (key, st, label) => `<label class="ft-label"><input type="checkbox" class="ft-cb" data-key="${key}" data-state="${st}"${st === 'all' ? ' checked' : ''} onchange="filterToggle('${key}', this.checked)"><span>${label}</span></label>`;
-  const byYear = new Map();
-  for (const iso of leaves) {
-    const y = iso.slice(0, 4), m = iso.slice(0, 7);
-    if (!byYear.has(y)) byYear.set(y, new Map());
-    if (!byYear.get(y).has(m)) byYear.get(y).set(m, []);
-    byYear.get(y).get(m).push(iso);
-  }
   const exp = (key, open) => `<button class="ft-exp" onclick="filterToggleExpand('${key}')" aria-label="${open ? 'Collapse' : 'Expand'}"><i class="fa-solid fa-chevron-${open ? 'down' : 'right'}"></i></button>`;
-  const allItems = leaves.length + (showBlank ? 1 : 0), allOn = leaves.filter(x => d.dates.has(x)).length + (showBlank && d.blanks ? 1 : 0);
+  const allItems = leaves.length + (showBlank ? 1 : 0), allOn = leaves.filter(x => d.values.has(x)).length + (showBlank && d.blanks ? 1 : 0);
   let html = `<div class="ft-row">${cb('all', allOn === 0 ? 'none' : allOn === allItems ? 'all' : 'mixed', searching ? '(Select All Search Results)' : '(Select All)')}</div>`;
-  if (!allItems) html = `<div class="ft-empty">No dates match “${escapeHtml(d.search.trim())}”.</div>`;
-  else for (const [y, months] of byYear) {
-    const yOpen = searching || d.expanded.has('y:' + y);
-    html += `<div class="ft-row">${exp('y:' + y, yOpen)}${cb('y:' + y, state([].concat(...months.values())), y)}</div>`;
-    if (!yOpen) continue;
-    for (const [m, days] of months) {
-      const mOpen = searching || d.expanded.has('m:' + m);
-      html += `<div class="ft-row ft-l1">${exp('m:' + m, mOpen)}${cb('m:' + m, state(days), escapeHtml(monthNameOf(days[0])))}</div>`;
-      if (mOpen) for (const iso of days) html += `<div class="ft-row ft-l2">${cb('d:' + iso, state([iso]), fmtDate(iso))}</div>`;
+  if (!allItems) html = `<div class="ft-empty">Nothing matches “${escapeHtml(d.search.trim())}”.</div>`;
+  else if (d.kind === 'date') {
+    const byYear = new Map();
+    for (const iso of leaves) {
+      const y = iso.slice(0, 4), m = iso.slice(0, 7);
+      if (!byYear.has(y)) byYear.set(y, new Map());
+      if (!byYear.get(y).has(m)) byYear.get(y).set(m, []);
+      byYear.get(y).get(m).push(iso);
     }
+    for (const [y, months] of byYear) {
+      const yOpen = searching || d.expanded.has('y:' + y);
+      html += `<div class="ft-row">${exp('y:' + y, yOpen)}${cb('y:' + y, state([].concat(...months.values())), y)}</div>`;
+      if (!yOpen) continue;
+      for (const [m, days] of months) {
+        const mOpen = searching || d.expanded.has('m:' + m);
+        html += `<div class="ft-row ft-l1">${exp('m:' + m, mOpen)}${cb('m:' + m, state(days), escapeHtml(monthNameOf(days[0])))}</div>`;
+        if (mOpen) for (const iso of days) html += `<div class="ft-row ft-l2">${cb('d:' + iso, state([iso]), fmtDate(iso))}</div>`;
+      }
+    }
+  } else {
+    for (const v of leaves) html += `<div class="ft-row">${cb('v:' + d.index.get(v), d.values.has(v) ? 'all' : 'none', escapeHtml(filterValueLabel(d.col, v)))}</div>`;
   }
   if (showBlank) html += `<div class="ft-row">${cb('blank', d.blanks ? 'all' : 'none', '(Blanks)')}</div>`;
   const tree = document.getElementById('filterTree');
@@ -1457,10 +1555,14 @@ function applyFilterDraft() {
   const d = filterDraft;
   if (!d || !filterOkEnabled()) return;
   let spec = null;
-  if (d.rule) spec = { type: 'rule', rule: d.rule, a: d.a, b: d.b };
-  else {
-    const dates = d.all.filter(x => d.dates.has(x));
-    if (!(dates.length === d.all.length && (!d.hasBlank || d.blanks))) spec = { type: 'values', dates: new Set(dates), blanks: d.hasBlank && d.blanks };
+  if (d.rule) {
+    const num = d.kind === 'number', r = rulesFor(d.kind).find(x => x.id === d.rule);
+    spec = { type: 'rule', rule: d.rule, a: num ? Number(d.a) : d.a, b: num ? Number(d.b) : d.b };
+    if (d.kind === 'text') spec.a = d.a.trim();
+    if (r.inputs < 2) delete spec.b;
+  } else {
+    const vals = d.all.filter(x => d.values.has(x));
+    if (!(vals.length === d.all.length && (!d.hasBlank || d.blanks))) spec = { type: 'values', values: new Set(vals), blanks: d.hasBlank && d.blanks };
   }
   colFilters[d.col] = spec;
   filterPinned.clear();
@@ -1468,11 +1570,21 @@ function applyFilterDraft() {
   render();
 }
 
+// "3FS+2, 5SS" — exactly what the Predecessors column shows (and what the column filter tests).
+function predecessorLabel(t) {
+  return t.predecessors.map(p => {
+    const pt = byId(p.id);
+    if (!pt) return '';
+    const lag = p.lag ? (p.lag > 0 ? `+${p.lag}` : `${p.lag}`) : '';
+    return `${taskDisplayId(p.id)}${p.type}${lag}`;
+  }).filter(Boolean).join(', ');
+}
+
 function renderGrid() {
   const full = currentView === 'tasks';
   document.getElementById('gridHeader').innerHTML = full
-    ? `<div></div><div title="Task Mode"></div><div>Task Name</div>${colHeadHtml('Start', 'start')}${colHeadHtml('Finish', 'end')}<div>Duration</div><div>%</div><div>Predecessors</div><div></div>`
-    : `<div></div><div title="Task Mode"></div><div>Task Name</div>${colHeadHtml('Start', 'start')}${colHeadHtml('Finish', 'end')}`;
+    ? `<div></div>${colHeadHtml('', 'mode')}${colHeadHtml('Task Name', 'name')}${colHeadHtml('Start', 'start')}${colHeadHtml('Finish', 'end')}${colHeadHtml('Duration', 'duration')}${colHeadHtml('%', 'progress')}${colHeadHtml('Predecessors', 'preds')}<div></div>`
+    : `<div></div>${colHeadHtml('', 'mode')}${colHeadHtml('Task Name', 'name')}${colHeadHtml('Start', 'start')}${colHeadHtml('Finish', 'end')}`;
   const list = visibleTaskList();
   const el = document.getElementById('gridRows');
   if (list.length === 0 && filtersActive() && tasks.length) { el.innerHTML = filterEmptyHtml(); return; }
@@ -1489,12 +1601,7 @@ function renderGrid() {
     // stays meaningful (and short enough for this column) however that
     // task gets renamed later, and matches how real MS Project's own
     // Predecessors column reads.
-    const predLabel = t.predecessors.map(p => {
-      const pt = byId(p.id);
-      if (!pt) return '';
-      const lag = p.lag ? (p.lag > 0 ? `+${p.lag}` : `${p.lag}`) : '';
-      return `${taskDisplayId(p.id)}${p.type}${lag}`;
-    }).filter(Boolean).join(', ');
+    const predLabel = predecessorLabel(t);
     const manual = t.taskMode === 'manual';
     const canEditDates = full && (!summary || manual);
     const canEditFinish = canEditDates && !t.milestone;
@@ -2890,7 +2997,7 @@ function createPlanRecord(name, data) {
 }
 function resetTransientUI() {
   selectedTaskId = null; editingCell = null; editingPredecessors = [];
-  colFilters = { start: null, end: null }; filterPinned.clear(); closeFilterMenu();   // filters belong to the plan you were looking at
+  colFilters = newColFilters(); filterPinned.clear(); closeFilterMenu();   // filters belong to the plan you were looking at
   closeTaskModal(); closeImportModal(); closeDataMenu(); closeTaskModeMenu();
   clearTimeout(toastTimer); toastUndoAction = null;
   document.getElementById('toast').classList.remove('show');   // an Undo for the old plan must not act on the new one
