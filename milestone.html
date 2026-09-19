@@ -91,6 +91,9 @@ button { cursor: pointer; }
 .btn-primary { background: var(--task-green); border-color: var(--task-green); color: #fff; }
 .btn-primary:hover { background: var(--task-green); filter: brightness(1.06); }
 .btn-danger { color: var(--danger); }
+/* Filled red button — the confirm dialog's default for destructive actions (Delete task, Delete plan). */
+.btn-primary.btn-danger { background: var(--danger); border-color: var(--danger); color: #fff; }
+.btn-primary.btn-danger:hover { background: var(--danger); }
 .icon-btn {
   display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px;
   border: none; background: transparent; color: var(--text-dim); border-radius: 8px; font-size: 15px;
@@ -219,6 +222,10 @@ input.inline-edit { width: 100%; min-width: 0; padding: 3px 6px; border: 1px sol
 .gantt-content { position: relative; }
 .gantt-header { position: sticky; top: 0; z-index: 5; height: var(--row-h); background: var(--panel-2); border-bottom: 1px solid var(--border); }
 .gantt-tick { position: absolute; top: 0; bottom: 0; border-left: 1px solid var(--border); font-size: 10.5px; color: var(--text-faint); padding: 8px 0 0 4px; white-space: nowrap; }
+/* Day zoom: a column is only 32px, narrower than a one-line "Mi., 10" (German) or "Wed 10", so the label is stacked —
+   weekday over day number — and centred instead of running into the next column. */
+.gantt-tick.day { padding: 3px 0 0; text-align: center; line-height: 12px; font-size: 10px; }
+.gantt-tick.day b { display: block; font-size: 11.5px; font-weight: 600; color: var(--text-dim); }
 .gantt-tick.weekend { background: color-mix(in srgb, var(--text-faint) 6%, transparent); }
 .gantt-rows { position: relative; }
 .gantt-row-bg { position: absolute; left: 0; right: 0; height: var(--row-h); border-bottom: 1px solid var(--border); }
@@ -1581,7 +1588,8 @@ function renderGanttHeaderTicks(range, px) {
       const iso = dayNumberToIso(d);
       const date = parseLocalDate(iso);
       const weekend = date.getDay() === 0 || date.getDay() === 6;
-      ticks.push({ left: (d - range.start) * px, label: date.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric' }), weekend });
+      const wd = date.toLocaleDateString(undefined, { weekday: 'short' }).replace(/[.,]+$/, '');   // "Mi." -> "Mi"
+      ticks.push({ left: (d - range.start) * px, html: `${escapeHtml(wd)}<b>${date.getDate()}</b>`, weekend });
     }
   } else if (z.id === 'week') {
     let d = range.start - (parseLocalDate(dayNumberToIso(range.start)).getDay() || 7) + 1;
@@ -1619,7 +1627,7 @@ function renderGantt() {
   document.getElementById('ganttRows').style.width = totalW + 'px';
 
   const ticks = renderGanttHeaderTicks(dateRange, px);
-  document.getElementById('ganttHeader').innerHTML = ticks.map(t => `<div class="gantt-tick${t.weekend ? ' weekend' : ''}" style="left:${t.left}px;width:${px}px">${escapeHtml(t.label)}</div>`).join('');
+  document.getElementById('ganttHeader').innerHTML = ticks.map(t => `<div class="gantt-tick${z.id === 'day' ? ' day' : ''}${t.weekend ? ' weekend' : ''}" style="left:${t.left}px;width:${px}px">${t.html || escapeHtml(t.label)}</div>`).join('');
 
   if (list.length === 0) {
     document.getElementById('ganttRows').innerHTML = `<div class="empty-state" style="position:absolute;left:0;right:0"><i class="fa-solid fa-chart-gantt"></i>Nothing to chart yet.</div>`;
@@ -2207,10 +2215,12 @@ function openBackupsModal() {
 function closeBackupsModal() { document.getElementById('backupsModalBg').classList.remove('open'); }
 function restoreBackup(dateKey) {
   const backups = listBackups(); const snap = backups[dateKey]; if (!snap) return;
+  closeBackupsModal();   // the confirm dialog is earlier in the page than this one and would open *behind* it, out of reach
   openConfirmModal({
     title: 'Restore Backup',
     body: `Restore the snapshot from ${escapeHtml(dateKey)}? Your current data will be downloaded as a safety copy first.`,
     confirmLabel: 'Restore',
+    confirmClass: 'btn btn-primary',   // replaces the data (after a safety download) but isn't a delete, so not red
     action() {
       downloadData(syncPayload(), `milestone-backup-before-restore-${todayStr()}.json`);
       project = snap.project || project;
