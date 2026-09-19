@@ -306,7 +306,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 
 <div class="topbar">
   <div class="brand">
-    <svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="58" fill="currentColor" opacity=".15"/><rect x="30" y="34" width="34" height="9" rx="3" fill="currentColor"/><rect x="38" y="49" width="48" height="9" rx="3" fill="currentColor"/><rect x="46" y="64" width="40" height="9" rx="3" fill="currentColor"/></svg>
+    <svg viewBox="0 0 120 120" aria-hidden="true"><mask id="logoMaskBar"><rect width="120" height="120" fill="#fff"/><rect x="40" y="34" width="40" height="14" rx="7" fill="#000"/><rect x="26" y="53" width="58" height="14" rx="7" fill="#000"/><rect x="50" y="72" width="34" height="14" rx="7" fill="#000"/></mask><polygon mask="url(#logoMaskBar)" points="60,3 117,60 60,117 3,60" fill="currentColor"/></svg>
     Milestone
   </div>
   <input id="projectNameInput" type="text" title="Project name">
@@ -481,7 +481,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
   <div class="modal narrow">
     <div class="modal-header"><h2>About</h2><button onclick="closeAboutModal()">&times;</button></div>
     <div class="modal-body about-body">
-      <svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="58" fill="currentColor" opacity=".15"/><rect x="30" y="34" width="34" height="9" rx="3" fill="currentColor"/><rect x="38" y="49" width="48" height="9" rx="3" fill="currentColor"/><rect x="46" y="64" width="40" height="9" rx="3" fill="currentColor"/></svg>
+      <svg viewBox="0 0 120 120" aria-hidden="true"><mask id="logoMaskAbout"><rect width="120" height="120" fill="#fff"/><rect x="40" y="34" width="40" height="14" rx="7" fill="#000"/><rect x="26" y="53" width="58" height="14" rx="7" fill="#000"/><rect x="50" y="72" width="34" height="14" rx="7" fill="#000"/></mask><polygon mask="url(#logoMaskAbout)" points="60,3 117,60 60,117 3,60" fill="currentColor"/></svg>
       <div style="font-weight:700;font-size:16px">Milestone</div>
       <div style="color:var(--text-dim);font-size:13px">A local-first project planner — Gantt chart, dependencies, no account, no server.</div>
       <div id="aboutVersionLine" style="color:var(--text-faint);font-size:11.5px"></div>
