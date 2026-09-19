@@ -61,11 +61,15 @@ button { cursor: pointer; }
 .topbar > * { flex-shrink: 0; }
 .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 21px; letter-spacing: -0.02em; color: var(--text); }
 .brand svg { width: 36px; height: 36px; color: var(--accent); }
-#projectNameInput {
-  border: none; background: transparent; font-weight: 600; font-size: 14px;
-  padding: 4px 8px; border-radius: 6px; color: var(--text-dim); min-width: 120px; max-width: 320px;
+/* Plan switcher: the project name, as a button that opens the list of plans. 243px = the old name field's 182px + 1/3. */
+.plan-btn {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 243px;
+  border: none; background: transparent; font-weight: 600; font-size: 14px; text-align: left;
+  padding: 4px 8px; border-radius: 6px; color: var(--text-dim);
 }
-#projectNameInput:hover, #projectNameInput:focus { background: var(--panel-2); color: var(--text); outline: none; }
+.plan-btn:hover, .plan-btn.open { background: var(--panel-2); color: var(--text); }
+.plan-btn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.plan-btn i { font-size: 10px; color: var(--text-faint); flex-shrink: 0; }
 .topbar-divider { width: 1px; height: 22px; background: var(--border); }
 .topbar-spacer { flex: 1 1 auto; }
 
@@ -85,7 +89,7 @@ button { cursor: pointer; }
 .btn:disabled { opacity: .45; cursor: default; }
 .btn:disabled:hover { background: var(--panel); }
 .btn-primary { background: var(--task-green); border-color: var(--task-green); color: #fff; }
-.btn-primary:hover { filter: brightness(1.06); }
+.btn-primary:hover { background: var(--task-green); filter: brightness(1.06); }
 .btn-danger { color: var(--danger); }
 .icon-btn {
   display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px;
@@ -122,6 +126,20 @@ button:focus:not(:focus-visible) { outline: none; }
 .dropdown-item:hover { background: var(--panel-2); }
 .dropdown-item i { width: 15px; color: var(--text-dim); }
 .dropdown-sep { height: 1px; background: var(--border); margin: 6px 2px; }
+.dropdown-item:disabled { opacity: .45; cursor: default; }
+.dropdown-item:disabled:hover { background: transparent; }
+.plan-menu { min-width: 290px; max-width: 380px; }
+.plan-list { max-height: 50vh; overflow-y: auto; }
+.plan-item {
+  display: flex; align-items: center; gap: 9px; width: 100%; padding: 7px 10px;
+  border: none; background: transparent; border-radius: 7px; text-align: left; color: var(--text);
+}
+.plan-item:hover { background: var(--panel-2); }
+.plan-item.active { background: color-mix(in srgb, var(--accent) 10%, var(--panel)); }
+.plan-item .plan-check { width: 14px; flex-shrink: 0; font-size: 12px; color: var(--accent); }
+.plan-item .plan-text { min-width: 0; display: flex; flex-direction: column; }
+.plan-item .plan-name { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.plan-item .plan-file { font-size: 11.5px; color: var(--text-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 #fileSyncIndicator, #syncStatusBtn { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-dim); }
 
@@ -155,8 +173,7 @@ button:focus:not(:focus-visible) { outline: none; }
 .grid-row { border-bottom: 1px solid var(--border); font-size: 12.5px; cursor: default; }
 .grid-row:hover { background: var(--panel-2); }
 .grid-row.selected { background: color-mix(in srgb, var(--accent) 10%, var(--panel)); }
-.grid-row[draggable="true"] { cursor: grab; }
-.grid-row[draggable="true"]:active { cursor: grabbing; }
+.grid-row.grabbing { cursor: grabbing; }
 .grid-row.dragging { opacity: .4; }
 .grid-row.drop-before { box-shadow: inset 0 2px 0 var(--accent); }
 .grid-row.drop-after { box-shadow: inset 0 -2px 0 var(--accent); }
@@ -316,7 +333,10 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
     <svg viewBox="0 0 120 120" aria-hidden="true"><mask id="logoMaskBar"><rect width="120" height="120" fill="#fff"/><rect x="40" y="34" width="40" height="14" rx="7" fill="#000"/><rect x="26" y="53" width="58" height="14" rx="7" fill="#000"/><rect x="50" y="72" width="34" height="14" rx="7" fill="#000"/></mask><polygon mask="url(#logoMaskBar)" points="60,3 117,60 60,117 3,60" fill="currentColor"/></svg>
     Milestone
   </div>
-  <input id="projectNameInput" type="text" title="Project name">
+  <div class="dropdown-wrap">
+    <button class="plan-btn" id="planMenuBtn" onclick="togglePlanMenu()" title="Switch plan"><span id="planBtnName"></span><i class="fa-solid fa-chevron-down"></i></button>
+    <div class="dropdown-menu plan-menu" id="planMenu"></div>
+  </div>
   <div class="topbar-divider"></div>
   <div class="view-tabs" id="mainViewTabs"></div>
   <div class="topbar-divider" id="ganttControlsDivider"></div>
@@ -429,6 +449,22 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
   </div>
 </div>
 
+<!-- Plan name modal (New plan / Rename plan) -->
+<div class="modal-bg" id="planModalBg" onclick="if(event.target===this) closePlanModal()">
+  <div class="modal narrow">
+    <div class="modal-header"><h2 id="planModalTitle">New plan</h2><button onclick="closePlanModal()">&times;</button></div>
+    <div class="modal-body">
+      <div class="field"><label for="planNameInput">Plan name</label><input type="text" id="planNameInput" maxlength="80" onkeydown="if(event.key==='Enter'){event.preventDefault();submitPlanModal(false)}"></div>
+      <p id="planModalHint" style="font-size:12.5px;color:var(--text-dim);margin:0;line-height:1.5"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closePlanModal()">Cancel</button>
+      <button class="btn" id="planFileBtn" onclick="submitPlanModal(true)"><i class="fa-solid fa-file-circle-plus"></i>Create with file…</button>
+      <button class="btn btn-primary" id="planSubmitBtn" onclick="submitPlanModal(false)">Create</button>
+    </div>
+  </div>
+</div>
+
 <!-- Import modal -->
 <div class="modal-bg" id="importModalBg" onclick="if(event.target===this) closeImportModal()">
   <div class="modal narrow">
@@ -476,7 +512,8 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
       <div><div class="help-section-title">Task Mode</div>Every task is either Manually Scheduled (pushpin) or Auto Scheduled (chart icon) — click the icon in the Task Mode column, or use the Task Mode field in a task's dialog. An Auto task follows its predecessors and constraints. A Manual task stays exactly where you put it: predecessors never move it, its Start, Finish and Duration can be free text such as "TBD", and a warning triangle appears if it starts earlier than its predecessors allow. Manual tasks are drawn with a dashed bar, and are left out of the critical path. Switching a task to Auto moves it to the earliest date its links allow. The "New tasks" button at the right of the toolbar chooses the mode new tasks start in (Manual, like MS Project, by default).</div>
       <div><div class="help-section-title">Dependencies</div>Open a task and add a predecessor to link it to another task (Finish-to-Start, Start-to-Start, Finish-to-Finish or Start-to-Finish). Give it a lead or lag in days: a positive number delays the dependent task (lag), a negative number lets it overlap and start early (lead) — e.g. "3FS+2" waits 2 extra days after task 3 finishes, "3FS-2" starts 2 days before task 3 finishes. Moving a task forward automatically pushes any dependent tasks forward too — it never pulls a task earlier on its own. A circular dependency is flagged with a warning icon and stops auto-scheduling for the tasks involved.</div>
       <div><div class="help-section-title">The Gantt chart</div>Drag a bar to reschedule it, drag its edges to resize, or drag the small circle on its right edge onto another task to create a dependency. Click a bar or row to edit it. The route icon in the toolbar highlights the critical path — the chain of tasks with zero slack that determines the overall project end date.</div>
-      <div><div class="help-section-title">Data &amp; sync</div>Everything lives in this browser's local storage — nothing ever leaves your machine unless you export it or link a file. Data → Export/Import moves a full JSON snapshot in or out; Local Backups keeps a rolling daily snapshot. The file-link button next to Data lets you sync to a plain JSON file, which works well inside an iCloud Drive/OneDrive/Dropbox folder for keeping your own devices in step.</div>
+      <div><div class="help-section-title">Plans</div>The plan name at the top left is a switcher: click it to move between plans, start a new one, open an existing file as a plan, or rename, duplicate or delete the current plan. Each plan has its own tasks, its own daily backups and — optionally — its own linked file, so switching plans also switches which file is kept in sync. Deleting a plan only removes it from this browser; its file is never touched.</div>
+      <div><div class="help-section-title">Data &amp; sync</div>Everything lives in this browser's local storage — nothing ever leaves your machine unless you export it or link a file. Data → Export/Import moves a full JSON snapshot of the current plan in or out; Local Backups keeps a rolling daily snapshot. The file-link button next to Data lets you sync to a plain JSON file, which works well inside an iCloud Drive/OneDrive/Dropbox folder for keeping your own devices in step.</div>
       <div class="help-tip">Nothing here ever leaves your machine unless you explicitly export or link a file.</div>
     </div>
     <div class="modal-footer"><button class="btn" onclick="closeHelpModal()">Close</button></div>
@@ -507,6 +544,19 @@ const APP_VERSION = 1;
 const APP_BUILD_DATE = '2026-09-13';
 const STORAGE_KEY = 'milestone-v1';
 const BACKUPS_KEY = 'milestone-backups';
+// Plans. Before plans existed the app kept ONE project under STORAGE_KEY / BACKUPS_KEY and one file handle
+// under _FS_KEY; those three are now only the migration source (see initPlans()). Layout today:
+//   PLANS_KEY                  { current, plans: [{ id, name, fileName }] }   name/fileName are cached for the switcher
+//   PLAN_DATA_PREFIX + id      { version, project, tasks, deletedTaskIds }    exactly what is synced to that plan's file
+//   PLAN_BACKUPS_PREFIX + id   { 'YYYY-MM-DD': snapshot }
+//   PREFS_KEY                  { theme, zoom, view, gridPaneWidth }           per device, shared by every plan
+//   IndexedDB handles store    'plan:' + id -> FileSystemFileHandle
+const PLANS_KEY = 'milestone-plans';
+const PREFS_KEY = 'milestone-prefs';
+const PLAN_DATA_PREFIX = 'milestone-plan-';
+const PLAN_BACKUPS_PREFIX = 'milestone-backups-';
+const LEGACY_PLAN_ID = 'plan1';
+const HANDLE_MIGRATED_KEY = 'milestone-handle-migrated';
 // The app was originally named dbPlanner. Copy (not move) data saved under
 // the old keys forward once, so an existing project/backups survive the
 // rename; the old entries are left in place as a rollback safety net.
@@ -592,8 +642,14 @@ let pendingImportData = null;
 let modalTarget = null;
 let toastUndoAction = null;
 
+let currentPlanId = null;
+let indexedPlanName = null;      // the name last written to the plans index for the current plan
+let planEpoch = 0;               // bumped on every plan switch — async file work compares it to notice "the plan changed while I was waiting"
+let planSwitching = false;
+let planModalMode = 'new';       // 'new' | 'rename'
+
 let syncFileHandle = null;
-let fileSyncStatus = 'unlinked'; // unsupported | unlinked | linked | lapsed
+let fileSyncStatus = 'unlinked'; // unsupported | unlinked | checking | linked | lapsed
 let lastSyncedSnapshot = null;
 let lastSyncedAt = 0;
 let fileSyncWriteInFlight = false;
@@ -621,28 +677,101 @@ function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c
 function byId(id) { return tasks.find(t => t.id === id); }
 
 /* ============================ Persistence =============================== */
-function localPayload() { return { version: APP_VERSION, project, tasks, deletedTaskIds, theme, zoom, view: currentView, gridPaneWidth }; }
+function prefsPayload() { return { theme, zoom, view: currentView, gridPaneWidth }; }
 function syncPayload() { return { version: APP_VERSION, project, tasks, deletedTaskIds }; }
 
-function load() {
+function planDataKey(id) { return PLAN_DATA_PREFIX + id; }
+function planBackupsKey(id) { return PLAN_BACKUPS_PREFIX + id; }
+function planHandleKey(id) { return 'plan:' + id; }
+
+function readPlansIndex() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const idx = JSON.parse(localStorage.getItem(PLANS_KEY));
+    if (idx && Array.isArray(idx.plans) && idx.plans.length) return idx;
+  } catch (e) { /* fall through */ }
+  return null;
+}
+function planRecord(idx, id) { return idx.plans.find(p => p.id === id); }
+// Always read-modify-write against localStorage, never an in-memory copy, so a second tab that added or
+// renamed a plan in the meantime isn't overwritten.
+function updatePlansIndex(fn) {
+  const idx = readPlansIndex() || { current: currentPlanId, plans: [] };
+  fn(idx);
+  localStorage.setItem(PLANS_KEY, JSON.stringify(idx));
+  return idx;
+}
+function setPlanFileName(id, fileName) {
+  updatePlansIndex(idx => { const r = planRecord(idx, id); if (r) r.fileName = fileName || null; });
+}
+
+// Make sure the plans index exists and pick the current plan. The first time this build runs, the single
+// pre-plans project becomes "Plan 1" — copied, not moved, like the dbPlanner→Milestone rename: the old
+// keys stay behind as a rollback copy, and once the index exists they are never read again.
+function initPlans() {
+  let idx = readPlansIndex();
+  if (!idx) {
+    idx = { current: null, plans: [] };
+    let legacy = null;
+    try { legacy = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'); } catch (e) { legacy = null; }
+    if (legacy && typeof legacy === 'object') {
+      const id = LEGACY_PLAN_ID;
+      localStorage.setItem(planDataKey(id), JSON.stringify({ version: APP_VERSION, project: legacy.project, tasks: legacy.tasks, deletedTaskIds: legacy.deletedTaskIds }));
+      localStorage.setItem(PREFS_KEY, JSON.stringify({ theme: legacy.theme, zoom: legacy.zoom, view: legacy.view, gridPaneWidth: legacy.gridPaneWidth }));
+      const oldBackups = localStorage.getItem(BACKUPS_KEY);
+      if (oldBackups !== null) localStorage.setItem(planBackupsKey(id), oldBackups);
+      idx.plans.push({ id, name: (legacy.project && legacy.project.name) || 'My Project', fileName: null });
+      idx.current = id;
+    } else {
+      const id = genId();
+      idx.plans.push({ id, name: 'My Project', fileName: null });
+      idx.current = id;
+    }
+    localStorage.setItem(PLANS_KEY, JSON.stringify(idx));
+  }
+  if (!planRecord(idx, idx.current)) { idx.current = idx.plans[0].id; localStorage.setItem(PLANS_KEY, JSON.stringify(idx)); }
+  currentPlanId = idx.current;
+}
+function loadPrefs() {
+  let d = {};
+  try { d = JSON.parse(localStorage.getItem(PREFS_KEY) || '{}') || {}; } catch (e) { d = {}; }
+  theme = d.theme === 'dark' ? 'dark' : 'light';
+  zoom = ZOOMS.some(z => z.id === d.zoom) ? d.zoom : 'week';
+  currentView = d.view === 'gantt' ? 'gantt' : 'tasks';
+  gridPaneWidth = Number.isFinite(d.gridPaneWidth) ? Math.max(GRID_PANE_MIN_WIDTH, Math.min(GRID_PANE_MAX_WIDTH, d.gridPaneWidth)) : 400;
+}
+function loadPlanData(id) {
+  const idx = readPlansIndex();
+  const rec = idx && planRecord(idx, id);
+  project = { name: (rec && rec.name) || 'My Project', updatedAt: 0 };
+  tasks = []; deletedTaskIds = [];
+  try {
+    const raw = localStorage.getItem(planDataKey(id));
     if (raw) {
       const data = JSON.parse(raw);
       project = data.project || project;
       tasks = Array.isArray(data.tasks) ? data.tasks : [];
       deletedTaskIds = Array.isArray(data.deletedTaskIds) ? data.deletedTaskIds : [];
-      theme = data.theme === 'dark' ? 'dark' : 'light';
-      zoom = ZOOMS.some(z => z.id === data.zoom) ? data.zoom : 'week';
-      currentView = data.view === 'gantt' ? 'gantt' : 'tasks';
-      gridPaneWidth = Number.isFinite(data.gridPaneWidth) ? Math.max(GRID_PANE_MIN_WIDTH, Math.min(GRID_PANE_MAX_WIDTH, data.gridPaneWidth)) : 400;
     }
-  } catch (e) { console.warn('Milestone: failed to load', e); }
+  } catch (e) { console.warn('Milestone: failed to load plan', e); }
   normalizeData();
+  indexedPlanName = rec ? rec.name : null;
+}
+function load() {
+  initPlans();
+  loadPrefs();
+  loadPlanData(currentPlanId);
+}
+function persistLocal() {
+  localStorage.setItem(planDataKey(currentPlanId), JSON.stringify(syncPayload()));
+  localStorage.setItem(PREFS_KEY, JSON.stringify(prefsPayload()));
+  if (project.name !== indexedPlanName) {   // keep the switcher's cached name current
+    updatePlansIndex(idx => { const r = planRecord(idx, currentPlanId); if (r) r.name = project.name; });
+    indexedPlanName = project.name;
+  }
 }
 function save() {
   normalizeData();
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(localPayload()));
+  persistLocal();
   maybeSnapshotBackup();
   queueFileSyncWrite();
 }
@@ -1002,15 +1131,14 @@ function renderMainViewTabs() {
 function setView(id) { currentView = id; editingCell = null; save(); render(); }
 
 function updateProjectNameUI() {
-  const el = document.getElementById('projectNameInput');
-  if (document.activeElement !== el) el.value = project.name;
+  document.getElementById('planBtnName').textContent = project.name;
+  document.title = project.name + ' · Milestone';
 }
 function renameProject(name) {
   name = (name || '').trim() || 'My Project';
   if (name === project.name) return;
   project.name = name; project.updatedAt = Date.now();
-  document.title = name + ' · Milestone';
-  save();
+  save(); render();
 }
 function renderZoomTabs() {
   const el = document.getElementById('zoomTabs');
@@ -1138,6 +1266,24 @@ let dropIndicatorEl = null;
 function clearDropIndicators() {
   document.querySelectorAll('.drop-before, .drop-after, .drop-into, .drop-end').forEach(el => el.classList.remove('drop-before', 'drop-after', 'drop-into', 'drop-end'));
   dropIndicatorEl = null;
+}
+// The grab cursor only appears once the mouse has been held down on a row for a moment — at rest and
+// on an ordinary click the row shows the normal pointer. (A CSS :active rule would flash it on every click.)
+const GRAB_HOLD_MS = 250;
+let grabTimer = null;
+function clearGrabHold() {
+  clearTimeout(grabTimer); grabTimer = null;
+  document.querySelectorAll('.grid-row.grabbing').forEach(el => el.classList.remove('grabbing'));
+}
+function wireGrabCursor() {
+  document.addEventListener('mousedown', (e) => {
+    clearGrabHold();
+    const row = e.button === 0 && e.target.closest ? e.target.closest('.grid-row[draggable="true"]') : null;
+    if (!row) return;
+    grabTimer = setTimeout(() => { grabTimer = null; if (row.isConnected) row.classList.add('grabbing'); }, GRAB_HOLD_MS);
+  });
+  document.addEventListener('mouseup', clearGrabHold);
+  document.addEventListener('dragstart', clearGrabHold); // once the drag is under way the browser draws its own cursor
 }
 function dragStartTask(event, id) {
   draggedTaskId = id;
@@ -1951,12 +2097,12 @@ function updateThemeToggleUI() {
 }
 
 /* ============================== Data dropdown ============================= */
-function positionDropdown(btnId, menuId) {
+function positionDropdown(btnId, menuId, align) {
   const btn = document.getElementById(btnId), menu = document.getElementById(menuId);
   const rect = btn.getBoundingClientRect();
   menu.style.top = rect.bottom + 'px';
-  menu.style.right = (window.innerWidth - rect.right) + 'px';
-  menu.style.left = 'auto';
+  if (align === 'left') { menu.style.left = rect.left + 'px'; menu.style.right = 'auto'; }
+  else { menu.style.right = (window.innerWidth - rect.right) + 'px'; menu.style.left = 'auto'; }
 }
 function toggleDataMenu() { positionDropdown('dataMenuBtn', 'dataMenu'); document.getElementById('dataMenu').classList.toggle('open'); }
 function closeDataMenu() { document.getElementById('dataMenu').classList.remove('open'); }
@@ -2001,7 +2147,7 @@ function downloadData(data, filename) {
   document.body.appendChild(a); a.click(); a.remove();
   URL.revokeObjectURL(url);
 }
-function exportProject() { downloadData(syncPayload(), `milestone-${todayStr()}.json`); closeDataMenu(); }
+function exportProject() { downloadData(syncPayload(), `${fileBase(project.name)}-${todayStr()}.json`); closeDataMenu(); }
 function triggerImport() { document.getElementById('fileInput').click(); closeDataMenu(); }
 function handleFileImport(event) {
   const file = event.target.files[0]; if (!file) return;
@@ -2038,16 +2184,16 @@ function applyImport(mode) {
 /* ============================== Local backups ============================== */
 function maybeSnapshotBackup() {
   try {
-    const backups = JSON.parse(localStorage.getItem(BACKUPS_KEY) || '{}');
+    const backups = listBackups();
     const key = todayStr();
     if (backups[key]) return;
     backups[key] = syncPayload();
     const keys = Object.keys(backups).sort();
     while (keys.length > MAX_BACKUPS) delete backups[keys.shift()];
-    localStorage.setItem(BACKUPS_KEY, JSON.stringify(backups));
+    localStorage.setItem(planBackupsKey(currentPlanId), JSON.stringify(backups));
   } catch (e) { console.warn('Milestone: backup snapshot failed', e); }
 }
-function listBackups() { try { return JSON.parse(localStorage.getItem(BACKUPS_KEY) || '{}'); } catch (e) { return {}; } }
+function listBackups() { try { return JSON.parse(localStorage.getItem(planBackupsKey(currentPlanId)) || '{}') || {}; } catch (e) { return {}; } }
 function openBackupsModal() {
   const backups = listBackups();
   const keys = Object.keys(backups).sort().reverse();
@@ -2118,25 +2264,53 @@ function fileSyncSupported() { return typeof window.showOpenFilePicker === 'func
 function openFileSyncModal() { document.getElementById('fileSyncModalBg').classList.add('open'); }
 function closeFileSyncModal() { document.getElementById('fileSyncModalBg').classList.remove('open'); }
 
+const FILE_PICKER_TYPES = [{ description: 'Milestone data', accept: { 'application/json': ['.json'] } }];
+// A plan name made safe to use as a file name ("Website Relaunch" -> "Website Relaunch").
+function fileBase(name) { return String(name || '').replace(/[\\/:*?"<>|]+/g, '').trim() || 'milestone-data'; }
+
+// The plan (other than `exceptId`) whose linked file is this very file, or null. One file must never back two plans —
+// each would keep overwriting the other's changes.
+async function findPlanForHandle(handle, exceptId) {
+  const idx = readPlansIndex();
+  if (!idx) return null;
+  for (const p of idx.plans) {
+    if (p.id === exceptId) continue;
+    const h = p.id === currentPlanId ? syncFileHandle : await _fsGet(planHandleKey(p.id)).catch(() => null);
+    if (h && await h.isSameEntry(handle).catch(() => false)) return p;
+  }
+  return null;
+}
+async function refuseIfFileBelongsToAnotherPlan(handle) {
+  const other = await findPlanForHandle(handle, currentPlanId);
+  if (!other) return false;
+  showToast(`That file is already linked to the plan “${other.name}”`, true);
+  return true;
+}
+
 async function linkNewFile() {
   try {
-    const handle = await window.showSaveFilePicker({ suggestedName: 'milestone-data.json', types: [{ description: 'Milestone data', accept: { 'application/json': ['.json'] } }] });
+    const handle = await window.showSaveFilePicker({ suggestedName: fileBase(project.name) + '.json', types: FILE_PICKER_TYPES });
+    if (await refuseIfFileBelongsToAnotherPlan(handle)) return;
     await finishLinking(handle, true);
   } catch (e) { if (e.name !== 'AbortError') showToast('Could not create file', true); }
 }
 async function linkExistingFile() {
   try {
-    const [handle] = await window.showOpenFilePicker({ types: [{ description: 'Milestone data', accept: { 'application/json': ['.json'] } }] });
+    const [handle] = await window.showOpenFilePicker({ mode: 'readwrite', types: FILE_PICKER_TYPES });
+    if (await refuseIfFileBelongsToAnotherPlan(handle)) return;
     await finishLinking(handle, false);
   } catch (e) { if (e.name !== 'AbortError') showToast('Could not open file', true); }
 }
 async function finishLinking(handle, isNew) {
+  const planId = currentPlanId, epoch = planEpoch;
   syncFileHandle = handle;
-  await _fsPut(_FS_KEY, handle);
+  await _fsPut(planHandleKey(planId), handle);
+  setPlanFileName(planId, handle.name);
   if (!isNew) {
     try {
       const file = await handle.getFile();
       const text = await file.text();
+      if (epoch !== planEpoch) return;
       if (text.trim()) {
         const data = JSON.parse(text);
         if (Array.isArray(data.tasks)) {
@@ -2146,6 +2320,7 @@ async function finishLinking(handle, isNew) {
       }
     } catch (e) { console.warn('Milestone: could not read linked file', e); }
   }
+  if (epoch !== planEpoch) return;
   fileSyncStatus = 'linked';
   lastSyncedAt = Date.now();
   normalizeData(); save(); render();
@@ -2155,20 +2330,29 @@ async function finishLinking(handle, isNew) {
   showToast('File linked');
 }
 async function writeSyncFile() {
-  if (!syncFileHandle) return;
+  const handle = syncFileHandle;
+  if (!handle) return;
+  // Everything this write needs is captured now, before the first await: if the user switches plans while it is in
+  // flight it still finishes writing *this* plan's data to *this* plan's file, and (epoch check) leaves the newly
+  // opened plan's sync state alone.
+  const epoch = planEpoch;
+  const text = JSON.stringify(syncPayload(), null, 2);
   try {
-    const perm = await syncFileHandle.queryPermission({ mode: 'readwrite' });
-    if (perm !== 'granted') { fileSyncStatus = 'lapsed'; updateFileSyncUI(); return; }
-    const text = JSON.stringify(syncPayload(), null, 2);
-    if (text === lastSyncedSnapshot) return;
-    const writable = await syncFileHandle.createWritable();
+    const perm = await handle.queryPermission({ mode: 'readwrite' });
+    if (perm !== 'granted') { if (epoch === planEpoch) { fileSyncStatus = 'lapsed'; updateFileSyncUI(); } return; }
+    if (epoch === planEpoch && text === lastSyncedSnapshot) return;
+    const writable = await handle.createWritable();
     await writable.write(text);
     await writable.close();
+    if (epoch !== planEpoch) return;
     lastSyncedSnapshot = text;
     lastSyncedAt = Date.now();
     fileSyncStatus = 'linked';
-  } catch (e) { console.warn('Milestone: sync write failed', e); showToast('File sync write failed', true); }
-  updateFileSyncUI();
+  } catch (e) {
+    console.warn('Milestone: sync write failed', e);
+    if (epoch === planEpoch) showToast('File sync write failed', true);
+  }
+  if (epoch === planEpoch) updateFileSyncUI();
 }
 function queueFileSyncWrite() {
   if (!syncFileHandle) return;
@@ -2179,15 +2363,27 @@ function queueFileSyncWrite() {
     if (fileSyncWritePending) { fileSyncWritePending = false; queueFileSyncWrite(); }
   });
 }
+// Called just before switching plans: let the in-flight write land, then write once more so nothing edited in the
+// last moments exists only in the browser copy.
+async function flushFileSync() {
+  if (!syncFileHandle) return;
+  for (let i = 0; i < 120 && fileSyncWriteInFlight; i++) await new Promise(r => setTimeout(r, 25));
+  fileSyncWriteInFlight = true;
+  try { await writeSyncFile(); } finally { fileSyncWriteInFlight = false; fileSyncWritePending = false; }
+}
 function startFileSyncPolling() { stopFileSyncPolling(); fileSyncPollTimer = setInterval(pollFileSync, FILE_SYNC_POLL_MS); }
 function stopFileSyncPolling() { if (fileSyncPollTimer) { clearInterval(fileSyncPollTimer); fileSyncPollTimer = null; } }
 async function pollFileSync() {
-  if (!syncFileHandle) return;
+  const handle = syncFileHandle;
+  if (!handle) return;
+  const epoch = planEpoch;   // if the plan changes while we wait on the file, this data belongs to the old plan: drop it
   try {
-    const perm = await syncFileHandle.queryPermission({ mode: 'readwrite' });
+    const perm = await handle.queryPermission({ mode: 'readwrite' });
+    if (epoch !== planEpoch) return;
     if (perm !== 'granted') { fileSyncStatus = 'lapsed'; updateFileSyncUI(); return; }
-    const file = await syncFileHandle.getFile();
+    const file = await handle.getFile();
     const text = await file.text();
+    if (epoch !== planEpoch) return;
     if (text === lastSyncedSnapshot) return;
     const data = JSON.parse(text);
     if (!Array.isArray(data.tasks)) return;
@@ -2195,50 +2391,87 @@ async function pollFileSync() {
     lastSyncedSnapshot = text; lastSyncedAt = Date.now();
     if (changed) {
       normalizeData();
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(localPayload()));
+      persistLocal();
       render();
       showToast('Synced changes from another device');
     }
   } catch (e) { console.warn('Milestone: poll failed', e); }
 }
 async function reconnectFile() {
-  if (!syncFileHandle) return;
+  const handle = syncFileHandle;
+  if (!handle) return;
+  const epoch = planEpoch;
   try {
-    const perm = await syncFileHandle.requestPermission({ mode: 'readwrite' });
-    if (perm === 'granted') { fileSyncStatus = 'linked'; await pollFileSync(); await writeSyncFile(); startFileSyncPolling(); showToast('Reconnected'); }
+    const perm = await handle.requestPermission({ mode: 'readwrite' });
+    if (epoch !== planEpoch) return;
+    if (perm === 'granted') { fileSyncStatus = 'linked'; await pollFileSync(); await writeSyncFile(); if (epoch === planEpoch) { startFileSyncPolling(); showToast('Reconnected'); } }
     else showToast('Permission not granted', true);
   } catch (e) { showToast('Reconnect failed', true); }
-  updateFileSyncUI();
+  if (epoch === planEpoch) updateFileSyncUI();
 }
 async function unlinkFile() {
+  const planId = currentPlanId;
   syncFileHandle = null; lastSyncedSnapshot = null; lastSyncedAt = 0;
   fileSyncStatus = 'unlinked';
   stopFileSyncPolling();
-  await _fsDel(_FS_KEY);
+  await _fsDel(planHandleKey(planId));
+  setPlanFileName(planId, null);
   updateFileSyncUI();
   showToast('File unlinked');
 }
-async function initFileSync() {
-  if (!fileSyncSupported()) { fileSyncStatus = 'unsupported'; updateFileSyncUI(); return; }
+
+// Before plans there was one handle under _FS_KEY. Hand it to the migrated "Plan 1" once (copy, not move: the old
+// entry stays as a rollback copy), and never again — otherwise unlinking Plan 1 would resurrect it on the next load.
+async function _fsMigrateLegacyKey() {
   try {
-    await _fsMigrateLegacy();
-    const handle = await _fsGet(_FS_KEY);
+    if (localStorage.getItem(HANDLE_MIGRATED_KEY)) return;
+    const idx = readPlansIndex();
+    if (!idx) return;
+    if (planRecord(idx, LEGACY_PLAN_ID) && !(await _fsGet(planHandleKey(LEGACY_PLAN_ID)))) {
+      const legacy = await _fsGet(_FS_KEY);
+      if (legacy && legacy.kind === 'file') { await _fsPut(planHandleKey(LEGACY_PLAN_ID), legacy); setPlanFileName(LEGACY_PLAN_ID, legacy.name); }
+    }
+    localStorage.setItem(HANDLE_MIGRATED_KEY, '1');
+  } catch (e) { console.warn('Milestone: file-sync handle migration failed', e); }
+}
+
+// Find the current plan's linked file, check permission (asking for it when this runs from a click, i.e. a plan
+// switch) and start syncing. Sync state belongs to the *current plan*, so it is reset first.
+async function activatePlanFile(interactive) {
+  const epoch = planEpoch, planId = currentPlanId;
+  syncFileHandle = null; lastSyncedSnapshot = null; lastSyncedAt = 0;
+  if (!fileSyncSupported()) { fileSyncStatus = 'unsupported'; updateFileSyncUI(); return; }
+  fileSyncStatus = 'checking'; updateFileSyncUI();
+  try {
+    const handle = await _fsGet(planHandleKey(planId));
+    if (epoch !== planEpoch) return;
     if (handle && handle.kind === 'file') {
       syncFileHandle = handle;
-      const perm = await handle.queryPermission({ mode: 'readwrite' });
+      if (readPlansIndex() && (planRecord(readPlansIndex(), planId) || {}).fileName !== handle.name) setPlanFileName(planId, handle.name);
+      let perm = await handle.queryPermission({ mode: 'readwrite' });
+      if (perm !== 'granted' && interactive) { try { perm = await handle.requestPermission({ mode: 'readwrite' }); } catch (e) { /* needs a fresher click — falls back to Reconnect */ } }
+      if (epoch !== planEpoch) return;
       if (perm === 'granted') {
         fileSyncStatus = 'linked';
         await pollFileSync();
+        if (epoch !== planEpoch) return;
         lastSyncedSnapshot = JSON.stringify(syncPayload());
         startFileSyncPolling();
         render();
       } else { fileSyncStatus = 'lapsed'; }
     } else { fileSyncStatus = 'unlinked'; }
-  } catch (e) { console.warn('Milestone: initFileSync failed', e); fileSyncStatus = 'unlinked'; }
-  updateFileSyncUI();
+  } catch (e) {
+    console.warn('Milestone: file sync setup failed', e);
+    if (epoch === planEpoch) { fileSyncStatus = 'unlinked'; syncFileHandle = null; }
+  }
+  if (epoch === planEpoch) updateFileSyncUI();
+}
+async function initFileSync() {
+  if (fileSyncSupported()) { await _fsMigrateLegacy(); await _fsMigrateLegacyKey(); }
+  await activatePlanFile(false);
 }
 function onFileSyncBtnClick() {
-  if (fileSyncStatus === 'unsupported') return;
+  if (fileSyncStatus === 'unsupported' || fileSyncStatus === 'checking') return;
   if (fileSyncStatus === 'unlinked') openFileSyncModal();
   else if (fileSyncStatus === 'lapsed') reconnectFile();
   else unlinkFile();
@@ -2247,9 +2480,209 @@ function updateFileSyncUI() {
   const btn = document.getElementById('fileSyncBtn');
   if (fileSyncStatus === 'unsupported') { btn.classList.add('hidden'); return; }
   btn.classList.remove('hidden');
-  if (fileSyncStatus === 'unlinked') { btn.innerHTML = '<i class="fa-solid fa-link"></i>Link file'; btn.title = 'Sync this project to a JSON file on disk'; }
+  btn.style.color = '';
+  if (fileSyncStatus === 'checking') { btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; btn.title = 'Checking this plan’s linked file…'; }
+  else if (fileSyncStatus === 'unlinked') { btn.innerHTML = '<i class="fa-solid fa-link"></i>Link file'; btn.title = 'Sync this plan to a JSON file on disk'; }
   else if (fileSyncStatus === 'lapsed') { btn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>Reconnect'; btn.style.color = 'var(--danger)'; btn.title = 'Permission was lost — click to reconnect'; }
-  else { btn.innerHTML = `<i class="fa-solid fa-check" style="color:var(--task-green)"></i>${escapeHtml(syncFileHandle ? syncFileHandle.name : 'Linked')}`; btn.style.color = ''; btn.title = 'Linked — click to unlink'; }
+  else { btn.innerHTML = `<i class="fa-solid fa-check" style="color:var(--task-green)"></i>${escapeHtml(syncFileHandle ? syncFileHandle.name : 'Linked')}`; btn.title = 'Linked — click to unlink'; }
+}
+
+/* ================================== Plans =================================== */
+// A plan is one project with its own tasks, daily backups and (optionally) its own linked file. Only the current plan
+// is in memory; switching writes it out (browser copy, then file), swaps in the other plan and re-points file sync.
+function uniquePlanName(base) {
+  const names = new Set((readPlansIndex() || { plans: [] }).plans.map(p => p.name));
+  if (!names.has(base)) return base;
+  for (let n = 2; ; n++) if (!names.has(`${base} ${n}`)) return `${base} ${n}`;
+}
+// Add a plan to the browser (not yet opened). `data` is a project payload from a file/duplicate, or null for an empty plan.
+function createPlanRecord(name, data) {
+  const id = genId();
+  const payload = {
+    version: APP_VERSION,
+    project: Object.assign({ updatedAt: 0 }, data && data.project, { name }),
+    tasks: data && Array.isArray(data.tasks) ? data.tasks : [],
+    deletedTaskIds: data && Array.isArray(data.deletedTaskIds) ? data.deletedTaskIds : []
+  };
+  localStorage.setItem(planDataKey(id), JSON.stringify(payload));
+  updatePlansIndex(idx => { idx.plans.push({ id, name, fileName: null }); });
+  return id;
+}
+function resetTransientUI() {
+  selectedTaskId = null; editingCell = null; editingPredecessors = [];
+  closeTaskModal(); closeImportModal(); closeDataMenu(); closeTaskModeMenu();
+  clearTimeout(toastTimer); toastUndoAction = null;
+  document.getElementById('toast').classList.remove('show');   // an Undo for the old plan must not act on the new one
+}
+async function switchPlan(id) {
+  closePlanMenu();
+  if (planSwitching || id === currentPlanId) return false;
+  const idx = readPlansIndex();
+  if (!idx || !planRecord(idx, id)) { showToast('That plan no longer exists', true); return false; }
+  planSwitching = true;
+  try {
+    persistLocal();            // 1. the browser copy is safe first (synchronous)
+    await flushFileSync();     // 2. then the old plan's file
+    planEpoch++;               // 3. from here on, anything still in flight for the old plan is ignored
+    stopFileSyncPolling(); fileSyncWritePending = false;
+    currentPlanId = id;
+    updatePlansIndex(i => { i.current = id; });
+    loadPlanData(id);
+    resetTransientUI();
+    render();
+    await activatePlanFile(true);
+  } finally { planSwitching = false; }
+  return true;
+}
+
+function togglePlanMenu() {
+  const menu = document.getElementById('planMenu');
+  if (menu.classList.contains('open')) { closePlanMenu(); return; }
+  renderPlanMenu();
+  positionDropdown('planMenuBtn', 'planMenu', 'left');
+  menu.classList.add('open');
+  document.getElementById('planMenuBtn').classList.add('open');
+}
+function closePlanMenu() {
+  document.getElementById('planMenu').classList.remove('open');
+  document.getElementById('planMenuBtn').classList.remove('open');
+}
+function renderPlanMenu() {
+  const idx = readPlansIndex() || { plans: [] };
+  const list = idx.plans.filter(p => isSafeId(p.id)).map(p => {
+    const cur = p.id === currentPlanId;
+    const name = cur ? project.name : p.name;
+    const file = cur && syncFileHandle ? syncFileHandle.name : p.fileName;
+    return `<button class="plan-item${cur ? ' active' : ''}" data-plan-id="${p.id}" onclick="switchPlan('${p.id}')">` +
+      `<i class="fa-solid fa-check plan-check" style="visibility:${cur ? 'visible' : 'hidden'}"></i>` +
+      `<span class="plan-text"><span class="plan-name">${escapeHtml(name)}</span>` +
+      `<span class="plan-file">${file ? '<i class="fa-solid fa-link"></i> ' + escapeHtml(file) : 'Browser only'}</span></span></button>`;
+  }).join('');
+  document.getElementById('planMenu').innerHTML =
+    `<div class="plan-list">${list}</div>` +
+    `<div class="dropdown-sep"></div>` +
+    `<button class="dropdown-item" id="planNewItem" onclick="openPlanModal('new')"><i class="fa-solid fa-plus"></i>New plan…</button>` +
+    (fileSyncSupported() ? `<button class="dropdown-item" id="planOpenFileItem" onclick="openFileAsPlan()"><i class="fa-solid fa-folder-open"></i>Open file as plan…</button>` : '') +
+    `<div class="dropdown-sep"></div>` +
+    `<button class="dropdown-item" id="planRenameItem" onclick="openPlanModal('rename')"><i class="fa-solid fa-pen"></i>Rename plan…</button>` +
+    `<button class="dropdown-item" id="planDuplicateItem" onclick="duplicatePlan()"><i class="fa-regular fa-copy"></i>Duplicate plan</button>` +
+    `<button class="dropdown-item" id="planDeleteItem" onclick="deleteCurrentPlan()"${idx.plans.length < 2 ? ' disabled title="You need at least one plan"' : ''}><i class="fa-solid fa-trash"></i>Delete plan…</button>`;
+}
+
+function openPlanModal(mode) {
+  closePlanMenu();
+  planModalMode = mode;
+  const isNew = mode === 'new';
+  document.getElementById('planModalTitle').textContent = isNew ? 'New plan' : 'Rename plan';
+  document.getElementById('planSubmitBtn').textContent = isNew ? 'Create' : 'Rename';
+  document.getElementById('planFileBtn').classList.toggle('hidden', !isNew || !fileSyncSupported());
+  document.getElementById('planModalHint').textContent = isNew ? 'A new plan starts empty and is kept in this browser. You can link a file to it later, or create it together with a file now.' : '';
+  document.getElementById('planModalHint').classList.toggle('hidden', !isNew);
+  const input = document.getElementById('planNameInput');
+  input.value = isNew ? uniquePlanName('New plan') : project.name;
+  document.getElementById('planModalBg').classList.add('open');
+  requestAnimationFrame(() => { input.focus(); input.select(); });
+}
+function closePlanModal() { document.getElementById('planModalBg').classList.remove('open'); }
+async function submitPlanModal(withFile) {
+  const name = document.getElementById('planNameInput').value.trim();
+  if (planModalMode === 'rename') { closePlanModal(); renameProject(name); return; }
+  const finalName = name || uniquePlanName('New plan');
+  if (withFile) { await createPlanWithFile(finalName); return; }
+  closePlanModal();
+  await switchPlan(createPlanRecord(finalName, null));
+}
+// The file picker must open straight from the click (it needs that user gesture), so it comes first; only once the
+// user has picked a file is the plan created and written into it.
+async function createPlanWithFile(name) {
+  let handle;
+  try { handle = await window.showSaveFilePicker({ suggestedName: fileBase(name) + '.json', types: FILE_PICKER_TYPES }); }
+  catch (e) { if (e.name !== 'AbortError') showToast('Could not create file', true); return; }
+  if (await refuseIfFileBelongsToAnotherPlan(handle)) return;
+  closePlanModal();
+  try {
+    const id = createPlanRecord(name, null);
+    const rec = JSON.parse(localStorage.getItem(planDataKey(id)));
+    const w = await handle.createWritable();
+    await w.write(JSON.stringify(rec, null, 2));
+    await w.close();
+    await _fsPut(planHandleKey(id), handle);
+    setPlanFileName(id, handle.name);
+    await switchPlan(id);
+  } catch (e) { console.warn('Milestone: could not create plan file', e); showToast('Could not create file', true); }
+}
+
+async function openFileAsPlan() {
+  closePlanMenu();
+  if (!fileSyncSupported()) { showToast('Opening files requires Chrome or Edge', true); return; }
+  let handle;
+  try { [handle] = await window.showOpenFilePicker({ mode: 'readwrite', types: FILE_PICKER_TYPES }); }
+  catch (e) { if (e.name !== 'AbortError') showToast('Could not open file', true); return; }
+  // Already one of the plans? Then just go there instead of adding a second plan on the same file.
+  if (syncFileHandle && await syncFileHandle.isSameEntry(handle).catch(() => false)) { showToast('That file is already open'); return; }
+  const existing = await findPlanForHandle(handle, currentPlanId);
+  if (existing) { await switchPlan(existing.id); showToast(`Switched to “${existing.name}”`); return; }
+  let data, empty = false;
+  try {
+    const text = (await (await handle.getFile()).text()).trim();
+    empty = !text;
+    data = empty ? { tasks: [] } : JSON.parse(text);
+    if (!data || !Array.isArray(data.tasks)) throw new Error('missing tasks');
+  } catch (e) { showToast("That file doesn't look like a Milestone file", true); return; }
+  const name = uniquePlanName((data.project && data.project.name) || handle.name.replace(/\.[^.]+$/, ''));
+  const id = createPlanRecord(name, data);
+  await _fsPut(planHandleKey(id), handle);
+  setPlanFileName(id, handle.name);
+  if (await switchPlan(id)) {
+    if (empty) await writeSyncFile();   // give a blank file its first content
+    showToast(`Opened “${name}”`);
+  }
+}
+
+async function duplicatePlan() {
+  closePlanMenu();
+  if (planSwitching) return;
+  const copy = JSON.parse(JSON.stringify(syncPayload()));
+  const id = createPlanRecord(uniquePlanName(`${project.name} copy`), copy);
+  if (await switchPlan(id)) showToast('Duplicated — the copy isn’t linked to a file yet');
+}
+function deleteCurrentPlan() {
+  closePlanMenu();
+  const idx = readPlansIndex();
+  if (!idx || idx.plans.length < 2) { showToast('You need at least one plan', true); return; }
+  const file = syncFileHandle ? syncFileHandle.name : null;
+  openConfirmModal({
+    title: 'Delete plan',
+    body: `Remove <strong>${escapeHtml(project.name)}</strong> from this browser?` + (file
+      ? ` Its linked file <strong>${escapeHtml(file)}</strong> is <em>not</em> deleted — you can open it again any time with “Open file as plan”.`
+      : ` It isn’t linked to a file, so this is the only copy — you can undo for a few seconds afterwards.`),
+    confirmLabel: 'Delete plan',
+    action: doDeleteCurrentPlan
+  });
+}
+async function doDeleteCurrentPlan() {
+  const idx = readPlansIndex();
+  if (!idx || idx.plans.length < 2 || planSwitching) return;
+  const id = currentPlanId, pos = idx.plans.findIndex(p => p.id === id);
+  const rec = Object.assign({}, planRecord(idx, id), { name: project.name });
+  const next = idx.plans[pos + 1] || idx.plans[pos - 1];
+  persistLocal();
+  const saved = { rec, pos, data: localStorage.getItem(planDataKey(id)), backups: localStorage.getItem(planBackupsKey(id)), handle: syncFileHandle };
+  if (!(await switchPlan(next.id))) return;   // also flushes the file one last time
+  localStorage.removeItem(planDataKey(id));
+  localStorage.removeItem(planBackupsKey(id));
+  try { await _fsDel(planHandleKey(id)); } catch (e) { /* handle already gone */ }
+  updatePlansIndex(i => { i.plans = i.plans.filter(p => p.id !== id); });
+  showToast(`Deleted “${rec.name}”`, false, () => undoDeletePlan(saved), 'Undo');
+}
+async function undoDeletePlan(saved) {
+  const id = saved.rec.id;
+  if (saved.data !== null) localStorage.setItem(planDataKey(id), saved.data);
+  if (saved.backups !== null) localStorage.setItem(planBackupsKey(id), saved.backups);
+  if (saved.handle) { try { await _fsPut(planHandleKey(id), saved.handle); } catch (e) { /* plan comes back unlinked */ } }
+  updatePlansIndex(i => { if (!planRecord(i, id)) i.plans.splice(Math.min(saved.pos, i.plans.length), 0, saved.rec); });
+  await switchPlan(id);
+  showToast('Plan restored');
 }
 
 /* =============================== Help / About ============================== */
@@ -2302,8 +2735,10 @@ function wireScrollSync() {
 
 /* =================================== Init =================================== */
 function wireGlobalEvents() {
+  wireGrabCursor();
   document.addEventListener('click', (e) => {
     if (!e.target.closest('#dataMenuBtn') && !e.target.closest('#dataMenu')) closeDataMenu();
+    if (!e.target.closest('#planMenuBtn') && !e.target.closest('#planMenu')) closePlanMenu();
     if (!e.target.closest('#taskModeMenu')) closeTaskModeMenu();
   });
   document.addEventListener('keydown', (e) => {
@@ -2311,18 +2746,18 @@ function wireGlobalEvents() {
     // Escape closes whatever overlay is open first; only when there is none — and
     // the user isn't typing in a field, where Escape already means "cancel this
     // edit" — does it clear the task selection.
-    const modalIds = ['taskModalBg', 'confirmModalBg', 'importModalBg', 'backupsModalBg', 'fileSyncModalBg', 'helpModalBg', 'aboutModalBg'];
+    const modalIds = ['taskModalBg', 'confirmModalBg', 'planModalBg', 'importModalBg', 'backupsModalBg', 'fileSyncModalBg', 'helpModalBg', 'aboutModalBg'];
     const overlayOpen = modalIds.some(id => document.getElementById(id).classList.contains('open'))
       || document.getElementById('dataMenu').classList.contains('open')
+      || document.getElementById('planMenu').classList.contains('open')
       || document.getElementById('taskModeMenu').classList.contains('open');
     // e.target, not document.activeElement: an inline editor's own Escape handler re-renders and destroys the
     // focused field before this runs, so by now activeElement is already <body>.
     const typing = /^(INPUT|TEXTAREA|SELECT)$/.test((e.target || {}).tagName || '');
     for (const id of modalIds) document.getElementById(id).classList.remove('open');
-    closeDataMenu(); closeTaskModeMenu();
+    closeDataMenu(); closePlanMenu(); closeTaskModeMenu();
     if (!overlayOpen && !typing && selectedTaskId) { selectedTaskId = null; render(); }
   });
-  document.getElementById('projectNameInput').addEventListener('change', (e) => renameProject(e.target.value));
   document.getElementById('toastUndoBtn').addEventListener('click', triggerToastUndo);
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') pollFileSync(); });
 }
