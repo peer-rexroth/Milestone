@@ -336,6 +336,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 .modal-bg.open { opacity: 1; visibility: visible; pointer-events: auto; }
 .modal { background: var(--panel); border-radius: var(--radius); box-shadow: var(--shadow); width: 480px; max-width: 92vw; max-height: 86vh; display: flex; flex-direction: column; }
 .modal.narrow { width: 380px; }
+.modal.roomy { width: 540px; max-height: 94vh; }   /* the task dialog: a lot of fields, so more room before it scrolls */
 .modal.wide { width: 620px; }
 .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; border-bottom: 1px solid var(--border); }
 .modal-header h2 { margin: 0; font-size: 16px; }
@@ -350,6 +351,8 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 }
 .field textarea { resize: vertical; font-family: inherit; }
 .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+/* read-only, calculated values in the task dialog (WBS, Remaining Duration, Status) */
+.calc-row .ro-value { min-height: 34px; display: flex; align-items: center; padding: 6px 10px; border: 1px dashed var(--border); border-radius: 7px; background: var(--panel-2); color: var(--text-dim); font-size: 13px; }
 .field-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
 .checkbox-row { display: flex; align-items: center; gap: 8px; font-size: 13px; }
 .checkbox-row input { width: 15px; height: 15px; }
@@ -458,11 +461,14 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 
 <!-- Task modal -->
 <div class="modal-bg" id="taskModalBg" onclick="if(event.target===this) closeTaskModal()">
-  <div class="modal">
+  <div class="modal roomy">
     <div class="modal-header"><h2 id="taskModalTitle">Task<span id="taskModalIdBadge" class="id-badge"></span></h2><button onclick="closeTaskModal()">&times;</button></div>
     <div class="modal-body">
       <div class="field"><label>Task Name</label><input type="text" id="taskNameInput" placeholder="Task name"></div>
-      <div class="field"><label>Task Mode</label><select id="taskModeInput"><option value="manual">Manually Scheduled</option><option value="auto">Auto Scheduled</option></select></div>
+      <div class="field-row">
+        <div class="field"><label>Task Mode</label><select id="taskModeInput"><option value="manual">Manually Scheduled</option><option value="auto">Auto Scheduled</option></select></div>
+        <div class="field"><label>Resource</label><input type="text" id="taskResourceInput" maxlength="200" placeholder="e.g. Anna, Ben"></div>
+      </div>
       <div class="checkbox-row"><input type="checkbox" id="taskMilestoneInput" onchange="onMilestoneToggle()"><label for="taskMilestoneInput">Milestone (zero-duration)</label></div>
       <div class="field-row">
         <div class="field"><label>Start</label><input type="date" id="taskStartInput" onchange="onTaskStartChange()"></div>
@@ -478,6 +484,11 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
         <div class="field"><label>Actual Finish</label><input type="date" id="taskActualFinishInput"></div>
       </div>
       <div class="pred-empty hidden" id="taskActualsNote"></div>
+      <div class="field-row-3 calc-row" title="Worked out by Milestone — not entered">
+        <div class="field"><label>WBS</label><div class="ro-value" id="taskWbsInfo"></div></div>
+        <div class="field"><label>Remaining Duration</label><div class="ro-value" id="taskRemainingInfo"></div></div>
+        <div class="field"><label>Status</label><div class="ro-value" id="taskStatusInfo"></div></div>
+      </div>
       <div class="field-row">
         <div class="field">
           <label>Constraint</label>
@@ -492,7 +503,6 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
         <label>Color</label>
         <div class="color-swatches" id="taskColorSwatches"></div>
       </div>
-      <div class="field"><label>Resource</label><input type="text" id="taskResourceInput" maxlength="200" placeholder="Who does the work — e.g. Anna, Ben"></div>
       <div class="field"><label>Notes</label><textarea id="taskNotesInput" rows="2" placeholder="Optional notes"></textarea></div>
       <div class="field">
         <label>Predecessors</label>
@@ -1055,11 +1065,11 @@ function wbsCode(id) {
 }
 // Remaining Duration: what is left of the duration — duration × (1 − % complete), in days, one decimal ("2.5 days"); a
 // milestone has none and a task whose duration is free text ("TBD") has no number to work from. Computed, not stored.
+function remainingOf(duration, progress) { return Math.round(duration * (100 - Math.min(100, Math.max(0, progress))) / 100 * 10) / 10; }
 function remainingDays(id) {
   const t = byId(id), e = effectiveDates(id);
   if (!t || t.milestone || !e.start || !e.end || t.durText != null) return null;
-  const p = Math.min(100, Math.max(0, e.progress));
-  return Math.round(durationDays(e.start, e.end) * (100 - p) / 100 * 10) / 10;
+  return remainingOf(durationDays(e.start, e.end), e.progress);
 }
 function fmtRemaining(v) { return v === 1 ? '1 day' : `${v} days`; }
 // Status, judged against today (as MS Project does against its status date):
@@ -1069,16 +1079,20 @@ function fmtRemaining(v) { return v === 1 ? '1 day' : `${v} days`; }
 //   On Schedule  everything else (under way, or starting today)
 // "Started" means some progress or an actual start. A task with no dates to judge against has no status.
 const STATUS_ORDER = ['Late', 'On Schedule', 'Future Task', 'Complete'];
-function taskStatus(id) {
-  const t = byId(id), e = effectiveDates(id), act = actualDates(id), today = todayStr();
-  if (!t) return null;
-  if (e.progress >= 100 || act.end) return 'Complete';
-  if (!e.start) return null;
-  const started = e.progress > 0 || !!act.start;
-  if (e.end < today || (!started && e.start < today)) return 'Late';
-  if (!started && e.start > today) return 'Future Task';
+function statusOf({ start, end, progress, actualStart, actualEnd }) {
+  const today = todayStr();
+  if (progress >= 100 || actualEnd) return 'Complete';
+  if (!start) return null;
+  const started = progress > 0 || !!actualStart;
+  if (end < today || (!started && start < today)) return 'Late';
+  if (!started && start > today) return 'Future Task';
   return 'On Schedule';
 }
+function taskStatus(id) {
+  const t = byId(id), e = effectiveDates(id), act = actualDates(id);
+  return t ? statusOf({ start: e.start, end: e.end, progress: e.progress, actualStart: act.start, actualEnd: act.end }) : null;
+}
+function statusPillHtml(st) { return st ? `<span class="status-pill st-${st.toLowerCase().replace(' ', '-')}">${st}</span>` : ''; }
 // Actual Start / Actual Finish as shown: a task's own; a group rolls up (earliest actual start of anything below it;
 // an actual finish only once EVERYTHING below has finished, then the latest).
 const _actCache = new Map();
@@ -1840,7 +1854,7 @@ function renderGrid() {
       start: startCell, end: finishCell, actualStart: actualCell('actualStart', act.start), actualFinish: actualCell('actualFinish', act.end),
       duration: durationCell, progress: `<div class="grid-cell-dim${summaryCls}">${Math.round(eff.progress)}%</div>`,
       remaining: `<div class="grid-cell-dim${summaryCls}">${remainingDays(t.id) == null ? '' : fmtRemaining(remainingDays(t.id))}</div>`,
-      status: `<div class="grid-cell-dim${summaryCls}">${taskStatus(t.id) ? `<span class="status-pill st-${taskStatus(t.id).toLowerCase().replace(' ', '-')}">${taskStatus(t.id)}</span>` : ''}</div>`,
+      status: `<div class="grid-cell-dim${summaryCls}">${statusPillHtml(taskStatus(t.id))}</div>`,
       preds: predCell, resource: resourceCell
     };
     return `<div class="grid-row${t.id === selectedTaskId ? ' selected' : ''}" data-id="${t.id}" onclick="selectTask('${t.id}')" ondblclick="openTaskModal('${t.id}')" draggable="${editingCell && editingCell.id === t.id ? 'false' : 'true'}" ondragstart="dragStartTask(event,'${t.id}')" ondragend="dragEndTask()" ondragover="dragOverTask(event,'${t.id}')" ondrop="dropOnTask(event,'${t.id}')">
@@ -2565,6 +2579,7 @@ function openTaskModal(id, isNew) {
   editingPredecessors = t.predecessors.map(p => ({ ...p }));
   renderPredecessorRows();
   onMilestoneToggle();
+  updateModalComputed();
   document.getElementById('taskModalBg').classList.add('open');
   setTimeout(() => document.getElementById('taskNameInput').focus(), 30);
 }
@@ -2576,6 +2591,25 @@ function onConstraintTypeChange() {
   const cinfo = constraintTypeInfo(document.getElementById('taskConstraintTypeInput').value);
   document.getElementById('taskConstraintDateField').classList.toggle('hidden', !cinfo.hasDate);
   if (cinfo.hasDate) document.getElementById('taskConstraintDateLabel').textContent = cinfo.basis === 'finish' ? 'Finish by/on' : 'Start by/on';
+}
+// The dialog's read-only row (WBS, Remaining Duration, Status), worked out from what is *currently typed* so it follows
+// the edits live; a group shows its rolled-up values instead, and a task whose dates are still free text ("TBD") has none.
+function updateModalComputed() {
+  const t = editingTaskId && byId(editingTaskId);
+  if (!t) return;
+  const $ = id => document.getElementById(id), v = id => $(id).value;
+  let remaining, status;
+  if (hasChildren(t.id)) { remaining = remainingDays(t.id); status = taskStatus(t.id); }
+  else {
+    const milestone = $('taskMilestoneInput').checked, start = v('taskStartInput') || null, end = milestone ? start : (v('taskEndInput') || start);
+    const progress = Math.max(0, Math.min(100, parseInt(v('taskProgressInput')) || 0));
+    const untouched = start === modalOrigDates.start && end === modalOrigDates.end, scheduled = !!start && !(isUnscheduled(t) && untouched);
+    remaining = milestone || !scheduled || (t.durText != null && untouched) ? null : remainingOf(durationDays(start, end), progress);
+    status = statusOf({ start: scheduled ? start : null, end: scheduled ? end : null, progress, actualStart: v('taskActualStartInput') || null, actualEnd: v('taskActualFinishInput') || null });
+  }
+  $('taskWbsInfo').textContent = wbsCode(t.id);
+  $('taskRemainingInfo').textContent = remaining == null ? '—' : fmtRemaining(remaining);
+  $('taskStatusInfo').innerHTML = statusPillHtml(status) || '—';
 }
 function onMilestoneToggle() {
   const on = document.getElementById('taskMilestoneInput').checked;
@@ -3763,6 +3797,8 @@ function wireGlobalEvents() {
     if (!overlayOpen && !typing && selectedTaskId) { selectedTaskId = null; render(); }
   });
   document.getElementById('toastUndoBtn').addEventListener('click', triggerToastUndo);
+  // Any edit in the task dialog refreshes its calculated row (this runs after the field's own onchange has synced the dates/duration).
+  for (const ev of ['input', 'change']) document.getElementById('taskModalBg').addEventListener(ev, updateModalComputed);
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') pollFileSync(); });
 }
 
