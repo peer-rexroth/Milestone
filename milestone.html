@@ -398,6 +398,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
     <div class="dropdown-menu" id="dataMenu">
       <button class="dropdown-item" onclick="exportProject()"><i class="fa-solid fa-file-export"></i>Export JSON</button>
       <button class="dropdown-item" onclick="triggerImport()"><i class="fa-solid fa-file-import"></i>Import JSON</button>
+      <button class="dropdown-item" id="excelExportItem" onclick="openExcelExport()"><i class="fa-solid fa-file-excel"></i>Export to Excel…</button>
       <div class="dropdown-sep"></div>
       <button class="dropdown-item" onclick="openBackupsModal()"><i class="fa-solid fa-clock-rotate-left"></i>Local Backups</button>
     </div>
@@ -512,6 +513,22 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
   </div>
 </div>
 
+<!-- Excel export modal -->
+<div class="modal-bg" id="excelModalBg" onclick="if(event.target===this) closeExcelModal()">
+  <div class="modal narrow">
+    <div class="modal-header"><h2>Export to Excel</h2><button onclick="closeExcelModal()">&times;</button></div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text-dim);margin:0;line-height:1.5">Saves an Excel workbook (.xlsx) with a formatted task list — real dates, durations and percentages, indented groups, filters and print settings.</p>
+      <div class="field" id="excelScopeBlock"><label>Which tasks</label>
+        <label class="checkbox-row"><input type="radio" name="excelScope" value="all" checked><span id="excelScopeAll"></span></label>
+        <label class="checkbox-row"><input type="radio" name="excelScope" value="filtered"><span id="excelScopeFiltered"></span></label>
+      </div>
+      <label class="checkbox-row"><input type="checkbox" id="excelGantt" checked>Add a Gantt chart sheet</label>
+    </div>
+    <div class="modal-footer"><button class="btn" onclick="closeExcelModal()">Cancel</button><button class="btn btn-primary" id="excelExportBtn" onclick="runExcelExport()"><i class="fa-solid fa-file-excel"></i>Export</button></div>
+  </div>
+</div>
+
 <!-- Import modal -->
 <div class="modal-bg" id="importModalBg" onclick="if(event.target===this) closeImportModal()">
   <div class="modal narrow">
@@ -562,7 +579,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
       <div><div class="help-section-title">Dependencies</div>Open a task and add a predecessor to link it to another task (Finish-to-Start, Start-to-Start, Finish-to-Finish or Start-to-Finish). Give it a lead or lag in days: a positive number delays the dependent task (lag), a negative number lets it overlap and start early (lead) — e.g. "3FS+2" waits 2 extra days after task 3 finishes, "3FS-2" starts 2 days before task 3 finishes. Moving a task forward automatically pushes any dependent tasks forward too — it never pulls a task earlier on its own. A circular dependency is flagged with a warning icon and stops auto-scheduling for the tasks involved.</div>
       <div><div class="help-section-title">The Gantt chart</div>Drag a bar to reschedule it, drag its edges to resize, or drag the small circle on its right edge onto another task to create a dependency. Click a bar or row to edit it. The Week / Month / Year buttons change the scale: Year (the default) shows quarters, and Week is labelled by calendar week (CW, weeks start on Monday, ISO 8601). The route icon in the toolbar highlights the critical path — the chain of tasks with zero slack that determines the overall project end date.</div>
       <div><div class="help-section-title">Plans</div>The plan name at the top left is a switcher: click it to move between plans, start a new one, open an existing file as a plan, or rename, duplicate or delete the current plan. Each plan has its own tasks, its own daily backups and — optionally — its own linked file, so switching plans also switches which file is kept in sync. Deleting a plan only removes it from this browser; its file is never touched. Every plan must live in a file (Chrome/Edge), so New plan and Duplicate ask you where to save it.</div>
-      <div><div class="help-section-title">Data &amp; sync</div>Everything lives in this browser's local storage — nothing ever leaves your machine except into the files you choose. Every plan is kept in a plain JSON file on your disk (linking one is required, in Chrome/Edge): every change is saved to it automatically, and inside an iCloud Drive/OneDrive/Dropbox folder it keeps your own devices in step. You can disconnect a plan's file (click the file name at the top right, or use the plan menu) — the file is kept, and Milestone asks you to choose a file for the plan straight away. If the file is moved or deleted, Milestone asks you to create or find it again. Data → Export/Import moves a full JSON snapshot of the current plan in or out; Local Backups keeps a rolling daily snapshot.</div>
+      <div><div class="help-section-title">Data &amp; sync</div>Everything lives in this browser's local storage — nothing ever leaves your machine except into the files you choose. Every plan is kept in a plain JSON file on your disk (linking one is required, in Chrome/Edge): every change is saved to it automatically, and inside an iCloud Drive/OneDrive/Dropbox folder it keeps your own devices in step. You can disconnect a plan's file (click the file name at the top right, or use the plan menu) — the file is kept, and Milestone asks you to choose a file for the plan straight away. If the file is moved or deleted, Milestone asks you to create or find it again. Data → Export/Import moves a full JSON snapshot of the current plan in or out, and Export to Excel saves a formatted .xlsx workbook (a task list plus an optional Gantt chart sheet); Local Backups keeps a rolling daily snapshot.</div>
       <div class="help-tip">Nothing here ever leaves your machine except into the files you choose.</div>
     </div>
     <div class="modal-footer"><button class="btn" onclick="closeHelpModal()">Close</button></div>
@@ -2624,6 +2641,291 @@ function applyImport(mode) {
   showToast('Import complete');
 }
 
+/* ============================== Excel export ============================== */
+// A real .xlsx (Office Open XML), written by hand — the app has no dependencies, and a library from a CDN wouldn't do
+// styling anyway. An .xlsx is a ZIP of XML parts: zipStore() writes the ZIP (entries stored, not compressed),
+// xlsxStyleBook() collects fonts/fills/borders/number formats into styles.xml, xlsxSheet() builds a worksheet.
+// Two sheets: "Tasks" (what the list shows, as real dates/numbers/percentages) and "Gantt" (a coloured weekly chart).
+const _crcTable = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(bytes) { let c = 0xFFFFFFFF; for (let i = 0; i < bytes.length; i++) c = _crcTable[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+function zipStore(files) {                       // files: [{ name, data: Uint8Array }]  ->  Blob
+  const enc = new TextEncoder(), parts = [], central = [];
+  const now = new Date(), dosTime = (now.getHours() << 11) | (now.getMinutes() << 5) | (now.getSeconds() >> 1);
+  const dosDate = ((now.getFullYear() - 1980) << 9) | ((now.getMonth() + 1) << 5) | now.getDate();
+  let offset = 0;
+  for (const f of files) {
+    const name = enc.encode(f.name), crc = crc32(f.data), size = f.data.length;
+    const lh = new DataView(new ArrayBuffer(30));
+    lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(6, 0x0800, true); lh.setUint16(8, 0, true);
+    lh.setUint16(10, dosTime, true); lh.setUint16(12, dosDate, true); lh.setUint32(14, crc, true); lh.setUint32(18, size, true); lh.setUint32(22, size, true);
+    lh.setUint16(26, name.length, true); lh.setUint16(28, 0, true);
+    parts.push(new Uint8Array(lh.buffer), name, f.data);
+    const ch = new DataView(new ArrayBuffer(46));
+    ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true); ch.setUint16(8, 0x0800, true); ch.setUint16(10, 0, true);
+    ch.setUint16(12, dosTime, true); ch.setUint16(14, dosDate, true); ch.setUint32(16, crc, true); ch.setUint32(20, size, true); ch.setUint32(24, size, true);
+    ch.setUint16(28, name.length, true); ch.setUint32(42, offset, true);
+    central.push(new Uint8Array(ch.buffer), name);
+    offset += 30 + name.length + size;
+  }
+  const cdSize = central.reduce((n, a) => n + a.length, 0), end = new DataView(new ArrayBuffer(22));
+  end.setUint32(0, 0x06054b50, true); end.setUint16(8, files.length, true); end.setUint16(10, files.length, true); end.setUint32(12, cdSize, true); end.setUint32(16, offset, true);
+  return new Blob([...parts, ...central, new Uint8Array(end.buffer)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+}
+// XML text/attribute escaping; also drops the control characters XML 1.0 forbids (Excel refuses the file otherwise).
+function xmlEsc(s) { return String(s).replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+function xlsxCol(n) { let s = ''; for (; n > 0; n = Math.floor((n - 1) / 26)) s = String.fromCharCode(65 + ((n - 1) % 26)) + s; return s; }
+function xlsxSerial(iso) { return dayNumber(iso) + 25569; }   // Excel's day 0 is 1899-12-30; dayNumber's is 1970-01-01
+
+function xlsxSharedStrings() {
+  const list = [], map = new Map(); let refs = 0;
+  return {
+    add(s) { s = s.slice(0, 32000); refs++; if (!map.has(s)) { map.set(s, list.length); list.push(s); } return map.get(s); },   // Excel allows 32767 characters in a cell
+    xml() { return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="${refs}" uniqueCount="${list.length}">${list.map(s => `<si><t xml:space="preserve">${xmlEsc(s)}</t></si>`).join('')}</sst>`; }
+  };
+}
+// Collects the distinct fonts/fills/borders/number formats/cell formats a workbook uses; style({...}) returns the cell-format index.
+function xlsxStyleBook() {
+  const fonts = [], fills = ['<fill><patternFill patternType="none"/></fill>', '<fill><patternFill patternType="gray125"/></fill>'];
+  const borders = ['<border><left/><right/><top/><bottom/><diagonal/></border>'], numFmts = [], xfs = [];
+  const seen = { font: new Map(), fill: new Map(), border: new Map(), num: new Map(), xf: new Map() };
+  const add = (list, map, xml) => { if (!map.has(xml)) { map.set(xml, list.length); list.push(xml); } return map.get(xml); };
+  const font = o => add(fonts, seen.font, `<font>${o.bold ? '<b/>' : ''}${o.italic ? '<i/>' : ''}<sz val="${o.size || 10}"/><color rgb="FF${o.color || '1F2328'}"/><name val="Calibri"/><family val="2"/></font>`);
+  const fill = c => c ? add(fills, seen.fill, `<fill><patternFill patternType="solid"><fgColor rgb="FF${c}"/><bgColor indexed="64"/></patternFill></fill>`) : 0;
+  const border = b => {
+    if (!b) return 0;
+    const side = n => b[n] ? `<${n} style="${b[n][0]}"><color rgb="FF${b[n][1]}"/></${n}>` : `<${n}/>`;
+    return add(borders, seen.border, `<border>${side('left')}${side('right')}${side('top')}${side('bottom')}<diagonal/></border>`);
+  };
+  const num = code => {
+    if (!code || code === 'General') return 0;
+    if (code === '0%') return 9;
+    if (!seen.num.has(code)) { const id = 164 + numFmts.length; numFmts.push(`<numFmt numFmtId="${id}" formatCode="${xmlEsc(code)}"/>`); seen.num.set(code, id); }
+    return seen.num.get(code);
+  };
+  function style(o = {}) {
+    const al = (o.h || o.indent || o.wrap || o.rotate || o.v) ? `<alignment${o.h ? ` horizontal="${o.h}"` : ''} vertical="${o.v || 'center'}"${o.indent ? ` indent="${o.indent}"` : ''}${o.wrap ? ' wrapText="1"' : ''}${o.rotate ? ` textRotation="${o.rotate}"` : ''}/>` : '';
+    const xml = `<xf numFmtId="${num(o.num)}" fontId="${font(o)}" fillId="${fill(o.fill)}" borderId="${border(o.border)}" xfId="0" applyNumberFormat="1" applyFont="1" applyFill="1" applyBorder="1"${al ? ` applyAlignment="1">${al}</xf>` : '/>'}`;
+    return add(xfs, seen.xf, xml);
+  }
+  style({});                                                  // index 0 of every list is the workbook default
+  return {
+    style,
+    xml() {
+      const list = (tag, items) => `<${tag} count="${items.length}">${items.join('')}</${tag}>`;
+      return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">` +
+        (numFmts.length ? list('numFmts', numFmts) : '') + list('fonts', fonts) + list('fills', fills) + list('borders', borders) +
+        `<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>` + list('cellXfs', xfs) +
+        `<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles><dxfs count="0"/><tableStyles count="0" defaultTableStyle="TableStyleMedium9" defaultPivotStyle="PivotStyleLight16"/></styleSheet>`;
+    }
+  };
+}
+// One worksheet. `opts` is read when xml() is called, so the caller may still fill it in (e.g. the filter range) afterwards.
+function xlsxSheet(sst, opts) {
+  const rows = new Map(), merges = [], cols = [], cfs = [];
+  const rowOf = r => { if (!rows.has(r)) rows.set(r, { cells: new Map(), ht: null }); return rows.get(r); };
+  let maxR = 1, maxC = 1;
+  return {
+    opts,
+    cell(r, c, v, s) { rowOf(r).cells.set(c, { v, s }); maxR = Math.max(maxR, r); maxC = Math.max(maxC, c); },
+    height(r, ht) { rowOf(r).ht = ht; maxR = Math.max(maxR, r); },
+    width(c1, c2, w) { cols.push(`<col min="${c1}" max="${c2}" width="${w}" customWidth="1"/>`); },
+    merge(r1, c1, r2, c2) { merges.push(`${xlsxCol(c1)}${r1}:${xlsxCol(c2)}${r2}`); },
+    dataBar(ref, color) { cfs.push(`<conditionalFormatting sqref="${ref}"><cfRule type="dataBar" priority="${cfs.length + 1}"><dataBar><cfvo type="num" val="0"/><cfvo type="num" val="1"/><color rgb="FF${color}"/></dataBar></cfRule></conditionalFormatting>`); },
+    xml() {
+      const o = opts, sheetData = [...rows.keys()].sort((a, b) => a - b).map(r => {
+        const row = rows.get(r);
+        const cells = [...row.cells.keys()].sort((a, b) => a - b).map(c => {
+          const { v, s } = row.cells.get(c), ref = xlsxCol(c) + r;
+          if (v === null || v === undefined || v === '') return `<c r="${ref}" s="${s}"/>`;
+          return typeof v === 'number' ? `<c r="${ref}" s="${s}"><v>${v}</v></c>` : `<c r="${ref}" s="${s}" t="s"><v>${sst.add(String(v))}</v></c>`;
+        }).join('');
+        return `<row r="${r}"${row.ht ? ` ht="${row.ht}" customHeight="1"` : ''}>${cells}</row>`;
+      }).join('');
+      const fc = o.freeze && xlsxCol(o.freeze.cols + 1), fr = o.freeze && o.freeze.rows + 1;
+      const pane = o.freeze ? `<pane xSplit="${o.freeze.cols}" ySplit="${o.freeze.rows}" topLeftCell="${fc}${fr}" activePane="bottomRight" state="frozen"/>` +
+        `<selection pane="topRight" activeCell="${fc}1" sqref="${fc}1"/><selection pane="bottomLeft" activeCell="A${fr}" sqref="A${fr}"/><selection pane="bottomRight" activeCell="${fc}${fr}" sqref="${fc}${fr}"/>` : '';
+      return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">` +
+        `<sheetPr><tabColor rgb="FF${o.tab}"/><pageSetUpPr fitToPage="1"/></sheetPr><dimension ref="A1:${xlsxCol(maxC)}${maxR}"/>` +
+        `<sheetViews><sheetView workbookViewId="0"${o.grid ? '' : ' showGridLines="0"'}${o.selected ? ' tabSelected="1"' : ''}>${pane}</sheetView></sheetViews><sheetFormatPr defaultRowHeight="15"/>` +
+        `<cols>${cols.join('')}</cols><sheetData>${sheetData}</sheetData>` +
+        (o.filter ? `<autoFilter ref="${o.filter}"/>` : '') + (merges.length ? `<mergeCells count="${merges.length}">${merges.map(m => `<mergeCell ref="${m}"/>`).join('')}</mergeCells>` : '') + cfs.join('') +
+        `<printOptions horizontalCentered="1"/><pageMargins left="0.4" right="0.4" top="0.5" bottom="0.6" header="0.3" footer="0.3"/>` +
+        `<pageSetup paperSize="9" orientation="landscape" fitToWidth="${o.fitWidth}" fitToHeight="${o.fitHeight}"/>` +
+        `<headerFooter><oddFooter>&amp;L&amp;A&amp;CPage &amp;P of &amp;N&amp;R&amp;D</oddFooter></headerFooter></worksheet>`;
+    }
+  };
+}
+
+// Bar colours: the light theme's fixed palette (the app's own bar colours), as hex.
+const XLSX_COLORS = { blue: '0969DA', teal: '1B7C83', purple: '8250DF', amber: '9A6700', pink: 'CE2C85', green: '1A7F37', red: 'CF222E', grey: '656D76', complete: '0969DA', danger: 'CF222E', accent: '0969DA', 'not-started': '8C959F' };
+// statusColorVar() gives var(--task-purple) / var(--status-complete) / var(--danger) ...; this maps that to the hex of the same colour.
+function statusColorHex(t) { const m = statusColorVar(t).match(/--(?:task-|status-)?([a-z-]+)\)/); return XLSX_COLORS[m ? m[1] : 'not-started'] || '8C959F'; }
+function xlsxTint(hex, k) { const ch = i => Math.round(parseInt(hex.substr(i, 2), 16) * k + 255 * (1 - k)).toString(16).padStart(2, '0'); return (ch(0) + ch(2) + ch(4)).toUpperCase(); }
+function exportTaskRows(scope) {                 // [{ task, depth }] in outline order, ignoring collapsed groups
+  const out = [], onlyShown = scope === 'filtered' && filtersActive();
+  (function walk(pid, depth) {
+    for (const t of childrenOf(pid)) { if (onlyShown && !filterShows(t)) continue; out.push({ task: t, depth }); walk(t.id, depth + 1); }
+  })(null, 0);
+  return out;
+}
+
+function buildXlsx(opts) {
+  const rowsIn = exportTaskRows(opts.scope), sst = xlsxSharedStrings(), book = xlsxStyleBook();
+  const GRID = 'D8DEE4', HEAD = '24292F', SUM = 'F6F8FA', DIM = '656D76';
+  const box = { left: ['thin', GRID], right: ['thin', GRID], top: ['thin', GRID], bottom: ['thin', GRID] };
+  const dateFmt = 'dd\\.mm\\.yyyy', durFmt = '[=1]0" day";0" days"';
+  const scopeText = opts.scope === 'filtered' && filtersActive() ? `${rowsIn.length} of ${tasks.length} tasks (filtered)` : `${rowsIn.length} task${rowsIn.length === 1 ? '' : 's'}`;
+  const titleStyle = book.style({ bold: true, size: 16 }), subStyle = book.style({ size: 10, color: DIM });
+  const headStyle = book.style({ bold: true, color: 'FFFFFF', fill: HEAD, h: 'center', wrap: true, border: box });
+  const tasksSheet = xlsxSheet(sst, { tab: '0969DA', grid: false, selected: true, freeze: { cols: 3, rows: 4 }, fitWidth: 1, fitHeight: 0 });
+
+  // ---------------- Tasks sheet: A ID, B Mode, C Task Name, D Start, E Finish, F Duration, G % Complete, H Predecessors, I Notes
+  const heads = ['ID', 'Mode', 'Task Name', 'Start', 'Finish', 'Duration', '% Complete', 'Predecessors', 'Notes'], widths = [6, 10, 46, 13, 13, 12, 13, 18, 46];
+  widths.forEach((w, i) => tasksSheet.width(i + 1, i + 1, w));
+  tasksSheet.cell(1, 1, project.name, titleStyle); tasksSheet.merge(1, 1, 1, heads.length); tasksSheet.height(1, 28);
+  tasksSheet.cell(2, 1, `Exported ${fmtDate(todayStr())} · ${scopeText}`, subStyle); tasksSheet.merge(2, 1, 2, heads.length); tasksSheet.height(2, 16);
+  tasksSheet.height(3, 6);
+  heads.forEach((h, i) => tasksSheet.cell(4, i + 1, h, headStyle)); tasksSheet.height(4, 26);
+  const HR = 4;
+  rowsIn.forEach(({ task: t, depth }, i) => {
+    const r = HR + 1 + i, eff = effectiveDates(t.id), summary = hasChildren(t.id), manual = t.taskMode === 'manual';
+    const ownDates = !summary || manual, startIso = ownDates ? t.startDate : eff.start, endIso = ownDates ? t.endDate : eff.end;
+    const base = { border: box, fill: summary ? SUM : null, bold: summary };
+    const S = o => book.style(Object.assign({}, base, o));
+    tasksSheet.cell(r, 1, taskDisplayId(t.id), S({ h: 'center', color: DIM, bold: false }));
+    tasksSheet.cell(r, 2, manual ? 'Manual' : 'Auto', S({ h: 'center', color: manual ? '9A6700' : DIM, bold: false }));
+    tasksSheet.cell(r, 3, (t.milestone ? '◆ ' : '') + t.name, S({ h: 'left', indent: depth }));
+    const dateCell = (c, text, iso) => text != null ? tasksSheet.cell(r, c, text, S({ h: 'center', italic: true, color: DIM, bold: false }))
+      : iso ? tasksSheet.cell(r, c, xlsxSerial(iso), S({ h: 'center', num: dateFmt })) : tasksSheet.cell(r, c, null, S({}));
+    dateCell(4, t.startText, startIso); dateCell(5, t.endText, endIso);
+    const durNum = !isUnscheduled(t) && startIso && endIso ? durationDays(startIso, endIso) : null;
+    if (t.durText != null) tasksSheet.cell(r, 6, t.durText, S({ h: 'center', italic: true, color: DIM, bold: false }));
+    else if (durNum != null) tasksSheet.cell(r, 6, durNum, S({ h: 'center', num: durFmt }));
+    else tasksSheet.cell(r, 6, null, S({}));
+    tasksSheet.cell(r, 7, Math.round(eff.progress) / 100, S({ h: 'center', num: '0%' }));
+    tasksSheet.cell(r, 8, predecessorLabel(t) || null, S({ h: 'left' }));
+    const notes = (t.notes || '').trim();
+    tasksSheet.cell(r, 9, notes || null, S({ h: 'left', wrap: true, bold: false, color: DIM }));
+    const noteLines = notes ? notes.split('\n').reduce((n, line) => n + Math.max(1, Math.ceil(line.length / 50)), 0) : 1;
+    tasksSheet.height(r, Math.min(409, Math.max(19, 14 * noteLines + 5)));   // 409pt is Excel's maximum row height
+  });
+  const last = HR + Math.max(1, rowsIn.length);
+  tasksSheet.opts.filter = `A${HR}:I${last}`;
+  if (rowsIn.length) tasksSheet.dataBar(`G${HR + 1}:G${last}`, '63BE7B');
+  const sheets = [{ name: 'Tasks', sheet: tasksSheet, filter: tasksSheet.opts.filter, titles: `Tasks!$${HR}:$${HR}` }];
+
+  // ---------------- Gantt sheet: A ID, B Task Name, C Start, D Finish, then one column per calendar week (or month)
+  const scheduled = rowsIn.filter(({ task: t }) => effectiveDates(t.id).start);
+  if (opts.gantt && scheduled.length) {
+    const g = xlsxSheet(sst, { tab: '1A7F37', grid: false, freeze: { cols: 4, rows: 4 }, fitWidth: 0, fitHeight: 1 });
+    let minD = Infinity, maxD = -Infinity;
+    for (const { task: t } of scheduled) { const e = effectiveDates(t.id); minD = Math.min(minD, dayNumber(e.start)); maxD = Math.max(maxD, dayNumber(e.end)); }
+    const monday = d => d - (((d + 3) % 7) + 7) % 7, periods = [];
+    const weekly = (monday(maxD) + 6 - monday(minD) + 1) / 7 <= 170;   // very long projects get one column per month instead
+    if (weekly) for (let d = monday(minD); d <= monday(maxD); d += 7) {
+      const iso = dayNumberToIso(d);
+      periods.push({ s: d, e: d + 6, group: iso.slice(0, 7), top: new Date(Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, 1)).toLocaleDateString(undefined, { month: 'long', year: 'numeric', timeZone: 'UTC' }), bottom: `${CAL_WEEK_LABEL} ${isoWeekOf(d).week}` });
+    } else {
+      let y = +dayNumberToIso(minD).slice(0, 4), m = +dayNumberToIso(minD).slice(5, 7);
+      while (dayNumber(`${y}-${pad2(m)}-01`) <= maxD) {
+        const s = dayNumber(`${y}-${pad2(m)}-01`), ny = m === 12 ? y + 1 : y, nm = m === 12 ? 1 : m + 1;
+        periods.push({ s, e: dayNumber(`${ny}-${pad2(nm)}-01`) - 1, group: String(y), top: String(y), bottom: new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString(undefined, { month: 'short', timeZone: 'UTC' }) });
+        y = ny; m = nm;
+      }
+    }
+    const FIRST = 5, todayD = dayNumber(todayStr());
+    [6, 40, 12, 12].forEach((w, i) => g.width(i + 1, i + 1, w));
+    g.width(FIRST, FIRST + periods.length - 1, weekly ? 3.6 : 5.5);
+    g.cell(1, 1, project.name, titleStyle); g.merge(1, 1, 1, 4); g.height(1, 28);
+    g.cell(2, 1, (weekly ? `Calendar weeks (${CAL_WEEK_LABEL}), Monday to Sunday` : 'Months') + ' · solid = done, light = still to do, dark = group, ◆ = milestone', subStyle); g.merge(2, 1, 2, 4); g.height(2, 16);
+    ['ID', 'Task Name', 'Start', 'Finish'].forEach((h, i) => { g.cell(3, i + 1, h, headStyle); g.cell(4, i + 1, null, headStyle); g.merge(3, i + 1, 4, i + 1); });
+    g.height(3, 18); g.height(4, weekly ? 40 : 22);
+    // header: the month (or year) merged over its columns, then CW n (or the month name); this week's column is highlighted
+    const isStart = i => i === 0 || periods[i].group !== periods[i - 1].group;
+    const groupStyle = book.style({ bold: true, color: 'FFFFFF', fill: '424A53', h: 'center', border: box });
+    for (let i = 0; i < periods.length;) {
+      let j = i; while (j + 1 < periods.length && periods[j + 1].group === periods[i].group) j++;
+      for (let c = i; c <= j; c++) g.cell(3, FIRST + c, c === i ? periods[i].top : null, groupStyle);
+      if (j > i) g.merge(3, FIRST + i, 3, FIRST + j);
+      i = j + 1;
+    }
+    periods.forEach((p, i) => {
+      const today = todayD >= p.s && todayD <= p.e;
+      g.cell(4, FIRST + i, p.bottom, book.style({ bold: true, size: 8, color: today ? '1F2328' : 'FFFFFF', fill: today ? 'FFD33D' : HEAD, h: 'center', rotate: weekly ? 90 : 0, border: box }));
+    });
+    scheduled.forEach(({ task: t, depth }, idx) => {
+      const r = 5 + idx, eff = effectiveDates(t.id), summary = hasChildren(t.id);
+      const base = { border: box, fill: summary ? SUM : null, bold: summary };
+      const S = o => book.style(Object.assign({}, base, o));
+      g.cell(r, 1, taskDisplayId(t.id), S({ h: 'center', color: DIM, bold: false }));
+      g.cell(r, 2, (t.milestone ? '◆ ' : '') + t.name, S({ h: 'left', indent: depth }));
+      g.cell(r, 3, xlsxSerial(eff.start), S({ h: 'center', num: dateFmt })); g.cell(r, 4, xlsxSerial(eff.end), S({ h: 'center', num: dateFmt }));
+      const s0 = dayNumber(eff.start), e0 = dayNumber(eff.end), doneEnd = s0 + Math.round((e0 - s0 + 1) * eff.progress / 100) - 1;
+      const color = summary ? HEAD : statusColorHex(t), light = summary ? 'AEB6BF' : xlsxTint(color, 0.28);
+      periods.forEach((p, i) => {
+        const line = 'E6EAEE', cellBorder = { left: ['thin', isStart(i) ? 'AEB6BF' : line], right: ['thin', line], top: ['thin', line], bottom: ['thin', line] };
+        if (t.milestone) g.cell(r, FIRST + i, s0 >= p.s && s0 <= p.e ? '◆' : null, book.style({ border: cellBorder, h: 'center', bold: true, color, size: 11 }));
+        else if (p.s <= e0 && p.e >= s0) g.cell(r, FIRST + i, null, book.style({ border: cellBorder, fill: Math.max(p.s, s0) <= doneEnd ? color : light }));
+        else g.cell(r, FIRST + i, null, book.style({ border: cellBorder }));
+      });
+      g.height(r, 19);
+    });
+    sheets.push({ name: 'Gantt', sheet: g, titles: 'Gantt!$3:$4' });
+  }
+
+  // ---------------- assemble the package (the ZIP of XML parts)
+  const enc = new TextEncoder(), n = sheets.length, X = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
+  const absRef = ref => ref.replace(/([A-Z]+)(\d+)/g, '$$$1$$$2');   // A4:I30 -> $A$4:$I$30
+  const parts = sheets.map((s, i) => ({ name: `xl/worksheets/sheet${i + 1}.xml`, text: s.sheet.xml() }));   // builds the shared strings as it goes
+  const files = [
+    { name: '[Content_Types].xml', text: X + `<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>` +
+      sheets.map((s, i) => `<Override PartName="/xl/worksheets/sheet${i + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('') +
+      `<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/><Override PartName="/xl/sharedStrings.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/><Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/></Types>` },
+    { name: '_rels/.rels', text: X + `<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/></Relationships>` },
+    { name: 'docProps/core.xml', text: X + `<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:title>${xmlEsc(project.name)}</dc:title><dc:creator>Milestone</dc:creator><dcterms:created xsi:type="dcterms:W3CDTF">${new Date().toISOString().replace(/\.\d+Z$/, 'Z')}</dcterms:created></cp:coreProperties>` },
+    { name: 'docProps/app.xml', text: X + `<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"><Application>Milestone</Application></Properties>` },
+    { name: 'xl/_rels/workbook.xml.rels', text: X + `<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">` +
+      sheets.map((s, i) => `<Relationship Id="rId${i + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`).join('') +
+      `<Relationship Id="rId${n + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/><Relationship Id="rId${n + 2}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings" Target="sharedStrings.xml"/></Relationships>` },
+    { name: 'xl/workbook.xml', text: X + `<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><workbookPr/><bookViews><workbookView xWindow="0" yWindow="0" windowWidth="28800" windowHeight="16000" activeTab="0"/></bookViews><sheets>` +
+      sheets.map((s, i) => `<sheet name="${s.name}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`).join('') + `</sheets><definedNames>` +
+      sheets.map((s, i) => (s.filter ? `<definedName name="_xlnm._FilterDatabase" localSheetId="${i}" hidden="1">${s.name}!${absRef(s.filter)}</definedName>` : '') + `<definedName name="_xlnm.Print_Titles" localSheetId="${i}">${s.titles}</definedName>`).join('') + `</definedNames><calcPr calcId="191029"/></workbook>` },
+    ...parts,
+    { name: 'xl/styles.xml', text: book.xml() },
+    { name: 'xl/sharedStrings.xml', text: sst.xml() }
+  ];
+  return zipStore(files.map(f => ({ name: f.name, data: enc.encode(f.text) })));
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob), a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+function openExcelExport() {
+  closeDataMenu();
+  if (!tasks.length) { showToast('Nothing to export yet — add a task first', true); return; }
+  const filtered = filtersActive(), shown = tasks.filter(filterShows).length;
+  document.getElementById('excelScopeBlock').classList.toggle('hidden', !filtered);
+  document.getElementById('excelScopeAll').textContent = `All ${tasks.length} tasks`;
+  document.getElementById('excelScopeFiltered').textContent = `Only the ${shown} task${shown === 1 ? '' : 's'} matching the current filter`;
+  document.querySelector('input[name="excelScope"][value="all"]').checked = true;
+  document.getElementById('excelModalBg').classList.add('open');
+}
+function closeExcelModal() { document.getElementById('excelModalBg').classList.remove('open'); }
+function runExcelExport() {
+  const scope = (document.querySelector('input[name="excelScope"]:checked') || {}).value === 'filtered' ? 'filtered' : 'all';
+  const gantt = document.getElementById('excelGantt').checked;
+  closeExcelModal();
+  try {
+    resetEffectiveCache();
+    const n = exportTaskRows(scope).length;
+    downloadBlob(buildXlsx({ scope, gantt }), `${fileBase(project.name)}-${todayStr()}.xlsx`);
+    showToast(`Exported ${n} task${n === 1 ? '' : 's'} to Excel`);
+  } catch (e) { console.error('Milestone: Excel export failed', e); showToast('Excel export failed', true); }
+}
+
 /* ============================== Local backups ============================== */
 function maybeSnapshotBackup() {
   try {
@@ -3242,7 +3544,7 @@ function wireGlobalEvents() {
     // Escape closes whatever overlay is open first; only when there is none — and
     // the user isn't typing in a field, where Escape already means "cancel this
     // edit" — does it clear the task selection.
-    const modalIds = ['taskModalBg', 'confirmModalBg', 'planModalBg', 'importModalBg', 'backupsModalBg', 'helpModalBg', 'aboutModalBg'];
+    const modalIds = ['taskModalBg', 'confirmModalBg', 'planModalBg', 'excelModalBg', 'importModalBg', 'backupsModalBg', 'helpModalBg', 'aboutModalBg'];
     const overlayOpen = modalIds.some(id => document.getElementById(id).classList.contains('open'))
       || document.getElementById('fileSyncModalBg').classList.contains('open')   // mandatory: Escape can't close it
       || document.getElementById('dataMenu').classList.contains('open')
