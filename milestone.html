@@ -155,6 +155,13 @@ button:focus:not(:focus-visible) { outline: none; }
 .grid-row { border-bottom: 1px solid var(--border); font-size: 12.5px; cursor: default; }
 .grid-row:hover { background: var(--panel-2); }
 .grid-row.selected { background: color-mix(in srgb, var(--accent) 10%, var(--panel)); }
+.task-drag-handle { cursor: grab; }
+.task-drag-handle:active { cursor: grabbing; }
+.grid-row.dragging { opacity: .4; }
+.grid-row.drop-before { box-shadow: inset 0 2px 0 var(--accent); }
+.grid-row.drop-after { box-shadow: inset 0 -2px 0 var(--accent); }
+.grid-row.drop-into { background: color-mix(in srgb, var(--accent) 12%, var(--panel)); box-shadow: inset 0 -2px 0 var(--accent); }
+.grid-rows.drop-end { box-shadow: inset 0 -2px 0 var(--accent); }
 .grid-name { display: flex; align-items: center; gap: 4px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .name-text.editable, .grid-cell-dim.editable { cursor: text; }
 .name-text.editable:hover, .grid-cell-dim.editable:hover { background: var(--panel-2); border-radius: 4px; }
@@ -349,7 +356,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 <div class="main" id="main">
   <div class="grid-pane" id="gridPane">
     <div class="grid-header" id="gridHeader"></div>
-    <div class="grid-rows" id="gridRows"></div>
+    <div class="grid-rows" id="gridRows" ondragover="dragOverEnd(event)" ondrop="dropOnEnd(event)"></div>
     <div class="grid-resize-handle" id="gridResizeHandle" title="Drag to resize"></div>
   </div>
   <div class="gantt-pane-outer" id="ganttPaneOuter">
@@ -465,7 +472,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
   <div class="modal wide">
     <div class="modal-header"><h2>Help</h2><button onclick="closeHelpModal()">&times;</button></div>
     <div class="modal-body help-body">
-      <div><div class="help-section-title">The basics</div>Add tasks with the + Add Task button. Each task has a start/end date, a % complete, and can be a milestone (a zero-duration diamond). Use Indent/Outdent to build a work breakdown structure — a parent task's own dates and progress roll up automatically from its children.</div>
+      <div><div class="help-section-title">The basics</div>Add tasks with the + Add Task button. Each task has a start/end date, a % complete, and can be a milestone (a zero-duration diamond). Use Indent/Outdent to build a work breakdown structure — a parent task's own dates and progress roll up automatically from its children. Drag a task by its ID number to reorder it (a parent brings its sub-tasks along). Add Task inserts below the selected task, or at the bottom when nothing is selected; press Escape to clear the selection.</div>
       <div><div class="help-section-title">Task Mode</div>Every task is either Manually Scheduled (pushpin) or Auto Scheduled (chart icon) — click the icon in the Task Mode column, or use the Task Mode field in a task's dialog. An Auto task follows its predecessors and constraints. A Manual task stays exactly where you put it: predecessors never move it, its Start, Finish and Duration can be free text such as "TBD", and a warning triangle appears if it starts earlier than its predecessors allow. Manual tasks are drawn with a dashed bar, and are left out of the critical path. Switching a task to Auto moves it to the earliest date its links allow. The "New tasks" button at the right of the toolbar chooses the mode new tasks start in (Manual, like MS Project, by default).</div>
       <div><div class="help-section-title">Dependencies</div>Open a task and add a predecessor to link it to another task (Finish-to-Start, Start-to-Start, Finish-to-Finish or Start-to-Finish). Give it a lead or lag in days: a positive number delays the dependent task (lag), a negative number lets it overlap and start early (lead) — e.g. "3FS+2" waits 2 extra days after task 3 finishes, "3FS-2" starts 2 days before task 3 finishes. Moving a task forward automatically pushes any dependent tasks forward too — it never pulls a task earlier on its own. A circular dependency is flagged with a warning icon and stops auto-scheduling for the tasks involved.</div>
       <div><div class="help-section-title">The Gantt chart</div>Drag a bar to reschedule it, drag its edges to resize, or drag the small circle on its right edge onto another task to create a dependency. Click a bar or row to edit it. The route icon in the toolbar highlights the critical path — the chain of tasks with zero slack that determines the overall project end date.</div>
@@ -1093,8 +1100,8 @@ function renderGrid() {
     const mi = taskModeInfo(t.taskMode);
     const modeCell = `<div class="grid-cell-dim task-mode-cell" style="text-align:center" title="${mi.label} — click to change" onclick="openTaskModeMenu(event,'${t.id}')"><i class="fa-solid ${mi.icon} mode-${t.taskMode}"></i></div>`;
     const mismatchDate = scheduleMismatch(t);
-    return `<div class="grid-row${t.id === selectedTaskId ? ' selected' : ''}" data-id="${t.id}" onclick="selectTask('${t.id}')" ondblclick="openTaskModal('${t.id}')">
-      <div class="grid-cell-dim" style="text-align:center">${taskDisplayId(t.id)}</div>
+    return `<div class="grid-row${t.id === selectedTaskId ? ' selected' : ''}" data-id="${t.id}" onclick="selectTask('${t.id}')" ondblclick="openTaskModal('${t.id}')" ondragover="dragOverTask(event,'${t.id}')" ondrop="dropOnTask(event,'${t.id}')">
+      <div class="grid-cell-dim task-drag-handle" draggable="true" ondragstart="dragStartTask(event,'${t.id}')" ondragend="dragEndTask()" title="Drag to reorder" style="text-align:center">${taskDisplayId(t.id)}</div>
       ${modeCell}
       <div class="grid-name" style="padding-left:${depth * 16}px">
         <button class="chevron${summary ? '' : ' empty'}" onclick="event.stopPropagation();toggleCollapse('${t.id}')"><i class="fa-solid fa-chevron-${t.collapsed ? 'right' : 'down'}"></i></button>
@@ -1118,6 +1125,119 @@ function renderGrid() {
   }).join('');
 }
 function selectTask(id) { selectedTaskId = id; render(); }
+
+/* ---------------------- Drag-and-drop task reordering ---------------------- */
+// The ID cell is the drag handle (as MS Project's row number is); every row is a
+// drop target. Top half of a row = insert before it, bottom half = insert after
+// it — except that "after" an *expanded summary* is the slot directly under its
+// header, i.e. its first sub-task. Drop indicators are plain classes toggled on
+// the live row, never a re-render, which would destroy the drag mid-flight.
+let draggedTaskId = null;
+let dropIndicatorEl = null;
+
+function clearDropIndicators() {
+  document.querySelectorAll('.drop-before, .drop-after, .drop-into, .drop-end').forEach(el => el.classList.remove('drop-before', 'drop-after', 'drop-into', 'drop-end'));
+  dropIndicatorEl = null;
+}
+function dragStartTask(event, id) {
+  draggedTaskId = id;
+  event.dataTransfer.effectAllowed = 'move';
+  event.dataTransfer.setData('text/plain', id);
+  const row = event.target.closest('.grid-row');
+  if (row) {
+    event.dataTransfer.setDragImage(row, 16, 16);
+    setTimeout(() => row.classList.add('dragging'), 0); // after the drag image is captured, so the ghost isn't dimmed
+  }
+}
+function dragEndTask() {
+  draggedTaskId = null;
+  document.querySelectorAll('.grid-row.dragging').forEach(el => el.classList.remove('dragging'));
+  clearDropIndicators();
+}
+// A task can't be dropped onto itself or anywhere inside its own subtree.
+function canDropTaskOn(targetId) {
+  return !!draggedTaskId && targetId !== draggedTaskId && !descendantIds(draggedTaskId).includes(targetId);
+}
+function dropZoneFor(event, rowEl, targetId) {
+  const rect = rowEl.getBoundingClientRect();
+  if (event.clientY < rect.top + rect.height / 2) return 'before';
+  const target = byId(targetId);
+  return (hasChildren(targetId) && !target.collapsed) ? 'into' : 'after';
+}
+function dragOverTask(event, targetId) {
+  if (!canDropTaskOn(targetId)) return;
+  event.preventDefault();
+  event.stopPropagation(); // the empty-area handler on #gridRows must not also claim this event
+  event.dataTransfer.dropEffect = 'move';
+  const rowEl = event.currentTarget;
+  const zone = dropZoneFor(event, rowEl, targetId);
+  if (dropIndicatorEl !== rowEl) clearDropIndicators();
+  dropIndicatorEl = rowEl;
+  rowEl.classList.remove('drop-before', 'drop-after', 'drop-into');
+  rowEl.classList.add('drop-' + zone);
+}
+function dropOnTask(event, targetId) {
+  if (!canDropTaskOn(targetId)) return;
+  event.preventDefault();
+  event.stopPropagation();
+  const zone = dropZoneFor(event, event.currentTarget, targetId);
+  const id = draggedTaskId;
+  dragEndTask();
+  moveTask(id, targetId, zone);
+}
+// Dropping in the blank space below the last row moves the task to the end of the top level.
+function dragOverEnd(event) {
+  if (!draggedTaskId || event.target.closest('.grid-row')) return;
+  event.preventDefault();
+  event.dataTransfer.dropEffect = 'move';
+  if (dropIndicatorEl !== event.currentTarget) clearDropIndicators();
+  dropIndicatorEl = event.currentTarget;
+  event.currentTarget.classList.add('drop-end');
+}
+function dropOnEnd(event) {
+  if (!draggedTaskId || event.target.closest('.grid-row')) return;
+  event.preventDefault();
+  const id = draggedTaskId;
+  dragEndTask();
+  moveTask(id, null, 'end');
+}
+// Moves task `id` relative to `targetId` (zone: 'before' | 'after' | 'into' = first
+// sub-task of an expanded summary | 'end' = end of the top level, targetId null).
+// Sibling `order` values are renumbered 0..n at the destination (and the source
+// level if the parent changed); only tasks whose order or parent actually changed
+// get a fresh updatedAt, because order is a merged field and an un-stamped
+// renumber would never reach another device.
+function moveTask(id, targetId, zone) {
+  const t = byId(id);
+  if (!t) return;
+  let parentId, index;
+  if (zone === 'end') {
+    parentId = null; index = childrenOf(null).filter(s => s.id !== id).length;
+  } else {
+    const target = byId(targetId);
+    if (!target || id === targetId || descendantIds(id).includes(targetId)) return;
+    if (zone === 'into') { parentId = targetId; index = 0; }
+    else {
+      parentId = target.parentId || null;
+      const sibs = childrenOf(parentId).filter(s => s.id !== id);
+      const ti = sibs.findIndex(s => s.id === targetId);
+      index = zone === 'before' ? ti : ti + 1;
+    }
+  }
+  const oldParentId = t.parentId || null, oldOrder = t.order;
+  const dest = childrenOf(parentId).filter(s => s.id !== id);
+  dest.splice(index, 0, t);
+  t.parentId = parentId;
+  let changed = oldParentId !== parentId;
+  dest.forEach((s, i) => { if (s.order !== i) { s.order = i; if (s !== t) s.updatedAt = Date.now(); changed = true; } });
+  if (oldParentId !== parentId) {
+    childrenOf(oldParentId).forEach((s, i) => { if (s.order !== i) { s.order = i; s.updatedAt = Date.now(); } });
+  }
+  if (!changed) return; // dropped back where it already was
+  t.updatedAt = Date.now();
+  selectedTaskId = id;
+  normalizeData(); save(); render();
+}
 function toggleCollapse(id) { const t = byId(id); t.collapsed = !t.collapsed; save(); render(); }
 // Switching a task to Auto Scheduled re-plans it the way MS Project does:
 // free-text dates are dropped and, if it has links or a constraint, it moves
@@ -2188,10 +2308,19 @@ function wireGlobalEvents() {
   });
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
-    for (const id of ['taskModalBg', 'confirmModalBg', 'importModalBg', 'backupsModalBg', 'fileSyncModalBg', 'helpModalBg', 'aboutModalBg']) {
-      document.getElementById(id).classList.remove('open');
-    }
+    // Escape closes whatever overlay is open first; only when there is none — and
+    // the user isn't typing in a field, where Escape already means "cancel this
+    // edit" — does it clear the task selection.
+    const modalIds = ['taskModalBg', 'confirmModalBg', 'importModalBg', 'backupsModalBg', 'fileSyncModalBg', 'helpModalBg', 'aboutModalBg'];
+    const overlayOpen = modalIds.some(id => document.getElementById(id).classList.contains('open'))
+      || document.getElementById('dataMenu').classList.contains('open')
+      || document.getElementById('taskModeMenu').classList.contains('open');
+    // e.target, not document.activeElement: an inline editor's own Escape handler re-renders and destroys the
+    // focused field before this runs, so by now activeElement is already <body>.
+    const typing = /^(INPUT|TEXTAREA|SELECT)$/.test((e.target || {}).tagName || '');
+    for (const id of modalIds) document.getElementById(id).classList.remove('open');
     closeDataMenu(); closeTaskModeMenu();
+    if (!overlayOpen && !typing && selectedTaskId) { selectedTaskId = null; render(); }
   });
   document.getElementById('projectNameInput').addEventListener('change', (e) => renameProject(e.target.value));
   document.getElementById('toastUndoBtn').addEventListener('click', triggerToastUndo);
