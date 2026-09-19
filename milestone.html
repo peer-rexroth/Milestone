@@ -300,6 +300,10 @@ input.inline-edit { width: 100%; min-width: 0; padding: 3px 6px; border: 1px sol
 .grid-name .mismatch-warn { color: var(--task-amber); flex-shrink: 0; font-size: 11px; }
 .inline-wrap { position: relative; display: flex; align-items: center; }
 .inline-wrap .inline-edit { padding-right: 24px; }
+/* A date editor needs more room than a narrow date column has (the native control is ~127px with its picker icon; Actual Start/Finish
+   columns are 92px, Start/Finish 116px): while it is open it grows past its column, over the neighbour, instead of clipping the picker. */
+.main.view-tasks .grid-row > input.inline-edit[type=date] { width: max(100%, 132px); position: relative; z-index: 4; }
+.main.view-tasks .grid-row > .inline-wrap { overflow: visible; width: max(100%, 132px); z-index: 4; }
 .inline-cal { position: absolute; right: 2px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-dim); padding: 2px 5px; font-size: 12px; }
 .inline-cal:hover { color: var(--accent); }
 .inline-date-hidden { position: absolute; right: 0; bottom: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
