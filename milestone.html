@@ -54,19 +54,18 @@ button { cursor: pointer; }
 
 /* ── Topbar ─────────────────────────────────────────────────────────── */
 .topbar {
-  display: flex; align-items: center; gap: 10px; height: 54px; padding: 0 14px;
+  display: flex; align-items: center; gap: 14px; height: 54px; padding: 0 16px;
   background: var(--panel); border-bottom: 1px solid var(--border);
   flex-shrink: 0; overflow-x: auto;
 }
 .topbar > * { flex-shrink: 0; }
-.brand { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 16px; color: var(--text); }
-.brand svg { width: 22px; height: 22px; color: var(--accent); }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 21px; letter-spacing: -0.02em; color: var(--text); }
+.brand svg { width: 26px; height: 26px; color: var(--accent); }
 #projectNameInput {
-  border: 1px solid transparent; background: transparent; font-weight: 600; font-size: 14px;
-  padding: 5px 8px; border-radius: 6px; color: var(--text); min-width: 120px; max-width: 240px;
+  border: none; background: transparent; font-weight: 600; font-size: 14px;
+  padding: 4px 8px; border-radius: 6px; color: var(--text-dim); min-width: 120px; max-width: 320px;
 }
-#projectNameInput:hover { border-color: var(--border); }
-#projectNameInput:focus { outline: none; border-color: var(--accent); background: var(--panel-2); }
+#projectNameInput:hover, #projectNameInput:focus { background: var(--panel-2); color: var(--text); outline: none; }
 .topbar-divider { width: 1px; height: 22px; background: var(--border); }
 .topbar-spacer { flex: 1 1 auto; }
 
@@ -95,6 +94,15 @@ button { cursor: pointer; }
 .icon-btn:hover { background: var(--panel-2); color: var(--text); }
 .icon-btn.active { background: color-mix(in srgb, var(--accent) 16%, var(--panel)); color: var(--accent); }
 button:focus:not(:focus-visible) { outline: none; }
+/* Top bar only — Pulse's bordered pill tabs, bordered square icon buttons and
+   semibold buttons at the browser's own 13.33px. Scoped to .topbar on purpose. */
+.topbar .view-tabs { gap: 2px; border: 1px solid var(--border); }
+.topbar .view-tab { padding: 6px 14px; font-size: 13.3333px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.topbar .view-tab.active { color: var(--accent); box-shadow: var(--shadow); }
+.topbar .icon-btn { border: 1px solid var(--border); background: var(--panel); font-size: 13.3333px; }
+.topbar .icon-btn:hover { background: var(--panel-2); }
+.topbar .icon-btn.active { border-color: var(--accent); }
+.topbar .btn { font-size: 13.3333px; font-weight: 600; }
 
 .view-tabs { display: flex; background: var(--panel-2); border-radius: 8px; padding: 2px; }
 .view-tab { padding: 5px 11px; border: none; background: transparent; border-radius: 6px; font-size: 12.5px; font-weight: 500; color: var(--text-dim); }
@@ -308,6 +316,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
   <div class="view-tabs" id="zoomTabs"></div>
   <button class="icon-btn" id="criticalPathBtn" onclick="toggleCriticalPath()" title="Highlight critical path"><i class="fa-solid fa-route"></i></button>
   <div class="topbar-spacer"></div>
+  <div class="topbar-divider"></div>
   <div class="dropdown-wrap">
     <button class="btn" id="fileSyncBtn" onclick="onFileSyncBtnClick()"></button>
   </div>
@@ -321,6 +330,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
     </div>
   </div>
   <input type="file" id="fileInput" accept="application/json" class="hidden" onchange="handleFileImport(event)">
+  <div class="topbar-divider"></div>
   <button class="icon-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Toggle light/dark"></button>
   <button class="icon-btn" onclick="openHelpModal()" title="Help"><i class="fa-regular fa-circle-question"></i></button>
   <button class="icon-btn" onclick="openAboutModal()" title="About"><i class="fa-solid fa-circle-info"></i></button>
