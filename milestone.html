@@ -129,6 +129,42 @@ button:focus:not(:focus-visible) { outline: none; }
 .dropdown-item:hover { background: var(--panel-2); }
 .dropdown-item i { width: 15px; color: var(--text-dim); }
 .dropdown-sep { height: 1px; background: var(--border); margin: 6px 2px; }
+/* ---- column filters ---- */
+.col-head { display: flex; align-items: center; gap: 3px; min-width: 0; }
+.col-head > span { overflow: hidden; text-overflow: ellipsis; }
+.col-filter-btn { flex-shrink: 0; width: 18px; height: 18px; padding: 0; border: none; border-radius: 4px; background: transparent; color: var(--text-faint); font-size: 9px; opacity: .55; }
+.grid-header:hover .col-filter-btn { opacity: 1; }
+.col-filter-btn:hover { background: var(--panel-2); color: var(--text); opacity: 1; }
+.col-filter-btn.active { color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--panel)); opacity: 1; }
+.filter-bar { display: flex; align-items: center; gap: 8px; margin-left: 6px; font-size: 12px; color: var(--text-dim); min-width: 0; }
+.filter-bar.hidden { display: none; }
+.filter-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 4px 3px 8px; border-radius: 999px; white-space: nowrap; font-size: 12px; color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--panel)); border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--panel)); }
+.filter-chip i { font-size: 10px; }
+.filter-chip button { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; padding: 0; border: none; border-radius: 50%; background: transparent; color: inherit; font-size: 10px; }
+.filter-chip button:hover { background: color-mix(in srgb, var(--accent) 22%, var(--panel)); }
+.filter-count { white-space: nowrap; }
+.btn-link { border: none; background: transparent; padding: 2px 4px; font-size: 12px; font-weight: 600; color: var(--accent); }
+.btn-link:hover:not(:disabled) { text-decoration: underline; }
+.btn-link:disabled { color: var(--text-faint); cursor: default; }
+.filter-menu { width: 300px; padding: 0; overflow: hidden; z-index: 90; flex-direction: column; }
+.filter-menu.open { display: flex; }
+.filter-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px 8px; font-size: 13px; }
+.filter-section { padding: 6px 12px 10px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 6px; }
+.filter-label { font-size: 11.5px; font-weight: 600; color: var(--text-dim); }
+.filter-menu select, .filter-menu input[type=date], .filter-menu input[type=search] { width: 100%; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel); color: var(--text); font-size: 12.5px; }
+.filter-rule-inputs { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-dim); }
+.filter-rule-inputs:empty { display: none; }
+.filter-list { min-height: 0; flex: 1; }
+.filter-tree { overflow-y: auto; max-height: 240px; min-height: 90px; padding: 2px 0; }
+.filter-tree.dimmed { opacity: .5; }
+.ft-row { display: flex; align-items: center; gap: 2px; padding: 1px 0; }
+.ft-l1 { padding-left: 16px; } .ft-l2 { padding-left: 34px; }
+.ft-exp { flex-shrink: 0; width: 16px; height: 16px; padding: 0; border: none; background: transparent; color: var(--text-faint); font-size: 9px; }
+.ft-label { display: flex; align-items: center; gap: 7px; flex: 1; min-width: 0; padding: 2px 4px; border-radius: 4px; font-size: 12.5px; cursor: pointer; }
+.ft-label:hover { background: var(--panel-2); }
+.ft-cb { flex-shrink: 0; width: 14px; height: 14px; margin: 0; }
+.ft-empty { padding: 10px 4px; font-size: 12.5px; color: var(--text-faint); }
+.filter-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--border); }
 .dropdown-item:disabled { opacity: .45; cursor: default; }
 .dropdown-item:disabled:hover { background: transparent; }
 .plan-menu { min-width: 290px; max-width: 380px; }
@@ -222,11 +258,13 @@ input.inline-edit { width: 100%; min-width: 0; padding: 3px 6px; border: 1px sol
 .gantt-content { position: relative; }
 .gantt-header { position: sticky; top: 0; z-index: 5; height: var(--row-h); background: var(--panel-2); border-bottom: 1px solid var(--border); }
 .gantt-tick { position: absolute; top: 0; bottom: 0; border-left: 1px solid var(--border); font-size: 10.5px; color: var(--text-faint); padding: 8px 0 0 4px; white-space: nowrap; }
-/* Day zoom: a column is only 32px, narrower than a one-line "Mi., 10" (German) or "Wed 10", so the label is stacked —
-   weekday over day number — and centred instead of running into the next column. */
-.gantt-tick.day { padding: 3px 0 0; text-align: center; line-height: 12px; font-size: 10px; }
-.gantt-tick.day b { display: block; font-size: 11.5px; font-weight: 600; color: var(--text-dim); }
-.gantt-tick.weekend { background: color-mix(in srgb, var(--text-faint) 6%, transparent); }
+/* Ticks span their whole period (a calendar week, a month, a quarter), so overflow is clipped rather than
+   spilling into the next tick. Week and Year labels are two lines. Week: "CW 37" over the Monday's date. Year: the year
+   (on each Q1) over the quarter. */
+.gantt-tick { overflow: hidden; }
+.gantt-tick.zoom-week, .gantt-tick.zoom-year { padding: 3px 0 0 5px; line-height: 12px; font-size: 10px; }
+.gantt-tick b { display: block; font-size: 11.5px; font-weight: 600; color: var(--text-dim); }
+.gantt-tick.year-start { border-left-color: var(--text-faint); }
 .gantt-rows { position: relative; }
 .gantt-row-bg { position: absolute; left: 0; right: 0; height: var(--row-h); border-bottom: 1px solid var(--border); }
 .gantt-row-bg.selected { background: color-mix(in srgb, var(--accent) 8%, transparent); }
@@ -263,7 +301,7 @@ input.inline-edit { width: 100%; min-width: 0; padding: 3px 6px; border: 1px sol
 .gantt-milestone.manual { background: transparent; border-style: dashed; border-color: var(--bar-color, var(--task-purple)); }
 .gantt-milestone.mismatch { box-shadow: 0 0 0 2px var(--task-amber); }
 .gantt-link-preview { position: absolute; z-index: 6; pointer-events: none; }
-svg.gantt-deps { position: absolute; top: 0; left: 0; overflow: visible; pointer-events: none; z-index: 2; }
+svg.gantt-deps { position: absolute; top: var(--row-h); left: 0;   /* its y-axis starts at the first row, i.e. below the one-row header (it used to sit at 0, drawing every arrow a row too high) */ overflow: visible; pointer-events: none; z-index: 2; }
 svg.gantt-deps path { fill: none; stroke: var(--text-faint); stroke-width: 1.5; }
 svg.gantt-deps path.critical { stroke: var(--danger); }
 
@@ -375,10 +413,12 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
   <button class="icon-btn" id="indentBtn" onclick="indentSelected()" title="Indent (make sub-task)"><i class="fa-solid fa-indent"></i></button>
   <button class="icon-btn" id="outdentBtn" onclick="outdentSelected()" title="Outdent"><i class="fa-solid fa-outdent"></i></button>
   <button class="icon-btn btn-danger" id="deleteTaskBtn" onclick="deleteSelected()" title="Delete task"><i class="fa-solid fa-trash"></i></button>
+  <div class="filter-bar hidden" id="filterBar"></div>
   <span class="subbar-spacer"></span>
   <button class="btn" id="newTaskModeBtn" onclick="openTaskModeMenu(event,'new')" title="Scheduling mode given to newly added tasks"></button>
 </div>
 <div class="dropdown-menu" id="taskModeMenu"></div>
+<div class="dropdown-menu filter-menu" id="filterMenu"></div>
 
 <div class="main" id="main">
   <div class="grid-pane" id="gridPane">
@@ -516,9 +556,10 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
     <div class="modal-header"><h2>Help</h2><button onclick="closeHelpModal()">&times;</button></div>
     <div class="modal-body help-body">
       <div><div class="help-section-title">The basics</div>Add tasks with the + Add Task button. Each task has a start/end date, a % complete, and can be a milestone (a zero-duration diamond). Use Indent/Outdent to build a work breakdown structure — a parent task's own dates and progress roll up automatically from its children. Drag a task's line up or down to reorder it (a parent brings its sub-tasks along). Add Task inserts below the selected task, or at the bottom when nothing is selected; press Escape to clear the selection.</div>
+      <div><div class="help-section-title">Filtering by date</div>Click the funnel next to Start or Finish (in either view) for an Excel-style filter: pick a rule (equals, before, after, between, or relative to today such as this week, next month or year to date), or tick individual dates in the Year › Month › Day list — type in the search box to narrow it, and use (Blanks) for tasks without a real date. The two columns combine, so a task must match both. A group stays visible while any sub-task inside it matches, and stays open while a filter is on. The bar under the toolbar shows what is filtered and how many tasks are showing; click × on a chip, or Clear all, to remove it. Filters are only for looking — they aren't saved, and a task you add or edit stays visible until you filter again.</div>
       <div><div class="help-section-title">Task Mode</div>Every task is either Manually Scheduled (pushpin) or Auto Scheduled (chart icon) — click the icon in the Task Mode column, or use the Task Mode field in a task's dialog. An Auto task follows its predecessors and constraints. A Manual task stays exactly where you put it: predecessors never move it, its Start, Finish and Duration can be free text such as "TBD", and a warning triangle appears if it starts earlier than its predecessors allow. Manual tasks are drawn with a dashed bar, and are left out of the critical path. Switching a task to Auto moves it to the earliest date its links allow. The "New tasks" button at the right of the toolbar chooses the mode new tasks start in (Manual, like MS Project, by default).</div>
       <div><div class="help-section-title">Dependencies</div>Open a task and add a predecessor to link it to another task (Finish-to-Start, Start-to-Start, Finish-to-Finish or Start-to-Finish). Give it a lead or lag in days: a positive number delays the dependent task (lag), a negative number lets it overlap and start early (lead) — e.g. "3FS+2" waits 2 extra days after task 3 finishes, "3FS-2" starts 2 days before task 3 finishes. Moving a task forward automatically pushes any dependent tasks forward too — it never pulls a task earlier on its own. A circular dependency is flagged with a warning icon and stops auto-scheduling for the tasks involved.</div>
-      <div><div class="help-section-title">The Gantt chart</div>Drag a bar to reschedule it, drag its edges to resize, or drag the small circle on its right edge onto another task to create a dependency. Click a bar or row to edit it. The route icon in the toolbar highlights the critical path — the chain of tasks with zero slack that determines the overall project end date.</div>
+      <div><div class="help-section-title">The Gantt chart</div>Drag a bar to reschedule it, drag its edges to resize, or drag the small circle on its right edge onto another task to create a dependency. Click a bar or row to edit it. The Week / Month / Year buttons change the scale: Year (the default) shows quarters, and Week is labelled by calendar week (CW, weeks start on Monday, ISO 8601). The route icon in the toolbar highlights the critical path — the chain of tasks with zero slack that determines the overall project end date.</div>
       <div><div class="help-section-title">Plans</div>The plan name at the top left is a switcher: click it to move between plans, start a new one, open an existing file as a plan, or rename, duplicate or delete the current plan. Each plan has its own tasks, its own daily backups and — optionally — its own linked file, so switching plans also switches which file is kept in sync. Deleting a plan only removes it from this browser; its file is never touched. Every plan must live in a file (Chrome/Edge), so New plan and Duplicate ask you where to save it.</div>
       <div><div class="help-section-title">Data &amp; sync</div>Everything lives in this browser's local storage — nothing ever leaves your machine except into the files you choose. Every plan is kept in a plain JSON file on your disk (linking one is required, in Chrome/Edge): every change is saved to it automatically, and inside an iCloud Drive/OneDrive/Dropbox folder it keeps your own devices in step. You can disconnect a plan's file (click the file name at the top right, or use the plan menu) — the file is kept, and Milestone asks you to choose a file for the plan straight away. If the file is moved or deleted, Milestone asks you to create or find it again. Data → Export/Import moves a full JSON snapshot of the current plan in or out; Local Backups keeps a rolling daily snapshot.</div>
       <div class="help-tip">Nothing here ever leaves your machine except into the files you choose.</div>
@@ -581,10 +622,13 @@ const DAY_MS = 86400000;
 const ROW_H = 32;
 
 const ZOOMS = [
-  { id: 'day',   label: 'Day',   pxPerDay: 32 },
   { id: 'week',  label: 'Week',  pxPerDay: 14 },
-  { id: 'month', label: 'Month', pxPerDay: 5  }
+  { id: 'month', label: 'Month', pxPerDay: 5  },
+  { id: 'year',  label: 'Year',  pxPerDay: 1.5 }   // ~46px a month, ~137px a quarter
 ];
+const DEFAULT_ZOOM = 'year';        // the standard Gantt scale
+const ZOOM_DEFAULT_REV = 1;         // bump to reset everybody's saved scale to DEFAULT_ZOOM once (see loadPrefs)
+const CAL_WEEK_LABEL = 'CW';   // week scale is labelled by ISO calendar week: "CW 37"
 
 const TASK_COLORS = [
   { id: 'blue', label: 'Blue' }, { id: 'teal', label: 'Teal' }, { id: 'purple', label: 'Purple' },
@@ -636,7 +680,7 @@ let project = { name: 'My Project', updatedAt: 0 };
 let tasks = [];
 let deletedTaskIds = [];
 let theme = 'light';
-let zoom = 'week';
+let zoom = DEFAULT_ZOOM;
 let currentView = 'tasks';
 let gridPaneWidth = 400;
 const GRID_PANE_MIN_WIDTH = 240, GRID_PANE_MAX_WIDTH = 720;
@@ -684,7 +728,7 @@ function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c
 function byId(id) { return tasks.find(t => t.id === id); }
 
 /* ============================ Persistence =============================== */
-function prefsPayload() { return { theme, zoom, view: currentView, gridPaneWidth }; }
+function prefsPayload() { return { theme, zoom, zoomRev: ZOOM_DEFAULT_REV, view: currentView, gridPaneWidth }; }
 function syncPayload() { return { version: APP_VERSION, project, tasks, deletedTaskIds }; }
 
 function planDataKey(id) { return PLAN_DATA_PREFIX + id; }
@@ -742,7 +786,9 @@ function loadPrefs() {
   let d = {};
   try { d = JSON.parse(localStorage.getItem(PREFS_KEY) || '{}') || {}; } catch (e) { d = {}; }
   theme = d.theme === 'dark' ? 'dark' : 'light';
-  zoom = ZOOMS.some(z => z.id === d.zoom) ? d.zoom : 'week';
+  // A saved scale only counts if it was chosen under the current default: every install had the old default (Week)
+  // saved by the very first save(), so without the revision check nobody would ever see a changed default.
+  zoom = (d.zoomRev === ZOOM_DEFAULT_REV && ZOOMS.some(z => z.id === d.zoom)) ? d.zoom : DEFAULT_ZOOM;
   currentView = d.view === 'gantt' ? 'gantt' : 'tasks';
   gridPaneWidth = Number.isFinite(d.gridPaneWidth) ? Math.max(GRID_PANE_MIN_WIDTH, Math.min(GRID_PANE_MAX_WIDTH, d.gridPaneWidth)) : 400;
 }
@@ -868,11 +914,12 @@ function descendantIds(id) {
   return out;
 }
 function visibleTaskList() {
-  const out = [];
+  const out = [], filtering = filtersActive();
   (function walk(parentId, depth) {
     for (const t of childrenOf(parentId)) {
+      if (filtering && !filterShows(t)) continue;
       out.push({ task: t, depth });
-      if (!t.collapsed) walk(t.id, depth + 1);
+      if (!t.collapsed || filtering) walk(t.id, depth + 1);   // while filtering, groups are shown open so the matches inside them are seen
     }
   })(null, 0);
   return out;
@@ -929,7 +976,7 @@ function effectiveDates(id) {
   _effCache.set(id, result);
   return result;
 }
-function resetEffectiveCache() { _effCache.clear(); }
+function resetEffectiveCache() { _effCache.clear(); _filterShow.clear(); }
 
 /* ======================== Scheduling & critical path ===================== */
 function successorsMap() {
@@ -1108,7 +1155,7 @@ function computeDateRange() {
   const pad = Math.max(3, Math.round((end - start) * 0.06));
   return { start: start - pad, end: end + pad };
 }
-function currentZoom() { return ZOOMS.find(z => z.id === zoom) || ZOOMS[1]; }
+function currentZoom() { return ZOOMS.find(z => z.id === zoom) || ZOOMS.find(z => z.id === DEFAULT_ZOOM); }
 
 function render() {
   resetEffectiveCache();
@@ -1119,6 +1166,7 @@ function render() {
   updateCriticalPathUI();
   renderGrid();
   renderGantt();
+  renderFilterBar();
   updateFileSyncUI();
   updateThemeToggleUI();
   updateNewTaskModeUI();
@@ -1172,13 +1220,262 @@ function statusColorVar(t) {
   return 'var(--status-not-started)';
 }
 
+/* ============================ Column filters ============================= */
+// Excel-style filters on the Start and Finish columns (both views; the two combine with AND). Pure view state, like the
+// selection: not saved, not synced, cleared when the plan is switched. A `spec` is either
+//   { type: 'rule',   rule, a, b }        e.g. between 01.09.2026 and 30.09.2026, or "this month" (evaluated against today)
+//   { type: 'values', dates: Set, blanks } the checked dates of the Year > Month > Day list, plus "(Blanks)"
+// Rows are filtered by the dates they *display* (effectiveDates: a summary shows its roll-up); a task with no real date
+// (free-text "TBD") counts as blank. A summary stays visible while any of its sub-tasks match, so a match keeps its
+// context; tasks added or edited since the filter was applied stay visible too (filterPinned) instead of vanishing
+// under your cursor.
+let colFilters = { start: null, end: null };
+let filterPinned = new Set();
+let filterDraft = null;
+const _filterShow = new Map();
+const FILTER_COLS = { start: 'Start', end: 'Finish' };
+const FILTER_RULES = [
+  { id: 'equals',  label: 'Equals…',  inputs: 1, group: 'Compare' },
+  { id: 'before',  label: 'Before…',  inputs: 1, group: 'Compare' },
+  { id: 'after',   label: 'After…',   inputs: 1, group: 'Compare' },
+  { id: 'between', label: 'Between…', inputs: 2, group: 'Compare' },
+  { id: 'today', label: 'Today', group: 'Relative to today' }, { id: 'tomorrow', label: 'Tomorrow', group: 'Relative to today' }, { id: 'yesterday', label: 'Yesterday', group: 'Relative to today' },
+  { id: 'nextWeek', label: 'Next week', group: 'Relative to today' }, { id: 'thisWeek', label: 'This week', group: 'Relative to today' }, { id: 'lastWeek', label: 'Last week', group: 'Relative to today' },
+  { id: 'nextMonth', label: 'Next month', group: 'Relative to today' }, { id: 'thisMonth', label: 'This month', group: 'Relative to today' }, { id: 'lastMonth', label: 'Last month', group: 'Relative to today' },
+  { id: 'nextQuarter', label: 'Next quarter', group: 'Relative to today' }, { id: 'thisQuarter', label: 'This quarter', group: 'Relative to today' }, { id: 'lastQuarter', label: 'Last quarter', group: 'Relative to today' },
+  { id: 'nextYear', label: 'Next year', group: 'Relative to today' }, { id: 'thisYear', label: 'This year', group: 'Relative to today' }, { id: 'lastYear', label: 'Last year', group: 'Relative to today' },
+  { id: 'ytd', label: 'Year to date', group: 'Relative to today' }
+];
+function filtersActive() { return !!(colFilters.start || colFilters.end); }
+function filterColDate(t, col) { const e = effectiveDates(t.id); return (col === 'start' ? e.start : e.end) || null; }
+
+// [firstDay, lastDay] as day numbers for a rule (weeks run Monday-Sunday, like the calendar-week scale).
+function ruleRange(rule, a, b) {
+  const today = dayNumber(todayStr());
+  const monday = today - (((today + 3) % 7) + 7) % 7;
+  const iso = dayNumberToIso(today), y = parseInt(iso.slice(0, 4)), m = parseInt(iso.slice(5, 7));
+  const monthR = idx => [dayNumber(`${Math.floor(idx / 12)}-${pad2((idx % 12) + 1)}-01`), dayNumber(`${Math.floor((idx + 1) / 12)}-${pad2(((idx + 1) % 12) + 1)}-01`) - 1];
+  const quarterR = q => [monthR(q * 3)[0], monthR(q * 3 + 2)[1]];
+  const yearR = yy => [dayNumber(`${yy}-01-01`), dayNumber(`${yy}-12-31`)];
+  const mi = y * 12 + m - 1, qi = y * 4 + Math.floor((m - 1) / 3);
+  switch (rule) {
+    case 'equals': return [dayNumber(a), dayNumber(a)];
+    case 'before': return [-Infinity, dayNumber(a) - 1];
+    case 'after': return [dayNumber(a) + 1, Infinity];
+    case 'between': { const x = dayNumber(a), z = dayNumber(b); return [Math.min(x, z), Math.max(x, z)]; }
+    case 'today': return [today, today];
+    case 'tomorrow': return [today + 1, today + 1];
+    case 'yesterday': return [today - 1, today - 1];
+    case 'thisWeek': return [monday, monday + 6];
+    case 'nextWeek': return [monday + 7, monday + 13];
+    case 'lastWeek': return [monday - 7, monday - 1];
+    case 'thisMonth': return monthR(mi);
+    case 'nextMonth': return monthR(mi + 1);
+    case 'lastMonth': return monthR(mi - 1);
+    case 'thisQuarter': return quarterR(qi);
+    case 'nextQuarter': return quarterR(qi + 1);
+    case 'lastQuarter': return quarterR(qi - 1);
+    case 'thisYear': return yearR(y);
+    case 'nextYear': return yearR(y + 1);
+    case 'lastYear': return yearR(y - 1);
+    case 'ytd': return [yearR(y)[0], today];
+  }
+  return [-Infinity, Infinity];
+}
+function specMatches(spec, iso) {
+  if (!spec) return true;
+  if (spec.type === 'values') return iso === null ? !!spec.blanks : spec.dates.has(iso);
+  if (iso === null) return false;                         // a rule never matches a blank date (as in Excel)
+  const [lo, hi] = ruleRange(spec.rule, spec.a, spec.b), d = dayNumber(iso);
+  return d >= lo && d <= hi;
+}
+function filterPasses(t) {
+  for (const col of Object.keys(FILTER_COLS)) if (!specMatches(colFilters[col], filterColDate(t, col))) return false;
+  return true;
+}
+function filterShows(t) {
+  if (!filtersActive()) return true;
+  if (_filterShow.has(t.id)) return _filterShow.get(t.id);
+  const shown = filterPinned.has(t.id) || filterPasses(t) || childrenOf(t.id).some(filterShows);
+  _filterShow.set(t.id, shown);
+  return shown;
+}
+function describeSpec(spec) {
+  if (spec.type === 'rule') {
+    const r = FILTER_RULES.find(x => x.id === spec.rule);
+    if (spec.rule === 'between') return `between ${fmtDate(spec.a)} and ${fmtDate(spec.b)}`;
+    if (r.inputs === 1) return `${r.label.replace('…', '').toLowerCase()} ${fmtDate(spec.a)}`;
+    return r.label.toLowerCase();
+  }
+  const dates = [...spec.dates], parts = [];
+  if (dates.length === 1) parts.push(fmtDate(dates[0])); else if (dates.length > 1) parts.push(`${dates.length} dates`);
+  if (spec.blanks) parts.push('(Blanks)');
+  return parts.join(' + ') || 'nothing';
+}
+function colHeadHtml(label, col) {
+  const spec = colFilters[col];
+  const title = spec ? `Filtered: ${describeSpec(spec)}` : `Filter ${label}`;
+  return `<div class="col-head"><span>${label}</span><button class="col-filter-btn${spec ? ' active' : ''}" onclick="openColumnFilter(event,'${col}')" title="${escapeHtml(title)}"><i class="fa-solid fa-filter"></i></button></div>`;
+}
+function renderFilterBar() {
+  const el = document.getElementById('filterBar');
+  if (!filtersActive()) { el.classList.add('hidden'); el.innerHTML = ''; return; }
+  const chips = Object.keys(FILTER_COLS).filter(c => colFilters[c]).map(c =>
+    `<span class="filter-chip"><i class="fa-solid fa-filter"></i>${FILTER_COLS[c]}: ${escapeHtml(describeSpec(colFilters[c]))}<button onclick="clearColFilter('${c}')" title="Remove this filter"><i class="fa-solid fa-xmark"></i></button></span>`).join('');
+  el.innerHTML = `${chips}<span class="filter-count">${tasks.filter(filterShows).length} of ${tasks.length} tasks</span><button class="btn-link" onclick="clearAllFilters()">Clear all</button>`;
+  el.classList.remove('hidden');
+}
+function clearColFilter(col) { colFilters[col] = null; filterPinned.clear(); closeFilterMenu(); render(); }
+function clearAllFilters() { colFilters = { start: null, end: null }; filterPinned.clear(); closeFilterMenu(); render(); }
+function filterEmptyHtml() {
+  return `<div class="empty-state"><i class="fa-solid fa-filter"></i>No tasks match the filter.<button class="btn" onclick="clearAllFilters()">Clear all filters</button></div>`;
+}
+
+/* ---- the filter panel (opened from a column header) ---- */
+function openColumnFilter(event, col) {
+  event.stopPropagation();
+  const menu = document.getElementById('filterMenu');
+  if (menu.classList.contains('open') && filterDraft && filterDraft.col === col) { closeFilterMenu(); return; }
+  closeDataMenu(); closePlanMenu(); closeTaskModeMenu();
+  // The list offers the dates that exist in this column among the tasks the *other* column's filter lets through.
+  const other = col === 'start' ? 'end' : 'start', found = new Set();
+  let hasBlank = false;
+  for (const t of tasks) {
+    if (!specMatches(colFilters[other], filterColDate(t, other))) continue;
+    const d = filterColDate(t, col);
+    if (d) found.add(d); else hasBlank = true;
+  }
+  const all = [...found].sort(), spec = colFilters[col];
+  filterDraft = {
+    col, all, hasBlank,
+    rule: spec && spec.type === 'rule' ? spec.rule : '', a: spec && spec.type === 'rule' ? (spec.a || '') : '', b: spec && spec.type === 'rule' ? (spec.b || '') : '',
+    dates: new Set(spec && spec.type === 'values' ? spec.dates : all), blanks: spec && spec.type === 'values' ? !!spec.blanks : hasBlank,
+    expanded: new Set(), search: '', pre: null
+  };
+  for (const iso of all) filterDraft.expanded.add('y:' + iso.slice(0, 4));   // years open, so the months show; months stay collapsed until you open one
+  const groups = [...new Set(FILTER_RULES.map(r => r.group))];
+  menu.innerHTML =
+    `<div class="filter-head"><strong>Filter ${FILTER_COLS[col]}</strong><button class="btn-link" id="filterClearBtn" onclick="clearColFilter('${col}')"${spec ? '' : ' disabled'}>Clear filter</button></div>` +
+    `<div class="filter-section"><label class="filter-label" for="filterRuleSel">Date filter</label>` +
+    `<select id="filterRuleSel" onchange="onFilterRuleChange(this.value)"><option value="">Choose a rule…</option>` +
+    groups.map(g => `<optgroup label="${g}">${FILTER_RULES.filter(r => r.group === g).map(r => `<option value="${r.id}">${r.label}</option>`).join('')}</optgroup>`).join('') +
+    `</select><div class="filter-rule-inputs" id="filterRuleInputs"></div></div>` +
+    `<div class="filter-section filter-list"><input type="search" id="filterSearch" placeholder="Search dates" autocomplete="off" oninput="onFilterSearch(this.value)"><div class="filter-tree" id="filterTree"></div></div>` +
+    `<div class="filter-actions"><button class="btn" onclick="closeFilterMenu()">Cancel</button><button class="btn btn-primary" id="filterOkBtn" onclick="applyFilterDraft()">OK</button></div>`;
+  document.getElementById('filterRuleSel').value = filterDraft.rule;
+  renderFilterRuleInputs(); renderFilterTree();
+  const rect = event.currentTarget.getBoundingClientRect();
+  menu.style.top = (rect.bottom + 4) + 'px';
+  menu.style.left = Math.max(8, Math.min(rect.left - 8, window.innerWidth - 316)) + 'px';
+  menu.style.maxHeight = Math.max(260, window.innerHeight - rect.bottom - 16) + 'px';
+  menu.classList.add('open');
+}
+function closeFilterMenu() { document.getElementById('filterMenu').classList.remove('open'); filterDraft = null; }
+function filterDateText(iso) { return `${fmtDate(iso)} ${monthNameOf(iso)} ${iso.slice(0, 4)}`.toLowerCase(); }
+function monthNameOf(iso) { return new Date(Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, 1)).toLocaleDateString(undefined, { month: 'long', timeZone: 'UTC' }); }
+function filterLeaves() {
+  const q = filterDraft.search.trim().toLowerCase();
+  return q ? filterDraft.all.filter(iso => filterDateText(iso).includes(q)) : filterDraft.all;
+}
+function filterShowBlank() {
+  const q = filterDraft.search.trim().toLowerCase();
+  return filterDraft.hasBlank && (!q || '(blanks)'.includes(q));
+}
+function filterOkEnabled() {
+  const d = filterDraft;
+  if (d.rule) { const r = FILTER_RULES.find(x => x.id === d.rule); return r.inputs === 0 || r.inputs === undefined ? true : r.inputs === 1 ? !!d.a : !!(d.a && d.b); }
+  return d.dates.size > 0 || d.blanks;
+}
+function updateFilterOk() { document.getElementById('filterOkBtn').disabled = !filterOkEnabled(); }
+function onFilterRuleChange(v) { if (!filterDraft) return; filterDraft.rule = v; renderFilterRuleInputs(); renderFilterTree(); }
+function renderFilterRuleInputs() {
+  const d = filterDraft, r = FILTER_RULES.find(x => x.id === d.rule), el = document.getElementById('filterRuleInputs');
+  const inp = (id, val, aria) => `<input type="date" id="${id}" value="${escapeHtml(val)}" aria-label="${aria}" oninput="onFilterDateInput('${id === 'filterDateA' ? 'a' : 'b'}', this.value)">`;
+  el.innerHTML = !r || !r.inputs ? '' : r.inputs === 1 ? inp('filterDateA', d.a, 'Date') : `${inp('filterDateA', d.a, 'From')}<span>and</span>${inp('filterDateB', d.b, 'To')}`;
+  updateFilterOk();
+}
+function onFilterDateInput(which, v) { if (!filterDraft) return; filterDraft[which] = v; updateFilterOk(); }
+function onFilterSearch(v) {
+  // Escape in a search box clears it and fires an input event — after our own Escape handler has already closed the panel.
+  if (!filterDraft) return;
+  const d = filterDraft, q = v.trim();
+  d.search = v;
+  if (q) {                                     // as in Excel: typing selects exactly the matches
+    if (!d.pre) d.pre = { dates: new Set(d.dates), blanks: d.blanks };
+    d.rule = ''; document.getElementById('filterRuleSel').value = ''; renderFilterRuleInputs();
+    d.dates = new Set(filterLeaves()); d.blanks = filterShowBlank();
+  } else if (d.pre) { d.dates = d.pre.dates; d.blanks = d.pre.blanks; d.pre = null; }
+  renderFilterTree();
+}
+function filterToggleExpand(key) { if (!filterDraft) return; const s = filterDraft.expanded; if (s.has(key)) s.delete(key); else s.add(key); renderFilterTree(); }
+function filterToggle(key, checked) {
+  const d = filterDraft;
+  if (!d) return;
+  if (d.rule) { d.rule = ''; document.getElementById('filterRuleSel').value = ''; renderFilterRuleInputs(); }   // ticking dates switches back to a list filter
+  const leaves = filterLeaves();
+  if (key === 'blank') d.blanks = checked;
+  else {
+    const prefix = key === 'all' ? '' : key.startsWith('y:') ? key.slice(2) + '-' : key.startsWith('m:') ? key.slice(2) + '-' : key.slice(2);
+    for (const iso of leaves) if (iso.startsWith(prefix)) { if (checked) d.dates.add(iso); else d.dates.delete(iso); }
+    if (key === 'all' && filterShowBlank()) d.blanks = checked;
+  }
+  renderFilterTree();
+}
+function renderFilterTree() {
+  const d = filterDraft, leaves = filterLeaves(), searching = !!d.search.trim(), showBlank = filterShowBlank();
+  const state = arr => { const n = arr.filter(x => d.dates.has(x)).length; return n === 0 ? 'none' : n === arr.length ? 'all' : 'mixed'; };
+  const cb = (key, st, label) => `<label class="ft-label"><input type="checkbox" class="ft-cb" data-key="${key}" data-state="${st}"${st === 'all' ? ' checked' : ''} onchange="filterToggle('${key}', this.checked)"><span>${label}</span></label>`;
+  const byYear = new Map();
+  for (const iso of leaves) {
+    const y = iso.slice(0, 4), m = iso.slice(0, 7);
+    if (!byYear.has(y)) byYear.set(y, new Map());
+    if (!byYear.get(y).has(m)) byYear.get(y).set(m, []);
+    byYear.get(y).get(m).push(iso);
+  }
+  const exp = (key, open) => `<button class="ft-exp" onclick="filterToggleExpand('${key}')" aria-label="${open ? 'Collapse' : 'Expand'}"><i class="fa-solid fa-chevron-${open ? 'down' : 'right'}"></i></button>`;
+  const allItems = leaves.length + (showBlank ? 1 : 0), allOn = leaves.filter(x => d.dates.has(x)).length + (showBlank && d.blanks ? 1 : 0);
+  let html = `<div class="ft-row">${cb('all', allOn === 0 ? 'none' : allOn === allItems ? 'all' : 'mixed', searching ? '(Select All Search Results)' : '(Select All)')}</div>`;
+  if (!allItems) html = `<div class="ft-empty">No dates match “${escapeHtml(d.search.trim())}”.</div>`;
+  else for (const [y, months] of byYear) {
+    const yOpen = searching || d.expanded.has('y:' + y);
+    html += `<div class="ft-row">${exp('y:' + y, yOpen)}${cb('y:' + y, state([].concat(...months.values())), y)}</div>`;
+    if (!yOpen) continue;
+    for (const [m, days] of months) {
+      const mOpen = searching || d.expanded.has('m:' + m);
+      html += `<div class="ft-row ft-l1">${exp('m:' + m, mOpen)}${cb('m:' + m, state(days), escapeHtml(monthNameOf(days[0])))}</div>`;
+      if (mOpen) for (const iso of days) html += `<div class="ft-row ft-l2">${cb('d:' + iso, state([iso]), fmtDate(iso))}</div>`;
+    }
+  }
+  if (showBlank) html += `<div class="ft-row">${cb('blank', d.blanks ? 'all' : 'none', '(Blanks)')}</div>`;
+  const tree = document.getElementById('filterTree');
+  tree.innerHTML = html;
+  tree.classList.toggle('dimmed', !!d.rule);
+  tree.querySelectorAll('.ft-cb[data-state="mixed"]').forEach(e => { e.indeterminate = true; });
+  updateFilterOk();
+}
+function applyFilterDraft() {
+  const d = filterDraft;
+  if (!d || !filterOkEnabled()) return;
+  let spec = null;
+  if (d.rule) spec = { type: 'rule', rule: d.rule, a: d.a, b: d.b };
+  else {
+    const dates = d.all.filter(x => d.dates.has(x));
+    if (!(dates.length === d.all.length && (!d.hasBlank || d.blanks))) spec = { type: 'values', dates: new Set(dates), blanks: d.hasBlank && d.blanks };
+  }
+  colFilters[d.col] = spec;
+  filterPinned.clear();
+  closeFilterMenu();
+  render();
+}
+
 function renderGrid() {
   const full = currentView === 'tasks';
   document.getElementById('gridHeader').innerHTML = full
-    ? '<div></div><div title="Task Mode"></div><div>Task Name</div><div>Start</div><div>Finish</div><div>Duration</div><div>%</div><div>Predecessors</div><div></div>'
-    : '<div></div><div title="Task Mode"></div><div>Task Name</div><div>Start</div><div>Finish</div>';
+    ? `<div></div><div title="Task Mode"></div><div>Task Name</div>${colHeadHtml('Start', 'start')}${colHeadHtml('Finish', 'end')}<div>Duration</div><div>%</div><div>Predecessors</div><div></div>`
+    : `<div></div><div title="Task Mode"></div><div>Task Name</div>${colHeadHtml('Start', 'start')}${colHeadHtml('Finish', 'end')}`;
   const list = visibleTaskList();
   const el = document.getElementById('gridRows');
+  if (list.length === 0 && filtersActive() && tasks.length) { el.innerHTML = filterEmptyHtml(); return; }
   if (list.length === 0) {
     el.innerHTML = `<div class="empty-state"><i class="fa-solid fa-diagram-project"></i>No tasks yet.<div style="font-size:12px;margin-top:4px">Add your first task to start planning.</div><button class="btn btn-primary" onclick="addTask()"><i class="fa-solid fa-plus"></i>Add Task</button></div>`;
     return;
@@ -1239,7 +1536,7 @@ function renderGrid() {
       <div class="grid-cell-dim" style="text-align:center">${taskDisplayId(t.id)}</div>
       ${modeCell}
       <div class="grid-name" style="padding-left:${depth * 16}px">
-        <button class="chevron${summary ? '' : ' empty'}" onclick="event.stopPropagation();toggleCollapse('${t.id}')"><i class="fa-solid fa-chevron-${t.collapsed ? 'right' : 'down'}"></i></button>
+        <button class="chevron${summary ? '' : ' empty'}" onclick="event.stopPropagation();toggleCollapse('${t.id}')"><i class="fa-solid fa-chevron-${t.collapsed && !filtersActive() ? 'right' : 'down'}"></i></button>
         ${t.milestone ? '<i class="fa-solid fa-diamond milestone-dot" style="font-size:9px"></i>' : ''}
         ${cyclic.has(t.id) ? '<i class="fa-solid fa-triangle-exclamation cycle-warn" title="Circular dependency — not auto-scheduled"></i>' : ''}
         ${mismatchDate ? `<i class="fa-solid fa-triangle-exclamation mismatch-warn" title="Manually scheduled and starts before its predecessors allow — Auto Scheduled it would start ${fmtDate(mismatchDate)}"></i>` : ''}
@@ -1315,7 +1612,7 @@ function dropZoneFor(event, rowEl, targetId) {
   const rect = rowEl.getBoundingClientRect();
   if (event.clientY < rect.top + rect.height / 2) return 'before';
   const target = byId(targetId);
-  return (hasChildren(targetId) && !target.collapsed) ? 'into' : 'after';
+  return (hasChildren(targetId) && (!target.collapsed || filtersActive())) ? 'into' : 'after';
 }
 function dragOverTask(event, targetId) {
   if (!canDropTaskOn(targetId)) return;
@@ -1391,7 +1688,10 @@ function moveTask(id, targetId, zone) {
   selectedTaskId = id;
   normalizeData(); save(); render();
 }
-function toggleCollapse(id) { const t = byId(id); t.collapsed = !t.collapsed; save(); render(); }
+function toggleCollapse(id) {
+  if (filtersActive()) { showToast('Groups stay open while a filter is on'); return; }
+  const t = byId(id); t.collapsed = !t.collapsed; save(); render();
+}
 // Switching a task to Auto Scheduled re-plans it the way MS Project does:
 // free-text dates are dropped and, if it has links or a constraint, it moves
 // to the earliest date they allow — earlier OR later than where it sat (the
@@ -1520,6 +1820,7 @@ function commitInlineEdit(id, field, rawValue) {
   editingCell = null;
   const t = byId(id);
   if (!t) { render(); return; }
+  filterPinned.add(id);   // an edited row stays put even if its new date no longer matches the filter
   const val = (rawValue || '').trim();
   const manual = t.taskMode === 'manual';
   if (field === 'name') {
@@ -1580,34 +1881,51 @@ function parsePredecessorString(str, taskId) {
   return result;
 }
 
+// ISO 8601 calendar week (weeks start on Monday; week 1 is the one holding the year's first Thursday) of the week that
+// contains day number `dn`. The week's year can differ from its Monday's year (e.g. Mon 29.12.2025 is CW 1 of 2026).
+function isoWeekOf(dn) {
+  const monday = dn - (((dn + 3) % 7) + 7) % 7;   // day 0 (1970-01-01) was a Thursday
+  const thursday = monday + 3;
+  const year = new Date(thursday * DAY_MS).getUTCFullYear();
+  return { week: Math.floor((thursday - dayNumber(`${year}-01-01`)) / 7) + 1, year, monday };
+}
 function renderGanttHeaderTicks(range, px) {
   const z = currentZoom();
   const ticks = [];
-  if (z.id === 'day') {
-    for (let d = range.start; d <= range.end; d++) {
-      const iso = dayNumberToIso(d);
-      const date = parseLocalDate(iso);
-      const weekend = date.getDay() === 0 || date.getDay() === 6;
-      const wd = date.toLocaleDateString(undefined, { weekday: 'short' }).replace(/[.,]+$/, '');   // "Mi." -> "Mi"
-      ticks.push({ left: (d - range.start) * px, html: `${escapeHtml(wd)}<b>${date.getDate()}</b>`, weekend });
+  if (z.id === 'week') {
+    // One tick per calendar week, from the Monday on/before the range start. Shown: "CW 37" over the Monday's date
+    // (with the year on the first tick and wherever the year changes); the tooltip gives the whole week.
+    let prevYear = null;
+    for (let mon = isoWeekOf(range.start).monday; mon <= range.end; mon += 7) {
+      const { week } = isoWeekOf(mon);
+      const iso = dayNumberToIso(mon);
+      const year = iso.slice(0, 4);
+      const dateText = (prevYear === null || year !== prevYear) ? fmtDate(iso) : fmtDate(iso).slice(0, 6);   // "07.09." / "04.01.2027"
+      prevYear = year;
+      ticks.push({ left: (mon - range.start) * px, width: 7 * px, html: `<b>${CAL_WEEK_LABEL} ${week}</b>${dateText}`, title: `${CAL_WEEK_LABEL} ${week}: ${fmtDate(iso)} – ${fmtDate(dayNumberToIso(mon + 6))}` });
     }
-  } else if (z.id === 'week') {
-    let d = range.start - (parseLocalDate(dayNumberToIso(range.start)).getDay() || 7) + 1;
-    if (d > range.start) d -= 7;
-    for (; d <= range.end; d += 7) {
-      if (d < range.start - 7) continue;
-      const iso = dayNumberToIso(d);
-      ticks.push({ left: (d - range.start) * px, label: fmtDate(iso), weekend: false });
-    }
-  } else {
+  } else if (z.id === 'month') {
     const startIso = dayNumberToIso(range.start);
     let y = parseInt(startIso.slice(0, 4)), m = parseInt(startIso.slice(5, 7));
     for (let i = 0; i < 240; i++) {
       const iso = `${y}-${pad2(m)}-01`;
       const d = dayNumber(iso);
       if (d > range.end) break;
-      if (d >= range.start - 31) ticks.push({ left: (d - range.start) * px, label: parseLocalDate(iso).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }), weekend: false });
-      m++; if (m > 12) { m = 1; y++; }
+      const ny = m === 12 ? y + 1 : y, nm = m === 12 ? 1 : m + 1;
+      if (d >= range.start - 31) ticks.push({ left: (d - range.start) * px, width: (dayNumber(`${ny}-${pad2(nm)}-01`) - d) * px, label: parseLocalDate(iso).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) });
+      y = ny; m = nm;
+    }
+  } else {
+    // Year scale: one tick per quarter; the year is written on each Q1 (and on the first tick), the quarter below it.
+    const startIso = dayNumberToIso(range.start);
+    let y = parseInt(startIso.slice(0, 4)), q = Math.floor((parseInt(startIso.slice(5, 7)) - 1) / 3);
+    for (let i = 0; i < 400; i++) {
+      const d = dayNumber(`${y}-${pad2(q * 3 + 1)}-01`);
+      if (d > range.end) break;
+      const ny = q === 3 ? y + 1 : y, nq = q === 3 ? 0 : q + 1;
+      ticks.push({ left: (d - range.start) * px, width: (dayNumber(`${ny}-${pad2(nq * 3 + 1)}-01`) - d) * px, yearStart: q === 0,
+        html: `<b>${q === 0 || i === 0 ? y : '&nbsp;'}</b>Q${q + 1}`, title: `Q${q + 1} ${y}` });
+      y = ny; q = nq;
     }
   }
   return ticks;
@@ -1627,10 +1945,17 @@ function renderGantt() {
   document.getElementById('ganttRows').style.width = totalW + 'px';
 
   const ticks = renderGanttHeaderTicks(dateRange, px);
-  document.getElementById('ganttHeader').innerHTML = ticks.map(t => `<div class="gantt-tick${z.id === 'day' ? ' day' : ''}${t.weekend ? ' weekend' : ''}" style="left:${t.left}px;width:${px}px">${t.html || escapeHtml(t.label)}</div>`).join('');
+  // A tick that starts before the chart (the week/month/quarter holding the first day) is clipped to the chart's edge.
+  document.getElementById('ganttHeader').innerHTML = ticks.map(t => {
+    const left = Math.max(0, t.left), width = t.width - (left - t.left);
+    if (width <= 0) return '';
+    return `<div class="gantt-tick zoom-${z.id}${t.yearStart ? ' year-start' : ''}" style="left:${left}px;width:${width}px"${t.title ? ` title="${escapeHtml(t.title)}"` : ''}>${t.html || escapeHtml(t.label)}</div>`;
+  }).join('');
 
   if (list.length === 0) {
-    document.getElementById('ganttRows').innerHTML = `<div class="empty-state" style="position:absolute;left:0;right:0"><i class="fa-solid fa-chart-gantt"></i>Nothing to chart yet.</div>`;
+    document.getElementById('ganttRows').innerHTML = filtersActive() && tasks.length
+      ? `<div class="empty-state" style="position:absolute;left:0;right:0"><i class="fa-solid fa-filter"></i>No tasks match the filter.</div>`
+      : `<div class="empty-state" style="position:absolute;left:0;right:0"><i class="fa-solid fa-chart-gantt"></i>Nothing to chart yet.</div>`;
     document.getElementById('ganttDeps').innerHTML = '';
     return;
   }
@@ -1778,7 +2103,7 @@ function onLinkHandleMouseDown(event, fromId) {
   document.getElementById('ganttDeps').appendChild(preview);
   function move(e) {
     const x2 = e.clientX - rect.left + outer.scrollLeft;
-    const y2 = e.clientY - rect.top + outer.scrollTop - ROW_H;
+    const y2 = e.clientY - rect.top + outer.scrollTop - ROW_H;   // the svg's y-axis starts below the (one-row) header
     preview.setAttribute('d', `M${from.right},${from.midY} L${x2},${y2}`);
   }
   function up(e) {
@@ -1828,6 +2153,7 @@ function addTask() {
     constraintType: 'ASAP', constraintDate: null, taskMode: project.newTaskMode === 'auto' ? 'auto' : 'manual'
   };
   tasks.push(t);
+  filterPinned.add(t.id);   // a filter must not hide the task you just added
   // Renumber the level's siblings with the new task in its slot; only tasks
   // whose order actually moved get a fresh updatedAt, so a merge sees a real change.
   const sibs = childrenOf(parentId).filter(s => s.id !== t.id);
@@ -2033,6 +2359,7 @@ function renderSuccessorsList(taskId) {
 
 function saveTaskFromModal() {
   const t = byId(editingTaskId); if (!t) return;
+  filterPinned.add(t.id);
   const name = document.getElementById('taskNameInput').value.trim() || 'Untitled Task';
   t.name = name;
   t.milestone = document.getElementById('taskMilestoneInput').checked;
@@ -2563,6 +2890,7 @@ function createPlanRecord(name, data) {
 }
 function resetTransientUI() {
   selectedTaskId = null; editingCell = null; editingPredecessors = [];
+  colFilters = { start: null, end: null }; filterPinned.clear(); closeFilterMenu();   // filters belong to the plan you were looking at
   closeTaskModal(); closeImportModal(); closeDataMenu(); closeTaskModeMenu();
   clearTimeout(toastTimer); toastUndoAction = null;
   document.getElementById('toast').classList.remove('show');   // an Undo for the old plan must not act on the new one
@@ -2797,6 +3125,9 @@ function wireGlobalEvents() {
   document.addEventListener('click', (e) => {
     if (!e.target.closest('#dataMenuBtn') && !e.target.closest('#dataMenu')) closeDataMenu();
     if (!e.target.closest('#planMenuBtn') && !e.target.closest('#planMenu')) closePlanMenu();
+    // isConnected: clicking an expand arrow re-renders the list, detaching the very button that was clicked before this
+    // runs, and a detached node is no longer "inside" #filterMenu — without the check the panel closed on every expand.
+    if (e.target.isConnected && !e.target.closest('#filterMenu') && !e.target.closest('.col-filter-btn')) closeFilterMenu();
     if (!e.target.closest('#taskModeMenu')) closeTaskModeMenu();
   });
   document.addEventListener('keydown', (e) => {
@@ -2809,12 +3140,13 @@ function wireGlobalEvents() {
       || document.getElementById('fileSyncModalBg').classList.contains('open')   // mandatory: Escape can't close it
       || document.getElementById('dataMenu').classList.contains('open')
       || document.getElementById('planMenu').classList.contains('open')
+      || document.getElementById('filterMenu').classList.contains('open')
       || document.getElementById('taskModeMenu').classList.contains('open');
     // e.target, not document.activeElement: an inline editor's own Escape handler re-renders and destroys the
     // focused field before this runs, so by now activeElement is already <body>.
     const typing = /^(INPUT|TEXTAREA|SELECT)$/.test((e.target || {}).tagName || '');
     for (const id of modalIds) document.getElementById(id).classList.remove('open');
-    closeDataMenu(); closePlanMenu(); closeTaskModeMenu();
+    closeDataMenu(); closePlanMenu(); closeFilterMenu(); closeTaskModeMenu();
     if (!overlayOpen && !typing && selectedTaskId) { selectedTaskId = null; render(); }
   });
   document.getElementById('toastUndoBtn').addEventListener('click', triggerToastUndo);
