@@ -265,6 +265,16 @@ button:focus:not(:focus-visible) { outline: none; }
 .main.view-tasks .grid-header, .main.view-tasks .grid-row { grid-template-columns: var(--task-cols, 34px 24px minmax(160px,1fr) 116px 116px 96px 54px 1fr 82px); }   /* --task-cols is built from the visible columns in renderGrid() */
 .main.view-tasks .grid-header > div, .main.view-tasks .grid-row > div { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .main.view-tasks .gantt-pane-outer { display: none; }
+/* Tasks view: a fine vertical line between the columns, in the same colour as the divider between list and chart in the Gantt view.
+   The tracks are fr/px mixes, so the lines can't be cell borders (the 6px gaps and the editors would fight them): updateColumnLines()
+   reads the real track positions and hands them over as --col-lines-h (header) / --col-lines-r (rows); each row paints them on a
+   pseudo-element that sits in the middle of every gap and never receives the mouse. */
+.main.view-tasks .grid-header, .main.view-tasks .grid-row { position: relative; }
+.main.view-tasks .grid-header::before, .main.view-tasks .grid-row::before { content: ''; position: absolute; inset: 0; pointer-events: none; background-repeat: no-repeat; background-size: 1px 100%; }
+.main.view-tasks .grid-header::before { background-image: var(--col-lines-h, none); background-position: var(--col-pos-h, 0 0); }
+.main.view-tasks .grid-row::before { background-image: var(--col-lines-r, none); background-position: var(--col-pos-r, 0 0); }
+/* ...and the same lines run on down the empty area under the last task (the rows are transparent, so they line up exactly) */
+.main.view-tasks .grid-rows { background-image: var(--col-lines-r, none); background-position: var(--col-pos-r, 0 0); background-size: 1px 100%; background-repeat: no-repeat; }
 .grid-row { border-bottom: 1px solid var(--border); font-size: 12.5px; cursor: default; }
 .grid-row:hover { background: var(--panel-2); }
 .grid-row.selected { background: color-mix(in srgb, var(--accent) 10%, var(--panel)); }
@@ -1486,6 +1496,7 @@ function render() {
   renderZoomTabs();
   updateCriticalPathUI();
   renderGrid();
+  updateColumnLines();
   renderGantt();
   renderFilterBar();
   updateCollapseButtons();
@@ -1925,6 +1936,32 @@ function predecessorLabel(t) {
     return `${taskDisplayId(p.id)}${p.type}${lag}`;
   }).filter(Boolean).join(', ');
 }
+
+// Positions of the column lines (Tasks view): the middle of every gap between two tracks, read from the resolved grid tracks of the
+// header and of the first row (they can differ by a scrollbar). No line before the row-actions column at the far right.
+function updateColumnLines() {
+  const main = document.getElementById('main');
+  const set = (suffix, el) => {
+    let images = 'none', positions = '0 0';
+    if (el && currentView === 'tasks') {
+      const cs = getComputedStyle(el);
+      const tracks = cs.gridTemplateColumns.split(' ').map(parseFloat).filter(Number.isFinite);
+      const gap = parseFloat(cs.columnGap) || 0, pad = parseFloat(cs.paddingLeft) || 0;
+      const xs = []; let x = pad;
+      for (let i = 0; i < tracks.length - 2; i++) { x += tracks[i]; xs.push(Math.round((x + gap / 2 - 0.5) * 2) / 2); x += gap; }
+      if (xs.length) {
+        images = xs.map(() => 'linear-gradient(var(--border), var(--border))').join(', ');
+        positions = xs.map(v => `${v}px 0`).join(', ');
+      }
+    }
+    main.style.setProperty('--col-lines-' + suffix, images);
+    main.style.setProperty('--col-pos-' + suffix, positions);
+  };
+  set('h', document.getElementById('gridHeader'));
+  set('r', document.querySelector('#gridRows .grid-row'));
+}
+if (typeof ResizeObserver !== 'undefined') new ResizeObserver(() => updateColumnLines()).observe(document.getElementById('gridPane'));
+else window.addEventListener('resize', updateColumnLines);
 
 function renderGrid() {
   const full = currentView === 'tasks';
