@@ -486,7 +486,8 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 </div>
 
 <!-- File sync modal. Linking a file is mandatory, so this can't be dismissed: no close button, no "Not now",
-     backdrop clicks and Escape ignore it. It only opens while the current plan has no usable file. -->
+     backdrop clicks and Escape ignore it. It opens whenever the current plan has no usable file (on load, on
+     switching to such a plan, when the file went missing, and straight after the user disconnects one). -->
 <div class="modal-bg" id="fileSyncModalBg">
   <div class="modal narrow">
     <div class="modal-header"><h2 id="fileSyncModalTitle">Link a file to continue</h2></div>
@@ -512,7 +513,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
       <div><div class="help-section-title">Dependencies</div>Open a task and add a predecessor to link it to another task (Finish-to-Start, Start-to-Start, Finish-to-Finish or Start-to-Finish). Give it a lead or lag in days: a positive number delays the dependent task (lag), a negative number lets it overlap and start early (lead) — e.g. "3FS+2" waits 2 extra days after task 3 finishes, "3FS-2" starts 2 days before task 3 finishes. Moving a task forward automatically pushes any dependent tasks forward too — it never pulls a task earlier on its own. A circular dependency is flagged with a warning icon and stops auto-scheduling for the tasks involved.</div>
       <div><div class="help-section-title">The Gantt chart</div>Drag a bar to reschedule it, drag its edges to resize, or drag the small circle on its right edge onto another task to create a dependency. Click a bar or row to edit it. The route icon in the toolbar highlights the critical path — the chain of tasks with zero slack that determines the overall project end date.</div>
       <div><div class="help-section-title">Plans</div>The plan name at the top left is a switcher: click it to move between plans, start a new one, open an existing file as a plan, or rename, duplicate or delete the current plan. Each plan has its own tasks, its own daily backups and — optionally — its own linked file, so switching plans also switches which file is kept in sync. Deleting a plan only removes it from this browser; its file is never touched. Every plan must live in a file (Chrome/Edge), so New plan and Duplicate ask you where to save it.</div>
-      <div><div class="help-section-title">Data &amp; sync</div>Everything lives in this browser's local storage — nothing ever leaves your machine except into the files you choose. Every plan is kept in a plain JSON file on your disk (linking one is required, in Chrome/Edge): every change is saved to it automatically, and inside an iCloud Drive/OneDrive/Dropbox folder it keeps your own devices in step. If the file is moved or deleted, Milestone asks you to create or find it again. Data → Export/Import moves a full JSON snapshot of the current plan in or out; Local Backups keeps a rolling daily snapshot.</div>
+      <div><div class="help-section-title">Data &amp; sync</div>Everything lives in this browser's local storage — nothing ever leaves your machine except into the files you choose. Every plan is kept in a plain JSON file on your disk (linking one is required, in Chrome/Edge): every change is saved to it automatically, and inside an iCloud Drive/OneDrive/Dropbox folder it keeps your own devices in step. You can disconnect a plan's file (click the file name at the top right, or use the plan menu) — the file is kept, and Milestone asks you to choose a file for the plan straight away. If the file is moved or deleted, Milestone asks you to create or find it again. Data → Export/Import moves a full JSON snapshot of the current plan in or out; Local Backups keeps a rolling daily snapshot.</div>
       <div class="help-tip">Nothing here ever leaves your machine except into the files you choose.</div>
     </div>
     <div class="modal-footer"><button class="btn" onclick="closeHelpModal()">Close</button></div>
@@ -2076,11 +2077,12 @@ function showToast(msg, isError, undoAction, actionLabel) {
 }
 function triggerToastUndo() { if (toastUndoAction) { toastUndoAction(); toastUndoAction = null; } document.getElementById('toast').classList.remove('show'); }
 
-function openConfirmModal({ title, body, action, confirmLabel }) {
+function openConfirmModal({ title, body, action, confirmLabel, confirmClass }) {
   modalTarget = { action };
   document.getElementById('confirmModalTitle').textContent = title || 'Confirm';
   document.getElementById('confirmModalBody').innerHTML = body || '';
   document.getElementById('confirmModalActionBtn').textContent = confirmLabel || 'Delete';
+  document.getElementById('confirmModalActionBtn').className = confirmClass || 'btn btn-primary btn-danger';   // callers that aren't destructive pass a plainer class
   document.getElementById('confirmModalBg').classList.add('open');
 }
 function closeConfirmModal() { document.getElementById('confirmModalBg').classList.remove('open'); modalTarget = null; }
@@ -2267,8 +2269,8 @@ function openFileSyncModal() {
   const missing = fileSyncStatus === 'missing';
   document.getElementById('fileSyncModalTitle').textContent = missing ? 'Linked file not found' : 'Link a file to continue';
   document.getElementById('fileSyncModalText').textContent = missing
-    ? `“${syncFileHandle ? syncFileHandle.name : 'The file'}” was moved, renamed or deleted. Create a new file for “${project.name}” (its current tasks are saved into it), or open the file where it went.`
-    : `Every plan is kept in a JSON file on your disk. Create a new file for “${project.name}”, or open an existing one. In a folder synced by iCloud Drive, OneDrive or Dropbox it also keeps your own devices in step.`;
+    ? `“${syncFileHandle ? syncFileHandle.name : 'The file'}” was moved, renamed or deleted. Create a new file for “${project.name}” (its current tasks are saved into it), or open the file where it went (its tasks are merged into this plan).`
+    : `Every plan is kept in a JSON file on your disk. Create a new file for “${project.name}” (its current tasks are saved into it), or open an existing one (its tasks are merged into this plan). In a folder synced by iCloud Drive, OneDrive or Dropbox it also keeps your own devices in step.`;
   document.getElementById('fileSyncModalBg').classList.add('open');
 }
 // Called once a plan has finished loading and its file has been looked for.
@@ -2430,6 +2432,34 @@ async function reconnectFile() {
   } catch (e) { showToast('Reconnect failed', true); }
   if (epoch === planEpoch) updateFileSyncUI();
 }
+// Disconnect the current plan from its file — only ever on the user's say-so (see disconnectFile()). The file keeps
+// everything saved up to now and is never deleted. Linking is mandatory, so the link dialog opens straight away and the
+// plan has to be given a file again (the same one, another existing one, or a new one).
+async function unlinkFile() {
+  const planId = currentPlanId;
+  await flushFileSync();                    // last write, so the file is complete when we let go of it
+  if (planId !== currentPlanId) return;
+  planEpoch++;                              // anything still in flight for the old file is now ignored
+  syncFileHandle = null; lastSyncedSnapshot = null; lastSyncedAt = 0; fileSyncWritePending = false;
+  fileSyncStatus = 'unlinked';
+  stopFileSyncPolling();
+  await _fsDel(planHandleKey(planId));
+  setPlanFileName(planId, null);
+  updateFileSyncUI();
+  enforceFileLink();
+}
+function disconnectFile() {
+  closePlanMenu();
+  if (!syncFileHandle) return;
+  openConfirmModal({
+    title: 'Disconnect file',
+    body: `Stop saving <strong>${escapeHtml(project.name)}</strong> to <strong>${escapeHtml(syncFileHandle.name)}</strong>? The file keeps everything saved so far and is not deleted. Every plan needs a file, so you'll be asked to choose one straight away — the same file again, another one, or a new one.`,
+    confirmLabel: 'Disconnect',
+    confirmClass: 'btn',   // not destructive — the file is kept — so no green/red button
+    action: unlinkFile
+  });
+}
+
 // Before plans there was one handle under _FS_KEY. Hand it to the migrated "Plan 1" once (copy, not move: the old
 // entry stays as a rollback copy), and never again — otherwise unlinking Plan 1 would resurrect it on the next load.
 async function _fsMigrateLegacyKey() {
@@ -2486,7 +2516,7 @@ function onFileSyncBtnClick() {
   if (fileSyncStatus === 'unsupported' || fileSyncStatus === 'checking') return;
   if (fileSyncStatus === 'unlinked' || fileSyncStatus === 'missing') openFileSyncModal();
   else if (fileSyncStatus === 'lapsed') reconnectFile();
-  // linked: nothing to do — a plan can't be unlinked
+  else disconnectFile();   // linked: offers to disconnect (with a confirmation)
 }
 function updateFileSyncUI() {
   const btn = document.getElementById('fileSyncBtn');
@@ -2494,10 +2524,10 @@ function updateFileSyncUI() {
   btn.classList.remove('hidden');
   btn.style.color = ''; btn.style.cursor = '';
   if (fileSyncStatus === 'checking') { btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; btn.title = 'Checking this plan’s linked file…'; }
-  else if (fileSyncStatus === 'unlinked') { btn.innerHTML = '<i class="fa-solid fa-link"></i>Link file'; btn.title = 'Choose the file this plan is saved to'; }
+  else if (fileSyncStatus === 'unlinked') { btn.innerHTML = '<i class="fa-solid fa-link"></i>Link file'; btn.style.color = 'var(--task-amber)'; btn.title = 'Not saved to a file — only kept in this browser. Click to choose a file.'; }
   else if (fileSyncStatus === 'missing') { btn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>File missing'; btn.style.color = 'var(--danger)'; btn.title = 'The linked file was moved or deleted — click to fix'; }
   else if (fileSyncStatus === 'lapsed') { btn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>Reconnect'; btn.style.color = 'var(--danger)'; btn.title = 'Permission was lost — click to reconnect'; }
-  else { btn.innerHTML = `<i class="fa-solid fa-check" style="color:var(--task-green)"></i>${escapeHtml(syncFileHandle ? syncFileHandle.name : 'Linked')}`; btn.title = syncFileHandle ? `This plan is saved to ${syncFileHandle.name}` : 'Linked'; btn.style.cursor = 'default'; }
+  else { btn.innerHTML = `<i class="fa-solid fa-check" style="color:var(--task-green)"></i>${escapeHtml(syncFileHandle ? syncFileHandle.name : 'Linked')}`; btn.title = syncFileHandle ? `This plan is saved to ${syncFileHandle.name} — click to disconnect` : 'Linked'; }
 }
 
 /* ================================== Plans =================================== */
@@ -2579,6 +2609,7 @@ function renderPlanMenu() {
     `<div class="dropdown-sep"></div>` +
     `<button class="dropdown-item" id="planRenameItem" onclick="openPlanModal('rename')"><i class="fa-solid fa-pen"></i>Rename plan…</button>` +
     `<button class="dropdown-item" id="planDuplicateItem" onclick="duplicatePlan()"><i class="fa-regular fa-copy"></i>Duplicate plan</button>` +
+    (fileSyncSupported() ? `<button class="dropdown-item" id="planDisconnectItem" onclick="disconnectFile()"${syncFileHandle ? '' : ' disabled title="This plan isn’t linked to a file"'}><i class="fa-solid fa-link-slash"></i>Disconnect file…</button>` : '') +
     `<button class="dropdown-item" id="planDeleteItem" onclick="deleteCurrentPlan()"${idx.plans.length < 2 ? ' disabled title="You need at least one plan"' : ''}><i class="fa-solid fa-trash"></i>Delete plan…</button>`;
 }
 
