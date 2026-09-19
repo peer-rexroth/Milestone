@@ -25,9 +25,10 @@
   --task-blue: #0969da; --task-teal: #1b7c83; --task-purple: #8250df; --task-amber: #9a6700;
   --task-pink: #ce2c85; --task-green: #1a7f37; --task-red: #cf222e; --task-grey: #656d76;
   --status-not-started: #8c959f; --status-complete: #0969da;
+  --accent-bg: #ddf4ff;
   --radius: 10px;
   --shadow: 0 1px 2px rgba(20,20,30,.04), 0 4px 16px rgba(20,20,30,.06);
-  --row-h: 32px;
+  --row-h: 40px;
 }
 html[data-theme="dark"] {
   --bg: #262c36; --panel: #212830; --panel-2: #2d3640; --border: rgba(209,215,224,0.10);
@@ -36,6 +37,7 @@ html[data-theme="dark"] {
   --task-blue: #478be6; --task-teal: #4cb6c4; --task-purple: #986ee2; --task-amber: #c69026;
   --task-pink: #c96b96; --task-green: #57ab5a; --task-red: #e5534b; --task-grey: #9198a1;
   --status-not-started: #6b7280; --status-complete: #478be6;
+  --accent-bg: #16324f;
   --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.35);
 }
 
@@ -48,31 +50,30 @@ body {
   display: flex; flex-direction: column; height: 100vh;
   overflow-x: hidden; overflow-y: hidden;
 }
-button, input, select, textarea { font: inherit; color: inherit; }
+button, input, select, textarea { font-family: inherit; color: inherit; }
+input, select, textarea { font-size: 14px; }
 button { cursor: pointer; }
 .hidden { display: none !important; }
 
 /* ── Topbar ─────────────────────────────────────────────────────────── */
 .topbar {
-  display: flex; align-items: center; gap: 10px; height: 54px; padding: 0 14px;
+  display: flex; align-items: center; gap: 14px; height: 54px; padding: 0 16px;
   background: var(--panel); border-bottom: 1px solid var(--border);
   flex-shrink: 0; overflow-x: auto;
 }
 .topbar > * { flex-shrink: 0; }
-.brand { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 16px; color: var(--text); }
-.brand svg { width: 22px; height: 22px; color: var(--accent); }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 21px; letter-spacing: -0.02em; color: var(--text); }
+.brand svg { width: 26px; height: 26px; color: var(--accent); }
 #projectNameInput {
-  border: 1px solid transparent; background: transparent; font-weight: 600; font-size: 14px;
-  padding: 5px 8px; border-radius: 6px; color: var(--text); min-width: 120px; max-width: 240px;
+  border: none; background: transparent; font-weight: 600; font-size: 14px;
+  padding: 4px 8px; border-radius: 6px; color: var(--text-dim); min-width: 120px; max-width: 320px;
 }
-#projectNameInput:hover { border-color: var(--border); }
-#projectNameInput:focus { outline: none; border-color: var(--accent); background: var(--panel-2); }
+#projectNameInput:hover, #projectNameInput:focus { background: var(--panel-2); color: var(--text); outline: none; }
 .topbar-divider { width: 1px; height: 22px; background: var(--border); }
 .topbar-spacer { flex: 1 1 auto; }
 
 .subbar {
-  display: flex; align-items: center; gap: 10px; height: 46px; padding: 0 14px;
-  background: var(--panel-2); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px; padding: 14px 24px 0;
   flex-shrink: 0; overflow-x: auto;
 }
 .subbar > * { flex-shrink: 0; }
@@ -80,40 +81,40 @@ button { cursor: pointer; }
 .btn {
   display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px;
   border: 1px solid var(--border); background: var(--panel); color: var(--text);
-  border-radius: 8px; font-size: 13px; font-weight: 500; white-space: nowrap;
+  border-radius: 8px; font-weight: 600; white-space: nowrap;
 }
 .btn:hover { background: var(--panel-2); }
-.btn:disabled { opacity: .45; cursor: default; }
+.btn:disabled { opacity: .4; cursor: not-allowed; filter: none; }
 .btn:disabled:hover { background: var(--panel); }
 .btn-primary { background: var(--task-green); border-color: var(--task-green); color: #fff; }
-.btn-primary:hover { filter: brightness(1.06); }
+.btn-primary:hover { filter: brightness(1.06); background: var(--task-green); }
 .btn-danger { color: var(--danger); }
 .icon-btn {
   display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px;
-  border: none; background: transparent; color: var(--text-dim); border-radius: 8px; font-size: 15px;
+  border: 1px solid var(--border); background: var(--panel); color: var(--text-dim); border-radius: 8px;
 }
 .icon-btn:hover { background: var(--panel-2); color: var(--text); }
-.icon-btn.active { background: color-mix(in srgb, var(--accent) 16%, var(--panel)); color: var(--accent); }
+.icon-btn.active { background: var(--accent-bg); border-color: var(--accent); color: var(--accent); }
 button:focus:not(:focus-visible) { outline: none; }
 
-.view-tabs { display: flex; background: var(--panel-2); border-radius: 8px; padding: 2px; }
-.view-tab { padding: 5px 11px; border: none; background: transparent; border-radius: 6px; font-size: 12.5px; font-weight: 500; color: var(--text-dim); }
-.view-tab.active { background: var(--panel); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+.view-tabs { display: flex; gap: 2px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 2px; }
+.view-tab { padding: 6px 14px; border: none; background: transparent; border-radius: 6px; font-weight: 600; color: var(--text-dim); display: flex; align-items: center; gap: 6px; }
+.view-tab.active { background: var(--panel); color: var(--accent); box-shadow: var(--shadow); }
 
 .dropdown-wrap { position: relative; }
 .dropdown-menu {
-  position: fixed; margin-top: 6px; min-width: 190px; background: var(--panel);
+  position: fixed; margin-top: 6px; min-width: 220px; background: var(--panel);
   border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow);
-  padding: 6px; display: none; z-index: 80;
+  display: none; z-index: 80; overflow: hidden;
 }
 .dropdown-menu.open { display: block; }
 .dropdown-item {
-  display: flex; align-items: center; gap: 9px; width: 100%; padding: 8px 10px;
-  border: none; background: transparent; border-radius: 7px; font-size: 13px; color: var(--text); text-align: left;
+  display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 13px;
+  border: none; background: transparent; font-size: 12.5px; font-weight: 700; color: var(--text); text-align: left;
 }
 .dropdown-item:hover { background: var(--panel-2); }
-.dropdown-item i { width: 15px; color: var(--text-dim); }
-.dropdown-sep { height: 1px; background: var(--border); margin: 6px 2px; }
+.dropdown-item + .dropdown-item { border-top: 1px solid var(--border); }
+.dropdown-item i { width: 14px; color: var(--text-faint); font-size: 12px; }
 
 #fileSyncIndicator, #syncStatusBtn { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-dim); }
 
@@ -125,14 +126,14 @@ button:focus:not(:focus-visible) { outline: none; }
    since it exists to label the chart's rows, not to be a spreadsheet. */
 .grid-header, .grid-row {
   display: grid; grid-template-columns: 30px 24px minmax(80px,1fr) 116px 116px;
-  align-items: center; gap: 6px; padding: 0 10px; height: var(--row-h);
+  align-items: center; gap: 10px; padding: 0 20px 0 14px; height: var(--row-h);
 }
 .grid-resize-handle {
   position: absolute; top: 0; right: -3px; bottom: 0; width: 6px; cursor: ew-resize; z-index: 6;
 }
 .grid-resize-handle:hover, .grid-resize-handle.resizing { background: color-mix(in srgb, var(--accent) 40%, transparent); }
 .main.view-tasks .grid-resize-handle { display: none; }
-.grid-header { font-size: 11px; font-weight: 700; color: var(--text-faint); text-transform: uppercase; letter-spacing: .03em; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.grid-header { font-size: 10px; font-weight: 700; color: var(--text-faint); text-transform: uppercase; letter-spacing: .03em; background: var(--panel-2); border-bottom: 1px solid var(--border); flex-shrink: 0; }
 .grid-rows { flex: 1; overflow: hidden; position: relative; }
 /* Task view: the grid is the only pane, so it scrolls on its own.
    Gantt view: the grid's scrollTop is instead driven programmatically from
@@ -140,13 +141,15 @@ button:focus:not(:focus-visible) { outline: none; }
    (see wireScrollSync()) — overflow:hidden still permits that, it only
    suppresses the scrollbar UI and direct user-initiated scrolling. */
 .main.view-tasks .grid-rows { overflow-y: auto; }
-.main.view-tasks .grid-pane { width: auto; flex: 1; border-right: none; }
+.main.view-tasks { padding: 14px 24px 20px; }
+.main.view-tasks .grid-pane { width: auto; flex: 1; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; align-self: flex-start; max-height: 100%; }
+.main.view-gantt { margin-top: 14px; border-top: 1px solid var(--border); }
 .main.view-tasks .grid-header, .main.view-tasks .grid-row { grid-template-columns: 34px 24px minmax(160px,1fr) 116px 116px 78px 40px 1fr 56px; }
 .main.view-tasks .grid-header > div, .main.view-tasks .grid-row > div { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .main.view-tasks .gantt-pane-outer { display: none; }
 .grid-row { border-bottom: 1px solid var(--border); font-size: 12.5px; cursor: default; }
 .grid-row:hover { background: var(--panel-2); }
-.grid-row.selected { background: color-mix(in srgb, var(--accent) 10%, var(--panel)); }
+.grid-row.selected { background: var(--accent-bg); }
 .grid-name { display: flex; align-items: center; gap: 4px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .name-text.editable, .grid-cell-dim.editable { cursor: text; }
 .name-text.editable:hover, .grid-cell-dim.editable:hover { background: var(--panel-2); border-radius: 4px; }
@@ -176,7 +179,8 @@ input.inline-edit { width: 100%; min-width: 0; padding: 3px 6px; border: 1px sol
 .inline-cal:hover { color: var(--accent); }
 .inline-date-hidden { position: absolute; right: 0; bottom: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 .grid-actions { display: flex; gap: 2px; justify-content: flex-end; }
-.grid-actions .icon-btn { width: 24px; height: 24px; font-size: 12px; opacity: 0; }
+.grid-actions .icon-btn { width: auto; height: auto; padding: 4px 6px; border: none; background: transparent; color: var(--text-faint); border-radius: 5px; font-size: 12px; opacity: 0; }
+.grid-actions .icon-btn:hover { background: var(--border); color: var(--text); }
 .grid-row:hover .grid-actions .icon-btn { opacity: 1; }
 
 .empty-state { padding: 60px 24px; text-align: center; color: var(--text-dim); }
@@ -236,19 +240,19 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
   transition: opacity .15s ease, visibility .15s ease;
 }
 .modal-bg.open { opacity: 1; visibility: visible; pointer-events: auto; }
-.modal { background: var(--panel); border-radius: var(--radius); box-shadow: var(--shadow); width: 480px; max-width: 92vw; max-height: 86vh; display: flex; flex-direction: column; }
+.modal { background: var(--panel); border-radius: 14px; box-shadow: var(--shadow); width: 480px; max-width: 92vw; max-height: 86vh; display: flex; flex-direction: column; }
 .modal.narrow { width: 380px; }
 .modal.wide { width: 620px; }
-.modal-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; border-bottom: 1px solid var(--border); }
+.modal-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 20px 0; }
 .modal-header h2 { margin: 0; font-size: 16px; }
 .modal-header button { border: none; background: none; font-size: 18px; color: var(--text-dim); width: 28px; height: 28px; border-radius: 6px; }
 .modal-header button:hover { background: var(--panel-2); }
-.modal-body { padding: 16px 18px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
-.modal-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 18px; border-top: 1px solid var(--border); }
+.modal-body { padding: 14px 20px 0; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+.modal-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 16px 20px 20px; }
 .field { display: flex; flex-direction: column; gap: 5px; }
-.field label { font-size: 12px; font-weight: 600; color: var(--text-dim); }
+.field label { font-size: 12px; font-weight: 700; color: var(--text-dim); }
 .field input[type=text], .field input[type=date], .field input[type=number], .field textarea, .field select {
-  padding: 8px 10px; border: 1px solid var(--border); border-radius: 7px; background: var(--panel); color: var(--text); width: 100%;
+  padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel-2); color: var(--text); width: 100%;
 }
 .field textarea { resize: vertical; font-family: inherit; }
 .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -261,7 +265,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 .swatch.auto { background: var(--panel-2); border: 1px dashed var(--text-faint); display: flex; align-items: center; justify-content: center; font-size: 9px; color: var(--text-faint); }
 
 .pred-row { display: grid; grid-template-columns: 1fr 68px 60px 26px; gap: 6px; align-items: center; margin-bottom: 6px; }
-.pred-row select, .pred-row input { padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel); font-size: 12.5px; }
+.pred-row select, .pred-row input { padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel-2); font-size: 12.5px; }
 .pred-row input.pred-id-input::-webkit-outer-spin-button, .pred-row input.pred-id-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .pred-row input.pred-id-input { -moz-appearance: textfield; }
 .pred-remove { border: none; background: none; color: var(--text-faint); width: 24px; height: 24px; border-radius: 5px; }
@@ -272,9 +276,9 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 .successor-row .succ-meta { color: var(--text-faint); font-size: 11.5px; }
 .id-badge { font-size: 12px; font-weight: 600; color: var(--text-faint); margin-left: 8px; vertical-align: middle; }
 
-.help-body, .about-body { display: flex; flex-direction: column; gap: 14px; font-size: 13px; line-height: 1.5; }
-.help-section-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
-.help-tip { font-size: 12px; color: var(--text-faint); border-top: 1px solid var(--border); padding-top: 10px; }
+.help-body, .about-body { display: flex; flex-direction: column; gap: 20px; font-size: 13px; line-height: 1.6; color: var(--text-dim); }
+.help-section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-faint); margin-bottom: 6px; }
+.help-tip { background: var(--panel-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px; font-size: 12px; color: var(--text-dim); line-height: 1.6; }
 .about-body { align-items: center; text-align: center; }
 .about-body svg { width: 44px; height: 44px; color: var(--accent); }
 
@@ -283,11 +287,11 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 
 #toast {
   position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%) translateY(20px);
-  background: var(--text); color: var(--bg); padding: 11px 16px; border-radius: 9px; font-size: 13px;
-  display: flex; align-items: center; gap: 12px; opacity: 0; pointer-events: none; transition: opacity .18s ease, transform .18s ease; z-index: 200; box-shadow: var(--shadow);
+  background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: 8px; font-weight: 600; font-size: 13px;
+  display: flex; align-items: center; gap: 10px; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; z-index: 200;
 }
 #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
-#toast button { border: none; background: none; color: color-mix(in srgb, var(--accent) 70%, white); font-weight: 600; font-size: 13px; }
+#toast button { border: none; background: none; color: inherit; font-weight: 700; font-size: 13px; text-decoration: underline; padding: 0; }
 
 .file-sync-help { margin-top: 10px; border-top: 1px solid var(--border); padding-top: 10px; }
 .file-sync-help summary { cursor: pointer; font-size: 12.5px; color: var(--text-dim); font-weight: 600; }
@@ -308,6 +312,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
   <div class="view-tabs" id="zoomTabs"></div>
   <button class="icon-btn" id="criticalPathBtn" onclick="toggleCriticalPath()" title="Highlight critical path"><i class="fa-solid fa-route"></i></button>
   <div class="topbar-spacer"></div>
+  <div class="topbar-divider"></div>
   <div class="dropdown-wrap">
     <button class="btn" id="fileSyncBtn" onclick="onFileSyncBtnClick()"></button>
   </div>
@@ -316,11 +321,11 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
     <div class="dropdown-menu" id="dataMenu">
       <button class="dropdown-item" onclick="exportProject()"><i class="fa-solid fa-file-export"></i>Export JSON</button>
       <button class="dropdown-item" onclick="triggerImport()"><i class="fa-solid fa-file-import"></i>Import JSON</button>
-      <div class="dropdown-sep"></div>
       <button class="dropdown-item" onclick="openBackupsModal()"><i class="fa-solid fa-clock-rotate-left"></i>Local Backups</button>
     </div>
   </div>
   <input type="file" id="fileInput" accept="application/json" class="hidden" onchange="handleFileImport(event)">
+  <div class="topbar-divider"></div>
   <button class="icon-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Toggle light/dark"></button>
   <button class="icon-btn" onclick="openHelpModal()" title="Help"><i class="fa-regular fa-circle-question"></i></button>
   <button class="icon-btn" onclick="openAboutModal()" title="About"><i class="fa-solid fa-circle-info"></i></button>
@@ -504,7 +509,7 @@ const BACKUPS_KEY = 'milestone-backups';
 const MAX_BACKUPS = 7;
 const FILE_SYNC_POLL_MS = 45000;
 const DAY_MS = 86400000;
-const ROW_H = 32;
+const ROW_H = 40;
 
 const ZOOMS = [
   { id: 'day',   label: 'Day',   pxPerDay: 32 },
