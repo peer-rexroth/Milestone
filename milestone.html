@@ -521,8 +521,8 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
         <div class="field"><label>% Complete</label><input type="number" min="0" max="100" id="taskProgressInput"></div>
       </div>
       <div class="field-row">
-        <div class="field"><label>Actual Start</label><input type="date" id="taskActualStartInput"></div>
-        <div class="field" id="taskActualFinishField"><label>Actual Finish</label><input type="date" id="taskActualFinishInput"></div>
+        <div class="field"><label>Actual Start</label><input type="date" id="taskActualStartInput" onchange="onActualStartChange()"></div>
+        <div class="field" id="taskActualFinishField" title="Recording an Actual Finish marks the task 100% complete"><label>Actual Finish</label><input type="date" id="taskActualFinishInput" onchange="onActualFinishChange()"></div>
       </div>
       <div class="pred-empty hidden" id="taskActualsNote"></div>
       <div class="field-row-3 calc-row" title="Worked out by Milestone — not entered">
@@ -671,7 +671,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
     <div class="modal-body help-body">
       <div><div class="help-section-title">The basics</div>Add tasks with the + Add Task button. Each task has a start/end date, a % complete, and can be a milestone (a zero-duration diamond). Use Indent/Outdent to build a work breakdown structure — a parent task's own dates and progress roll up automatically from its children. Drag a task's line up or down to reorder it (a parent brings its sub-tasks along). Add Task inserts below the selected task, or at the bottom when nothing is selected; press Escape to clear the selection. The double arrow above the ID numbers steps through the outline: click it to collapse every group, then again to open the first level, again for the next level, and so on until everything is open — then it starts over.</div>
       <div><div class="help-section-title">Filtering</div>Click the funnel in a column header (Task Mode, Task Name, Start, Finish, Duration, %, Predecessors) for an Excel-style filter. Each column offers what fits its data: dates get rules (equals, before, after, between, or relative to today such as this week, next month or year to date) and a Year › Month › Day list; text columns get contains / begins with / ends with / equals and their negatives; numbers get equals, greater or less than, and between. Every column also has a list of its values to tick, with a search box and (Blanks) for tasks that have no value. Filters on several columns combine, so a task must match all of them. A group stays visible while any sub-task inside it matches, and stays open while a filter is on. The bar under the toolbar shows what is filtered and how many tasks are showing; click × on a chip, or Clear all, to remove it. Filters are only for looking — they aren't saved, and a task you add or edit stays visible until you filter again.</div>Click the funnel next to Start or Finish (in either view) for an Excel-style filter: pick a rule (equals, before, after, between, or relative to today such as this week, next month or year to date), or tick individual dates in the Year › Month › Day list — type in the search box to narrow it, and use (Blanks) for tasks without a real date. The two columns combine, so a task must match both. A group stays visible while any sub-task inside it matches, and stays open while a filter is on. The bar under the toolbar shows what is filtered and how many tasks are showing; click × on a chip, or Clear all, to remove it. Filters are only for looking — they aren't saved, and a task you add or edit stays visible until you filter again.</div>
-      <div><div class="help-section-title">Columns and extra fields</div>Besides name, dates, duration, % and predecessors, a task can carry a <strong>Resource</strong> (who does the work), an <strong>Actual Start</strong> and <strong>Actual Finish</strong> (what really happened, kept separate from the plan), and has a <strong>WBS</strong> code such as 2.1.3 that is worked out from the outline (shown by default). <strong>Remaining Duration</strong> (the duration still to go, from % complete) and <strong>Status</strong> (Complete, On Schedule, Late or Future Task, judged against today) are worked out for you too. Resource, Actual Start/Finish, Remaining Duration and Status aren't shown by default: click <strong>Columns</strong> in the toolbar (Tasks view) to tick the columns you want and reorder them; your choice is remembered on this device. Click a Resource or actual-date cell to edit it, or use the task dialog. A group shows the actual dates of the tasks in it (its earliest actual start, and an actual finish once everything in it has finished).</div>
+      <div><div class="help-section-title">Columns and extra fields</div>Besides name, dates, duration, % and predecessors, a task can carry a <strong>Resource</strong> (who does the work), an <strong>Actual Start</strong> and <strong>Actual Finish</strong> (what really happened, kept separate from the plan; recording an Actual Finish marks the task 100% complete and fills an empty Actual Start), and has a <strong>WBS</strong> code such as 2.1.3 that is worked out from the outline (shown by default). <strong>Remaining Duration</strong> (the duration still to go, from % complete) and <strong>Status</strong> (Complete, On Schedule, Late or Future Task, judged against today) are worked out for you too. Resource, Actual Start/Finish, Remaining Duration and Status aren't shown by default: click <strong>Columns</strong> in the toolbar (Tasks view) to tick the columns you want and reorder them; your choice is remembered on this device. Click a Resource or actual-date cell to edit it, or use the task dialog. A group shows the actual dates of the tasks in it (its earliest actual start, and an actual finish once everything in it has finished). The tasks that <strong>depend</strong> on a task are scheduled from what really happened: from its actual dates once it has them, and a task that has started but not finished is expected to finish its planned duration after the day it really started (a late start pushes its successors later).</div>
       <div><div class="help-section-title">Custom fields</div>Every task can carry up to 20 fields of your own: <strong>Text1–5</strong>, <strong>Number1–5</strong>, <strong>Date1–5</strong> and <strong>Flag1–5</strong> (a yes/no tick). Fill them in on the task dialog's <strong>Custom fields</strong> tab, or — once you have ticked them under <strong>Columns</strong>, where they start hidden — straight in the list (click a cell; a flag toggles). Use the pencil beside a field to rename it, for instance Text1 to <em>Cost centre</em>: the name is saved with the plan, so another plan can call the same field something else. Custom fields can be filtered like any column and are included in the Excel export.</div>
       <div><div class="help-section-title">Task Mode</div>Every task is either Manually Scheduled (pushpin) or Auto Scheduled (chart icon) — click the icon in the Task Mode column, or use the Task Mode field in a task's dialog. An Auto task follows its predecessors and constraints. A Manual task stays exactly where you put it: predecessors never move it, its Start, Finish and Duration can be free text such as "TBD", and a warning triangle appears if it starts earlier than its predecessors allow. Manual tasks are drawn with a dashed bar, and are left out of the critical path. Switching a task to Auto moves it to the earliest date its links allow. The "New tasks" button at the right of the toolbar chooses the mode new tasks start in (Auto Scheduled by default).</div>
       <div><div class="help-section-title">Dependencies</div>Open a task and add a predecessor to link it to another task (Finish-to-Start, Start-to-Start, Finish-to-Finish or Start-to-Finish). Give it a lead or lag in days: a positive number delays the dependent task (lag), a negative number lets it overlap and start early (lead) — e.g. "3FS+2" waits 2 extra days after task 3 finishes, "3FS-2" starts 2 days before task 3 finishes. Moving a task forward automatically pushes any dependent tasks forward too — it never pulls a task earlier on its own. A circular dependency is flagged with a warning icon and stops auto-scheduling for the tasks involved.</div>
@@ -755,7 +755,7 @@ const TASK_COLS = {
   actualFinish: { label: 'Actual Finish', width: '92px',              dflt: false },   // header: Actual / Finish
   duration:     { label: 'Duration',      width: '96px',              dflt: true },
   progress:     { label: '% Complete',    width: '54px',              dflt: true },
-  preds:        { label: 'Predecessors',  width: '1fr',               dflt: true },
+  preds:        { label: 'Predecessors',  width: '122px',             dflt: true },   // just wide enough for its header (text 95px + funnel 18px + gap ≈ 116px, plus a little slack for other fonts)
   remaining:    { label: 'Remaining Duration', width: '96px',         dflt: false },
   status:       { label: 'Status',        width: '104px',             dflt: false },
   resource:     { label: 'Resource',      width: 'minmax(110px,1fr)', dflt: false }
@@ -1294,6 +1294,26 @@ function taskCycleSet() {
   for (const t of tasks) dfs(t.id, new Set());
   return bad;
 }
+// What a dependency reads from its predecessor: the dates it ACTUALLY had, and the planned ones only where nothing has
+// happened yet (as MS Project does). A task that has started but not finished is projected to finish where its planned
+// duration, counted from the day it REALLY started, ends — so a task that began late finishes late (and one that began early,
+// early), instead of the plan's finish being trusted. (Summary tasks can't be predecessors.)
+function linkStart(pred) { return pred.actualStart || pred.startDate; }
+function linkEnd(pred) {
+  if (pred.actualFinish) return pred.actualFinish;
+  if (pred.actualStart) return addDays(pred.actualStart, durationDays(pred.startDate, pred.endDate) - 1);
+  return pred.endDate;
+}
+// Recording an Actual Finish completes the task (MS Project does the same): 100% complete, and an empty Actual Start is
+// filled in with the planned start (or the finish itself if that would be later). Only when the Actual Finish is NEW or
+// CHANGED — an edit to % complete afterwards is left alone. Returns true when it changed the progress.
+function recordActualFinish(t, previousFinish) {
+  if (!t.actualFinish || t.actualFinish === previousFinish || hasChildren(t.id)) return false;
+  const changed = t.progress < 100;
+  t.progress = 100;
+  if (!t.actualStart) t.actualStart = dayNumber(t.startDate) <= dayNumber(t.actualFinish) ? t.startDate : t.actualFinish;
+  return changed;
+}
 function constraintStart(task, includeConstraint = true) {
   let cs = null;
   const dur = durationDays(task.startDate, task.endDate);
@@ -1302,10 +1322,10 @@ function constraintStart(task, includeConstraint = true) {
     if (!pred || isUnscheduled(pred)) continue;
     const lag = p.lag || 0;
     let c;
-    if (p.type === 'SS') c = addDays(pred.startDate, lag);
-    else if (p.type === 'FF') c = addDays(pred.endDate, lag - (dur - 1));
-    else if (p.type === 'SF') c = addDays(pred.startDate, lag - (dur - 1));
-    else c = addDays(pred.endDate, 1 + lag); // FS, default
+    if (p.type === 'SS') c = addDays(linkStart(pred), lag);
+    else if (p.type === 'FF') c = addDays(linkEnd(pred), lag - (dur - 1));
+    else if (p.type === 'SF') c = addDays(linkStart(pred), lag - (dur - 1));
+    else c = addDays(linkEnd(pred), 1 + lag); // FS, default
     if (cs === null || dayNumber(c) > dayNumber(cs)) cs = c;
   }
   // A task's own MSO/SNET/MFO/FNET constraint is a lower bound exactly like
@@ -1939,8 +1959,8 @@ function renderGrid() {
     const endIso = ownDates ? t.endDate : eff.end;
     const editing = (field) => full && editingCell && editingCell.id === t.id && editingCell.field === field;
     const blurAttr = (field) => `onblur="inlineBlur(event,'${t.id}','${field}')"`;
-    const dateEditor = (field, iso, text) => manual
-      ? inlineTextDateHtml(t.id, field, text != null ? text : fmtDate(iso))
+    const dateEditor = (field, iso, text, ph) => manual
+      ? inlineTextDateHtml(t.id, field, text != null ? text : fmtDate(iso), ph)
       : `<input type="date" class="inline-edit" value="${iso || ''}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" ${blurAttr(field)}>`;
     const nameCell = editing('name')
       ? `<input type="text" class="inline-edit" value="${escapeHtml(t.name)}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" ${blurAttr('name')}>`
@@ -1969,7 +1989,7 @@ function renderGrid() {
     const mismatchDate = scheduleMismatch(t);
     const act = actualDates(t.id), canEditActual = full && !summary;   // a group's actual dates are rolled up, so not editable (a milestone's Actual Finish follows its Actual Start)
     const actualCell = (field, iso) => editing(field)
-      ? `<input type="date" class="inline-edit" value="${iso || ''}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" ${blurAttr(field)}>`
+      ? dateEditor(field, iso, null, 'dd.mm.yyyy')   // exactly the Start/Finish editor: a manual task gets the typed box + calendar, an auto task the native picker
       : `<div class="grid-cell-dim${summaryCls}${canEditActual && !(t.milestone && field === 'actualFinish') ? ' editable' : ''}"${canEditActual && !(t.milestone && field === 'actualFinish') ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','${field}')"` : ''}>${iso ? fmtDate(iso) : ''}</div>`;
     const resourceCell = editing('resource')
       ? `<input type="text" class="inline-edit" maxlength="200" value="${escapeHtml(t.resource)}" placeholder="e.g. Anna, Ben" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" ${blurAttr('resource')}>`
@@ -1990,7 +2010,7 @@ function renderGrid() {
       remaining: `<div class="grid-cell-dim${summaryCls}">${remainingDays(t.id) == null ? '' : fmtRemaining(remainingDays(t.id))}</div>`,
       status: `<div class="grid-cell-dim${summaryCls}">${statusPillHtml(taskStatus(t.id))}</div>`,
       preds: predCell, resource: resourceCell,
-      ...Object.fromEntries(cols.filter(isCustomField).map(id => [id, customCellHtml(t, id, summaryCls, editing(id), blurAttr(id))]))
+      ...Object.fromEntries(cols.filter(isCustomField).map(id => [id, customCellHtml(t, id, summaryCls, editing(id), blurAttr(id), (f, iso) => dateEditor(f, iso, null, 'dd.mm.yyyy'))]))
     };
     return `<div class="grid-row${t.id === selectedTaskId ? ' selected' : ''}" data-id="${t.id}" onclick="selectTask('${t.id}')" ondblclick="openTaskModal('${t.id}')" draggable="${editingCell && editingCell.id === t.id ? 'false' : 'true'}" ondragstart="dragStartTask(event,'${t.id}')" ondragend="dragEndTask()" ondragover="dragOverTask(event,'${t.id}')" ondrop="dropOnTask(event,'${t.id}')">
       <div class="grid-cell-dim" style="text-align:center">${taskDisplayId(t.id)}</div>
@@ -2136,12 +2156,12 @@ function moveTask(id, targetId, zone) {
 }
 // A custom-field cell. Text / Number / Date edit in place (a click opens the editor); a Flag toggles on click. Any task can have
 // them — groups and milestones included — and nothing is rolled up.
-function customCellHtml(t, id, summaryCls, editingNow, blur) {
+function customCellHtml(t, id, summaryCls, editingNow, blur, dateEd) {
   const kind = CUSTOM_FIELDS[id].kind, v = customValue(t, id), name = customFieldName(id);
   if (kind === 'flag') return `<div class="grid-cell-dim custom-flag editable${summaryCls}" title="${escapeHtml(name)}: ${v ? 'Yes' : 'No'} — click to change" onclick="event.stopPropagation();toggleCustomFlag('${t.id}','${id}')">${v ? '<i class="fa-solid fa-check"></i>' : ''}</div>`;
   if (editingNow) {
     const val = v === undefined ? '' : v, stop = 'onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)"';
-    return kind === 'date' ? `<input type="date" class="inline-edit" value="${val}" ${stop} ${blur}>`
+    return kind === 'date' ? dateEd(id, v || null)
       : `<input type="text"${kind === 'number' ? ' inputmode="decimal" placeholder="number"' : ' maxlength="255"'} class="inline-edit" value="${escapeHtml(String(val))}" ${stop} ${blur}>`;   // a number is typed like in a spreadsheet (12,5 or 12.5) and checked on commit — a native number box would refuse to let you type the invalid part at all
   }
   const shown = v === undefined ? '' : kind === 'date' ? fmtDate(v) : String(v);
@@ -2290,8 +2310,8 @@ function parseUserDate(str) {
 // A manually scheduled task's Start/Finish is a free-text box (a date, or
 // anything like "TBD"), with a calendar button that borrows a hidden native
 // date input for its picker.
-function inlineTextDateHtml(id, field, value) {
-  return `<div class="inline-wrap"><input type="text" class="inline-edit" value="${escapeHtml(value)}" placeholder="dd.mm.yyyy or text" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" onblur="inlineBlur(event,'${id}','${field}')"><button type="button" class="inline-cal" tabindex="-1" title="Pick a date" onmousedown="event.preventDefault()" onclick="event.stopPropagation();openInlineDatePicker(this)"><i class="fa-regular fa-calendar"></i></button><input type="date" class="inline-date-hidden" tabindex="-1" onkeydown="onInlineEditKeydown(event)" onchange="commitInlineEdit('${id}','${field}',this.value)" onblur="inlineBlur(event,'${id}','${field}')"></div>`;
+function inlineTextDateHtml(id, field, value, placeholder = 'dd.mm.yyyy or text') {
+  return `<div class="inline-wrap"><input type="text" class="inline-edit" value="${escapeHtml(value)}" placeholder="${escapeHtml(placeholder)}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" onblur="inlineBlur(event,'${id}','${field}')"><button type="button" class="inline-cal" tabindex="-1" title="Pick a date" onmousedown="event.preventDefault()" onclick="event.stopPropagation();openInlineDatePicker(this)"><i class="fa-regular fa-calendar"></i></button><input type="date" class="inline-date-hidden" tabindex="-1" onkeydown="onInlineEditKeydown(event)" onchange="commitInlineEdit('${id}','${field}',this.value)" onblur="inlineBlur(event,'${id}','${field}')"></div>`;
 }
 function openInlineDatePicker(btn) {
   const wrap = btn.closest('.inline-wrap');
@@ -2363,7 +2383,12 @@ function commitInlineEdit(id, field, rawValue) {
     const aS = field === 'actualStart' ? iso : t.actualStart, aF = t.milestone ? aS : (field === 'actualFinish' ? iso : t.actualFinish);
     if (val && !iso) showToast(`"${val}" isn't a date`, true);
     else if (aS && aF && dayNumber(aF) < dayNumber(aS)) showToast("Actual Finish can't be before Actual Start", true);
-    else { t[field] = iso; if (t.milestone) t.actualFinish = t.actualStart; }
+    else {
+      const previousFinish = t.actualFinish;
+      t[field] = iso; if (t.milestone) t.actualFinish = t.actualStart;
+      if (recordActualFinish(t, previousFinish)) showToast('Actual Finish recorded — marked 100% complete');
+      cascadeSchedule(id);   // successors are scheduled off what actually happened
+    }
   } else if (field === 'predecessors') {
     const parsed = parsePredecessorString(val, id);
     if (parsed !== null) { t.predecessors = parsed; applyConstraints(id); }
@@ -2879,6 +2904,18 @@ function updateCustomBadge() {
   const n = Object.values(readCustomInputs()).filter(v => v === true || (typeof v === 'string' && v.trim() !== '')).length, b = document.getElementById('taskCustomBadge');
   b.textContent = n; b.classList.toggle('hidden', !n);
 }
+// Same effect as recordActualFinish(), shown while you type: an Actual Finish completes the task and fills an empty Actual Start.
+function onActualFinishChange() {
+  const f = document.getElementById('taskActualFinishInput').value;
+  if (!f) return;
+  document.getElementById('taskProgressInput').value = 100;
+  const as = document.getElementById('taskActualStartInput');
+  if (!as.value) { const st = document.getElementById('taskStartInput').value; as.value = st && dayNumber(st) <= dayNumber(f) ? st : f; }
+}
+// A milestone has one date: its actual date is its actual finish, so recording it completes the milestone.
+function onActualStartChange() {
+  if (document.getElementById('taskMilestoneInput').checked && document.getElementById('taskActualStartInput').value) document.getElementById('taskProgressInput').value = 100;
+}
 function onMilestoneToggle() {
   const on = document.getElementById('taskMilestoneInput').checked;
   document.getElementById('taskEndField').classList.toggle('hidden', on);
@@ -2978,7 +3015,8 @@ function saveTaskFromModal() {
   t.taskMode = document.getElementById('taskModeInput').value === 'auto' ? 'auto' : 'manual';
   t.progress = Math.max(0, Math.min(100, parseInt(document.getElementById('taskProgressInput').value) || 0));
   t.resource = document.getElementById('taskResourceInput').value.trim().slice(0, 200);
-  if (!isGroup) { t.actualStart = aStart; t.actualFinish = aEnd; }
+  const previousFinish = t.actualFinish;
+  if (!isGroup) { t.actualStart = aStart; t.actualFinish = aEnd; recordActualFinish(t, previousFinish); }
   { const cv = cleanCustomValues(readCustomInputs()); if (cv) t.custom = cv; else delete t.custom; }
   t.color = document.getElementById('taskColorSwatches').dataset.value || null;
   t.predecessors = editingPredecessors.filter(p => p.id);
