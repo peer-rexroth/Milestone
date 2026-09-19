@@ -1,8 +1,8 @@
 {
-  "name": "dbPlanner",
-  "short_name": "dbPlanner",
+  "name": "Milestone",
+  "short_name": "Milestone",
   "description": "A local-first project planner — Gantt chart, task dependencies and auto-scheduling tracked entirely on your own machine.",
-  "start_url": "./dbplanner.html",
+  "start_url": "./milestone.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#f6f8fa",

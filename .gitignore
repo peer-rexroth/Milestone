@@ -1,3 +1,3 @@
 .DS_Store
-.dbplanner-server.pid
-.dbplanner-server.log
+.milestone-server.pid
+.milestone-server.log

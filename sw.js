@@ -1,6 +1,6 @@
-const CACHE_NAME = 'dbplanner-cache-v2';
+const CACHE_NAME = 'milestone-cache-v1';
 const APP_SHELL = [
-  'dbplanner.html',
+  'milestone.html',
   'manifest.json',
   'icons/icon-192.png',
   'icons/icon-512.png',
@@ -15,7 +15,7 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => Promise.all(APP_SHELL.map((url) =>
-        cache.add(url).catch((err) => console.warn('dbplanner sw: failed to precache', url, err))
+        cache.add(url).catch((err) => console.warn('milestone sw: failed to precache', url, err))
       )))
       .then(() => self.skipWaiting())
   );
@@ -40,7 +40,7 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(req, res.clone()));
           return res;
         })
-        .catch(() => caches.match(req).then((cached) => cached || caches.match('dbplanner.html')))
+        .catch(() => caches.match(req).then((cached) => cached || caches.match('milestone.html')))
     );
     return;
   }

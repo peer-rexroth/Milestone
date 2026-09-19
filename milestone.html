@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>dbPlanner</title>
+<title>Milestone</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="icon" href="icons/icon-192.png">
@@ -163,8 +163,18 @@ input.inline-edit { width: 100%; min-width: 0; padding: 3px 6px; border: 1px sol
 .grid-cell-dim { color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-height: 1em; align-self: stretch; display: flex; align-items: center; }
 .grid-cell-dim.summary { font-weight: 600; color: var(--text); }
 .task-mode-cell { cursor: pointer; font-size: 12px; justify-content: center; }
-.task-mode-cell .fa-hand { color: var(--task-amber); }
-.task-mode-cell .fa-gears { color: var(--text-faint); }
+.mode-manual { color: var(--task-amber); }
+.mode-auto { color: var(--text-faint); }
+.task-mode-cell:hover { background: var(--panel-2); border-radius: 4px; }
+.dropdown-item.active { background: color-mix(in srgb, var(--accent) 10%, var(--panel)); }
+.dropdown-item .mode-check { margin-left: auto; color: var(--accent); }
+.subbar-spacer { flex: 1 1 auto; }
+.grid-name .mismatch-warn { color: var(--task-amber); flex-shrink: 0; font-size: 11px; }
+.inline-wrap { position: relative; display: flex; align-items: center; }
+.inline-wrap .inline-edit { padding-right: 24px; }
+.inline-cal { position: absolute; right: 2px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-dim); padding: 2px 5px; font-size: 12px; }
+.inline-cal:hover { color: var(--accent); }
+.inline-date-hidden { position: absolute; right: 0; bottom: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 .grid-actions { display: flex; gap: 2px; justify-content: flex-end; }
 .grid-actions .icon-btn { width: 24px; height: 24px; font-size: 12px; opacity: 0; }
 .grid-row:hover .grid-actions .icon-btn { opacity: 1; }
@@ -189,6 +199,13 @@ input.inline-edit { width: 100%; min-width: 0; padding: 3px 6px; border: 1px sol
   overflow: hidden;
 }
 .gantt-bar.critical { box-shadow: 0 0 0 2px var(--danger); }
+.gantt-bar.manual { border-style: dashed; background: color-mix(in srgb, var(--bar-color, var(--accent)) 8%, var(--panel)); }
+.gantt-bar.manual .fill { opacity: .5; }
+.gantt-bar.mismatch { box-shadow: 0 0 0 2px var(--task-amber); }
+.gantt-rollup { position: absolute; height: 4px; border-radius: 2px; background: var(--bar-color, var(--accent)); opacity: .75; pointer-events: none; }
+.gantt-bracket { position: absolute; width: 10px; height: 20px; border: 2px solid var(--text-dim); cursor: pointer; }
+.gantt-bracket.br-start { border-right: none; }
+.gantt-bracket.br-end { border-left: none; }
 .gantt-bar .fill { position: absolute; top: 0; left: 0; bottom: 0; background: var(--bar-color, var(--accent)); }
 .gantt-bar .bar-label { position: absolute; left: 6px; top: 0; line-height: 20px; font-size: 11px; color: var(--text); white-space: nowrap; pointer-events: none; mix-blend-mode: normal; }
 .resize-handle { position: absolute; top: 0; bottom: 0; width: 7px; cursor: ew-resize; }
@@ -204,6 +221,8 @@ input.inline-edit { width: 100%; min-width: 0; padding: 3px 6px; border: 1px sol
   background: var(--bar-color, var(--task-purple)); border: 1.5px solid color-mix(in srgb, var(--bar-color, var(--task-purple)) 60%, black);
 }
 .gantt-milestone.critical { box-shadow: 0 0 0 2px var(--danger); }
+.gantt-milestone.manual { background: transparent; border-style: dashed; border-color: var(--bar-color, var(--task-purple)); }
+.gantt-milestone.mismatch { box-shadow: 0 0 0 2px var(--task-amber); }
 .gantt-link-preview { position: absolute; z-index: 6; pointer-events: none; }
 svg.gantt-deps { position: absolute; top: 0; left: 0; overflow: visible; pointer-events: none; z-index: 2; }
 svg.gantt-deps path { fill: none; stroke: var(--text-faint); stroke-width: 1.5; }
@@ -280,7 +299,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 <div class="topbar">
   <div class="brand">
     <svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="58" fill="currentColor" opacity=".15"/><rect x="30" y="34" width="34" height="9" rx="3" fill="currentColor"/><rect x="38" y="49" width="48" height="9" rx="3" fill="currentColor"/><rect x="46" y="64" width="40" height="9" rx="3" fill="currentColor"/></svg>
-    dbPlanner
+    Milestone
   </div>
   <input id="projectNameInput" type="text" title="Project name">
   <div class="topbar-divider"></div>
@@ -312,7 +331,10 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
   <button class="icon-btn" id="indentBtn" onclick="indentSelected()" title="Indent (make sub-task)"><i class="fa-solid fa-indent"></i></button>
   <button class="icon-btn" id="outdentBtn" onclick="outdentSelected()" title="Outdent"><i class="fa-solid fa-outdent"></i></button>
   <button class="icon-btn btn-danger" id="deleteTaskBtn" onclick="deleteSelected()" title="Delete task"><i class="fa-solid fa-trash"></i></button>
+  <span class="subbar-spacer"></span>
+  <button class="btn" id="newTaskModeBtn" onclick="openTaskModeMenu(event,'new')" title="Scheduling mode given to newly added tasks"></button>
 </div>
+<div class="dropdown-menu" id="taskModeMenu"></div>
 
 <div class="main" id="main">
   <div class="grid-pane" id="gridPane">
@@ -335,11 +357,13 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
     <div class="modal-header"><h2 id="taskModalTitle">Task<span id="taskModalIdBadge" class="id-badge"></span></h2><button onclick="closeTaskModal()">&times;</button></div>
     <div class="modal-body">
       <div class="field"><label>Task Name</label><input type="text" id="taskNameInput" placeholder="Task name"></div>
+      <div class="field"><label>Task Mode</label><select id="taskModeInput"><option value="manual">Manually Scheduled</option><option value="auto">Auto Scheduled</option></select></div>
       <div class="checkbox-row"><input type="checkbox" id="taskMilestoneInput" onchange="onMilestoneToggle()"><label for="taskMilestoneInput">Milestone (zero-duration)</label></div>
       <div class="field-row">
         <div class="field"><label>Start</label><input type="date" id="taskStartInput" onchange="onTaskStartChange()"></div>
         <div class="field" id="taskEndField"><label>Finish</label><input type="date" id="taskEndInput" onchange="onTaskEndChange()"></div>
       </div>
+      <div class="pred-empty hidden" id="taskTextDatesNote"></div>
       <div class="field-row" id="taskDurProgRow">
         <div class="field" id="taskDurationField"><label>Duration (days)</label><input type="number" min="1" id="taskDurationInput" onchange="onTaskDurationChange()"></div>
         <div class="field"><label>% Complete</label><input type="number" min="0" max="100" id="taskProgressInput"></div>
@@ -414,12 +438,12 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
   <div class="modal narrow">
     <div class="modal-header"><h2>Link a File</h2><button onclick="closeFileSyncModal()">&times;</button></div>
     <div class="modal-body">
-      <p style="font-size:13px;color:var(--text-dim);margin:0">Keep dbPlanner's data in a plain JSON file on your disk — in a folder synced by iCloud Drive/OneDrive/Dropbox, it becomes a simple way to share this project across your own devices.</p>
+      <p style="font-size:13px;color:var(--text-dim);margin:0">Keep Milestone's data in a plain JSON file on your disk — in a folder synced by iCloud Drive/OneDrive/Dropbox, it becomes a simple way to share this project across your own devices.</p>
       <button class="btn btn-primary" onclick="linkNewFile()"><i class="fa-solid fa-file-circle-plus"></i>Create new file</button>
       <button class="btn" onclick="linkExistingFile()"><i class="fa-solid fa-folder-open"></i>Open existing file</button>
       <details class="file-sync-help">
         <summary>My file isn't syncing across devices</summary>
-        <div class="file-sync-help-body">Make sure the file lives inside a folder your cloud provider (iCloud Drive, OneDrive, Dropbox, …) actually syncs — picking a file only stores it locally. dbPlanner rereads it every 45s and on every save, and merges changes so two devices editing at once won't lose work.</div>
+        <div class="file-sync-help-body">Make sure the file lives inside a folder your cloud provider (iCloud Drive, OneDrive, Dropbox, …) actually syncs — picking a file only stores it locally. Milestone rereads it every 45s and on every save, and merges changes so two devices editing at once won't lose work.</div>
       </details>
     </div>
     <div class="modal-footer"><button class="btn" onclick="closeFileSyncModal()">Not now</button></div>
@@ -432,6 +456,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
     <div class="modal-header"><h2>Help</h2><button onclick="closeHelpModal()">&times;</button></div>
     <div class="modal-body help-body">
       <div><div class="help-section-title">The basics</div>Add tasks with the + Add Task button. Each task has a start/end date, a % complete, and can be a milestone (a zero-duration diamond). Use Indent/Outdent to build a work breakdown structure — a parent task's own dates and progress roll up automatically from its children.</div>
+      <div><div class="help-section-title">Task Mode</div>Every task is either Manually Scheduled (pushpin) or Auto Scheduled (chart icon) — click the icon in the Task Mode column, or use the Task Mode field in a task's dialog. An Auto task follows its predecessors and constraints. A Manual task stays exactly where you put it: predecessors never move it, its Start, Finish and Duration can be free text such as "TBD", and a warning triangle appears if it starts earlier than its predecessors allow. Manual tasks are drawn with a dashed bar, and are left out of the critical path. Switching a task to Auto moves it to the earliest date its links allow. The "New tasks" button at the right of the toolbar chooses the mode new tasks start in (Manual, like MS Project, by default).</div>
       <div><div class="help-section-title">Dependencies</div>Open a task and add a predecessor to link it to another task (Finish-to-Start, Start-to-Start, Finish-to-Finish or Start-to-Finish). Give it a lead or lag in days: a positive number delays the dependent task (lag), a negative number lets it overlap and start early (lead) — e.g. "3FS+2" waits 2 extra days after task 3 finishes, "3FS-2" starts 2 days before task 3 finishes. Moving a task forward automatically pushes any dependent tasks forward too — it never pulls a task earlier on its own. A circular dependency is flagged with a warning icon and stops auto-scheduling for the tasks involved.</div>
       <div><div class="help-section-title">The Gantt chart</div>Drag a bar to reschedule it, drag its edges to resize, or drag the small circle on its right edge onto another task to create a dependency. Click a bar or row to edit it. The route icon in the toolbar highlights the critical path — the chain of tasks with zero slack that determines the overall project end date.</div>
       <div><div class="help-section-title">Data &amp; sync</div>Everything lives in this browser's local storage — nothing ever leaves your machine unless you export it or link a file. Data → Export/Import moves a full JSON snapshot in or out; Local Backups keeps a rolling daily snapshot. The file-link button next to Data lets you sync to a plain JSON file, which works well inside an iCloud Drive/OneDrive/Dropbox folder for keeping your own devices in step.</div>
@@ -447,7 +472,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
     <div class="modal-header"><h2>About</h2><button onclick="closeAboutModal()">&times;</button></div>
     <div class="modal-body about-body">
       <svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="58" fill="currentColor" opacity=".15"/><rect x="30" y="34" width="34" height="9" rx="3" fill="currentColor"/><rect x="38" y="49" width="48" height="9" rx="3" fill="currentColor"/><rect x="46" y="64" width="40" height="9" rx="3" fill="currentColor"/></svg>
-      <div style="font-weight:700;font-size:16px">dbPlanner</div>
+      <div style="font-weight:700;font-size:16px">Milestone</div>
       <div style="color:var(--text-dim);font-size:13px">A local-first project planner — Gantt chart, dependencies, no account, no server.</div>
       <div id="aboutVersionLine" style="color:var(--text-faint);font-size:11.5px"></div>
       <div style="border-top:1px solid var(--border);width:100%;margin:6px 0"></div>
@@ -463,8 +488,19 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 /* ============================== Constants ============================== */
 const APP_VERSION = 1;
 const APP_BUILD_DATE = '2026-09-13';
-const STORAGE_KEY = 'dbplanner-v1';
-const BACKUPS_KEY = 'dbplanner-backups';
+const STORAGE_KEY = 'milestone-v1';
+const BACKUPS_KEY = 'milestone-backups';
+// The app was originally named dbPlanner. Copy (not move) data saved under
+// the old keys forward once, so an existing project/backups survive the
+// rename; the old entries are left in place as a rollback safety net.
+(function migrateLegacyStorage() {
+  try {
+    for (const [oldKey, newKey] of [['dbplanner-v1', STORAGE_KEY], ['dbplanner-backups', BACKUPS_KEY]]) {
+      const old = localStorage.getItem(oldKey);
+      if (old !== null && localStorage.getItem(newKey) === null) localStorage.setItem(newKey, old);
+    }
+  } catch (e) { console.warn('Milestone: legacy storage migration failed', e); }
+})();
 const MAX_BACKUPS = 7;
 const FILE_SYNC_POLL_MS = 45000;
 const DAY_MS = 86400000;
@@ -507,6 +543,19 @@ const CONSTRAINT_TYPES = [
   { id: 'FNLT', label: 'Finish No Later Than', hasDate: true, basis: 'finish', bound: 'upper' }
 ];
 function constraintTypeInfo(id) { return CONSTRAINT_TYPES.find(c => c.id === id) || CONSTRAINT_TYPES[0]; }
+
+// MS Project's Task Mode. 'manual' tasks are never moved by the scheduling
+// cascade and may carry free-text/blank Start, Finish and Duration
+// (startText/endText/durText, null = a real date/duration).
+const TASK_MODES = [
+  { id: 'manual', label: 'Manually Scheduled', icon: 'fa-thumbtack' },
+  { id: 'auto', label: 'Auto Scheduled', icon: 'fa-chart-gantt' }
+];
+function taskModeInfo(id) { return TASK_MODES.find(m => m.id === id) || TASK_MODES[1]; }
+// A manual task whose Start or Finish is blank/free text has no reliable
+// position on the timeline: no bar, ignored as a predecessor, left out of
+// summary rollups and the date range.
+function isUnscheduled(t) { return t.taskMode === 'manual' && (t.startText != null || t.endText != null); }
 
 /* =============================== State ================================= */
 let project = { name: 'My Project', updatedAt: 0 };
@@ -571,7 +620,7 @@ function load() {
       currentView = data.view === 'gantt' ? 'gantt' : 'tasks';
       gridPaneWidth = Number.isFinite(data.gridPaneWidth) ? Math.max(GRID_PANE_MIN_WIDTH, Math.min(GRID_PANE_MAX_WIDTH, data.gridPaneWidth)) : 400;
     }
-  } catch (e) { console.warn('dbPlanner: failed to load', e); }
+  } catch (e) { console.warn('Milestone: failed to load', e); }
   normalizeData();
 }
 function save() {
@@ -610,6 +659,10 @@ function normalizeData() {
     if (!cinfo.hasDate) t.constraintDate = null;
     else if (!/^\d{4}-\d{2}-\d{2}$/.test(t.constraintDate || '')) t.constraintDate = t.startDate;
     if (t.taskMode !== 'manual') t.taskMode = 'auto';
+    for (const f of ['startText', 'endText', 'durText']) {
+      t[f] = (t.taskMode === 'manual' && typeof t[f] === 'string') ? t[f].slice(0, 60) : null;
+    }
+    if (t.milestone) { t.endText = null; t.durText = null; }
   }
 
   // Break parentId cycles and drop dangling references before anything
@@ -650,6 +703,7 @@ function normalizeData() {
   if (!project || typeof project !== 'object') project = { name: 'My Project', updatedAt: 0 };
   if (typeof project.name !== 'string' || !project.name.trim()) project.name = 'My Project';
   if (typeof project.updatedAt !== 'number') project.updatedAt = 0;
+  if (project.newTaskMode !== 'auto') project.newTaskMode = 'manual';
 }
 
 /* =========================== Hierarchy helpers =========================== */
@@ -695,7 +749,9 @@ function effectiveDates(id) {
   const kids = childrenOf(id);
   let result;
   if (!t) { result = { start: null, end: null, progress: 0 }; }
-  else if (kids.length === 0) { result = { start: t.startDate, end: t.endDate, progress: t.progress }; }
+  else if (kids.length === 0) {
+    result = isUnscheduled(t) ? { start: null, end: null, progress: t.progress } : { start: t.startDate, end: t.endDate, progress: t.progress };
+  }
   else {
     let start = null, end = null, totalDur = 0, doneDur = 0;
     for (const k of kids) {
@@ -706,7 +762,16 @@ function effectiveDates(id) {
       const dur = dayNumber(e.end) - dayNumber(e.start) + 1;
       totalDur += dur; doneDur += dur * (e.progress / 100);
     }
-    result = { start: start || t.startDate, end: end || t.endDate, progress: totalDur > 0 ? Math.round((doneDur / totalDur) * 100) : 0 };
+    const progress = totalDur > 0 ? Math.round((doneDur / totalDur) * 100) : 0;
+    if (t.taskMode === 'manual') {
+      // A manually scheduled summary keeps its own dates instead of rolling
+      // up; the children's real extent is still reported as rollStart/rollEnd
+      // so the Gantt can draw it as a thin rollup bar underneath.
+      result = isUnscheduled(t) ? { start: null, end: null, progress, rollStart: start, rollEnd: end }
+                                : { start: t.startDate, end: t.endDate, progress, rollStart: start, rollEnd: end };
+    } else {
+      result = { start: start || t.startDate, end: end || t.endDate, progress };
+    }
   }
   _effCache.set(id, result);
   return result;
@@ -733,12 +798,12 @@ function taskCycleSet() {
   for (const t of tasks) dfs(t.id, new Set());
   return bad;
 }
-function constraintStart(task) {
+function constraintStart(task, includeConstraint = true) {
   let cs = null;
   const dur = durationDays(task.startDate, task.endDate);
   for (const p of task.predecessors) {
     const pred = byId(p.id);
-    if (!pred) continue;
+    if (!pred || isUnscheduled(pred)) continue;
     const lag = p.lag || 0;
     let c;
     if (p.type === 'SS') c = addDays(pred.startDate, lag);
@@ -755,7 +820,7 @@ function constraintStart(task) {
   // the same "flag it, don't silently override" treatment real MS Project
   // gives an over-constrained schedule via its own conflict indicator.
   const cinfo = constraintTypeInfo(task.constraintType);
-  if (task.constraintDate && (cinfo.bound === 'lower' || cinfo.bound === 'exact')) {
+  if (includeConstraint && task.constraintDate && (cinfo.bound === 'lower' || cinfo.bound === 'exact')) {
     const c = cinfo.basis === 'finish' ? addDays(task.constraintDate, -(dur - 1)) : task.constraintDate;
     if (cs === null || dayNumber(c) > dayNumber(cs)) cs = c;
   }
@@ -767,13 +832,21 @@ function constraintStart(task) {
 // so this is what surfaces a mismatch instead, the same role
 // taskCycleSet()'s warning icon plays for a circular dependency.
 function constraintViolated(task) {
-  if (!task.constraintDate) return false;
+  if (!task.constraintDate || task.taskMode === 'manual') return false; // constraints don't apply to manually scheduled tasks
   const cinfo = constraintTypeInfo(task.constraintType);
   const actual = cinfo.basis === 'finish' ? task.endDate : task.startDate;
   const want = dayNumber(task.constraintDate), have = dayNumber(actual);
   if (cinfo.bound === 'exact') return have !== want;
   if (cinfo.bound === 'upper') return have > want;
   return false; // lower bounds are enforced by constraintStart()'s cascade, never violated in steady state
+}
+// MS Project's schedule warning for a manually scheduled task: its links say
+// it can't start before this date, but it's placed earlier. Returns that
+// date (what Auto Scheduled would use), or null when nothing's inconsistent.
+function scheduleMismatch(t) {
+  if (t.taskMode !== 'manual' || hasChildren(t.id) || isUnscheduled(t)) return null;
+  const cs = constraintStart(t, false);
+  return cs && dayNumber(cs) > dayNumber(t.startDate) ? cs : null;
 }
 // Only ever pushes a dependent task LATER, never pulls one earlier — a
 // manual placement ahead of its own constraint is left alone (surfaced as
@@ -840,7 +913,7 @@ function topoOrder(ids, preds) {
 // not this specific slack calculation) — a documented v1 simplification.
 function computeCriticalPath() {
   const cyclic = taskCycleSet();
-  const leaves = tasks.filter(t => !hasChildren(t.id) && !cyclic.has(t.id));
+  const leaves = tasks.filter(t => !hasChildren(t.id) && !cyclic.has(t.id) && t.taskMode !== 'manual');
   const ids = leaves.map(t => t.id);
   const dur = {}; for (const t of leaves) dur[t.id] = Math.max(1, durationDays(t.startDate, t.endDate));
   const preds = {}; for (const t of leaves) preds[t.id] = t.predecessors.map(p => p.id).filter(pid => ids.includes(pid));
@@ -871,10 +944,14 @@ let dateRange = { start: 0, end: 0 };
 let barGeom = {}; // taskId -> {left, width, top, cx (milestone center)}
 
 function computeDateRange() {
-  const list = tasks.filter(t => t.startDate && t.endDate);
-  if (list.length === 0) { const t0 = dayNumber(todayStr()); return { start: t0 - 7, end: t0 + 30 }; }
   let start = Infinity, end = -Infinity;
-  for (const t of list) { start = Math.min(start, dayNumber(t.startDate)); end = Math.max(end, dayNumber(t.endDate)); }
+  for (const t of tasks) {
+    if (!t.startDate || !t.endDate) continue;
+    const s = t.startText == null || t.taskMode !== 'manual', e = t.endText == null || t.taskMode !== 'manual';
+    if (s) { start = Math.min(start, dayNumber(t.startDate)); end = Math.max(end, dayNumber(t.startDate)); }
+    if (e) { start = Math.min(start, dayNumber(t.endDate)); end = Math.max(end, dayNumber(t.endDate)); }
+  }
+  if (start === Infinity) { const t0 = dayNumber(todayStr()); return { start: t0 - 7, end: t0 + 30 }; }
   const pad = Math.max(3, Math.round((end - start) * 0.06));
   return { start: start - pad, end: end + pad };
 }
@@ -891,6 +968,7 @@ function render() {
   renderGantt();
   updateFileSyncUI();
   updateThemeToggleUI();
+  updateNewTaskModeUI();
   updateSelectionUI();
 }
 
@@ -914,7 +992,7 @@ function renameProject(name) {
   name = (name || '').trim() || 'My Project';
   if (name === project.name) return;
   project.name = name; project.updatedAt = Date.now();
-  document.title = name + ' · dbPlanner';
+  document.title = name + ' · Milestone';
   save();
 }
 function renderZoomTabs() {
@@ -968,31 +1046,43 @@ function renderGrid() {
       const lag = p.lag ? (p.lag > 0 ? `+${p.lag}` : `${p.lag}`) : '';
       return `${taskDisplayId(p.id)}${p.type}${lag}`;
     }).filter(Boolean).join(', ');
+    const manual = t.taskMode === 'manual';
+    const canEditDates = full && (!summary || manual);
+    const canEditFinish = canEditDates && !t.milestone;
+    // An auto summary shows its rollup; every other task shows its own stored dates.
+    const ownDates = !summary || manual;
+    const startIso = ownDates ? t.startDate : eff.start;
+    const endIso = ownDates ? t.endDate : eff.end;
     const editing = (field) => full && editingCell && editingCell.id === t.id && editingCell.field === field;
+    const blurAttr = (field) => `onblur="inlineBlur(event,'${t.id}','${field}')"`;
+    const dateEditor = (field, iso, text) => manual
+      ? inlineTextDateHtml(t.id, field, text != null ? text : fmtDate(iso))
+      : `<input type="date" class="inline-edit" value="${iso || ''}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" ${blurAttr(field)}>`;
     const nameCell = editing('name')
-      ? `<input type="text" class="inline-edit" value="${escapeHtml(t.name)}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" onblur="commitInlineEdit('${t.id}','name',this.value)">`
+      ? `<input type="text" class="inline-edit" value="${escapeHtml(t.name)}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" ${blurAttr('name')}>`
       : `<span class="name-text${summary ? ' summary' : ''}${full ? ' editable' : ''}" title="${escapeHtml(t.name)}"${full ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','name')"` : ''}>${escapeHtml(t.name)}</span>`;
     const summaryCls = summary ? ' summary' : '';
     const startCell = editing('start')
-      ? `<input type="date" class="inline-edit" value="${eff.start || ''}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" onblur="commitInlineEdit('${t.id}','start',this.value)">`
-      : `<div class="grid-cell-dim${summaryCls}${full && !summary ? ' editable' : ''}"${full && !summary ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','start')"` : ''}>${fmtDate(eff.start)}</div>`;
+      ? dateEditor('start', startIso, t.startText)
+      : `<div class="grid-cell-dim${summaryCls}${canEditDates ? ' editable' : ''}"${canEditDates ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','start')"` : ''}>${t.startText != null ? escapeHtml(t.startText) : fmtDate(startIso)}</div>`;
     const finishCell = editing('finish')
-      ? `<input type="date" class="inline-edit" value="${eff.end || ''}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" onblur="commitInlineEdit('${t.id}','finish',this.value)">`
-      : `<div class="grid-cell-dim${summaryCls}${full && !summary && !t.milestone ? ' editable' : ''}"${full && !summary && !t.milestone ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','finish')"` : ''}>${fmtDate(eff.end)}</div>`;
+      ? dateEditor('finish', endIso, t.endText)
+      : `<div class="grid-cell-dim${summaryCls}${canEditFinish ? ' editable' : ''}"${canEditFinish ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','finish')"` : ''}>${t.endText != null ? escapeHtml(t.endText) : fmtDate(endIso)}</div>`;
+    const durKnown = !isUnscheduled(t) && startIso && endIso;
+    const durNum = durKnown ? durationDays(startIso, endIso) : null;
     const durationCell = editing('duration')
-      ? `<input type="number" min="1" step="1" class="inline-edit" value="${eff.start && eff.end ? durationDays(eff.start, eff.end) : ''}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" onblur="commitInlineEdit('${t.id}','duration',this.value)">`
-      : `<div class="grid-cell-dim${summaryCls}${!summary && !t.milestone ? ' editable' : ''}"${!summary && !t.milestone ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','duration')"` : ''}>${eff.start && eff.end ? fmtDuration(durationDays(eff.start, eff.end)) : ''}</div>`;
+      ? (manual
+          ? `<input type="text" class="inline-edit" value="${escapeHtml(t.durText != null ? t.durText : (durNum != null ? String(durNum) : ''))}" placeholder="e.g. 5 or text" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" ${blurAttr('duration')}>`
+          : `<input type="number" min="1" step="1" class="inline-edit" value="${durNum != null ? durNum : ''}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" ${blurAttr('duration')}>`)
+      : `<div class="grid-cell-dim${summaryCls}${canEditFinish ? ' editable' : ''}"${canEditFinish ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','duration')"` : ''}>${t.durText != null ? escapeHtml(t.durText) : (durNum != null ? fmtDuration(durNum) : '')}</div>`;
     const predCell = editing('predecessors')
-      ? `<input type="text" class="inline-edit" placeholder="e.g. 3FS+2 (lag), 5SS-1 (lead)" title="Positive = lag (delay), negative = lead (overlap)" value="${escapeHtml(predLabel)}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" onblur="commitInlineEdit('${t.id}','predecessors',this.value)">`
+      ? `<input type="text" class="inline-edit" placeholder="e.g. 3FS+2 (lag), 5SS-1 (lead)" title="Positive = lag (delay), negative = lead (overlap)" value="${escapeHtml(predLabel)}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" ${blurAttr('predecessors')}>`
       : `<div class="grid-cell-dim${summaryCls}${!summary ? ' editable' : ''}" title="${escapeHtml(predLabel)}"${!summary ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','predecessors')"` : ''}>${escapeHtml(predLabel)}</div>`;
-    // MS Project-style Task Mode indicator: manually scheduled (hand icon)
-    // vs auto scheduled (gears icon), click to toggle — see toggleTaskMode().
-    // Summary tasks are always effectively auto (their dates are computed
-    // rollups, not stored — see effectiveDates()), so the icon there is
-    // just informational, not clickable.
-    const modeCell = summary
-      ? `<div class="grid-cell-dim task-mode-cell" style="text-align:center" title="Summary tasks are always auto-scheduled"><i class="fa-solid fa-gears" style="opacity:.35"></i></div>`
-      : `<div class="grid-cell-dim task-mode-cell" style="text-align:center" title="${t.taskMode === 'manual' ? 'Manually Scheduled — click to switch to Auto Scheduled' : 'Auto Scheduled — click to switch to Manually Scheduled'}" onclick="event.stopPropagation();toggleTaskMode('${t.id}')"><i class="fa-solid fa-${t.taskMode === 'manual' ? 'hand' : 'gears'}"></i></div>`;
+    // MS Project-style Task Mode column: click for a picker with the two
+    // named modes (see openTaskModeMenu()).
+    const mi = taskModeInfo(t.taskMode);
+    const modeCell = `<div class="grid-cell-dim task-mode-cell" style="text-align:center" title="${mi.label} — click to change" onclick="openTaskModeMenu(event,'${t.id}')"><i class="fa-solid ${mi.icon} mode-${t.taskMode}"></i></div>`;
+    const mismatchDate = scheduleMismatch(t);
     return `<div class="grid-row${t.id === selectedTaskId ? ' selected' : ''}" data-id="${t.id}" onclick="selectTask('${t.id}')" ondblclick="openTaskModal('${t.id}')">
       <div class="grid-cell-dim" style="text-align:center">${taskDisplayId(t.id)}</div>
       ${modeCell}
@@ -1000,7 +1090,8 @@ function renderGrid() {
         <button class="chevron${summary ? '' : ' empty'}" onclick="event.stopPropagation();toggleCollapse('${t.id}')"><i class="fa-solid fa-chevron-${t.collapsed ? 'right' : 'down'}"></i></button>
         ${t.milestone ? '<i class="fa-solid fa-diamond milestone-dot" style="font-size:9px"></i>' : ''}
         ${cyclic.has(t.id) ? '<i class="fa-solid fa-triangle-exclamation cycle-warn" title="Circular dependency — not auto-scheduled"></i>' : ''}
-        ${t.constraintType !== 'ASAP' ? `<i class="fa-solid fa-thumbtack constraint-icon${constraintViolated(t) ? ' violated' : ''}" title="${escapeHtml(constraintTypeInfo(t.constraintType).label)}${t.constraintDate ? ' (' + fmtDate(t.constraintDate) + ')' : ''}${constraintViolated(t) ? ' — constraint not met' : ''}"></i>` : ''}
+        ${mismatchDate ? `<i class="fa-solid fa-triangle-exclamation mismatch-warn" title="Manually scheduled and starts before its predecessors allow — Auto Scheduled it would start ${fmtDate(mismatchDate)}"></i>` : ''}
+        ${t.constraintType !== 'ASAP' ? `<i class="fa-solid fa-calendar-day constraint-icon${constraintViolated(t) ? ' violated' : ''}" title="${escapeHtml(constraintTypeInfo(t.constraintType).label)}${t.constraintDate ? ' (' + fmtDate(t.constraintDate) + ')' : ''}${manual ? ' — ignored while manually scheduled' : ''}${constraintViolated(t) ? ' — constraint not met' : ''}"></i>` : ''}
         ${nameCell}
       </div>
       ${startCell}
@@ -1018,17 +1109,61 @@ function renderGrid() {
 }
 function selectTask(id) { selectedTaskId = id; render(); }
 function toggleCollapse(id) { const t = byId(id); t.collapsed = !t.collapsed; save(); render(); }
-// MS Project's Task Mode: 'manual' tasks keep whatever dates they're given
-// and are skipped entirely by cascadeSchedule()/applyConstraints() (see
-// those functions' own comments) — switching a task back to 'auto' snaps
-// it into place immediately, the same "recalculate on re-link" behavior
-// real MS Project shows when you flip a task's mode back.
-function toggleTaskMode(id) {
+// Switching a task to Auto Scheduled re-plans it the way MS Project does:
+// free-text dates are dropped and, if it has links or a constraint, it moves
+// to the earliest date they allow — earlier OR later than where it sat (the
+// ongoing cascade below is still push-later-only; this is the one place a
+// task is pulled earlier). With no links there is nothing to schedule
+// against, so it keeps its dates.
+function rescheduleAsAuto(t) {
+  t.startText = t.endText = t.durText = null;
+  if (!hasChildren(t.id) && !taskCycleSet().has(t.id)) {
+    const cs = constraintStart(t);
+    if (cs) {
+      const dur = t.milestone ? 1 : durationDays(t.startDate, t.endDate);
+      t.startDate = cs;
+      t.endDate = addDays(cs, dur - 1);
+    }
+  }
+  t.updatedAt = Date.now();
+  cascadeSchedule(t.id);
+}
+function setTaskMode(id, mode) {
   const t = byId(id);
-  if (!t || hasChildren(id)) return;
-  t.taskMode = t.taskMode === 'manual' ? 'auto' : 'manual';
-  if (t.taskMode === 'auto') applyConstraints(id);
+  if (!t || (mode !== 'manual' && mode !== 'auto') || t.taskMode === mode) return;
+  t.taskMode = mode;
+  if (mode === 'auto') rescheduleAsAuto(t); else t.updatedAt = Date.now();
   save(); render();
+}
+
+// One shared popup serves both the per-row mode cells (target = task id) and
+// the "New tasks:" button in the sub-bar (target = 'new').
+let modeMenuTarget = null;
+function openTaskModeMenu(event, target) {
+  event.stopPropagation();
+  const menu = document.getElementById('taskModeMenu');
+  if (menu.classList.contains('open') && modeMenuTarget === target) { closeTaskModeMenu(); return; }
+  modeMenuTarget = target;
+  const current = target === 'new' ? project.newTaskMode : (byId(target) || {}).taskMode;
+  menu.innerHTML = TASK_MODES.map(m => `<button class="dropdown-item${m.id === current ? ' active' : ''}" onclick="pickTaskMode('${m.id}')"><i class="fa-solid ${m.icon}"></i>${m.label}${m.id === current ? '<i class="fa-solid fa-check mode-check"></i>' : ''}</button>`).join('');
+  const rect = event.currentTarget.getBoundingClientRect();
+  menu.classList.add('open');
+  const w = menu.offsetWidth, h = menu.offsetHeight;
+  menu.style.right = 'auto';
+  menu.style.left = Math.max(8, Math.min(rect.left, window.innerWidth - w - 8)) + 'px';
+  menu.style.top = (rect.bottom + h + 12 > window.innerHeight ? Math.max(8, rect.top - h - 12) : rect.bottom) + 'px';
+}
+function closeTaskModeMenu() { document.getElementById('taskModeMenu').classList.remove('open'); modeMenuTarget = null; }
+function pickTaskMode(mode) {
+  const target = modeMenuTarget;
+  closeTaskModeMenu();
+  if (target === 'new') { project.newTaskMode = mode; project.updatedAt = Date.now(); save(); render(); }
+  else if (target) setTaskMode(target, mode);
+}
+function updateNewTaskModeUI() {
+  const btn = document.getElementById('newTaskModeBtn');
+  const mi = taskModeInfo(project.newTaskMode);
+  btn.innerHTML = `New tasks: <i class="fa-solid ${mi.icon} mode-${project.newTaskMode}" style="margin:0 4px 0 6px"></i>${mi.label}`;
 }
 
 // Inline grid editing (Task view only) — one cell at a time, tracked here
@@ -1038,7 +1173,9 @@ let editingCell = null; // { id, field }
 function startInlineEdit(id, field) {
   const t = byId(id);
   if (!t) return;
-  if (field !== 'name' && hasChildren(id)) return; // summary rows: dates/duration/predecessors are computed rollups, edit via children instead
+  // Auto summary rows roll their dates up from their children, so only the
+  // name is editable there; a manually scheduled summary owns its own dates.
+  if (hasChildren(id) && field !== 'name' && !(t.taskMode === 'manual' && ['start', 'finish', 'duration'].includes(field))) return;
   if ((field === 'finish' || field === 'duration') && t.milestone) return; // milestones are zero-duration by definition
   editingCell = { id, field };
   render();
@@ -1055,6 +1192,45 @@ function onInlineEditKeydown(e) {
   else if (e.key === 'Escape') { e.preventDefault(); cancelInlineEdit(); }
 }
 
+// Accepts DD.MM.YYYY / D-M-YYYY (what the grid displays) and ISO YYYY-MM-DD
+// (what a native date input emits); returns an ISO string or null.
+function parseUserDate(str) {
+  str = (str || '').trim();
+  let y, m, d, mt;
+  if ((mt = str.match(/^(\d{1,2})[.\-](\d{1,2})[.\-](\d{4})$/))) { d = +mt[1]; m = +mt[2]; y = +mt[3]; }
+  else if ((mt = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/))) { y = +mt[1]; m = +mt[2]; d = +mt[3]; }
+  else return null;
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== m - 1 || dt.getUTCDate() !== d) return null;
+  return `${y}-${pad2(m)}-${pad2(d)}`;
+}
+
+// A manually scheduled task's Start/Finish is a free-text box (a date, or
+// anything like "TBD"), with a calendar button that borrows a hidden native
+// date input for its picker.
+function inlineTextDateHtml(id, field, value) {
+  return `<div class="inline-wrap"><input type="text" class="inline-edit" value="${escapeHtml(value)}" placeholder="dd.mm.yyyy or text" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" onblur="inlineBlur(event,'${id}','${field}')"><button type="button" class="inline-cal" tabindex="-1" title="Pick a date" onmousedown="event.preventDefault()" onclick="event.stopPropagation();openInlineDatePicker(this)"><i class="fa-regular fa-calendar"></i></button><input type="date" class="inline-date-hidden" tabindex="-1" onkeydown="onInlineEditKeydown(event)" onchange="commitInlineEdit('${id}','${field}',this.value)" onblur="inlineBlur(event,'${id}','${field}')"></div>`;
+}
+function openInlineDatePicker(btn) {
+  const wrap = btn.closest('.inline-wrap');
+  const dateEl = wrap.querySelector('input[type=date]');
+  const parsed = parseUserDate(wrap.querySelector('input[type=text]').value);
+  if (parsed) dateEl.value = parsed;
+  dateEl.focus();
+  try { dateEl.showPicker(); } catch (e) { /* picker unavailable — typing still works */ }
+}
+// Blur handler for every inline editor. Focus moving between the text box and
+// its calendar picker inside one .inline-wrap must not count as leaving.
+function inlineBlur(e, id, field) {
+  const wrap = e.target.closest('.inline-wrap');
+  if (wrap) {
+    if (e.relatedTarget && wrap.contains(e.relatedTarget)) return;
+    commitInlineEdit(id, field, wrap.querySelector('input[type=text]').value);
+  } else {
+    commitInlineEdit(id, field, e.target.value);
+  }
+}
+
 function commitInlineEdit(id, field, rawValue) {
   // Guards against a stray blur firing after Escape already cleared editingCell.
   if (!editingCell || editingCell.id !== id || editingCell.field !== field) return;
@@ -1062,29 +1238,36 @@ function commitInlineEdit(id, field, rawValue) {
   const t = byId(id);
   if (!t) { render(); return; }
   const val = (rawValue || '').trim();
+  const manual = t.taskMode === 'manual';
   if (field === 'name') {
     if (val) t.name = val;
-  } else if (field === 'start') {
-    if (/^\d{4}-\d{2}-\d{2}$/.test(val)) {
-      t.startDate = val;
-      if (t.milestone) t.endDate = val;
-      applyConstraints(id);
+  } else if (field === 'start' || field === 'finish') {
+    const isStart = field === 'start';
+    const iso = manual ? parseUserDate(val) : (/^\d{4}-\d{2}-\d{2}$/.test(val) ? val : null);
+    if (iso) {
+      if (isStart) { t.startDate = iso; t.startText = null; if (t.milestone) { t.endDate = iso; t.endText = null; } }
+      else if (!t.milestone) { t.endDate = iso; t.endText = null; }
+      if (!isUnscheduled(t)) t.durText = null;
+    } else if (manual && !(t.milestone && !isStart)) {
+      // Anything that isn't a date — including blank — is kept as free text.
+      if (isStart) t.startText = val.slice(0, 60); else t.endText = val.slice(0, 60);
     }
-  } else if (field === 'finish') {
-    if (/^\d{4}-\d{2}-\d{2}$/.test(val) && !t.milestone) {
-      t.endDate = val;
-      applyConstraints(id);
-    }
+    applyConstraints(id);
   } else if (field === 'duration') {
-    const d = parseInt(val, 10);
-    if (Number.isFinite(d) && d >= 1 && !t.milestone) {
-      t.endDate = addDays(t.startDate, d - 1);
-      applyConstraints(id);
+    if (manual) {
+      const n = /^\d+$/.test(val) ? parseInt(val, 10) : NaN;
+      if (Number.isFinite(n) && n >= 1 && !isUnscheduled(t) && !t.milestone) { t.endDate = addDays(t.startDate, n - 1); t.durText = null; }
+      else t.durText = val.slice(0, 60);
+    } else {
+      const d = parseInt(val, 10);
+      if (Number.isFinite(d) && d >= 1 && !t.milestone) t.endDate = addDays(t.startDate, d - 1);
     }
+    applyConstraints(id);
   } else if (field === 'predecessors') {
     const parsed = parsePredecessorString(val, id);
     if (parsed !== null) { t.predecessors = parsed; applyConstraints(id); }
   }
+  t.updatedAt = Date.now();
   save();
   render();
 }
@@ -1181,19 +1364,36 @@ function renderGantt() {
   list.forEach(({ task: t }, idx) => {
     const top = idx * ROW_H + (ROW_H - 20) / 2;
     const eff = effectiveDates(t.id);
-    if (!eff.start) return;
+    if (!eff.start) {
+      // A manual task with exactly one known date gets a bracket at it, as in
+      // MS Project; one with neither (or a rollup-less summary) has no mark.
+      if (isUnscheduled(t) && (t.startText == null) !== (t.endText == null)) {
+        const isStart = t.startText == null;
+        const bx = (dayNumber(isStart ? t.startDate : t.endDate) - dateRange.start) * px + (isStart ? 0 : px - 10);
+        html += `<div class="gantt-bracket ${isStart ? 'br-start' : 'br-end'}" style="left:${bx}px;top:${top}px" title="${escapeHtml(t.name)} — ${isStart ? 'finish' : 'start'} not set" onclick="openTaskModal('${t.id}')"></div>`;
+      }
+      return;
+    }
     const left = (dayNumber(eff.start) - dateRange.start) * px;
     const isCritical = critical.has(t.id);
     const color = statusColorVar(t);
+    const manual = t.taskMode === 'manual';
+    const cls = `${isCritical ? ' critical' : ''}${manual ? ' manual' : ''}${scheduleMismatch(t) ? ' mismatch' : ''}`;
+    const modeNote = manual ? ' — Manually Scheduled' : '';
+    if (manual && eff.rollStart && eff.rollEnd) {
+      const rl = (dayNumber(eff.rollStart) - dateRange.start) * px;
+      const rw = Math.max(6, (dayNumber(eff.rollEnd) - dayNumber(eff.rollStart) + 1) * px - 2);
+      html += `<div class="gantt-rollup" style="left:${rl}px;width:${rw}px;top:${idx * ROW_H + ROW_H - 6}px;--bar-color:${color}" title="Rollup of sub-tasks"></div>`;
+    }
     if (t.milestone) {
       const cx = left; const cy = idx * ROW_H + ROW_H / 2;
       barGeom[t.id] = { left: cx - 8, width: 16, top: cy - 8, right: cx + 8, midY: cy, milestone: true };
-      html += `<div class="gantt-milestone${isCritical ? ' critical' : ''}" style="left:${cx - 8}px;top:${cy - 8}px;--bar-color:${color}" title="${escapeHtml(t.name)}" onmousedown="onBarMouseDown(event,'${t.id}','move')"></div>`;
+      html += `<div class="gantt-milestone${cls}" style="left:${cx - 8}px;top:${cy - 8}px;--bar-color:${color}" title="${escapeHtml(t.name)}${modeNote}" onmousedown="onBarMouseDown(event,'${t.id}','move')"></div>`;
     } else {
       const width = Math.max(6, (dayNumber(eff.end) - dayNumber(eff.start) + 1) * px - 2);
       const midY = top + 10;
       barGeom[t.id] = { left, width, top, right: left + width, midY };
-      html += `<div class="gantt-bar${isCritical ? ' critical' : ''}" data-id="${t.id}" style="left:${left}px;width:${width}px;top:${top}px;--bar-color:${color}" title="${escapeHtml(t.name)} (${Math.round(eff.progress)}%)" onmousedown="onBarMouseDown(event,'${t.id}','move')">
+      html += `<div class="gantt-bar${cls}" data-id="${t.id}" style="left:${left}px;width:${width}px;top:${top}px;--bar-color:${color}" title="${escapeHtml(t.name)} (${Math.round(eff.progress)}%)${modeNote}" onmousedown="onBarMouseDown(event,'${t.id}','move')">
         <div class="fill" style="width:${Math.min(100, Math.max(0, eff.progress))}%"></div>
         <div class="bar-label">${escapeHtml(t.name)}</div>
         <div class="resize-handle left" onmousedown="event.stopPropagation();onBarMouseDown(event,'${t.id}','resize-left')"></div>
@@ -1277,6 +1477,7 @@ function onDragMouseUp() {
   if (!moved) { openTaskModal(taskId); return; }
   const t = byId(taskId);
   t.startDate = previewStart; t.endDate = t.milestone ? previewStart : previewEnd;
+  t.durText = null;
   t.updatedAt = Date.now();
   cascadeSchedule(t.id);
   save(); render();
@@ -1329,7 +1530,7 @@ function addTask() {
     id: genId(), name: '', parentId, order,
     startDate: todayStr(), endDate: todayStr(), progress: 0, milestone: false,
     color: null, notes: '', predecessors: [], collapsed: false, updatedAt: Date.now(),
-    constraintType: 'ASAP', constraintDate: null, taskMode: 'auto'
+    constraintType: 'ASAP', constraintDate: null, taskMode: project.newTaskMode === 'auto' ? 'auto' : 'manual'
   };
   tasks.push(t);
   normalizeData(); save(); render();
@@ -1395,6 +1596,7 @@ function deleteTaskFlow(id) {
 }
 
 /* ============================== Task modal ================================ */
+let modalOrigDates = { start: null, end: null };
 function openTaskModal(id, isNew) {
   editingCell = null;
   editingTaskId = id;
@@ -1402,6 +1604,12 @@ function openTaskModal(id, isNew) {
   document.getElementById('taskModalTitle').firstChild.textContent = isNew ? 'New Task' : 'Edit Task';
   document.getElementById('taskModalIdBadge').textContent = '#' + taskDisplayId(id);
   document.getElementById('taskNameInput').value = t.name === 'Untitled Task' && isNew ? '' : t.name;
+  document.getElementById('taskModeInput').value = t.taskMode;
+  modalOrigDates = { start: t.startDate, end: t.endDate };
+  const textBits = [t.startText != null && `Start: "${t.startText}"`, t.endText != null && `Finish: "${t.endText}"`, t.durText != null && `Duration: "${t.durText}"`].filter(Boolean);
+  const note = document.getElementById('taskTextDatesNote');
+  note.textContent = textBits.length ? `Free text on this task — ${textBits.join(', ')}. Changing a date field below replaces that text; leave it alone to keep it.` : '';
+  note.classList.toggle('hidden', !textBits.length);
   document.getElementById('taskMilestoneInput').checked = t.milestone;
   document.getElementById('taskStartInput').value = t.startDate;
   document.getElementById('taskEndInput').value = t.endDate;
@@ -1529,6 +1737,12 @@ function saveTaskFromModal() {
   t.milestone = document.getElementById('taskMilestoneInput').checked;
   t.startDate = document.getElementById('taskStartInput').value || todayStr();
   t.endDate = t.milestone ? t.startDate : (document.getElementById('taskEndInput').value || t.startDate);
+  // Free-text dates survive a save unless that date field was actually changed.
+  if (t.startDate !== modalOrigDates.start) t.startText = null;
+  if (t.endDate !== modalOrigDates.end) t.endText = null;
+  if (t.startDate !== modalOrigDates.start || t.endDate !== modalOrigDates.end) t.durText = null;
+  const switchingToAuto = t.taskMode === 'manual' && document.getElementById('taskModeInput').value === 'auto';
+  t.taskMode = document.getElementById('taskModeInput').value === 'auto' ? 'auto' : 'manual';
   t.progress = Math.max(0, Math.min(100, parseInt(document.getElementById('taskProgressInput').value) || 0));
   t.notes = document.getElementById('taskNotesInput').value;
   t.color = document.getElementById('taskColorSwatches').dataset.value || null;
@@ -1539,14 +1753,14 @@ function saveTaskFromModal() {
   // "Must Start/Finish On" is a hard pin — apply it immediately, the same
   // moment the constraint is set, rather than waiting for the cascade
   // below to merely treat it as a lower bound (see constraintStart()).
-  if (cinfo.bound === 'exact') {
+  if (cinfo.bound === 'exact' && t.taskMode !== 'manual') {
     const dur = durationDays(t.startDate, t.endDate);
     if (cinfo.basis === 'finish') { t.endDate = t.constraintDate; t.startDate = addDays(t.constraintDate, -(dur - 1)); }
     else { t.startDate = t.constraintDate; t.endDate = t.milestone ? t.constraintDate : addDays(t.constraintDate, dur - 1); }
   }
   t.updatedAt = Date.now();
   normalizeData();
-  applyConstraints(t.id);
+  if (switchingToAuto) rescheduleAsAuto(t); else applyConstraints(t.id);
   save(); render();
   closeTaskModal();
 }
@@ -1640,7 +1854,7 @@ function downloadData(data, filename) {
   document.body.appendChild(a); a.click(); a.remove();
   URL.revokeObjectURL(url);
 }
-function exportProject() { downloadData(syncPayload(), `dbplanner-${todayStr()}.json`); closeDataMenu(); }
+function exportProject() { downloadData(syncPayload(), `milestone-${todayStr()}.json`); closeDataMenu(); }
 function triggerImport() { document.getElementById('fileInput').click(); closeDataMenu(); }
 function handleFileImport(event) {
   const file = event.target.files[0]; if (!file) return;
@@ -1651,7 +1865,7 @@ function handleFileImport(event) {
       if (!Array.isArray(data.tasks)) throw new Error('missing tasks');
       pendingImportData = data;
       openImportModal();
-    } catch (e) { showToast("That file doesn't look like a dbPlanner export", true); }
+    } catch (e) { showToast("That file doesn't look like a Milestone export", true); }
   };
   reader.readAsText(file);
   event.target.value = '';
@@ -1661,7 +1875,7 @@ function closeImportModal() { document.getElementById('importModalBg').classList
 function applyImport(mode) {
   if (!pendingImportData) return;
   if (mode === 'replace') {
-    downloadData(syncPayload(), `dbplanner-backup-before-replace-${todayStr()}.json`);
+    downloadData(syncPayload(), `milestone-backup-before-replace-${todayStr()}.json`);
     project = pendingImportData.project || project;
     tasks = Array.isArray(pendingImportData.tasks) ? pendingImportData.tasks : [];
     deletedTaskIds = Array.isArray(pendingImportData.deletedTaskIds) ? pendingImportData.deletedTaskIds : [];
@@ -1684,14 +1898,14 @@ function maybeSnapshotBackup() {
     const keys = Object.keys(backups).sort();
     while (keys.length > MAX_BACKUPS) delete backups[keys.shift()];
     localStorage.setItem(BACKUPS_KEY, JSON.stringify(backups));
-  } catch (e) { console.warn('dbPlanner: backup snapshot failed', e); }
+  } catch (e) { console.warn('Milestone: backup snapshot failed', e); }
 }
 function listBackups() { try { return JSON.parse(localStorage.getItem(BACKUPS_KEY) || '{}'); } catch (e) { return {}; } }
 function openBackupsModal() {
   const backups = listBackups();
   const keys = Object.keys(backups).sort().reverse();
   const el = document.getElementById('backupsList');
-  el.innerHTML = keys.length === 0 ? '<div class="pred-empty">No backups yet — one is taken automatically each day you use dbPlanner.</div>' :
+  el.innerHTML = keys.length === 0 ? '<div class="pred-empty">No backups yet — one is taken automatically each day you use Milestone.</div>' :
     keys.map(k => `<div class="backup-row"><span>${escapeHtml(k)}</span><button class="btn" onclick="restoreBackup('${k}')">Restore</button></div>`).join('');
   document.getElementById('backupsModalBg').classList.add('open');
   closeDataMenu();
@@ -1704,7 +1918,7 @@ function restoreBackup(dateKey) {
     body: `Restore the snapshot from ${escapeHtml(dateKey)}? Your current data will be downloaded as a safety copy first.`,
     confirmLabel: 'Restore',
     action() {
-      downloadData(syncPayload(), `dbplanner-backup-before-restore-${todayStr()}.json`);
+      downloadData(syncPayload(), `milestone-backup-before-restore-${todayStr()}.json`);
       project = snap.project || project;
       tasks = Array.isArray(snap.tasks) ? snap.tasks : [];
       deletedTaskIds = Array.isArray(snap.deletedTaskIds) ? snap.deletedTaskIds : [];
@@ -1716,7 +1930,8 @@ function restoreBackup(dateKey) {
 }
 
 /* ==================== File System Access API single-file sync ============= */
-const _FS_DB = 'dbplanner-fs', _FS_STORE = 'handles', _FS_KEY = 'syncFile';
+const _FS_DB = 'milestone-fs', _FS_STORE = 'handles', _FS_KEY = 'syncFile';
+const _FS_LEGACY_DB = 'dbplanner-fs';
 function _fsIdb() {
   return new Promise((resolve, reject) => {
     const req = indexedDB.open(_FS_DB, 1);
@@ -1729,19 +1944,42 @@ async function _fsGet(key) { const db = await _fsIdb(); return new Promise((reso
 async function _fsPut(key, val) { const db = await _fsIdb(); return new Promise((resolve, reject) => { const tx = db.transaction(_FS_STORE, 'readwrite'); tx.objectStore(_FS_STORE).put(val, key); tx.oncomplete = () => resolve(); tx.onerror = () => reject(tx.error); }); }
 async function _fsDel(key) { const db = await _fsIdb(); return new Promise((resolve, reject) => { const tx = db.transaction(_FS_STORE, 'readwrite'); tx.objectStore(_FS_STORE).delete(key); tx.oncomplete = () => resolve(); tx.onerror = () => reject(tx.error); }); }
 
+// Carry a linked sync-file handle over from the pre-rename IndexedDB
+// database. databases() is checked first because indexedDB.open() on a
+// nonexistent name would create an empty legacy DB as a side effect.
+async function _fsMigrateLegacy() {
+  try {
+    if (!indexedDB.databases) return;
+    if (!(await indexedDB.databases()).some(d => d.name === _FS_LEGACY_DB)) return;
+    if (await _fsGet(_FS_KEY)) return;
+    const handle = await new Promise((resolve, reject) => {
+      const req = indexedDB.open(_FS_LEGACY_DB);
+      req.onerror = () => reject(req.error);
+      req.onsuccess = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains(_FS_STORE)) { db.close(); resolve(null); return; }
+        const r = db.transaction(_FS_STORE, 'readonly').objectStore(_FS_STORE).get(_FS_KEY);
+        r.onsuccess = () => { db.close(); resolve(r.result || null); };
+        r.onerror = () => { db.close(); reject(r.error); };
+      };
+    });
+    if (handle) await _fsPut(_FS_KEY, handle);
+  } catch (e) { console.warn('Milestone: legacy file-sync handle migration failed', e); }
+}
+
 function fileSyncSupported() { return typeof window.showOpenFilePicker === 'function'; }
 function openFileSyncModal() { document.getElementById('fileSyncModalBg').classList.add('open'); }
 function closeFileSyncModal() { document.getElementById('fileSyncModalBg').classList.remove('open'); }
 
 async function linkNewFile() {
   try {
-    const handle = await window.showSaveFilePicker({ suggestedName: 'dbplanner-data.json', types: [{ description: 'dbPlanner data', accept: { 'application/json': ['.json'] } }] });
+    const handle = await window.showSaveFilePicker({ suggestedName: 'milestone-data.json', types: [{ description: 'Milestone data', accept: { 'application/json': ['.json'] } }] });
     await finishLinking(handle, true);
   } catch (e) { if (e.name !== 'AbortError') showToast('Could not create file', true); }
 }
 async function linkExistingFile() {
   try {
-    const [handle] = await window.showOpenFilePicker({ types: [{ description: 'dbPlanner data', accept: { 'application/json': ['.json'] } }] });
+    const [handle] = await window.showOpenFilePicker({ types: [{ description: 'Milestone data', accept: { 'application/json': ['.json'] } }] });
     await finishLinking(handle, false);
   } catch (e) { if (e.name !== 'AbortError') showToast('Could not open file', true); }
 }
@@ -1759,7 +1997,7 @@ async function finishLinking(handle, isNew) {
           else mergeData(data, { respectTombstones: true });
         }
       }
-    } catch (e) { console.warn('dbPlanner: could not read linked file', e); }
+    } catch (e) { console.warn('Milestone: could not read linked file', e); }
   }
   fileSyncStatus = 'linked';
   lastSyncedAt = Date.now();
@@ -1782,7 +2020,7 @@ async function writeSyncFile() {
     lastSyncedSnapshot = text;
     lastSyncedAt = Date.now();
     fileSyncStatus = 'linked';
-  } catch (e) { console.warn('dbPlanner: sync write failed', e); showToast('File sync write failed', true); }
+  } catch (e) { console.warn('Milestone: sync write failed', e); showToast('File sync write failed', true); }
   updateFileSyncUI();
 }
 function queueFileSyncWrite() {
@@ -1814,7 +2052,7 @@ async function pollFileSync() {
       render();
       showToast('Synced changes from another device');
     }
-  } catch (e) { console.warn('dbPlanner: poll failed', e); }
+  } catch (e) { console.warn('Milestone: poll failed', e); }
 }
 async function reconnectFile() {
   if (!syncFileHandle) return;
@@ -1836,6 +2074,7 @@ async function unlinkFile() {
 async function initFileSync() {
   if (!fileSyncSupported()) { fileSyncStatus = 'unsupported'; updateFileSyncUI(); return; }
   try {
+    await _fsMigrateLegacy();
     const handle = await _fsGet(_FS_KEY);
     if (handle && handle.kind === 'file') {
       syncFileHandle = handle;
@@ -1848,7 +2087,7 @@ async function initFileSync() {
         render();
       } else { fileSyncStatus = 'lapsed'; }
     } else { fileSyncStatus = 'unlinked'; }
-  } catch (e) { console.warn('dbPlanner: initFileSync failed', e); fileSyncStatus = 'unlinked'; }
+  } catch (e) { console.warn('Milestone: initFileSync failed', e); fileSyncStatus = 'unlinked'; }
   updateFileSyncUI();
 }
 function onFileSyncBtnClick() {
@@ -1918,13 +2157,14 @@ function wireScrollSync() {
 function wireGlobalEvents() {
   document.addEventListener('click', (e) => {
     if (!e.target.closest('#dataMenuBtn') && !e.target.closest('#dataMenu')) closeDataMenu();
+    if (!e.target.closest('#taskModeMenu')) closeTaskModeMenu();
   });
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
     for (const id of ['taskModalBg', 'confirmModalBg', 'importModalBg', 'backupsModalBg', 'fileSyncModalBg', 'helpModalBg', 'aboutModalBg']) {
       document.getElementById(id).classList.remove('open');
     }
-    closeDataMenu();
+    closeDataMenu(); closeTaskModeMenu();
   });
   document.getElementById('projectNameInput').addEventListener('change', (e) => renameProject(e.target.value));
   document.getElementById('toastUndoBtn').addEventListener('click', triggerToastUndo);
@@ -1934,7 +2174,7 @@ function wireGlobalEvents() {
 document.addEventListener('DOMContentLoaded', () => {
   load();
   applyTheme(); applyGridPaneWidth();
-  document.title = project.name + ' · dbPlanner';
+  document.title = project.name + ' · Milestone';
   wireGlobalEvents();
   wireScrollSync();
   wireGridResize();
