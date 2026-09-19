@@ -273,6 +273,16 @@ button:focus:not(:focus-visible) { outline: none; }
 .main.view-tasks .grid-header::before, .main.view-tasks .grid-row::before { content: ''; position: absolute; inset: 0; pointer-events: none; background-repeat: no-repeat; background-size: 1px 100%; }
 .main.view-tasks .grid-header::before { background-image: var(--col-lines-h, none); background-position: var(--col-pos-h, 0 0); }
 .main.view-tasks .grid-row::before { background-image: var(--col-lines-r, none); background-position: var(--col-pos-r, 0 0); }
+/* One spacing rule for every column: no gap between tracks (the column line is the track boundary) and every cell keeps the same
+   8px inset from the line on both sides. The ID cell (first) and the row-actions cell (last) keep their own spacing; the inline
+   editors, which are grid items themselves, get the same inset as a margin. */
+.main.view-tasks .grid-header, .main.view-tasks .grid-row { column-gap: 0; }
+.main.view-tasks .grid-header > div:not(:first-child):not(:last-child), .main.view-tasks .grid-row > div:not(:first-child):not(:last-child):not(.inline-wrap):not(.grid-name) { padding-inline: 8px; }
+/* The Name column keeps its original indent (names start ~3px from the line, sub-tasks step in 16px per level) — only its right end gets the inset */
+.main.view-tasks .grid-row > .grid-name { padding-left: calc(3px + var(--depth, 0) * 16px); padding-right: 8px; }
+.main.view-tasks .grid-row > input.inline-edit { width: calc(100% - 4px); margin-inline: 2px; padding-inline: 5px; }   /* the typed text starts exactly where the cell's text does (2 + 1 border + 5 = 8px) */
+.main.view-tasks .grid-row > input.inline-edit[type=date] { width: max(calc(100% - 4px), 95px); padding-inline: 4px 2px; }   /* the native control needs ~93px for its fields + picker icon; the date columns are 104px = 2px + 100px + 2px, so it sits inside its column with equal space left and right */
+.main.view-tasks .grid-row > .inline-wrap { width: max(calc(100% - 4px), 92px); margin-inline: 2px; }
 /* ...and the same lines run on down the empty area under the last task (the rows are transparent, so they line up exactly) */
 .main.view-tasks .grid-rows { background-image: var(--col-lines-r, none); background-position: var(--col-pos-r, 0 0); background-size: 1px 100%; background-repeat: no-repeat; }
 .grid-row { border-bottom: 1px solid var(--border); font-size: 12.5px; cursor: default; }
@@ -284,10 +294,10 @@ button:focus:not(:focus-visible) { outline: none; }
 .grid-row.drop-after { box-shadow: inset 0 -2px 0 var(--accent); }
 .grid-row.drop-into { background: color-mix(in srgb, var(--accent) 12%, var(--panel)); box-shadow: inset 0 -2px 0 var(--accent); }
 .grid-rows.drop-end { box-shadow: inset 0 -2px 0 var(--accent); }
-.grid-name { display: flex; align-items: center; gap: 4px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.grid-name { display: flex; align-items: center; gap: 4px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding-left: calc(var(--depth, 0) * 16px); }   /* outline indent; the Tasks view adds 3px, the distance the name has always had from the column line */
 .name-text.editable, .grid-cell-dim.editable { cursor: text; }
 .name-text.editable:hover, .grid-cell-dim.editable:hover { background: var(--panel-2); border-radius: 4px; }
-input.inline-edit { width: 100%; min-width: 0; padding: 3px 6px; border: 1px solid var(--accent); border-radius: 4px; background: var(--panel); color: var(--text); font-size: 12.5px; font-family: inherit; }
+input.inline-edit { width: 100%; min-width: 0; padding: 3px 6px; border: 1px solid var(--accent); outline: none; border-radius: 4px; background: var(--panel); color: var(--text); font-size: 12.5px; font-family: inherit; }
 .grid-name input.inline-edit { flex: 1; }
 .grid-name .chevron { width: 14px; height: 14px; border: none; background: none; color: var(--text-faint); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 10px; }
 .grid-name .chevron.empty { visibility: hidden; }
@@ -303,18 +313,23 @@ input.inline-edit { width: 100%; min-width: 0; padding: 3px 6px; border: 1px sol
 .mode-manual { color: var(--task-amber); }
 .mode-auto { color: var(--text-faint); }
 .task-mode-cell:hover { background: var(--panel-2); border-radius: 4px; }
-.main.view-tasks .task-mode-cell { justify-content: flex-start; padding-left: 6px; }   /* under the left-aligned header label, like every other column */
+.main.view-tasks .task-mode-cell, .main.view-tasks .custom-flag { justify-content: flex-start; }   /* under the left-aligned header label, like every other column */
 .dropdown-item.active { background: color-mix(in srgb, var(--accent) 10%, var(--panel)); }
 .dropdown-item .mode-check { margin-left: auto; color: var(--accent); }
 .subbar-spacer { flex: 1 1 auto; }
 .grid-name .mismatch-warn { color: var(--task-amber); flex-shrink: 0; font-size: 11px; }
 .inline-wrap { position: relative; display: flex; align-items: center; }
-.inline-wrap .inline-edit { padding-right: 24px; }
+.inline-wrap .inline-edit { padding-right: 20px; }
+/* Compact date editor: the native control's own padding around the fields and its big picker icon are what made it ~130px wide. */
+input.inline-edit[type=date] { padding-block: 2px; font-size: 12px; }
+input.inline-edit[type=date]::-webkit-datetime-edit, input.inline-edit[type=date]::-webkit-datetime-edit-fields-wrapper { padding: 0; }
+input.inline-edit[type=date]::-webkit-calendar-picker-indicator { margin: 0 0 0 1px; padding: 0; width: 13px; height: 13px; }
+.inline-wrap .inline-edit { font-size: 12px; padding-block: 2px; }
 /* A date editor needs more room than a narrow date column has (the native control is ~127px with its picker icon; Actual Start/Finish
    columns are 92px, Start/Finish 116px): while it is open it grows past its column, over the neighbour, instead of clipping the picker. */
-.main.view-tasks .grid-row > input.inline-edit[type=date] { width: max(100%, 132px); position: relative; z-index: 4; }
-.main.view-tasks .grid-row > .inline-wrap { overflow: visible; width: max(100%, 132px); z-index: 4; }
-.inline-cal { position: absolute; right: 2px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-dim); padding: 2px 5px; font-size: 12px; }
+.main.view-tasks .grid-row > input.inline-edit[type=date] { position: relative; z-index: 4; }
+.main.view-tasks .grid-row > .inline-wrap { overflow: visible; z-index: 4; }
+.inline-cal { position: absolute; right: 1px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-dim); padding: 2px 4px; font-size: 11px; }
 .inline-cal:hover { color: var(--accent); }
 .inline-date-hidden { position: absolute; right: 0; bottom: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 .grid-actions { display: flex; gap: 2px; justify-content: flex-end; }
@@ -757,23 +772,25 @@ const ZOOMS = [
   { id: 'month', label: 'Month', pxPerDay: 5  },
   { id: 'year',  label: 'Year',  pxPerDay: 1.5 }   // ~46px a month, ~137px a quarter
 ];
+// A date column is 104px so that the date editor (native date + picker icon, ~95px) fits inside it with 2px to the line on each side.
+// Column widths INCLUDE the 8px inset on each side of a cell (see 'One spacing rule' in the CSS): width = widest header or content + 16px.
 // The columns of the Tasks view's list (the Gantt view's side list stays a fixed ID/Mode/Name/Start/Finish). The ID column is
 // always first and the row actions always last; everything in between can be shown, hidden and reordered (Columns button).
 // `dflt` = shown until the user says otherwise. Insertion order = the default order. Task Name can't be hidden.
 const TASK_COLS = {
-  mode:         { label: 'Task Mode',     width: '64px',              dflt: true },   // its header is two lines (Task / Mode) in the Tasks view; the Gantt side list keeps a 24px icon column
-  wbs:          { label: 'WBS',           width: '64px',              dflt: true },
+  mode:         { label: 'Task Mode',     width: '76px',              dflt: true },   // its header is two lines (Task / Mode) in the Tasks view; the Gantt side list keeps a 24px icon column
+  wbs:          { label: 'WBS',           width: '68px',              dflt: true },
   name:         { label: 'Task Name',     width: 'minmax(160px,1fr)', dflt: true, locked: true },
-  start:        { label: 'Start',         width: '116px',             dflt: true },
-  end:          { label: 'Finish',        width: '116px',             dflt: true },
-  actualStart:  { label: 'Actual Start',  width: '92px',              dflt: false },   // header: Actual / Start
-  actualFinish: { label: 'Actual Finish', width: '92px',              dflt: false },   // header: Actual / Finish
-  duration:     { label: 'Duration',      width: '96px',              dflt: true },
-  progress:     { label: '% Complete',    width: '54px',              dflt: true },
-  preds:        { label: 'Predecessors',  width: '122px',             dflt: true },   // just wide enough for its header (text 95px + funnel 18px + gap ≈ 116px, plus a little slack for other fonts)
-  remaining:    { label: 'Remaining Duration', width: '96px',         dflt: false },
-  status:       { label: 'Status',        width: '104px',             dflt: false },
-  resource:     { label: 'Resource',      width: 'minmax(110px,1fr)', dflt: false }
+  start:        { label: 'Start',         width: '104px',             dflt: true },
+  end:          { label: 'Finish',        width: '104px',             dflt: true },
+  actualStart:  { label: 'Actual Start',  width: '104px',             dflt: false },   // header: Actual / Start
+  actualFinish: { label: 'Actual Finish', width: '104px',             dflt: false },   // header: Actual / Finish
+  duration:     { label: 'Duration',      width: '104px',             dflt: true },
+  progress:     { label: '% Complete',    width: '56px',              dflt: true },
+  preds:        { label: 'Predecessors',  width: '136px',             dflt: true },   // just wide enough for its header: text 95px + gap 3px + funnel 18px + the 2×8px cell inset = 132px, plus a little slack for other fonts
+  remaining:    { label: 'Remaining Duration', width: '110px',        dflt: false },
+  status:       { label: 'Status',        width: '108px',             dflt: false },
+  resource:     { label: 'Resource',      width: '140px',             dflt: false }   // fixed like every column but Task Name; longer text is cut with an ellipsis (the cell's tooltip and the editor show all of it)
 };
 // ---- Custom fields: Text1-5, Number1-5, Date1-5, Flag1-5. A task keeps its values in `task.custom` ({ text1: 'x', number2: 4.5,
 // date3: '2026-09-01', flag4: true } — only fields that have a value are present). The field NAMES live on the plan
@@ -781,8 +798,8 @@ const TASK_COLS = {
 // two plans can name the same field differently. They are ordinary columns in the registry, hidden until ticked in Columns.
 const CUSTOM_KINDS = [
   { kind: 'text',   label: 'Text',   filter: 'text',   width: '130px' },
-  { kind: 'number', label: 'Number', filter: 'number', width: '96px' },
-  { kind: 'date',   label: 'Date',   filter: 'date',   width: '116px' },
+  { kind: 'number', label: 'Number', filter: 'number', width: '100px' },
+  { kind: 'date',   label: 'Date',   filter: 'date',   width: '104px' },
   { kind: 'flag',   label: 'Flag',   filter: 'list',   width: '80px' }
 ];
 const CUSTOM_FIELDS = {};
@@ -1938,7 +1955,7 @@ function predecessorLabel(t) {
 }
 
 // Positions of the column lines (Tasks view): the middle of every gap between two tracks, read from the resolved grid tracks of the
-// header and of the first row (they can differ by a scrollbar). No line before the row-actions column at the far right.
+// header and of the first row (they can differ by a scrollbar): on the boundary between two tracks (the last pixel of the left cell). No line before the row-actions column at the far right.
 function updateColumnLines() {
   const main = document.getElementById('main');
   const set = (suffix, el) => {
@@ -1948,7 +1965,7 @@ function updateColumnLines() {
       const tracks = cs.gridTemplateColumns.split(' ').map(parseFloat).filter(Number.isFinite);
       const gap = parseFloat(cs.columnGap) || 0, pad = parseFloat(cs.paddingLeft) || 0;
       const xs = []; let x = pad;
-      for (let i = 0; i < tracks.length - 2; i++) { x += tracks[i]; xs.push(Math.round((x + gap / 2 - 0.5) * 2) / 2); x += gap; }
+      for (let i = 0; i < tracks.length - 2; i++) { x += tracks[i]; xs.push(Math.floor(x + gap / 2 - 0.5)); x += gap; }
       if (xs.length) {
         images = xs.map(() => 'linear-gradient(var(--border), var(--border))').join(', ');
         positions = xs.map(v => `${v}px 0`).join(', ');
@@ -2040,7 +2057,7 @@ function renderGrid() {
     const cells = {
       mode: modeCell,
       wbs: `<div class="grid-cell-dim${summaryCls}">${escapeHtml(wbsCode(t.id))}</div>`,
-      name: `<div class="grid-name" style="padding-left:${depth * 16}px">
+      name: `<div class="grid-name" style="--depth:${depth}">
         <button class="chevron${summary ? '' : ' empty'}" onclick="event.stopPropagation();toggleCollapse('${t.id}')"><i class="fa-solid fa-chevron-${t.collapsed && !filtersActive() ? 'right' : 'down'}"></i></button>
         ${t.milestone ? '<i class="fa-solid fa-diamond milestone-dot" style="font-size:9px"></i>' : ''}
         ${cyclic.has(t.id) ? '<i class="fa-solid fa-triangle-exclamation cycle-warn" title="Circular dependency — not auto-scheduled"></i>' : ''}
