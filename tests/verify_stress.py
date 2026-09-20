@@ -108,7 +108,13 @@ async ([seed, steps, allowCalendar]) => {
     const bad = inv();
     if (bad.length) return { ok: false, step, op: op[0], why: 'invariant: ' + bad.slice(0, 4).join(' ; '), log };
     if (step % 20 === 0) {
-      const a1 = canonicalText(); normalizeData(); if (canonicalText() !== a1) return { ok: false, step, op: op[0], why: 'normalizeData is not idempotent', log };
+      const a1 = canonicalText(); normalizeData(); const a2 = canonicalText();
+      if (a2 !== a1) {   // say WHAT changed: the tasks and fields that differ between the two passes
+        const A = JSON.parse(a1), B = JSON.parse(a2), am = new Map(A.tasks.map(x => [x.id, x])), diffs = [];
+        for (const x of B.tasks) { const o = am.get(x.id); if (!o) { diffs.push('new ' + x.name); continue; } for (const k of new Set([...Object.keys(x), ...Object.keys(o)])) if (JSON.stringify(x[k]) !== JSON.stringify(o[k])) diffs.push(x.name + '.' + k + ': ' + JSON.stringify(o[k]) + ' -> ' + JSON.stringify(x[k])); }
+        for (const k of Object.keys(B.project)) if (JSON.stringify(B.project[k]) !== JSON.stringify(A.project[k])) diffs.push('project.' + k);
+        return { ok: false, step, op: op[0], why: 'normalizeData is not idempotent: ' + diffs.slice(0, 6).join(' | '), log };
+      }
       const before = canonicalText(); const base = JSON.parse(before);
       const changed = mergeData(JSON.parse(before), { respectTombstones: true, base, conflicts: [], changedIds: new Map() });
       if (canonicalText() !== before) return { ok: false, step, op: op[0], why: 'merging the plan with itself changed it', log };

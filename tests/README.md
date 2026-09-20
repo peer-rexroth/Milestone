@@ -21,6 +21,10 @@ set `MILESTONE_URL` / `--url` to test another address. Suites run three at a tim
 | `verify_stress` | seeded random operations (add, delete, indent, move, edits, drags, clone, undo/redo, calendar and holidays, baselines …) with invariants after every step — structure, dates, links, Auto tasks exactly where their links put them, idempotent normalise/merge, stable save/load, critical path, Excel export |
 | `verify_pull`, `verify_cycles`, `verify_actuals`, `verify_calendar`, `verify_holidays`, `verify_critical`, `verify_baseline` | scheduling: bidirectional Auto scheduling and the Start/Finish No Earlier Than pin, dependency cycles, actual dates, the working calendar and holidays, the critical path, baselines and variance |
 | `verify_undo` | undo / redo history |
+| `verify_robust` | garbage into every parser (thousands of random tables, XML mutations, scalar fragments), hostile names (XSS) in every new dialog and the print output, a 1,400-task plan, undo/redo across all the new features, accessible names |
+| `verify_monkey` | drives the real UI at random (clicks on every kind of control, shortcuts, typing hostile text, drags, resizes, reloads): no error, the plan valid throughout |
+| `verify_layout` | the toolbars at seven widths and every dialog at three window sizes, in both themes |
+| `verify_normalize` | `normalizeData` on random plans: idempotent, independent of the order of the tasks, a merge with itself changes nothing |
 | `verify_milestone_tbd` | Finish = TBD on a manual milestone; Excel column widths (WBS) |
 | `verify_bulk`, `verify_search`, `verify_import`, `verify_print`, `verify_holiday_presets` | multi-select, bulk edit and copy/paste of rows (also from Excel); the Find palette; MS Project XML and CSV import; print / PDF pages; public-holiday presets |
 | `verify_help` | the tabbed Help dialog: topics, keyboard, contrast in both themes, narrow layout |

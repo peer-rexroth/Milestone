@@ -44,6 +44,8 @@ with sync_playwright() as p:
     pg.keyboard.press("Escape"); pg.wait_for_timeout(200)
     pg.click("#searchBtn"); pg.wait_for_timeout(120)
     check("the Find button in the toolbar opens it", is_open())
+    check("the palette is 960px wide on a wide window, and never wider than 94% of a narrow one", ev("() => Math.round(document.querySelector('#searchModalBg .modal').getBoundingClientRect().width)") == 960 and (pg.set_viewport_size({"width": 700, "height": 700}), pg.wait_for_timeout(150), ev("() => Math.round(document.querySelector('#searchModalBg .modal').getBoundingClientRect().width)"))[2] <= 660, ev("() => document.querySelector('#searchModalBg .modal').getBoundingClientRect().width"))
+    pg.set_viewport_size({"width": 1600, "height": 800}); pg.wait_for_timeout(100)
     pg.mouse.click(5, 5); pg.wait_for_timeout(200)
     check("a click outside closes it", not is_open())
     ev("() => startInlineEdit(tasks[0].id, 'name')"); pg.wait_for_timeout(150); pg.keyboard.type("/")

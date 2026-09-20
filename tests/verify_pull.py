@@ -113,6 +113,20 @@ with sync_playwright() as p:
     pg.evaluate("() => { const t = tasks.find(x => x.name === 'B'); dragState = { taskId: t.id, moved: true, previewStart: '2026-09-22', previewEnd: '2026-09-28', mode: 'resize-right' }; onDragMouseUp(); }")
     check("...stretching a delayed task's right edge pins the Finish (FNET)", con("B") == ["FNET", "2026-09-28"], con("B"))
 
+    # ------------------------------------------------------------ undoing a delete restores the schedule DOWNSTREAM too (found by the stress test)
+    seed([{"name": "E", "s": "2026-09-07", "e": "2026-09-08"}, {"name": "D", "s": "2026-12-01", "e": "2026-12-04"},
+          {"name": "X", "s": "2026-12-07", "e": "2026-12-11", "preds": [["D", "FS", 0], ["E", "FS", 0]]}, {"name": "Y", "s": "2026-12-14", "e": "2026-12-18", "preds": [["X", "FS", 0]]},
+          {"name": "Z", "s": "2026-12-21", "e": "2026-12-22", "preds": [["Y", "FF", 0]]}])
+    pg.evaluate("() => { deleteTaskFlow(tasks.find(t => t.name === 'D').id); confirmModalAction(); }")
+    check("deleting D pulls its whole chain earlier: X (its other link is E), then Y behind X, then Z behind Y", dates("X")[0] == "2026-09-09" and dates("Y")[0] == "2026-09-14" or dates("Y")[0] < "2026-12-01", [dates("X"), dates("Y"), dates("Z")])
+    pg.evaluate("() => triggerToastUndo()")
+    check("Undo brings the chain BACK: D returns and X, Y and Z are on the dates they had (12.-11.12., 14.-18.12., 21.-22.12.)", dates("X") == ["2026-12-07", "2026-12-11"] and dates("Y") == ["2026-12-14", "2026-12-18"] and dates("Z")[0] >= "2026-12-14", [dates("X"), dates("Y"), dates("Z")])
+    check("...every Auto task sits where its links put it again", pg.evaluate("() => tasks.every(t => !offItsLinks(t))"))
+    seed([{"name": "E", "s": "2026-09-07", "e": "2026-09-08"}, {"name": "D", "s": "2026-12-01", "e": "2026-12-04"},
+          {"name": "X", "s": "2026-12-07", "e": "2026-12-11", "preds": [["D", "FS", 0], ["E", "FS", 0]]}, {"name": "Y", "s": "2026-12-14", "e": "2026-12-18", "preds": [["X", "FS", 0]]}])
+    pg.evaluate("() => { historyCoalesceMs = 0; deleteTaskFlow(tasks.find(t => t.name === 'D').id); confirmModalAction(); historyUndo(); }")
+    check("...and Ctrl+Z (history) does the same", dates("X") == ["2026-12-07", "2026-12-11"] and dates("Y") == ["2026-12-14", "2026-12-18"], [dates("X"), dates("Y")])
+
     # ------------------------------------------------------------ what is NOT scheduled
     chain()
     pg.evaluate("() => { tasks.find(x => x.name === 'B').taskMode = 'manual'; }")
