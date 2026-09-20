@@ -1,0 +1,101 @@
+from playwright.sync_api import sync_playwright
+import os
+URL = os.environ.get("MILESTONE_URL", "http://127.0.0.1:8937/milestone.html")
+errors, results = [], []
+def check(name, cond, detail=""):
+    results.append(bool(cond)); print(("PASS  " if cond else "FAIL  ") + name + (f"   [{str(detail)[:500]}]" if not cond and detail else ""))
+
+with sync_playwright() as p:
+    b = p.chromium.launch(headless=True)
+    ctx = b.new_context(viewport={"width": 1500, "height": 900}); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker")
+    pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
+    pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn")
+    ev = pg.evaluate
+    days = lambda rid, y0, y1=None: ev("([r, a, b]) => holidayPreset(r, a, b).map(h => h.date)", [rid, y0, y1 or y0])
+    named = lambda rid, y: {d: n for d, n in ev("([r, y]) => holidayPreset(r, y, y).map(h => [h.date, h.name])", [rid, y])}
+
+    # ------------------------------------------------------------ Easter and the moving days
+    check("Easter Sunday for 2024-2030 (the computus)", ev("() => [2024, 2025, 2026, 2027, 2028, 2029, 2030].map(easterSunday)") == ["2024-03-31", "2025-04-20", "2026-04-05", "2027-03-28", "2028-04-16", "2029-04-01", "2030-04-21"])
+    de = days("DE", 2026)
+    check("Germany 2026, nationwide: 9 days, Good Friday 03.04., Easter Monday 06.04., Ascension 14.05., Whit Monday 25.05., Unity Day 03.10. (a Saturday: kept, it is filtered by the calendar later)", de == ["2026-01-01", "2026-04-03", "2026-04-06", "2026-05-01", "2026-05-14", "2026-05-25", "2026-10-03", "2026-12-25", "2026-12-26"], de)
+    by = named("DE-BY", 2026)
+    check("Bavaria adds Epiphany 06.01., Corpus Christi 04.06. and All Saints 01.11.", by.get("2026-01-06") == "Epiphany" and by.get("2026-06-04") == "Corpus Christi" and "2026-11-01" in by and len(by) == 12, by)
+    check("Saxony adds Reformation Day and Repentance and Prayer Day (Wednesday before 23 Nov: 18.11.2026, 20.11.2024)", "2026-11-18" in days("DE-SN", 2026) and "2024-11-20" in days("DE-SN", 2024) and "2026-10-31" in days("DE-SN", 2026))
+    check("Berlin: Women's Day from 2019 only; Mecklenburg-Vorpommern from 2023 only", "2018-03-08" not in days("DE-BE", 2018) and "2019-03-08" in days("DE-BE", 2019) and "2022-03-08" not in days("DE-MV", 2022) and "2023-03-08" in days("DE-MV", 2023))
+    check("Reformation Day: Lower Saxony from 2018 (not 2017), Brandenburg always", "2017-10-31" not in days("DE-NI", 2017) and "2018-10-31" in days("DE-NI", 2018) and "2017-10-31" in days("DE-BB", 2017))
+    check("Thuringia: World Children's Day 20.09. from 2019", "2019-09-20" in days("DE-TH", 2019) and "2018-09-20" not in days("DE-TH", 2018))
+    check("Saarland has Assumption Day, Hesse does not", "2026-08-15" in days("DE-SL", 2026) and "2026-08-15" not in days("DE-HE", 2026))
+    check("all 16 German states are offered, plus the nationwide set", ev("() => HOLIDAY_REGIONS[0].regions.length") == 17)
+
+    # ------------------------------------------------------------ United States: observed days
+    us = named("US", 2026)
+    check("US 2026: 11 federal holidays; Independence Day, a Saturday, is observed Friday 03.07.; Thanksgiving 26.11.; Labor Day 07.09.; Memorial Day 25.05.", len(us) == 11 and us.get("2026-07-03") == "Independence Day (observed)" and "2026-11-26" in us and "2026-09-07" in us and "2026-05-25" in us, us)
+    check("...MLK Day 19.01., Presidents' Day 16.02., Columbus Day 12.10., Veterans Day 11.11., Juneteenth 19.06.", all(d in us for d in ("2026-01-19", "2026-02-16", "2026-10-12", "2026-11-11", "2026-06-19")))
+    check("Juneteenth exists from 2021 only", "2020-06-19" not in days("US", 2020) and "2021-06-18" in days("US", 2021), days("US", 2021))   # (19.06.2021 was a Saturday -> observed Friday)
+    check("New Year's Day on a Saturday (1.1.2028) is observed on Friday 31.12.2027", "2027-12-31" in days("US", 2028) and "2028-01-01" not in days("US", 2028), days("US", 2028)[:2])
+    check("Christmas on a Sunday (2022) is observed Monday 26.12.", "2022-12-26" in days("US", 2022), days("US", 2022)[-2:])
+
+    # ------------------------------------------------------------ United Kingdom: substitute days
+    uk = named("UK-ENG", 2026)
+    check("England 2026: 8 days; bank holidays 04.05., 25.05., 31.08.; Christmas Friday, Boxing Day (Saturday) becomes Monday 28.12.", len(uk) == 8 and "2026-05-04" in uk and "2026-05-25" in uk and "2026-08-31" in uk and uk.get("2026-12-28") == "Boxing Day (substitute day)" and "2026-12-25" in uk, uk)
+    u27 = named("UK-ENG", 2027)
+    check("2027: Christmas on a Saturday -> Monday 27.12., Boxing Day on a Sunday -> Tuesday 28.12.", u27.get("2027-12-27") == "Christmas Day (substitute day)" and u27.get("2027-12-28") == "Boxing Day (substitute day)", u27)
+    u22 = named("UK-ENG", 2022)
+    check("2022: Christmas on a Sunday -> Tuesday 27.12. (Boxing Day is Monday 26.12.)", u22.get("2022-12-26") == "Boxing Day" and u22.get("2022-12-27") == "Christmas Day (substitute day)", u22)
+    sct = named("UK-SCT", 2026)
+    check("Scotland: 2 January, no Easter Monday, first Monday of August (03.08.), St Andrew's Day 30.11.", "2026-01-02" in sct and "2026-04-06" not in sct and "2026-08-03" in sct and "2026-11-30" in sct, sct)
+    nir = named("UK-NIR", 2026)
+    check("Northern Ireland: St Patrick's Day 17.03., Easter Monday, Battle of the Boyne 13.07. (12.07. is a Sunday)", "2026-03-17" in nir and "2026-04-06" in nir and "2026-07-13" in nir, nir)
+
+    # ------------------------------------------------------------ others
+    ie = named("IE", 2026)
+    check("Ireland 2026: St Brigid's 02.02., bank holidays 04.05., 01.06., 03.08., 26.10.; no Good Friday", all(d in ie for d in ("2026-02-02", "2026-05-04", "2026-06-01", "2026-08-03", "2026-10-26")) and "2026-04-03" not in ie, ie)
+    check("Ireland: St Brigid's Day from 2023; when 1 February is a Friday it is that Friday (2030), otherwise the first Monday (2028: 07.02.)", "2022-02-07" not in days("IE", 2022) and "2030-02-01" in days("IE", 2030) and "2028-02-07" in days("IE", 2028))
+    ca = named("CA", 2026)
+    check("Canada: Victoria Day is the Monday before 25 May (2026: 18.05., 2027: 24.05.), Thanksgiving is the second Monday of October (12.10.2026)", "2026-05-18" in ca and "2027-05-24" in days("CA", 2027) and "2026-10-12" in ca and "2026-09-30" in ca, ca)
+    nl = days("NL", 2025)
+    check("Netherlands: King's Day is 27 April, or 26 April when that is a Sunday (2025)", "2025-04-26" in nl and "2025-04-27" not in nl and "2027-04-27" in days("NL", 2027))
+    check("France 2026: 11 days incl. 08.05., 14.07., 11.11.", len(days("FR", 2026)) == 11 and all(d in days("FR", 2026) for d in ("2026-05-08", "2026-07-14", "2026-11-11")))
+    check("Austria has Corpus Christi and 26.10., no Good Friday; Switzerland has 01.08.", "2026-06-04" in days("AT", 2026) and "2026-10-26" in days("AT", 2026) and "2026-04-03" not in days("AT", 2026) and "2026-08-01" in days("CH", 2026))
+    check("Belgium 21.07., Spain 12.10. and 06.12., Italy 25.04. and 02.06.", "2026-07-21" in days("BE", 2026) and "2026-10-12" in days("ES", 2026) and "2026-12-06" in days("ES", 2026) and "2026-04-25" in days("IT", 2026) and "2026-06-02" in days("IT", 2026))
+    check("several years at once, sorted and without duplicates (Germany 2026-2028 = 27 days; 2027: Easter 28.03.)", len(days("DE", 2026, 2028)) == 27 and days("DE", 2026, 2028) == sorted(set(days("DE", 2026, 2028))) and "2027-03-26" in days("DE", 2027))
+    check("an unknown region gives nothing", ev("() => holidayPreset('XX', 2026, 2026).length") == 0)
+
+    # ------------------------------------------------------------ the dialog
+    ev("() => { tasks.length = 0; delete project.holidays; delete project.workDays; save(); render(); }")
+    pg.click("#planMenuBtn"); pg.wait_for_selector("#planMenu.open"); pg.click("#planCalendarItem"); pg.wait_for_selector("#calendarModalBg.open"); pg.wait_for_timeout(200)
+    opts = ev("() => [...document.querySelectorAll('#holRegion optgroup')].map(g => [g.label, g.querySelectorAll('option').length])")
+    check("the dialog offers the regions in two groups: Germany (17) and the other countries (13)", opts == [["Germany", 17], ["Other countries and regions", 13]], opts)
+    y = ev("() => new Date().getFullYear()")
+    check("the years default to this year and the next", pg.input_value("#holYearFrom") == str(y) and pg.input_value("#holYearTo") == str(y + 1))
+    pg.click("#calendarModalBg .hol-preset .btn")
+    check("Add without a region asks for one", "Choose a country" in pg.inner_text("#toastMsg"), pg.inner_text("#toastMsg"))
+    pg.select_option("#holRegion", "DE-BY"); pg.fill("#holYearFrom", "2026"); pg.fill("#holYearTo", "2026"); pg.click("#calendarModalBg .hol-preset .btn"); pg.wait_for_timeout(100)
+    rows = pg.evaluate("() => [...document.querySelectorAll('#holList .hol-row')].map(r => r.innerText.replace(/\\s+/g, ' ').trim())")
+    check("Bavaria 2026 adds 9 holidays: the 12 rule days minus the three on a weekend (Unity Day is a Saturday, All Saints a Sunday, 26.12. a Saturday)", len(rows) == 9 and any("Corpus Christi" in r for r in rows) and not any("Unity" in r for r in rows), (len(rows), rows[:3]))
+    check("...the toast says so", "Added 9 holidays for Bavaria 2026" in pg.inner_text("#toastMsg") and "3 on days off anyway" in pg.inner_text("#toastMsg"), pg.inner_text("#toastMsg"))
+    pg.click("#calendarModalBg .hol-preset .btn"); pg.wait_for_timeout(80)
+    check("adding the same region and years again changes nothing", pg.locator("#holList .hol-row").count() == 9 and "Nothing new" in pg.inner_text("#toastMsg"), pg.inner_text("#toastMsg"))
+    pg.fill("#holYearTo", "2027"); pg.click("#calendarModalBg .hol-preset .btn"); pg.wait_for_timeout(80)
+    check("adding 2026-2027 then only adds the 2027 days", pg.locator("#holList .hol-row").count() > 9 and "2027" in " ".join(pg.evaluate("() => [...document.querySelectorAll('#holList .hol-when')].map(e => e.innerText)")))
+    pg.fill("#holYearFrom", "1999"); pg.click("#calendarModalBg .hol-preset .btn")
+    check("years outside 2000-2100 are refused", "four digits" in pg.inner_text("#toastMsg"), pg.inner_text("#toastMsg"))
+    pg.fill("#holYearFrom", "2026"); pg.fill("#holYearTo", "2040"); pg.click("#calendarModalBg .hol-preset .btn")
+    check("more than ten years at once is refused", "at most ten" in pg.inner_text("#toastMsg"), pg.inner_text("#toastMsg"))
+    # a plan that also works Saturdays keeps a Saturday holiday
+    pg.locator("#calendarDays .cal-day", has_text="Sat").click()
+    n0 = pg.locator("#holList .hol-row").count(); pg.fill("#holYearTo", "2026"); pg.select_option("#holRegion", "DE"); pg.click("#calendarModalBg .hol-preset .btn"); pg.wait_for_timeout(80)
+    check("when Saturday is a working day (the chip is ticked), a Saturday holiday is kept: German Unity Day 03.10.2026 is added", any("03.10.2026" in r for r in pg.evaluate("() => [...document.querySelectorAll('#holList .hol-row')].map(r => r.innerText)")))
+    pg.locator("#calendarDays .cal-day", has_text="Sat").click()
+    pg.click("#calendarModalBg .modal-footer .btn-primary"); pg.wait_for_timeout(150)
+    saved = ev("() => project.holidays")
+    check("Save stores them as ordinary holidays (single days with their names) in the plan, sorted", saved and all("to" not in h and "yearly" not in h and h.get("name") for h in saved) and [h["date"] for h in saved] == sorted(h["date"] for h in saved), saved[:2])
+    check("...and they are in effect: Corpus Christi 04.06.2026 is a day off, so a task on it moves", ev("() => [isWorkDay('2026-06-04'), isWorkDay('2026-06-05')]") == [False, True])
+    check("...the plan menu counts them", "holidays" in pg.evaluate("() => { togglePlanMenu(); return document.getElementById('planCalendarItem').innerText; }"))
+    pg.keyboard.press("Escape")
+    ev("() => { delete project.holidays; save(); }"); pg.reload(); pg.wait_for_selector("#addTaskBtn")
+    pg.click("#planMenuBtn"); pg.wait_for_selector("#planMenu.open"); pg.click("#planCalendarItem"); pg.wait_for_selector("#calendarModalBg.open"); pg.wait_for_timeout(200)
+    check("the region you used last is remembered on this device", pg.input_value("#holRegion") == "DE")
+    pg.keyboard.press("Escape")
+    check("no console errors", not errors, errors[:5])
+    print("console errors/warnings:", errors[:5]); print(f"{sum(results)}/{len(results)} passed"); b.close()

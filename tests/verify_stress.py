@@ -7,7 +7,7 @@ def check(name, cond, detail=""):
     results.append(bool(cond)); print(("PASS  " if cond else "FAIL  ") + name + (f"   [{str(detail)[:1500]}]" if not cond and detail else ""))
 STRESS_JS = r"""
 async ([seed, steps, allowCalendar]) => {
-  let calChanged = false; const everStarted = new Set();   // a task whose actual dates were cleared is a normal Auto task again but stays where it was (documented: it is pushed the next time a predecessor changes)
+  let calChanged = false; const everStarted = new Set(), knownIds = new Set();   // a task whose actual dates were cleared is a normal Auto task again but stays where it was (documented: it is pushed the next time a predecessor changes)
   let a = seed >>> 0;
   const rnd = () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
   const ri = (n) => Math.floor(rnd() * n), pick = (arr) => arr[ri(arr.length)];
@@ -15,6 +15,7 @@ async ([seed, steps, allowCalendar]) => {
   const randDate = () => addDays('2026-09-01', ri(120));
   const leaf = () => tasks.filter(t => !hasChildren(t.id));
   const anyTask = () => tasks.length ? pick(tasks) : null;
+  const many = () => { const out = []; for (let i = 1 + ri(3); i > 0 && tasks.length; i--) { const x = pick(tasks).id; if (!out.includes(x)) out.push(x); } return out; };
   const inv = () => {
     const bad = [], ids = new Set();
     for (const t of tasks) {
@@ -64,6 +65,11 @@ async ([seed, steps, allowCalendar]) => {
       if (mode === 'move') { ns = addDays(t.startDate, d); ne = addDays(t.endDate, d); } else if (mode === 'resize-left') { ns = addDays(t.startDate, d); if (dayNumber(ns) > dayNumber(ne)) ns = ne; } else { ne = addDays(t.endDate, d); if (dayNumber(ne) < dayNumber(ns)) ne = ns; }
       if (t.taskMode !== 'manual') { if (mode === 'move') { ns = nextWorkDay(ns); ne = t.milestone ? ns : finishFor(ns, durationDays(t.startDate, t.endDate)); } else if (mode === 'resize-right') { ne = prevWorkDay(ne); if (dayNumber(ne) < dayNumber(ns)) ne = ns; } else { ns = nextWorkDay(ns); if (dayNumber(ns) > dayNumber(ne)) ns = ne; } }
       dragState = { taskId: t.id, moved: true, previewStart: ns, previewEnd: ne, mode }; onDragMouseUp(); }],
+    ['multiClone', 2, () => { const ids = many(); if (ids.length && tasks.length < 50) { setSelection(ids); cloneSelected(); } }],
+    ['multiDelete', 2, () => { const ids = many(); if (ids.length && tasks.length > 4) deleteTasksNow([...new Set(ids.flatMap(id => [id, ...descendantIds(id)]))]); }],
+    ['multiIndent', 2, () => { const ids = many(); setSelection(ids); if (rnd() < .5) indentSelected(); else outdentSelected(); }],
+    ['copyPaste', 3, () => { const ids = many(); if (!ids.length || tasks.length > 50) return; setSelection(ids); const c = buildClip(); if (!c) return; setSelection(many()); pasteTaskPayload(c.json); }],
+    ['pasteRows', 2, () => { if (tasks.length > 50) return; setSelection(many()); let x = 'ID\tTask Name\tStart\tFinish\tDuration\tPredecessors\n'; const n = 1 + ri(4); for (let i = 1; i <= n; i++) x += `${i}\t${rnd() < .3 ? '  ' : ''}Row ${i}\t${rnd() < .6 ? randDate() : 'TBD'}\t${rnd() < .3 ? randDate() : ''}\t${rnd() < .5 ? (1 + ri(9)) + ' days' : ''}\t${i > 1 && rnd() < .5 ? (1 + ri(i - 1)) + pick(['FS', 'SS', 'FF', 'SF']) : ''}\n`; pasteTableText(x); }],
     ['clone', 3, () => { const t = anyTask(); if (t && tasks.length < 60) cloneTask(t.id); }],
     ['actualStart', 5, () => { const t = anyTask(); if (t && !hasChildren(t.id)) edit(t, 'actualStart', rnd() < .15 ? '' : randDate()); }],
     ['actualFinish', 5, () => { const t = anyTask(); if (t && !hasChildren(t.id)) edit(t, 'actualFinish', rnd() < .15 ? '' : randDate()); }],
@@ -94,6 +100,11 @@ async ([seed, steps, allowCalendar]) => {
     log.push(op[0]); if (log.length > 12) log.shift();
     try { op[2](); } catch (e) { return { ok: false, step, op: op[0], why: 'exception: ' + (e && e.stack ? e.stack.split('\n').slice(0, 3).join(' | ') : e), log }; }
     try { if (currentView === 'gantt') { renderGantt(); } } catch (e) { return { ok: false, step, op: op[0], why: 'gantt render threw: ' + e, log }; }
+    for (const t of tasks) if (isStarted(t)) everStarted.add(t.id);
+    for (const t of tasks) if (!knownIds.has(t.id)) {   // a copy or a pasted duplicate of a task that once had actual dates is in the same (documented) position as its source: clearing actual dates leaves it where it was
+      knownIds.add(t.id); const base = t.name.replace(/ \(copy\)$/, '');
+      if (tasks.some(x => x !== t && everStarted.has(x.id) && x.name === base)) everStarted.add(t.id);
+    }
     const bad = inv();
     if (bad.length) return { ok: false, step, op: op[0], why: 'invariant: ' + bad.slice(0, 4).join(' ; '), log };
     if (step % 20 === 0) {
