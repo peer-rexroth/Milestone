@@ -5,7 +5,7 @@ URL = os.environ.get("MILESTONE_URL", "http://127.0.0.1:8937/milestone.html")
 errors, results = [], []
 def check(name, cond, detail=""):
     results.append(bool(cond)); print(("PASS  " if cond else "FAIL  ") + name + (f"   [{str(detail)[:300]}]" if not cond and detail else ""))
-SEED = re.search(r'SEED = """(.*?)"""', open('verify_clone.py').read(), re.S).group(1)
+SEED = re.search(r'SEED = """(.*?)"""', open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'verify_clone.py')).read(), re.S).group(1)
 SPECS = [{"name": "Design", "s": "2026-09-07", "e": "2026-09-18"}, {"name": "Sketch", "parent": "Design", "s": "2026-09-07", "e": "2026-09-11"}, {"name": "Review", "parent": "Design", "s": "2026-09-14", "e": "2026-09-18", "preds": [["Sketch", "FS", 0]]}, {"name": "Build", "s": "2026-09-21", "e": "2026-09-30", "preds": [["Review", "FS", 0]]}]
 with sync_playwright() as p:
     b = p.chromium.launch(headless=True)

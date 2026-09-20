@@ -5,7 +5,7 @@ URL = os.environ.get("MILESTONE_URL", "http://127.0.0.1:8937/milestone.html")
 errors, results = [], []
 def check(name, cond, detail=""):
     results.append(bool(cond)); print(("PASS  " if cond else "FAIL  ") + name + (f"   [{str(detail)[:300]}]" if not cond and detail else ""))
-SEED = re.search(r'SEED = """(.*?)"""', open('verify_clone.py').read(), re.S).group(1)
+SEED = re.search(r'SEED = """(.*?)"""', open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'verify_clone.py')).read(), re.S).group(1)
 try:
     from PIL import Image
 except Exception:

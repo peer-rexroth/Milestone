@@ -11,7 +11,7 @@ If nothing answers at the URL, a static server for the repository folder is star
 Needs:  pip install playwright openpyxl  &&  python3 -m playwright install chromium
 Exit status 0 = everything passed.
 """
-import argparse, concurrent.futures as cf, os, re, subprocess, sys, time, urllib.request
+import argparse, concurrent.futures as cf, os, re, subprocess, sys, tempfile, time, urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -30,7 +30,8 @@ def run(name, url, extra=(), timeout=1800):
     t0 = time.time()
     env = dict(os.environ, MILESTONE_URL=url)
     try:
-        p = subprocess.run([sys.executable, os.path.join(HERE, name + ".py"), *extra], capture_output=True, text=True, env=env, timeout=timeout, cwd=HERE)
+        with tempfile.TemporaryDirectory(prefix=f"milestone-{name}-") as scratch:   # suites write .xlsx / .png files into their working directory: keep them out of the repository
+            p = subprocess.run([sys.executable, os.path.join(HERE, name + ".py"), *extra], capture_output=True, text=True, env=env, timeout=timeout, cwd=scratch)
         out, code = p.stdout + p.stderr, p.returncode
     except subprocess.TimeoutExpired:
         out, code = "TIMEOUT", 1

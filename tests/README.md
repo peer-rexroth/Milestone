@@ -21,6 +21,7 @@ set `MILESTONE_URL` / `--url` to test another address. Suites run three at a tim
 | `verify_stress` | seeded random operations (add, delete, indent, move, edits, drags, clone, undo/redo, calendar and holidays, baselines …) with invariants after every step — structure, dates, links, Auto tasks exactly where their links put them, idempotent normalise/merge, stable save/load, critical path, Excel export |
 | `verify_pull`, `verify_cycles`, `verify_actuals`, `verify_calendar`, `verify_holidays`, `verify_critical`, `verify_baseline` | scheduling: bidirectional Auto scheduling and the Start/Finish No Earlier Than pin, dependency cycles, actual dates, the working calendar and holidays, the critical path, baselines and variance |
 | `verify_undo` | undo / redo history |
+| `verify_help` | the tabbed Help dialog: topics, keyboard, contrast in both themes, narrow layout |
 | `verify_sync`, `verify_plans` | file merge between two simulated devices, conflicts; plans, file linking, the write race |
 | `verify_columns`, `verify_gantt_columns`, `verify_gantt_list`, `verify_custom_fields`, `verify_filters`, `verify_fixed_widths`, `verify_column_lines`, `verify_hscroll`, `verify_date_editors`, `verify_funnel_hover`, `verify_mode_header` | the task list: columns per view, custom fields, filters, widths, lines, scrolling, editors |
 | `verify_excel`, `verify_excel_views` | the Excel export (package structure, values, per-view columns) |

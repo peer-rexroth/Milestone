@@ -25,4 +25,17 @@ with sync_playwright() as p:
     pg.evaluate("() => { colHidden.add('resource'); render(); }"); pg.wait_for_timeout(120)
     w4 = widths()
     check("hiding Resource gives its width to Task Name only (nothing else moves)", all(w4[c] == w3[c] for c in w4 if c != 'name') and w4["name"] > w3["name"], (w3, w4))
+    # ---- the WBS column holds eight levels (2.2.2.2.2.2.2.2)
+    wb = pg.evaluate("""() => {
+      tasks.length = 0; let parent = null;   // at every level a first sibling and then the one the outline continues in: the deepest is 2.2.2.2.2.2.2.2
+      const mk = (id, parentId, order) => ({ id, name: id, parentId, order, startDate: '2026-09-07', endDate: '2026-09-08', progress: 0, milestone: false, color: null, predecessors: [], collapsed: false, updatedAt: 1, constraintType: 'ASAP', constraintDate: null, taskMode: 'auto', resource: '', actualStart: null, actualFinish: null });
+      for (let d = 0; d < 8; d++) { tasks.push(mk('f' + d, parent, 0)); const n = mk('n' + d, parent, 1); tasks.push(n); parent = n.id; }
+      normalizeData(); colHidden.delete('wbs'); render();
+      const cell = [...document.querySelectorAll('#gridRows .grid-row')].map(r => [...r.children].find(c => /^\\d+(\\.\\d+)+$/.test(c.textContent.trim()))).filter(Boolean).find(c => c.textContent.trim() === '2.2.2.2.2.2.2.2');
+      const head = [...document.querySelectorAll('#gridHeader > *')].find(h => h.textContent.trim().startsWith('WBS'));
+      return { found: !!cell, text: cell && cell.textContent, fits: cell && cell.scrollWidth <= cell.clientWidth, width: head.getBoundingClientRect().width, headFits: head.scrollWidth <= head.clientWidth + 0.5 };
+    }""")
+    check("the WBS column is 104px wide", wb["width"] == 104, wb)
+    check("the deepest code of an eight-level outline, 2.2.2.2.2.2.2.2, is shown in full (no ellipsis) in its cell", wb["found"] and wb["fits"], wb)
+    check("...and the WBS header (label and filter funnel) still fits", wb["headFits"], wb)
     print("console errors/warnings:", errors); print(f"{sum(results)}/{len(results)} passed"); b.close()
