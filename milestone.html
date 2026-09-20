@@ -28,6 +28,7 @@
   --radius: 10px;
   --shadow: 0 1px 2px rgba(20,20,30,.04), 0 4px 16px rgba(20,20,30,.06);
   --row-h: 32px;
+  --head-h: 42px;   /* the header of the task list and of the Gantt timescale: two lines of text, the same height in both so the rows line up */
   /* Tells the browser how to draw its own controls — the date picker's icon and popup, select menus, checkboxes, number
      spinners, scrollbars. Without it they are always drawn for a light page (a black calendar icon on the dark theme). */
   color-scheme: light;
@@ -184,9 +185,9 @@ button:focus:not(:focus-visible) { outline: none; }
 .col-head > span { overflow: hidden; text-overflow: ellipsis; line-height: 1.2; min-width: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 /* Tasks view: a header may run to two lines — a two-word name breaks after its first word, and anything longer than two lines is
    cut with an ellipsis. That is what lets Task Mode and the actual dates be narrow columns; the header row is taller to make room.
-   (The Gantt view's side list keeps its one-line 32px header, which has to line up with the chart's timescale.) */
-.main.view-tasks .grid-header { height: 42px; }
-.main.view-tasks .grid-header > .col-head { white-space: normal; }
+   (The Gantt view's list is the same list, and the chart's timescale is the same height, --head-h.) */
+.main .grid-header { height: var(--head-h); }
+.main .grid-header > .col-head { white-space: normal; }
 .col-filter-btn { flex-shrink: 0; width: 18px; height: 18px; padding: 0; border: none; border-radius: 4px; background: transparent; color: var(--text-faint); font-size: 9px; opacity: .55; }
 .col-filter-btn:hover { background: var(--panel-2); color: var(--text); opacity: 1; }
 .col-filter-btn.active { color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--panel)); opacity: 1; }
@@ -240,9 +241,7 @@ button:focus:not(:focus-visible) { outline: none; }
 /* ── Main layout ────────────────────────────────────────────────────── */
 .main { flex: 1; min-height: 0; display: flex; overflow: hidden; }
 .grid-pane { width: var(--grid-pane-width, 360px); flex-shrink: 0; display: flex; flex-direction: column; border-right: 1px solid var(--border); background: var(--panel); position: relative; }
-/* Gantt view's own label sidebar — deliberately just ID/Name/Start/End,
-   not Task view's full column set (see the .view-tasks override below),
-   since it exists to label the chart's rows, not to be a spreadsheet. */
+/* The task list — the same one in the Tasks view and (left of the chart) in the Gantt view; the Tasks-view rules below apply to both. */
 .grid-header, .grid-row {
   display: grid; grid-template-columns: 30px 24px minmax(80px,1fr) 116px 116px;
   align-items: center; gap: 6px; padding: 0 10px; height: var(--row-h);
@@ -262,39 +261,40 @@ button:focus:not(:focus-visible) { outline: none; }
    suppresses the scrollbar UI and direct user-initiated scrolling. */
 .main.view-tasks .grid-rows { overflow: auto; }   /* both ways: when the columns are wider than the window the list scrolls sideways (the header follows, see syncHeaderScroll) */
 .main.view-tasks .grid-pane { width: auto; flex: 1; border-right: none; min-width: 0; }
-.main.view-tasks .grid-header, .main.view-tasks .grid-row { grid-template-columns: var(--task-cols, 34px 24px minmax(160px,1fr) 116px 116px 96px 54px 1fr 88px); min-width: var(--grid-min-w, 0); }   /* --task-cols is built from the visible columns in renderGrid() */
-.main.view-tasks .grid-header > div, .main.view-tasks .grid-row > div { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.main .grid-header, .main .grid-row { grid-template-columns: var(--task-cols, 34px 24px minmax(160px,1fr) 116px 116px 96px 54px 1fr 88px); min-width: var(--grid-min-w, 0); }   /* --task-cols is built from the visible columns in renderGrid() */
+.main .grid-header > div, .main .grid-row > div { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .main.view-tasks .gantt-pane-outer { display: none; }
+.main.view-gantt .grid-rows { overflow-x: scroll; }   /* Gantt view: sideways by itself (always a track, like the chart's own scrollbar, so both panes end at the same height); vertically the chart drives it (wireScrollSync) */
 /* Tasks view: a fine vertical line between the columns, in the same colour as the divider between list and chart in the Gantt view.
    The tracks are fr/px mixes, so the lines can't be cell borders (the 6px gaps and the editors would fight them): updateColumnLines()
    reads the real track positions and hands them over as --col-lines-h (header) / --col-lines-r (rows); each row paints them on a
    pseudo-element that sits in the middle of every gap and never receives the mouse. */
-.main.view-tasks .grid-header, .main.view-tasks .grid-row { position: relative; }
-.main.view-tasks .grid-header::before, .main.view-tasks .grid-row::before { content: ''; position: absolute; inset: 0; pointer-events: none; background-repeat: no-repeat; background-size: 1px 100%; }
-.main.view-tasks .grid-header::before { background-image: var(--col-lines-h, none); background-position: var(--col-pos-h, 0 0); }
-.main.view-tasks .grid-row::before { background-image: var(--col-lines-r, none); background-position: var(--col-pos-r, 0 0); }
+.main .grid-header, .main .grid-row { position: relative; }
+.main .grid-header::before, .main .grid-row::before { content: ''; position: absolute; inset: 0; pointer-events: none; background-repeat: no-repeat; background-size: 1px 100%; }
+.main .grid-header::before { background-image: var(--col-lines-h, none); background-position: var(--col-pos-h, 0 0); }
+.main .grid-row::before { background-image: var(--col-lines-r, none); background-position: var(--col-pos-r, 0 0); }
 /* One spacing rule for every column: no gap between tracks (the column line is the track boundary) and every cell keeps the same
    8px inset from the line on both sides. The ID cell (first) and the row-actions cell (last) keep their own spacing; the inline
    editors, which are grid items themselves, get the same inset as a margin. */
-.main.view-tasks .grid-header, .main.view-tasks .grid-row { column-gap: 0; }
-.main.view-tasks .grid-header > div:not(:first-child):not(:last-child), .main.view-tasks .grid-row > div:not(:first-child):not(:last-child):not(.inline-wrap):not(.grid-name) { padding-inline: 8px; }
+.main .grid-header, .main .grid-row { column-gap: 0; }
+.main .grid-header > div:not(:first-child):not(:last-child), .main .grid-row > div:not(:first-child):not(:last-child):not(.inline-wrap):not(.grid-name) { padding-inline: 8px; }
 /* The Name column keeps its original indent (names start ~3px from the line, sub-tasks step in 16px per level) — only its right end gets the inset */
-.main.view-tasks .grid-row > .grid-name { padding-left: calc(3px + var(--depth, 0) * 16px); padding-right: 8px; }
-.main.view-tasks .grid-row > input.inline-edit { width: calc(100% - 4px); margin-inline: 2px; padding-inline: 5px; }   /* the typed text starts exactly where the cell's text does (2 + 1 border + 5 = 8px) */
-.main.view-tasks .grid-row > input.inline-edit[type=date] { width: max(calc(100% - 4px), 95px); padding-inline: 4px 2px; }   /* the native control needs ~93px for its fields + picker icon; the date columns are 104px = 2px + 100px + 2px, so it sits inside its column with equal space left and right */
-.main.view-tasks .grid-row > .inline-wrap { width: max(calc(100% - 4px), 92px); margin-inline: 2px; }
+.main .grid-row > .grid-name { padding-left: calc(3px + var(--depth, 0) * 16px); padding-right: 8px; }
+.main .grid-row > input.inline-edit { width: calc(100% - 4px); margin-inline: 2px; padding-inline: 5px; }   /* the typed text starts exactly where the cell's text does (2 + 1 border + 5 = 8px) */
+.main .grid-row > input.inline-edit[type=date] { width: max(calc(100% - 4px), 95px); padding-inline: 4px 2px; }   /* the native control needs ~93px for its fields + picker icon; the date columns are 104px = 2px + 100px + 2px, so it sits inside its column with equal space left and right */
+.main .grid-row > .inline-wrap { width: max(calc(100% - 4px), 92px); margin-inline: 2px; }
 /* Frozen columns: the ID column and everything up to and including Task Name stay put while the rest scrolls sideways (like Excel's
    "freeze panes"; updateFrozenColumns() marks the cells and gives each its `left`). They need an opaque background, or the columns
    scrolling underneath would show through: they inherit the row's (which changes on hover / selection). The column line at their
    right edge is drawn as an inset shadow, because the opaque cell covers the row's own line. */
-:where(.main.view-tasks .grid-row > .frz, .main.view-tasks .grid-header > .frz) { background: var(--row-bg); }
-.main.view-tasks .grid-row > .frz, .main.view-tasks .grid-header > .frz { position: sticky; z-index: 3; box-shadow: inset -1px 0 0 var(--border); }
-.main.view-tasks .grid-row > .frz:not(input), .main.view-tasks .grid-header > .frz { align-self: stretch; }   /* cover the whole row height (cells are otherwise only as tall as their content); a cell's own flex box keeps its content centred */
-.main.view-tasks .grid-row > .frz:first-child, .main.view-tasks .grid-header > .frz:first-child { box-shadow: -10px 0 0 var(--row-bg), inset -1px 0 0 var(--border); }   /* ...and the row's 10px left padding, where the scrolled columns would show */
-.main.view-tasks .grid-pane.h-scrolled .grid-row > .frz-last, .main.view-tasks .grid-pane.h-scrolled .grid-header > .frz-last { box-shadow: inset -1px 0 0 var(--border), 5px 0 6px -4px rgba(0, 0, 0, .28); }   /* a soft edge while content slides underneath */
-.main.view-tasks .grid-pane.h-scrolled .grid-rows { background-image: none; }   /* scrolled sideways: those lines would cross the frozen columns, so the empty area goes plain */
+:where(.main .grid-row > .frz, .main .grid-header > .frz) { background: var(--row-bg); }
+.main .grid-row > .frz, .main .grid-header > .frz { position: sticky; z-index: 3; box-shadow: inset -1px 0 0 var(--border); }
+.main .grid-row > .frz:not(input), .main .grid-header > .frz { align-self: stretch; }   /* cover the whole row height (cells are otherwise only as tall as their content); a cell's own flex box keeps its content centred */
+.main .grid-row > .frz:first-child, .main .grid-header > .frz:first-child { box-shadow: -10px 0 0 var(--row-bg), inset -1px 0 0 var(--border); }   /* ...and the row's 10px left padding, where the scrolled columns would show */
+.main .grid-pane.h-scrolled .grid-row > .frz-last, .main .grid-pane.h-scrolled .grid-header > .frz-last { box-shadow: inset -1px 0 0 var(--border), 5px 0 6px -4px rgba(0, 0, 0, .28); }   /* a soft edge while content slides underneath */
+.main .grid-pane.h-scrolled .grid-rows { background-image: none; }   /* scrolled sideways: those lines would cross the frozen columns, so the empty area goes plain */
 /* ...and the same lines run on down the empty area under the last task (the rows are transparent, so they line up exactly) */
-.main.view-tasks .grid-rows { background-image: var(--col-lines-r, none); background-position: var(--col-pos-r, 0 0); background-size: 1px 100%; background-repeat: no-repeat; background-attachment: local; }   /* local: the lines below the last task scroll sideways with the content */
+.main .grid-rows { background-image: var(--col-lines-r, none); background-position: var(--col-pos-r, 0 0); background-size: 1px 100%; background-repeat: no-repeat; background-attachment: local; }   /* local: the lines below the last task scroll sideways with the content */
 .grid-row { border-bottom: 1px solid var(--border); font-size: 12.5px; cursor: default; position: relative; --row-bg: var(--panel); background: var(--row-bg); }   /* --row-bg: the row's background, also painted by the frozen cells so what scrolls underneath doesn't show through */
 .grid-row:hover { --row-bg: var(--panel-2); }
 .grid-row.selected { --row-bg: color-mix(in srgb, var(--accent) 10%, var(--panel)); }
@@ -324,7 +324,7 @@ input.inline-edit { width: 100%; min-width: 0; padding: 3px 6px; border: 1px sol
 .mode-manual { color: var(--task-amber); }
 .mode-auto { color: var(--text-faint); }
 .task-mode-cell:hover { background: var(--panel-2); border-radius: 4px; }
-.main.view-tasks .task-mode-cell, .main.view-tasks .custom-flag { justify-content: flex-start; }   /* under the left-aligned header label, like every other column */
+.main .task-mode-cell, .main .custom-flag { justify-content: flex-start; }   /* under the left-aligned header label, like every other column */
 .dropdown-item.active { background: color-mix(in srgb, var(--accent) 10%, var(--panel)); }
 .dropdown-item .mode-check { margin-left: auto; color: var(--accent); }
 .subbar-spacer { flex: 1 1 auto; }
@@ -357,15 +357,15 @@ input.inline-edit[type=date]::-webkit-calendar-picker-indicator { margin: 0 0 0 
 .inline-wrap .inline-edit { font-size: 12px; padding-block: 2px; }
 /* A date editor needs more room than a narrow date column has (the native control is ~127px with its picker icon; Actual Start/Finish
    columns are 92px, Start/Finish 116px): while it is open it grows past its column, over the neighbour, instead of clipping the picker. */
-.main.view-tasks .grid-row > input.inline-edit[type=date] { position: relative; z-index: 4; }
-.main.view-tasks .grid-row > .inline-wrap { overflow: visible; z-index: 4; }
+.main .grid-row > input.inline-edit[type=date] { position: relative; z-index: 4; }
+.main .grid-row > .inline-wrap { overflow: visible; z-index: 4; }
 .inline-cal { position: absolute; right: 1px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-dim); padding: 2px 4px; font-size: 11px; }
 .inline-cal:hover { color: var(--accent); }
 .inline-date-hidden { position: absolute; right: 0; bottom: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 .grid-actions { display: flex; gap: 2px; justify-content: flex-end; }
 .grid-actions .icon-btn { width: 24px; height: 24px; font-size: 12px; opacity: 0; }
-.main.view-tasks .grid-actions { justify-content: flex-start; padding-left: 2px; }   /* the first icon's glyph starts at 2 + 6 = 8px, under the header label */
-.main.view-tasks .grid-header > .actions-head { padding-left: 8px; }
+.main .grid-actions { justify-content: flex-start; padding-left: 2px; }   /* the first icon's glyph starts at 2 + 6 = 8px, under the header label */
+.main .grid-header > .actions-head { padding-left: 8px; }
 .grid-row:hover .grid-actions .icon-btn { opacity: 1; }
 
 .empty-state { padding: 60px 24px; text-align: center; color: var(--text-dim); }
@@ -374,7 +374,7 @@ input.inline-edit[type=date]::-webkit-calendar-picker-indicator { margin: 0 0 0 
 
 .gantt-pane-outer { flex: 1; min-width: 0; overflow: auto; position: relative; background: var(--bg); }
 .gantt-content { position: relative; }
-.gantt-header { position: sticky; top: 0; z-index: 5; height: var(--row-h); background: var(--panel-2); border-bottom: 1px solid var(--border); }
+.gantt-header { position: sticky; top: 0; z-index: 5; height: var(--head-h); background: var(--panel-2); border-bottom: 1px solid var(--border); }
 .gantt-tick { position: absolute; top: 0; bottom: 0; border-left: 1px solid var(--border); font-size: 10.5px; color: var(--text-faint); padding: 8px 0 0 4px; white-space: nowrap; }
 /* Ticks span their whole period (a calendar week, a month, a quarter), so overflow is clipped rather than
    spilling into the next tick. Week and Year labels are two lines. Week: "CW 37" over the Monday's date. Year: the year
@@ -421,7 +421,7 @@ input.inline-edit[type=date]::-webkit-calendar-picker-indicator { margin: 0 0 0 
 .gantt-milestone.manual { background: transparent; border-style: dashed; border-color: var(--bar-color, var(--task-purple)); }
 .gantt-milestone.mismatch { box-shadow: 0 0 0 2px var(--task-amber); }
 .gantt-link-preview { position: absolute; z-index: 6; pointer-events: none; }
-svg.gantt-deps { position: absolute; top: var(--row-h); left: 0;   /* its y-axis starts at the first row, i.e. below the one-row header (it used to sit at 0, drawing every arrow a row too high) */ overflow: visible; pointer-events: none; z-index: 2; }
+svg.gantt-deps { position: absolute; top: var(--head-h); left: 0;   /* its y-axis starts at the first row, i.e. below the header (it used to sit at 0, drawing every arrow a row too high) */ overflow: visible; pointer-events: none; z-index: 2; }
 svg.gantt-deps path { fill: none; stroke: var(--text-faint); stroke-width: 1.5; }
 svg.gantt-deps path.critical { stroke: var(--danger); }
 
@@ -785,7 +785,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
       <div><div class="help-section-title">Custom fields</div>Every task can carry up to 20 fields of your own: <strong>Text1–5</strong>, <strong>Number1–5</strong>, <strong>Date1–5</strong> and <strong>Flag1–5</strong> (a yes/no tick). Fill them in on the task dialog's <strong>Custom fields</strong> tab, or — once you have ticked them under <strong>Columns</strong>, where they start hidden — straight in the list (click a cell; a flag toggles). Use the pencil beside a field to rename it, for instance Text1 to <em>Cost centre</em>: the name is saved with the plan, so another plan can call the same field something else. Custom fields can be filtered like any column and are included in the Excel export.</div>
       <div><div class="help-section-title">Task Mode</div>Every task is either Manually Scheduled (pushpin) or Auto Scheduled (chart icon) — click the icon in the Task Mode column, or use the Task Mode field in a task's dialog. An Auto task follows its predecessors and constraints. A Manual task stays exactly where you put it: predecessors never move it, its Start, Finish and Duration can be free text such as "TBD", and a warning triangle appears if it starts earlier than its predecessors allow. Manual tasks are drawn with a dashed bar, and are left out of the critical path. Switching a task to Auto moves it to the earliest date its links allow. The "New tasks" button at the right of the toolbar chooses the mode new tasks start in (Auto Scheduled by default).</div>
       <div><div class="help-section-title">Dependencies</div>Open a task and add a predecessor to link it to another task (Finish-to-Start, Start-to-Start, Finish-to-Finish or Start-to-Finish). Give it a lead or lag in days: a positive number delays the dependent task (lag), a negative number lets it overlap and start early (lead) — e.g. "3FS+2" waits 2 extra days after task 3 finishes, "3FS-2" starts 2 days before task 3 finishes. Moving a task forward automatically pushes any dependent tasks forward too — it never pulls a task earlier on its own. A circular dependency is flagged with a warning icon and stops auto-scheduling for the tasks involved.</div>
-      <div><div class="help-section-title">The Gantt chart</div>Drag a bar to reschedule it, drag its edges to resize, or drag the small circle on its right edge onto another task to create a dependency. Click a bar or row to edit it. The Week / Month / Year buttons change the scale: Year (the default) shows quarters, and Week is labelled by calendar week (CW, weeks start on Monday, ISO 8601). The route icon in the toolbar highlights the critical path — the chain of tasks with zero slack that determines the overall project end date.</div>
+      <div><div class="help-section-title">The Gantt chart</div>The left side of the Gantt view is the same task list as in the Tasks view — the same columns (pick them with <strong>Columns</strong>), filters, editing and buttons — with the chart to its right. Drag the thin strip between them to change how much room the list gets; the list scrolls sideways by itself when it has more columns than fit, and its ID … Task Name columns stay in place. Drag a bar to reschedule it, drag its edges to resize, or drag the small circle on its right edge onto another task to create a dependency. Click a bar or row to edit it. The Week / Month / Year buttons change the scale: Year (the default) shows quarters, and Week is labelled by calendar week (CW, weeks start on Monday, ISO 8601). The route icon in the toolbar highlights the critical path — the chain of tasks with zero slack that determines the overall project end date.</div>
       <div><div class="help-section-title">Plans</div>The plan name at the top left is a switcher: click it to move between plans, start a new one, open an existing file as a plan, or rename, duplicate or delete the current plan. Each plan has its own tasks, its own daily backups and — optionally — its own linked file, so switching plans also switches which file is kept in sync. Deleting a plan only removes it from this browser; its file is never touched. Every plan must live in a file (Chrome/Edge), so New plan and Duplicate ask you where to save it.</div>
       <div><div class="help-section-title">Data &amp; sync</div>Everything lives in this browser's local storage — nothing ever leaves your machine except into the files you choose. Every plan is kept in a plain JSON file on your disk (linking one is required, in Chrome/Edge): every change is saved to it automatically, and inside an iCloud Drive/OneDrive/Dropbox folder it keeps your own devices in step. You can disconnect a plan's file (click the file name at the top right, or use the plan menu) — the file is kept, and Milestone asks you to choose a file for the plan straight away. If the file is moved or deleted, Milestone asks you to create or find it again. Data → Export/Import moves a full JSON snapshot of the current plan in or out, and Export to Excel saves a formatted .xlsx workbook (a task list plus an optional Gantt chart sheet); Local Backups keeps a rolling daily snapshot.</div>
       <div class="help-tip">Nothing here ever leaves your machine except into the files you choose.</div>
@@ -845,7 +845,7 @@ const HANDLE_MIGRATED_KEY = 'milestone-handle-migrated';
 const MAX_BACKUPS = 7;
 const FILE_SYNC_POLL_MS = 45000;
 const DAY_MS = 86400000;
-const ROW_H = 32;
+const ROW_H = 32, HEAD_H = 42;   // (HEAD_H = --head-h)
 
 const ZOOMS = [
   { id: 'week',  label: 'Week',  pxPerDay: 14 },
@@ -854,11 +854,11 @@ const ZOOMS = [
 ];
 // A date column is 104px so that the date editor (native date + picker icon, ~95px) fits inside it with 2px to the line on each side.
 // Column widths INCLUDE the 8px inset on each side of a cell (see 'One spacing rule' in the CSS): width = widest header or content + 16px.
-// The columns of the Tasks view's list (the Gantt view's side list stays a fixed ID/Mode/Name/Start/Finish). The ID column is
+// The columns of the task list (the same list in the Tasks view and left of the chart in the Gantt view). The ID column is
 // always first and the row actions always last; everything in between can be shown, hidden and reordered (Columns button).
 // `dflt` = shown until the user says otherwise. Insertion order = the default order. Task Name can't be hidden.
 const TASK_COLS = {
-  mode:         { label: 'Task Mode',     width: '76px',              dflt: true },   // its header is two lines (Task / Mode) in the Tasks view; the Gantt side list keeps a 24px icon column
+  mode:         { label: 'Task Mode',     width: '76px',              dflt: true },   // its header is two lines (Task / Mode)
   wbs:          { label: 'WBS',           width: '68px',              dflt: true },
   name:         { label: 'Task Name',     width: 'minmax(160px,1fr)', dflt: true, locked: true },
   start:        { label: 'Start',         width: '104px',             dflt: true },
@@ -960,8 +960,8 @@ let zoom = DEFAULT_ZOOM;
 let colOrder = [...DEFAULT_COL_ORDER];                                       // every optional column, in the user's order
 let colHidden = new Set(DEFAULT_COL_ORDER.filter(c => !TASK_COLS[c].dflt));   // ...and which of them are hidden
 let currentView = 'tasks';
-let gridPaneWidth = 400;
-const GRID_PANE_MIN_WIDTH = 240, GRID_PANE_MAX_WIDTH = 720;
+let gridPaneWidth = 640;
+const GRID_PANE_MIN_WIDTH = 320, GRID_PANE_MAX_WIDTH = 1800, GRID_PANE_DEFAULT = 640, GRID_PANE_REV = 1;   // (REV: the list used to be a 400px sidebar; a width saved back then isn't kept)
 let showCriticalPath = false;
 let showBaseline = true;   // the compared baseline as thin bars under the Gantt bars
 let selectedTaskId = null;
@@ -1054,7 +1054,7 @@ function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c
 function byId(id) { return tasks.find(t => t.id === id); }
 
 /* ============================ Persistence =============================== */
-function prefsPayload() { return { theme, zoom, zoomRev: ZOOM_DEFAULT_REV, view: currentView, gridPaneWidth, showBaseline, cols: { order: colOrder, hidden: [...colHidden], rev: COLS_REV } }; }
+function prefsPayload() { return { theme, zoom, zoomRev: ZOOM_DEFAULT_REV, view: currentView, gridPaneWidth, gridPaneRev: GRID_PANE_REV, showBaseline, cols: { order: colOrder, hidden: [...colHidden], rev: COLS_REV } }; }
 function syncPayload() { return { version: APP_VERSION, project, tasks, deletedTaskIds }; }
 
 function planDataKey(id) { return PLAN_DATA_PREFIX + id; }
@@ -1117,7 +1117,7 @@ function loadPrefs() {
   zoom = (d.zoomRev === ZOOM_DEFAULT_REV && ZOOMS.some(z => z.id === d.zoom)) ? d.zoom : DEFAULT_ZOOM;
   currentView = d.view === 'gantt' ? 'gantt' : 'tasks';
   showBaseline = d.showBaseline !== false;
-  gridPaneWidth = Number.isFinite(d.gridPaneWidth) ? Math.max(GRID_PANE_MIN_WIDTH, Math.min(GRID_PANE_MAX_WIDTH, d.gridPaneWidth)) : 400;
+  gridPaneWidth = d.gridPaneRev === GRID_PANE_REV && Number.isFinite(d.gridPaneWidth) ? Math.max(GRID_PANE_MIN_WIDTH, Math.min(GRID_PANE_MAX_WIDTH, d.gridPaneWidth)) : GRID_PANE_DEFAULT;
   // Task list columns. A column the saved prefs don't know yet (added by a later version) is appended and follows its default.
   const known = id => !!TASK_COLS[id], sc = d.cols && typeof d.cols === 'object' ? d.cols : {};
   const savedOrder = Array.isArray(sc.order) ? sc.order.filter(known) : null;
@@ -1782,7 +1782,6 @@ function renderMainViewTabs() {
   document.getElementById('main').classList.toggle('view-tasks', currentView === 'tasks');
   document.getElementById('main').classList.toggle('view-gantt', currentView === 'gantt');
   document.getElementById('zoomTabs').classList.toggle('hidden', currentView !== 'gantt');
-  document.getElementById('columnsBtn').classList.toggle('hidden', currentView !== 'tasks');   // the Gantt view's list is fixed
   document.getElementById('criticalPathBtn').classList.toggle('hidden', currentView !== 'gantt');
   document.getElementById('baselineBtn').classList.toggle('hidden', currentView !== 'gantt');
   document.getElementById('ganttControlsDivider').classList.toggle('hidden', currentView !== 'gantt');
@@ -2228,7 +2227,7 @@ function updateColumnLines() {
   const main = document.getElementById('main');
   const set = (suffix, el) => {
     let images = 'none', positions = '0 0';
-    if (el && currentView === 'tasks') {
+    if (el) {
       const cs = getComputedStyle(el);
       const tracks = cs.gridTemplateColumns.split(' ').map(parseFloat).filter(Number.isFinite);
       const gap = parseFloat(cs.columnGap) || 0, pad = parseFloat(cs.paddingLeft) || 0;
@@ -2248,7 +2247,6 @@ function updateColumnLines() {
 // The ID column and everything up to and including Task Name are frozen (Tasks view): marked with .frz, each given the `left` it
 // sticks at (the row's padding plus the columns before it). Called after every render, when the cells are brand new.
 function updateFrozenColumns() {
-  if (currentView !== 'tasks') return;
   const hdr = document.getElementById('gridHeader');
   const k = visibleTaskCols().indexOf('name') + 2;   // ID + the columns up to Task Name
   const cs = getComputedStyle(hdr), tracks = cs.gridTemplateColumns.split(' ').map(parseFloat);
@@ -2260,27 +2258,30 @@ function updateFrozenColumns() {
       if (i === k - 1) c.classList.add('frz-last');
     }
   }
+  frozenMinWidth = (lefts[k - 1] || 0) + 160;   // the frozen columns with Task Name at its minimum
+  applyGridPaneWidth();
 }
+let frozenMinWidth = 0;
 // The rows scroll sideways; the header follows (it is in a clip box that never scrolls by itself). The clip also gets the rows'
 // vertical scrollbar width as right padding so header and rows have the same width, and a wheel/trackpad gesture over the header
 // scrolls the rows.
 function syncHeaderScroll() {
   const rows = document.getElementById('gridRows'), clip = document.getElementById('gridHeaderClip');
-  clip.style.paddingRight = currentView === 'tasks' ? Math.max(0, rows.offsetWidth - rows.clientWidth) + 'px' : '';
-  clip.scrollLeft = currentView === 'tasks' ? rows.scrollLeft : 0;
-  document.getElementById('gridPane').classList.toggle('h-scrolled', currentView === 'tasks' && rows.scrollLeft > 0);
+  clip.style.paddingRight = Math.max(0, rows.offsetWidth - rows.clientWidth) + 'px';
+  clip.scrollLeft = rows.scrollLeft;
+  document.getElementById('gridPane').classList.toggle('h-scrolled', rows.scrollLeft > 0);
 }
 document.getElementById('gridRows').addEventListener('scroll', syncHeaderScroll, { passive: true });
-document.getElementById('gridHeaderClip').addEventListener('wheel', (e) => { if (currentView === 'tasks' && e.deltaX) { document.getElementById('gridRows').scrollLeft += e.deltaX; e.preventDefault(); } }, { passive: false });
+document.getElementById('gridHeaderClip').addEventListener('wheel', (e) => { if (e.deltaX) { document.getElementById('gridRows').scrollLeft += e.deltaX; e.preventDefault(); } }, { passive: false });
 if (typeof ResizeObserver !== 'undefined') new ResizeObserver(() => { updateColumnLines(); syncHeaderScroll(); }).observe(document.getElementById('gridPane'));
 else window.addEventListener('resize', updateColumnLines);
 
 function renderGrid() {
-  const full = currentView === 'tasks';
-  // Tasks view: the user's visible columns in the user's order (ID first, row actions last). The Gantt view's side list is a fixed four.
-  const cols = full ? visibleTaskCols() : ['mode', 'name', 'start', 'end'];
+  const full = true;   // the same full list in both views (before, the Gantt view had a compact four-column one)
+  // The user's visible columns in the user's order (ID first, row actions last) — in both views.
+  const cols = visibleTaskCols();
   const HEAD = {
-    mode: colHeadHtml(full ? 'Task\nMode' : '', 'mode'), wbs: colHeadHtml('WBS', 'wbs'), name: colHeadHtml('Task Name', 'name'), start: colHeadHtml('Start', 'start'), end: colHeadHtml('Finish', 'end'),
+    mode: colHeadHtml('Task\nMode', 'mode'), wbs: colHeadHtml('WBS', 'wbs'), name: colHeadHtml('Task Name', 'name'), start: colHeadHtml('Start', 'start'), end: colHeadHtml('Finish', 'end'),
     actualStart: colHeadHtml('Actual\nStart', 'actualStart'), actualFinish: colHeadHtml('Actual\nFinish', 'actualFinish'), duration: colHeadHtml('Duration', 'duration'),
     progress: colHeadHtml('%', 'progress'), remaining: colHeadHtml('Remaining\nDuration', 'remaining'), status: colHeadHtml('Status', 'status'),
     baselineStart: colHeadHtml('Baseline\nStart', 'baselineStart'), baselineFinish: colHeadHtml('Baseline\nFinish', 'baselineFinish'), baselineDuration: colHeadHtml('Baseline\nDuration', 'baselineDuration'),
@@ -3044,7 +3045,7 @@ function onLinkHandleMouseDown(event, fromId) {
   document.getElementById('ganttDeps').appendChild(preview);
   function move(e) {
     const x2 = e.clientX - rect.left + outer.scrollLeft;
-    const y2 = e.clientY - rect.top + outer.scrollTop - ROW_H;   // the svg's y-axis starts below the (one-row) header
+    const y2 = e.clientY - rect.top + outer.scrollTop - HEAD_H;   // the svg's y-axis starts below the header
     preview.setAttribute('d', `M${from.right},${from.midY} L${x2},${y2}`);
   }
   function up(e) {
@@ -4633,7 +4634,11 @@ function openAboutModal() {
 }
 function closeAboutModal() { document.getElementById('aboutModalBg').classList.remove('open'); }
 
-function applyGridPaneWidth() { document.documentElement.style.setProperty('--grid-pane-width', gridPaneWidth + 'px'); }
+// The list's width in the Gantt view: what the user dragged it to, but never narrower than the frozen columns + a little room to scroll,
+// and never so wide that the chart is squeezed out.
+function minGridPaneWidth() { return Math.max(GRID_PANE_MIN_WIDTH, frozenMinWidth + 60); }
+function applyGridPaneWidth() { document.documentElement.style.setProperty('--grid-pane-width', Math.max(minGridPaneWidth(), Math.min(gridPaneWidth, window.innerWidth - 240)) + 'px'); }
+window.addEventListener('resize', applyGridPaneWidth);
 function wireGridResize() {
   const handle = document.getElementById('gridResizeHandle');
   handle.addEventListener('mousedown', (event) => {
@@ -4642,7 +4647,7 @@ function wireGridResize() {
     const startX = event.clientX, startWidth = gridPaneWidth;
     handle.classList.add('resizing');
     function move(e) {
-      const w = Math.max(GRID_PANE_MIN_WIDTH, Math.min(GRID_PANE_MAX_WIDTH, startWidth + (e.clientX - startX)));
+      const w = Math.max(minGridPaneWidth(), Math.min(GRID_PANE_MAX_WIDTH, window.innerWidth - 240, startWidth + (e.clientX - startX)));
       gridPaneWidth = w;
       applyGridPaneWidth();
     }
@@ -4663,6 +4668,7 @@ function wireScrollSync() {
   let syncing = false;
   gridRows.addEventListener('wheel', (e) => {
     if (currentView !== 'gantt') return; // Tasks view: grid scrolls natively, nothing to forward
+    if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;   // sideways: the list scrolls itself
     ganttOuter.scrollTop += e.deltaY; e.preventDefault();
   }, { passive: false });
   ganttOuter.addEventListener('scroll', () => {
