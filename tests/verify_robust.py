@@ -15,7 +15,7 @@ window.__planProblems = (list, opts) => {
   const bad = [], ids = new Set(list.map(t => t.id)), ISO = /^\d{4}-\d{2}-\d{2}$/, byId = new Map(list.map(t => [t.id, t]));
   if (ids.size !== list.length) bad.push('duplicate ids');
   for (const t of list) {
-    if (typeof t.name !== 'string' || !t.name.length || t.name.length > 200) bad.push('bad name ' + JSON.stringify(t.name).slice(0, 40));
+    if (typeof t.name !== 'string' || (!t.name.length && !t.spacer) || t.name.length > 200) bad.push('bad name ' + JSON.stringify(t.name).slice(0, 40));
     if (!ISO.test(t.startDate) || !ISO.test(t.endDate) || dayNumberToIso(dayNumber(t.startDate)) !== t.startDate || dayNumberToIso(dayNumber(t.endDate)) !== t.endDate) bad.push('bad date on ' + t.name);
     else if (dayNumber(t.endDate) < dayNumber(t.startDate)) bad.push('end before start on ' + t.name);
     if (t.milestone && t.startDate !== t.endDate) bad.push('milestone with two dates ' + t.name);

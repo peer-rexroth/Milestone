@@ -296,6 +296,7 @@ button:focus:not(:focus-visible) { outline: none; }
 /* ...and the same lines run on down the empty area under the last task (the rows are transparent, so they line up exactly) */
 .main .grid-rows { background-image: var(--col-lines-r, none); background-position: var(--col-pos-r, 0 0); background-size: 1px 100%; background-repeat: no-repeat; background-attachment: local; }   /* local: the lines below the last task scroll sideways with the content */
 .grid-row { border-bottom: 1px solid var(--border); font-size: 12.5px; cursor: default; position: relative; --row-bg: var(--panel); background: var(--row-bg); }   /* --row-bg: the row's background, also painted by the frozen cells so what scrolls underneath doesn't show through */
+.grid-row.spacer-row { --row-bg: color-mix(in srgb, var(--panel-2) 50%, var(--panel)); }   /* an empty line: a blank row, faintly tinted so it reads as a separator */
 .grid-row:hover { --row-bg: var(--panel-2); }
 .grid-row.selected { --row-bg: color-mix(in srgb, var(--accent) 10%, var(--panel)); }
 .grid-row.grabbing { cursor: grabbing; }
@@ -479,6 +480,7 @@ input.inline-edit[type=date]::-webkit-calendar-picker-indicator { margin: 0 0 0 
 .gantt-tick b { display: block; font-size: 11.5px; font-weight: 600; color: var(--text-dim); }
 .gantt-tick.year-start { border-left-color: var(--text-faint); }
 .gantt-rows { position: relative; }
+.gantt-row-bg.spacer { background: color-mix(in srgb, var(--panel-2) 50%, transparent); }
 .gantt-row-bg { position: absolute; left: 0; right: 0; height: var(--row-h); border-bottom: 1px solid var(--border); }
 .gantt-row-bg.selected { background: color-mix(in srgb, var(--accent) 8%, transparent); }
 .gantt-today-line { position: absolute; top: 0; width: 2px; background: var(--danger); opacity: .6; z-index: 3; pointer-events: none; }
@@ -664,6 +666,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
   <button class="icon-btn" id="undoBtn" onclick="historyUndo()" title="Undo (Ctrl+Z)" disabled><i class="fa-solid fa-rotate-left"></i></button>
   <button class="icon-btn" id="redoBtn" onclick="historyRedo()" title="Redo (Ctrl+Shift+Z)" disabled><i class="fa-solid fa-rotate-right"></i></button>
   <button class="btn" id="addTaskBtn" onclick="addTask()"><i class="fa-solid fa-plus"></i>Add Task</button>
+  <button class="icon-btn" id="addSpacerBtn" onclick="addSpacer()" title="Add an empty line below the selected task — a blank row to separate blocks of tasks"><i class="fa-solid fa-grip-lines"></i></button>
   <button class="icon-btn" id="indentBtn" onclick="indentSelected()" title="Indent (make sub-task)"><i class="fa-solid fa-indent"></i></button>
   <button class="icon-btn" id="outdentBtn" onclick="outdentSelected()" title="Outdent"><i class="fa-solid fa-outdent"></i></button>
   <button class="icon-btn" id="cloneTaskBtn" onclick="cloneSelected()" title="Clone task (with all its sub-tasks)"><i class="fa-regular fa-clone"></i></button>
@@ -1043,6 +1046,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
         <div class="help-section">
           <div class="help-section-title">Building a plan</div>
           <div class="help-row"><i class="fa-solid fa-plus"></i><span><strong>Add Task</strong> inserts a task below the selected one, or at the bottom when nothing is selected. Each task has a start and end date and a % complete, and can be a <strong>milestone</strong> (a one-day diamond).</span></div>
+          <div class="help-row"><i class="fa-solid fa-grip-lines"></i><span><strong>Add empty line</strong> (the lines button next to Add Task) inserts a blank row below the selected task (below its whole block when it is a group) to separate blocks of tasks. It has an ID but no name, dates or WBS, is never scheduled, charted or linked, and can be moved, indented, copied and deleted like any row.</span></div>
           <div class="help-row"><i class="fa-solid fa-indent"></i><span><strong>Indent</strong> and <strong>Outdent</strong> build the work breakdown structure. A parent task's own dates and progress roll up from its sub-tasks, and its <strong>WBS</strong> code (such as <code>2.1.3</code>) follows the outline.</span></div>
           <div class="help-row"><i class="fa-solid fa-grip-lines"></i><span><strong>Drag</strong> a task's line up or down to reorder it — a parent brings its sub-tasks along.</span></div>
           <div class="help-row"><i class="fa-solid fa-clone"></i><span><strong>Clone</strong> (on a task's line, or in the toolbar for the selected task) makes an exact copy right below it, including all its sub-tasks and their sub-tasks. Undo takes it back.</span></div>
@@ -1373,7 +1377,12 @@ function taskModeInfo(id) { return TASK_MODES.find(m => m.id === id) || TASK_MOD
 // A manual task whose Start or Finish is blank/free text has no reliable
 // position on the timeline: no bar, ignored as a predecessor, left out of
 // summary rollups and the date range.
-function isUnscheduled(t) { return t.taskMode === 'manual' && (t.startText != null || t.endText != null); }
+function isUnscheduled(t) { return !!t.spacer || (t.taskMode === 'manual' && (t.startText != null || t.endText != null)); }
+// An EMPTY LINE (`spacer: true`) is a row with nothing in it — no name, dates, links or progress — only there to separate blocks of tasks in the
+// list. It keeps a place in the outline (it has an ID like MS Project's blank rows) but no WBS code, is never scheduled, linked to, rolled up, charted
+// or counted, and cannot hold sub-tasks. `normalizeData()` enforces all of that; `isUnscheduled()` covers the rest of the engine.
+function isSpacer(t) { return !!(t && t.spacer); }
+function taskLabel(t) { return t && t.spacer ? 'an empty line' : `"${t ? t.name : ''}"`; }
 
 /* =============================== State ================================= */
 let project = { name: 'My Project', updatedAt: 0 };
@@ -1721,7 +1730,7 @@ function describeChange(beforeText, afterText) {
   const bm = new Map(B.tasks.map(t => [t.id, t])), am = new Map(A.tasks.map(t => [t.id, t]));
   const added = A.tasks.filter(t => !bm.has(t.id)), removed = B.tasks.filter(t => !am.has(t.id));
   const changed = A.tasks.filter(t => bm.has(t.id) && taskSig(t) !== taskSig(bm.get(t.id)));
-  const q = t => `"${t.name}"`, n = k => `${k} other task${k === 1 ? '' : 's'}`;
+  const q = t => t.spacer ? 'an empty line' : `"${t.name}"`, n = k => `${k} other task${k === 1 ? '' : 's'}`;
   const top = list => list.find(t => !t.parentId || !list.some(x => x.id === t.parentId)) || list[0];
   if (added.length && !removed.length && !changed.length) return added.length === 1 ? `Add ${q(added[0])}` : `Add ${q(top(added))} and ${added.length - 1} sub-task${added.length === 2 ? '' : 's'}`;
   if (removed.length && !added.length && !changed.length) return removed.length === 1 ? `Delete ${q(removed[0])}` : `Delete ${q(top(removed))} and ${removed.length - 1} sub-task${removed.length === 2 ? '' : 's'}`;
@@ -1829,7 +1838,8 @@ function normalizeData() {
   for (const t of tasks) ids.add(t.id);
 
   for (const t of tasks) {
-    if (typeof t.name !== 'string' || !t.name.trim()) t.name = 'Untitled Task';
+    if (t.spacer !== true) delete t.spacer;
+    if (typeof t.name !== 'string' || !t.name.trim()) t.name = t.spacer ? '' : 'Untitled Task';
     if (typeof t.order !== 'number') t.order = 0;
     if (!/^\d{4}-\d{2}-\d{2}$/.test(t.startDate || '')) t.startDate = todayStr();
     if (!/^\d{4}-\d{2}-\d{2}$/.test(t.endDate || '') || dayNumber(t.endDate) < dayNumber(t.startDate)) t.endDate = t.startDate;
@@ -1854,6 +1864,10 @@ function normalizeData() {
       t[f] = (t.taskMode === 'manual' && typeof t[f] === 'string') ? t[f].slice(0, 60) : null;
     }
     if (t.milestone) { t.durText = null; if (t.taskMode !== 'manual') t.endText = null; }   // (a manually scheduled milestone may have its Finish set to text such as TBD)
+    if (t.spacer) {   // an empty line holds nothing: no name, links, progress, actual dates, baselines, custom values … (kept Manual so the scheduler and the critical path leave it alone)
+      t.name = ''; t.milestone = false; t.progress = 0; t.predecessors = []; t.color = null; t.resource = ''; delete t.custom; delete t.baselines;
+      t.actualStart = t.actualFinish = null; t.constraintType = 'ASAP'; t.constraintDate = null; t.taskMode = 'manual'; t.startText = t.endText = t.durText = null; t.collapsed = false;
+    }
   }
 
   // Break parentId cycles and drop dangling references before anything
@@ -1873,14 +1887,19 @@ function normalizeData() {
     }
   }
 
+  {   // an empty line can't hold tasks: whatever sits under one moves up to the line's own parent (only a damaged file or a merge can produce that)
+    const sp = new Map(tasks.filter(t => t.spacer).map(t => [t.id, t]));
+    if (sp.size) for (const t of tasks) for (let guard = 0; t.parentId && sp.has(t.parentId) && guard < 1000; guard++) t.parentId = sp.get(t.parentId).parentId || null;
+  }
   const parentIds = new Set(tasks.filter(t => tasks.some(x => x.parentId === t.id)).map(t => t.id));
+  const spacerIds = new Set(tasks.filter(t => t.spacer).map(t => t.id));
   for (const t of tasks) {
     // A summary task's dates/progress roll up from its children — it can't
     // also be independently scheduled off predecessors of its own.
     if (parentIds.has(t.id)) { t.predecessors = []; continue; }
     const seenPred = new Set();
     t.predecessors = t.predecessors.filter(p => {
-      if (!p || p.id === t.id || !ids.has(p.id) || parentIds.has(p.id) || seenPred.has(p.id)) return false;
+      if (!p || p.id === t.id || !ids.has(p.id) || parentIds.has(p.id) || spacerIds.has(p.id) || seenPred.has(p.id)) return false;
       seenPred.add(p.id);
       return true;
     });
@@ -2000,7 +2019,7 @@ function taskIdByDisplayId(n) { ensureIdCache(); return _idReverseCache.get(n) |
 function wbsCode(id) {
   if (!_wbsCache) {
     _wbsCache = new Map();
-    (function walk(pid, prefix) { childrenOf(pid).forEach((t, i) => { const code = prefix ? `${prefix}.${i + 1}` : String(i + 1); _wbsCache.set(t.id, code); walk(t.id, code); }); })(null, '');
+    (function walk(pid, prefix) { let i = 0; for (const t of childrenOf(pid)) { if (t.spacer) continue; i++; const code = prefix ? `${prefix}.${i}` : String(i); _wbsCache.set(t.id, code); walk(t.id, code); } })(null, '');   // (an empty line has no WBS code and does not count)
   }
   return _wbsCache.get(id) || '';
 }
@@ -2419,7 +2438,7 @@ let barGeom = {}; // taskId -> {left, width, top, cx (milestone center)}
 function computeDateRange() {
   let start = Infinity, end = -Infinity;
   for (const t of tasks) {
-    if (!t.startDate || !t.endDate) continue;
+    if (!t.startDate || !t.endDate || t.spacer) continue;
     const s = t.startText == null || t.taskMode !== 'manual', e = t.endText == null || t.taskMode !== 'manual';
     if (s) { start = Math.min(start, dayNumber(t.startDate)); end = Math.max(end, dayNumber(t.startDate)); }
     if (e) { start = Math.min(start, dayNumber(t.endDate)); end = Math.max(end, dayNumber(t.endDate)); }
@@ -2497,7 +2516,7 @@ function updateSelectionUI() {
   document.getElementById('cloneTaskBtn').disabled = !has;
   document.getElementById('deleteTaskBtn').disabled = !has;
   document.getElementById('copyBtn').disabled = !has;
-  document.getElementById('bulkEditBtn').disabled = !has;
+  document.getElementById('bulkEditBtn').disabled = !ids.some(id => !byId(id).spacer);   // an empty line has no fields
   document.getElementById('bulkEditBtn').title = n > 1 ? `Change a field for all ${n} selected tasks` : 'Change fields of the selected task (or select several with Ctrl/Cmd+click or Shift+click)';
   const chip = document.getElementById('selChip');
   chip.classList.toggle('hidden', n < 2);
@@ -2697,6 +2716,7 @@ function filterPasses(t) {
 function filterShows(t) {
   if (!filtersActive()) return true;
   if (_filterShow.has(t.id)) return _filterShow.get(t.id);
+  if (t.spacer) { const keep = filterPinned.has(t.id); _filterShow.set(t.id, keep); return keep; }   // an empty line has no values: hidden while a filter is on (unless it was just added)
   const shown = filterPinned.has(t.id) || filterPasses(t) || childrenOf(t.id).some(filterShows);
   _filterShow.set(t.id, shown);
   return shown;
@@ -2730,7 +2750,7 @@ function renderFilterBar() {
   if (!filtersActive()) { el.classList.add('hidden'); el.innerHTML = ''; return; }
   const chips = Object.keys(FILTER_COLS).filter(c => colFilters[c]).map(c =>
     `<span class="filter-chip"><i class="fa-solid fa-filter"></i>${escapeHtml(FILTER_COLS[c].label)}: ${escapeHtml(describeSpec(c, colFilters[c]))}<button onclick="clearColFilter('${c}')" title="Remove this filter"><i class="fa-solid fa-xmark"></i></button></span>`).join('');
-  el.innerHTML = `${chips}<span class="filter-count">${tasks.filter(filterShows).length} of ${tasks.length} tasks</span><button class="btn-link" onclick="clearAllFilters()">Clear all</button>`;
+  el.innerHTML = `${chips}<span class="filter-count">${tasks.filter(t => !t.spacer && filterShows(t)).length} of ${tasks.filter(t => !t.spacer).length} tasks</span><button class="btn-link" onclick="clearAllFilters()">Clear all</button>`;
   el.classList.remove('hidden');
 }
 function clearColFilter(col) { colFilters[col] = null; filterPinned.clear(); closeFilterMenu(); render(); }
@@ -2750,6 +2770,7 @@ function openColumnFilter(event, col) {
   const others = Object.keys(FILTER_COLS).filter(c => c !== col), found = new Set();
   let hasBlank = false;
   for (const t of tasks) {
+    if (t.spacer) continue;
     if (!others.every(o => specMatches(colFilters[o], filterColValue(t, o), o))) continue;
     const v = filterColValue(t, col);
     if (v === null) hasBlank = true; else found.add(v);
@@ -3066,11 +3087,15 @@ function renderGrid() {
       preds: predCell, resource: resourceCell,
       ...Object.fromEntries(cols.filter(isCustomField).map(id => [id, customCellHtml(t, id, summaryCls, editing(id), blurAttr(id), (f, iso) => dateEditor(f, iso, null, 'dd.mm.yyyy'))]))
     };
-    return `<div class="grid-row${isSelected(t.id) ? ' selected' : ''}" data-id="${t.id}" onclick="selectTask('${t.id}', event)" ondblclick="rowDblClick(event, '${t.id}')" draggable="${editingCell && editingCell.id === t.id ? 'false' : 'true'}" ondragstart="dragStartTask(event,'${t.id}')" ondragend="dragEndTask()" ondragover="dragOverTask(event,'${t.id}')" ondrop="dropOnTask(event,'${t.id}')">
+    if (t.spacer) {   // an empty line: the ID and a blank cell in every column (nothing to edit)
+      for (const c of cols) cells[c] = '<div class="grid-cell-dim"></div>';
+      cells.name = `<div class="grid-name" style="--depth:${depth}"><button class="chevron empty" tabindex="-1"><i class="fa-solid fa-chevron-down"></i></button><span class="name-text spacer-label" title="Empty line — it only separates tasks"></span></div>`;
+    }
+    return `<div class="grid-row${isSelected(t.id) ? ' selected' : ''}${t.spacer ? ' spacer-row' : ''}" data-id="${t.id}" onclick="selectTask('${t.id}', event)" ondblclick="rowDblClick(event, '${t.id}')" draggable="${editingCell && editingCell.id === t.id ? 'false' : 'true'}" ondragstart="dragStartTask(event,'${t.id}')" ondragend="dragEndTask()" ondragover="dragOverTask(event,'${t.id}')" ondrop="dropOnTask(event,'${t.id}')">
       <div class="grid-cell-dim" style="text-align:center">${taskDisplayId(t.id)}</div>
       ${cols.map(c => cells[c]).join('')}
       ${full ? `<div class="grid-actions">
-        <button class="icon-btn" onclick="event.stopPropagation();openTaskModal('${t.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>
+        ${t.spacer ? '' : `<button class="icon-btn" onclick="event.stopPropagation();openTaskModal('${t.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>`}
         <button class="icon-btn" onclick="event.stopPropagation();cloneTask('${t.id}')" title="Clone${hasChildren(t.id) ? ' (with all its sub-tasks)' : ''}"><i class="fa-regular fa-clone"></i></button>
         <button class="icon-btn btn-danger" onclick="event.stopPropagation();deleteTaskFlow('${t.id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
       </div>` : ''}
@@ -3241,7 +3266,7 @@ function customCellHtml(t, id, summaryCls, editingNow, blur, dateEd) {
   return `<div class="grid-cell-dim editable${summaryCls}" title="${escapeHtml(shown)}" onclick="event.stopPropagation();startInlineEdit('${t.id}','${id}')">${escapeHtml(shown)}</div>`;
 }
 function toggleCustomFlag(id, field) {
-  const t = byId(id); if (!t || !isCustomField(field)) return;
+  const t = byId(id); if (!t || t.spacer || !isCustomField(field)) return;
   setCustomValue(t, field, !customValue(t, field));
   t.updatedAt = Date.now(); filterPinned.add(id); save(); render();
 }
@@ -3306,7 +3331,7 @@ function rescheduleAsAuto(t) {
 }
 function setTaskMode(id, mode) {
   const t = byId(id);
-  if (!t || (mode !== 'manual' && mode !== 'auto') || t.taskMode === mode) return;
+  if (!t || t.spacer || (mode !== 'manual' && mode !== 'auto') || t.taskMode === mode) return;
   t.taskMode = mode;
   if (mode === 'auto') rescheduleAsAuto(t); else t.updatedAt = Date.now();
   save(); render();
@@ -3348,7 +3373,7 @@ let editingCell = null; // { id, field }
 
 function startInlineEdit(id, field) {
   const t = byId(id);
-  if (!t) return;
+  if (!t || t.spacer) return;   // an empty line has nothing to edit
   // Auto summary rows roll their dates up from their children, so only the
   // name is editable there; a manually scheduled summary owns its own dates.
   if (hasChildren(id) && field !== 'name' && field !== 'resource' && !isCustomField(field) && !(t.taskMode === 'manual' && ['start', 'finish', 'duration'].includes(field))) return;
@@ -3412,6 +3437,7 @@ function commitInlineEdit(id, field, rawValue) {
   // Guards against a stray blur firing after Escape already cleared editingCell.
   if (!editingCell || editingCell.id !== id || editingCell.field !== field) return;
   editingCell = null;
+  if (byId(id) && byId(id).spacer) return;
   const t = byId(id);
   if (!t) { render(); return; }
   filterPinned.add(id);   // an edited row stays put even if its new date no longer matches the filter
@@ -3500,6 +3526,7 @@ function parsePredecessorString(str, taskId) {
     if (!targetId) { showToast(`No task #${n} — predecessors unchanged`, true); return null; }
     if (targetId === taskId) { showToast("A task can't depend on itself — predecessors unchanged", true); return null; }
     if (hasChildren(targetId)) { showToast("Can't depend on a summary task — predecessors unchanged", true); return null; }
+    if (byId(targetId).spacer) { showToast("Can't depend on an empty line — predecessors unchanged", true); return null; }
     if (seen.has(targetId)) continue;
     seen.add(targetId);
     const lagN = m[3] ? parseInt(m[3], 10) : 0;
@@ -3609,7 +3636,7 @@ function renderGantt() {
   let html = '';
   list.forEach(({ task: t }, idx) => {
     const top = idx * ROW_H;
-    html += `<div class="gantt-row-bg${isSelected(t.id) ? ' selected' : ''}" style="top:${top}px;width:${totalW}px" data-row-id="${t.id}"></div>`;
+    html += `<div class="gantt-row-bg${isSelected(t.id) ? ' selected' : ''}${t.spacer ? ' spacer' : ''}" style="top:${top}px;width:${totalW}px" data-row-id="${t.id}"></div>`;
   });
   if (px >= 4 && (workDaySet().size < 7 || holSet.size)) {   // shade the days off (not at Year zoom: 1.5px a day would just be noise)
     for (let n = dateRange.start; n < dateRange.end;) {
@@ -3823,6 +3850,22 @@ function addTask() {
   normalizeData(); save(); render();
   openTaskModal(t.id, true);
 }
+// Add an EMPTY LINE (see isSpacer) directly below the selected task — after its whole block when it is a group, at the same level; with nothing
+// selected at the end of the top level. It becomes the selection, so pressing the button again stacks another line below it. No dialog opens.
+function addSpacer() {
+  const sel = selectedTaskId ? byId(selectedTaskId) : null;
+  const parentId = sel ? (sel.parentId || null) : null, insertAt = sel ? childrenOf(parentId).findIndex(s => s.id === sel.id) + 1 : childrenOf(null).length, now = Date.now();
+  const t = { id: genId(), name: '', spacer: true, parentId, order: insertAt, startDate: todayStr(), endDate: todayStr(), progress: 0, milestone: false, color: null, predecessors: [],
+    collapsed: false, updatedAt: now, constraintType: 'ASAP', constraintDate: null, taskMode: 'manual', resource: '', actualStart: null, actualFinish: null };
+  tasks.push(t);
+  filterPinned.add(t.id);   // a filter must not hide the line you just added
+  const sibs = childrenOf(parentId).filter(s => s.id !== t.id);
+  sibs.splice(insertAt, 0, t);
+  sibs.forEach((s, i) => { if (s.order !== i) { s.order = i; if (s !== t) s.updatedAt = now; } });
+  setSelection([t.id]);
+  normalizeData(); save(); render();
+  const row = document.querySelector(`.grid-row[data-id="${t.id}"]`); if (row && row.scrollIntoView) row.scrollIntoView({ block: 'nearest' });
+}
 // Indent / outdent act on every selected task that is not inside another selected one, top to bottom (a group brings its sub-tasks).
 function indentTask(id) {
   const t = byId(id); if (!t) return false;
@@ -3830,6 +3873,7 @@ function indentTask(id) {
   const idx = siblings.findIndex(x => x.id === id);
   if (idx <= 0) return false;
   const newParent = siblings[idx - 1], snap = linkSnapshot();
+  if (newParent.spacer) { showToast("Can't indent under an empty line", true); return false; }
   t.parentId = newParent.id;
   const newSiblings = childrenOf(newParent.id);
   t.order = newSiblings.length ? Math.max(...newSiblings.map(x => x.order)) + 1 : 0;
@@ -3876,7 +3920,7 @@ function cloneTasks(ids) {
   for (const x of parts) for (const c of x.copies) if (x.inCycle.has(x.cycleSrc.get(c.id))) applyConstraints(c.id);   // a copy is exact (even a task the user placed ahead of its links), except that the copy of a dependency-cycle member — which the scheduler never placed — is not in the cycle and is placed by its links now
   save(); render();
   const sub = parts.reduce((n, x) => n + x.copies.length - 1, 0), src0 = parts[0].src;
-  const msg = parts.length === 1 ? (parts[0].copies.length > 1 ? `Cloned "${src0.name}" with ${parts[0].copies.length - 1} sub-task${parts[0].copies.length === 2 ? '' : 's'}` : `Cloned "${src0.name}"`) : `Cloned ${parts.length} tasks${sub ? ` with ${sub} sub-task${sub === 1 ? '' : 's'}` : ''}`;
+  const msg = parts.length === 1 ? (parts[0].copies.length > 1 ? `Cloned ${taskLabel(src0)} with ${parts[0].copies.length - 1} sub-task${parts[0].copies.length === 2 ? '' : 's'}` : `Cloned ${taskLabel(src0)}`) : `Cloned ${parts.length} tasks${sub ? ` with ${sub} sub-task${sub === 1 ? '' : 's'}` : ''}`;
   showToast(msg, false, () => {
     for (const x of [...parts].reverse()) x.undo();
     setSelection(prevSelected.filter(id => byId(id)));
@@ -3898,7 +3942,7 @@ function cloneOne(id) {
     return c;
   });
   const root = copies[0];
-  root.name = `${src.name} (copy)`;
+  root.name = src.spacer ? '' : `${src.name} (copy)`;
   tasks.push(...copies);
   // directly below the original: renumber that level, remembering what moved so Undo can put it back
   const parentId = src.parentId || null;
@@ -3930,7 +3974,7 @@ function deleteTaskFlow(idOrIds) {
   openConfirmModal({
     title: roots.length > 1 ? 'Delete Tasks' : 'Delete Task',
     body: roots.length > 1 ? `Delete these ${roots.length} tasks${count > roots.length ? ` and ${count - roots.length} sub-task${count - roots.length === 1 ? '' : 's'}` : ''}? This can be undone.`
-      : count > 1 ? `Delete "${escapeHtml(t.name)}" and ${count - 1} sub-task${count - 1 === 1 ? '' : 's'}? This can be undone.` : `Delete "${escapeHtml(t.name)}"? This can be undone.`,
+      : count > 1 ? `Delete ${t.spacer ? 'the empty line' : `"${escapeHtml(t.name)}"`} and ${count - 1} sub-task${count - 1 === 1 ? '' : 's'}? This can be undone.` : `Delete ${t.spacer ? 'this empty line' : `"${escapeHtml(t.name)}"`}? This can be undone.`,
     confirmLabel: 'Delete',
     action() { deleteTasksNow(allIds); }
   });
@@ -3978,6 +4022,7 @@ function deleteTasksNow(allIds, opts = {}) {
 /* ============================== Task modal ================================ */
 let modalOrigDates = { start: null, end: null };
 function openTaskModal(id, isNew) {
+  const t0 = byId(id); if (!t0 || t0.spacer) return;   // an empty line has nothing to edit
   editingCell = null;
   editingTaskId = id;
   const t = byId(id);
@@ -4493,6 +4538,7 @@ function onPredecessorIdChange(i, value) {
   if (!targetId) error = `No task #${value}`;
   else if (targetId === editingTaskId) error = "A task can't depend on itself";
   else if (hasChildren(targetId)) error = "Can't depend on a summary task — pick one of its own leaf tasks";
+  else if (byId(targetId).spacer) error = "Can't depend on an empty line";
   else if (editingPredecessors.some((p, idx) => idx !== i && p.id === targetId)) error = 'Already added';
   if (error) { showToast(error, true); editingPredecessors[i].id = null; }
   else editingPredecessors[i].id = targetId;
@@ -5065,13 +5111,14 @@ function taskPathText(t) { const out = []; let p = t.parentId; while (p) { const
 function searchTasks(q) {
   q = q.trim().toLowerCase(); if (!q) return [];
   const idm = /^#(\d+)$/.exec(q);
-  if (idm) { const id = taskIdByDisplayId(parseInt(idm[1], 10)); return id ? [{ t: byId(id), score: 10 }] : []; }
+  if (idm) { const id = taskIdByDisplayId(parseInt(idm[1], 10)); return id && !byId(id).spacer ? [{ t: byId(id), score: 10 }] : []; }
   const wbs = /^\d+(\.\d+)*\.?$/.test(q) && q.includes('.');
   if (wbs) { const w = q.replace(/\.$/, ''); return tasks.filter(t => { const c = wbsCode(t.id); return c === w || c.startsWith(w + '.'); }).map(t => ({ t, score: wbsCode(t.id) === w ? 9 : 5 })).sort((a, b) => taskDisplayId(a.t.id) - taskDisplayId(b.t.id)); }
   const res = q.startsWith('@'), terms = (res ? q.slice(1) : q).split(/\s+/).filter(Boolean);
   if (!terms.length) return [];
   const out = [];
   for (const t of tasks) {
+    if (t.spacer) continue;
     const name = t.name.toLowerCase(), r = (t.resource || '').toLowerCase();
     const extra = res ? '' : [wbsCode(t.id), ...Object.entries(t.custom || {}).filter(([k, v]) => typeof v === 'string').map(([k, v]) => v.toLowerCase())].join(' ');
     let score = 0, ok = true;
@@ -5246,7 +5293,8 @@ function buildPrintPages(o) {
       let cx = 0;
       cols.forEach((c, k) => {
         const w = widths[k], al = PRINT_COLS[c][2]; let txt = '';
-        if (c === 'id') txt = String(taskDisplayId(t.id)); else if (c === 'wbs') txt = wbsCode(t.id);
+        if (t.spacer) { if (c === 'id') txt = String(taskDisplayId(t.id)); }
+        else if (c === 'id') txt = String(taskDisplayId(t.id)); else if (c === 'wbs') txt = wbsCode(t.id);
         else if (c === 'name') txt = (t.milestone ? '◆ ' : '') + t.name;
         else if (c === 'start') txt = !group && t.startText != null ? t.startText : eff.start ? fmtDate(eff.start) : '';
         else if (c === 'end') txt = !group && t.endText != null ? t.endText : eff.end ? fmtDate(eff.end) : '';
@@ -5345,7 +5393,7 @@ function doPrint() {
 const BULK_COLORS = [['', 'Automatic (by status)'], ['blue', 'Blue'], ['teal', 'Teal'], ['purple', 'Purple'], ['amber', 'Amber'], ['pink', 'Pink'], ['green', 'Green'], ['red', 'Red'], ['grey', 'Grey']];
 function bulkCustomCols() { return visibleTaskCols(currentView).filter(isCustomField); }
 function openBulkModal() {
-  const ids = selectedIds(); if (!ids.length) return;
+  const ids = selectedIds().filter(id => !byId(id).spacer); if (!ids.length) return;   // (empty lines have no fields)
   const groups = ids.filter(id => hasChildren(id)).length;
   document.getElementById('bulkTitle').textContent = ids.length === 1 ? 'Edit task' : `Edit ${ids.length} tasks`;
   document.getElementById('bulkHint').textContent = `Tick the fields you want to change — everything else stays as it is.${groups ? ' Groups keep the progress and dates worked out from their tasks.' : ''}`;
@@ -5375,7 +5423,7 @@ function shiftTaskBy(t, n) {
   if (t.taskMode !== 'manual') pinToDate(t, 'start');   // moved later than its links allow = a deliberate delay, kept
 }
 function applyBulkEdit() {
-  const ids = selectedIds(); if (!ids.length) { closeBulkModal(); return; }
+  const ids = selectedIds().filter(id => !byId(id).spacer); if (!ids.length) { closeBulkModal(); return; }
   const on = f => { const c = document.getElementById('bulkOn-' + f); return !!(c && c.checked); }, val = f => document.getElementById('bulkVal-' + f).value;
   const customOn = bulkCustomCols().filter(c => on(c));
   if (!['progress', 'resource', 'mode', 'color', 'shift', 'pred'].some(on) && !customOn.length) { showToast('Tick at least one field to change', true); return; }
@@ -5386,6 +5434,7 @@ function applyBulkEdit() {
     const n = parseInt(val('predId'), 10); predTarget = Number.isFinite(n) ? taskIdByDisplayId(n) : null; lag = val('predLag').trim() === '' ? 0 : Number(val('predLag'));
     if (!predTarget) { showToast(`No task #${val('predId')}`, true); return; }
     if (hasChildren(predTarget)) { showToast("Can't depend on a summary task — pick one of its own leaf tasks", true); return; }
+    if (byId(predTarget).spacer) { showToast("Can't depend on an empty line", true); return; }
     if (!Number.isInteger(lag) || Math.abs(lag) > MAX_LAG_DAYS) { showToast(`The lag must be a whole number of days, at most ${MAX_LAG_DAYS.toLocaleString('en')}`, true); return; }
   }
   const customVals = {};
@@ -5426,6 +5475,7 @@ function applyBulkEdit() {
    so on. The pasted tasks go below the selected task (or at the end) at that task's level and become the selection. */
 const CLIP_KEY = 'milestone-clip';
 function clipCell(t, c, depth) {
+  if (t.spacer) return c === 'id' ? String(taskDisplayId(t.id)) : '';   // an empty line copies as a row with just its ID
   const eff = effectiveDates(t.id), own = !hasChildren(t.id) || t.taskMode === 'manual', act = actualDates(t.id);
   switch (c) {
     case 'id': return String(taskDisplayId(t.id));
@@ -5810,7 +5860,8 @@ function buildXlsx(opts) {
   const HEAD_FILL = '00205B';   // Midnight Blue, PANTONE 281 C — the colour of every header cell (task sheet columns, Gantt month band and week/day columns); HEAD stays the dark grey of the summary bars
   const box = { left: ['thin', GRID], right: ['thin', GRID], top: ['thin', GRID], bottom: ['thin', GRID] };
   const dateFmt = 'dd\\.mm\\.yyyy', durFmt = '[=1]0" day";0" days"';
-  const scopeText = opts.scope === 'filtered' && filtersActive() ? `${rowsIn.length} of ${tasks.length} tasks (filtered)` : `${rowsIn.length} task${rowsIn.length === 1 ? '' : 's'}`;
+  const nReal = rowsIn.filter(r => !r.task.spacer).length, nAll = tasks.filter(t => !t.spacer).length;
+  const scopeText = opts.scope === 'filtered' && filtersActive() ? `${nReal} of ${nAll} tasks (filtered)` : `${nReal} task${nReal === 1 ? '' : 's'}`;
   const titleStyle = book.style({ bold: true, size: 16 }), subStyle = book.style({ size: 10, color: DIM });
   const headStyle = book.style({ bold: true, color: 'FFFFFF', fill: HEAD_FILL, h: 'center', wrap: true, border: box });
   const tasksSheet = xlsxSheet(sst, { tab: '0969DA', grid: false, selected: true, freeze: null, fitWidth: 1, fitHeight: 0 });
@@ -5839,6 +5890,7 @@ function buildXlsx(opts) {
     const S = o => book.style(Object.assign({}, base, o));
     const dateCell = (c, text, iso) => text != null ? sheet.cell(r, c, text, S({ h: 'center', italic: true, color: DIM, bold: false }))
       : iso ? sheet.cell(r, c, xlsxSerial(iso), S({ h: 'center', num: dateFmt })) : sheet.cell(r, c, null, S({}));
+    if (t.spacer) { for (const k of ks) sheet.cell(r, colFn(k), k === 'id' ? taskDisplayId(t.id) : null, S(k === 'id' ? { h: 'center', color: DIM, bold: false } : {})); return; }   // an empty line: its ID and empty cells
     for (const k of ks) {
       const c = colFn(k);
       switch (k) {
@@ -5977,9 +6029,9 @@ function downloadBlob(blob, filename) {
 function openExcelExport() {
   closeDataMenu();
   if (!tasks.length) { showToast('Nothing to export yet — add a task first', true); return; }
-  const filtered = filtersActive(), shown = tasks.filter(filterShows).length;
+  const filtered = filtersActive(), shown = tasks.filter(t => !t.spacer && filterShows(t)).length;
   document.getElementById('excelScopeBlock').classList.toggle('hidden', !filtered);
-  document.getElementById('excelScopeAll').textContent = `All ${tasks.length} tasks`;
+  document.getElementById('excelScopeAll').textContent = `All ${tasks.filter(t => !t.spacer).length} tasks`;
   document.getElementById('excelScopeFiltered').textContent = `Only the ${shown} task${shown === 1 ? '' : 's'} matching the current filter`;
   document.querySelector('input[name="excelScope"][value="all"]').checked = true;
   document.querySelector('input[name="excelCols"][value="shown"]').checked = true;

@@ -28,6 +28,7 @@ set `MILESTONE_URL` / `--url` to test another address. Suites run three at a tim
 | `verify_milestone_tbd` | Finish = TBD on a manual milestone; Excel column widths (WBS) |
 | `verify_bulk`, `verify_search`, `verify_import`, `verify_print`, `verify_holiday_presets` | multi-select, bulk edit and copy/paste of rows (also from Excel); the Find palette; MS Project XML and CSV import; print / PDF pages; public-holiday presets |
 | `verify_inline_select` | selecting text in an inline editor (double-click a word, drag out of the box) keeps the edit open |
+| `verify_spacer` | empty lines (spacer rows): the button, placement, no WBS / dates / links, and every feature that must cope with one |
 | `verify_help` | the tabbed Help dialog: topics, keyboard, contrast in both themes, narrow layout |
 | `verify_sync`, `verify_plans` | file merge between two simulated devices, conflicts; plans, file linking, the write race |
 | `verify_columns`, `verify_gantt_columns`, `verify_gantt_list`, `verify_custom_fields`, `verify_filters`, `verify_fixed_widths`, `verify_column_lines`, `verify_hscroll`, `verify_date_editors`, `verify_funnel_hover`, `verify_mode_header` | the task list: columns per view, custom fields, filters, widths, lines, scrolling, editors |

@@ -13,7 +13,7 @@ async ([seed, steps, allowCalendar]) => {
   const ri = (n) => Math.floor(rnd() * n), pick = (arr) => arr[ri(arr.length)];
   const ISO = /^\d{4}-\d{2}-\d{2}$/;
   const randDate = () => addDays('2026-09-01', ri(120));
-  const leaf = () => tasks.filter(t => !hasChildren(t.id));
+  const leaf = () => tasks.filter(t => !hasChildren(t.id) && !t.spacer);   // (an empty line has no bar to drag)
   const anyTask = () => tasks.length ? pick(tasks) : null;
   const many = () => { const out = []; for (let i = 1 + ri(3); i > 0 && tasks.length; i--) { const x = pick(tasks).id; if (!out.includes(x)) out.push(x); } return out; };
   const inv = () => {
@@ -27,6 +27,11 @@ async ([seed, steps, allowCalendar]) => {
       if (t.parentId && !tasks.some(x => x.id === t.parentId)) bad.push('dangling parent on ' + t.name);
       if (t.actualStart && t.actualFinish && dayNumber(t.actualFinish) < dayNumber(t.actualStart)) bad.push('actual finish before start: ' + t.name);
       if (t.baselines) { if (hasChildren(t.id)) bad.push('baseline on a group ' + t.name); for (const [slot, b] of Object.entries(t.baselines)) if (!(slot >= 0 && slot < BASELINE_SLOTS) || !ISO.test(b[0]) || !ISO.test(b[1]) || b[1] < b[0]) bad.push('bad baseline ' + slot + ' on ' + t.name); }
+    }
+    for (const t of tasks) if (t.spacer) {   // an empty line stays empty: no name, links, children, WBS, baselines, custom values; nothing depends on it
+      if (t.name !== '' || t.predecessors.length || hasChildren(t.id) || wbsCode(t.id) !== '' || t.baselines || t.custom || t.milestone || t.progress || t.resource || t.actualStart || t.taskMode !== 'manual') bad.push('an empty line is not empty: ' + JSON.stringify(t).slice(0, 120));
+      if (tasks.some(x => x.predecessors.some(p => p.id === t.id))) bad.push('something depends on an empty line');
+      if (computeCriticalPath().has(t.id)) bad.push('an empty line is on the critical path');
     }
     for (const t of tasks) {   // parent chains end (no cycles)
       let n = 0, cur = t; while (cur && cur.parentId && n++ < 500) cur = tasks.find(x => x.id === cur.parentId);
@@ -70,6 +75,7 @@ async ([seed, steps, allowCalendar]) => {
     ['multiIndent', 2, () => { const ids = many(); setSelection(ids); if (rnd() < .5) indentSelected(); else outdentSelected(); }],
     ['copyPaste', 3, () => { const ids = many(); if (!ids.length || tasks.length > 50) return; setSelection(ids); const c = buildClip(); if (!c) return; setSelection(many()); pasteTaskPayload(c.json); }],
     ['pasteRows', 2, () => { if (tasks.length > 50) return; setSelection(many()); let x = 'ID\tTask Name\tStart\tFinish\tDuration\tPredecessors\n'; const n = 1 + ri(4); for (let i = 1; i <= n; i++) x += `${i}\t${rnd() < .3 ? '  ' : ''}Row ${i}\t${rnd() < .6 ? randDate() : 'TBD'}\t${rnd() < .3 ? randDate() : ''}\t${rnd() < .5 ? (1 + ri(9)) + ' days' : ''}\t${i > 1 && rnd() < .5 ? (1 + ri(i - 1)) + pick(['FS', 'SS', 'FF', 'SF']) : ''}\n`; pasteTableText(x); }],
+    ['spacer', 3, () => { if (tasks.length > 60) return; const s = anyTask(); selectedTaskId = s ? s.id : null; addSpacer(); }],
     ['clone', 3, () => { const t = anyTask(); if (t && tasks.length < 60) cloneTask(t.id); }],
     ['actualStart', 5, () => { const t = anyTask(); if (t && !hasChildren(t.id)) edit(t, 'actualStart', rnd() < .15 ? '' : randDate()); }],
     ['actualFinish', 5, () => { const t = anyTask(); if (t && !hasChildren(t.id)) edit(t, 'actualFinish', rnd() < .15 ? '' : randDate()); }],
