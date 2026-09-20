@@ -252,16 +252,17 @@ button:focus:not(:focus-visible) { outline: none; }
 }
 .grid-resize-handle:hover, .grid-resize-handle.resizing { background: color-mix(in srgb, var(--accent) 40%, transparent); }
 .main.view-tasks .grid-resize-handle { display: none; }
-.grid-header { font-size: 11px; font-weight: 700; color: var(--text-faint); text-transform: uppercase; letter-spacing: .03em; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.grid-header-clip { flex-shrink: 0; overflow: hidden; }   /* the header scrolls sideways with the rows (scrollLeft is set from the rows' scroll event) but never by itself */
+.grid-header { font-size: 11px; font-weight: 700; color: var(--text-faint); text-transform: uppercase; letter-spacing: .03em; border-bottom: 1px solid var(--border); flex-shrink: 0; --row-bg: var(--panel); background: var(--row-bg); }
 .grid-rows { flex: 1; overflow: hidden; position: relative; }
 /* Task view: the grid is the only pane, so it scrolls on its own.
    Gantt view: the grid's scrollTop is instead driven programmatically from
    the Gantt pane's real scroll container, so the two stay pixel-aligned
    (see wireScrollSync()) — overflow:hidden still permits that, it only
    suppresses the scrollbar UI and direct user-initiated scrolling. */
-.main.view-tasks .grid-rows { overflow-y: auto; }
-.main.view-tasks .grid-pane { width: auto; flex: 1; border-right: none; }
-.main.view-tasks .grid-header, .main.view-tasks .grid-row { grid-template-columns: var(--task-cols, 34px 24px minmax(160px,1fr) 116px 116px 96px 54px 1fr 88px); }   /* --task-cols is built from the visible columns in renderGrid() */
+.main.view-tasks .grid-rows { overflow: auto; }   /* both ways: when the columns are wider than the window the list scrolls sideways (the header follows, see syncHeaderScroll) */
+.main.view-tasks .grid-pane { width: auto; flex: 1; border-right: none; min-width: 0; }
+.main.view-tasks .grid-header, .main.view-tasks .grid-row { grid-template-columns: var(--task-cols, 34px 24px minmax(160px,1fr) 116px 116px 96px 54px 1fr 88px); min-width: var(--grid-min-w, 0); }   /* --task-cols is built from the visible columns in renderGrid() */
 .main.view-tasks .grid-header > div, .main.view-tasks .grid-row > div { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .main.view-tasks .gantt-pane-outer { display: none; }
 /* Tasks view: a fine vertical line between the columns, in the same colour as the divider between list and chart in the Gantt view.
@@ -282,16 +283,27 @@ button:focus:not(:focus-visible) { outline: none; }
 .main.view-tasks .grid-row > input.inline-edit { width: calc(100% - 4px); margin-inline: 2px; padding-inline: 5px; }   /* the typed text starts exactly where the cell's text does (2 + 1 border + 5 = 8px) */
 .main.view-tasks .grid-row > input.inline-edit[type=date] { width: max(calc(100% - 4px), 95px); padding-inline: 4px 2px; }   /* the native control needs ~93px for its fields + picker icon; the date columns are 104px = 2px + 100px + 2px, so it sits inside its column with equal space left and right */
 .main.view-tasks .grid-row > .inline-wrap { width: max(calc(100% - 4px), 92px); margin-inline: 2px; }
+/* Frozen columns: the ID column and everything up to and including Task Name stay put while the rest scrolls sideways (like Excel's
+   "freeze panes"; updateFrozenColumns() marks the cells and gives each its `left`). They need an opaque background, or the columns
+   scrolling underneath would show through: they inherit the row's (which changes on hover / selection). The column line at their
+   right edge is drawn as an inset shadow, because the opaque cell covers the row's own line. */
+:where(.main.view-tasks .grid-row > .frz, .main.view-tasks .grid-header > .frz) { background: var(--row-bg); }
+.main.view-tasks .grid-row > .frz, .main.view-tasks .grid-header > .frz { position: sticky; z-index: 3; box-shadow: inset -1px 0 0 var(--border); }
+.main.view-tasks .grid-row > .frz:not(input), .main.view-tasks .grid-header > .frz { align-self: stretch; }   /* cover the whole row height (cells are otherwise only as tall as their content); a cell's own flex box keeps its content centred */
+.main.view-tasks .grid-row > .frz:first-child, .main.view-tasks .grid-header > .frz:first-child { box-shadow: -10px 0 0 var(--row-bg), inset -1px 0 0 var(--border); }   /* ...and the row's 10px left padding, where the scrolled columns would show */
+.main.view-tasks .grid-pane.h-scrolled .grid-row > .frz-last, .main.view-tasks .grid-pane.h-scrolled .grid-header > .frz-last { box-shadow: inset -1px 0 0 var(--border), 5px 0 6px -4px rgba(0, 0, 0, .28); }   /* a soft edge while content slides underneath */
+.main.view-tasks .grid-pane.h-scrolled .grid-rows { background-image: none; }   /* scrolled sideways: those lines would cross the frozen columns, so the empty area goes plain */
 /* ...and the same lines run on down the empty area under the last task (the rows are transparent, so they line up exactly) */
-.main.view-tasks .grid-rows { background-image: var(--col-lines-r, none); background-position: var(--col-pos-r, 0 0); background-size: 1px 100%; background-repeat: no-repeat; }
-.grid-row { border-bottom: 1px solid var(--border); font-size: 12.5px; cursor: default; }
-.grid-row:hover { background: var(--panel-2); }
-.grid-row.selected { background: color-mix(in srgb, var(--accent) 10%, var(--panel)); }
+.main.view-tasks .grid-rows { background-image: var(--col-lines-r, none); background-position: var(--col-pos-r, 0 0); background-size: 1px 100%; background-repeat: no-repeat; background-attachment: local; }   /* local: the lines below the last task scroll sideways with the content */
+.grid-row { border-bottom: 1px solid var(--border); font-size: 12.5px; cursor: default; position: relative; --row-bg: var(--panel); background: var(--row-bg); }   /* --row-bg: the row's background, also painted by the frozen cells so what scrolls underneath doesn't show through */
+.grid-row:hover { --row-bg: var(--panel-2); }
+.grid-row.selected { --row-bg: color-mix(in srgb, var(--accent) 10%, var(--panel)); }
 .grid-row.grabbing { cursor: grabbing; }
 .grid-row.dragging { opacity: .4; }
-.grid-row.drop-before { box-shadow: inset 0 2px 0 var(--accent); }
-.grid-row.drop-after { box-shadow: inset 0 -2px 0 var(--accent); }
-.grid-row.drop-into { background: color-mix(in srgb, var(--accent) 12%, var(--panel)); box-shadow: inset 0 -2px 0 var(--accent); }
+.grid-row.drop-before::after, .grid-row.drop-after::after, .grid-row.drop-into::after { content: ''; position: absolute; left: 0; right: 0; height: 2px; background: var(--accent); z-index: 6; pointer-events: none; }
+.grid-row.drop-before::after { top: 0; }
+.grid-row.drop-after::after, .grid-row.drop-into::after { bottom: 0; }
+.grid-row.drop-into { --row-bg: color-mix(in srgb, var(--accent) 12%, var(--panel)); }
 .grid-rows.drop-end { box-shadow: inset 0 -2px 0 var(--accent); }
 .grid-name { display: flex; align-items: center; gap: 4px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding-left: calc(var(--depth, 0) * 16px); }   /* outline indent; the Tasks view adds 3px, the distance the name has always had from the column line */
 .name-text.editable, .grid-cell-dim.editable { cursor: text; }
@@ -376,6 +388,9 @@ input.inline-edit[type=date]::-webkit-calendar-picker-indicator { margin: 0 0 0 
 .gantt-bar.manual .fill { opacity: .5; }
 .gantt-bar.mismatch { box-shadow: 0 0 0 2px var(--task-amber); }
 .gantt-rollup { position: absolute; height: 4px; border-radius: 2px; background: var(--bar-color, var(--accent)); opacity: .75; pointer-events: none; }
+.gantt-actual { position: absolute; height: 4px; border-radius: 2px; background: var(--actual-color, var(--accent)); pointer-events: none; z-index: 1; }
+.gantt-actual.running::after { content: ''; position: absolute; right: -5px; top: -2px; border-left: 5px solid var(--actual-color, var(--accent)); border-top: 4px solid transparent; border-bottom: 4px solid transparent; }   /* an arrow head: still running */
+.gantt-actual-ms { position: absolute; width: 7px; height: 7px; transform: rotate(45deg); background: var(--actual-color, var(--accent)); border: 1px solid var(--panel); pointer-events: none; z-index: 1; }
 .gantt-bracket { position: absolute; width: 10px; height: 20px; border: 2px solid var(--text-dim); cursor: pointer; }
 .gantt-bracket.br-start { border-right: none; }
 .gantt-bracket.br-end { border-left: none; }
@@ -522,7 +537,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 
 <div class="main" id="main">
   <div class="grid-pane" id="gridPane">
-    <div class="grid-header" id="gridHeader"></div>
+    <div class="grid-header-clip" id="gridHeaderClip"><div class="grid-header" id="gridHeader"></div></div>
     <div class="grid-rows" id="gridRows" ondragover="dragOverEnd(event)" ondrop="dropOnEnd(event)"></div>
     <div class="grid-resize-handle" id="gridResizeHandle" title="Drag to resize"></div>
   </div>
@@ -727,6 +742,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
       <div><div class="help-section-title">The basics</div>Add tasks with the + Add Task button. Each task has a start/end date, a % complete, and can be a milestone (a zero-duration diamond). Use Indent/Outdent to build a work breakdown structure — a parent task's own dates and progress roll up automatically from its children. Drag a task's line up or down to reorder it (a parent brings its sub-tasks along). Add Task inserts below the selected task, or at the bottom when nothing is selected; press Escape to clear the selection. The <strong>Clone</strong> button (on a task's line, and in the toolbar for the selected task) makes an exact copy right below it — including all its sub-tasks and their sub-tasks — and Undo takes it back. The double arrow above the ID numbers steps through the outline: click it to collapse every group, then again to open the first level, again for the next level, and so on until everything is open — then it starts over.</div>
       <div><div class="help-section-title">Filtering</div>Click the funnel in a column header (Task Mode, Task Name, Start, Finish, Duration, %, Predecessors) for an Excel-style filter. Each column offers what fits its data: dates get rules (equals, before, after, between, or relative to today such as this week, next month or year to date) and a Year › Month › Day list; text columns get contains / begins with / ends with / equals and their negatives; numbers get equals, greater or less than, and between. Every column also has a list of its values to tick, with a search box and (Blanks) for tasks that have no value. Filters on several columns combine, so a task must match all of them. A group stays visible while any sub-task inside it matches, and stays open while a filter is on. The bar under the toolbar shows what is filtered and how many tasks are showing; click × on a chip, or Clear all, to remove it. Filters are only for looking — they aren't saved, and a task you add or edit stays visible until you filter again.</div>Click the funnel next to Start or Finish (in either view) for an Excel-style filter: pick a rule (equals, before, after, between, or relative to today such as this week, next month or year to date), or tick individual dates in the Year › Month › Day list — type in the search box to narrow it, and use (Blanks) for tasks without a real date. The two columns combine, so a task must match both. A group stays visible while any sub-task inside it matches, and stays open while a filter is on. The bar under the toolbar shows what is filtered and how many tasks are showing; click × on a chip, or Clear all, to remove it. Filters are only for looking — they aren't saved, and a task you add or edit stays visible until you filter again.</div>
       <div><div class="help-section-title">Working calendar</div>Each plan has its own working days — Monday to Friday unless you change it (plan menu → <strong>Working calendar…</strong>). Durations, lags and dependencies count working days only, so a 5-day task that starts on a Monday finishes on that Friday and its successor starts the next Monday. Auto Scheduled tasks start and finish on working days (a date you type or drag to on a day off moves to the nearest working day); Manually Scheduled tasks keep exactly the dates you give them. Days off are shaded in the Gantt chart. Changing the calendar never moves dates that are already in the plan.</div>
+      <div><div class="help-section-title">Planned and actual in the Gantt chart</div>The bar is the plan. Under it a thin line shows what really happened, from the actual start to the actual finish: <strong>green</strong> when the task finished on time, <strong>red</strong> when it finished late (or is still running past its planned finish), <strong>blue</strong> with an arrow head while it is still running within plan. A milestone shows a small diamond at the day it was reached. Hover a bar for the actual dates.</div>
       <div><div class="help-section-title">Columns and extra fields</div>Besides name, dates, duration, % and predecessors, a task can carry a <strong>Resource</strong> (who does the work), an <strong>Actual Start</strong> and <strong>Actual Finish</strong> (what really happened, kept separate from the plan; recording an Actual Finish marks the task 100% complete and fills an empty Actual Start), and has a <strong>WBS</strong> code such as 2.1.3 that is worked out from the outline (shown by default). <strong>Remaining Duration</strong> (the duration still to go, from % complete) and <strong>Status</strong> (Complete, On Schedule, Late or Future Task, judged against today) are worked out for you too. Resource, Actual Start/Finish, Remaining Duration and Status aren't shown by default: click <strong>Columns</strong> in the toolbar (Tasks view) to tick the columns you want and reorder them; your choice is remembered on this device. Click a Resource or actual-date cell to edit it, or use the task dialog. A group shows the actual dates of the tasks in it (its earliest actual start, and an actual finish once everything in it has finished). The tasks that <strong>depend</strong> on a task are scheduled from what really happened: from its actual dates once it has them, and a task that has started but not finished is expected to finish its planned duration after the day it really started (a late start pushes its successors later). A task that has itself already started or finished (it has an actual date) is not rescheduled any more: its planned dates stay as they are, and a warning triangle appears if its predecessors say it couldn't have started yet.</div>
       <div><div class="help-section-title">Custom fields</div>Every task can carry up to 20 fields of your own: <strong>Text1–5</strong>, <strong>Number1–5</strong>, <strong>Date1–5</strong> and <strong>Flag1–5</strong> (a yes/no tick). Fill them in on the task dialog's <strong>Custom fields</strong> tab, or — once you have ticked them under <strong>Columns</strong>, where they start hidden — straight in the list (click a cell; a flag toggles). Use the pencil beside a field to rename it, for instance Text1 to <em>Cost centre</em>: the name is saved with the plan, so another plan can call the same field something else. Custom fields can be filtered like any column and are included in the Excel export.</div>
       <div><div class="help-section-title">Task Mode</div>Every task is either Manually Scheduled (pushpin) or Auto Scheduled (chart icon) — click the icon in the Task Mode column, or use the Task Mode field in a task's dialog. An Auto task follows its predecessors and constraints. A Manual task stays exactly where you put it: predecessors never move it, its Start, Finish and Duration can be free text such as "TBD", and a warning triangle appears if it starts earlier than its predecessors allow. Manual tasks are drawn with a dashed bar, and are left out of the critical path. Switching a task to Auto moves it to the earliest date its links allow. The "New tasks" button at the right of the toolbar chooses the mode new tasks start in (Auto Scheduled by default).</div>
@@ -1599,6 +1615,10 @@ function computeDateRange() {
     if (s) { start = Math.min(start, dayNumber(t.startDate)); end = Math.max(end, dayNumber(t.startDate)); }
     if (e) { start = Math.min(start, dayNumber(t.endDate)); end = Math.max(end, dayNumber(t.endDate)); }
   }
+  for (const t of tasks) {   // ...and what actually happened: the actual bars must fit too (a task still running is drawn up to today)
+    const a = actualDates(t.id);
+    for (const iso of [a.start, a.end, a.start && !a.end ? todayStr() : null]) if (iso) { start = Math.min(start, dayNumber(iso)); end = Math.max(end, dayNumber(iso)); }
+  }
   if (start === Infinity) { const t0 = dayNumber(todayStr()); return { start: t0 - 7, end: t0 + 30 }; }
   const pad = Math.max(3, Math.round((end - start) * 0.06));
   return { start: start - pad, end: end + pad };
@@ -1613,7 +1633,9 @@ function render() {
   renderZoomTabs();
   updateCriticalPathUI();
   renderGrid();
+  syncHeaderScroll();
   updateColumnLines();
+  updateFrozenColumns();
   renderGantt();
   renderFilterBar();
   updateCollapseButtons();
@@ -2077,7 +2099,34 @@ function updateColumnLines() {
   set('h', document.getElementById('gridHeader'));
   set('r', document.querySelector('#gridRows .grid-row'));
 }
-if (typeof ResizeObserver !== 'undefined') new ResizeObserver(() => updateColumnLines()).observe(document.getElementById('gridPane'));
+// The ID column and everything up to and including Task Name are frozen (Tasks view): marked with .frz, each given the `left` it
+// sticks at (the row's padding plus the columns before it). Called after every render, when the cells are brand new.
+function updateFrozenColumns() {
+  if (currentView !== 'tasks') return;
+  const hdr = document.getElementById('gridHeader');
+  const k = visibleTaskCols().indexOf('name') + 2;   // ID + the columns up to Task Name
+  const cs = getComputedStyle(hdr), tracks = cs.gridTemplateColumns.split(' ').map(parseFloat);
+  let left = parseFloat(cs.paddingLeft) || 0;
+  const lefts = tracks.slice(0, k).map(w => { const l = left; left += w; return l; });
+  for (const row of [hdr, ...document.querySelectorAll('#gridRows .grid-row')]) {
+    for (let i = 0; i < k && i < row.children.length; i++) {
+      const c = row.children[i]; c.classList.add('frz'); c.style.left = lefts[i] + 'px';
+      if (i === k - 1) c.classList.add('frz-last');
+    }
+  }
+}
+// The rows scroll sideways; the header follows (it is in a clip box that never scrolls by itself). The clip also gets the rows'
+// vertical scrollbar width as right padding so header and rows have the same width, and a wheel/trackpad gesture over the header
+// scrolls the rows.
+function syncHeaderScroll() {
+  const rows = document.getElementById('gridRows'), clip = document.getElementById('gridHeaderClip');
+  clip.style.paddingRight = currentView === 'tasks' ? Math.max(0, rows.offsetWidth - rows.clientWidth) + 'px' : '';
+  clip.scrollLeft = currentView === 'tasks' ? rows.scrollLeft : 0;
+  document.getElementById('gridPane').classList.toggle('h-scrolled', currentView === 'tasks' && rows.scrollLeft > 0);
+}
+document.getElementById('gridRows').addEventListener('scroll', syncHeaderScroll, { passive: true });
+document.getElementById('gridHeaderClip').addEventListener('wheel', (e) => { if (currentView === 'tasks' && e.deltaX) { document.getElementById('gridRows').scrollLeft += e.deltaX; e.preventDefault(); } }, { passive: false });
+if (typeof ResizeObserver !== 'undefined') new ResizeObserver(() => { updateColumnLines(); syncHeaderScroll(); }).observe(document.getElementById('gridPane'));
 else window.addEventListener('resize', updateColumnLines);
 
 function renderGrid() {
@@ -2092,6 +2141,10 @@ function renderGrid() {
     ...Object.fromEntries(Object.keys(CUSTOM_FIELDS).map(id => [id, colHeadHtml(customFieldName(id), id)]))
   };
   document.getElementById('main').style.setProperty('--task-cols', ['34px', ...cols.map(c => TASK_COLS[c].width), '88px'].join(' '));
+  {   // the narrowest the row can get (Task Name at its minimum) + the row's 10px padding on each side: below this width the list scrolls sideways
+    const px = w => { const m = /^(\d+(?:\.\d+)?)px$/.exec(w) || /^minmax\((\d+(?:\.\d+)?)px/.exec(w); return m ? parseFloat(m[1]) : 0; };
+    document.getElementById('main').style.setProperty('--grid-min-w', (34 + cols.reduce((a, c) => a + px(TASK_COLS[c].width), 0) + 88 + 20) + 'px');
+  }
   document.getElementById('gridHeader').innerHTML = `<div class="id-head"><button class="id-toggle" id="collapseToggleBtn" onclick="toggleAllCollapsed()"><i class="fa-solid fa-angles-up"></i></button></div>${cols.map(c => HEAD[c]).join('')}${full ? '<div class="actions-head">Actions</div>' : ''}`;
   const list = visibleTaskList();
   const el = document.getElementById('gridRows');
@@ -2636,6 +2689,32 @@ function renderGanttHeaderTicks(range, px) {
   return ticks;
 }
 
+// The actual span of a task (Gantt): a thin bar under the planned one from the day it really started to the day it really
+// finished — or, if it is still running, up to today with an arrow head. Green: finished on time, red: finished late (or running
+// past its planned finish), blue: running within plan. A milestone gets a small diamond at the day it was reached. Groups show the
+// rollup (earliest actual start, finish once everything below is done).
+function actualStatus(t) {
+  const a = actualDates(t.id), s = a.start || a.end;
+  if (!s) return null;
+  const plannedEnd = effectiveDates(t.id).end, ref = a.end || todayStr();
+  const lateDays = plannedEnd && dayNumber(ref) > dayNumber(plannedEnd) ? countWorkNum(dayNumber(plannedEnd) + 1, dayNumber(ref)) : 0;
+  const late = !!plannedEnd && dayNumber(ref) > dayNumber(plannedEnd);
+  return { start: s, end: a.end, running: !a.end, late, lateDays, color: late ? 'var(--danger)' : a.end ? 'var(--task-green)' : 'var(--accent)' };
+}
+function actualNote(t) {   // appended to the planned bar's tooltip
+  const a = actualStatus(t); if (!a) return '';
+  const span = t.milestone ? `reached ${fmtDate(a.start)}` : `${fmtDate(a.start)} – ${a.end ? fmtDate(a.end) : 'in progress'}`;
+  const slip = a.late ? (a.running ? ' — past its planned finish' : a.lateDays ? ` — finished ${a.lateDays} working day${a.lateDays === 1 ? '' : 's'} late` : ' — finished late') : (a.end ? ' — on time' : '');
+  return ` — Actual: ${span}${slip}`;
+}
+function actualBarHtml(t, idx, px) {
+  const a = actualStatus(t); if (!a) return '';
+  const rowTop = idx * ROW_H;
+  if (t.milestone) return `<div class="gantt-actual-ms" style="left:${(dayNumber(a.start) - dateRange.start) * px - 3.5}px;top:${rowTop + ROW_H - 10}px;--actual-color:${a.color}"></div>`;
+  const e = a.end || (dayNumber(todayStr()) > dayNumber(a.start) ? todayStr() : a.start);
+  const left = (dayNumber(a.start) - dateRange.start) * px, width = Math.max(3, (dayNumber(e) - dayNumber(a.start) + 1) * px - 2);
+  return `<div class="gantt-actual${a.running ? ' running' : ''}" data-actual-for="${t.id}" style="left:${left}px;width:${width}px;top:${rowTop + ROW_H - 5}px;--actual-color:${a.color}"></div>`;
+}
 function renderGantt() {
   const z = currentZoom();
   dateRange = computeDateRange();
@@ -2710,12 +2789,12 @@ function renderGantt() {
     if (t.milestone) {
       const cx = left; const cy = idx * ROW_H + ROW_H / 2;
       barGeom[t.id] = { left: cx - 8, width: 16, top: cy - 8, right: cx + 8, midY: cy, milestone: true };
-      html += `<div class="gantt-milestone${cls}" style="left:${cx - 8}px;top:${cy - 8}px;--bar-color:${color}" title="${escapeHtml(t.name)}${modeNote}" onmousedown="onBarMouseDown(event,'${t.id}','move')"></div>`;
+      html += `<div class="gantt-milestone${cls}" style="left:${cx - 8}px;top:${cy - 8}px;--bar-color:${color}" title="${escapeHtml(t.name)}${modeNote}${escapeHtml(actualNote(t))}" onmousedown="onBarMouseDown(event,'${t.id}','move')"></div>`;
     } else {
       const width = Math.max(6, (dayNumber(eff.end) - dayNumber(eff.start) + 1) * px - 2);
       const midY = top + 10;
       barGeom[t.id] = { left, width, top, right: left + width, midY };
-      html += `<div class="gantt-bar${cls}" data-id="${t.id}" style="left:${left}px;width:${width}px;top:${top}px;--bar-color:${color}" title="${escapeHtml(t.name)} (${Math.round(eff.progress)}%)${modeNote}" onmousedown="onBarMouseDown(event,'${t.id}','move')">
+      html += `<div class="gantt-bar${cls}" data-id="${t.id}" style="left:${left}px;width:${width}px;top:${top}px;--bar-color:${color}" title="${escapeHtml(t.name)} (${Math.round(eff.progress)}%)${modeNote}${escapeHtml(actualNote(t))}" onmousedown="onBarMouseDown(event,'${t.id}','move')">
         <div class="fill" style="width:${Math.min(100, Math.max(0, eff.progress))}%"></div>
         <div class="bar-label">${escapeHtml(t.name)}</div>
         <div class="resize-handle left" onmousedown="event.stopPropagation();onBarMouseDown(event,'${t.id}','resize-left')"></div>
@@ -2724,6 +2803,7 @@ function renderGantt() {
       </div>`;
     }
   });
+  list.forEach(({ task: t }, idx) => { html += actualBarHtml(t, idx, px); });   // after the planned bars, so they sit on top
   document.getElementById('ganttRows').innerHTML = html;
 
   const svg = document.getElementById('ganttDeps');
