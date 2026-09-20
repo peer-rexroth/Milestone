@@ -1,0 +1,135 @@
+from playwright.sync_api import sync_playwright
+import os
+URL = os.environ.get("MILESTONE_URL", "http://127.0.0.1:8937/milestone.html")
+errors, results = [], []
+def check(name, cond, detail=""):
+    results.append(bool(cond)); print(("PASS  " if cond else "FAIL  ") + name + (f"   [{str(detail)[:400]}]" if not cond and detail else ""))
+
+SEED = """(specs) => { tasks.length = 0; deletedTaskIds.length = 0; selectedTaskId = null; colFilters = newColFilters(); filterPinned.clear(); delete project.workDays; delete project.holidays;
+  const ids = {};
+  for (const sp of specs) { const t = Object.assign({id: genId(), name: sp.name, parentId: null, order: tasks.length, startDate: sp.s, endDate: sp.e, progress: 0, milestone: false, color: null, predecessors: [], collapsed: false, updatedAt: 1, constraintType: 'ASAP', constraintDate: null, taskMode: 'auto', resource: '', actualStart: null, actualFinish: null}, sp.extra || {});
+    tasks.push(t); ids[sp.name] = t.id; }
+  for (const sp of specs) { const t = tasks.find(x => x.name === sp.name); if (sp.preds) t.predecessors = sp.preds.map(([n, type, lag]) => ({id: ids[n], type, lag})); }
+  currentView = 'tasks'; normalizeData(); save(); render(); resetHistory(); }"""
+
+with sync_playwright() as p:
+    b = p.chromium.launch(headless=True)
+    ctx = b.new_context(viewport={"width": 1600, "height": 900}); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker")
+    pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
+    pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn")
+    ev = lambda js, *a: pg.evaluate(js, *a) if a else pg.evaluate(js)
+    seed = lambda specs: pg.evaluate(SEED, specs)
+    dates = lambda n: pg.evaluate("n => { const t = tasks.find(x => x.name === n); return [t.startDate, t.endDate]; }", n)
+    edit = lambda n, field, v: pg.evaluate("([n, f, v]) => { const t = tasks.find(x => x.name === n); editingCell = { id: t.id, field: f }; commitInlineEdit(t.id, f, v); }", [n, field, v])
+    setHol = lambda lst: pg.evaluate("l => { project.holidays = l; normalizeData(); }", lst)
+    seed([{"name": "A", "s": "2026-09-07", "e": "2026-09-08"}])
+
+    # ------------------------------------------------------------ the calendar arithmetic (Mon 07.09.2026)
+    setHol([{"date": "2026-09-09", "name": "Midweek"}])
+    check("a holiday on a Wednesday is not a working day", ev("() => isWorkDay('2026-09-09')") is False and ev("() => isWorkDay('2026-09-08')") is True)
+    check("...next / previous working day skip it", ev("() => [nextWorkDay('2026-09-09'), prevWorkDay('2026-09-09')]") == ["2026-09-10", "2026-09-08"])
+    check("...a Mon-Fri week with it counts 4 working days", ev("() => durationDays('2026-09-07', '2026-09-11')") == 4)
+    check("...finishFor: 4 days from Monday end on Friday, 3 days on Thursday", ev("() => [finishFor('2026-09-07', 4), finishFor('2026-09-07', 3)]") == ["2026-09-11", "2026-09-10"])
+    check("...shiftWork jumps over it (Tuesday + 1 = Thursday; Thursday - 1 = Tuesday)", ev("() => [shiftWork('2026-09-08', 1), shiftWork('2026-09-10', -1)]") == ["2026-09-10", "2026-09-08"])
+    check("...the holiday's name is known", ev("() => holidayName(dayNumber('2026-09-09'))") == "Midweek")
+    setHol([{"date": "2026-09-12"}])
+    check("a holiday on a day that is off anyway (Saturday) changes nothing", ev("() => durationDays('2026-09-07', '2026-09-18')") == 10)
+    setHol([{"date": "2026-12-24", "to": "2027-01-01", "name": "Shutdown"}])
+    check("a range: everything from 24.12. to 01.01. is off; the next working day after 23.12. is Mon 04.01.", ev("() => [isWorkDay('2026-12-28'), isWorkDay('2027-01-01'), shiftWork('2026-12-23', 1), nextWorkDay('2026-12-24')]") == [False, False, "2027-01-04", "2027-01-04"])
+    check("...a long move over it counts day by day (23.12. + 5 working days = 08.01.)", ev("() => shiftWork('2026-12-23', 5)") == "2027-01-08", ev("() => shiftWork('2026-12-23', 5)"))
+    check("...durationDays across it: 21.12. - 08.01. = 3 + 1(23rd counted in the 21-23) ... = 21,22,23 + 04,05,06,07,08 = 8", ev("() => durationDays('2026-12-21', '2027-01-08')") == 8, ev("() => durationDays('2026-12-21', '2027-01-08')"))
+    setHol([{"date": "2026-05-01", "yearly": True, "name": "Labour Day"}, {"date": "2028-02-29", "yearly": True}])
+    check("a yearly holiday comes back every year (1 May 2026 Fri, 2028 Mon, 2030 Wed are all off)", ev("() => ['2026-05-01', '2028-05-01', '2030-05-01'].map(isWorkDay)") == [False, False, False])
+    check("...and only that day (2 May 2028 works)", ev("() => isWorkDay('2028-05-02')") is True)
+    check("...29 February is off in 2028 (Tue) and does not spill into other years (Thu 01.03.2029 and Wed 28.02.2029 work)", ev("() => [isWorkDay('2028-02-29'), isWorkDay('2029-03-01'), isWorkDay('2029-02-28')]") == [False, True, True], ev("() => [isWorkDay('2028-02-29'), isWorkDay('2029-03-01'), isWorkDay('2029-02-28')]"))
+    setHol(None)
+    check("no holidays: the calendar is exactly as before (Mon-Fri week = 5 days, 6 weeks = 30)", ev("() => [durationDays('2026-09-07', '2026-09-11'), durationDays('2026-09-07', '2026-10-16'), shiftWork('2026-09-07', 30)]") == [5, 30, "2026-10-19"])
+    ev("() => { project.workDays = [0,1,2,3,4,5,6]; project.holidays = [{ date: '2026-09-09' }]; normalizeData(); }")
+    check("with every weekday working, a holiday still takes its day away", ev("() => [durationDays('2026-09-07', '2026-09-11'), isWorkDay('2026-09-09')]") == [4, False])
+    ev("() => { delete project.workDays; delete project.holidays; }")
+
+    # ------------------------------------------------------------ scheduling honours them
+    seed([{"name": "A", "s": "2026-09-07", "e": "2026-09-08"}, {"name": "B", "s": "2026-09-09", "e": "2026-09-11", "preds": [["A", "FS", 0]]}])
+    setHol([{"date": "2026-09-09"}])
+    edit("A", "duration", "1")
+    edit("A", "duration", "2")
+    check("a successor is placed after the predecessor on a WORKING day (B: Wed 09.09. is off -> starts Thu 10.09.)", dates("B")[0] == "2026-09-10", dates("B"))
+    check("...and keeps its working-day duration (2 days: Thu-Fri 10-11)", dates("B") == ["2026-09-10", "2026-09-11"], dates("B"))
+    edit("A", "start", "2026-09-09")
+    check("typing a Start on a holiday moves an Auto task to the next working day", dates("A")[0] == "2026-09-10", dates("A"))
+    check("...with the usual toast", "working day" in pg.inner_text("#toastMsg"), pg.inner_text("#toastMsg"))
+    seed([{"name": "M", "s": "2026-09-07", "e": "2026-09-07", "extra": {"taskMode": "manual"}}])
+    setHol([{"date": "2026-09-07"}]); edit("M", "start", "2026-09-07")
+    check("a Manually Scheduled task keeps a date on a holiday (like on a weekend)", dates("M")[0] == "2026-09-07")
+
+    # ------------------------------------------------------------ Gantt shading
+    seed([{"name": "A", "s": "2026-09-07", "e": "2026-09-18"}])
+    ev("() => { setView('gantt'); }"); pg.wait_for_timeout(200)
+    ev("() => setZoom('week')"); pg.wait_for_timeout(100)
+    weekends = ev("() => document.querySelectorAll('.gantt-nonwork').length")
+    setHol([{"date": "2026-09-09"}, {"date": "2026-09-16"}]); ev("() => render()"); pg.wait_for_timeout(100)
+    after = ev("() => document.querySelectorAll('.gantt-nonwork').length")
+    check("holidays are shaded in the Gantt chart like weekends (two more bands)", after == weekends + 2, (weekends, after))
+    setHol([{"date": "2026-09-11"}]); ev("() => render()"); pg.wait_for_timeout(100)
+    check("...a holiday next to a weekend joins its band (Friday: no extra band)", ev("() => document.querySelectorAll('.gantt-nonwork').length") == weekends, ev("() => document.querySelectorAll('.gantt-nonwork').length"))
+    ev("() => { setView('tasks'); }")
+
+    # ------------------------------------------------------------ sanitising
+    ev("""() => { project.holidays = [ { date: '2026-13-40' }, { date: 'x' }, null, 5, { date: '2026-12-25', name: '  Xmas  ' }, { date: '2026-12-25', name: 'dup' }, { date: '2026-12-24', to: '2026-12-20' }, { date: '2026-12-01', to: '2026-12-03', yearly: true, name: 'a'.repeat(100) }, { date: '2026-01-01', yearly: true } ]; normalizeData(); }""")
+    h = ev("() => project.holidays")
+    check("garbage is dropped: bad dates, non-objects, duplicates; sorted by date", [x["date"] for x in h] == ["2026-01-01", "2026-12-01", "2026-12-24", "2026-12-25"], h)
+    check("...a range that ends before it starts becomes a single day; 'yearly' is kept only for single days; names trimmed and capped", h[2] == {"date": "2026-12-24"} and "yearly" not in h[1] and h[1]["to"] == "2026-12-03" and len(h[1]["name"]) == 60 and h[3]["name"] == "Xmas", h)
+    ev("() => { project.holidays = []; normalizeData(); }")
+    check("an empty list is not stored", ev("() => project.holidays === undefined"))
+    ev("() => { project.holidays = Array.from({length: 600}, (_, i) => ({ date: dayNumberToIso(20000 + i) })); normalizeData(); }")
+    check("at most 400 entries are kept", ev("() => project.holidays.length") == 400)
+    ev("() => { delete project.holidays; normalizeData(); }")
+    check("normalising twice changes nothing (the calendar cache keeps its identity)", ev("() => { project.holidays = [{ date: '2026-09-09' }]; normalizeData(); const a = project.holidays; normalizeData(); return a === project.holidays; }"))
+    ev("() => { delete project.holidays; }")
+
+    # ------------------------------------------------------------ the dialog
+    seed([{"name": "A", "s": "2026-09-07", "e": "2026-09-11"}])
+    pg.click("#planMenuBtn"); pg.wait_for_selector("#planMenu.open"); pg.click("#planCalendarItem"); pg.wait_for_selector("#calendarModalBg.open"); pg.wait_for_timeout(150)
+    check("the dialog has a holiday section with an empty list", pg.locator("#holList .hol-row").count() == 0 and "No holidays" in (pg.evaluate("() => getComputedStyle(document.getElementById('holList'), '::before').content") or ""))
+    pg.click("#holFrom + .hol-to") if False else None
+    pg.fill("#holFrom", "2026-12-25"); pg.fill("#holName", "Christmas Day"); pg.check("#holYearly"); pg.click("#calendarModalBg .hol-add .btn"); pg.wait_for_timeout(80)
+    pg.fill("#holFrom", "2026-12-28"); pg.fill("#holTo", "2027-01-01"); pg.fill("#holName", "Shutdown"); pg.click("#calendarModalBg .hol-add .btn"); pg.wait_for_timeout(80)
+    pg.fill("#holFrom", "2026-09-09"); pg.click("#calendarModalBg .hol-add .btn"); pg.wait_for_timeout(80)
+    rows = pg.evaluate("() => [...document.querySelectorAll('#holList .hol-row')].map(r => r.innerText.replace(/\\s+/g, ' ').trim())")
+    check("three holidays added: sorted by date, a range shows its length, a yearly one says so", len(rows) == 3 and "09.09.2026" in rows[0] and "28.12.2026 – 01.01.2027" in rows[2] and "5 days" in rows[2] and "25.12." in rows[1] and "every year" in rows[1] and "Christmas Day" in rows[1], rows)
+    check("...the form is cleared after each Add", pg.input_value("#holFrom") == "" and pg.input_value("#holName") == "")
+    pg.fill("#holFrom", "2026-10-01"); pg.fill("#holTo", "2026-10-05")
+    check("'Every year' is disabled (and off) once a last day is given", pg.evaluate("() => document.getElementById('holYearly').disabled && !document.getElementById('holYearly').checked"))
+    pg.fill("#holTo", "2026-10-01"); pg.click("#calendarModalBg .hol-add .btn")
+    check("a last day that is not after the first day is refused with a toast", "after" in pg.inner_text("#toastMsg") and pg.locator("#holList .hol-row").count() == 3, pg.inner_text("#toastMsg"))
+    pg.fill("#holFrom", ""); pg.fill("#holTo", ""); pg.click("#calendarModalBg .hol-add .btn")
+    check("an Add without a date is refused too", "Pick the day" in pg.inner_text("#toastMsg"))
+    pg.locator("#holList .hol-row").nth(0).locator("button").click(); pg.wait_for_timeout(50)
+    check("the ✕ removes a row (in the dialog's draft only)", pg.locator("#holList .hol-row").count() == 2 and ev("() => project.holidays === undefined"))
+    pg.click("#calendarModalBg .modal-footer .btn-primary"); pg.wait_for_timeout(150)
+    saved = ev("() => project.holidays")
+    check("Save stores the list in the plan (sorted, yearly flag, range, names)", saved == [{"date": "2026-12-25", "name": "Christmas Day", "yearly": True}, {"date": "2026-12-28", "to": "2027-01-01", "name": "Shutdown"}], saved)
+    check("...the toast and the plan menu say how many holidays", "2 holidays" in pg.inner_text("#toastMsg"), pg.inner_text("#toastMsg"))
+    pg.click("#planMenuBtn"); pg.wait_for_selector("#planMenu.open")
+    check("...the menu item shows 'Mon–Fri · 2 holidays'", "Mon–Fri · 2 holidays" in pg.inner_text("#planCalendarItem"), pg.inner_text("#planCalendarItem"))
+    pg.click("#planCalendarItem"); pg.wait_for_selector("#calendarModalBg.open"); pg.wait_for_timeout(150)
+    check("reopening the dialog shows the saved list", pg.locator("#holList .hol-row").count() == 2)
+    pg.locator("#holList .hol-row").nth(0).locator("button").click(); pg.keyboard.press("Escape"); pg.wait_for_timeout(200)
+    check("Escape leaves the plan untouched", ev("() => project.holidays.length") == 2)
+    pg.reload(); pg.wait_for_selector("#addTaskBtn")
+    check("holidays survive a reload and are in effect (25.12.2026 off, and again 25.12.2029)", ev("() => [project.holidays.length, isWorkDay('2026-12-25'), isWorkDay('2029-12-25')]") == [2, False, False], ev("() => [project.holidays.length, isWorkDay('2026-12-25'), isWorkDay('2029-12-25')]"))
+    pg.evaluate("() => { historyCoalesceMs = 0; }")
+    ev("() => { project.holidays = [{ date: '2026-09-09' }]; project.updatedAt = Date.now(); save(); }")
+    ev("() => historyUndo()")
+    check("a change of holidays is one undo step", ev("() => project.holidays.length") == 2)
+    export_ok = ev("() => { const j = JSON.parse(canonicalText()); return Array.isArray(j.project.holidays) && j.project.holidays.length === 2; }")
+    check("...and travels with the plan (in the exported / synced text)", export_ok)
+    check("the merge log describes a holiday change", ev("() => fmtConflictValue('holidays', project.holidays)") == "2 holidays")
+
+    # ------------------------------------------------------------ speed
+    t = ev("""() => { project.holidays = Array.from({length: 300}, (_, i) => ({ date: dayNumberToIso(20500 + i * 3), name: 'h' + i })); normalizeData();
+      const t0 = performance.now(); let s = 0; for (let i = 0; i < 2000; i++) { s += durationDays('2026-01-05', '2027-06-30'); shiftWork('2026-03-02', 200); } return performance.now() - t0; }""")
+    check("300 holidays: 2000 duration + shift calculations stay fast (< 1.5 s)", t < 1500, t)
+    ev("() => { delete project.holidays; }")
+    check("no console errors", not errors, errors[:5])
+    print("console errors/warnings:", errors[:5]); print(f"{sum(results)}/{len(results)} passed"); b.close()
