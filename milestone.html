@@ -384,6 +384,8 @@ input.inline-edit { width: 100%; min-width: 0; padding: 3px 6px; border: 1px sol
 .search-results { overflow-y: auto; padding: 6px; flex: 1; min-height: 0; }
 .search-empty { padding: 14px 16px 12px; color: var(--text-dim); font-size: 13px; line-height: 1.5; }
 .search-lead { color: var(--text); margin-bottom: 10px; }
+.search-how { margin-top: 6px; font-size: 12.5px; color: var(--text-dim); }
+.search-how b { font-weight: 600; color: var(--text); }
 .search-total { margin-top: 12px; font-size: 11.5px; color: var(--text-faint); }
 .search-empty code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; color: var(--text); }
 .sr { display: grid; grid-template-columns: 44px 1fr auto; gap: 10px; align-items: center; padding: 7px 10px; border-radius: 6px; cursor: pointer; font-size: 13px; }
@@ -729,7 +731,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
   </div>
   <div class="filter-bar hidden" id="filterBar"></div>
   <span class="subbar-spacer"></span>
-  <button class="btn" id="searchBtn" onclick="openSearch()" title="Find a task by name, WBS (2.1), #ID or @resource (Ctrl/Cmd+K, or /)"><i class="fa-solid fa-magnifying-glass"></i>Find</button>
+  <button class="btn" id="searchBtn" onclick="openSearch()" title="Find a task by name, WBS, number (#12), resource (@anna) or status (status:late) — Ctrl/Cmd+K, or /"><i class="fa-solid fa-magnifying-glass"></i>Find</button>
   <button class="btn" id="columnsBtn" onclick="toggleColumnsMenu()" title="Choose which columns the task list shows"><i class="fa-solid fa-table-columns"></i>Columns</button>
 </div>
 <div class="dropdown-menu" id="addMenu" role="menu">
@@ -926,7 +928,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 
 <div class="modal-bg search-bg" id="searchModalBg" onclick="if(event.target===this) closeSearch()">
   <div class="modal search-modal" role="dialog" aria-label="Find a task">
-    <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="searchInput" autocomplete="off" spellcheck="false" placeholder="Find a task by name…" oninput="renderSearch()" onkeydown="searchKey(event)" aria-controls="searchResults"><button class="search-x" onclick="closeSearch()" aria-label="Close">Esc</button></div>
+    <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="searchInput" autocomplete="off" spellcheck="false" placeholder="Find a task by name, WBS, number, resource or status…" oninput="renderSearch()" onkeydown="searchKey(event)" aria-controls="searchResults"><button class="search-x" onclick="closeSearch()" aria-label="Close">Esc</button></div>
     <div class="search-results" id="searchResults" role="listbox"></div>
     <div class="search-foot" id="searchFoot"><span><kbd>↑</kbd><kbd>↓</kbd> move</span><span><kbd>Enter</kbd> go to the task</span><span data-shift><kbd>Shift</kbd>+<kbd>Enter</kbd> show only the matches</span><span class="search-count" id="searchCount"></span></div>
   </div>
@@ -5295,7 +5297,7 @@ function closeSearch() { document.getElementById('searchModalBg').classList.remo
 function renderSearch() {
   const q = document.getElementById('searchInput').value, box = document.getElementById('searchResults');
   const all = searchTasks(q); searchHits = all.slice(0, 50); searchIdx = 0;
-  if (!q.trim()) box.innerHTML = `<div class="search-empty"><div class="search-lead">Type part of a task name — every word must match.</div><div class="search-total">${tasks.filter(t => !t.spacer).length} task${tasks.filter(t => !t.spacer).length === 1 ? '' : 's'} in this plan</div></div>`;
+  if (!q.trim()) box.innerHTML = `<div class="search-empty"><div class="search-lead">Search by task name, WBS code, task number, resource, status or a text field of your own.</div><div class="search-how">Every word must match. Put <b>#</b> before a task number, <b>@</b> before a resource and <b>status:</b> before a status (late, complete, future or on).</div><div class="search-total">${tasks.filter(t => !t.spacer).length} task${tasks.filter(t => !t.spacer).length === 1 ? '' : 's'} in this plan</div></div>`;
   else if (!searchHits.length) box.innerHTML = `<div class="search-empty">No task matches “${escapeHtml(q.trim())}”.</div>`;
   else box.innerHTML = searchHits.map(({ t }, i) => {
     const eff = effectiveDates(t.id), parts = taskPathParts(t), dates = t.startText != null && !hasChildren(t.id) ? t.startText : eff.start ? (t.milestone ? fmtDate(eff.start) : `${fmtDate(eff.start)} – ${fmtDate(eff.end)}`) : '';

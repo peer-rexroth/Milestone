@@ -32,7 +32,7 @@ with sync_playwright() as p:
     ev("() => document.activeElement && document.activeElement.blur()")
     pg.keyboard.press("Control+k"); pg.wait_for_timeout(120)
     check("Ctrl+K opens the palette with the cursor in the search box", is_open() and ev("() => document.activeElement.id") == "searchInput")
-    check("...an empty search gives the one-line hint and counts the tasks (no examples)", "8 tasks" in pg.inner_text("#searchResults") and "every word must match" in pg.inner_text("#searchResults") and "#12" not in pg.inner_text("#searchResults"), pg.inner_text("#searchResults"))
+    check("...an empty search gives the one-line hint and counts the tasks (no examples)", "8 tasks" in pg.inner_text("#searchResults") and "every word must match" in pg.inner_text("#searchResults").lower() and "#12" not in pg.inner_text("#searchResults"), pg.inner_text("#searchResults"))
     pg.keyboard.press("Control+k"); pg.wait_for_timeout(120)
     check("Ctrl+K again closes it", not is_open())
     pg.keyboard.press("Meta+k"); pg.wait_for_timeout(120)
