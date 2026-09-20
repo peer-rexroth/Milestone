@@ -1,3 +1,8 @@
 .DS_Store
 .milestone-server.pid
 .milestone-server.log
+
+# files the test suites write when run from inside the repository
+tests/*.xlsx
+tests/*.png
+tests/__pycache__/

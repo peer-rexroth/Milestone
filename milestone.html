@@ -498,9 +498,40 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 .pred-empty { font-size: 12px; color: var(--text-faint); padding: 4px 0; }
 .id-badge { font-size: 12px; font-weight: 600; color: var(--text-faint); margin-left: 8px; vertical-align: middle; }
 
-.help-body, .about-body { display: flex; flex-direction: column; gap: 14px; font-size: 13px; line-height: 1.5; }
-.help-section-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
-.help-tip { font-size: 12px; color: var(--text-faint); border-top: 1px solid var(--border); padding-top: 10px; }
+.about-body { display: flex; flex-direction: column; gap: 14px; font-size: 13px; line-height: 1.5; }
+/* Help: a tabbed dialog — a rail of topics on the left, short icon rows under small section titles on the right (like Pulse's help) */
+.modal.help-modal { width: 840px; max-width: 94vw; height: min(690px, 88vh); max-height: none; }   /* a fixed height, so switching topics never resizes the dialog */
+.help-layout { display: flex; flex: 1; min-height: 0; }
+.help-nav { width: 214px; flex-shrink: 0; display: flex; flex-direction: column; gap: 2px; padding: 12px 10px; border-right: 1px solid var(--border); background: var(--panel-2); overflow-y: auto; }
+.help-nav button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border: 0; border-radius: 6px; background: transparent; color: var(--text); font: inherit; font-size: 13px; font-weight: 500; text-align: left; cursor: pointer; }
+.help-nav button i { width: 16px; text-align: center; font-size: 14px; color: var(--text-faint); flex-shrink: 0; }
+.help-nav button:hover { background: color-mix(in srgb, var(--text) 6%, transparent); color: var(--text); }
+.help-nav button.active { background: var(--panel); color: var(--text); font-weight: 600; box-shadow: 0 0 0 1px var(--border), inset 3px 0 0 var(--accent); }   /* (the accent as a bar and on the icon: accent-coloured text is under 4.5:1 on the dark panel) */
+.help-nav button.active i { color: var(--accent); }
+.help-nav button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.help-panes { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.help-pane { flex: 1; min-height: 0; overflow-y: auto; padding: 20px 26px 24px; display: flex; flex-direction: column; gap: 18px; }
+.help-pane[hidden] { display: none; }
+.help-section { display: flex; flex-direction: column; gap: 8px; }
+.help-section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-dim); }
+.help-row { display: flex; gap: 12px; align-items: flex-start; font-size: 13px; line-height: 1.6; color: var(--text-dim); }
+.help-row > i { flex: 0 0 18px; margin-top: 3px; text-align: center; font-size: 14px; color: var(--text-faint); }
+.help-row strong { color: var(--text); font-weight: 600; }
+.help-row em { font-style: normal; color: var(--text); }
+.help-row code, .help-keys kbd { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; padding: 0 5px; border: 1px solid var(--border); border-radius: 4px; background: var(--panel-2); color: var(--text); white-space: nowrap; }
+.help-keys kbd { padding: 1px 6px; border-bottom-width: 2px; }
+.help-plus { color: var(--text-faint); font-size: 12px; }
+.help-keys { display: grid; grid-template-columns: max-content 1fr; gap: 8px 16px; align-items: center; font-size: 13px; color: var(--text-dim); }
+.help-keycombo { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 3px; white-space: nowrap; }
+.help-divider { height: 1px; background: var(--border); flex-shrink: 0; }
+.help-tip { background: var(--panel-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px; font-size: 12px; line-height: 1.6; color: var(--text-dim); }
+.help-tip strong { color: var(--text); font-weight: 600; }
+@media (max-width: 660px) {
+  .help-layout { flex-direction: column; }
+  .help-nav { width: auto; flex-direction: row; border-right: 0; border-bottom: 1px solid var(--border); padding: 8px; overflow-x: auto; overflow-y: hidden; }
+  .help-nav button { width: auto; white-space: nowrap; }
+  .help-pane { padding: 16px 16px 20px; }
+}
 .about-body { align-items: center; text-align: center; }
 .about-body svg { width: 44px; height: 44px; color: var(--accent); }
 
@@ -831,22 +862,158 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 
 <!-- Help modal -->
 <div class="modal-bg" id="helpModalBg" onclick="if(event.target===this) closeHelpModal()">
-  <div class="modal wide">
-    <div class="modal-header"><h2>Help</h2><button onclick="closeHelpModal()">&times;</button></div>
-    <div class="modal-body help-body">
-      <div><div class="help-section-title">The basics</div>Add tasks with the + Add Task button. Each task has a start/end date, a % complete, and can be a milestone (a zero-duration diamond). Use Indent/Outdent to build a work breakdown structure — a parent task's own dates and progress roll up automatically from its children. Drag a task's line up or down to reorder it (a parent brings its sub-tasks along). Add Task inserts below the selected task, or at the bottom when nothing is selected; press Escape to clear the selection. The <strong>Clone</strong> button (on a task's line, and in the toolbar for the selected task) makes an exact copy right below it — including all its sub-tasks and their sub-tasks — and Undo takes it back. The double arrow above the ID numbers steps through the outline: click it to collapse every group, then again to open the first level, again for the next level, and so on until everything is open — then it starts over.</div>
-      <div><div class="help-section-title">Filtering</div>Click the funnel in a column header (Task Mode, Task Name, Start, Finish, Duration, %, Predecessors) for an Excel-style filter. Each column offers what fits its data: dates get rules (equals, before, after, between, or relative to today such as this week, next month or year to date) and a Year › Month › Day list; text columns get contains / begins with / ends with / equals and their negatives; numbers get equals, greater or less than, and between. Every column also has a list of its values to tick, with a search box and (Blanks) for tasks that have no value. Filters on several columns combine, so a task must match all of them. A group stays visible while any sub-task inside it matches, and stays open while a filter is on. The bar under the toolbar shows what is filtered and how many tasks are showing; click × on a chip, or Clear all, to remove it. Filters are only for looking — they aren't saved, and a task you add or edit stays visible until you filter again.</div>Click the funnel next to Start or Finish (in either view) for an Excel-style filter: pick a rule (equals, before, after, between, or relative to today such as this week, next month or year to date), or tick individual dates in the Year › Month › Day list — type in the search box to narrow it, and use (Blanks) for tasks without a real date. The two columns combine, so a task must match both. A group stays visible while any sub-task inside it matches, and stays open while a filter is on. The bar under the toolbar shows what is filtered and how many tasks are showing; click × on a chip, or Clear all, to remove it. Filters are only for looking — they aren't saved, and a task you add or edit stays visible until you filter again.</div>
-      <div><div class="help-section-title">Working calendar</div>Each plan has its own working days — Monday to Friday unless you change it (plan menu → <strong>Working calendar…</strong>). Durations, lags and dependencies count working days only, so a 5-day task that starts on a Monday finishes on that Friday and its successor starts the next Monday. Auto Scheduled tasks start and finish on working days (a date you type or drag to on a day off moves to the nearest working day); Manually Scheduled tasks keep exactly the dates you give them. Add <strong>holidays and other days off</strong> in the same dialog: a single day, a longer break (from … to …) or a day that comes back every year, each with an optional name — they count as days off exactly like weekends. Days off are shaded in the Gantt chart. Changing the calendar or the holidays never moves dates that are already in the plan.</div>
-      <div><div class="help-section-title">Undo and redo</div>The two round arrows at the left of the toolbar (or <strong>Ctrl/Cmd+Z</strong>, and <strong>Ctrl/Cmd+Shift+Z</strong> or <strong>Ctrl+Y</strong> to redo) take back and repeat your changes one step at a time — an edit together with everything it moved in the schedule, an added or deleted task, a baseline, a change of the working calendar. The toast says what was undone and offers the opposite step. The history is kept in memory only: it starts empty when you open the app or switch to another plan, and it is cleared when changes from another device are merged in, so undo can never take back somebody else's work. In a text field Ctrl+Z is the browser's own.</div>
-      <div><div class="help-section-title">Baselines and variance</div>The bar is the <strong>current schedule</strong>. To keep the original plan, set a <strong>baseline</strong> (plan menu → <strong>Baseline…</strong>): a frozen copy of every task's Start and Finish — only ever taken when you ask. You can keep up to eleven (Baseline and Baseline 1–10) and choose which one to compare with. The baseline shows as a thin grey line under each bar in the Gantt chart (the ruler button hides it), and the <strong>Start Variance</strong>, <strong>Finish Variance</strong>, <strong>Baseline Start/Finish/Duration</strong> and <strong>Duration Variance</strong> columns (in the column picker) show how far each task has moved, in working days — positive means later than the baseline. When you record an actual date, it becomes the task's Start or Finish (a task that is still running keeps its duration), and the tasks that follow are re-planned from it.</div>
-      <div><div class="help-section-title">Columns and extra fields</div>Besides name, dates, duration, % and predecessors, a task can carry a <strong>Resource</strong> (who does the work), an <strong>Actual Start</strong> and <strong>Actual Finish</strong> (what really happened — they overwrite Start and Finish; recording an Actual Finish marks the task 100% complete and fills an empty Actual Start), and has a <strong>WBS</strong> code such as 2.1.3 that is worked out from the outline (shown by default). <strong>Remaining Duration</strong> (the duration still to go, from % complete) and <strong>Status</strong> (Complete, On Schedule, Late or Future Task, judged against today) are worked out for you too. Resource, Actual Start/Finish, Remaining Duration and Status aren't shown by default: click <strong>Columns</strong> in the toolbar (Tasks view) to tick the columns you want and reorder them; your choice is remembered on this device. Click a Resource or actual-date cell to edit it, or use the task dialog. A group shows the actual dates of the tasks in it (its earliest actual start, and an actual finish once everything in it has finished). <strong>Actual dates are the schedule</strong>: recording an Actual Start makes it the task's Start (a task that is still running keeps its duration, so its Finish moves with it), an Actual Finish makes it the Finish, and the tasks that <strong>depend</strong> on it are re-planned from those dates (a late start or finish pushes them later). A task that has itself already started or finished (it has an actual date) is not rescheduled any more: its planned dates stay as they are, and a warning triangle appears if its predecessors say it couldn't have started yet.</div>
-      <div><div class="help-section-title">Custom fields</div>Every task can carry up to 20 fields of your own: <strong>Text1–5</strong>, <strong>Number1–5</strong>, <strong>Date1–5</strong> and <strong>Flag1–5</strong> (a yes/no tick). Fill them in on the task dialog's <strong>Custom fields</strong> tab, or — once you have ticked them under <strong>Columns</strong>, where they start hidden — straight in the list (click a cell; a flag toggles). Use the pencil beside a field to rename it, for instance Text1 to <em>Cost centre</em>: the name is saved with the plan, so another plan can call the same field something else. Custom fields can be filtered like any column and are included in the Excel export.</div>
-      <div><div class="help-section-title">Task Mode</div>Every task is either Manually Scheduled (pushpin) or Auto Scheduled (chart icon) — click the icon in the Task Mode column, or use the Task Mode field in a task's dialog. An Auto task follows its predecessors and constraints. A Manual task stays exactly where you put it: predecessors never move it, its Start, Finish and Duration can be free text such as "TBD", and a warning triangle appears if it starts earlier than its predecessors allow. Manual tasks are drawn with a dashed bar, and are left out of the critical path. Switching a task to Auto moves it to the earliest date its links allow. The "New tasks" button at the right of the toolbar chooses the mode new tasks start in (Auto Scheduled by default).</div>
-      <div><div class="help-section-title">Dependencies</div>Open a task and add a predecessor to link it to another task (Finish-to-Start, Start-to-Start, Finish-to-Finish or Start-to-Finish). Give it a lead or lag in days: a positive number delays the dependent task (lag), a negative number lets it overlap and start early (lead) — e.g. "3FS+2" waits 2 extra days after task 3 finishes, "3FS-2" starts 2 days before task 3 finishes. An Auto task always sits at the <strong>earliest date its links allow</strong>, as in MS Project: move a predecessor later and the dependent tasks are pushed later, make it shorter, finish it early (record an Actual Finish) or delete it and they are pulled earlier. The date you choose for yourself is kept: if you type a <strong>Start</strong> later than its links allow (or drag the bar later, or change it in a task's dialog) — a deliberate delay — the task is kept there with a <em>Start No Earlier Than</em> constraint at that date, and a later <strong>Finish</strong> gets <em>Finish No Earlier Than</em>: links can still push the task later, but never pull it before that date. A date that is not a delay adds no constraint (a milestone or a task with no links stays a plain as-soon-as-possible task). Change or remove a constraint in the task's dialog. Manual tasks and tasks that have already started are never moved. A circular dependency is flagged with a warning icon and stops auto-scheduling for the tasks involved.</div>
-      <div><div class="help-section-title">The Gantt chart</div>The left side of the Gantt view is the same task list as in the Tasks view — the same filters, editing and buttons — with the chart to its right. <strong>Columns</strong> chooses the columns of the view you are in: the Gantt view remembers its own set (Mode, Name, Start and Finish to begin with) apart from the Tasks view's. Drag the thin strip between them to change how much room the list gets; the list scrolls sideways by itself when it has more columns than fit, and its ID … Task Name columns stay in place. Drag a bar to reschedule it, drag its edges to resize, or drag the small circle on its right edge onto another task to create a dependency. Click a bar or row to edit it. The Week / Month / Year buttons change the scale: Year (the default) shows quarters, and Week is labelled by calendar week (CW, weeks start on Monday, ISO 8601). The route icon in the toolbar highlights the critical path — the chain of tasks with no float left that determines the project's finish. It follows the real schedule and all four link types (Finish-to-Start, Start-to-Start, Finish-to-Finish, Start-to-Finish) with their lags and leads, counted in working days; Manual tasks and summary tasks are left out.</div>
-      <div><div class="help-section-title">Plans</div>The plan name at the top left is a switcher: click it to move between plans, start a new one, open an existing file as a plan, or rename, duplicate or delete the current plan. Each plan has its own tasks, its own daily backups and — optionally — its own linked file, so switching plans also switches which file is kept in sync. Deleting a plan only removes it from this browser; its file is never touched. Every plan must live in a file (Chrome/Edge), so New plan and Duplicate ask you where to save it.</div>
-      <div><div class="help-section-title">Data &amp; sync</div>Everything lives in this browser's local storage — nothing ever leaves your machine except into the files you choose. Every plan is kept in a plain JSON file on your disk (linking one is required, in Chrome/Edge): every change is saved to it automatically, and inside an iCloud Drive/OneDrive/Dropbox folder it keeps your own devices in step. You can disconnect a plan's file (click the file name at the top right, or use the plan menu) — the file is kept, and Milestone asks you to choose a file for the plan straight away. If the file is moved or deleted, Milestone asks you to create or find it again. Data → Export/Import moves a full JSON snapshot of the current plan in or out, and Export to Excel saves a formatted .xlsx workbook (a task list plus an optional Gantt chart sheet — each sheet uses the columns you chose in its own view); Local Backups keeps a rolling daily snapshot. <strong>Working together on one file:</strong> when several people (or devices) use the same linked file, Milestone reads the file before it writes, so a save never wipes out someone else's work. Changes to <em>different</em> things — even different fields of the same task — are all kept. If you and someone else changed the <em>same</em> field, the newer edit is kept and an amber <strong>conflicts</strong> badge appears next to the file name: click it to see both versions and take the other one if it should have won. Tasks that depend on something that moved are re-planned after a merge.</div>
-      <div class="help-tip">Nothing here ever leaves your machine except into the files you choose.</div>
+  <div class="modal help-modal" role="dialog" aria-labelledby="helpTitle">
+    <div class="modal-header"><h2 id="helpTitle">Help</h2><button onclick="closeHelpModal()" aria-label="Close">&times;</button></div>
+    <div class="help-layout">
+      <div class="help-nav" role="tablist" aria-orientation="vertical" onkeydown="helpTabKey(event)">
+        <button type="button" role="tab" id="helpTab-start" class="active" aria-selected="true" aria-controls="helpPane-start" tabindex="0" onclick="setHelpTab('start')"><i class="fa-solid fa-compass"></i><span>Getting started</span></button>
+        <button type="button" role="tab" id="helpTab-scheduling" class="" aria-selected="false" aria-controls="helpPane-scheduling" tabindex="-1" onclick="setHelpTab('scheduling')"><i class="fa-solid fa-diagram-project"></i><span>Scheduling</span></button>
+        <button type="button" role="tab" id="helpTab-progress" class="" aria-selected="false" aria-controls="helpPane-progress" tabindex="-1" onclick="setHelpTab('progress')"><i class="fa-solid fa-calendar-days"></i><span>Calendar &amp; progress</span></button>
+        <button type="button" role="tab" id="helpTab-list" class="" aria-selected="false" aria-controls="helpPane-list" tabindex="-1" onclick="setHelpTab('list')"><i class="fa-solid fa-table-list"></i><span>Task list</span></button>
+        <button type="button" role="tab" id="helpTab-gantt" class="" aria-selected="false" aria-controls="helpPane-gantt" tabindex="-1" onclick="setHelpTab('gantt')"><i class="fa-solid fa-chart-gantt"></i><span>Gantt chart</span></button>
+        <button type="button" role="tab" id="helpTab-data" class="" aria-selected="false" aria-controls="helpPane-data" tabindex="-1" onclick="setHelpTab('data')"><i class="fa-solid fa-hard-drive"></i><span>Plans &amp; data</span></button>
+      </div>
+      <div class="help-panes">
+      <div class="help-pane" id="helpPane-start" role="tabpanel" aria-labelledby="helpTab-start">
+        <div class="help-section">
+          <div class="help-section-title">Building a plan</div>
+          <div class="help-row"><i class="fa-solid fa-plus"></i><span><strong>Add Task</strong> inserts a task below the selected one, or at the bottom when nothing is selected. Each task has a start and end date and a % complete, and can be a <strong>milestone</strong> (a one-day diamond).</span></div>
+          <div class="help-row"><i class="fa-solid fa-indent"></i><span><strong>Indent</strong> and <strong>Outdent</strong> build the work breakdown structure. A parent task's own dates and progress roll up from its sub-tasks, and its <strong>WBS</strong> code (such as <code>2.1.3</code>) follows the outline.</span></div>
+          <div class="help-row"><i class="fa-solid fa-grip-lines"></i><span><strong>Drag</strong> a task's line up or down to reorder it — a parent brings its sub-tasks along.</span></div>
+          <div class="help-row"><i class="fa-solid fa-clone"></i><span><strong>Clone</strong> (on a task's line, or in the toolbar for the selected task) makes an exact copy right below it, including all its sub-tasks and their sub-tasks. Undo takes it back.</span></div>
+          <div class="help-row"><i class="fa-solid fa-angles-up"></i><span>The <strong>double arrow above the ID numbers</strong> steps through the outline: collapse every group, then open the first level, then the next level, and so on until everything is open — then it starts over.</span></div>
+        </div>
+        <div class="help-divider"></div>
+        <div class="help-section">
+          <div class="help-section-title">Undo and redo</div>
+          <div class="help-row"><i class="fa-solid fa-rotate-left"></i><span>The two round arrows at the left of the toolbar take back and repeat your changes one step at a time — an edit together with everything it moved in the schedule, an added or deleted task, a baseline, a change of the working calendar. The toast says what was undone and offers the opposite step.</span></div>
+          <div class="help-row"><i class="fa-solid fa-circle-info"></i><span>The history is kept in memory only: it starts empty when you open the app or switch to another plan, and it is cleared when changes from another device are merged in — so undo can never take back somebody else's work.</span></div>
+        </div>
+        <div class="help-divider"></div>
+        <div class="help-section">
+          <div class="help-section-title">Keyboard</div>
+          <div class="help-keys">
+            <span class="help-keycombo"><kbd>Ctrl/Cmd</kbd><span class="help-plus">+</span><kbd>Z</kbd></span><span>Undo</span>
+            <span class="help-keycombo"><kbd>Ctrl/Cmd</kbd><span class="help-plus">+</span><kbd>Shift</kbd><span class="help-plus">+</span><kbd>Z</kbd> or <kbd>Ctrl</kbd><span class="help-plus">+</span><kbd>Y</kbd></span><span>Redo</span>
+            <span class="help-keycombo"><kbd>Enter</kbd></span><span>Save the cell you are editing</span>
+            <span class="help-keycombo"><kbd>Esc</kbd></span><span>Cancel an edit, close a dialog or menu, or clear the selection</span>
+          </div>
+          <div class="help-tip">In a text field <strong>Ctrl/Cmd+Z</strong> is the browser's own undo for what you are typing; with a dialog open it leaves the plan alone.</div>
+        </div>
+      </div>
+      <div class="help-pane" id="helpPane-scheduling" role="tabpanel" aria-labelledby="helpTab-scheduling" hidden>
+        <div class="help-section">
+          <div class="help-section-title">Task Mode</div>
+          <div class="help-row"><i class="fa-solid fa-chart-gantt"></i><span><strong>Auto Scheduled</strong> (chart icon) tasks follow their predecessors and constraints.</span></div>
+          <div class="help-row"><i class="fa-solid fa-thumbtack"></i><span><strong>Manually Scheduled</strong> (pushpin) tasks stay exactly where you put them: predecessors never move them, their Start, Finish and Duration can be free text such as “TBD”, and a warning triangle appears if one starts earlier than its predecessors allow. They are drawn with a dashed bar and left out of the critical path.</span></div>
+          <div class="help-row"><i class="fa-solid fa-toggle-on"></i><span>Click the icon in the <strong>Task Mode</strong> column (or use the Task Mode field in a task's dialog) to switch. Switching to Auto moves the task to the earliest date its links allow. The <strong>New tasks</strong> button at the right of the toolbar chooses the mode new tasks start in — Auto Scheduled by default.</span></div>
+        </div>
+        <div class="help-divider"></div>
+        <div class="help-section">
+          <div class="help-section-title">Dependencies</div>
+          <div class="help-row"><i class="fa-solid fa-link"></i><span>Open a task and add a <strong>predecessor</strong> to link it to another task: Finish-to-Start, Start-to-Start, Finish-to-Finish or Start-to-Finish. In the list you can type them directly, such as <code>3FS+2</code>.</span></div>
+          <div class="help-row"><i class="fa-solid fa-arrows-left-right"></i><span><strong>Lag and lead:</strong> a positive number delays the dependent task, a negative number lets it overlap and start early. <code>3FS+2</code> waits 2 extra days after task 3 finishes; <code>3FS-2</code> starts 2 days before task 3 finishes.</span></div>
+          <div class="help-row"><i class="fa-solid fa-triangle-exclamation"></i><span>A <strong>circular dependency</strong> is flagged with a warning icon and stops auto-scheduling for the tasks involved.</span></div>
+        </div>
+        <div class="help-divider"></div>
+        <div class="help-section">
+          <div class="help-section-title">Automatic scheduling, as in MS Project</div>
+          <div class="help-row"><i class="fa-solid fa-wand-magic-sparkles"></i><span>An Auto task always sits at the <strong>earliest date its links allow</strong>. Move a predecessor later and the dependent tasks are pushed later; make it shorter, finish it early (record an Actual Finish) or delete it, and they are pulled earlier.</span></div>
+          <div class="help-row"><i class="fa-solid fa-calendar-day"></i><span><strong>A date you choose is kept.</strong> Type a Start later than its links allow (or drag the bar later, or change it in the task's dialog) — a deliberate delay — and the task stays there with a <em>Start No Earlier Than</em> constraint at that date; a later Finish gets <em>Finish No Earlier Than</em>. Links can still push the task later, but never pull it before that date.</span></div>
+          <div class="help-row"><i class="fa-solid fa-circle-info"></i><span>A date that is not a delay adds no constraint: a milestone or a task with no links stays a plain as-soon-as-possible task. Change or remove a constraint in the task's dialog. Manual tasks and tasks that have already started are never moved.</span></div>
+        </div>
+      </div>
+      <div class="help-pane" id="helpPane-progress" role="tabpanel" aria-labelledby="helpTab-progress" hidden>
+        <div class="help-section">
+          <div class="help-section-title">Working calendar</div>
+          <div class="help-row"><i class="fa-solid fa-calendar-week"></i><span>Each plan has its own working days — Monday to Friday unless you change it (plan menu → <strong>Working calendar…</strong>). Durations, lags and dependencies count working days only: a 5-day task that starts on a Monday finishes on that Friday, and its successor starts the next Monday.</span></div>
+          <div class="help-row"><i class="fa-solid fa-umbrella-beach"></i><span>Add <strong>holidays and other days off</strong> in the same dialog: a single day, a longer break (from … to …), or a day that comes back every year, each with an optional name. They count as days off exactly like weekends, and are shaded in the Gantt chart.</span></div>
+          <div class="help-row"><i class="fa-solid fa-hand-pointer"></i><span>Auto tasks start and finish on working days — a date you type or drag to on a day off moves to the nearest working day. Manual tasks keep exactly the dates you give them. Changing the calendar or the holidays never moves dates that are already in the plan.</span></div>
+        </div>
+        <div class="help-divider"></div>
+        <div class="help-section">
+          <div class="help-section-title">Actual dates and status</div>
+          <div class="help-row"><i class="fa-solid fa-circle-play"></i><span><strong>Actual Start</strong> and <strong>Actual Finish</strong> record what really happened, and they <strong>are the schedule</strong>: an Actual Start becomes the task's Start (a running task keeps its duration, so its Finish moves with it) and an Actual Finish becomes its Finish. The tasks that depend on it are re-planned from those dates — later or earlier.</span></div>
+          <div class="help-row"><i class="fa-solid fa-circle-check"></i><span>Recording an Actual Finish marks the task <strong>100% complete</strong> and fills an empty Actual Start. A task that has started or finished is not rescheduled any more; a warning triangle appears if its predecessors say it couldn't have started yet.</span></div>
+          <div class="help-row"><i class="fa-solid fa-layer-group"></i><span>A group shows the actual dates of the tasks in it: the earliest actual start, and an actual finish once everything in it has finished.</span></div>
+          <div class="help-row"><i class="fa-solid fa-gauge-high"></i><span><strong>Remaining Duration</strong> (the duration still to go, from % complete) and <strong>Status</strong> (Complete, On Schedule, Late or Future Task, judged against today) are worked out for you.</span></div>
+        </div>
+        <div class="help-divider"></div>
+        <div class="help-section">
+          <div class="help-section-title">Baselines and variance</div>
+          <div class="help-row"><i class="fa-solid fa-ruler-horizontal"></i><span>The bar is the <strong>current schedule</strong>. To keep the original plan, set a <strong>baseline</strong> (plan menu → <strong>Baseline…</strong>): a frozen copy of every task's Start and Finish, only ever taken when you ask. Keep up to eleven — Baseline and Baseline 1–10 — and choose which one to compare with.</span></div>
+          <div class="help-row"><i class="fa-solid fa-minus"></i><span>The baseline shows as a thin grey line under each bar in the Gantt chart (the ruler button hides it).</span></div>
+          <div class="help-row"><i class="fa-solid fa-plus-minus"></i><span>The <strong>Start Variance</strong>, <strong>Finish Variance</strong>, <strong>Baseline Start/Finish/Duration</strong> and <strong>Duration Variance</strong> columns show how far each task has moved, in working days — positive means later than the baseline.</span></div>
+        </div>
+      </div>
+      <div class="help-pane" id="helpPane-list" role="tabpanel" aria-labelledby="helpTab-list" hidden>
+        <div class="help-section">
+          <div class="help-section-title">Columns</div>
+          <div class="help-row"><i class="fa-solid fa-table-columns"></i><span>Click <strong>Columns</strong> in the toolbar to tick the columns you want and reorder them. The <strong>Tasks view and the Gantt view each remember their own set</strong> on this device; Task Name always stays.</span></div>
+          <div class="help-row"><i class="fa-solid fa-eye-slash"></i><span>Remaining Duration, Resource, the baseline and variance columns and the custom fields start hidden. Click a <strong>Resource</strong> or actual-date cell to edit it, or use the task dialog.</span></div>
+        </div>
+        <div class="help-divider"></div>
+        <div class="help-section">
+          <div class="help-section-title">Custom fields</div>
+          <div class="help-row"><i class="fa-solid fa-shapes"></i><span>Every task can carry up to 20 fields of your own: <strong>Text1–5</strong>, <strong>Number1–5</strong>, <strong>Date1–5</strong> and <strong>Flag1–5</strong> (a yes/no tick). Fill them in on the task dialog's <strong>Custom fields</strong> tab, or — once ticked under Columns, where they start hidden — straight in the list (click a cell; a flag toggles).</span></div>
+          <div class="help-row"><i class="fa-solid fa-pen"></i><span>Use the pencil beside a field to <strong>rename</strong> it, for instance Text1 to <em>Cost centre</em>. The name is saved with the plan, so another plan can call the same field something else. Custom fields can be filtered like any column and are included in the Excel export.</span></div>
+        </div>
+        <div class="help-divider"></div>
+        <div class="help-section">
+          <div class="help-section-title">Filtering</div>
+          <div class="help-row"><i class="fa-solid fa-filter"></i><span>Click the <strong>funnel</strong> in a column header (every column has one) for an Excel-style filter. Dates get rules — equals, before, after, between, or relative to today such as this week, next month or year to date — and a Year › Month › Day list. Text columns get contains / begins with / ends with / equals and their negatives; numbers get equals, greater or less than, and between.</span></div>
+          <div class="help-row"><i class="fa-solid fa-list-check"></i><span>Every column also has a list of its values to tick, with a search box and <strong>(Blanks)</strong> for tasks that have no value.</span></div>
+          <div class="help-row"><i class="fa-solid fa-layer-group"></i><span>Filters on several columns combine, so a task must match all of them. A group stays visible while any sub-task inside it matches, and stays open while a filter is on.</span></div>
+          <div class="help-row"><i class="fa-solid fa-tags"></i><span>The bar under the toolbar shows what is filtered and how many tasks are showing; click <strong>×</strong> on a chip, or <strong>Clear all</strong>, to remove it. Filters are only for looking — they aren't saved, and a task you add or edit stays visible until you filter again.</span></div>
+        </div>
+      </div>
+      <div class="help-pane" id="helpPane-gantt" role="tabpanel" aria-labelledby="helpTab-gantt" hidden>
+        <div class="help-section">
+          <div class="help-section-title">The view</div>
+          <div class="help-row"><i class="fa-solid fa-table-list"></i><span>The left side is the <strong>same task list</strong> as in the Tasks view — the same filters, editing and buttons — with the chart to its right. Drag the thin strip between them to change how much room the list gets. It scrolls sideways when it has more columns than fit, and its ID … Task Name columns stay in place.</span></div>
+          <div class="help-row"><i class="fa-solid fa-calendar"></i><span>The <strong>Week / Month / Year</strong> buttons change the scale. Year (the default) shows quarters; Week is labelled by calendar week (CW — weeks start on Monday, ISO 8601). Days off are shaded.</span></div>
+        </div>
+        <div class="help-divider"></div>
+        <div class="help-section">
+          <div class="help-section-title">Working with bars</div>
+          <div class="help-row"><i class="fa-solid fa-arrows-left-right"></i><span><strong>Drag</strong> a bar to reschedule it and drag its edges to resize it. Click a bar or a row to edit it.</span></div>
+          <div class="help-row"><i class="fa-solid fa-link"></i><span>Drag the <strong>small circle on a bar's right edge</strong> onto another task to create a dependency.</span></div>
+          <div class="help-row"><i class="fa-solid fa-ruler-horizontal"></i><span>The <strong>ruler</strong> button shows or hides the baseline line under the bars.</span></div>
+        </div>
+        <div class="help-divider"></div>
+        <div class="help-section">
+          <div class="help-section-title">Critical path</div>
+          <div class="help-row"><i class="fa-solid fa-route"></i><span>The <strong>route icon</strong> in the toolbar highlights the critical path — the chain of tasks with no float left that determines the project's finish. It follows the real schedule and all four link types with their lags and leads, counted in working days. Manual tasks and summary tasks are left out.</span></div>
+        </div>
+      </div>
+      <div class="help-pane" id="helpPane-data" role="tabpanel" aria-labelledby="helpTab-data" hidden>
+        <div class="help-section">
+          <div class="help-section-title">Plans</div>
+          <div class="help-row"><i class="fa-solid fa-folder-tree"></i><span>The <strong>plan name</strong> at the top left is a switcher: move between plans, start a new one, open an existing file as a plan, or rename, duplicate or delete the current plan.</span></div>
+          <div class="help-row"><i class="fa-solid fa-file-lines"></i><span>Each plan has its own tasks, its own daily backups and its own linked file, so switching plans also switches which file is kept in sync. Deleting a plan only removes it from this browser; its file is never touched.</span></div>
+        </div>
+        <div class="help-divider"></div>
+        <div class="help-section">
+          <div class="help-section-title">Files and sync</div>
+          <div class="help-row"><i class="fa-solid fa-hard-drive"></i><span>Every plan is kept in a plain <strong>JSON file</strong> on your disk (linking one is required, in Chrome/Edge). Every change is saved to it automatically, and inside an iCloud Drive, OneDrive or Dropbox folder it keeps your own devices in step. <strong>New plan</strong> and <strong>Duplicate</strong> ask where to save the file.</span></div>
+          <div class="help-row"><i class="fa-solid fa-link-slash"></i><span>You can <strong>disconnect</strong> a plan's file (click the file name at the top right, or use the plan menu) — the file is kept, and Milestone asks you to choose one straight away. If the file is moved or deleted, Milestone asks you to create or find it again.</span></div>
+        </div>
+        <div class="help-divider"></div>
+        <div class="help-section">
+          <div class="help-section-title">Working together on one file</div>
+          <div class="help-row"><i class="fa-solid fa-users"></i><span>When several people (or devices) use the same linked file, Milestone reads the file before it writes, so <strong>a save never wipes out someone else's work</strong>. Changes to <em>different</em> things — even different fields of the same task — are all kept.</span></div>
+          <div class="help-row"><i class="fa-solid fa-code-merge"></i><span>If you and someone else changed the <em>same</em> field, the newer edit is kept and an amber <strong>conflicts</strong> badge appears next to the file name: click it to see both versions and take the other one if it should have won. Tasks that depend on something that moved are re-planned after a merge.</span></div>
+        </div>
+        <div class="help-divider"></div>
+        <div class="help-section">
+          <div class="help-section-title">Import, export and backups</div>
+          <div class="help-row"><i class="fa-solid fa-file-export"></i><span><strong>Data → Export / Import</strong> moves a full JSON snapshot of the current plan out or in.</span></div>
+          <div class="help-row"><i class="fa-solid fa-file-excel"></i><span><strong>Export to Excel</strong> saves a formatted .xlsx workbook: a task list plus an optional Gantt chart sheet, each sheet using the columns you chose in its own view.</span></div>
+          <div class="help-row"><i class="fa-solid fa-clock-rotate-left"></i><span><strong>Local Backups</strong> keeps a rolling daily snapshot of every plan in this browser.</span></div>
+        </div>
+        <div class="help-tip">Nothing here ever leaves your machine except into the files you choose.</div>
+      </div>
+      </div>
     </div>
     <div class="modal-footer"><button class="btn" onclick="closeHelpModal()">Close</button></div>
   </div>
@@ -917,7 +1084,7 @@ const ZOOMS = [
 // `dflt` = shown until the user says otherwise. Insertion order = the default order. Task Name can't be hidden.
 const TASK_COLS = {
   mode:         { label: 'Task Mode',     width: '76px',              dflt: true },   // its header is two lines (Task / Mode)
-  wbs:          { label: 'WBS',           width: '68px',              dflt: true },
+  wbs:          { label: 'WBS',           width: '104px',             dflt: true },   // sized for eight levels, 2.2.2.2.2.2.2.2 (83px of text in the widest digit) + the 8px inset on each side + a little slack
   name:         { label: 'Task Name',     width: 'minmax(160px,1fr)', dflt: true, locked: true },
   start:        { label: 'Start',         width: '104px',             dflt: true },
   end:          { label: 'Finish',        width: '104px',             dflt: true },
@@ -5159,7 +5326,24 @@ async function undoDeletePlan(saved) {
 }
 
 /* =============================== Help / About ============================== */
-function openHelpModal() { document.getElementById('helpModalBg').classList.add('open'); }
+const HELP_TABS = ['start', 'scheduling', 'progress', 'list', 'gantt', 'data'];
+let helpTab = 'start';   // the topic last read (this session): the dialog reopens where you left it
+function openHelpModal(tab) { setHelpTab(tab || helpTab); document.getElementById('helpModalBg').classList.add('open'); }
+function setHelpTab(id) {
+  if (!HELP_TABS.includes(id)) id = HELP_TABS[0];
+  helpTab = id;
+  for (const t of HELP_TABS) {
+    const on = t === id, b = document.getElementById('helpTab-' + t), p = document.getElementById('helpPane-' + t);
+    b.classList.toggle('active', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); b.tabIndex = on ? 0 : -1; p.hidden = !on;
+  }
+  document.getElementById('helpPane-' + id).scrollTop = 0;
+}
+function helpTabKey(e) {   // arrow keys / Home / End move between the topics, like any tab list
+  const k = e.key, i = HELP_TABS.indexOf(helpTab);
+  const next = k === 'ArrowDown' || k === 'ArrowRight' ? (i + 1) % HELP_TABS.length : k === 'ArrowUp' || k === 'ArrowLeft' ? (i + HELP_TABS.length - 1) % HELP_TABS.length : k === 'Home' ? 0 : k === 'End' ? HELP_TABS.length - 1 : -1;
+  if (next < 0) return;
+  e.preventDefault(); setHelpTab(HELP_TABS[next]); document.getElementById('helpTab-' + HELP_TABS[next]).focus();
+}
 function closeHelpModal() { document.getElementById('helpModalBg').classList.remove('open'); }
 function openAboutModal() {
   document.getElementById('aboutVersionLine').textContent = `Version ${APP_VERSION} · ${fmtDateY(APP_BUILD_DATE)}`;
