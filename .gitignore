@@ -6,3 +6,4 @@
 tests/*.xlsx
 tests/*.png
 tests/__pycache__/
+/*.xlsx

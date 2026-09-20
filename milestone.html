@@ -328,6 +328,61 @@ input.inline-edit { width: 100%; min-width: 0; padding: 3px 6px; border: 1px sol
 .dropdown-item.active { background: color-mix(in srgb, var(--accent) 10%, var(--panel)); }
 .dropdown-item .mode-check { margin-left: auto; color: var(--accent); }
 .subbar-spacer { flex: 1 1 auto; }
+.sel-chip { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border: 1px solid var(--accent); border-radius: 13px; background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--text); font-size: 12px; font-weight: 600; cursor: pointer; }
+.sel-chip:hover { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+.sel-chip i { font-size: 11px; color: var(--text-dim); }
+.bulk-row { display: grid; grid-template-columns: 190px 1fr; gap: 10px; align-items: center; }
+.bulk-on { display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; }
+.bulk-ctl { display: flex; gap: 6px; align-items: center; min-width: 0; }
+.bulk-ctl input, .bulk-ctl select { min-width: 0; flex: 1; }
+.bulk-ctl input[type=number] { max-width: 120px; }
+.bulk-sep { border-top: 1px solid var(--border); margin: 2px 0; }
+.bulk-hint { font-size: 12px; color: var(--text-dim); margin: 0; }
+.modal.print-modal { width: 1040px; max-width: 96vw; height: min(780px, 92vh); max-height: none; }
+.print-layout { display: flex; flex: 1; min-height: 0; }
+.print-opts { width: 300px; flex-shrink: 0; overflow-y: auto; padding: 16px 18px; border-right: 1px solid var(--border); display: flex; flex-direction: column; gap: 14px; }
+.print-two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.print-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; }
+.print-chk { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--text); cursor: pointer; margin-top: 3px; flex-wrap: wrap; }
+.print-range { display: flex; align-items: center; gap: 6px; margin: 4px 0 0 24px; font-size: 12.5px; color: var(--text-dim); }
+.print-range input[type=date] { flex: 1; min-width: 0; }
+.print-side { flex: 1; min-width: 0; display: flex; flex-direction: column; background: var(--panel-2); }
+.print-preview { flex: 1; min-height: 0; overflow: auto; padding: 18px; display: flex; align-items: flex-start; justify-content: center; }
+.print-sheet { background: #fff; box-shadow: 0 1px 8px rgba(0, 0, 0, .3); width: 100%; max-width: 100%; }
+.print-sheet svg { display: block; width: 100%; height: 100%; }
+.print-nav { display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-top: 1px solid var(--border); font-size: 12.5px; color: var(--text-dim); }
+.print-summary { margin-left: auto; text-align: right; }
+.print-tip { margin-right: auto; font-size: 12px; color: var(--text-dim); }
+#printRoot { display: none; }
+@media print {
+  body > *:not(#printRoot) { display: none !important; }
+  html, body { background: #fff !important; height: auto !important; overflow: visible !important; }
+  #printRoot { display: block !important; }
+  .print-page { break-after: page; page-break-after: always; overflow: hidden; }
+  .print-page:last-child { break-after: auto; page-break-after: auto; }
+  .print-page svg { display: block; width: 100%; height: 100%; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+.search-bg { align-items: flex-start; padding-top: 12vh; }
+.modal.search-modal { width: 640px; max-width: 94vw; max-height: 70vh; overflow: hidden; }
+.search-box { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.search-box > i { color: var(--text-faint); }
+.search-box input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; color: var(--text); font-size: 15px; }
+.search-x { border: 1px solid var(--border); background: var(--panel-2); color: var(--text-dim); border-radius: 4px; font-size: 11px; padding: 2px 6px; cursor: pointer; }
+.search-results { overflow-y: auto; padding: 6px; flex: 1; min-height: 0; }
+.search-empty { padding: 18px 14px; color: var(--text-dim); font-size: 13px; line-height: 1.6; }
+.search-empty code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; color: var(--text); }
+.sr { display: grid; grid-template-columns: 44px 60px 1fr auto; gap: 10px; align-items: center; padding: 7px 10px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+.sr.active, .sr:hover { background: color-mix(in srgb, var(--accent) 14%, var(--panel)); }
+.sr-id { color: var(--text-faint); font-variant-numeric: tabular-nums; } .sr-wbs { color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.sr-main { min-width: 0; } .sr-name { color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .sr-name mark { background: color-mix(in srgb, var(--accent) 30%, transparent); color: inherit; border-radius: 2px; }
+.sr-path { color: var(--text-faint); font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sr-side { text-align: right; color: var(--text-dim); font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.sr-side .sr-res { display: block; color: var(--text-faint); font-size: 11.5px; }
+.search-foot { display: flex; gap: 16px; padding: 8px 16px; border-top: 1px solid var(--border); color: var(--text-dim); font-size: 11.5px; background: var(--panel-2); }
+.search-foot kbd, .search-x { font-family: inherit; } .search-foot kbd { border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 4px; background: var(--panel); padding: 0 5px; margin-right: 3px; color: var(--text); }
+.grid-row.jump-flash, .gantt-row-bg.jump-flash { animation: jumpFlash 1.4s ease-out; }
+@keyframes jumpFlash { 0% { box-shadow: inset 0 0 0 2px var(--accent); background: color-mix(in srgb, var(--accent) 25%, var(--panel)); } 100% { box-shadow: inset 0 0 0 0 transparent; } }
 .dropdown-item .item-hint { margin-left: auto; padding-left: 14px; color: var(--text-faint); font-size: 11.5px; }
 .cal-days { display: flex; flex-wrap: wrap; gap: 6px; }
 .cal-day { position: relative; cursor: pointer; }
@@ -358,7 +413,18 @@ input.inline-edit { width: 100%; min-width: 0; padding: 3px 6px; border: 1px sol
 .baseline-info .bi-sep { color: var(--text-faint); }
 .var-late { color: var(--danger) !important; }
 .var-early { color: var(--task-green) !important; }
-.hol-add { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.fi-file { font-weight: 600; font-size: 13px; } .fi-file i { color: var(--text-faint); margin-right: 4px; }
+.fi-summary { font-size: 13px; color: var(--text-dim); display: flex; flex-direction: column; gap: 8px; }
+.fi-summary strong { color: var(--text); }
+.fi-preview { border: 1px solid var(--border); border-radius: 6px; background: var(--panel-2); padding: 6px 10px; max-height: 190px; overflow-y: auto; }
+.fi-row { display: flex; justify-content: space-between; gap: 12px; padding: 2px 0; font-size: 12.5px; }
+.fi-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); } .fi-dates { color: var(--text-dim); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.fi-more { color: var(--text-faint); font-size: 12px; padding-top: 3px; }
+.fi-warn { font-size: 12.5px; color: var(--text-dim); border-left: 3px solid #bf8700; padding: 4px 10px; background: color-mix(in srgb, #bf8700 10%, transparent); border-radius: 0 6px 6px 0; }
+.hol-preset, .hol-add { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.hol-preset { margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px dashed var(--border); }
+.hol-preset select { flex: 1 1 220px; min-width: 180px; }
+.hol-preset input[type=number] { width: 74px; }
 .hol-add input[type=date] { width: 138px; }
 .hol-add input[type=text] { flex: 1 1 140px; min-width: 120px; }
 .hol-to { color: var(--text-dim); font-size: 12.5px; }
@@ -579,12 +645,15 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
     <div class="dropdown-menu" id="dataMenu">
       <button class="dropdown-item" onclick="exportProject()"><i class="fa-solid fa-file-export"></i>Export JSON</button>
       <button class="dropdown-item" onclick="triggerImport()"><i class="fa-solid fa-file-import"></i>Import JSON</button>
+      <button class="dropdown-item" id="foreignImportItem" onclick="triggerForeignImport()"><i class="fa-solid fa-diagram-project"></i>Import MS Project XML / CSV…</button>
       <button class="dropdown-item" id="excelExportItem" onclick="openExcelExport()"><i class="fa-solid fa-file-excel"></i>Export to Excel…</button>
+      <button class="dropdown-item" id="printItem" onclick="openPrintModal()"><i class="fa-solid fa-print"></i>Print / PDF…</button>
       <div class="dropdown-sep"></div>
       <button class="dropdown-item" onclick="openBackupsModal()"><i class="fa-solid fa-clock-rotate-left"></i>Local Backups</button>
     </div>
   </div>
   <input type="file" id="fileInput" accept="application/json" class="hidden" onchange="handleFileImport(event)">
+  <input type="file" id="foreignFileInput" accept=".xml,.csv,.tsv,.txt,.mpp,.xlsx,text/csv,text/xml,application/xml,text/plain" class="hidden" onchange="handleForeignFile(event)">
   <div class="topbar-divider"></div>
   <button class="icon-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Toggle light/dark"></button>
   <button class="icon-btn" onclick="openHelpModal()" title="Help"><i class="fa-regular fa-circle-question"></i></button>
@@ -598,9 +667,15 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
   <button class="icon-btn" id="indentBtn" onclick="indentSelected()" title="Indent (make sub-task)"><i class="fa-solid fa-indent"></i></button>
   <button class="icon-btn" id="outdentBtn" onclick="outdentSelected()" title="Outdent"><i class="fa-solid fa-outdent"></i></button>
   <button class="icon-btn" id="cloneTaskBtn" onclick="cloneSelected()" title="Clone task (with all its sub-tasks)"><i class="fa-regular fa-clone"></i></button>
+  <button class="icon-btn" id="copyBtn" onclick="copySelectionButton()" title="Copy the selected tasks (Ctrl/Cmd+C) — paste into Milestone or Excel" disabled><i class="fa-regular fa-copy"></i></button>
+  <button class="icon-btn" id="pasteBtn" onclick="pasteButton()" title="Paste below the selected task (Ctrl/Cmd+V) — tasks copied here, or rows copied from Excel"><i class="fa-regular fa-paste"></i></button>
+  <button class="icon-btn" id="bulkEditBtn" onclick="openBulkModal()" title="Change fields of the selected tasks" disabled><i class="fa-solid fa-pen-to-square"></i></button>
   <button class="icon-btn btn-danger" id="deleteTaskBtn" onclick="deleteSelected()" title="Delete task"><i class="fa-solid fa-trash"></i></button>
+  <button class="sel-chip hidden" id="selChip" onclick="clearSelection()" title="Clear the selection"></button>
   <div class="filter-bar hidden" id="filterBar"></div>
   <span class="subbar-spacer"></span>
+  <button class="icon-btn" id="printBtn" onclick="openPrintModal()" title="Print or save the plan as PDF (Ctrl/Cmd+P)"><i class="fa-solid fa-print"></i></button>
+  <button class="btn" id="searchBtn" onclick="openSearch()" title="Find a task by name, WBS (2.1), #ID or @resource (Ctrl/Cmd+K, or /)"><i class="fa-solid fa-magnifying-glass"></i>Find</button>
   <button class="btn" id="columnsBtn" onclick="toggleColumnsMenu()" title="Choose which columns the task list shows"><i class="fa-solid fa-table-columns"></i>Columns</button>
   <button class="btn" id="newTaskModeBtn" onclick="openTaskModeMenu(event,'new')" title="Scheduling mode given to newly added tasks"></button>
 </div>
@@ -751,6 +826,89 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
   </div>
 </div>
 
+<div class="modal-bg" id="foreignImportModalBg" onclick="if(event.target===this) closeForeignImport()">
+  <div class="modal">
+    <div class="modal-header"><h2 id="foreignImportTitle">Import</h2><button onclick="closeForeignImport()" aria-label="Close">&times;</button></div>
+    <div class="modal-body">
+      <div class="fi-file" id="foreignImportFile"></div>
+      <div class="fi-summary" id="foreignImportSummary"></div>
+      <div class="fi-warn hidden" id="foreignImportWarn"></div>
+      <div class="field hidden" id="foreignImportFmtField"><label for="foreignImportFmt">Dates in the file are written as</label>
+        <select id="foreignImportFmt" onchange="foreignImportFormatChanged()">
+          <option value="auto">Detect (day first, unless it can only be month first)</option>
+          <option value="dmy">Day.Month.Year (07.09.2026, 07/09/2026)</option>
+          <option value="mdy">Month/Day/Year (09/07/2026)</option>
+          <option value="ymd">Year-Month-Day (2026-09-07)</option>
+        </select></div>
+      <div class="field"><label>What to do with it</label>
+        <div class="radio-col">
+          <label class="radio-row"><input type="radio" name="fiMode" value="append" checked> <span>Add the tasks to this plan, after the existing ones</span></label>
+          <label class="radio-row"><input type="radio" name="fiMode" value="replace"> <span>Replace this plan's tasks — a backup file is downloaded first</span></label>
+        </div></div>
+      <label class="radio-row hidden" id="foreignImportCalRow"><input type="checkbox" id="foreignImportCal"> <span>Also take the working days, holidays and baselines from the file</span></label>
+    </div>
+    <div class="modal-footer"><button class="btn" onclick="closeForeignImport()">Cancel</button><button class="btn btn-primary" id="foreignImportGo" onclick="applyForeignImport()">Import</button></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="bulkModalBg" onclick="if(event.target===this) closeBulkModal()">
+  <div class="modal">
+    <div class="modal-header"><h2 id="bulkTitle">Edit tasks</h2><button onclick="closeBulkModal()" aria-label="Close">&times;</button></div>
+    <div class="modal-body">
+      <p class="bulk-hint" id="bulkHint"></p>
+      <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-progress"> % complete</label><div class="bulk-ctl"><input type="number" id="bulkVal-progress" min="0" max="100" step="1" placeholder="0 – 100"></div></div>
+      <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-resource"> Resource</label><div class="bulk-ctl"><input type="text" id="bulkVal-resource" maxlength="200" placeholder="Anna, Ben (empty clears it)"></div></div>
+      <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-mode"> Task Mode</label><div class="bulk-ctl"><select id="bulkVal-mode"><option value="auto">Auto Scheduled</option><option value="manual">Manually Scheduled</option></select></div></div>
+      <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-color"> Colour</label><div class="bulk-ctl"><select id="bulkVal-color"></select></div></div>
+      <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-shift"> Move dates by</label><div class="bulk-ctl"><input type="number" id="bulkVal-shift" step="1" placeholder="working days (negative = earlier)"><span class="bulk-hint">working days</span></div></div>
+      <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-pred"> Add predecessor</label><div class="bulk-ctl"><input type="number" id="bulkVal-predId" min="1" step="1" placeholder="task #"><select id="bulkVal-predType"><option value="FS">Finish-to-Start</option><option value="SS">Start-to-Start</option><option value="FF">Finish-to-Finish</option><option value="SF">Start-to-Finish</option></select><input type="number" id="bulkVal-predLag" step="1" placeholder="lag" style="max-width:70px"></div></div>
+      <div id="bulkCustom"></div>
+    </div>
+    <div class="modal-footer"><button class="btn" onclick="closeBulkModal()">Cancel</button><button class="btn btn-primary" onclick="applyBulkEdit()">Apply</button></div>
+  </div>
+</div>
+
+<div class="modal-bg search-bg" id="searchModalBg" onclick="if(event.target===this) closeSearch()">
+  <div class="modal search-modal" role="dialog" aria-label="Find a task">
+    <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="searchInput" autocomplete="off" spellcheck="false" placeholder="Find a task — name, WBS (2.1), #ID, @resource" oninput="renderSearch()" onkeydown="searchKey(event)" aria-controls="searchResults"><button class="search-x" onclick="closeSearch()" aria-label="Close">Esc</button></div>
+    <div class="search-results" id="searchResults" role="listbox"></div>
+    <div class="search-foot" id="searchFoot"><span><kbd>↑</kbd><kbd>↓</kbd> move</span><span><kbd>Enter</kbd> go to the task</span><span><kbd>Shift</kbd>+<kbd>Enter</kbd> show only the matches</span></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="printModalBg" onclick="if(event.target===this) closePrintModal()">
+  <div class="modal print-modal" role="dialog" aria-labelledby="printModalTitle">
+    <div class="modal-header"><h2 id="printModalTitle">Print or save as PDF</h2><button onclick="closePrintModal()" aria-label="Close">&times;</button></div>
+    <div class="print-layout">
+      <div class="print-opts" oninput="printOptionChanged()" onchange="printOptionChanged()">
+        <div class="field"><label for="printTitle">Title</label><input type="text" id="printTitle" maxlength="120"></div>
+        <div class="print-two">
+          <div class="field"><label for="printPaper">Paper</label><select id="printPaper"><option>A4</option><option>A3</option><option>Letter</option><option>Legal</option><option>Tabloid</option></select></div>
+          <div class="field"><label for="printOrient">Orientation</label><select id="printOrient"><option value="landscape">Landscape</option><option value="portrait">Portrait</option></select></div>
+        </div>
+        <div class="field"><label>Task list columns</label><div class="print-cols"><label class="print-chk"><input type="checkbox" id="printCol-id"> ID</label><label class="print-chk"><input type="checkbox" id="printCol-wbs"> WBS</label><label class="print-chk"><input type="checkbox" id="printCol-name"> Task Name</label><label class="print-chk"><input type="checkbox" id="printCol-start"> Start</label><label class="print-chk"><input type="checkbox" id="printCol-end"> Finish</label><label class="print-chk"><input type="checkbox" id="printCol-duration"> Days</label><label class="print-chk"><input type="checkbox" id="printCol-progress"> % complete</label><label class="print-chk"><input type="checkbox" id="printCol-resource"> Resource</label><label class="print-chk"><input type="checkbox" id="printCol-preds"> Predecessors</label></div></div>
+        <div class="field"><label>Time range</label>
+          <label class="print-chk"><input type="radio" name="printRange" id="printRangeAll" checked> The whole plan</label>
+          <label class="print-chk"><input type="radio" name="printRange" id="printRangeCustom"> A custom range</label>
+          <div class="print-range"><input type="date" id="printFrom" aria-label="From" onfocus="document.getElementById('printRangeCustom').checked = true"><span>to</span><input type="date" id="printTo" aria-label="To" onfocus="document.getElementById('printRangeCustom').checked = true"></div></div>
+        <div class="field"><label for="printScale">Timescale</label><select id="printScale"><option value="auto">Automatic for the length of the plan</option><option value="week">Weeks</option><option value="month">Months</option><option value="quarter">Quarters</option></select></div>
+        <div class="field"><label>Show</label>
+          <label class="print-chk"><input type="checkbox" id="printBaseline"> Baseline under the bars</label>
+          <label class="print-chk"><input type="checkbox" id="printCritical"> Critical path</label>
+          <label class="print-chk"><input type="checkbox" id="printDeps"> Dependency arrows</label>
+          <label class="print-chk"><input type="checkbox" id="printToday"> Today line</label>
+          <label class="print-chk"><input type="checkbox" id="printShade"> Days off shaded</label>
+          <label class="print-chk"><input type="checkbox" id="printExpand"> Every group expanded (otherwise as the list shows it)</label></div>
+      </div>
+      <div class="print-side">
+        <div class="print-preview" id="printPreview"></div>
+        <div class="print-nav"><button class="btn" id="printPrev" onclick="printPage(-1)" aria-label="Previous page"><i class="fa-solid fa-chevron-left"></i></button><span id="printPageInfo"></span><button class="btn" id="printNext" onclick="printPage(1)" aria-label="Next page"><i class="fa-solid fa-chevron-right"></i></button><span class="print-summary" id="printSummary"></span></div>
+      </div>
+    </div>
+    <div class="modal-footer"><span class="print-tip">Your browser's print dialog has “Save as PDF”.</span><button class="btn" onclick="closePrintModal()">Cancel</button><button class="btn btn-primary" id="printGo" onclick="doPrint()"><i class="fa-solid fa-print"></i>Print / Save as PDF…</button></div>
+  </div>
+</div>
+
 <!-- Backups modal -->
 <div class="modal-bg" id="backupsModalBg" onclick="if(event.target===this) closeBackupsModal()">
   <div class="modal narrow">
@@ -801,6 +959,13 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
       <div class="field"><label>Working days of “<span id="calendarPlanName"></span>”</label>
         <div class="cal-days" id="calendarDays"></div></div>
       <div class="field"><label for="holFrom">Holidays and other days off</label>
+        <div class="hol-preset">
+          <select id="holRegion" aria-label="Country or region for public holidays"></select>
+          <input type="number" id="holYearFrom" min="2000" max="2100" aria-label="From year" onkeydown="if(event.key==='Enter'){event.preventDefault();addHolidayPreset();}">
+          <span class="hol-to">–</span>
+          <input type="number" id="holYearTo" min="2000" max="2100" aria-label="To year" onkeydown="if(event.key==='Enter'){event.preventDefault();addHolidayPreset();}">
+          <button class="btn" type="button" onclick="addHolidayPreset()" title="Add the public holidays of this region for these years"><i class="fa-solid fa-flag"></i>Add public holidays</button>
+        </div>
         <div class="hol-add">
           <input type="date" id="holFrom" title="The day off, or the first day of a longer break" onkeydown="if(event.key==='Enter'){event.preventDefault();addHoliday();}">
           <span class="hol-to">to</span>
@@ -810,7 +975,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
           <button class="btn" type="button" onclick="addHoliday()"><i class="fa-solid fa-plus"></i>Add</button>
         </div>
         <div class="hol-list" id="holList"></div></div>
-      <p class="cal-hint">Durations, lags and dependencies count working days only — weekdays that work and are not a holiday. Auto Scheduled tasks start and finish on working days; Manually Scheduled tasks keep the dates you give them. Days off are shaded in the Gantt chart. Dates already in the plan are not moved when you change this, and other plans keep their own calendar.</p>
+      <p class="cal-hint">Durations, lags and dependencies count working days only — weekdays that work and are not a holiday. Auto Scheduled tasks start and finish on working days; Manually Scheduled tasks keep the dates you give them. Days off are shaded in the Gantt chart. Public-holiday presets are a starting point — check them against your own calendar; regional and company days differ. Dates already in the plan are not moved when you change this, and other plans keep their own calendar.</p>
     </div>
     <div class="modal-footer">
       <button class="btn" onclick="closeCalendarModal()">Cancel</button>
@@ -885,6 +1050,24 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
         </div>
         <div class="help-divider"></div>
         <div class="help-section">
+          <div class="help-section-title">Selecting several tasks</div>
+          <div class="help-row"><i class="fa-solid fa-object-group"></i><span><strong>Ctrl/Cmd+click</strong> adds a task to the selection or takes it out; <strong>Shift+click</strong> selects every visible row from the last one you clicked; <strong>Ctrl/Cmd+A</strong> selects all visible tasks; <strong>Esc</strong> (or the “N selected” chip in the toolbar) clears it.</span></div>
+          <div class="help-row"><i class="fa-solid fa-layer-group"></i><span>Indent, Outdent, Clone, Copy and Delete then act on all of them (a group brings its sub-tasks). The <strong>pencil</strong> button opens <strong>Edit tasks</strong>: tick the fields to change — % complete, Resource, Task Mode, Colour, <em>Move dates by</em> a number of working days, <em>Add predecessor</em>, and any custom field you show — and Apply. It is one Undo step.</span></div>
+        </div>
+        <div class="help-divider"></div>
+        <div class="help-section">
+          <div class="help-section-title">Copy and paste</div>
+          <div class="help-row"><i class="fa-solid fa-copy"></i><span><strong>Ctrl/Cmd+C</strong> (or the copy button) copies the selected tasks with their sub-tasks and the links between them; <strong>Ctrl/Cmd+V</strong> pastes them below the selected task at its level — into this plan or another. <strong>Ctrl/Cmd+X</strong> cuts.</span></div>
+          <div class="help-row"><i class="fa-solid fa-file-excel"></i><span>The same copy is a table Excel understands: a header row, the ID column and the columns you show, names indented by level.</span></div>
+          <div class="help-row"><i class="fa-solid fa-table"></i><span>It works the other way too: <strong>copy rows in Excel</strong> — with a header such as Task Name, Start, Finish, Duration, % Complete, Resource, Predecessors — and paste them here. Indented names or a WBS / Outline Level column give the outline; dates like <code>07.09.2026</code>, durations like <code>5 days</code> and links like <code>3FS+2</code> are read, and “TBD” dates make a Manually Scheduled task.</span></div>
+        </div>
+        <div class="help-divider"></div>
+        <div class="help-section">
+          <div class="help-section-title">Find a task</div>
+          <div class="help-row"><i class="fa-solid fa-magnifying-glass"></i><span><strong>Ctrl/Cmd+K</strong>, <code>/</code> or the <strong>Find</strong> button opens a search: part of a name (every word must match), a WBS code such as <code>2.1</code>, <code>#12</code> for the task with that ID, or <code>@anna</code> for a resource. <strong>Enter</strong> goes to the task — folded groups open, a filter that would hide it steps aside, the row (and in the Gantt view the bar) scrolls into view and flashes. <strong>Shift+Enter</strong> shows only the matches.</span></div>
+        </div>
+        <div class="help-divider"></div>
+        <div class="help-section">
           <div class="help-section-title">Undo and redo</div>
           <div class="help-row"><i class="fa-solid fa-rotate-left"></i><span>The two round arrows at the left of the toolbar take back and repeat your changes one step at a time — an edit together with everything it moved in the schedule, an added or deleted task, a baseline, a change of the working calendar. The toast says what was undone and offers the opposite step.</span></div>
           <div class="help-row"><i class="fa-solid fa-circle-info"></i><span>The history is kept in memory only: it starts empty when you open the app or switch to another plan, and it is cleared when changes from another device are merged in — so undo can never take back somebody else's work.</span></div>
@@ -897,6 +1080,11 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
             <span class="help-keycombo"><kbd>Ctrl/Cmd</kbd><span class="help-plus">+</span><kbd>Shift</kbd><span class="help-plus">+</span><kbd>Z</kbd> or <kbd>Ctrl</kbd><span class="help-plus">+</span><kbd>Y</kbd></span><span>Redo</span>
             <span class="help-keycombo"><kbd>Enter</kbd></span><span>Save the cell you are editing</span>
             <span class="help-keycombo"><kbd>Esc</kbd></span><span>Cancel an edit, close a dialog or menu, or clear the selection</span>
+            <span class="help-keycombo"><kbd>Ctrl/Cmd</kbd><span class="help-plus">+</span><kbd>A</kbd></span><span>Select all visible tasks</span>
+            <span class="help-keycombo"><kbd>Ctrl/Cmd</kbd><span class="help-plus">+</span><kbd>C</kbd> <kbd>X</kbd> <kbd>V</kbd></span><span>Copy, cut and paste tasks (or rows from Excel)</span>
+            <span class="help-keycombo"><kbd>Delete</kbd></span><span>Delete the selected tasks (after asking)</span>
+            <span class="help-keycombo"><kbd>Ctrl/Cmd</kbd><span class="help-plus">+</span><kbd>K</kbd> or <kbd>/</kbd></span><span>Find a task</span>
+            <span class="help-keycombo"><kbd>Ctrl/Cmd</kbd><span class="help-plus">+</span><kbd>P</kbd></span><span>Print or save as PDF</span>
           </div>
           <div class="help-tip">In a text field <strong>Ctrl/Cmd+Z</strong> is the browser's own undo for what you are typing; with a dialog open it leaves the plan alone.</div>
         </div>
@@ -905,7 +1093,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
         <div class="help-section">
           <div class="help-section-title">Task Mode</div>
           <div class="help-row"><i class="fa-solid fa-chart-gantt"></i><span><strong>Auto Scheduled</strong> (chart icon) tasks follow their predecessors and constraints.</span></div>
-          <div class="help-row"><i class="fa-solid fa-thumbtack"></i><span><strong>Manually Scheduled</strong> (pushpin) tasks stay exactly where you put them: predecessors never move them, their Start, Finish and Duration can be free text such as “TBD”, and a warning triangle appears if one starts earlier than its predecessors allow. They are drawn with a dashed bar and left out of the critical path.</span></div>
+          <div class="help-row"><i class="fa-solid fa-thumbtack"></i><span><strong>Manually Scheduled</strong> (pushpin) tasks stay exactly where you put them: predecessors never move them, their Start, Finish (a manual milestone's too) and Duration can be free text such as “TBD”, and a warning triangle appears if one starts earlier than its predecessors allow. They are drawn with a dashed bar and left out of the critical path.</span></div>
           <div class="help-row"><i class="fa-solid fa-toggle-on"></i><span>Click the icon in the <strong>Task Mode</strong> column (or use the Task Mode field in a task's dialog) to switch. Switching to Auto moves the task to the earliest date its links allow. The <strong>New tasks</strong> button at the right of the toolbar chooses the mode new tasks start in — Auto Scheduled by default.</span></div>
         </div>
         <div class="help-divider"></div>
@@ -928,6 +1116,8 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
           <div class="help-section-title">Working calendar</div>
           <div class="help-row"><i class="fa-solid fa-calendar-week"></i><span>Each plan has its own working days — Monday to Friday unless you change it (plan menu → <strong>Working calendar…</strong>). Durations, lags and dependencies count working days only: a 5-day task that starts on a Monday finishes on that Friday, and its successor starts the next Monday.</span></div>
           <div class="help-row"><i class="fa-solid fa-umbrella-beach"></i><span>Add <strong>holidays and other days off</strong> in the same dialog: a single day, a longer break (from … to …), or a day that comes back every year, each with an optional name. They count as days off exactly like weekends, and are shaded in the Gantt chart.</span></div>
+          <div class="help-row"><i class="fa-solid fa-flag"></i><span><strong>Public holidays:</strong> pick a country or region (Germany with each of its states, Austria, Switzerland, the UK, Ireland, the US, Canada, France, the Netherlands, Belgium, Spain, Italy) and the years, then <strong>Add public holidays</strong>. Movable ones (Easter, Ascension, Thanksgiving …) are worked out for each year; days that fall on a day off anyway are left out.</span></div>
+          <div class="help-row"><i class="fa-solid fa-circle-exclamation"></i><span>Treat the presets as a starting point: check them against your own calendar — regional and company days differ — and edit or remove any entry.</span></div>
           <div class="help-row"><i class="fa-solid fa-hand-pointer"></i><span>Auto tasks start and finish on working days — a date you type or drag to on a day off moves to the nearest working day. Manual tasks keep exactly the dates you give them. Changing the calendar or the holidays never moves dates that are already in the plan.</span></div>
         </div>
         <div class="help-divider"></div>
@@ -982,6 +1172,12 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
         </div>
         <div class="help-divider"></div>
         <div class="help-section">
+          <div class="help-section-title">Printing</div>
+          <div class="help-row"><i class="fa-solid fa-print"></i><span><strong>Print / PDF…</strong> (the printer button, the Data menu, or Ctrl/Cmd+P) lays the list and the chart out on pages of the paper you choose — A4, A3, Letter, Legal or Tabloid, landscape or portrait. The whole timeline is fitted to the page width, long plans continue on the next page with the heading repeated, and a live preview shows every page.</span></div>
+          <div class="help-row"><i class="fa-solid fa-sliders"></i><span>Choose the list columns, the time range, the timescale (weeks, months or quarters — automatic by default), and whether to show the baseline, the critical path, dependency arrows, the today line and days off. Tasks print as the list shows them (folded groups and filters apply) unless you expand every group. In your browser's print dialog choose <strong>Save as PDF</strong> for a file.</span></div>
+        </div>
+        <div class="help-divider"></div>
+        <div class="help-section">
           <div class="help-section-title">Critical path</div>
           <div class="help-row"><i class="fa-solid fa-route"></i><span>The <strong>route icon</strong> in the toolbar highlights the critical path — the chain of tasks with no float left that determines the project's finish. It follows the real schedule and all four link types with their lags and leads, counted in working days. Manual tasks and summary tasks are left out.</span></div>
         </div>
@@ -1009,6 +1205,9 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
           <div class="help-section-title">Import, export and backups</div>
           <div class="help-row"><i class="fa-solid fa-file-export"></i><span><strong>Data → Export / Import</strong> moves a full JSON snapshot of the current plan out or in.</span></div>
           <div class="help-row"><i class="fa-solid fa-file-excel"></i><span><strong>Export to Excel</strong> saves a formatted .xlsx workbook: a task list plus an optional Gantt chart sheet, each sheet using the columns you chose in its own view.</span></div>
+          <div class="help-row"><i class="fa-solid fa-diagram-project"></i><span><strong>Import MS Project XML / CSV…</strong> reads a plan saved from MS Project as XML (File → Save As → XML Format): tasks and their outline, dates, % complete, actual dates, links with lags, manual mode, constraints, resources, baselines, the working week and the holidays.</span></div>
+          <div class="help-row"><i class="fa-solid fa-file-csv"></i><span>It also reads a <strong>CSV</strong> with a header row — English or German column names such as Task Name, Start, Finish, Duration, Predecessors, Outline Level. A preview shows what was found; you add the tasks to this plan or replace its tasks (a backup file is downloaded first).</span></div>
+          <div class="help-row"><i class="fa-solid fa-print"></i><span><strong>Print / PDF…</strong> is under Data as well — see the Gantt chart topic.</span></div>
           <div class="help-row"><i class="fa-solid fa-clock-rotate-left"></i><span><strong>Local Backups</strong> keeps a rolling daily snapshot of every plan in this browser.</span></div>
         </div>
         <div class="help-tip">Nothing here ever leaves your machine except into the files you choose.</div>
@@ -1200,6 +1399,25 @@ const GRID_PANE_MIN_WIDTH = 320, GRID_PANE_MAX_WIDTH = 1800, GRID_PANE_DEFAULT =
 let showCriticalPath = false;
 let showBaseline = true;   // the compared baseline as thin bars under the Gantt bars
 let selectedTaskId = null;
+let selectedTaskIds = new Set();   // the multi-selection (selectedTaskId is the anchor: the one clicked last)
+let selShadow = null;   // the anchor as this module last saw it: a different value means the anchor was assigned directly (older code, tests) = a single selection
+function setSelection(ids, anchor) { selectedTaskIds = new Set(ids); selectedTaskId = anchor !== undefined ? anchor : (ids.length ? ids[ids.length - 1] : null); selShadow = selectedTaskId; }
+function pruneSelection() {
+  if (selectedTaskId !== selShadow) selectedTaskIds = new Set(selectedTaskId ? [selectedTaskId] : []);
+  selectedTaskIds = new Set([...selectedTaskIds].filter(id => byId(id)));   // tasks that are gone (deleted, merged away) leave the selection
+  if (selectedTaskId && !byId(selectedTaskId)) selectedTaskId = selectedTaskIds.size ? [...selectedTaskIds].pop() : null;
+  if (selectedTaskId && !selectedTaskIds.has(selectedTaskId)) selectedTaskIds.add(selectedTaskId);
+  selShadow = selectedTaskId;
+}
+function isSelected(id) { return selectedTaskIds.has(id) || id === selectedTaskId; }
+// the selected tasks in outline order; selectionRoots() = those not inside another selected task (what delete / clone / copy / indent act on: a group brings its sub-tasks)
+function selectedIds() { pruneSelection(); return [...selectedTaskIds].sort((a, b) => taskDisplayId(a) - taskDisplayId(b)); }
+function selectionRoots() {
+  const ids = selectedIds(), set = new Set(ids);
+  return ids.filter(id => { let p = byId(id).parentId; while (p) { if (set.has(p)) return false; p = (byId(p) || {}).parentId; } return true; });
+}
+function subtreeTasks(rootIds) { const out = []; const walk = t => { out.push(t); for (const c of childrenOf(t.id)) walk(c); }; for (const id of rootIds) walk(byId(id)); return out; }
+function clearSelection() { setSelection([]); render(); }
 
 let editingTaskId = null;
 let editingPredecessors = [];
@@ -1539,7 +1757,7 @@ function stepHistory(dir) {
   histBusy = true;
   try {
     applySnapshot(e.text);
-    if (selectedTaskId && !byId(selectedTaskId)) selectedTaskId = null;
+    pruneSelection();
     save(); render();
   } finally { histBusy = false; }
   histText = canonicalText(); histSig = stateSig(histText); histLastAt = 0;
@@ -1633,7 +1851,7 @@ function normalizeData() {
     for (const f of ['startText', 'endText', 'durText']) {
       t[f] = (t.taskMode === 'manual' && typeof t[f] === 'string') ? t[f].slice(0, 60) : null;
     }
-    if (t.milestone) { t.endText = null; t.durText = null; }
+    if (t.milestone) { t.durText = null; if (t.taskMode !== 'manual') t.endText = null; }   // (a manually scheduled milestone may have its Finish set to text such as TBD)
   }
 
   // Break parentId cycles and drop dangling references before anything
@@ -2208,7 +2426,7 @@ function computeDateRange() {
 function currentZoom() { return ZOOMS.find(z => z.id === zoom) || ZOOMS.find(z => z.id === DEFAULT_ZOOM); }
 
 function render() {
-  if (selectedTaskId && !byId(selectedTaskId)) selectedTaskId = null;
+  pruneSelection();
   resetEffectiveCache();
   resetIdCache();
   updateProjectNameUI();
@@ -2264,13 +2482,17 @@ function updateCriticalPathUI() {
 function toggleBaseline() { showBaseline = !showBaseline; save(); render(); }
 function toggleCriticalPath() { showCriticalPath = !showCriticalPath; render(); }
 function updateSelectionUI() {
-  const sel = selectedTaskId ? byId(selectedTaskId) : null;
-  if (selectedTaskId && !sel) selectedTaskId = null;   // the selected task is gone (deleted on another device, replaced by an import or a merge)
-  const has = !!sel;
+  const ids = selectedIds(), n = ids.length, has = n > 0;
   document.getElementById('indentBtn').disabled = !has;
-  document.getElementById('outdentBtn').disabled = !has || !sel.parentId;
+  document.getElementById('outdentBtn').disabled = !ids.some(id => byId(id).parentId);
   document.getElementById('cloneTaskBtn').disabled = !has;
   document.getElementById('deleteTaskBtn').disabled = !has;
+  document.getElementById('copyBtn').disabled = !has;
+  document.getElementById('bulkEditBtn').disabled = !has;
+  document.getElementById('bulkEditBtn').title = n > 1 ? `Change a field for all ${n} selected tasks` : 'Change fields of the selected task (or select several with Ctrl/Cmd+click or Shift+click)';
+  const chip = document.getElementById('selChip');
+  chip.classList.toggle('hidden', n < 2);
+  chip.innerHTML = `${n} selected <i class="fa-solid fa-xmark"></i>`;
 }
 
 function statusColorVar(t) {
@@ -2769,7 +2991,8 @@ function renderGrid() {
     const predLabel = predecessorLabel(t);
     const manual = t.taskMode === 'manual';
     const canEditDates = full && (!summary || manual);
-    const canEditFinish = canEditDates && !t.milestone;
+    const canEditFinish = canEditDates && !t.milestone;   // (Duration)
+    const canEditFinishCell = canEditDates && (!t.milestone || manual);   // a manually scheduled milestone's Finish can be set to a date or to text such as TBD
     // An auto summary shows its rollup; every other task shows its own stored dates.
     const ownDates = !summary || manual;
     const startIso = ownDates ? t.startDate : eff.start;
@@ -2788,7 +3011,7 @@ function renderGrid() {
       : `<div class="grid-cell-dim${summaryCls}${canEditDates ? ' editable' : ''}"${canEditDates ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','start')"` : ''}>${t.startText != null ? escapeHtml(t.startText) : fmtDate(startIso)}</div>`;
     const finishCell = editing('finish')
       ? dateEditor('finish', endIso, t.endText)
-      : `<div class="grid-cell-dim${summaryCls}${canEditFinish ? ' editable' : ''}"${canEditFinish ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','finish')"` : ''}>${t.endText != null ? escapeHtml(t.endText) : fmtDate(endIso)}</div>`;
+      : `<div class="grid-cell-dim${summaryCls}${canEditFinishCell ? ' editable' : ''}"${canEditFinishCell ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','finish')"` : ''}>${t.endText != null ? escapeHtml(t.endText) : t.milestone && t.startText != null ? escapeHtml(t.startText) : fmtDate(endIso)}</div>`;
     const durKnown = !isUnscheduled(t) && startIso && endIso;
     const durNum = durKnown ? durationDays(startIso, endIso) : null;
     const durationCell = editing('duration')
@@ -2834,7 +3057,7 @@ function renderGrid() {
       preds: predCell, resource: resourceCell,
       ...Object.fromEntries(cols.filter(isCustomField).map(id => [id, customCellHtml(t, id, summaryCls, editing(id), blurAttr(id), (f, iso) => dateEditor(f, iso, null, 'dd.mm.yyyy'))]))
     };
-    return `<div class="grid-row${t.id === selectedTaskId ? ' selected' : ''}" data-id="${t.id}" onclick="selectTask('${t.id}')" ondblclick="openTaskModal('${t.id}')" draggable="${editingCell && editingCell.id === t.id ? 'false' : 'true'}" ondragstart="dragStartTask(event,'${t.id}')" ondragend="dragEndTask()" ondragover="dragOverTask(event,'${t.id}')" ondrop="dropOnTask(event,'${t.id}')">
+    return `<div class="grid-row${isSelected(t.id) ? ' selected' : ''}" data-id="${t.id}" onclick="selectTask('${t.id}', event)" ondblclick="openTaskModal('${t.id}')" draggable="${editingCell && editingCell.id === t.id ? 'false' : 'true'}" ondragstart="dragStartTask(event,'${t.id}')" ondragend="dragEndTask()" ondragover="dragOverTask(event,'${t.id}')" ondrop="dropOnTask(event,'${t.id}')">
       <div class="grid-cell-dim" style="text-align:center">${taskDisplayId(t.id)}</div>
       ${cols.map(c => cells[c]).join('')}
       ${full ? `<div class="grid-actions">
@@ -2845,7 +3068,19 @@ function renderGrid() {
     </div>`;
   }).join('');
 }
-function selectTask(id) { selectedTaskId = id; render(); }
+// Click selects one task; Ctrl/Cmd+click adds or removes one; Shift+click selects the visible rows from the last clicked one.
+function selectTask(id, ev) {
+  pruneSelection();
+  if (ev && (ev.ctrlKey || ev.metaKey)) {
+    const set = new Set(selectedTaskIds); if (set.has(id)) set.delete(id); else set.add(id);
+    setSelection([...set], set.has(id) ? id : (set.size ? [...set].pop() : null));
+  } else if (ev && ev.shiftKey && selectedTaskId) {
+    window.getSelection && window.getSelection().removeAllRanges();   // (no text selection under the rows)
+    const list = visibleTaskList().map(v => v.task.id), a = list.indexOf(selectedTaskId), b = list.indexOf(id);
+    if (a >= 0 && b >= 0) setSelection(list.slice(Math.min(a, b), Math.max(a, b) + 1), selectedTaskId); else setSelection([id]);
+  } else setSelection([id]);
+  render();
+}
 
 /* ---------------------- Drag-and-drop task reordering ---------------------- */
 // The whole row is the drag handle (and every row is a drop target), except while
@@ -2974,7 +3209,7 @@ function moveTask(id, targetId, zone) {
   }
   if (!changed) return; // dropped back where it already was
   t.updatedAt = Date.now();
-  selectedTaskId = id;
+  setSelection([id]);
   normalizeData(); releaseGroup(oldParentId); replanChangedLinks(snap); save(); render();
 }
 // A custom-field cell. Text / Number / Date edit in place (a click opens the editor); a Flag toggles on click. Any task can have
@@ -3102,7 +3337,8 @@ function startInlineEdit(id, field) {
   // Auto summary rows roll their dates up from their children, so only the
   // name is editable there; a manually scheduled summary owns its own dates.
   if (hasChildren(id) && field !== 'name' && field !== 'resource' && !isCustomField(field) && !(t.taskMode === 'manual' && ['start', 'finish', 'duration'].includes(field))) return;
-  if ((field === 'finish' || field === 'duration' || field === 'actualFinish') && t.milestone) return; // milestones are zero-duration by definition
+  if ((field === 'duration' || field === 'actualFinish') && t.milestone) return; // milestones are zero-duration by definition
+  if (field === 'finish' && t.milestone && t.taskMode !== 'manual') return;   // (a manually scheduled milestone's Finish can be a date or text such as TBD)
   editingCell = { id, field };
   render();
   requestAnimationFrame(() => {
@@ -3174,8 +3410,9 @@ function commitInlineEdit(id, field, rawValue) {
     if (iso) {
       if (isStart) { t.startDate = iso; t.startText = null; if (t.milestone) { t.endDate = iso; t.endText = null; } if (t.actualStart) { t.actualStart = iso; if (t.milestone) t.actualFinish = iso; } }   // (a started task's Start IS its Actual Start)
       else if (!t.milestone) { t.endDate = iso; t.endText = null; if (t.actualFinish) t.actualFinish = iso; }
+      else { t.startDate = t.endDate = iso; t.startText = t.endText = null; if (t.actualStart) t.actualStart = t.actualFinish = iso; }   // a milestone has one date: its Finish IS its Start
       if (!isUnscheduled(t)) t.durText = null;
-    } else if (manual && !(t.milestone && !isStart)) {
+    } else if (manual) {
       // Anything that isn't a date — including blank — is kept as free text.
       if (isStart) t.startText = val.slice(0, 60); else t.endText = val.slice(0, 60);
     }
@@ -3353,7 +3590,7 @@ function renderGantt() {
   let html = '';
   list.forEach(({ task: t }, idx) => {
     const top = idx * ROW_H;
-    html += `<div class="gantt-row-bg${t.id === selectedTaskId ? ' selected' : ''}" style="top:${top}px;width:${totalW}px" data-row-id="${t.id}"></div>`;
+    html += `<div class="gantt-row-bg${isSelected(t.id) ? ' selected' : ''}" style="top:${top}px;width:${totalW}px" data-row-id="${t.id}"></div>`;
   });
   if (px >= 4 && (workDaySet().size < 7 || holSet.size)) {   // shade the days off (not at Year zoom: 1.5px a day would just be noise)
     for (let n = dateRange.start; n < dateRange.end;) {
@@ -3563,47 +3800,74 @@ function addTask() {
   const sibs = childrenOf(parentId).filter(s => s.id !== t.id);
   sibs.splice(insertAt, 0, t);
   sibs.forEach((s, i) => { if (s.order !== i) { s.order = i; if (s !== t) s.updatedAt = Date.now(); } });
-  selectedTaskId = t.id;
+  setSelection([t.id]);
   normalizeData(); save(); render();
   openTaskModal(t.id, true);
 }
-function indentSelected() {
-  const id = selectedTaskId; if (!id) return;
-  const t = byId(id);
+// Indent / outdent act on every selected task that is not inside another selected one, top to bottom (a group brings its sub-tasks).
+function indentTask(id) {
+  const t = byId(id); if (!t) return false;
   const siblings = childrenOf(t.parentId || null);
-  const idx = siblings.findIndex(s => s.id === id);
-  if (idx <= 0) return;
+  const idx = siblings.findIndex(x => x.id === id);
+  if (idx <= 0) return false;
   const newParent = siblings[idx - 1], snap = linkSnapshot();
   t.parentId = newParent.id;
   const newSiblings = childrenOf(newParent.id);
-  t.order = newSiblings.length ? Math.max(...newSiblings.map(s => s.order)) + 1 : 0;
+  t.order = newSiblings.length ? Math.max(...newSiblings.map(x => x.order)) + 1 : 0;
   t.updatedAt = Date.now();
   normalizeData(); replanChangedLinks(snap);   // the new parent is a group now: its links (and those pointing at it) are dropped
-  save(); render();
+  return true;
+}
+function indentSelected() {
+  let any = false;
+  for (const id of selectionRoots()) if (indentTask(id)) any = true;
+  if (any) { save(); render(); }
 }
 // A group that has just lost its last task is an ordinary task again, so its own links and constraint (ignored while it was a group)
 // apply from now on: place it.
 function releaseGroup(id) { if (id && byId(id) && !hasChildren(id)) applyConstraints(id); }
-function outdentSelected() {
-  const id = selectedTaskId; if (!id) return;
-  const t = byId(id); if (!t.parentId) return;
+function outdentTask(id) {
+  const t = byId(id); if (!t || !t.parentId) return false;
   const oldParent = byId(t.parentId);
   t.parentId = oldParent ? (oldParent.parentId || null) : null;
   const siblings = childrenOf(t.parentId);
-  t.order = siblings.length ? Math.max(...siblings.map(s => s.order)) + 1 : 0;
+  t.order = siblings.length ? Math.max(...siblings.map(x => x.order)) + 1 : 0;
   t.updatedAt = Date.now();
   normalizeData(); releaseGroup(oldParent && oldParent.id);
-  save(); render();
+  return true;
+}
+function outdentSelected() {
+  let any = false;
+  for (const id of selectionRoots()) if (outdentTask(id)) any = true;
+  if (any) { save(); render(); }
 }
 // Clone a task together with everything below it. The copy is an exact one (dates, %, actuals, mode, constraint, colour,
 // resource, custom fields …) with fresh ids, placed directly under the original at the same level; only the top task's name
 // gets " (copy)". Dependencies: links BETWEEN cloned tasks point at the clones; links to tasks outside the clone are kept (so
 // the copy is scheduled exactly like the original); nothing outside starts depending on the copy.
-function cloneSelected() { if (selectedTaskId) cloneTask(selectedTaskId); }
-function cloneTask(id) {
-  const src = byId(id); if (!src) return;
+function cloneSelected() { cloneTasks(selectionRoots()); }
+function cloneTask(id) { cloneTasks([id]); }
+// Clones the tasks (each with everything below it), each copy directly under its original; the copies become the selection. One toast, one Undo.
+function cloneTasks(ids) {
+  const parts = ids.map(id => cloneOne(id)).filter(Boolean); if (!parts.length) return;
+  const prevSelected = selectedIds();
+  const roots = parts.map(x => x.root);
+  setSelection(roots.map(r => r.id));
+  normalizeData();
+  for (const x of parts) for (const c of x.copies) if (x.inCycle.has(x.cycleSrc.get(c.id))) applyConstraints(c.id);   // a copy is exact (even a task the user placed ahead of its links), except that the copy of a dependency-cycle member — which the scheduler never placed — is not in the cycle and is placed by its links now
+  save(); render();
+  const sub = parts.reduce((n, x) => n + x.copies.length - 1, 0), src0 = parts[0].src;
+  const msg = parts.length === 1 ? (parts[0].copies.length > 1 ? `Cloned "${src0.name}" with ${parts[0].copies.length - 1} sub-task${parts[0].copies.length === 2 ? '' : 's'}` : `Cloned "${src0.name}"`) : `Cloned ${parts.length} tasks${sub ? ` with ${sub} sub-task${sub === 1 ? '' : 's'}` : ''}`;
+  showToast(msg, false, () => {
+    for (const x of [...parts].reverse()) x.undo();
+    setSelection(prevSelected.filter(id => byId(id)));
+    save(); render();
+  });
+}
+function cloneOne(id) {
+  const src = byId(id); if (!src) return null;
   const subtree = [src, ...descendantIds(id).map(byId).filter(Boolean)];
-  const idMap = new Map(subtree.map(t => [t.id, genId()]));
+  const idMap = new Map(subtree.map(t => [t.id, genId() + Math.random().toString(36).slice(2, 5)]));
   const inCycle = taskCycleSet(), cycleSrc = new Map([...idMap].map(([from, to]) => [to, from]));
   const now = Date.now();
   const copies = subtree.map(t => {
@@ -3624,71 +3888,68 @@ function cloneTask(id) {
   const moved = [];
   sibs.forEach((x, i) => { if (x.order !== i) { if (x !== root) moved.push({ t: x, order: x.order }); x.order = i; if (x !== root) x.updatedAt = now; } });
   for (const c of copies) filterPinned.add(c.id);   // a filter must not hide what you just cloned
-  const prevSelected = selectedTaskId;
-  selectedTaskId = root.id;
-  normalizeData();
-  for (const c of copies) if (inCycle.has(cycleSrc.get(c.id))) applyConstraints(c.id);   // a copy is exact (even a task the user placed ahead of its links), except that the copy of a dependency-cycle member — which the scheduler never placed — is not in the cycle and is placed by its links now
-  save(); render();
   const newIds = new Set(copies.map(c => c.id));
-  showToast(copies.length > 1 ? `Cloned "${src.name}" with ${copies.length - 1} sub-task${copies.length === 2 ? '' : 's'}` : `Cloned "${src.name}"`, false, () => {
+  const undo = () => {
     const parentsNow = [...new Set(copies.map(c => (byId(c.id) || {}).parentId).filter(pid => pid && !newIds.has(pid)))];   // where the copies are NOW (they may have been moved since)
     const lost = [];   // tasks that were linked to a copy in the meantime lose that link: they are placed again by what is left
     for (const x of tasks) { const kept = x.predecessors.filter(p => !newIds.has(p.id)); if (kept.length !== x.predecessors.length && !newIds.has(x.id)) { x.predecessors = kept; lost.push(x.id); } }
     tasks = tasks.filter(x => !newIds.has(x.id));
     for (const c of copies) tombstone(deletedTaskIds, c.id);
     normalizeData();
-    for (const id of lost) if (byId(id)) applyConstraints(id);
+    for (const lid of lost) if (byId(lid)) applyConstraints(lid);
     for (const pid of parentsNow) releaseGroup(pid);   // a parent that had a copy as its only task is an ordinary task again
     for (const m of moved) { m.t.order = m.order; m.t.updatedAt = Date.now(); }
-    selectedTaskId = byId(prevSelected) ? prevSelected : null;
-    save(); render();
+  };
+  return { src, root, copies, undo, inCycle, cycleSrc };
+}
+function deleteSelected() { const roots = selectionRoots(); if (roots.length) deleteTaskFlow(roots); }
+// deleteTaskFlow(id) or deleteTaskFlow([ids]): asks first (every deletion can be undone), then deleteTasksNow().
+function deleteTaskFlow(idOrIds) {
+  const ids = (Array.isArray(idOrIds) ? idOrIds : [idOrIds]).filter(x => byId(x)); if (!ids.length) return;
+  const set = new Set(ids), roots = ids.filter(id => { let p = byId(id).parentId; while (p) { if (set.has(p)) return false; p = (byId(p) || {}).parentId; } return true; });
+  const allIds = [...new Set(roots.flatMap(id => [id, ...descendantIds(id)]))], count = allIds.length, t = byId(roots[0]);
+  openConfirmModal({
+    title: roots.length > 1 ? 'Delete Tasks' : 'Delete Task',
+    body: roots.length > 1 ? `Delete these ${roots.length} tasks${count > roots.length ? ` and ${count - roots.length} sub-task${count - roots.length === 1 ? '' : 's'}` : ''}? This can be undone.`
+      : count > 1 ? `Delete "${escapeHtml(t.name)}" and ${count - 1} sub-task${count - 1 === 1 ? '' : 's'}? This can be undone.` : `Delete "${escapeHtml(t.name)}"? This can be undone.`,
+    confirmLabel: 'Delete',
+    action() { deleteTasksNow(allIds); }
   });
 }
-function deleteSelected() { if (selectedTaskId) deleteTaskFlow(selectedTaskId); }
-function deleteTaskFlow(id) {
-  const t = byId(id); if (!t) return;
-  const descIds = descendantIds(id);
-  const allIds = [id, ...descIds];
+function deleteTasksNow(allIds, opts = {}) {
   const count = allIds.length;
-  openConfirmModal({
-    title: 'Delete Task',
-    body: count > 1 ? `Delete "${escapeHtml(t.name)}" and ${count - 1} sub-task${count - 1 === 1 ? '' : 's'}? This can be undone.` : `Delete "${escapeHtml(t.name)}"? This can be undone.`,
-    confirmLabel: 'Delete',
-    action() {
-      const removed = tasks.filter(x => allIds.includes(x.id)), cyc0 = taskCycleSet();
-      const offBefore = new Set(tasks.filter(x => offItsLinks(x, cyc0)).map(x => x.id));   // already off their links before the delete: Undo leaves those as they were
-      const strippedLinks = [];
-      for (const other of tasks) {
-        if (allIds.includes(other.id)) continue;
-        const before = other.predecessors;
-        const kept = before.filter(p => !allIds.includes(p.id));
-        if (kept.length !== before.length) {
-          for (const p of before) if (allIds.includes(p.id)) strippedLinks.push({ taskId: other.id, pred: p });
-          other.predecessors = kept;
-        }
-      }
-      tasks = tasks.filter(x => !allIds.includes(x.id));
-      for (const rid of allIds) tombstone(deletedTaskIds, rid);
-      if (selectedTaskId && allIds.includes(selectedTaskId)) selectedTaskId = null;
-      const freed = [...new Set(removed.map(r => r.parentId).filter(pid => pid && !allIds.includes(pid)))].filter(pid => byId(pid) && !hasChildren(pid));   // groups that lost their last task
-      const cycAfter = taskCycleSet(), unCycled = [...cyc0].filter(id => byId(id) && !cycAfter.has(id));   // tasks the delete released from a dependency cycle
-      const replanned = [...new Set([...strippedLinks.map(l => l.taskId), ...freed, ...unCycled])].map(id => byId(id)).filter(Boolean).map(t => ({ t, s: t.startDate, e: t.endDate, u: t.updatedAt }));
-      for (const { t } of replanned) applyConstraints(t.id);
-      for (const r of replanned) { r.ns = r.t.startDate; r.ne = r.t.endDate; }   // where the re-plan put them: Undo only takes them back if they are still there
-      save(); render();
-      showToast(count > 1 ? `${count} tasks deleted` : 'Task deleted', false, () => {
-        for (const rid of allIds) untombstone(deletedTaskIds, rid);
-        for (const r of removed) tasks.push(r);
-        for (const { taskId, pred } of strippedLinks) { const ot = byId(taskId); if (ot) ot.predecessors.push(pred); }
-        for (const r of replanned) if (r.t.startDate === r.ns && r.t.endDate === r.ne) { r.t.startDate = r.s; r.t.endDate = r.e; r.t.updatedAt = r.u; }   // (what the re-check moved goes back too — unless it was edited since)
-        const linksBefore = new Map(tasks.map(t => [t.id, t.predecessors.length]));
-        normalizeData();   // (first: a link to what is a group by now is dropped here, and the task that had it needs placing by what is left)
-        for (const t of tasks) if (linksBefore.get(t.id) !== t.predecessors.length) applyConstraints(t.id);
-        const cycNow = taskCycleSet();   // edits made in the meantime may have moved a predecessor: the restored tasks and links are checked against the schedule as it is now
-        for (const rid of new Set([...removed.map(r => r.id), ...strippedLinks.map(l => l.taskId)])) if (!offBefore.has(rid) && offItsLinks(byId(rid), cycNow)) applyConstraints(rid);
-        save(); render();
-      });
+  const removed = tasks.filter(x => allIds.includes(x.id)), cyc0 = taskCycleSet();
+  const offBefore = new Set(tasks.filter(x => offItsLinks(x, cyc0)).map(x => x.id));   // already off their links before the delete: Undo leaves those as they were
+  const strippedLinks = [];
+  for (const other of tasks) {
+    if (allIds.includes(other.id)) continue;
+    const before = other.predecessors;
+    const kept = before.filter(p => !allIds.includes(p.id));
+    if (kept.length !== before.length) {
+      for (const p of before) if (allIds.includes(p.id)) strippedLinks.push({ taskId: other.id, pred: p });
+      other.predecessors = kept;
     }
+  }
+  tasks = tasks.filter(x => !allIds.includes(x.id));
+  for (const rid of allIds) tombstone(deletedTaskIds, rid);
+  setSelection(selectedIds().filter(sid => !allIds.includes(sid)));
+  const freed = [...new Set(removed.map(r => r.parentId).filter(pid => pid && !allIds.includes(pid)))].filter(pid => byId(pid) && !hasChildren(pid));   // groups that lost their last task
+  const cycAfter = taskCycleSet(), unCycled = [...cyc0].filter(id => byId(id) && !cycAfter.has(id));   // tasks the delete released from a dependency cycle
+  const replanned = [...new Set([...strippedLinks.map(l => l.taskId), ...freed, ...unCycled])].map(id => byId(id)).filter(Boolean).map(t => ({ t, s: t.startDate, e: t.endDate, u: t.updatedAt }));
+  for (const { t } of replanned) applyConstraints(t.id);
+  for (const r of replanned) { r.ns = r.t.startDate; r.ne = r.t.endDate; }   // where the re-plan put them: Undo only takes them back if they are still there
+  save(); render();
+  showToast(opts.cut ? `Cut ${count} task${count === 1 ? '' : 's'} — paste them where you want them` : count > 1 ? `${count} tasks deleted` : 'Task deleted', false, () => {
+    for (const rid of allIds) untombstone(deletedTaskIds, rid);
+    for (const r of removed) tasks.push(r);
+    for (const { taskId, pred } of strippedLinks) { const ot = byId(taskId); if (ot) ot.predecessors.push(pred); }
+    for (const r of replanned) if (r.t.startDate === r.ns && r.t.endDate === r.ne) { r.t.startDate = r.s; r.t.endDate = r.e; r.t.updatedAt = r.u; }   // (what the re-check moved goes back too — unless it was edited since)
+    const linksBefore = new Map(tasks.map(t => [t.id, t.predecessors.length]));
+    normalizeData();   // (first: a link to what is a group by now is dropped here, and the task that had it needs placing by what is left)
+    for (const t of tasks) if (linksBefore.get(t.id) !== t.predecessors.length) applyConstraints(t.id);
+    const cycNow = taskCycleSet();   // edits made in the meantime may have moved a predecessor: the restored tasks and links are checked against the schedule as it is now
+    for (const rid of new Set([...removed.map(r => r.id), ...strippedLinks.map(l => l.taskId)])) if (!offBefore.has(rid) && offItsLinks(byId(rid), cycNow)) applyConstraints(rid);
+    save(); render();
   });
 }
 
@@ -3872,6 +4133,124 @@ function applyActualsToSchedule() {
     normalizeData(); save(); render(); renderBaselineModal();
   });
 }
+/* ============================ Public-holiday presets ============================
+   Rules, not lists: a fixed date, a day relative to Easter, the n-th (or last) weekday of a month, the weekday before a date, or a small
+   function — so any year can be generated. `from` / `to` limit a rule to the years it applies to; `sub` says what happens when the day falls
+   on a weekend: 'us' = observed on the Friday before / Monday after, 'uk' = a substitute weekday. A starting point, not legal advice: the
+   dialog says so, and every entry can be edited or removed afterwards. */
+const HD = {
+  fix: (m, d, name, o) => Object.assign({ k: 'fix', m, d, name }, o),
+  easter: (off, name, o) => Object.assign({ k: 'easter', off, name }, o),
+  nth: (m, wd, n, name, o) => Object.assign({ k: 'nth', m, wd, n, name }, o),   // wd 0 = Sunday … 6 = Saturday; n = 1…4, or -1 for the last
+  before: (m, d, wd, name, o) => Object.assign({ k: 'before', m, d, wd, name }, o),   // the weekday strictly before that date
+  fn: (name, f, o) => Object.assign({ k: 'fn', name, f }, o)
+};
+function easterSunday(y) {   // the Gregorian computus (Meeus/Jones/Butcher)
+  const a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30, i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const month = Math.floor((h + l - 7 * m + 114) / 31), day = ((h + l - 7 * m + 114) % 31) + 1;
+  return `${y}-${pad2(month)}-${pad2(day)}`;
+}
+function holidayRuleDate(r, y) {
+  if ((r.from && y < r.from) || (r.to && y > r.to)) return null;
+  const isoYMD = (m, d) => `${y}-${pad2(m)}-${pad2(d)}`, num = (m, d) => Math.floor(Date.UTC(y, m - 1, d) / DAY_MS);
+  if (r.k === 'fix') return isoYMD(r.m, r.d);
+  if (r.k === 'easter') return addDays(easterSunday(y), r.off);
+  if (r.k === 'nth') {
+    if (r.n > 0) return dayNumberToIso(num(r.m, 1) + ((r.wd - weekdayOf(num(r.m, 1)) + 7) % 7) + (r.n - 1) * 7);
+    const last = new Date(Date.UTC(y, r.m, 0)).getUTCDate();   // the last day of the month
+    return dayNumberToIso(num(r.m, last) - ((weekdayOf(num(r.m, last)) - r.wd + 7) % 7));
+  }
+  if (r.k === 'before') { const dn = num(r.m, r.d); return dayNumberToIso(dn - (((weekdayOf(dn) - r.wd + 7) % 7) || 7)); }
+  if (r.k === 'fn') return r.f(y);
+  return null;
+}
+// All the days off of one region for the years y0…y1, as [{ date, name }] sorted by date (one entry per date).
+function holidayPreset(regionId, y0, y1) {
+  const region = HOLIDAY_REGION_BY_ID[regionId]; if (!region) return [];
+  const out = new Map();
+  for (let y = y0; y <= y1; y++) {
+    const list = region.rules.map(r => { const date = holidayRuleDate(r, y); return date ? { date, name: r.name, sub: r.sub } : null; }).filter(Boolean);
+    const taken = new Set(list.filter(e => !e.sub || (weekdayOf(dayNumber(e.date)) !== 0 && weekdayOf(dayNumber(e.date)) !== 6)).map(e => e.date));   // days that are holidays on their own date
+    for (const e of list) {
+      const wd = weekdayOf(dayNumber(e.date));
+      if (e.sub === 'us' && (wd === 6 || wd === 0)) { e.date = addDays(e.date, wd === 6 ? -1 : 1); e.name += ' (observed)'; }
+      else if (e.sub === 'uk' && (wd === 6 || wd === 0)) {   // the next Monday, or the first free weekday after it
+        let d = addDays(e.date, wd === 6 ? 2 : 1);
+        while (taken.has(d) || [0, 6].includes(weekdayOf(dayNumber(d)))) d = addDays(d, 1);
+        taken.add(d); e.date = d; e.name += ' (substitute day)';
+      }
+      if (!out.has(e.date)) out.set(e.date, e.name);
+    }
+  }
+  return [...out].map(([date, name]) => ({ date, name })).sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
+}
+const _MON = 1, _THU = 4;
+const _NEWYEAR = HD.fix(1, 1, "New Year's Day"), _XMAS = HD.fix(12, 25, 'Christmas Day'), _BOX = HD.fix(12, 26, 'Boxing Day');
+const _GOODFRI = HD.easter(-2, 'Good Friday'), _EASTERMON = HD.easter(1, 'Easter Monday'), _ASCENSION = HD.easter(39, 'Ascension Day'), _WHITMON = HD.easter(50, 'Whit Monday'), _CORPUS = HD.easter(60, 'Corpus Christi');
+const DE_BASE = [_NEWYEAR, _GOODFRI, _EASTERMON, HD.fix(5, 1, 'Labour Day'), _ASCENSION, _WHITMON, HD.fix(10, 3, 'German Unity Day'), _XMAS, HD.fix(12, 26, 'Second Day of Christmas')];
+const DE_STATES = {   // state → what it adds to the nationwide days
+  BW: ['epiphany', 'corpus', 'allsaints'], BY: ['epiphany', 'corpus', 'allsaints'], BE: ['women2019'], BB: ['reformation'], HB: ['reformation2018'], HH: ['reformation2018'], HE: ['corpus'],
+  MV: ['women2023', 'reformation'], NI: ['reformation2018'], NW: ['corpus', 'allsaints'], RP: ['corpus', 'allsaints'], SL: ['corpus', 'assumption', 'allsaints'],
+  SN: ['reformation', 'repentance'], ST: ['epiphany', 'reformation'], SH: ['reformation2018'], TH: ['worldchildren2019', 'reformation']
+};
+const DE_EXTRA = {
+  epiphany: HD.fix(1, 6, 'Epiphany'), corpus: _CORPUS, allsaints: HD.fix(11, 1, "All Saints' Day"), assumption: HD.fix(8, 15, 'Assumption Day'),
+  women2019: HD.fix(3, 8, "International Women's Day", { from: 2019 }), women2023: HD.fix(3, 8, "International Women's Day", { from: 2023 }),
+  reformation: HD.fix(10, 31, 'Reformation Day'), reformation2018: HD.fix(10, 31, 'Reformation Day', { from: 2018 }),
+  repentance: HD.before(11, 23, 3, 'Repentance and Prayer Day'), worldchildren2019: HD.fix(9, 20, "World Children's Day", { from: 2019 })
+};
+const DE_STATE_NAMES = { BW: 'Baden-Württemberg', BY: 'Bavaria', BE: 'Berlin', BB: 'Brandenburg', HB: 'Bremen', HH: 'Hamburg', HE: 'Hesse', MV: 'Mecklenburg-Vorpommern', NI: 'Lower Saxony', NW: 'North Rhine-Westphalia', RP: 'Rhineland-Palatinate', SL: 'Saarland', SN: 'Saxony', ST: 'Saxony-Anhalt', SH: 'Schleswig-Holstein', TH: 'Thuringia' };
+const UK_BASE = [Object.assign({}, _NEWYEAR, { sub: 'uk' }), _GOODFRI, HD.nth(5, _MON, 1, 'Early May bank holiday')];
+const HOLIDAY_REGIONS = [
+  { group: 'Germany', regions: [{ id: 'DE', label: 'Germany — nationwide days only', rules: DE_BASE }].concat(Object.keys(DE_STATES).map(st => ({ id: 'DE-' + st, label: DE_STATE_NAMES[st], rules: DE_BASE.concat(DE_STATES[st].map(k => DE_EXTRA[k])) }))) },
+  { group: 'Other countries and regions', regions: [
+    { id: 'AT', label: 'Austria', rules: [_NEWYEAR, HD.fix(1, 6, 'Epiphany'), _EASTERMON, HD.fix(5, 1, 'Labour Day'), _ASCENSION, _WHITMON, _CORPUS, HD.fix(8, 15, 'Assumption Day'), HD.fix(10, 26, 'National Day'), HD.fix(11, 1, "All Saints' Day"), HD.fix(12, 8, 'Immaculate Conception'), _XMAS, HD.fix(12, 26, "St. Stephen's Day")] },
+    { id: 'CH', label: 'Switzerland — widely observed days (cantons differ)', rules: [_NEWYEAR, _GOODFRI, _EASTERMON, _ASCENSION, _WHITMON, HD.fix(8, 1, 'Swiss National Day'), _XMAS, HD.fix(12, 26, "St. Stephen's Day")] },
+    { id: 'UK-ENG', label: 'United Kingdom — England & Wales', rules: UK_BASE.concat([_EASTERMON, HD.nth(5, _MON, -1, 'Spring bank holiday'), HD.nth(8, _MON, -1, 'Summer bank holiday'), Object.assign({}, _XMAS, { sub: 'uk' }), Object.assign({}, _BOX, { sub: 'uk' })]) },
+    { id: 'UK-SCT', label: 'United Kingdom — Scotland', rules: UK_BASE.concat([HD.fix(1, 2, '2nd January', { sub: 'uk' }), HD.nth(5, _MON, -1, 'Spring bank holiday'), HD.nth(8, _MON, 1, 'Summer bank holiday'), HD.fix(11, 30, "St Andrew's Day", { sub: 'uk' }), Object.assign({}, _XMAS, { sub: 'uk' }), Object.assign({}, _BOX, { sub: 'uk' })]) },
+    { id: 'UK-NIR', label: 'United Kingdom — Northern Ireland', rules: UK_BASE.concat([HD.fix(3, 17, "St Patrick's Day", { sub: 'uk' }), _EASTERMON, HD.nth(5, _MON, -1, 'Spring bank holiday'), HD.fix(7, 12, "Battle of the Boyne (Orangemen's Day)", { sub: 'uk' }), HD.nth(8, _MON, -1, 'Summer bank holiday'), Object.assign({}, _XMAS, { sub: 'uk' }), Object.assign({}, _BOX, { sub: 'uk' })]) },
+    { id: 'IE', label: 'Ireland', rules: [_NEWYEAR, HD.fn("St Brigid's Day", y => { if (y < 2023) return null; const f = `${y}-02-01`; return weekdayOf(dayNumber(f)) === 5 ? f : dayNumberToIso(dayNumber(f) + ((1 - weekdayOf(dayNumber(f)) + 7) % 7)); }), HD.fix(3, 17, "St Patrick's Day"), _EASTERMON, HD.nth(5, _MON, 1, 'May bank holiday'), HD.nth(6, _MON, 1, 'June bank holiday'), HD.nth(8, _MON, 1, 'August bank holiday'), HD.nth(10, _MON, -1, 'October bank holiday'), _XMAS, HD.fix(12, 26, "St Stephen's Day")] },
+    { id: 'US', label: 'United States — federal holidays', rules: [Object.assign({}, _NEWYEAR, { sub: 'us' }), HD.nth(1, _MON, 3, 'Martin Luther King Jr. Day'), HD.nth(2, _MON, 3, "Washington's Birthday (Presidents' Day)"), HD.nth(5, _MON, -1, 'Memorial Day'), HD.fix(6, 19, 'Juneteenth', { from: 2021, sub: 'us' }), HD.fix(7, 4, 'Independence Day', { sub: 'us' }), HD.nth(9, _MON, 1, 'Labor Day'), HD.nth(10, _MON, 2, 'Columbus Day'), HD.fix(11, 11, 'Veterans Day', { sub: 'us' }), HD.nth(11, _THU, 4, 'Thanksgiving Day'), Object.assign({}, _XMAS, { sub: 'us' })] },
+    { id: 'CA', label: 'Canada — federal holidays', rules: [_NEWYEAR, _GOODFRI, HD.before(5, 25, _MON, 'Victoria Day'), HD.fix(7, 1, 'Canada Day'), HD.nth(9, _MON, 1, 'Labour Day'), HD.fix(9, 30, 'National Day for Truth and Reconciliation', { from: 2021 }), HD.nth(10, _MON, 2, 'Thanksgiving'), HD.fix(11, 11, 'Remembrance Day'), _XMAS, _BOX] },
+    { id: 'FR', label: 'France', rules: [_NEWYEAR, _EASTERMON, HD.fix(5, 1, 'Labour Day'), HD.fix(5, 8, 'Victory in Europe Day'), _ASCENSION, _WHITMON, HD.fix(7, 14, 'Bastille Day'), HD.fix(8, 15, 'Assumption Day'), HD.fix(11, 1, "All Saints' Day"), HD.fix(11, 11, 'Armistice Day'), _XMAS] },
+    { id: 'NL', label: 'Netherlands', rules: [_NEWYEAR, _EASTERMON, HD.fn("King's Day", y => weekdayOf(dayNumber(`${y}-04-27`)) === 0 ? `${y}-04-26` : `${y}-04-27`, { from: 2014 }), _ASCENSION, _WHITMON, _XMAS, HD.fix(12, 26, 'Second Day of Christmas')] },
+    { id: 'BE', label: 'Belgium', rules: [_NEWYEAR, _EASTERMON, HD.fix(5, 1, 'Labour Day'), _ASCENSION, _WHITMON, HD.fix(7, 21, 'Belgian National Day'), HD.fix(8, 15, 'Assumption Day'), HD.fix(11, 1, "All Saints' Day"), HD.fix(11, 11, 'Armistice Day'), _XMAS] },
+    { id: 'ES', label: 'Spain — national holidays (regions add their own)', rules: [_NEWYEAR, HD.fix(1, 6, 'Epiphany'), _GOODFRI, HD.fix(5, 1, 'Labour Day'), HD.fix(8, 15, 'Assumption Day'), HD.fix(10, 12, 'National Day'), HD.fix(11, 1, "All Saints' Day"), HD.fix(12, 6, 'Constitution Day'), HD.fix(12, 8, 'Immaculate Conception'), _XMAS] },
+    { id: 'IT', label: 'Italy', rules: [_NEWYEAR, HD.fix(1, 6, 'Epiphany'), _EASTERMON, HD.fix(4, 25, 'Liberation Day'), HD.fix(5, 1, 'Labour Day'), HD.fix(6, 2, 'Republic Day'), HD.fix(8, 15, 'Assumption Day'), HD.fix(11, 1, "All Saints' Day"), HD.fix(12, 8, 'Immaculate Conception'), _XMAS, HD.fix(12, 26, "St. Stephen's Day")] }
+  ] }
+];
+const HOLIDAY_REGION_BY_ID = {}; for (const g of HOLIDAY_REGIONS) for (const r of g.regions) HOLIDAY_REGION_BY_ID[r.id] = r;
+function fillHolidayPresets() {
+  const sel = document.getElementById('holRegion');
+  if (!sel.options.length) sel.innerHTML = '<option value="">Choose a country or region…</option>' + HOLIDAY_REGIONS.map(g => `<optgroup label="${escapeHtml(g.group)}">${g.regions.map(r => `<option value="${r.id}">${escapeHtml(r.label)}</option>`).join('')}</optgroup>`).join('');
+  let last = ''; try { last = localStorage.getItem('milestone-holregion') || ''; } catch (e) { /* remembering the region is a convenience only */ }
+  if (last && HOLIDAY_REGION_BY_ID[last]) sel.value = last;
+  const y = new Date().getFullYear();
+  document.getElementById('holYearFrom').value = y; document.getElementById('holYearTo').value = y + 1;
+}
+// Adds the region's days off for the chosen years to the dialog's list. Days that fall on a day the plan does not work anyway (the
+// weekday chips as they are set right now) are left out, and so is anything already in the list.
+function addHolidayPreset() {
+  const id = document.getElementById('holRegion').value, region = HOLIDAY_REGION_BY_ID[id];
+  if (!region) { showToast('Choose a country or region first', true); document.getElementById('holRegion').focus(); return; }
+  let y0 = parseInt(document.getElementById('holYearFrom').value, 10), y1 = parseInt(document.getElementById('holYearTo').value, 10);
+  if (!(y0 >= 2000 && y0 <= 2100 && y1 >= 2000 && y1 <= 2100)) { showToast('Give the years as four digits between 2000 and 2100', true); return; }
+  if (y1 < y0) [y0, y1] = [y1, y0];
+  if (y1 - y0 > 9) { showToast('Add at most ten years at a time', true); return; }
+  const works = new Set([...document.querySelectorAll('#calendarDays input:checked')].map(i => Number(i.value)));
+  const have = new Set(calHolidays.filter(h => !h.to && !h.yearly).map(h => h.date));
+  let added = 0, offDays = 0;
+  for (const h of holidayPreset(id, y0, y1)) {
+    if (!works.has(weekdayOf(dayNumber(h.date)))) { offDays++; continue; }
+    if (have.has(h.date)) continue;
+    calHolidays.push({ date: h.date, name: h.name }); have.add(h.date); added++;
+  }
+  renderHolidayList();
+  try { localStorage.setItem('milestone-holregion', id); } catch (e) { /* ignore */ }
+  const label = region.label.replace(/ —.*$| \(.*\)$/, ''), yrs = y0 === y1 ? y0 : `${y0}–${y1}`;
+  showToast(added ? `Added ${added} holiday${added === 1 ? '' : 's'} for ${label} ${yrs}${offDays ? ` (${offDays} on days off anyway)` : ''}` : `Nothing new for ${label} ${yrs} — everything is already in the list${offDays ? ' or on a day off' : ''}`);
+}
 let calHolidays = [];   // the dialog's working copy of project.holidays
 function openCalendarModal() {
   closePlanMenu();
@@ -3880,6 +4259,7 @@ function openCalendarModal() {
   document.getElementById('calendarDays').innerHTML = WEEKDAY_ORDER.map(d =>
     `<label class="cal-day"><input type="checkbox" value="${d}"${on.has(d) ? ' checked' : ''}><span>${WEEKDAY_NAMES[d]}</span></label>`).join('');
   calHolidays = (project.holidays || []).map(h => Object.assign({}, h));
+  fillHolidayPresets();
   for (const id of ['holFrom', 'holTo', 'holName']) document.getElementById(id).value = '';
   document.getElementById('holYearly').checked = false; document.getElementById('holYearly').disabled = false;
   renderHolidayList();
@@ -4370,6 +4750,769 @@ function resolveSyncConflict(i, which) {
   showToast(which === 'mine' ? 'Kept your version' : 'Took the other version');
 }
 
+/* ============================ Tables and foreign formats ============================
+   One parser turns a table of text — a CSV file, a block pasted from Excel — into tasks; another reads an MS Project XML file (MSPDI).
+   Both give { tasks, project, warnings, info } and touch nothing in the plan themselves: applyImportedTasks() / pasteTasks() do. */
+function detectDelimiter(text) {
+  const lines = text.split(/\r?\n/).slice(0, 8).filter(l => l.trim());
+  let best = ',', bestScore = -1;
+  for (const d of [',', ';', '\t']) {
+    const counts = lines.map(l => { let n = 0, q = false; for (const ch of l) { if (ch === '"') q = !q; else if (ch === d && !q) n++; } return n; });
+    if (!counts.length || !counts[0]) continue;
+    const score = counts[0] * (counts.every(c => c === counts[0]) ? 10 : 1);
+    if (score > bestScore) { bestScore = score; best = d; }
+  }
+  return best;
+}
+// Rows of cells; quoted cells may hold the delimiter, doubled quotes and line breaks. Empty lines are dropped.
+function parseDelimited(text, delim) {
+  text = String(text).replace(/^\uFEFF/, '');
+  delim = delim || detectDelimiter(text);
+  const rows = []; let row = [], cell = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (q) { if (ch === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; } else cell += ch; }
+    else if (ch === '"' && cell === '') q = true;
+    else if (ch === delim) { row.push(cell); cell = ''; }
+    else if (ch === '\n' || ch === '\r') { if (ch === '\r' && text[i + 1] === '\n') i++; row.push(cell); rows.push(row); row = []; cell = ''; }
+    else cell += ch;
+  }
+  if (cell !== '' || row.length) { row.push(cell); rows.push(row); }
+  return rows.filter(r => r.some(c => c.trim() !== ''));
+}
+const MONTH_NAMES = { jan: 1, januar: 1, january: 1, feb: 2, februar: 2, february: 2, mar: 3, mrz: 3, märz: 3, maerz: 3, march: 3, apr: 4, april: 4, may: 5, mai: 5, jun: 6, juni: 6, june: 6, jul: 7, juli: 7, july: 7, aug: 8, august: 8, sep: 9, sept: 9, september: 9, oct: 10, okt: 10, oktober: 10, october: 10, nov: 11, november: 11, dec: 12, dez: 12, dezember: 12, december: 12 };
+// A date in the way people write them: 2026-09-07, 07.09.2026, 7.9.26, 07/09/2026, Mon 07.09.26, 7 Sep 2026, September 7, 2026 … Returns ISO or null.
+// fmt: 'auto' (day first; slashes with a first number above 12 are day first, with a second above 12 month first), 'dmy', 'mdy', 'ymd'.
+function parseTableDate(str, fmt = 'auto') {
+  let s = String(str == null ? '' : str).trim().replace(/\s+/g, ' ');
+  if (!s) return null;
+  s = s.replace(/[T ]\d{1,2}:\d{2}(:\d{2})?(\.\d+)?(Z|[+-]\d{2}:?\d{2})?( ?[AaPp][Mm])?$/, '');   // a time of day is dropped
+  const ok = (y, m, d) => { const iso = `${y}-${pad2(m)}-${pad2(d)}`; return m >= 1 && m <= 12 && d >= 1 && d <= 31 && y >= 1900 && y <= 2200 && dayNumberToIso(dayNumber(iso)) === iso ? iso : null; };
+  let m;
+  if ((m = /^(?:[A-Za-zÄÖÜäöüß]{2,10}\.?,? )?(\d{1,2})\.? ([A-Za-zÄÖÜäöüß]{3,9})\.?,? (\d{2}|\d{4})$/.exec(s)) && MONTH_NAMES[m[2].toLowerCase()]) return ok(y4(m[3]), MONTH_NAMES[m[2].toLowerCase()], +m[1]);
+  if ((m = /^(?:[A-Za-zÄÖÜäöüß]{2,10}\.?,? )?([A-Za-zÄÖÜäöüß]{3,9})\.? (\d{1,2}),? (\d{2}|\d{4})$/.exec(s)) && MONTH_NAMES[m[1].toLowerCase()]) return ok(y4(m[3]), MONTH_NAMES[m[1].toLowerCase()], +m[2]);
+  s = s.replace(/^[A-Za-zÄÖÜäöüß]{2,10}\.?,? (?=\d)/, '');   // a weekday name in front: "Mon 07.09.26", "Mo, 07.09.2026"
+  if ((m = /^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/.exec(s))) return ok(+m[1], +m[2], +m[3]);
+  if ((m = /^(\d{1,2})([./-])(\d{1,2})\2(\d{2}|\d{4})$/.exec(s))) {
+    const a = +m[1], b = +m[3], y = y4(m[4]);
+    let mdy = fmt === 'mdy'; if (fmt === 'auto') mdy = m[2] === '/' && a <= 12 && b > 12;
+    if (fmt === 'ymd') return null;
+    return mdy ? ok(y, a, b) : ok(y, b, a);
+  }
+  return null;
+  function y4(v) { return v.length === 2 ? 2000 + +v : +v; }
+}
+// A duration in WORKING days: "5", "5 days", "5d", "5 Tage", "2w", "16h", "1.5 days" …; a trailing ? (estimated) is ignored. null = not a duration.
+function parseTableDuration(str) {
+  const s = String(str == null ? '' : str).trim().toLowerCase().replace(/\?$/, '').trim();
+  const m = /^(\d+(?:[.,]\d+)?)\s*([a-zäöü]*)$/.exec(s);
+  if (!m) return null;
+  const n = parseFloat(m[1].replace(',', '.')), u = m[2];
+  let days;
+  if (['', 'd', 'day', 'days', 'ed', 'edays', 't', 'tag', 'tage', 'tagen'].includes(u)) days = n;
+  else if (['w', 'wk', 'wks', 'week', 'weeks', 'wo', 'woche', 'wochen'].includes(u)) days = n * 5;
+  else if (['h', 'hr', 'hrs', 'hour', 'hours', 'std', 'stunde', 'stunden'].includes(u)) days = n / 8;
+  else if (['min', 'mins', 'minute', 'minutes', 'm'].includes(u)) days = n / 480;
+  else if (['mo', 'mon', 'month', 'months', 'monat', 'monate'].includes(u)) days = n * 20;
+  else return null;
+  const r = Math.round(days);
+  return r === 0 && days > 0 ? 1 : r;
+}
+// MS Project's predecessor text: "3", "3FS", "3SS+2d", "4;5FF-1 day", German "3EA+2 Tage" → [{ ref, type, lag }] (ref is the number as written)
+const PRED_TYPES = { FS: 'FS', SS: 'SS', FF: 'FF', SF: 'SF', EA: 'FS', AA: 'SS', EE: 'FF', AE: 'SF' };
+function parsePredText(str) {
+  const out = [], bad = [];
+  for (const tok of String(str || '').split(/[;,]/).map(x => x.trim()).filter(Boolean)) {
+    const m = /^(\d+)\s*(FS|SS|FF|SF|EA|AA|EE|AE)?\s*(?:([+-])\s*(\d+(?:[.,]\d+)?)\s*([a-zäöü%]*))?$/i.exec(tok);
+    if (!m) { bad.push(tok); continue; }
+    let lag = 0;
+    if (m[3]) {
+      const n = parseFloat(m[4].replace(',', '.')), u = (m[5] || '').toLowerCase();
+      if (u === '%') { bad.push(tok); continue; }
+      lag = /^(w|wk|wks|week|weeks|wo|woche|wochen)$/.test(u) ? n * 5 : /^(h|hr|hrs|hour|hours|std|stunde|stunden)$/.test(u) ? n / 8 : n;
+      lag = Math.round(lag) * (m[3] === '-' ? -1 : 1);
+    }
+    out.push({ ref: m[1], type: PRED_TYPES[(m[2] || 'FS').toUpperCase()], lag });
+  }
+  return { links: out, bad };
+}
+const IMPORT_HEADERS = {
+  id: ['id', 'nr', 'nr.', 'vorgangs-id', 'row', 'no', 'no.', '#'],
+  name: ['task name', 'name', 'task', 'title', 'vorgangsname', 'aufgabe', 'aufgabenname', 'vorgang', 'task title', 'activity'],
+  start: ['start', 'start date', 'begin', 'beginn', 'anfang', 'startdatum', 'planned start'],
+  end: ['finish', 'end', 'end date', 'finish date', 'ende', 'enddatum', 'planned finish'],
+  duration: ['duration', 'dauer', 'days', 'tage', 'work days'],
+  progress: ['% complete', 'percent complete', '% abgeschlossen', '% fertig', 'progress', 'fortschritt', '%', 'pct complete', 'complete', 'done'],
+  preds: ['predecessors', 'predecessor', 'vorgänger', 'vorgaenger', 'depends on', 'dependencies'],
+  resource: ['resource names', 'resource', 'resources', 'ressourcennamen', 'ressourcen', 'assigned to', 'owner', 'verantwortlich'],
+  level: ['outline level', 'level', 'gliederungsebene', 'ebene'],
+  wbs: ['wbs', 'outline number', 'psp-code', 'psp', 'gliederungsnummer', 'wbs code'],
+  milestone: ['milestone', 'meilenstein'],
+  actualStart: ['actual start', 'tatsächlicher anfang', 'tatsaechlicher anfang', 'ist-start', 'actual begin'],
+  actualFinish: ['actual finish', 'tatsächliches ende', 'tatsaechliches ende', 'ist-ende', 'actual end'],
+  constraintType: ['constraint type', 'einschränkungstyp'], constraintDate: ['constraint date', 'einschränkungsdatum']
+};
+function importHeaderField(cell) {
+  const h = String(cell || '').replace(/^\uFEFF/, '').trim().toLowerCase().replace(/\s+/g, ' ');
+  for (const [k, names] of Object.entries(IMPORT_HEADERS)) if (names.includes(h)) return k;
+  return null;
+}
+const TRUE_WORDS = ['1', 'yes', 'y', 'true', 'ja', 'x', 'wahr', '✓'];
+function isTrueWord(v) { return TRUE_WORDS.includes(String(v || '').trim().toLowerCase()); }
+function newImportedTask(name, parentId, order) {
+  return { id: genId() + Math.random().toString(36).slice(2, 5), name: String(name || '').trim().slice(0, 200) || 'Untitled Task', parentId, order, startDate: todayStr(), endDate: todayStr(), progress: 0, milestone: false, color: null,
+    predecessors: [], collapsed: false, updatedAt: Date.now(), constraintType: 'ASAP', constraintDate: null, taskMode: 'auto', resource: '', actualStart: null, actualFinish: null };
+}
+// Turns rows of cells into tasks. opts: { dateFormat, defaultCols (field names for a table without a header) }.
+function tasksFromTable(rows, opts = {}) {
+  const warnings = [], fmt = opts.dateFormat || 'auto';
+  if (!rows.length) return { tasks: [], warnings, info: { header: false, links: 0, levels: 0 } };
+  let fields = rows[0].map(importHeaderField), header = fields.filter(Boolean).length >= 2 || (fields.includes('name') && !rows[0].some(c => parseTableDate(c, fmt) || /^\d+$/.test(String(c).trim())));
+  let data = rows;
+  if (header) data = rows.slice(1);
+  else {
+    const dc = rows[0].length === 1 ? ['name'] : (opts.defaultCols || ['name', 'start', 'end', 'duration', 'progress', 'resource']);   // one column is a list of names
+    fields = rows[0].map((_, i) => dc[i] || null);
+    // (a table without a header whose first column looks like ids or dates: give up on names being there)
+  }
+  const col = f => fields.indexOf(f);
+  if (col('name') < 0) { const i = fields.findIndex(f => !f); if (i >= 0) fields[i] = 'name'; else throw new Error('I could not find a column with the task names — give the first row headers such as "Task Name", "Start", "Finish".'); }
+  const cell = (r, f) => { const i = col(f); return i >= 0 && i < r.length ? String(r[i]) : ''; };
+  const recs = data.map((r, i) => ({ r, row: i + 1 })).filter(x => cell(x.r, 'name').trim() !== '');
+  if (!recs.length) return { tasks: [], warnings, info: { header, links: 0, levels: 0 } };
+  // outline levels: a level column, else the WBS code, else how far the name is indented
+  const indentOf = s => (/^[ \t\u00a0]*/.exec(s)[0].replace(/\t/g, '    ').length);
+  const hasLevel = col('level') >= 0, hasWbs = col('wbs') >= 0;
+  const indents = recs.map(x => indentOf(cell(x.r, 'name'))), unit = Math.min(...indents.filter(n => n > 0), 999);
+  const levelOf = (x, i) => {
+    if (hasLevel) { const n = parseInt(cell(x.r, 'level'), 10); if (n >= 1) return n; }
+    if (hasWbs) { const w = cell(x.r, 'wbs').trim(); if (/^\d+(\.\d+)*\.?$/.test(w)) return w.replace(/\.$/, '').split('.').length; }
+    if (unit !== 999) return 1 + Math.round(indents[i] / unit);
+    return 1;
+  };
+  const made = [], stack = [], byRef = new Map(), tops = { n: 0 }, kidCount = new Map();
+  let maxLevel = 1, links = 0;
+  recs.forEach((x, i) => {
+    let lvl = levelOf(x, i); lvl = Math.max(1, Math.min(lvl, stack.length + 1)); maxLevel = Math.max(maxLevel, lvl);
+    stack.length = lvl - 1;
+    const parent = stack.length ? stack[stack.length - 1] : null;
+    const order = parent ? (kidCount.get(parent.id) || 0) : tops.n++;
+    if (parent) kidCount.set(parent.id, order + 1);
+    let name = cell(x.r, 'name').trim(), ms = isTrueWord(cell(x.r, 'milestone'));
+    if (name.startsWith('◆')) { name = name.replace(/^◆\s*/, ''); ms = true; }
+    const t = newImportedTask(name, parent ? parent.id : null, order);
+    // dates and duration
+    const sTxt = cell(x.r, 'start').trim(), eTxt = cell(x.r, 'end').trim();
+    let s = parseTableDate(sTxt, fmt), e = parseTableDate(eTxt, fmt), d = parseTableDuration(cell(x.r, 'duration'));
+    if (d === 0) ms = true;
+    let partial = false;
+    if (ms) { const one = s || e; if (one) { s = e = one; } }
+    else if (s && e) { if (dayNumber(e) < dayNumber(s)) e = s; }
+    else if (s && d != null) e = finishFor(s, Math.max(1, d));
+    else if (e && d != null) s = shiftWork(e, -(Math.max(1, d) - 1));
+    else if (s || e) { partial = true; if (s) e = s; else s = e; }   // one date and no duration: the other end is still open
+    t.milestone = ms && !!(s && e);
+    if (s && e) { t.startDate = s; t.endDate = e; }
+    else { t.taskMode = 'manual'; t.startText = (sTxt && !s ? sTxt : 'TBD').slice(0, 60); t.endText = (eTxt && !e ? eTxt : 'TBD').slice(0, 60); }
+    if (partial) { t.taskMode = 'manual'; if (parseTableDate(sTxt, fmt)) t.endText = (eTxt || 'TBD').slice(0, 60); else t.startText = (sTxt || 'TBD').slice(0, 60); }
+    const pr = cell(x.r, 'progress').trim();
+    if (pr) { let n = parseFloat(pr.replace('%', '').replace(',', '.')); if (Number.isFinite(n)) { if (!pr.includes('%') && n > 0 && n <= 1 && /[.,]/.test(pr)) n *= 100; t.progress = Math.max(0, Math.min(100, Math.round(n))); } }
+    t.resource = cell(x.r, 'resource').trim().slice(0, 200);
+    const as = parseTableDate(cell(x.r, 'actualStart'), fmt), af = parseTableDate(cell(x.r, 'actualFinish'), fmt);
+    if (as) t.actualStart = as; if (af) t.actualFinish = af;
+    const ct = cell(x.r, 'constraintType').trim().toLowerCase();
+    if (ct) { const c = CONSTRAINT_TYPES.find(k => k.id.toLowerCase() === ct || k.label.toLowerCase() === ct); if (c && c.id !== 'ASAP') { t.constraintType = c.id; if (c.hasDate) t.constraintDate = parseTableDate(cell(x.r, 'constraintDate'), fmt) || t.startDate; } }
+    stack.push(t); made.push({ t, x });
+    byRef.set(String(col('id') >= 0 ? cell(x.r, 'id').trim() : x.row), t);
+    if (col('id') >= 0) byRef.set(String(x.row), byRef.get(String(x.row)) || t);
+  });
+  // links (after every task exists): "3FS+2d" refers to the ID column, or to the row number
+  for (const { t, x } of made) {
+    const txt = cell(x.r, 'preds').trim(); if (!txt) continue;
+    const { links: ls, bad } = parsePredText(txt);
+    for (const b of bad) warnings.push(`"${t.name}": could not read the predecessor "${b}"`);
+    for (const l of ls) {
+      const p = byRef.get(l.ref);
+      if (!p) { warnings.push(`"${t.name}": there is no task ${l.ref} to depend on`); continue; }
+      if (p === t) continue;
+      if (t.predecessors.some(q => q.id === p.id)) continue;
+      t.predecessors.push({ id: p.id, type: l.type, lag: l.lag }); links++;
+    }
+  }
+  return { tasks: made.map(m => m.t), warnings, info: { header, links, levels: maxLevel } };
+}
+// MS Project XML (MSPDI, File → Save As → XML): tasks with their outline, dates, %, actual dates, links and lags, manual mode, constraints,
+// resource names (from the assignments), baselines 0-10, the working week, and the non-working exceptions as holidays.
+function parseMspdi(xmlText) {
+  const doc = new DOMParser().parseFromString(xmlText, 'application/xml');
+  if (doc.getElementsByTagName('parsererror').length) throw new Error('That file is not valid XML.');
+  const root = doc.documentElement;
+  if (!root || root.localName !== 'Project') throw new Error('That XML file is not an MS Project file (it has no <Project> element).');
+  const warnings = [], kids = el => [...el.children];
+  const one = (el, n) => kids(el).find(k => k.localName === n) || null;
+  const txt = (el, n) => { const c = one(el, n); return c ? c.textContent.trim() : ''; };
+  const list = (el, n) => { const c = one(el, n); return c ? kids(c) : []; };
+  const dateOf = v => { const m = /^(\d{4}-\d{2}-\d{2})/.exec(v || ''); return m && dayNumberToIso(dayNumber(m[1])) === m[1] ? m[1] : null; };
+  const perDay = parseInt(txt(root, 'MinutesPerDay'), 10) || 480;
+  const project = { name: txt(root, 'Title') || txt(root, 'Name') || '' };
+  // calendar: the project's own (CalendarUID), else the first base calendar
+  const cals = list(root, 'Calendars'), calUid = txt(root, 'CalendarUID');
+  const cal = cals.find(c => txt(c, 'UID') === calUid) || cals.find(c => txt(c, 'IsBaseCalendar') === '1') || cals[0];
+  if (cal) {
+    const wd = new Set(), seen = new Set();
+    for (const w of list(cal, 'WeekDays')) { const dt = parseInt(txt(w, 'DayType'), 10); if (dt >= 1 && dt <= 7 && !one(w, 'TimePeriod')) { seen.add(dt - 1); if (txt(w, 'DayWorking') === '1') wd.add(dt - 1); } }   // 1 = Sunday … 7 = Saturday  →  0 … 6
+    if (seen.size && wd.size) project.workDays = [...wd].sort((a, b) => a - b);
+    const hol = []; let recurring = 0;
+    for (const ex of list(cal, 'Exceptions')) {
+      if (txt(ex, 'DayWorking') === '1') continue;
+      const tp = one(ex, 'TimePeriod'); if (!tp) continue;
+      const from = dateOf(txt(tp, 'FromDate')), to = dateOf(txt(tp, 'ToDate'));
+      if (!from) continue;
+      if (parseInt(txt(ex, 'Type'), 10) > 1 && parseInt(txt(ex, 'Occurrences'), 10) > 1) recurring++;
+      const h = { date: from }; if (to && dayNumber(to) > dayNumber(from)) h.to = to; const nm = txt(ex, 'Name'); if (nm) h.name = nm.slice(0, 60);
+      hol.push(h);
+    }
+    if (hol.length) project.holidays = hol;
+    if (recurring) warnings.push(`${recurring} recurring calendar exception${recurring === 1 ? '' : 's'} came in as single days only`);
+  }
+  // resources per task
+  const resName = new Map(list(root, 'Resources').map(r => [txt(r, 'UID'), txt(r, 'Name')]));
+  const assigned = new Map();
+  for (const a of list(root, 'Assignments')) { const tu = txt(a, 'TaskUID'), rn = resName.get(txt(a, 'ResourceUID')); if (tu && rn) { if (!assigned.has(tu)) assigned.set(tu, []); if (!assigned.get(tu).includes(rn)) assigned.get(tu).push(rn); } }
+  // tasks
+  const stack = [], byUid = new Map(), made = [], kidCount = new Map(), tops = { n: 0 };
+  let maxLevel = 1, links = 0, elapsed = 0, baselineSlots = new Set();
+  const TYPE = { 0: 'FF', 1: 'FS', 2: 'SF', 3: 'SS' };
+  const CT = { 0: 'ASAP', 1: 'ALAP', 2: 'MSO', 3: 'MFO', 4: 'SNET', 5: 'SNLT', 6: 'FNET', 7: 'FNLT' };
+  for (const el of list(root, 'Tasks')) {
+    if (txt(el, 'IsNull') === '1') continue;
+    const uid = txt(el, 'UID'), level = parseInt(txt(el, 'OutlineLevel'), 10);
+    if (uid === '0' || !(level >= 1)) continue;   // the project summary task
+    const lvl = Math.max(1, Math.min(level, stack.length + 1)); maxLevel = Math.max(maxLevel, lvl);
+    stack.length = lvl - 1;
+    const parent = stack.length ? stack[stack.length - 1] : null;
+    const order = parent ? (kidCount.get(parent.id) || 0) : tops.n++;
+    if (parent) kidCount.set(parent.id, order + 1);
+    const t = newImportedTask(txt(el, 'Name'), parent ? parent.id : null, order);
+    const manual = txt(el, 'Manual') === '1';
+    let s = dateOf(txt(el, 'Start')), e = dateOf(txt(el, 'Finish'));
+    if (manual) { s = dateOf(txt(el, 'ManualStart')) || s; e = dateOf(txt(el, 'ManualFinish')) || e; }
+    const dm = /^PT?(?:(\d+)H)?(?:(\d+)M)?/.exec(txt(el, 'Duration')), durMin = dm ? (parseInt(dm[1] || 0, 10) * 60 + parseInt(dm[2] || 0, 10)) : null;
+    const ms = txt(el, 'Milestone') === '1' || (durMin === 0 && txt(el, 'Summary') !== '1');
+    if (ms && (s || e)) { s = e = s || e; }
+    if (s && e) { t.startDate = s; t.endDate = dayNumber(e) < dayNumber(s) ? s : e; } else if (s || e) { t.startDate = t.endDate = s || e; }
+    else { t.taskMode = 'manual'; t.startText = t.endText = 'TBD'; }
+    t.milestone = ms && !!(s || e);
+    if (manual) t.taskMode = 'manual';
+    const pc = parseInt(txt(el, 'PercentComplete'), 10); if (pc >= 0) t.progress = Math.min(100, pc);
+    t.actualStart = dateOf(txt(el, 'ActualStart')); t.actualFinish = dateOf(txt(el, 'ActualFinish'));
+    const ctp = CT[parseInt(txt(el, 'ConstraintType'), 10)];
+    if (ctp && ctp !== 'ASAP') { t.constraintType = ctp; const info = constraintTypeInfo(ctp); if (info.hasDate) t.constraintDate = dateOf(txt(el, 'ConstraintDate')) || t.startDate; }
+    const rs = assigned.get(uid); if (rs) t.resource = rs.join(', ').slice(0, 200);
+    t._base = {}; for (const b of kids(el).filter(k => k.localName === 'Baseline')) { const n = parseInt(txt(b, 'Number'), 10), bs = dateOf(txt(b, 'Start')), bf = dateOf(txt(b, 'Finish')); if (n >= 0 && n <= 10 && bs && bf) { t._base[n] = [bs, dayNumber(bf) < dayNumber(bs) ? bs : bf]; baselineSlots.add(n); } }
+    t._links = kids(el).filter(k => k.localName === 'PredecessorLink').map(l => ({ uid: txt(l, 'PredecessorUID'), type: TYPE[parseInt(txt(l, 'Type'), 10)] || 'FS', lag: Math.round((parseInt(txt(l, 'LinkLag'), 10) || 0) / 10 / perDay), fmt: parseInt(txt(l, 'LagFormat'), 10) }));
+    stack.push(t); made.push(t); byUid.set(uid, t);
+  }
+  for (const t of made) {
+    for (const l of t._links) {
+      const p = byUid.get(l.uid);
+      if (!p || p === t) { if (!p) warnings.push(`"${t.name}": its predecessor (UID ${l.uid}) is not in the file`); continue; }
+      if (t.predecessors.some(q => q.id === p.id)) continue;
+      t.predecessors.push({ id: p.id, type: l.type, lag: l.lag }); links++;
+      if ([4, 6, 8, 10, 12, 20].includes(l.fmt)) elapsed++;
+    }
+    delete t._links;
+    const isGroup = made.some(k => k.parentId === t.id);
+    if (Object.keys(t._base).length && !isGroup) t.baselines = t._base;
+    delete t._base;
+  }
+  if (elapsed) warnings.push(`${elapsed} link lag${elapsed === 1 ? '' : 's'} in elapsed time were read as working days`);
+  if (baselineSlots.size) { project.baselines = {}; for (const n of baselineSlots) project.baselines[n] = { setAt: dateOf(txt(root, 'CreationDate')) || todayStr() }; }
+  return { tasks: made, project, warnings, info: { header: true, links, levels: maxLevel, baselines: baselineSlots.size } };
+}
+
+/* ============================ Find a task / jump ============================
+   Ctrl/Cmd+K (or "/", or the Find button) opens a palette: type part of a name (every word must match), a WBS code (2.1 or 2.1.3), #12 for the
+   task with that ID, or @anna for a resource. Enter goes to the task: its groups open, a filter that would hide it is bypassed (the task is
+   pinned, like one you just added), it becomes the selection and scrolls into view — in the Gantt view the bar too — with a short flash.
+   Shift+Enter turns the matches into a Task Name filter instead. */
+let searchIdx = 0, searchHits = [];
+function taskPathText(t) { const out = []; let p = t.parentId; while (p) { const a = byId(p); if (!a) break; out.unshift(a.name); p = a.parentId; } return out.join(' › '); }
+function searchTasks(q) {
+  q = q.trim().toLowerCase(); if (!q) return [];
+  const idm = /^#(\d+)$/.exec(q);
+  if (idm) { const id = taskIdByDisplayId(parseInt(idm[1], 10)); return id ? [{ t: byId(id), score: 10 }] : []; }
+  const wbs = /^\d+(\.\d+)*\.?$/.test(q) && q.includes('.');
+  if (wbs) { const w = q.replace(/\.$/, ''); return tasks.filter(t => { const c = wbsCode(t.id); return c === w || c.startsWith(w + '.'); }).map(t => ({ t, score: wbsCode(t.id) === w ? 9 : 5 })).sort((a, b) => taskDisplayId(a.t.id) - taskDisplayId(b.t.id)); }
+  const res = q.startsWith('@'), terms = (res ? q.slice(1) : q).split(/\s+/).filter(Boolean);
+  if (!terms.length) return [];
+  const out = [];
+  for (const t of tasks) {
+    const name = t.name.toLowerCase(), r = (t.resource || '').toLowerCase();
+    const extra = res ? '' : [wbsCode(t.id), ...Object.entries(t.custom || {}).filter(([k, v]) => typeof v === 'string').map(([k, v]) => v.toLowerCase())].join(' ');
+    let score = 0, ok = true;
+    for (const w of terms) {
+      if (res) { if (!r.includes(w)) { ok = false; break; } score += r.split(/[\s,;]+/).some(x => x.startsWith(w)) ? 4 : 2; continue; }
+      if (name.startsWith(w)) score += 6; else if (new RegExp('(^|[^a-z0-9äöüß])' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).test(name)) score += 4; else if (name.includes(w)) score += 3;
+      else if (r.includes(w)) score += 2; else if (extra.includes(w)) score += 1; else { ok = false; break; }
+    }
+    if (ok) out.push({ t, score });
+  }
+  return out.sort((a, b) => b.score - a.score || taskDisplayId(a.t.id) - taskDisplayId(b.t.id));
+}
+function hilite(text, q) {
+  const terms = q.replace(/^@/, '').trim().toLowerCase().split(/\s+/).filter(w => w && !/^#\d+$/.test(w));
+  let out = escapeHtml(text);
+  for (const w of terms) out = out.replace(new RegExp('(' + escapeHtml(w).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi'), '<mark>$1</mark>');
+  return out;
+}
+function openSearch() {
+  closeDataMenu && closeDataMenu();
+  document.getElementById('searchInput').value = '';
+  renderSearch();
+  document.getElementById('searchModalBg').classList.add('open');
+  setTimeout(() => document.getElementById('searchInput').focus(), 30);
+}
+function closeSearch() { document.getElementById('searchModalBg').classList.remove('open'); }
+function renderSearch() {
+  const q = document.getElementById('searchInput').value, box = document.getElementById('searchResults');
+  searchHits = searchTasks(q).slice(0, 50); searchIdx = 0;
+  if (!q.trim()) box.innerHTML = `<div class="search-empty">Type part of a task name — every word must match.<br>Or a WBS code such as <code>2.1</code>, a task number such as <code>#12</code>, or <code>@anna</code> for a resource.<br>${tasks.length} task${tasks.length === 1 ? '' : 's'} in this plan.</div>`;
+  else if (!searchHits.length) box.innerHTML = `<div class="search-empty">No task matches “${escapeHtml(q.trim())}”.</div>`;
+  else box.innerHTML = searchHits.map(({ t }, i) => {
+    const eff = effectiveDates(t.id), path = taskPathText(t), dates = t.startText != null && !hasChildren(t.id) ? t.startText : eff.start ? (t.milestone ? fmtDate(eff.start) : `${fmtDate(eff.start)} – ${fmtDate(eff.end)}`) : '';
+    return `<div class="sr${i === 0 ? ' active' : ''}" role="option" data-i="${i}" onmousemove="searchSetActive(${i})" onclick="searchGo(${i})"><span class="sr-id">#${taskDisplayId(t.id)}</span><span class="sr-wbs">${wbsCode(t.id)}</span><span class="sr-main"><span class="sr-name">${t.milestone ? '◆ ' : ''}${hilite(t.name, q)}</span>${path ? `<span class="sr-path"> ${escapeHtml(path)}</span>` : ''}</span><span class="sr-side">${escapeHtml(dates)}${t.resource ? `<span class="sr-res">${hilite(t.resource, q)}</span>` : ''}</span></div>`;
+  }).join('');
+  const foot = document.getElementById('searchFoot').querySelector('span:last-child');
+  if (foot) foot.style.visibility = searchHits.length > 1 ? 'visible' : 'hidden';
+}
+function searchSetActive(i) { searchIdx = i; document.querySelectorAll('#searchResults .sr').forEach((el, k) => el.classList.toggle('active', k === i)); }
+function searchKey(e) {
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault(); if (!searchHits.length) return;
+    searchSetActive((searchIdx + (e.key === 'ArrowDown' ? 1 : searchHits.length - 1)) % searchHits.length);
+    const el = document.querySelector('#searchResults .sr.active'); if (el) el.scrollIntoView({ block: 'nearest' });
+  } else if (e.key === 'Enter') { e.preventDefault(); if (e.shiftKey) searchFilter(); else searchGo(searchIdx); }
+}
+function searchGo(i) { const h = searchHits[i]; if (!h) return; closeSearch(); jumpToTask(h.t.id); }
+function searchFilter() {
+  if (searchHits.length < 2) { if (searchHits.length === 1) searchGo(0); return; }
+  const names = new Set(searchHits.map(h => h.t.name)), q = document.getElementById('searchInput').value.trim();
+  closeSearch();
+  colFilters.name = { type: 'values', values: names, blanks: false };
+  filterPinned.clear(); render();
+  showToast(`Showing the ${searchHits.length} task${searchHits.length === 1 ? '' : 's'} that match “${q}” — clear the filter in the bar under the toolbar`);
+}
+function jumpToTask(id) {
+  const t = byId(id); if (!t) return;
+  for (let p = t.parentId; p;) { const a = byId(p); if (!a) break; if (a.collapsed) a.collapsed = false; p = a.parentId; }   // (a fold is view state: not stamped, not synced)
+  filterPinned.add(id);
+  setSelection([id]);
+  render();
+  requestAnimationFrame(() => {
+    const row = document.querySelector(`#gridRows .grid-row[data-id="${id}"]`);
+    if (currentView === 'gantt') {
+      const outer = document.getElementById('ganttPaneOuter'), g = barGeom[id], top = (visibleTaskList().findIndex(v => v.task.id === id)) * ROW_H;
+      outer.scrollTop = Math.max(0, top - outer.clientHeight / 2 + ROW_H);
+      if (g) outer.scrollLeft = Math.max(0, (g.left != null ? g.left : g.cx || 0) - outer.clientWidth / 3);
+    } else if (row) row.scrollIntoView({ block: 'center' });
+    for (const el of document.querySelectorAll(`.grid-row[data-id="${id}"], .gantt-row-bg[data-row-id="${id}"]`)) { el.classList.add('jump-flash'); setTimeout(() => el.classList.remove('jump-flash'), 1500); }
+  });
+}
+
+/* ============================== Print / PDF ================================
+   "Print…" builds the pages itself instead of printing the screen: one SVG per page, drawn in a fixed coordinate system whose shape is the
+   printable area of the chosen paper, so the same drawing prints on any paper and any zoom. The page holds the title, the task list columns
+   you tick, and the Gantt chart — the timeline is fitted to the page width, the rows continue on the next page (with the heading repeated). The
+   browser's print dialog then prints it or, with "Save as PDF", writes the PDF. Tasks are printed as the list shows them (folded groups and
+   filters apply), unless you ask to expand every group. */
+const PAPER_MM = { A4: [210, 297], A3: [297, 420], Letter: [215.9, 279.4], Legal: [215.9, 355.6], Tabloid: [279.4, 431.8] };
+const PRINT_MARGIN_MM = 8;
+const PRINT_COLS = { id: ['ID', 24, 'c'], wbs: ['WBS', 66, 'l'], name: ['Task Name', 220, 'l'], start: ['Start', 58, 'c'], end: ['Finish', 58, 'c'], duration: ['Days', 34, 'c'], progress: ['%', 32, 'c'], resource: ['Resource', 92, 'l'], preds: ['Predecessors', 74, 'l'] };
+const PRINT_FONT = '-apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+let printPageNo = 0, printBuilt = null, printTimer = null;
+function printDefaults() { return { paper: 'A4', orient: 'landscape', cols: ['id', 'name', 'start', 'end', 'duration'], range: 'all', from: '', to: '', scale: 'auto', baseline: showBaseline, critical: showCriticalPath, deps: true, today: true, shade: true, expandAll: false, title: project.name }; }
+let _printCtx = null;
+function printTextWidth(text, size, bold) { _printCtx = _printCtx || document.createElement('canvas').getContext('2d'); _printCtx.font = `${bold ? '600 ' : ''}${size}px ${PRINT_FONT}`; return _printCtx.measureText(text).width; }
+function printFit(text, maxW, size, bold) {   // truncated with an ellipsis so it fits maxW units
+  text = String(text == null ? '' : text);
+  if (printTextWidth(text, size, bold) <= maxW) return text;
+  let lo = 0, hi = text.length;
+  while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (printTextWidth(text.slice(0, mid) + '…', size, bold) <= maxW) lo = mid; else hi = mid - 1; }
+  return lo > 0 ? text.slice(0, lo) + '…' : '';
+}
+function printRows(o) {
+  if (o.expandAll) return exportTaskRows('filtered');
+  return visibleTaskList().map(v => ({ task: v.task, depth: v.depth }));
+}
+function printScaleSegments(unit, d0, d1) {   // the two tiers of the timescale as [{ s, e, label }] over day numbers d0…d1
+  const mondayOf = d => d - (((d + 3) % 7) + 7) % 7, ymd = d => dayNumberToIso(d), top = [], bottom = [];
+  const push = (arr, s, e, label) => arr.push({ s: Math.max(s, d0), e: Math.min(e, d1), label });
+  const monthName = (y, m) => new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString(undefined, { month: 'short', timeZone: 'UTC' });
+  if (unit === 'week') {
+    for (let d = mondayOf(d0); d <= d1; d += 7) { const w = isoWeekOf(d); push(bottom, d, d + 6, { week: w.week, date: ymd(d).slice(8) + '.' + ymd(d).slice(5, 7) + '.' }); }
+    let y = +ymd(d0).slice(0, 4), m = +ymd(d0).slice(5, 7);
+    for (;;) { const s = dayNumber(`${y}-${pad2(m)}-01`); if (s > d1) break; const ny = m === 12 ? y + 1 : y, nm = m === 12 ? 1 : m + 1, e = dayNumber(`${ny}-${pad2(nm)}-01`) - 1; if (e >= d0) push(top, s, e, `${monthName(y, m)} ${y}`); y = ny; m = nm; }
+  } else {
+    let y = +ymd(d0).slice(0, 4);
+    for (; dayNumber(`${y}-01-01`) <= d1; y++) { const s = dayNumber(`${y}-01-01`), e = dayNumber(`${y + 1}-01-01`) - 1; if (e >= d0) push(top, s, e, String(y)); }
+    if (unit === 'month') for (let yy = +ymd(d0).slice(0, 4), m = +ymd(d0).slice(5, 7); ; ) { const s = dayNumber(`${yy}-${pad2(m)}-01`); if (s > d1) break; const ny = m === 12 ? yy + 1 : yy, nm = m === 12 ? 1 : m + 1; push(bottom, s, dayNumber(`${ny}-${pad2(nm)}-01`) - 1, monthName(yy, m)); yy = ny; m = nm; }
+    else for (let yy = +ymd(d0).slice(0, 4); dayNumber(`${yy}-01-01`) <= d1; yy++) for (let q = 1; q <= 4; q++) { const s = dayNumber(`${yy}-${pad2(q * 3 - 2)}-01`), e = q === 4 ? dayNumber(`${yy + 1}-01-01`) - 1 : dayNumber(`${yy}-${pad2(q * 3 + 1)}-01`) - 1; if (e >= d0 && s <= d1) push(bottom, s, e, `Q${q}`); }
+  }
+  return { top, bottom };
+}
+// Builds every page. Returns { pages: [svg strings], W, H, pageMm: [w, h], paper, orient, rows, rowsPerPage, range: [d0, d1], unit }.
+function buildPrintPages(o) {
+  const [pa, pb] = PAPER_MM[o.paper] || PAPER_MM.A4, land = o.orient !== 'portrait';
+  const pageW = (land ? pb : pa) - 2 * PRINT_MARGIN_MM, pageH = (land ? pa : pb) - 2 * PRINT_MARGIN_MM;
+  const W = land ? 1100 : 780, H = Math.round(W * pageH / pageW);
+  const rows = printRows(o), esc = escapeHtml;
+  // ---- the time range
+  let d0 = Infinity, d1 = -Infinity;
+  for (const { task: t } of rows) {
+    const e = effectiveDates(t.id); if (e.start && !(isUnscheduled(t) && !hasChildren(t.id))) { d0 = Math.min(d0, dayNumber(e.start)); d1 = Math.max(d1, dayNumber(e.end)); }
+    if (o.baseline) { const b = baselineDates(t.id); if (b.start) { d0 = Math.min(d0, dayNumber(b.start)); d1 = Math.max(d1, dayNumber(b.end)); } }
+  }
+  if (!Number.isFinite(d0)) { d0 = dayNumber(todayStr()) - 7; d1 = d0 + 30; } else { const pad = Math.max(2, Math.round((d1 - d0) * 0.02)); d0 -= pad; d1 += pad; }
+  if (o.range === 'custom') { const a = o.from && /^\d{4}-\d{2}-\d{2}$/.test(o.from) ? dayNumber(o.from) : null, b = o.to && /^\d{4}-\d{2}-\d{2}$/.test(o.to) ? dayNumber(o.to) : null; if (a != null) d0 = a; if (b != null) d1 = b; if (d1 <= d0) d1 = d0 + 7; }
+  const days = d1 - d0 + 1, unit = o.scale && o.scale !== 'auto' ? o.scale : days <= 150 ? 'week' : days <= 900 ? 'month' : 'quarter';
+  // ---- columns and the vertical layout
+  const cols = (o.cols || []).filter(c => PRINT_COLS[c]);
+  const widths = cols.map(c => PRINT_COLS[c][1]);
+  let listW = widths.reduce((a, b) => a + b, 0);
+  const nameAt = cols.indexOf('name');
+  if (nameAt >= 0 && W - listW < 380) { const cut = Math.min(widths[nameAt] - 110, 380 - (W - listW)); widths[nameAt] -= cut; listW -= cut; }   // a wide list leaves the chart less than 380 units: the name column gives way
+  const chartW = Math.max(200, W - listW - 6), cx0 = listW + 6, pxd = chartW / days;
+  const headerH = 30, tierH = 15, headH = tierH * 2, footH = 16, top0 = headerH + headH;
+  let rowH = 15;
+  const perPage = Math.max(5, Math.floor((H - top0 - footH) / rowH)), nPages = Math.max(1, Math.ceil(rows.length / perPage));
+  if (rows.length && rows.length <= perPage) rowH = Math.min(22, Math.floor((H - top0 - footH) / rows.length));   // a short plan uses the page: taller rows
+  const seg = printScaleSegments(unit, d0, d1), xOf = d => cx0 + (d - d0) * pxd;
+  const crit = o.critical ? computeCriticalPath() : new Set(), today = dayNumber(todayStr());
+  const BLUE = '#00205B', GRID = '#D8DEE4', DIM = '#57606A', INK = '#1F2328';
+  const tint = (hex, k) => { const n = parseInt(hex.slice(1), 16), ch = s => Math.round(((n >> s) & 255) * k + 255 * (1 - k)); return `#${[16, 8, 0].map(s => ch(s).toString(16).padStart(2, '0')).join('')}`; };
+  const pages = [];
+  for (let pg = 0; pg < nPages; pg++) {
+    const slice = rows.slice(pg * perPage, (pg + 1) * perPage), geom = {}, out = [];
+    out.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="100%" height="100%" preserveAspectRatio="xMidYMin meet" font-family='${PRINT_FONT}' font-size="9">`);
+    out.push(`<defs><marker id="pa${pg}" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#8C959F"/></marker><marker id="pc${pg}" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#CF222E"/></marker></defs>`);
+    out.push(`<rect width="${W}" height="${H}" fill="#fff"/>`);
+    // title
+    out.push(`<text x="0" y="14" font-size="14" font-weight="700" fill="${INK}">${esc(printFit(o.title || project.name, W - 260, 14, true))}</text>`);
+    out.push(`<text x="${W}" y="13" text-anchor="end" font-size="8.5" fill="${DIM}">${esc(`${fmtDate(dayNumberToIso(d0))} – ${fmtDate(dayNumberToIso(d1))} · printed ${fmtDate(todayStr())}`)}</text>`);
+    // heading: the list header (both tiers tall) and the two-tier timescale
+    let x = 0;
+    cols.forEach((c, i) => { const w = widths[i], al = PRINT_COLS[c][2]; out.push(`<rect x="${x}" y="${headerH}" width="${w}" height="${headH}" fill="${BLUE}" stroke="#fff" stroke-width="0.4"/><text x="${al === 'c' ? x + w / 2 : x + 4}" y="${headerH + headH / 2 + 3}" text-anchor="${al === 'c' ? 'middle' : 'start'}" font-size="8.5" font-weight="700" fill="#fff">${esc(printFit(PRINT_COLS[c][0], w - 6, 8.5, true))}</text>`); x += w; });
+    for (const s of seg.top) out.push(`<rect x="${xOf(s.s)}" y="${headerH}" width="${(s.e - s.s + 1) * pxd}" height="${tierH}" fill="${BLUE}" stroke="#fff" stroke-width="0.4"/><text x="${xOf(s.s) + 3}" y="${headerH + 10.5}" font-size="8.5" font-weight="700" fill="#fff">${esc(printFit(s.label, (s.e - s.s + 1) * pxd - 5, 8.5, true))}</text>`);
+    for (const s of seg.bottom) {
+      const w = (s.e - s.s + 1) * pxd, lab = typeof s.label === 'object' ? (w >= 30 ? `${CAL_WEEK_LABEL} ${s.label.week}` : w >= 13 ? String(s.label.week) : '') : s.label;
+      out.push(`<rect x="${xOf(s.s)}" y="${headerH + tierH}" width="${w}" height="${tierH}" fill="#E8EEF7" stroke="${GRID}" stroke-width="0.4"/>${lab ? `<text x="${xOf(s.s) + w / 2}" y="${headerH + tierH + 10.5}" text-anchor="middle" font-size="8" fill="${INK}">${esc(lab)}</text>` : ''}`);
+    }
+    // body: zebra rows, days off, gridlines, today
+    const bodyTop = top0, bodyH = slice.length * rowH;
+    slice.forEach(({ task: t }, i) => { const y = bodyTop + i * rowH, group = hasChildren(t.id); if (group || i % 2) out.push(`<rect x="0" y="${y}" width="${W}" height="${rowH}" fill="${group ? '#EEF1F5' : '#F8F9FB'}"/>`); });
+    if (o.shade && pxd >= 2.4 && (workDaySet().size < 7 || holSet.size)) {
+      for (let d = d0; d <= d1;) { if (isWorkNum(d)) { d++; continue; } let e = d; while (e + 1 <= d1 && !isWorkNum(e + 1)) e++; out.push(`<rect x="${xOf(d)}" y="${bodyTop}" width="${(e - d + 1) * pxd}" height="${bodyH}" fill="#E6E9ED" opacity="0.55"/>`); d = e + 1; }
+    }
+    for (const s of seg.bottom) out.push(`<line x1="${xOf(s.s)}" y1="${bodyTop}" x2="${xOf(s.s)}" y2="${bodyTop + bodyH}" stroke="${GRID}" stroke-width="0.4"/>`);
+    out.push(`<line x1="${cx0 - 3}" y1="${headerH}" x2="${cx0 - 3}" y2="${bodyTop + bodyH}" stroke="#8C959F" stroke-width="0.6"/>`);
+    // rows: list text and bars
+    slice.forEach(({ task: t, depth }, i) => {
+      const y = bodyTop + i * rowH, ty = y + rowH / 2 + 3, group = hasChildren(t.id), eff = effectiveDates(t.id), manual = t.taskMode === 'manual';
+      let cx = 0;
+      cols.forEach((c, k) => {
+        const w = widths[k], al = PRINT_COLS[c][2]; let txt = '';
+        if (c === 'id') txt = String(taskDisplayId(t.id)); else if (c === 'wbs') txt = wbsCode(t.id);
+        else if (c === 'name') txt = (t.milestone ? '◆ ' : '') + t.name;
+        else if (c === 'start') txt = !group && t.startText != null ? t.startText : eff.start ? fmtDate(eff.start) : '';
+        else if (c === 'end') txt = !group && t.endText != null ? t.endText : eff.end ? fmtDate(eff.end) : '';
+        else if (c === 'duration') txt = !group && t.durText != null ? t.durText : eff.start && eff.end && !isUnscheduled(t) ? String(durationDays(eff.start, eff.end)) : '';
+        else if (c === 'progress') txt = `${Math.round(eff.progress)}%`; else if (c === 'resource') txt = t.resource || ''; else if (c === 'preds') txt = predecessorLabel(t) || '';
+        const indent = c === 'name' ? depth * 8 : 0;
+        out.push(`<text x="${al === 'c' ? cx + w / 2 : cx + 4 + indent}" y="${ty}" text-anchor="${al === 'c' ? 'middle' : 'start'}" font-size="9" ${group ? 'font-weight="700" ' : ''}fill="${c === 'id' || c === 'wbs' ? DIM : INK}">${esc(printFit(txt, w - 8 - indent, 9, group))}</text>`);
+        cx += w;
+      });
+      if (!eff.start || (isUnscheduled(t) && !group)) return;
+      const s = dayNumber(eff.start), e = dayNumber(eff.end), L = xOf(s), R = xOf(e + 1), mid = y + rowH / 2, hh = Math.round(rowH * 0.54), by = y + (rowH - hh) / 2 - 1;
+      const color = '#' + statusColorHex(t), critical = crit.has(t.id);
+      if (t.milestone) { const cxm = xOf(s) + pxd / 2, r = Math.round(hh * 0.62); out.push(`<polygon points="${cxm},${mid - r - 1} ${cxm + r},${mid - 1} ${cxm},${mid + r - 1} ${cxm - r},${mid - 1}" fill="${manual ? '#fff' : color}" stroke="${critical ? '#CF222E' : color}" stroke-width="${critical ? 1.4 : 0.8}"/>`); geom[t.id] = { left: cxm - r, right: cxm + r, y: mid - 1, row: i }; }
+      else if (group) { const w = Math.max(3, R - L); out.push(`<rect x="${L}" y="${mid - 4}" width="${w}" height="4" fill="#24292F"/><polygon points="${L},${mid} ${L + 4},${mid} ${L},${mid + 4}" fill="#24292F"/><polygon points="${L + w},${mid} ${L + w - 4},${mid} ${L + w},${mid + 4}" fill="#24292F"/>`); geom[t.id] = { left: L, right: L + w, y: mid - 2, row: i }; }
+      else {
+        const w = Math.max(2, R - L), done = w * Math.max(0, Math.min(100, t.progress)) / 100, dash = manual ? ' stroke-dasharray="2 1.5"' : '';
+        out.push(`<rect x="${L}" y="${by}" width="${w}" height="${hh}" rx="1.5" fill="${tint(color, manual ? 0.12 : 0.28)}" stroke="${critical ? '#CF222E' : color}" stroke-width="${critical ? 1.4 : 0.7}"${dash}/>`);
+        if (done > 0) out.push(`<rect x="${L}" y="${by}" width="${done}" height="${hh}" rx="1.5" fill="${color}"/>`);
+        geom[t.id] = { left: L, right: L + w, y: mid - 1, row: i };
+      }
+      if (o.baseline && !t.milestone) { const b = baselineDates(t.id); if (b.start) out.push(`<rect x="${xOf(dayNumber(b.start))}" y="${y + rowH - 4}" width="${Math.max(2, (dayNumber(b.end) - dayNumber(b.start) + 1) * pxd)}" height="2.2" fill="#8C959F"/>`); }
+    });
+    // arrows between the tasks on this page
+    if (o.deps) for (const { task: t } of slice) for (const p of t.predecessors) {
+      const a = geom[p.id], b = geom[t.id]; if (!a || !b) continue;
+      const isCrit = crit.has(t.id) && crit.has(p.id), x1 = a.right, y1 = a.y, x2 = b.left, y2 = b.y, mx = x1 + Math.max(6, (x2 - x1) / 2), dir = y2 > y1 ? 1 : -1;
+      const d = x2 >= x1 + 5 ? `M${x1},${y1} H${mx} V${y2} H${x2}` : `M${x1},${y1} H${x1 + 5} V${y1 + dir * rowH / 2} H${x2 - 5} V${y2} H${x2}`;
+      out.push(`<path d="${d}" fill="none" stroke="${isCrit ? '#CF222E' : '#8C959F'}" stroke-width="0.6" marker-end="url(#${isCrit ? 'pc' : 'pa'}${pg})"/>`);
+    }
+    if (o.today && today >= d0 && today <= d1) out.push(`<line x1="${xOf(today) + pxd / 2}" y1="${headerH + tierH}" x2="${xOf(today) + pxd / 2}" y2="${bodyTop + bodyH}" stroke="#CF222E" stroke-width="0.8" stroke-dasharray="3 2"/>`);
+    out.push(`<rect x="0" y="${bodyTop + bodyH}" width="${W}" height="0.6" fill="${GRID}"/>`);
+    // footer: a small legend and the page number
+    const fy = H - 4;
+    out.push(`<g font-size="7.5" fill="${DIM}"><rect x="0" y="${fy - 6}" width="12" height="6" rx="1" fill="#0969DA"/><text x="15" y="${fy - 0.5}">done</text><rect x="42" y="${fy - 6}" width="12" height="6" rx="1" fill="${tint('#0969DA', 0.28)}" stroke="#0969DA" stroke-width="0.5"/><text x="57" y="${fy - 0.5}">still to do</text><polygon points="110,${fy - 3} 114,${fy - 7} 118,${fy - 3} 114,${fy + 1}" fill="#24292F"/><text x="121" y="${fy - 0.5}">milestone</text><rect x="160" y="${fy - 4}" width="12" height="2.2" fill="#8C959F"/><text x="175" y="${fy - 0.5}">baseline</text><text x="${W}" y="${fy - 0.5}" text-anchor="end" font-size="8">Page ${pg + 1} of ${nPages}</text></g>`);
+    out.push('</svg>');
+    pages.push(out.join(''));
+  }
+  return { pages, W, H, pageMm: [pageW, pageH], paper: o.paper, orient: land ? 'landscape' : 'portrait', rows: rows.length, rowsPerPage: perPage, range: [d0, d1], unit };
+}
+// ---- the dialog
+function readPrintOptions() {
+  const g = id => document.getElementById(id);
+  return { paper: g('printPaper').value, orient: g('printOrient').value, cols: Object.keys(PRINT_COLS).filter(c => g('printCol-' + c).checked), range: g('printRangeCustom').checked ? 'custom' : 'all', from: g('printFrom').value, to: g('printTo').value,
+    scale: g('printScale').value, baseline: g('printBaseline').checked, critical: g('printCritical').checked, deps: g('printDeps').checked, today: g('printToday').checked, shade: g('printShade').checked, expandAll: g('printExpand').checked, title: g('printTitle').value.trim() || project.name };
+}
+function openPrintModal() {
+  closeDataMenu && closeDataMenu();
+  const d = printDefaults(), g = id => document.getElementById(id);
+  g('printPaper').value = d.paper; g('printOrient').value = d.orient; g('printScale').value = d.scale; g('printTitle').value = d.title;
+  for (const c of Object.keys(PRINT_COLS)) g('printCol-' + c).checked = d.cols.includes(c);
+  g('printRangeAll').checked = true; g('printFrom').value = ''; g('printTo').value = '';
+  g('printBaseline').checked = d.baseline; g('printCritical').checked = d.critical; g('printDeps').checked = d.deps; g('printToday').checked = d.today; g('printShade').checked = d.shade; g('printExpand').checked = d.expandAll;
+  printPageNo = 0;
+  g('printModalBg').classList.add('open');
+  refreshPrintPreview();
+}
+function closePrintModal() { document.getElementById('printModalBg').classList.remove('open'); printBuilt = null; }
+function printOptionChanged() { clearTimeout(printTimer); printTimer = setTimeout(refreshPrintPreview, 60); }
+function refreshPrintPreview() {
+  const o = readPrintOptions();
+  printBuilt = buildPrintPages(o); printPageNo = Math.min(printPageNo, printBuilt.pages.length - 1);
+  drawPrintPreview();
+}
+function printPage(delta) { if (!printBuilt) return; printPageNo = Math.max(0, Math.min(printBuilt.pages.length - 1, printPageNo + delta)); drawPrintPreview(); }
+function drawPrintPreview() {
+  const b = printBuilt, box = document.getElementById('printPreview');
+  box.innerHTML = `<div class="print-sheet" style="aspect-ratio:${b.W}/${b.H}">${b.pages[printPageNo]}</div>`;
+  document.getElementById('printPageInfo').textContent = `Page ${printPageNo + 1} of ${b.pages.length}`;
+  document.getElementById('printPrev').disabled = printPageNo === 0; document.getElementById('printNext').disabled = printPageNo >= b.pages.length - 1;
+  document.getElementById('printSummary').textContent = `${b.rows} task${b.rows === 1 ? '' : 's'} on ${b.pages.length} page${b.pages.length === 1 ? '' : 's'} · ${b.paper} ${b.orient} · ${fmtDate(dayNumberToIso(b.range[0]))} – ${fmtDate(dayNumberToIso(b.range[1]))} in ${b.unit === 'week' ? 'weeks' : b.unit === 'month' ? 'months' : 'quarters'}`;
+}
+// Puts the pages into #printRoot (hidden on screen, the only thing that shows when printing) and sets the paper size.
+function mountPrintRoot(built) {
+  unmountPrintRoot();
+  const root = document.createElement('div'); root.id = 'printRoot';
+  root.innerHTML = built.pages.map(svg => `<section class="print-page" style="width:${built.pageMm[0]}mm;height:${built.pageMm[1]}mm">${svg}</section>`).join('');
+  document.body.appendChild(root);
+  const st = document.createElement('style'); st.id = 'printPageStyle';
+  st.textContent = `@page { size: ${built.paper} ${built.orient}; margin: ${PRINT_MARGIN_MM}mm; }`;
+  document.head.appendChild(st);
+}
+function unmountPrintRoot() { for (const id of ['printRoot', 'printPageStyle']) { const el = document.getElementById(id); if (el) el.remove(); } }
+function doPrint() {
+  const built = printBuilt || buildPrintPages(readPrintOptions());
+  closePrintModal();
+  mountPrintRoot(built);
+  const done = () => { unmountPrintRoot(); window.removeEventListener('afterprint', done); };
+  window.addEventListener('afterprint', done);
+  setTimeout(() => window.print(), 60);
+  setTimeout(() => { if (document.getElementById('printRoot') && !document.hidden) { /* the dialog was dismissed without an afterprint event */ } }, 4000);
+}
+
+/* ============================== Bulk edit ================================
+   Tick the fields to change, fill them in, Apply: every selected task gets them, in one Undo step. Groups keep what is worked out from
+   their tasks (progress, dates); tasks that have started, or have free-text dates, are not moved by "Move dates". */
+const BULK_COLORS = [['', 'Automatic (by status)'], ['blue', 'Blue'], ['teal', 'Teal'], ['purple', 'Purple'], ['amber', 'Amber'], ['pink', 'Pink'], ['green', 'Green'], ['red', 'Red'], ['grey', 'Grey']];
+function bulkCustomCols() { return visibleTaskCols(currentView).filter(isCustomField); }
+function openBulkModal() {
+  const ids = selectedIds(); if (!ids.length) return;
+  const groups = ids.filter(id => hasChildren(id)).length;
+  document.getElementById('bulkTitle').textContent = ids.length === 1 ? 'Edit task' : `Edit ${ids.length} tasks`;
+  document.getElementById('bulkHint').textContent = `Tick the fields you want to change — everything else stays as it is.${groups ? ' Groups keep the progress and dates worked out from their tasks.' : ''}`;
+  for (const f of ['progress', 'resource', 'mode', 'color', 'shift', 'pred']) document.getElementById('bulkOn-' + f).checked = false;
+  for (const id of ['bulkVal-progress', 'bulkVal-resource', 'bulkVal-shift', 'bulkVal-predId', 'bulkVal-predLag']) document.getElementById(id).value = '';
+  document.getElementById('bulkVal-mode').value = 'auto'; document.getElementById('bulkVal-predType').value = 'FS';
+  document.getElementById('bulkVal-color').innerHTML = BULK_COLORS.map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
+  const custom = bulkCustomCols();
+  document.getElementById('bulkCustom').innerHTML = custom.length ? '<div class="bulk-sep"></div>' + custom.map(cid => {
+    const kind = CUSTOM_FIELDS[cid].kind, ctl = kind === 'flag' ? `<select id="bulkVal-${cid}"><option value="1">Yes</option><option value="">No</option></select>` : kind === 'date' ? `<input type="date" id="bulkVal-${cid}">` : `<input type="text" id="bulkVal-${cid}" ${kind === 'number' ? 'inputmode="decimal" placeholder="number"' : 'maxlength="255"'}>`;
+    return `<div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-${cid}"> ${escapeHtml(customFieldName(cid))}</label><div class="bulk-ctl">${ctl}</div></div>`;
+  }).join('') : '';
+  // editing a value ticks its box
+  document.querySelectorAll('#bulkModalBg .bulk-ctl input, #bulkModalBg .bulk-ctl select').forEach(el => { const f = el.id.replace('bulkVal-', ''), box = document.getElementById('bulkOn-' + (f.startsWith('pred') ? 'pred' : f)); el.oninput = el.onchange = () => { if (box) box.checked = true; }; });
+  document.getElementById('bulkModalBg').classList.add('open');
+  setTimeout(() => document.getElementById('bulkVal-progress').focus(), 40);
+}
+function closeBulkModal() { document.getElementById('bulkModalBg').classList.remove('open'); }
+function wouldCreateCycle(taskId, predId) {   // does predId (through its own predecessors) already depend on taskId?
+  const seen = new Set(), stack = [predId];
+  while (stack.length) { const cur = stack.pop(); if (cur === taskId) return true; if (seen.has(cur)) continue; seen.add(cur); const t = byId(cur); if (t) for (const p of t.predecessors) stack.push(p.id); }
+  return false;
+}
+function shiftTaskBy(t, n) {
+  const dur = t.milestone ? 1 : durationDays(t.startDate, t.endDate), ns = shiftWork(t.startDate, n);
+  t.startDate = ns; t.endDate = t.milestone ? ns : finishFor(ns, dur);
+  if (t.taskMode !== 'manual') pinToDate(t, 'start');   // moved later than its links allow = a deliberate delay, kept
+}
+function applyBulkEdit() {
+  const ids = selectedIds(); if (!ids.length) { closeBulkModal(); return; }
+  const on = f => { const c = document.getElementById('bulkOn-' + f); return !!(c && c.checked); }, val = f => document.getElementById('bulkVal-' + f).value;
+  const customOn = bulkCustomCols().filter(c => on(c));
+  if (!['progress', 'resource', 'mode', 'color', 'shift', 'pred'].some(on) && !customOn.length) { showToast('Tick at least one field to change', true); return; }
+  let pct = null, shift = 0, predTarget = null, lag = 0, predType = val('predType');
+  if (on('progress')) { pct = Number(val('progress')); if (val('progress').trim() === '' || !Number.isFinite(pct) || pct < 0 || pct > 100) { showToast('% complete must be between 0 and 100', true); return; } pct = Math.round(pct); }
+  if (on('shift')) { shift = Number(val('shift')); if (val('shift').trim() === '' || !Number.isInteger(shift) || Math.abs(shift) > 5000) { showToast('Give the number of working days to move by, such as 5 or -2', true); return; } }
+  if (on('pred')) {
+    const n = parseInt(val('predId'), 10); predTarget = Number.isFinite(n) ? taskIdByDisplayId(n) : null; lag = val('predLag').trim() === '' ? 0 : Number(val('predLag'));
+    if (!predTarget) { showToast(`No task #${val('predId')}`, true); return; }
+    if (hasChildren(predTarget)) { showToast("Can't depend on a summary task — pick one of its own leaf tasks", true); return; }
+    if (!Number.isInteger(lag)) { showToast('The lag must be a whole number of days', true); return; }
+  }
+  const customVals = {};
+  for (const c of customOn) {
+    const kind = CUSTOM_FIELDS[c].kind, raw = val(c);
+    if (kind === 'number') { if (raw.trim() === '') customVals[c] = null; else { const nn = Number(raw.replace(',', '.')); if (!Number.isFinite(nn)) { showToast(`"${raw}" isn't a number`, true); return; } customVals[c] = nn; } }
+    else if (kind === 'flag') customVals[c] = raw ? true : null;
+    else customVals[c] = raw.trim() === '' ? null : raw.trim();
+  }
+  const skipped = { progress: 0, shift: 0, pred: 0 }, touched = [], now = Date.now();
+  let changed = 0;
+  for (const id of ids) {
+    const t = byId(id); let did = false;
+    if (on('progress')) { if (hasChildren(id)) skipped.progress++; else { t.progress = pct; did = true; } }
+    if (on('resource')) { t.resource = val('resource').trim().slice(0, 200); did = true; }
+    if (on('mode') && t.taskMode !== val('mode')) { t.taskMode = val('mode'); if (t.taskMode === 'auto') rescheduleAsAuto(t); did = true; }
+    if (on('color')) { t.color = val('color') || null; did = true; }
+    if (on('shift') && shift !== 0) { if (hasChildren(id) || isStarted(t) || isUnscheduled(t)) skipped.shift++; else { shiftTaskBy(t, shift); touched.push(id); did = true; } }
+    if (on('pred')) {
+      if (hasChildren(id) || id === predTarget || t.predecessors.some(p => p.id === predTarget) || wouldCreateCycle(id, predTarget)) skipped.pred++;
+      else { t.predecessors.push({ id: predTarget, type: predType, lag }); touched.push(id); did = true; }
+    }
+    for (const c of customOn) { setCustomValue(t, c, customVals[c]); did = true; }
+    if (did) { t.updatedAt = now; changed++; }
+  }
+  normalizeData();
+  for (const id of touched) if (byId(id)) applyConstraints(id);
+  save(); render(); closeBulkModal();
+  const notes = [skipped.progress && `${skipped.progress} group${skipped.progress === 1 ? '' : 's'} kept their worked-out progress`, skipped.shift && `${skipped.shift} not moved (group, started or dates as text)`, skipped.pred && `${skipped.pred} not linked (group, already linked, or it would make a cycle)`].filter(Boolean);
+  showToast(`Updated ${changed} task${changed === 1 ? '' : 's'}${notes.length ? ' — ' + notes.join('; ') : ''}`);
+}
+
+/* ============================ Copy, cut and paste ==========================
+   Copy puts two things on the clipboard: the tasks themselves (a private format: everything, links between the copied tasks included,
+   for pasting into Milestone) and a tab-separated table with a header row (the ID column and the visible columns, names indented by
+   outline level) that Excel and text editors understand. Paste takes the private format when it finds it — on the clipboard, or remembered
+   from the last copy — and otherwise reads the text as a table, exactly like a CSV import: header names, an outline from indentation, and
+   so on. The pasted tasks go below the selected task (or at the end) at that task's level and become the selection. */
+const CLIP_KEY = 'milestone-clip';
+function clipCell(t, c, depth) {
+  const eff = effectiveDates(t.id), own = !hasChildren(t.id) || t.taskMode === 'manual', act = actualDates(t.id);
+  switch (c) {
+    case 'id': return String(taskDisplayId(t.id));
+    case 'mode': return t.taskMode === 'manual' ? 'Manual' : 'Auto';
+    case 'wbs': return wbsCode(t.id);
+    case 'name': return '  '.repeat(depth) + (t.milestone ? '◆ ' : '') + t.name;
+    case 'start': return own && t.startText != null ? t.startText : eff.start ? fmtDate(eff.start) : '';
+    case 'end': return own && t.endText != null ? t.endText : eff.end ? fmtDate(eff.end) : '';
+    case 'actualStart': return act.start ? fmtDate(act.start) : '';
+    case 'actualFinish': return act.end ? fmtDate(act.end) : '';
+    case 'duration': return t.durText != null ? t.durText : eff.start && eff.end && !isUnscheduled(t) ? String(durationDays(eff.start, eff.end)) : '';
+    case 'progress': return `${Math.round(eff.progress)}%`;
+    case 'remaining': { const r = remainingDays(t.id); return r == null ? '' : String(r); }
+    case 'status': return taskStatus(t.id) || '';
+    case 'preds': return predecessorLabel(t) || '';
+    case 'resource': return (t.resource || '').trim();
+    case 'baselineStart': return baselineDates(t.id).start ? fmtDate(baselineDates(t.id).start) : '';
+    case 'baselineFinish': return baselineDates(t.id).end ? fmtDate(baselineDates(t.id).end) : '';
+    case 'baselineDuration': { const v = scheduleVariance(t.id).baseDuration; return v == null ? '' : String(v); }
+    case 'startVariance': case 'finishVariance': case 'durationVariance': { const sv = scheduleVariance(t.id), n = { startVariance: sv.start, finishVariance: sv.finish, durationVariance: sv.duration }[c]; return n == null ? '' : String(n); }
+    default: if (isCustomField(c)) { const v = customValue(t, c), kind = CUSTOM_FIELDS[c].kind; return v === undefined ? '' : kind === 'flag' ? (v ? 'Yes' : 'No') : kind === 'date' ? fmtDate(v) : String(v); }
+  }
+  return '';
+}
+function buildClip() {
+  const roots = selectionRoots(); if (!roots.length) return null;
+  const list = subtreeTasks(roots), depth = t => { let d = 0, p = t.parentId; while (p) { d++; p = (byId(p) || {}).parentId; } return d; };
+  const base = Math.min(...roots.map(id => depth(byId(id)))), cols = ['id', ...visibleTaskCols(currentView)];
+  const clean = v => String(v).replace(/[\t\r\n]+/g, ' ');
+  const tsv = [cols.map(c => c === 'id' ? 'ID' : clean(TASK_COLS[c].label).replace(/\s+/g, ' ')).join('\t')].concat(list.map(t => cols.map(c => clean(clipCell(t, c, depth(t) - base))).join('\t'))).join('\n');
+  return { tsv, count: list.length, roots: roots.length, json: { app: 'milestone', v: 1, planId: currentPlanId, roots, tasks: list.map(t => JSON.parse(JSON.stringify(t))) } };
+}
+function rememberClip(clip) { try { const txt = JSON.stringify({ tsv: clip.tsv, json: clip.json }); if (txt.length < 3e6) localStorage.setItem(CLIP_KEY, txt); } catch (e) { /* the clipboard itself still works */ } }
+function recallClip() { try { return JSON.parse(localStorage.getItem(CLIP_KEY) || 'null'); } catch (e) { return null; } }
+function clipboardActive(e) {
+  const tg = e.target || {};
+  if (/^(INPUT|TEXTAREA|SELECT)$/.test(tg.tagName || '') || tg.isContentEditable) return false;   // in a text field copy and paste are the browser's own
+  if (document.querySelector('.modal-bg.open')) return false;
+  if (String(window.getSelection ? window.getSelection() : '').trim()) return false;   // text somebody selected on the page
+  return true;
+}
+function copySelection(data, cut) {
+  const clip = buildClip(); if (!clip) return false;
+  rememberClip(clip);
+  if (data) { data.setData('text/plain', clip.tsv); data.setData('application/x-milestone-tasks', JSON.stringify(clip.json)); }
+  else if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(clip.tsv).catch(() => {});
+  if (cut) deleteTasksNow([...new Set(subtreeTasks(selectionRoots()).map(t => t.id))], { cut: true });
+  else showToast(`Copied ${clip.count} task${clip.count === 1 ? '' : 's'} — paste with Ctrl/Cmd+V${clip.count > 1 && clip.roots < clip.count ? ' (sub-tasks come along)' : ''}`);
+  return true;
+}
+function copySelectionButton() { copySelection(null, false); }
+// Inserts new tasks (those with parentId null are the top ones) after the last selected top task, at its level, or at the end.
+function insertTaskBlock(list) {
+  const roots = list.filter(t => !t.parentId).sort((a, b) => a.order - b.order);
+  const anchors = selectionRoots(), anchor = anchors.length ? byId(anchors[anchors.length - 1]) : null;
+  const parentId = anchor ? (anchor.parentId || null) : null, sibs = childrenOf(parentId), at = anchor ? sibs.findIndex(x => x.id === anchor.id) + 1 : sibs.length;
+  for (const r of roots) r.parentId = parentId;
+  const fresh = new Set(list.map(t => t.id)), merged = sibs.slice(0, at).concat(roots, sibs.slice(at)), now = Date.now();
+  tasks.push(...list);
+  merged.forEach((x, i) => { if (x.order !== i) { x.order = i; if (!fresh.has(x.id)) x.updatedAt = now; } });
+  for (const t of list) filterPinned.add(t.id);
+  return roots;
+}
+function pasteTaskPayload(pl) {
+  if (!pl || pl.app !== 'milestone' || !Array.isArray(pl.tasks) || !pl.tasks.length) return 0;
+  const rootSet = new Set(pl.roots), now = Date.now(), idMap = new Map(pl.tasks.map(t => [t.id, genId() + Math.random().toString(36).slice(2, 5)]));
+  const copies = pl.tasks.map(t => {
+    const c = JSON.parse(JSON.stringify(t));
+    c.id = idMap.get(t.id); c.parentId = rootSet.has(t.id) ? null : (idMap.get(t.parentId) || null);
+    c.predecessors = (c.predecessors || []).filter(pr => idMap.has(pr.id) || byId(pr.id)).map(pr => idMap.has(pr.id) ? Object.assign({}, pr, { id: idMap.get(pr.id) }) : pr);   // links between the copied tasks follow the copies; links to other tasks stay when that task exists here
+    c.updatedAt = now;
+    if (rootSet.has(t.id)) c.order = pl.roots.indexOf(t.id);
+    return c;
+  });
+  const inCycle = taskCycleSet(), fromCycle = new Set(pl.tasks.filter(t => inCycle.has(t.id)).map(t => idMap.get(t.id)));   // (same plan) a copy of a dependency-cycle member is not in the cycle: it is placed by its links
+  const roots = insertTaskBlock(copies);
+  normalizeData();
+  for (const c of copies) if (fromCycle.has(c.id) && byId(c.id)) applyConstraints(c.id);
+  setSelection(roots.map(r => r.id)); save(); render();
+  return copies.length;
+}
+let pasteWarned = false;
+function pasteTableText(text) {
+  const rows = parseDelimited(text, text.includes('\t') ? '\t' : undefined), map = { id: 'id', name: 'name', start: 'start', end: 'end', actualStart: 'actualStart', actualFinish: 'actualFinish', duration: 'duration', progress: 'progress', preds: 'preds', resource: 'resource', wbs: 'wbs' };
+  let res;
+  try { res = tasksFromTable(rows, { defaultCols: ['id', ...visibleTaskCols(currentView)].map(c => map[c] || null) }); } catch (e) { showToast(e.message, true); return 0; }
+  if (!res.tasks.length) { showToast('Nothing to paste — no task names found', true); return 0; }
+  for (const t of res.tasks) { applyActualDates(t); clampTaskDates(t); if (!isStarted(t)) snapToWorkDays(t); }
+  const roots = insertTaskBlock(res.tasks);
+  normalizeData(); placeImportedTasks(res.tasks); setSelection(roots.map(r => r.id)); save(); render();
+  pasteWarned = res.warnings.length > 0;
+  if (pasteWarned) showToast(`Pasted ${res.tasks.length} task${res.tasks.length === 1 ? '' : 's'} — ${res.warnings[0]}${res.warnings.length > 1 ? ` (+${res.warnings.length - 1} more notes)` : ''}`);
+  return res.tasks.length;
+}
+function pasteFrom(text, json) {
+  let n = 0, how = '';
+  if (json) { try { n = pasteTaskPayload(JSON.parse(json)); how = 'tasks'; } catch (e) { n = 0; } }
+  if (!n && text) {
+    const mem = recallClip(), same = mem && mem.tsv.replace(/\r/g, '') === text.replace(/\r/g, '').replace(/\n+$/, '');
+    if (same) { n = pasteTaskPayload(mem.json); how = 'tasks'; }
+    else if (text.trim()) { n = pasteTableText(text); how = 'rows'; }
+  }
+  if (n && how === 'tasks') showToast(`Pasted ${n} task${n === 1 ? '' : 's'} — Ctrl+Z takes it back`);
+  else if (n && how === 'rows' && !pasteWarned) showToast(`Pasted ${n} row${n === 1 ? '' : 's'} as tasks — Ctrl+Z takes it back`);
+  return n;
+}
+function pasteButton() {
+  if (!navigator.clipboard || !navigator.clipboard.readText) { const mem = recallClip(); if (mem) pasteTaskPayload(mem.json); else showToast('Press Ctrl/Cmd+V to paste', true); return; }
+  navigator.clipboard.readText().then(text => { if (!pasteFrom(text, '')) showToast('The clipboard has nothing to paste', true); }).catch(() => { const mem = recallClip(); if (mem) pasteTaskPayload(mem.json); else showToast('Press Ctrl/Cmd+V to paste', true); });
+}
+
 /* =============================== Export / Import =========================== */
 function downloadData(data, filename) {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -4394,6 +5537,102 @@ function handleFileImport(event) {
   };
   reader.readAsText(file);
   event.target.value = '';
+}
+/* ---- importing from MS Project XML / CSV: a preview dialog, then applyImportedTasks() */
+let foreignImport = null;   // { kind: 'xml' | 'csv', text, fileName, result, fmt }
+function triggerForeignImport() { closeDataMenu(); document.getElementById('foreignFileInput').click(); }
+async function handleForeignFile(event) {
+  const file = event.target.files[0]; event.target.value = '';
+  if (!file) return;
+  if (/\.(mpp|mpt|mpx)$/i.test(file.name)) { showToast("MS Project's own .mpp format can't be read in a browser — in MS Project use File → Save As → XML Format", true); return; }
+  if (/\.xlsx?$/i.test(file.name)) { showToast('Copy the rows in Excel and paste them here (Ctrl+V), or save the sheet as CSV', true); return; }
+  const buf = await file.arrayBuffer();
+  let text; try { text = new TextDecoder('utf-8', { fatal: true }).decode(buf); } catch (e) { text = new TextDecoder('windows-1252').decode(buf); }   // German Excel writes CSV in Windows-1252
+  openForeignImport(text, file.name);
+}
+function openForeignImport(text, fileName, fmt) {
+  const kind = /^\s*(<\?xml|<Project\b)/i.test(text.replace(/^﻿/, '')) ? 'xml' : 'csv';
+  let result;
+  try { result = kind === 'xml' ? parseMspdi(text) : tasksFromTable(parseDelimited(text), { dateFormat: fmt || 'auto' }); }
+  catch (e) { showToast(e.message || 'I could not read that file', true); return false; }
+  if (!result.tasks.length) { showToast('No tasks found in that file', true); return false; }
+  foreignImport = { kind, text, fileName, result, fmt: fmt || 'auto' };
+  renderForeignImport();
+  document.getElementById('foreignImportModalBg').classList.add('open');
+  return true;
+}
+function closeForeignImport() { document.getElementById('foreignImportModalBg').classList.remove('open'); foreignImport = null; }
+function foreignImportFormatChanged() { if (!foreignImport) return; const f = document.getElementById('foreignImportFmt').value; openForeignImport(foreignImport.text, foreignImport.fileName, f); }
+function renderForeignImport() {
+  const fi = foreignImport, r = fi.result, xml = fi.kind === 'xml';
+  document.getElementById('foreignImportTitle').textContent = xml ? 'Import from MS Project' : 'Import from CSV';
+  document.getElementById('foreignImportFile').innerHTML = `<i class="fa-solid ${xml ? 'fa-file-code' : 'fa-file-csv'}"></i> ${escapeHtml(fi.fileName)}`;
+  const groups = new Set(r.tasks.map(t => t.parentId).filter(Boolean)).size, bits = [`<strong>${r.tasks.length}</strong> task${r.tasks.length === 1 ? '' : 's'}`];
+  if (groups) bits.push(`${groups} group${groups === 1 ? '' : 's'} in ${r.info.levels} level${r.info.levels === 1 ? '' : 's'}`);
+  if (r.info.links) bits.push(`${r.info.links} link${r.info.links === 1 ? '' : 's'}`);
+  const project = r.project || {};
+  if (project.workDays) bits.push(`working week ${calendarLabel(project.workDays)}`);
+  if (project.holidays) bits.push(`${project.holidays.length} holiday${project.holidays.length === 1 ? '' : 's'}`);
+  if (r.info.baselines) bits.push(`${r.info.baselines} baseline${r.info.baselines === 1 ? '' : 's'}`);
+  const unscheduled = r.tasks.filter(t => t.startText != null).length; if (unscheduled) bits.push(`${unscheduled} without dates (kept as “TBD”)`);
+  const depth = t => { let d = 0, p = t.parentId; while (p) { d++; p = (r.tasks.find(x => x.id === p) || {}).parentId; } return d; };
+  const preview = r.tasks.slice(0, 8).map(t => `<div class="fi-row" style="padding-left:${depth(t) * 14}px"><span class="fi-name">${t.milestone ? '◆ ' : ''}${escapeHtml(t.name)}</span><span class="fi-dates">${t.startText != null ? escapeHtml(t.startText) : t.milestone ? fmtDate(t.startDate) : `${fmtDate(t.startDate)} – ${fmtDate(t.endDate)}`}</span></div>`).join('');
+  document.getElementById('foreignImportSummary').innerHTML = `<div>${bits.join(' · ')}</div><div class="fi-preview">${preview}${r.tasks.length > 8 ? `<div class="fi-more">… and ${r.tasks.length - 8} more</div>` : ''}</div>`;
+  const w = document.getElementById('foreignImportWarn');
+  w.classList.toggle('hidden', !r.warnings.length);
+  w.innerHTML = r.warnings.length ? `<i class="fa-solid fa-triangle-exclamation"></i> ${r.warnings.slice(0, 5).map(escapeHtml).join('<br>')}${r.warnings.length > 5 ? `<br>… and ${r.warnings.length - 5} more notes` : ''}` : '';
+  document.getElementById('foreignImportFmtField').classList.toggle('hidden', xml);
+  document.getElementById('foreignImportFmt').value = fi.fmt;
+  const cal = document.getElementById('foreignImportCalRow');
+  cal.classList.toggle('hidden', !(project.workDays || project.holidays || r.info.baselines));
+  document.getElementById('foreignImportCal').checked = !!(project.workDays || project.holidays || r.info.baselines);
+}
+// Imported or pasted Auto tasks that have both dates and links: a start LATER than the links allow is a deliberate delay (kept, as a Start No
+// Earlier Than — the same rule as typing a date); anything else is placed by its links. In dependency order; manual, started and dated-as-text tasks stay as given.
+function placeImportedTasks(list) {
+  const ids = list.map(t => t.id), idSet = new Set(ids), preds = {};
+  for (const t of list) preds[t.id] = t.predecessors.map(p => p.id).filter(id => idSet.has(id));
+  const cyc = taskCycleSet();
+  for (const id of topoOrder(ids, preds)) {
+    const t = byId(id);
+    if (!t || hasChildren(id) || cyc.has(id) || t.taskMode === 'manual' || isStarted(t) || isUnscheduled(t)) continue;
+    if (t.predecessors.length) pinToDate(t, 'start');
+    applyConstraints(id);
+  }
+}
+// Puts imported tasks into the plan: appended after the existing top level, or replacing everything (the old tasks are tombstoned, so a
+// synced file learns they are gone). Auto tasks are put on working days; actual dates overwrite Start/Finish as usual. Nothing is re-planned.
+function applyImportedTasks(res, mode, opts = {}) {
+  const imported = res.tasks, project0 = res.project || {};
+  if (mode === 'replace') {
+    downloadData(syncPayload(), `milestone-backup-before-import-${todayStr()}.json`);
+    for (const t of tasks) tombstone(deletedTaskIds, t.id);
+    tasks = [];
+    delete project.baselines; delete project.compareBaseline;
+  } else {
+    const base = childrenOf(null).length;
+    for (const t of imported) if (!t.parentId) t.order += base;
+  }
+  if (opts.calendar) {
+    if (project0.workDays) project.workDays = project0.workDays;
+    if (project0.holidays) project.holidays = mode === 'replace' ? project0.holidays : (project.holidays || []).concat(project0.holidays);
+    if (project0.baselines) { project.baselines = Object.assign({}, project.baselines, project0.baselines); if (!project.compareBaseline) { const first = Math.min(...Object.keys(project0.baselines).map(Number)); if (first > 0) project.compareBaseline = first; } }
+    project.updatedAt = Date.now();
+    normalizeData();
+  } else for (const t of imported) delete t.baselines;
+  for (const t of imported) { applyActualDates(t); clampTaskDates(t); if (!isStarted(t)) snapToWorkDays(t); }
+  tasks.push(...imported);
+  const roots = imported.filter(t => !t.parentId);
+  normalizeData(); placeImportedTasks(imported); setSelection(roots.map(t => t.id)); save(); render();
+  return roots;
+}
+function applyForeignImport() {
+  if (!foreignImport) return;
+  const mode = document.querySelector('input[name=fiMode]:checked').value, cal = document.getElementById('foreignImportCal').checked && !document.getElementById('foreignImportCalRow').classList.contains('hidden');
+  const fi = foreignImport, n = fi.result.tasks.length;
+  closeForeignImport();
+  applyImportedTasks(fi.result, mode, { calendar: cal });
+  showToast(`Imported ${n} task${n === 1 ? '' : 's'} from ${fi.fileName}${mode === 'replace' ? ' (your previous tasks are in the backup file that was downloaded)' : ''} — Ctrl+Z takes it back`);
 }
 function openImportModal() { document.getElementById('importModalBg').classList.add('open'); }
 function closeImportModal() { document.getElementById('importModalBg').classList.remove('open'); pendingImportData = null; }
@@ -4554,7 +5793,7 @@ function buildXlsx(opts) {
 
   // ---------------- Tasks sheet: ID, then the task list's own visible columns in the user's order (or all of them)
   const XCOLS = {
-    id: ['ID', 6], mode: ['Mode', 10], wbs: ['WBS', 9], name: ['Task Name', 46], start: ['Start', 13], end: ['Finish', 13], actualStart: ['Actual Start', 13],
+    id: ['ID', 6], mode: ['Mode', 10], wbs: ['WBS', 15], name: ['Task Name', 46], start: ['Start', 13], end: ['Finish', 13], actualStart: ['Actual Start', 13],
     actualFinish: ['Actual Finish', 13], baselineStart: ['Baseline Start', 13], baselineFinish: ['Baseline Finish', 13], baselineDuration: ['Baseline Duration', 13], startVariance: ['Start Variance', 13], finishVariance: ['Finish Variance', 13], durationVariance: ['Duration Variance', 13], duration: ['Duration', 12], progress: ['% Complete', 13], remaining: ['Remaining Duration', 13], status: ['Status', 13], preds: ['Predecessors', 18], resource: ['Resource', 22]
   };
   for (const id of Object.keys(CUSTOM_FIELDS)) XCOLS[id] = [customFieldName(id), { text: 22, number: 13, date: 13, flag: 9 }[CUSTOM_FIELDS[id].kind]];
@@ -5139,7 +6378,7 @@ function createPlanRecord(name, data) {
   return id;
 }
 function resetTransientUI() {
-  selectedTaskId = null; editingCell = null; editingPredecessors = [];
+  setSelection([]); editingCell = null; editingPredecessors = [];
   colFilters = newColFilters(); filterPinned.clear(); closeFilterMenu();   // filters belong to the plan you were looking at
   closeTaskModal(); closeImportModal(); closeDataMenu(); closeColumnsMenu(); closeTaskModeMenu();
   clearTimeout(toastTimer); toastUndoAction = null;
@@ -5416,12 +6655,18 @@ function wireGlobalEvents() {
       if (e.key.toLowerCase() === 'y' || e.shiftKey) historyRedo(); else historyUndo();
       return;
     }
+    const typingNow = /^(INPUT|TEXTAREA|SELECT)$/.test((e.target || {}).tagName || '') || (e.target || {}).isContentEditable, modalOpen = !!document.querySelector('.modal-bg.open');
+    if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'a' && !typingNow && !modalOpen) { e.preventDefault(); setSelection(visibleTaskList().map(v => v.task.id)); render(); return; }   // select every visible task
+    if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'k' && !document.querySelector('.modal-bg.open:not(#searchModalBg)')) { e.preventDefault(); if (document.getElementById('searchModalBg').classList.contains('open')) closeSearch(); else openSearch(); return; }
+    if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'p' && !document.querySelector('.modal-bg.open:not(#printModalBg)')) { e.preventDefault(); if (!document.getElementById('printModalBg').classList.contains('open')) openPrintModal(); return; }   // Ctrl/Cmd+P opens our print dialog instead of printing the screen
+    if (e.key === '/' && !typingNow && !modalOpen && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); openSearch(); return; }
+    if ((e.key === 'Delete' || e.key === 'Backspace') && !typingNow && !modalOpen && !editingCell && selectedIds().length) { e.preventDefault(); deleteSelected(); return; }
     if (e.key !== 'Escape') return;
     if (document.getElementById('fieldNameModalBg').classList.contains('open')) { closeFieldNameModal(); return; }   // only the topmost dialog: the task dialog underneath keeps its unsaved edits
     // Escape closes whatever overlay is open first; only when there is none — and
     // the user isn't typing in a field, where Escape already means "cancel this
     // edit" — does it clear the task selection.
-    const modalIds = ['taskModalBg', 'confirmModalBg', 'calendarModalBg', 'baselineModalBg', 'syncConflictsModalBg', 'planModalBg', 'excelModalBg', 'importModalBg', 'backupsModalBg', 'helpModalBg', 'aboutModalBg'];
+    const modalIds = ['taskModalBg', 'confirmModalBg', 'calendarModalBg', 'baselineModalBg', 'syncConflictsModalBg', 'planModalBg', 'excelModalBg', 'importModalBg', 'foreignImportModalBg', 'bulkModalBg', 'searchModalBg', 'printModalBg', 'backupsModalBg', 'helpModalBg', 'aboutModalBg'];
     const overlayOpen = modalIds.some(id => document.getElementById(id).classList.contains('open'))
       || document.getElementById('fileSyncModalBg').classList.contains('open')   // mandatory: Escape can't close it
       || document.getElementById('dataMenu').classList.contains('open')
@@ -5435,9 +6680,12 @@ function wireGlobalEvents() {
     for (const id of modalIds) document.getElementById(id).classList.remove('open');
     closeDataMenu(); closePlanMenu(); closeFilterMenu(); closeColumnsMenu(); closeTaskModeMenu();
     if (!overlayOpen && editingCell) { cancelInlineEdit(); return; }   // an inline editor that hasn't received focus yet (it gets it a frame after it appears)
-    if (!overlayOpen && !typing && selectedTaskId) { selectedTaskId = null; render(); }
+    if (!overlayOpen && !typing && (selectedTaskId || selectedTaskIds.size)) { setSelection([]); render(); }
   });
   document.getElementById('toastUndoBtn').addEventListener('click', triggerToastUndo);
+  document.addEventListener('copy', e => { if (clipboardActive(e) && selectedIds().length) { e.preventDefault(); copySelection(e.clipboardData, false); } });
+  document.addEventListener('cut', e => { if (clipboardActive(e) && selectedIds().length) { e.preventDefault(); copySelection(e.clipboardData, true); } });
+  document.addEventListener('paste', e => { if (!clipboardActive(e)) return; e.preventDefault(); pasteFrom(e.clipboardData.getData('text/plain'), e.clipboardData.getData('application/x-milestone-tasks')); });
   // Any edit in the task dialog refreshes its calculated row (this runs after the field's own onchange has synced the dates/duration).
   for (const ev of ['input', 'change']) document.getElementById('taskModalBg').addEventListener(ev, updateModalComputed);
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') pollFileSync(); });
