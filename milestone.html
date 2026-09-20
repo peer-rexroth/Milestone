@@ -79,9 +79,9 @@ button { cursor: pointer; }
 .topbar-spacer { flex: 1 1 auto; }
 
 .subbar {
-  display: flex; align-items: center; gap: 10px; height: 46px; padding: 0 14px;
+  display: flex; align-items: center; gap: 6px 10px; min-height: 46px; padding: 5px 14px;
   background: var(--panel-2); border-bottom: 1px solid var(--border);
-  flex-shrink: 0; overflow-x: auto;
+  flex-shrink: 0; flex-wrap: wrap;   /* a narrow window wraps the toolbar onto a second row instead of hiding the buttons on the right */
 }
 .subbar > * { flex-shrink: 0; }
 
@@ -364,7 +364,7 @@ input.inline-edit { width: 100%; min-width: 0; padding: 3px 6px; border: 1px sol
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
 .search-bg { align-items: flex-start; padding-top: 12vh; }
-.modal.search-modal { width: 640px; max-width: 94vw; max-height: 70vh; overflow: hidden; }
+.modal.search-modal { width: 960px; max-width: 94vw; max-height: 70vh; overflow: hidden; }   /* 960px: the results show the name, its groups, the dates and the resource side by side */
 .search-box { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
 .search-box > i { color: var(--text-faint); }
 .search-box input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; color: var(--text); font-size: 15px; }
@@ -720,7 +720,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
       </div>
       <div class="pred-empty hidden" id="taskTextDatesNote"></div>
       <div class="field-row" id="taskDurProgRow">
-        <div class="field" id="taskDurationField"><label title="Working days, counted on the plan's working calendar">Duration (days)</label><input type="number" min="1" id="taskDurationInput" onchange="onTaskDurationChange()"></div>
+        <div class="field" id="taskDurationField"><label title="Working days, counted on the plan's working calendar">Duration (days)</label><input type="number" min="1" max="9999" id="taskDurationInput" onchange="onTaskDurationChange()"></div>
         <div class="field"><label>% Complete</label><input type="number" min="0" max="100" id="taskProgressInput"></div>
       </div>
       <div class="field-row">
@@ -856,12 +856,12 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
     <div class="modal-header"><h2 id="bulkTitle">Edit tasks</h2><button onclick="closeBulkModal()" aria-label="Close">&times;</button></div>
     <div class="modal-body">
       <p class="bulk-hint" id="bulkHint"></p>
-      <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-progress"> % complete</label><div class="bulk-ctl"><input type="number" id="bulkVal-progress" min="0" max="100" step="1" placeholder="0 – 100"></div></div>
-      <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-resource"> Resource</label><div class="bulk-ctl"><input type="text" id="bulkVal-resource" maxlength="200" placeholder="Anna, Ben (empty clears it)"></div></div>
-      <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-mode"> Task Mode</label><div class="bulk-ctl"><select id="bulkVal-mode"><option value="auto">Auto Scheduled</option><option value="manual">Manually Scheduled</option></select></div></div>
-      <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-color"> Colour</label><div class="bulk-ctl"><select id="bulkVal-color"></select></div></div>
-      <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-shift"> Move dates by</label><div class="bulk-ctl"><input type="number" id="bulkVal-shift" step="1" placeholder="working days (negative = earlier)"><span class="bulk-hint">working days</span></div></div>
-      <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-pred"> Add predecessor</label><div class="bulk-ctl"><input type="number" id="bulkVal-predId" min="1" step="1" placeholder="task #"><select id="bulkVal-predType"><option value="FS">Finish-to-Start</option><option value="SS">Start-to-Start</option><option value="FF">Finish-to-Finish</option><option value="SF">Start-to-Finish</option></select><input type="number" id="bulkVal-predLag" step="1" placeholder="lag" style="max-width:70px"></div></div>
+      <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-progress"> % complete</label><div class="bulk-ctl"><input type="number" id="bulkVal-progress" min="0" max="100" step="1" placeholder="0 – 100" aria-label="% complete"></div></div>
+      <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-resource"> Resource</label><div class="bulk-ctl"><input type="text" id="bulkVal-resource" maxlength="200" placeholder="Anna, Ben (empty clears it)" aria-label="Resource"></div></div>
+      <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-mode"> Task Mode</label><div class="bulk-ctl"><select id="bulkVal-mode" aria-label="Task Mode"><option value="auto">Auto Scheduled</option><option value="manual">Manually Scheduled</option></select></div></div>
+      <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-color"> Colour</label><div class="bulk-ctl"><select id="bulkVal-color" aria-label="Colour"></select></div></div>
+      <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-shift"> Move dates by</label><div class="bulk-ctl"><input type="number" id="bulkVal-shift" step="1" placeholder="working days (negative = earlier)" aria-label="Working days to move by"><span class="bulk-hint">working days</span></div></div>
+      <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-pred"> Add predecessor</label><div class="bulk-ctl"><input type="number" id="bulkVal-predId" min="1" step="1" placeholder="task #" aria-label="Predecessor task number"><select id="bulkVal-predType" aria-label="Link type"><option value="FS">Finish-to-Start</option><option value="SS">Start-to-Start</option><option value="FF">Finish-to-Finish</option><option value="SF">Start-to-Finish</option></select><input type="number" id="bulkVal-predLag" step="1" placeholder="lag" style="max-width:70px" aria-label="Lag in working days"></div></div>
       <div id="bulkCustom"></div>
     </div>
     <div class="modal-footer"><button class="btn" onclick="closeBulkModal()">Cancel</button><button class="btn btn-primary" onclick="applyBulkEdit()">Apply</button></div>
@@ -1481,8 +1481,10 @@ function weekdayOf(n) { return ((n + 4) % 7 + 7) % 7; }   // day number -> 0 = S
 function isWorkNum(n) { return workDaySet().has(weekdayOf(n)) && !holSet.has(n); }
 function nextWorkNum(n) { while (!isWorkNum(n)) n++; return n; }   // on or after
 function prevWorkNum(n) { while (!isWorkNum(n)) n--; return n; }   // on or before
+const MAX_DURATION_DAYS = 9999, MAX_LAG_DAYS = 9999;   // what a person can enter; addWorkNum() also caps any move at 40,000 working days (about 150 years), so no input — typed, imported or pasted — can make the day-by-day walk (used when there are holidays) run for ever
 function addWorkNum(n, k) {   // n is a working day; move |k| working days forward (k > 0) or back (k < 0)
   if (!k) return n;
+  k = Math.max(-40000, Math.min(40000, k));
   const dir = k > 0 ? 1 : -1, per = workDaySet().size;
   let left = Math.abs(k);
   if (!holSet.size) { const weeks = Math.floor(left / per); n += dir * weeks * 7; left -= weeks * per; }   // a whole week of working days is exactly 7 calendar days (unless there are holidays: then count day by day)
@@ -1885,6 +1887,7 @@ function normalizeData() {
     for (const p of t.predecessors) {
       if (!DEP_TYPES.includes(p.type)) p.type = 'FS';
       if (typeof p.lag !== 'number' || !isFinite(p.lag)) p.lag = 0;
+      p.lag = Math.max(-MAX_LAG_DAYS, Math.min(MAX_LAG_DAYS, Math.round(p.lag)));
     }
   }
 
@@ -1931,14 +1934,20 @@ function normalizeData() {
   }
   // An automatic group's own Start/Finish are never used while it has tasks in it (it shows their rollup), but they are what it falls back to
   // when it stops being a group (its last sub-task is moved out or deleted): keep them equal to the rollup so that fallback is sensible.
-  resetEffectiveCache();
-  for (const t of tasks) if (parentIds.has(t.id)) {
-    t.milestone = false;   // a task with tasks in it can't be a milestone
-    if (t.taskMode === 'manual') continue;
-    const e = effectiveDates(t.id); if (!e.start || !e.end) continue;
-    const st = isWorkDay(e.start) ? e.start : nextWorkDay(e.start);                       // (on working days, like any Auto task it may turn back into)
-    let en = isWorkDay(e.end) ? e.end : prevWorkDay(e.end); if (dayNumber(en) < dayNumber(st)) en = st;
-    if (t.startDate !== st || t.endDate !== en) { t.startDate = st; t.endDate = en; }
+  // (Repeated until nothing changes: a group whose tasks are all unscheduled falls back to its OWN stored dates, which this very step may snap
+  // to a working day — a group above it may already have read the old value, and the answer would depend on the order of the tasks.)
+  for (const t of tasks) if (parentIds.has(t.id)) t.milestone = false;   // a task with tasks in it can't be a milestone
+  for (let pass = 0; pass < 8; pass++) {
+    resetEffectiveCache();
+    let moved = false;
+    for (const t of tasks) if (parentIds.has(t.id)) {
+      if (t.taskMode === 'manual') continue;
+      const e = effectiveDates(t.id); if (!e.start || !e.end) continue;
+      const st = isWorkDay(e.start) ? e.start : nextWorkDay(e.start);                       // (on working days, like any Auto task it may turn back into)
+      let en = isWorkDay(e.end) ? e.end : prevWorkDay(e.end); if (dayNumber(en) < dayNumber(st)) en = st;
+      if (t.startDate !== st || t.endDate !== en) { t.startDate = st; t.endDate = en; moved = true; }
+    }
+    if (!moved) break;
   }
   resetEffectiveCache();
   // New tasks are Auto Scheduled unless the project says otherwise. Every project saved while the default was Manual has
@@ -3423,11 +3432,13 @@ function commitInlineEdit(id, field, rawValue) {
   } else if (field === 'duration') {
     if (manual) {
       const n = /^\d+$/.test(val) ? parseInt(val, 10) : NaN;
-      if (Number.isFinite(n) && n >= 1 && !isUnscheduled(t) && !t.milestone) { t.endDate = finishFor(t.startDate, n); t.durText = null; if (t.actualFinish) t.actualFinish = t.endDate; }
+      if (Number.isFinite(n) && n > MAX_DURATION_DAYS) showToast(`A duration can be at most ${MAX_DURATION_DAYS.toLocaleString('en')} days`, true);
+      else if (Number.isFinite(n) && n >= 1 && !isUnscheduled(t) && !t.milestone) { t.endDate = finishFor(t.startDate, n); t.durText = null; if (t.actualFinish) t.actualFinish = t.endDate; }
       else t.durText = val.slice(0, 60);
     } else {
       const d = parseInt(val, 10);
-      if (Number.isFinite(d) && d >= 1 && !t.milestone) { snapToWorkDays(t); t.endDate = finishFor(t.startDate, d); if (t.actualFinish) t.actualFinish = t.endDate; clampTaskDates(t); }
+      if (Number.isFinite(d) && d > MAX_DURATION_DAYS) showToast(`A duration can be at most ${MAX_DURATION_DAYS.toLocaleString('en')} days`, true);
+      else if (Number.isFinite(d) && d >= 1 && !t.milestone) { snapToWorkDays(t); t.endDate = finishFor(t.startDate, d); if (t.actualFinish) t.actualFinish = t.endDate; clampTaskDates(t); }
     }
     applyConstraints(id);
   } else if (isCustomField(field)) {
@@ -3485,7 +3496,9 @@ function parsePredecessorString(str, taskId) {
     if (hasChildren(targetId)) { showToast("Can't depend on a summary task — predecessors unchanged", true); return null; }
     if (seen.has(targetId)) continue;
     seen.add(targetId);
-    result.push({ id: targetId, type: (m[2] || 'FS').toUpperCase(), lag: m[3] ? parseInt(m[3], 10) : 0 });
+    const lagN = m[3] ? parseInt(m[3], 10) : 0;
+    if (Math.abs(lagN) > MAX_LAG_DAYS) { showToast(`A lag can be at most ${MAX_LAG_DAYS.toLocaleString('en')} days — predecessors unchanged`, true); return null; }
+    result.push({ id: targetId, type: (m[2] || 'FS').toUpperCase(), lag: lagN });
   }
   return result;
 }
@@ -3949,6 +3962,9 @@ function deleteTasksNow(allIds, opts = {}) {
     for (const t of tasks) if (linksBefore.get(t.id) !== t.predecessors.length) applyConstraints(t.id);
     const cycNow = taskCycleSet();   // edits made in the meantime may have moved a predecessor: the restored tasks and links are checked against the schedule as it is now
     for (const rid of new Set([...removed.map(r => r.id), ...strippedLinks.map(l => l.taskId)])) if (!offBefore.has(rid) && offItsLinks(byId(rid), cycNow)) applyConstraints(rid);
+    // Deleting a predecessor can pull a whole chain of successors earlier (Auto scheduling is bidirectional); only the tasks that lost a link are in
+    // the record above, so what is further down the chain is put back by cascading from every task that came back or was re-placed.
+    for (const rid of new Set([...removed.map(r => r.id), ...strippedLinks.map(l => l.taskId), ...replanned.map(r => r.t.id)])) if (byId(rid)) cascadeSchedule(rid);
     save(); render();
   });
 }
@@ -4389,7 +4405,7 @@ function onActualStartChange() {
   const a = document.getElementById('taskActualStartInput').value;
   if (!a) return;
   const startEl = document.getElementById('taskStartInput'), endEl = document.getElementById('taskEndInput');
-  const dur = Math.max(1, parseInt(document.getElementById('taskDurationInput').value) || 1);
+  const dur = Math.min(MAX_DURATION_DAYS, Math.max(1, parseInt(document.getElementById('taskDurationInput').value) || 1));
   startEl.value = a;
   if (document.getElementById('taskMilestoneInput').checked) { endEl.value = a; document.getElementById('taskProgressInput').value = 100; }
   else if (!document.getElementById('taskActualFinishInput').value) endEl.value = finishFor(a, dur);
@@ -4422,7 +4438,7 @@ function onTaskEndChange() {
   updateDurationDisplay();
 }
 function onTaskDurationChange() {
-  const d = Math.max(1, parseInt(document.getElementById('taskDurationInput').value) || 1);
+  const d = Math.min(MAX_DURATION_DAYS, Math.max(1, parseInt(document.getElementById('taskDurationInput').value) || 1));
   let s = document.getElementById('taskStartInput').value;
   if (dialogIsAuto() && !isWorkDay(s)) { s = nextWorkDay(s); document.getElementById('taskStartInput').value = s; }
   document.getElementById('taskEndInput').value = finishFor(s, d);
@@ -4815,6 +4831,7 @@ function parseTableDuration(str) {
   else if (['min', 'mins', 'minute', 'minutes', 'm'].includes(u)) days = n / 480;
   else if (['mo', 'mon', 'month', 'months', 'monat', 'monate'].includes(u)) days = n * 20;
   else return null;
+  if (!(days <= MAX_DURATION_DAYS)) return null;   // not a duration a plan can hold (also NaN, Infinity)
   const r = Math.round(days);
   return r === 0 && days > 0 ? 1 : r;
 }
@@ -4830,6 +4847,7 @@ function parsePredText(str) {
       const n = parseFloat(m[4].replace(',', '.')), u = (m[5] || '').toLowerCase();
       if (u === '%') { bad.push(tok); continue; }
       lag = /^(w|wk|wks|week|weeks|wo|woche|wochen)$/.test(u) ? n * 5 : /^(h|hr|hrs|hour|hours|std|stunde|stunden)$/.test(u) ? n / 8 : n;
+      if (!(lag <= MAX_LAG_DAYS)) { bad.push(tok); continue; }
       lag = Math.round(lag) * (m[3] === '-' ? -1 : 1);
     }
     out.push({ ref: m[1], type: PRED_TYPES[(m[2] || 'FS').toUpperCase()], lag });
@@ -5331,7 +5349,7 @@ function openBulkModal() {
   document.getElementById('bulkVal-color').innerHTML = BULK_COLORS.map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
   const custom = bulkCustomCols();
   document.getElementById('bulkCustom').innerHTML = custom.length ? '<div class="bulk-sep"></div>' + custom.map(cid => {
-    const kind = CUSTOM_FIELDS[cid].kind, ctl = kind === 'flag' ? `<select id="bulkVal-${cid}"><option value="1">Yes</option><option value="">No</option></select>` : kind === 'date' ? `<input type="date" id="bulkVal-${cid}">` : `<input type="text" id="bulkVal-${cid}" ${kind === 'number' ? 'inputmode="decimal" placeholder="number"' : 'maxlength="255"'}>`;
+    const kind = CUSTOM_FIELDS[cid].kind, an = escapeHtml(customFieldName(cid)), ctl = kind === 'flag' ? `<select id="bulkVal-${cid}" aria-label="${an}"><option value="1">Yes</option><option value="">No</option></select>` : kind === 'date' ? `<input type="date" id="bulkVal-${cid}" aria-label="${an}">` : `<input type="text" id="bulkVal-${cid}" aria-label="${an}" ${kind === 'number' ? 'inputmode="decimal" placeholder="number"' : 'maxlength="255"'}>`;
     return `<div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-${cid}"> ${escapeHtml(customFieldName(cid))}</label><div class="bulk-ctl">${ctl}</div></div>`;
   }).join('') : '';
   // editing a value ticks its box
@@ -5362,7 +5380,7 @@ function applyBulkEdit() {
     const n = parseInt(val('predId'), 10); predTarget = Number.isFinite(n) ? taskIdByDisplayId(n) : null; lag = val('predLag').trim() === '' ? 0 : Number(val('predLag'));
     if (!predTarget) { showToast(`No task #${val('predId')}`, true); return; }
     if (hasChildren(predTarget)) { showToast("Can't depend on a summary task — pick one of its own leaf tasks", true); return; }
-    if (!Number.isInteger(lag)) { showToast('The lag must be a whole number of days', true); return; }
+    if (!Number.isInteger(lag) || Math.abs(lag) > MAX_LAG_DAYS) { showToast(`The lag must be a whole number of days, at most ${MAX_LAG_DAYS.toLocaleString('en')}`, true); return; }
   }
   const customVals = {};
   for (const c of customOn) {
