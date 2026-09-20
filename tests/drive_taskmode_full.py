@@ -41,7 +41,7 @@ with sync_playwright() as p:
     check("1  modal Task Mode field shows auto", page.eval_on_selector("#taskModeInput", "e => e.value") == "auto")
     page.fill("#taskNameInput", "First"); page.click("#taskModalBg button:has-text('Save')")
     page.wait_for_selector("#taskModalBg:not(.open)")
-    check("1  'New tasks' button reads Auto Scheduled", "Auto Scheduled" in page.inner_text("#newTaskModeBtn"))
+    check("1  'New tasks' button reads Auto Scheduled", "Auto Scheduled" in page.evaluate("() => document.querySelector('#addMenu .dropdown-item.active').textContent"))
 
     # ---- Gap 2: icons (pushpin = manual, chart = auto); constraint icon no longer a thumbtack
     first = page.evaluate("() => tasks[0].id")
@@ -59,14 +59,13 @@ with sync_playwright() as p:
     page.screenshot(path=f"{SHOT}/70_mode_picker.png")
     page.click("#taskModeMenu .dropdown-item:has-text('Manually Scheduled')")
     check("3  picking Manual applies + closes menu", T(a)["taskMode"] == "manual" and not page.eval_on_selector("#taskModeMenu", "e => e.classList.contains('open')"))
-    page.locator("#newTaskModeBtn").click()
-    page.wait_for_selector("#taskModeMenu.open")
-    page.click("#taskModeMenu .dropdown-item:has-text('Auto Scheduled')")
-    check("3  'New tasks' picker sets project default", page.evaluate("() => project.newTaskMode") == "auto" and "Auto Scheduled" in page.inner_text("#newTaskModeBtn"))
+    page.click("#addMenuBtn"); page.wait_for_selector("#addMenu.open")
+    page.click("#newModeAuto")
+    check("3  'New tasks' picker sets project default", page.evaluate("() => project.newTaskMode") == "auto" and "Auto Scheduled" in page.evaluate("() => document.querySelector('#addMenu .dropdown-item.active').textContent"))
     page.click("#addTaskBtn"); page.wait_for_selector("#taskModalBg.open")
     check("3  next new task follows the new default (auto)", page.eval_on_selector("#taskModeInput", "e => e.value") == "auto")
     page.click("#taskModalBg button:has-text('Cancel')")
-    page.locator("#newTaskModeBtn").click(); page.click("#taskModeMenu .dropdown-item:has-text('Manually Scheduled')")
+    page.click("#addMenuBtn"); page.click("#newModeManual")
 
     # ---- Gap 4: field in the task dialog
     page.evaluate("() => { tasks.length = 0; selectedTaskId = null; save(); render(); }")

@@ -90,7 +90,7 @@ with sync_playwright() as p:
     # ------------------------------------------------------------ the dialog
     seed([{"name": "A", "s": "2026-09-07", "e": "2026-09-11"}])
     pg.click("#planMenuBtn"); pg.wait_for_selector("#planMenu.open"); pg.click("#planCalendarItem"); pg.wait_for_selector("#calendarModalBg.open"); pg.wait_for_timeout(150)
-    check("the dialog has a holiday section with an empty list", pg.locator("#holList .hol-row").count() == 0 and "No holidays" in (pg.evaluate("() => getComputedStyle(document.getElementById('holList'), '::before').content") or ""))
+    check("the dialog has a holiday section with an empty list", pg.locator("#holList .hol-row").count() == 0 and "No days off" in (pg.evaluate("() => getComputedStyle(document.getElementById('holList'), '::before').content") or ""))
     pg.click("#holFrom + .hol-to") if False else None
     pg.fill("#holFrom", "2026-12-25"); pg.fill("#holName", "Christmas Day"); pg.check("#holYearly"); pg.click("#calendarModalBg .hol-add .btn"); pg.wait_for_timeout(80)
     pg.fill("#holFrom", "2026-12-28"); pg.fill("#holTo", "2027-01-01"); pg.fill("#holName", "Shutdown"); pg.click("#calendarModalBg .hol-add .btn"); pg.wait_for_timeout(80)

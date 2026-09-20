@@ -115,7 +115,7 @@ with sync_playwright() as p:
 
     # ---------------------------------------------------------- toolbar button
     pg.evaluate("() => { selectedTaskId = null; render(); }")
-    check("toolbar Clone is disabled with nothing selected", pg.is_disabled("#cloneTaskBtn"))
+    check("toolbar Duplicate is not shown with nothing selected", not pg.is_visible("#cloneTaskBtn"))
     seed([{"name": "T", "s": "2026-09-07", "e": "2026-09-10"}, {"name": "T1", "parent": "T", "s": "2026-09-07", "e": "2026-09-08"}])
     pg.click(f".grid-row[data-id='{tid('T')}'] >> nth=0", position={"x": 30, "y": 10}); pg.wait_for_timeout(100)
     check("...and enabled once a task is selected", not pg.is_disabled("#cloneTaskBtn"))

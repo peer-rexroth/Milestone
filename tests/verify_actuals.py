@@ -187,7 +187,8 @@ with sync_playwright() as p:
     pg.evaluate("n => openTaskModal(tasks.find(t => t.name === n).id)", "M"); pg.wait_for_selector("#taskModalBg.open"); pg.wait_for_timeout(80)
     pg.fill("#taskActualStartInput", "2026-09-11"); pg.dispatch_event("#taskActualStartInput", "change")
     check("dialog: a milestone's actual date completes it live", pg.input_value("#taskProgressInput") == "100", pg.input_value("#taskProgressInput"))
-    pg.keyboard.press("Escape"); pg.wait_for_timeout(200)
+    pg.keyboard.press("Escape"); pg.wait_for_selector("#confirmModalBg.open")   # (edited: Escape asks before throwing the changes away)
+    pg.click("#confirmModalActionBtn"); pg.wait_for_timeout(200)
 
     # ================================================================= the date editors are the ones Start/Finish use
     make([{"name": "Auto1", "s": "2026-09-07", "e": "2026-09-11"}, {"name": "Man1", "s": "2026-09-07", "e": "2026-09-11", "mode": "manual"}])

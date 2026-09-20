@@ -34,7 +34,7 @@ with sync_playwright() as p:
     check("...the title defaults to the plan name, the default columns are ticked (ID, Task Name, Start, Finish, Days)", pg.input_value("#printTitle") == ev("() => project.name") and ev("() => ['id', 'name', 'start', 'end', 'duration'].every(c => document.getElementById('printCol-' + c).checked) && ['wbs', 'progress', 'resource', 'preds'].every(c => !document.getElementById('printCol-' + c).checked)"))
     pg.keyboard.press("Escape"); pg.wait_for_timeout(250)
     check("Escape closes it and leaves nothing behind (no print root, no page style)", not ev("() => document.getElementById('printModalBg').classList.contains('open')") and not ev("() => !!document.getElementById('printRoot') || !!document.getElementById('printPageStyle')"))
-    pg.click("#printBtn"); pg.wait_for_selector("#printModalBg.open"); check("the printer button in the toolbar opens it", True); pg.keyboard.press("Escape"); pg.wait_for_timeout(250)
+    pg.click("#dataMenuBtn"); pg.click("#printItem"); pg.wait_for_selector("#printModalBg.open"); check("Data menu → Print / PDF… opens it", True); pg.keyboard.press("Escape"); pg.wait_for_timeout(250)
     pg.click("#dataMenuBtn"); pg.click("#printItem"); pg.wait_for_selector("#printModalBg.open"); check("...and so does Data > Print / PDF…", True); pg.keyboard.press("Escape"); pg.wait_for_timeout(250)
 
     # ------------------------------------------------------------ what a page contains

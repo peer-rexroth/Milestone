@@ -76,6 +76,7 @@ async ([seed, steps, allowCalendar]) => {
     ['copyPaste', 3, () => { const ids = many(); if (!ids.length || tasks.length > 50) return; setSelection(ids); const c = buildClip(); if (!c) return; setSelection(many()); pasteTaskPayload(c.json); }],
     ['pasteRows', 2, () => { if (tasks.length > 50) return; setSelection(many()); let x = 'ID\tTask Name\tStart\tFinish\tDuration\tPredecessors\n'; const n = 1 + ri(4); for (let i = 1; i <= n; i++) x += `${i}\t${rnd() < .3 ? '  ' : ''}Row ${i}\t${rnd() < .6 ? randDate() : 'TBD'}\t${rnd() < .3 ? randDate() : ''}\t${rnd() < .5 ? (1 + ri(9)) + ' days' : ''}\t${i > 1 && rnd() < .5 ? (1 + ri(i - 1)) + pick(['FS', 'SS', 'FF', 'SF']) : ''}\n`; pasteTableText(x); }],
     ['spacer', 3, () => { if (tasks.length > 60) return; const s = anyTask(); selectedTaskId = s ? s.id : null; addSpacer(); }],
+    ['progress', 3, () => { const t = anyTask(); if (t && !hasChildren(t.id)) edit(t, 'progress', pick(['0', '50', '100', '7.6', '33,4', 'abc', '150', '-3', '40%', ''])); }],
     ['clone', 3, () => { const t = anyTask(); if (t && tasks.length < 60) cloneTask(t.id); }],
     ['actualStart', 5, () => { const t = anyTask(); if (t && !hasChildren(t.id)) edit(t, 'actualStart', rnd() < .15 ? '' : randDate()); }],
     ['actualFinish', 5, () => { const t = anyTask(); if (t && !hasChildren(t.id)) edit(t, 'actualFinish', rnd() < .15 ? '' : randDate()); }],

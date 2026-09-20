@@ -20,6 +20,7 @@ with sync_playwright() as p:
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
     pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn")
     ev = pg.evaluate
+    def add_line(): pg.click("#addMenuBtn"); pg.click("#addSpacerBtn")   # the Add menu's "Add empty line"
     def fresh(): ev(SEED); pg.wait_for_timeout(120)
     def pick(name, mods=None):
         row = pg.locator(f".grid-row[data-id='{ev('(n) => tasks.find(t => t.name === n).id', name)}']"); row.locator("> div").first.click(modifiers=mods or []); pg.wait_for_timeout(80)
@@ -30,18 +31,20 @@ with sync_playwright() as p:
 
     # ---------------------------------------------------------------- the button and where the line goes
     fresh()
-    check("the toolbar has an 'Add empty line' button", pg.locator("#addSpacerBtn").count() == 1 and "empty line" in (pg.get_attribute("#addSpacerBtn", "title") or ""))
-    pg.click("#addSpacerBtn"); pg.wait_for_timeout(200)
+    pg.click("#addMenuBtn")
+    check("the Add menu has an 'Add empty line' item", pg.locator("#addMenu.open #addSpacerBtn").is_visible() and "Add empty line" in pg.inner_text("#addSpacerBtn"))
+    pg.keyboard.press("Escape")
+    add_line(); pg.wait_for_timeout(200)
     check("nothing selected: the line goes to the end of the top level, and no dialog opens", ev(OUTLINE) == ["Group", "Alpha@1", "Beta@1", "Gamma", "Delta", "·"] and not modal_open(), ev(OUTLINE))
     t = ev("() => { const s = tasks.find(t => t.spacer); return { name: s.name, spacer: s.spacer, wbs: wbsCode(s.id), id: taskDisplayId(s.id), sel: selectedIds().map(id => byId(id).spacer === true), parent: s.parentId }; }")
     check("...it has no name and no WBS, takes an ID, is the selection", t["name"] == "" and t["spacer"] is True and t["wbs"] == "" and t["id"] == 6 and t["sel"] == [True], t)
-    pg.click("#addSpacerBtn"); pg.wait_for_timeout(150)
+    add_line(); pg.wait_for_timeout(150)
     check("pressing the button again stacks another line below it", ev(OUTLINE)[-2:] == ["·", "·"] and sp() == 2, ev(OUTLINE))
-    fresh(); pick("Gamma"); pg.click("#addSpacerBtn"); pg.wait_for_timeout(150)
+    fresh(); pick("Gamma"); add_line(); pg.wait_for_timeout(150)
     check("a task selected: the line goes right below it, at its level", ev(OUTLINE) == ["Group", "Alpha@1", "Beta@1", "Gamma", "·", "Delta"], ev(OUTLINE))
-    fresh(); pick("Group"); pg.click("#addSpacerBtn"); pg.wait_for_timeout(150)
+    fresh(); pick("Group"); add_line(); pg.wait_for_timeout(150)
     check("a group selected: the line goes after the whole group, not inside it", ev(OUTLINE) == ["Group", "Alpha@1", "Beta@1", "·", "Gamma", "Delta"], ev(OUTLINE))
-    fresh(); pick("Alpha"); pg.click("#addSpacerBtn"); pg.wait_for_timeout(150)
+    fresh(); pick("Alpha"); add_line(); pg.wait_for_timeout(150)
     check("a sub-task selected: the line goes below it inside the group", ev(OUTLINE) == ["Group", "Alpha@1", "·@1", "Beta@1", "Gamma", "Delta"], ev(OUTLINE))
     check("the WBS codes ignore the line (Beta stays 1.2) while the IDs count it (Beta is now #4)", ev("() => [wbsCode(byId('b').id), taskDisplayId('b')]") == ["1.2", 4], ev("() => [wbsCode('b'), taskDisplayId('b')]"))
     check("the link Alpha → Beta still reads correctly from the shifted numbers", ev("() => predecessorLabel(byId('b'))") == "2FS", ev("() => predecessorLabel(byId('b'))"))
@@ -95,7 +98,7 @@ with sync_playwright() as p:
     check("...and moved to the end", ev(OUTLINE)[-1] == "·", ev(OUTLINE))
 
     # ---------------------------------------------------------------- clone, delete, undo
-    fresh(); pick("Gamma"); pg.click("#addSpacerBtn"); pg.wait_for_timeout(150)
+    fresh(); pick("Gamma"); add_line(); pg.wait_for_timeout(150)
     sid = ev("() => tasks.find(t => t.spacer).id"); before = ev(OUTLINE)
     pg.click("#cloneTaskBtn"); pg.wait_for_timeout(200)
     check("Clone copies the line (another empty line right below it, no ' (copy)' name)", ev(OUTLINE) == ["Group", "Alpha@1", "Beta@1", "Gamma", "·", "·", "Delta"] and ev("() => tasks.filter(t => t.spacer).every(t => t.name === '')") and "empty line" in toast(), (ev(OUTLINE), toast()))
@@ -108,7 +111,7 @@ with sync_playwright() as p:
     pg.click("#toastUndoBtn"); pg.wait_for_timeout(200)
     check("...Undo brings it back in place", ev(OUTLINE) == before, ev(OUTLINE))
     pg.keyboard.press("Escape")
-    fresh(); pick("Gamma"); pg.click("#addSpacerBtn"); pg.wait_for_timeout(200)
+    fresh(); pick("Gamma"); add_line(); pg.wait_for_timeout(200)
     ev("() => historyUndo()"); pg.wait_for_timeout(200)
     check("Undo removes an added line", sp() == 0 and "empty line" in toast(), (sp(), toast()))
     ev("() => historyRedo()"); pg.wait_for_timeout(200)
@@ -125,7 +128,7 @@ with sync_playwright() as p:
     ev("() => historyUndo()")
 
     # ---------------------------------------------------------------- bulk edit, find, filters
-    fresh(); pick("Gamma"); pg.click("#addSpacerBtn"); pg.wait_for_timeout(150)
+    fresh(); pick("Gamma"); add_line(); pg.wait_for_timeout(150)
     check("only an empty line selected: the bulk-edit button is disabled", pg.locator("#bulkEditBtn").is_disabled())
     sid = ev("() => tasks.find(t => t.spacer).id"); ev("(id) => { setSelection([id, 'c', 'd'], 'c'); render(); }", sid); pg.wait_for_timeout(80)
     pg.click("#bulkEditBtn"); pg.wait_for_timeout(200)

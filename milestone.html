@@ -329,6 +329,17 @@ input.inline-edit { width: 100%; min-width: 0; padding: 3px 6px; border: 1px sol
 .dropdown-item.active { background: color-mix(in srgb, var(--accent) 10%, var(--panel)); }
 .dropdown-item .mode-check { margin-left: auto; color: var(--accent); }
 .subbar-spacer { flex: 1 1 auto; }
+.tb-sep { width: 1px; height: 22px; background: var(--border); margin: 0 2px; flex-shrink: 0; }
+.split-btn { display: inline-flex; }
+.split-btn .btn:first-child { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.split-btn .split-caret { padding: 7px 8px; border-left-color: transparent; border-top-left-radius: 0; border-bottom-left-radius: 0; font-size: 10px; }
+.split-btn .split-caret:hover { border-left-color: var(--border); }
+.sel-actions { display: flex; align-items: center; gap: 6px 8px; flex-wrap: wrap; }
+.sel-actions.hidden { display: none; }
+.btn-sm { padding: 5px 10px; font-size: 12.5px; }
+.menu-head { padding: 6px 10px 3px; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-faint); }
+.dropdown-item.danger, .dropdown-item.danger i { color: var(--danger); }
+#rowMenu { min-width: 230px; margin-top: 0; }
 .sel-chip { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border: 1px solid var(--accent); border-radius: 13px; background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--text); font-size: 12px; font-weight: 600; cursor: pointer; }
 .sel-chip:hover { background: color-mix(in srgb, var(--accent) 22%, transparent); }
 .sel-chip i { font-size: 11px; color: var(--text-dim); }
@@ -364,23 +375,30 @@ input.inline-edit { width: 100%; min-width: 0; padding: 3px 6px; border: 1px sol
   .print-page svg { display: block; width: 100%; height: 100%; }
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
-.search-bg { align-items: flex-start; padding-top: 12vh; }
+.modal-bg.search-bg { align-items: flex-start; padding-top: 12vh; }   /* (.modal-bg centres; the palette must stay put at the top while its content grows and shrinks) */
 .modal.search-modal { width: 960px; max-width: 94vw; max-height: 70vh; overflow: hidden; }   /* 960px: the results show the name, its groups, the dates and the resource side by side */
 .search-box { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
 .search-box > i { color: var(--text-faint); }
 .search-box input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; color: var(--text); font-size: 15px; }
 .search-x { border: 1px solid var(--border); background: var(--panel-2); color: var(--text-dim); border-radius: 4px; font-size: 11px; padding: 2px 6px; cursor: pointer; }
 .search-results { overflow-y: auto; padding: 6px; flex: 1; min-height: 0; }
-.search-empty { padding: 18px 14px; color: var(--text-dim); font-size: 13px; line-height: 1.6; }
+.search-empty { padding: 14px 16px 12px; color: var(--text-dim); font-size: 13px; line-height: 1.5; }
+.search-lead { color: var(--text); margin-bottom: 10px; }
+.search-total { margin-top: 12px; font-size: 11.5px; color: var(--text-faint); }
 .search-empty code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; color: var(--text); }
-.sr { display: grid; grid-template-columns: 44px 60px 1fr auto; gap: 10px; align-items: center; padding: 7px 10px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+.sr { display: grid; grid-template-columns: 44px 1fr auto; gap: 10px; align-items: center; padding: 7px 10px; border-radius: 6px; cursor: pointer; font-size: 13px; }
 .sr.active, .sr:hover { background: color-mix(in srgb, var(--accent) 14%, var(--panel)); }
-.sr-id { color: var(--text-faint); font-variant-numeric: tabular-nums; } .sr-wbs { color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.sr-id { color: var(--text-faint); font-variant-numeric: tabular-nums; }
 .sr-main { min-width: 0; } .sr-name { color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .sr-name mark { background: color-mix(in srgb, var(--accent) 30%, transparent); color: inherit; border-radius: 2px; }
-.sr-path { color: var(--text-faint); font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sr-path { display: block; margin-top: 1px; color: var(--text-faint); font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sr-path mark { background: color-mix(in srgb, var(--accent) 30%, transparent); color: inherit; border-radius: 2px; }
+.sr-wbs { color: var(--text-dim); font-variant-numeric: tabular-nums; }
 .sr-side { text-align: right; color: var(--text-dim); font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .sr-side .sr-res { display: block; color: var(--text-faint); font-size: 11.5px; }
 .search-foot { display: flex; gap: 16px; padding: 8px 16px; border-top: 1px solid var(--border); color: var(--text-dim); font-size: 11.5px; background: var(--panel-2); }
+.search-count { margin-left: auto; font-variant-numeric: tabular-nums; }
+.sr-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 7px; background: var(--text-faint); vertical-align: 1px; }
+.sr-dot.st-late { background: var(--danger); } .sr-dot.st-complete { background: var(--status-complete); } .sr-dot.st-on-schedule { background: var(--accent); } .sr-dot.st-future-task { background: var(--status-not-started); }
 .search-foot kbd, .search-x { font-family: inherit; } .search-foot kbd { border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 4px; background: var(--panel); padding: 0 5px; margin-right: 3px; color: var(--text); }
 .grid-row.jump-flash, .gantt-row-bg.jump-flash { animation: jumpFlash 1.4s ease-out; }
 @keyframes jumpFlash { 0% { box-shadow: inset 0 0 0 2px var(--accent); background: color-mix(in srgb, var(--accent) 25%, var(--panel)); } 100% { box-shadow: inset 0 0 0 0 transparent; } }
@@ -422,17 +440,11 @@ input.inline-edit { width: 100%; min-width: 0; padding: 3px 6px; border: 1px sol
 .fi-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); } .fi-dates { color: var(--text-dim); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .fi-more { color: var(--text-faint); font-size: 12px; padding-top: 3px; }
 .fi-warn { font-size: 12.5px; color: var(--text-dim); border-left: 3px solid #bf8700; padding: 4px 10px; background: color-mix(in srgb, #bf8700 10%, transparent); border-radius: 0 6px 6px 0; }
-.hol-preset, .hol-add { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-.hol-preset { margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px dashed var(--border); }
-.hol-preset select { flex: 1 1 220px; min-width: 180px; }
-.hol-preset input[type=number] { width: 74px; }
-.hol-add input[type=date] { width: 138px; }
-.hol-add input[type=text] { flex: 1 1 140px; min-width: 120px; }
 .hol-to { color: var(--text-dim); font-size: 12.5px; }
 .hol-yearly { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; color: var(--text-dim); white-space: nowrap; }
 .hol-yearly input:disabled + * , .hol-yearly:has(input:disabled) { opacity: .5; }
-.hol-list { margin-top: 8px; max-height: 190px; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px; }
-.hol-list:empty::before { content: 'No holidays yet'; display: block; padding: 10px 12px; color: var(--text-faint); font-size: 12.5px; }
+.hol-list { max-height: 190px; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px; }
+.hol-list:empty::before { content: 'No days off yet — add the public holidays of a region above, or a single day or a break'; display: block; padding: 10px 12px; color: var(--text-faint); font-size: 12.5px; }
 .hol-row { display: flex; align-items: center; gap: 10px; padding: 5px 8px 5px 12px; font-size: 13px; border-bottom: 1px solid var(--border); }
 .hol-row:last-child { border-bottom: 0; }
 .hol-row .hol-when { font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -530,9 +542,43 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
   transition: opacity .15s ease, visibility .15s ease;
 }
 .modal-bg.open { opacity: 1; visibility: visible; pointer-events: auto; }
+#confirmModalBg { z-index: 110; }   /* a question ("discard your changes?", "delete?") always sits above whatever dialog asked it, wherever that dialog is in the page */
 .modal { background: var(--panel); border-radius: var(--radius); box-shadow: var(--shadow); width: 480px; max-width: 92vw; max-height: 86vh; display: flex; flex-direction: column; }
 .modal.narrow { width: 380px; }
-.modal.roomy { width: 540px; max-height: 94vh; }   /* the task dialog: a lot of fields, so more room before it scrolls */
+.modal.roomy { width: 540px; max-height: 94vh; }
+/* dialog sizes: narrow 380 (questions), 480 (default), mid 520 (Baselines), wide 620 (Edit Task, Working calendar, imports — many fields side by side) */
+.modal.mid { width: 520px; max-height: 94vh; }
+.modal.wide { max-height: 94vh; }   /* (its width, 620px, is set further down) */
+.mh-title { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.cal-summary { font-size: 12px; font-weight: 600; color: var(--text-dim); padding: 2px 10px; border: 1px solid var(--border); border-radius: 12px; background: var(--panel-2); white-space: nowrap; }
+.foot-note { margin-right: auto; align-self: center; font-size: 12px; color: var(--text-faint); }
+/* sections of the calendar and baseline dialogs */
+.cal-sec { display: flex; flex-direction: column; gap: 8px; }
+.cal-sec + .cal-sec, .cal-sec + .cal-how { padding-top: 12px; border-top: 1px solid var(--border); }
+.cal-sec-title { display: flex; align-items: center; gap: 8px; font-size: 11.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-dim); }
+.cal-sec-title .cal-sec-note { text-transform: none; letter-spacing: 0; font-weight: 500; color: var(--text-faint); }
+.cal-sec-title .btn-link { margin-left: auto; text-transform: none; letter-spacing: 0; }
+.cal-sec input[type=text], .cal-sec input[type=date], .cal-sec input[type=number], .cal-sec select { padding: 7px 9px; border: 1px solid var(--border); border-radius: 7px; background: var(--panel); color: var(--text); min-width: 0; }
+.cal-sec .hol-preset, .cal-sec .hol-add { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.cal-sec .hol-preset select { flex: 1 1 200px; }
+.cal-sec .hol-preset input[type=number] { width: 78px; }
+.cal-sec .hol-add input[type=date] { width: 150px; }
+.cal-sec .hol-add input[type=text] { flex: 1 1 200px; min-width: 110px; }
+.hol-break { flex-basis: 100%; height: 0; }
+.cal-how summary { cursor: pointer; font-size: 12.5px; font-weight: 600; color: var(--text-dim); }
+.cal-how .cal-hint { margin-top: 8px; }
+.bl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
+.bl-grid .field select { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 7px; background: var(--panel); color: var(--text); }
+.bl-status { display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: var(--text-dim); line-height: 1.45; }
+.bl-status span { flex: 1; }
+.btn-link.danger { color: var(--danger); }
+.btn-link.danger:disabled { color: var(--text-faint); }
+.cal-sec .bl-compare { width: 100%; padding: 8px 10px; }
+/* Edit Task: four columns */
+.field-grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.field-grid-4 > .span2 { grid-column: span 2; } .field-grid-4 > .span3 { grid-column: span 3; }
+.field-grid-4 input[type=date], .field-grid-4 input[type=number], .field-grid-4 input[type=text], .field-grid-4 select { padding: 8px 8px; }
+.ms-field { align-self: end; padding-bottom: 9px; }   /* the task dialog: a lot of fields, so more room before it scrolls */
 .modal.wide { width: 620px; }
 .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; border-bottom: 1px solid var(--border); }
 .modal-header h2 { margin: 0; font-size: 16px; }
@@ -665,23 +711,36 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 <div class="subbar">
   <button class="icon-btn" id="undoBtn" onclick="historyUndo()" title="Undo (Ctrl+Z)" disabled><i class="fa-solid fa-rotate-left"></i></button>
   <button class="icon-btn" id="redoBtn" onclick="historyRedo()" title="Redo (Ctrl+Shift+Z)" disabled><i class="fa-solid fa-rotate-right"></i></button>
-  <button class="btn" id="addTaskBtn" onclick="addTask()"><i class="fa-solid fa-plus"></i>Add Task</button>
-  <button class="icon-btn" id="addSpacerBtn" onclick="addSpacer()" title="Add an empty line below the selected task — a blank row to separate blocks of tasks"><i class="fa-solid fa-grip-lines"></i></button>
+  <span class="tb-sep"></span>
+  <div class="split-btn">
+    <button class="btn" id="addTaskBtn" onclick="addTask()"><i class="fa-solid fa-plus"></i>Add Task</button>
+    <button class="btn split-caret" id="addMenuBtn" onclick="toggleAddMenu(event)" title="More ways to add rows — an empty line, paste — and how new tasks are scheduled" aria-haspopup="menu" aria-label="More add options"><i class="fa-solid fa-chevron-down"></i></button>
+  </div>
+  <span class="tb-sep"></span>
   <button class="icon-btn" id="indentBtn" onclick="indentSelected()" title="Indent (make sub-task)"><i class="fa-solid fa-indent"></i></button>
   <button class="icon-btn" id="outdentBtn" onclick="outdentSelected()" title="Outdent"><i class="fa-solid fa-outdent"></i></button>
-  <button class="icon-btn" id="cloneTaskBtn" onclick="cloneSelected()" title="Clone task (with all its sub-tasks)"><i class="fa-regular fa-clone"></i></button>
-  <button class="icon-btn" id="copyBtn" onclick="copySelectionButton()" title="Copy the selected tasks (Ctrl/Cmd+C) — paste into Milestone or Excel" disabled><i class="fa-regular fa-copy"></i></button>
-  <button class="icon-btn" id="pasteBtn" onclick="pasteButton()" title="Paste below the selected task (Ctrl/Cmd+V) — tasks copied here, or rows copied from Excel"><i class="fa-regular fa-paste"></i></button>
-  <button class="icon-btn" id="bulkEditBtn" onclick="openBulkModal()" title="Change fields of the selected tasks" disabled><i class="fa-solid fa-pen-to-square"></i></button>
-  <button class="icon-btn btn-danger" id="deleteTaskBtn" onclick="deleteSelected()" title="Delete task"><i class="fa-solid fa-trash"></i></button>
-  <button class="sel-chip hidden" id="selChip" onclick="clearSelection()" title="Clear the selection"></button>
+  <div class="sel-actions hidden" id="selActions">
+    <span class="tb-sep"></span>
+    <button class="sel-chip" id="selChip" onclick="clearSelection()" title="Clear the selection (Esc)"></button>
+    <button class="btn btn-sm" id="bulkEditBtn" onclick="editSelected()" title="Edit the selected task"><i class="fa-solid fa-pen-to-square"></i>Edit</button>
+    <button class="btn btn-sm" id="cloneTaskBtn" onclick="cloneSelected()" title="Duplicate — an exact copy right below, with all its sub-tasks"><i class="fa-regular fa-clone"></i>Duplicate</button>
+    <button class="btn btn-sm" id="copyBtn" onclick="copySelectionButton()" title="Copy the selected tasks (Ctrl/Cmd+C) — paste into Milestone or Excel"><i class="fa-regular fa-copy"></i>Copy</button>
+    <button class="btn btn-sm btn-danger" id="deleteTaskBtn" onclick="deleteSelected()" title="Delete the selected tasks (Delete)"><i class="fa-solid fa-trash"></i>Delete</button>
+  </div>
   <div class="filter-bar hidden" id="filterBar"></div>
   <span class="subbar-spacer"></span>
-  <button class="icon-btn" id="printBtn" onclick="openPrintModal()" title="Print or save the plan as PDF (Ctrl/Cmd+P)"><i class="fa-solid fa-print"></i></button>
   <button class="btn" id="searchBtn" onclick="openSearch()" title="Find a task by name, WBS (2.1), #ID or @resource (Ctrl/Cmd+K, or /)"><i class="fa-solid fa-magnifying-glass"></i>Find</button>
   <button class="btn" id="columnsBtn" onclick="toggleColumnsMenu()" title="Choose which columns the task list shows"><i class="fa-solid fa-table-columns"></i>Columns</button>
-  <button class="btn" id="newTaskModeBtn" onclick="openTaskModeMenu(event,'new')" title="Scheduling mode given to newly added tasks"></button>
 </div>
+<div class="dropdown-menu" id="addMenu" role="menu">
+  <button class="dropdown-item" id="addSpacerBtn" role="menuitem" onclick="closeAddMenu();addSpacer()"><i class="fa-solid fa-grip-lines"></i>Add empty line<span class="item-hint">a blank row to separate tasks</span></button>
+  <button class="dropdown-item" id="pasteBtn" role="menuitem" onclick="closeAddMenu();pasteButton()"><i class="fa-regular fa-paste"></i>Paste tasks<span class="item-hint" data-kbd="V"></span></button>
+  <div class="dropdown-sep"></div>
+  <div class="menu-head">New tasks are</div>
+  <button class="dropdown-item" id="newModeAuto" role="menuitemradio" onclick="setNewTaskMode('auto')"></button>
+  <button class="dropdown-item" id="newModeManual" role="menuitemradio" onclick="setNewTaskMode('manual')"></button>
+</div>
+<div class="dropdown-menu" id="rowMenu" role="menu"></div>
 <div class="dropdown-menu" id="taskModeMenu"></div>
 <div class="dropdown-menu filter-menu" id="filterMenu"></div>
 <div class="dropdown-menu cols-menu" id="columnsMenu"></div>
@@ -702,48 +761,42 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 </div>
 
 <!-- Task modal -->
-<div class="modal-bg" id="taskModalBg" onclick="if(event.target===this) closeTaskModal()">
-  <div class="modal roomy">
-    <div class="modal-header"><h2 id="taskModalTitle">Task<span id="taskModalIdBadge" class="id-badge"></span></h2><button onclick="closeTaskModal()">&times;</button></div>
+<div class="modal-bg" id="taskModalBg" onclick="if(event.target===this) requestCloseTaskModal()">
+  <div class="modal wide">
+    <div class="modal-header"><h2 id="taskModalTitle">Task<span id="taskModalIdBadge" class="id-badge"></span></h2><button onclick="requestCloseTaskModal()" aria-label="Close">&times;</button></div>
     <div class="modal-tabs" role="tablist">
       <button type="button" class="modal-tab active" id="taskTabBtnGeneral" role="tab" aria-selected="true" onclick="setTaskModalTab('general')">General</button>
       <button type="button" class="modal-tab" id="taskTabBtnCustom" role="tab" aria-selected="false" onclick="setTaskModalTab('custom')">Custom fields<span class="tab-badge hidden" id="taskCustomBadge"></span></button>
     </div>
     <div class="modal-body">
       <div class="tab-pane" id="taskTabGeneral">
-      <div class="field"><label>Task Name</label><input type="text" id="taskNameInput" placeholder="Task name"></div>
-      <div class="field-row">
-        <div class="field"><label>Task Mode</label><select id="taskModeInput"><option value="manual">Manually Scheduled</option><option value="auto">Auto Scheduled</option></select></div>
-        <div class="field"><label>Resource</label><input type="text" id="taskResourceInput" maxlength="200" placeholder="e.g. Anna, Ben"></div>
-      </div>
-      <div class="checkbox-row"><input type="checkbox" id="taskMilestoneInput" onchange="onMilestoneToggle()"><label for="taskMilestoneInput">Milestone (zero-duration)</label></div>
-      <div class="field-row">
-        <div class="field"><label>Start</label><input type="date" id="taskStartInput" onchange="onTaskStartChange()"></div>
-        <div class="field" id="taskEndField"><label>Finish</label><input type="date" id="taskEndInput" onchange="onTaskEndChange()"></div>
+      <div class="field-grid-4">
+        <div class="field span3"><label for="taskNameInput">Task Name</label><input type="text" id="taskNameInput" placeholder="Task name" onkeydown="if(event.key==='Enter'){event.preventDefault();saveTaskFromModal();}"></div>
+        <div class="field"><label for="taskModeInput">Task Mode</label><select id="taskModeInput"><option value="manual">Manually Scheduled</option><option value="auto">Auto Scheduled</option></select></div>
+        <div class="field span3"><label for="taskResourceInput">Resource</label><input type="text" id="taskResourceInput" maxlength="200"></div>
+        <div class="checkbox-row ms-field"><input type="checkbox" id="taskMilestoneInput" onchange="onMilestoneToggle()"><label for="taskMilestoneInput">Milestone</label></div>
+        <div class="field"><label for="taskStartInput">Start</label><input type="date" id="taskStartInput" onchange="onTaskStartChange()"></div>
+        <div class="field" id="taskEndField"><label for="taskEndInput">Finish</label><input type="date" id="taskEndInput" onchange="onTaskEndChange()"></div>
+        <div class="field" id="taskDurationField"><label for="taskDurationInput" title="Working days, counted on the plan's working calendar">Duration (days)</label><input type="number" min="1" max="9999" id="taskDurationInput" onchange="onTaskDurationChange()"></div>
+        <div class="field"><label for="taskProgressInput">% Complete</label><input type="number" min="0" max="100" id="taskProgressInput"></div>
       </div>
       <div class="pred-empty hidden" id="taskTextDatesNote"></div>
-      <div class="field-row" id="taskDurProgRow">
-        <div class="field" id="taskDurationField"><label title="Working days, counted on the plan's working calendar">Duration (days)</label><input type="number" min="1" max="9999" id="taskDurationInput" onchange="onTaskDurationChange()"></div>
-        <div class="field"><label>% Complete</label><input type="number" min="0" max="100" id="taskProgressInput"></div>
-      </div>
-      <div class="field-row">
-        <div class="field"><label>Actual Start</label><input type="date" id="taskActualStartInput" onchange="onActualStartChange()"></div>
-        <div class="field" id="taskActualFinishField" title="Recording an Actual Finish marks the task 100% complete"><label>Actual Finish</label><input type="date" id="taskActualFinishInput" onchange="onActualFinishChange()"></div>
+      <div class="field-grid-4 calc-row">
+        <div class="field"><label for="taskActualStartInput">Actual Start</label><input type="date" id="taskActualStartInput" onchange="onActualStartChange()"></div>
+        <div class="field" id="taskActualFinishField" title="Recording an Actual Finish marks the task 100% complete"><label for="taskActualFinishInput">Actual Finish</label><input type="date" id="taskActualFinishInput" onchange="onActualFinishChange()"></div>
+        <div class="field" title="Worked out by Milestone — not entered"><label>Remaining</label><div class="ro-value" id="taskRemainingInfo"></div></div>
+        <div class="field" title="Worked out by Milestone — not entered"><label>Status</label><div class="ro-value" id="taskStatusInfo"></div></div>
+        <span id="taskWbsInfo" class="hidden"></span>
       </div>
       <div class="pred-empty hidden" id="taskActualsNote"></div>
       <div class="baseline-info hidden" id="taskBaselineInfo" title="From the plan's baseline (plan menu → Baseline…)"></div>
-      <div class="field-row-3 calc-row" title="Worked out by Milestone — not entered">
-        <div class="field"><label>WBS</label><div class="ro-value" id="taskWbsInfo"></div></div>
-        <div class="field"><label>Remaining Duration</label><div class="ro-value" id="taskRemainingInfo"></div></div>
-        <div class="field"><label>Status</label><div class="ro-value" id="taskStatusInfo"></div></div>
-      </div>
-      <div class="field-row">
-        <div class="field">
-          <label>Constraint</label>
+      <div class="field-grid-4">
+        <div class="field span2">
+          <label for="taskConstraintTypeInput">Constraint</label>
           <select id="taskConstraintTypeInput" onchange="onConstraintTypeChange()"></select>
         </div>
-        <div class="field" id="taskConstraintDateField">
-          <label id="taskConstraintDateLabel">Constraint date</label>
+        <div class="field span2" id="taskConstraintDateField">
+          <label id="taskConstraintDateLabel" for="taskConstraintDateInput">Constraint date</label>
           <input type="date" id="taskConstraintDateInput">
         </div>
       </div>
@@ -775,7 +828,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
     <div class="modal-header"><h2 id="confirmModalTitle">Confirm</h2><button onclick="closeConfirmModal()">&times;</button></div>
     <div class="modal-body"><div id="confirmModalBody" style="font-size:13.5px;line-height:1.5"></div></div>
     <div class="modal-footer">
-      <button class="btn" onclick="closeConfirmModal()">Cancel</button>
+      <button class="btn" id="confirmModalCancelBtn" onclick="closeConfirmModal()">Cancel</button>
       <button class="btn btn-primary btn-danger" id="confirmModalActionBtn" onclick="confirmModalAction()">Delete</button>
     </div>
   </div>
@@ -860,7 +913,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
     <div class="modal-body">
       <p class="bulk-hint" id="bulkHint"></p>
       <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-progress"> % complete</label><div class="bulk-ctl"><input type="number" id="bulkVal-progress" min="0" max="100" step="1" placeholder="0 – 100" aria-label="% complete"></div></div>
-      <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-resource"> Resource</label><div class="bulk-ctl"><input type="text" id="bulkVal-resource" maxlength="200" placeholder="Anna, Ben (empty clears it)" aria-label="Resource"></div></div>
+      <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-resource"> Resource</label><div class="bulk-ctl"><input type="text" id="bulkVal-resource" maxlength="200" placeholder="Empty clears the resource" aria-label="Resource"></div></div>
       <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-mode"> Task Mode</label><div class="bulk-ctl"><select id="bulkVal-mode" aria-label="Task Mode"><option value="auto">Auto Scheduled</option><option value="manual">Manually Scheduled</option></select></div></div>
       <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-color"> Colour</label><div class="bulk-ctl"><select id="bulkVal-color" aria-label="Colour"></select></div></div>
       <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-shift"> Move dates by</label><div class="bulk-ctl"><input type="number" id="bulkVal-shift" step="1" placeholder="working days (negative = earlier)" aria-label="Working days to move by"><span class="bulk-hint">working days</span></div></div>
@@ -873,9 +926,9 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 
 <div class="modal-bg search-bg" id="searchModalBg" onclick="if(event.target===this) closeSearch()">
   <div class="modal search-modal" role="dialog" aria-label="Find a task">
-    <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="searchInput" autocomplete="off" spellcheck="false" placeholder="Find a task — name, WBS (2.1), #ID, @resource" oninput="renderSearch()" onkeydown="searchKey(event)" aria-controls="searchResults"><button class="search-x" onclick="closeSearch()" aria-label="Close">Esc</button></div>
+    <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="searchInput" autocomplete="off" spellcheck="false" placeholder="Find a task by name…" oninput="renderSearch()" onkeydown="searchKey(event)" aria-controls="searchResults"><button class="search-x" onclick="closeSearch()" aria-label="Close">Esc</button></div>
     <div class="search-results" id="searchResults" role="listbox"></div>
-    <div class="search-foot" id="searchFoot"><span><kbd>↑</kbd><kbd>↓</kbd> move</span><span><kbd>Enter</kbd> go to the task</span><span><kbd>Shift</kbd>+<kbd>Enter</kbd> show only the matches</span></div>
+    <div class="search-foot" id="searchFoot"><span><kbd>↑</kbd><kbd>↓</kbd> move</span><span><kbd>Enter</kbd> go to the task</span><span data-shift><kbd>Shift</kbd>+<kbd>Enter</kbd> show only the matches</span><span class="search-count" id="searchCount"></span></div>
   </div>
 </div>
 
@@ -955,32 +1008,45 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
   </div>
 </div>
 
-<div class="modal-bg" id="calendarModalBg" onclick="if(event.target===this) closeCalendarModal()">
-  <div class="modal roomy">
-    <div class="modal-header"><h2>Working calendar</h2><button onclick="closeCalendarModal()">&times;</button></div>
+<div class="modal-bg" id="calendarModalBg" onclick="if(event.target===this) requestCloseCalendarModal()">
+  <div class="modal wide">
+    <div class="modal-header"><div class="mh-title"><h2>Working calendar</h2><span class="cal-summary" id="calendarSummaryLive"></span></div><button onclick="requestCloseCalendarModal()" aria-label="Close">&times;</button></div>
     <div class="modal-body">
-      <div class="field"><label>Working days of “<span id="calendarPlanName"></span>”</label>
-        <div class="cal-days" id="calendarDays"></div></div>
-      <div class="field"><label for="holFrom">Holidays and other days off</label>
+      <section class="cal-sec">
+        <div class="cal-sec-title">Working week <span class="cal-sec-note">of “<span id="calendarPlanName"></span>”</span></div>
+        <div class="cal-days" id="calendarDays"></div>
+      </section>
+      <section class="cal-sec">
+        <div class="cal-sec-title">Public holidays</div>
         <div class="hol-preset">
           <select id="holRegion" aria-label="Country or region for public holidays"></select>
           <input type="number" id="holYearFrom" min="2000" max="2100" aria-label="From year" onkeydown="if(event.key==='Enter'){event.preventDefault();addHolidayPreset();}">
-          <span class="hol-to">–</span>
+          <span class="hol-to">to</span>
           <input type="number" id="holYearTo" min="2000" max="2100" aria-label="To year" onkeydown="if(event.key==='Enter'){event.preventDefault();addHolidayPreset();}">
           <button class="btn" type="button" onclick="addHolidayPreset()" title="Add the public holidays of this region for these years"><i class="fa-solid fa-flag"></i>Add public holidays</button>
         </div>
+      </section>
+      <section class="cal-sec">
+        <div class="cal-sec-title">Another day off <span class="cal-sec-note">a single day, a break, or a day that comes back every year</span></div>
         <div class="hol-add">
-          <input type="date" id="holFrom" title="The day off, or the first day of a longer break" onkeydown="if(event.key==='Enter'){event.preventDefault();addHoliday();}">
+          <input type="date" id="holFrom" aria-label="The day off, or the first day of a longer break" title="The day off, or the first day of a longer break" onkeydown="if(event.key==='Enter'){event.preventDefault();addHoliday();}">
           <span class="hol-to">to</span>
-          <input type="date" id="holTo" title="Last day of a longer break (leave empty for a single day)" onchange="holToChanged()" onkeydown="if(event.key==='Enter'){event.preventDefault();addHoliday();}">
-          <input type="text" id="holName" maxlength="60" placeholder="Name (optional)" onkeydown="if(event.key==='Enter'){event.preventDefault();addHoliday();}">
+          <input type="date" id="holTo" aria-label="Last day of a longer break" title="Last day of a longer break (leave empty for a single day)" onchange="holToChanged()" onkeydown="if(event.key==='Enter'){event.preventDefault();addHoliday();}">
           <label class="hol-yearly" title="A single day that comes back every year, such as 25 December"><input type="checkbox" id="holYearly"> Every year</label>
+          <span class="hol-break"></span>
+          <input type="text" id="holName" maxlength="60" placeholder="Name (optional)" aria-label="Name of the day off" onkeydown="if(event.key==='Enter'){event.preventDefault();addHoliday();}">
           <button class="btn" type="button" onclick="addHoliday()"><i class="fa-solid fa-plus"></i>Add</button>
         </div>
-        <div class="hol-list" id="holList"></div></div>
-      <p class="cal-hint">Durations, lags and dependencies count working days only — weekdays that work and are not a holiday. Auto Scheduled tasks start and finish on working days; Manually Scheduled tasks keep the dates you give them. Days off are shaded in the Gantt chart. Public-holiday presets are a starting point — check them against your own calendar; regional and company days differ. Dates already in the plan are not moved when you change this, and other plans keep their own calendar.</p>
+      </section>
+      <section class="cal-sec">
+        <div class="cal-sec-title">Days off in this plan <span class="cal-sec-note" id="holCount"></span><button class="btn-link danger" type="button" id="holClearBtn" onclick="clearHolidays()">Clear all</button></div>
+        <div class="hol-list" id="holList"></div>
+      </section>
+      <details class="cal-how"><summary>How this works</summary>
+        <p class="cal-hint">Durations, lags and dependencies count working days only — weekdays that work and are not a holiday. Auto Scheduled tasks start and finish on working days; Manually Scheduled tasks keep the dates you give them. Days off are shaded in the Gantt chart. Public-holiday presets are a starting point — check them against your own calendar; regional and company days differ. Dates already in the plan are not moved when you change this, and other plans keep their own calendar.</p></details>
     </div>
     <div class="modal-footer">
+      <span class="foot-note">Changes apply when you save.</span>
       <button class="btn" onclick="closeCalendarModal()">Cancel</button>
       <button class="btn btn-primary" onclick="saveCalendar()">Save</button>
     </div>
@@ -988,24 +1054,32 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 </div>
 
 <div class="modal-bg" id="baselineModalBg" onclick="if(event.target===this) closeBaselineModal()">
-  <div class="modal narrow">
-    <div class="modal-header"><h2>Baseline</h2><button onclick="closeBaselineModal()">&times;</button></div>
+  <div class="modal mid">
+    <div class="modal-header"><h2>Baselines</h2><button onclick="closeBaselineModal()" aria-label="Close">&times;</button></div>
     <div class="modal-body">
-      <div class="field"><label for="baselineSlotSelect">Baseline to set</label><select id="baselineSlotSelect" onchange="renderBaselineModal()"></select></div>
-      <div class="field"><label>Apply to</label>
-        <div class="radio-col">
-          <label class="radio-row"><input type="radio" name="baselineScope" id="baselineScopeAll" value="all" checked> <span>The entire plan</span></label>
-          <label class="radio-row"><input type="radio" name="baselineScope" id="baselineScopeSel" value="selected"> <span id="baselineScopeSelLabel">The selected task</span></label>
-        </div></div>
-      <p class="cal-hint" id="baselineSlotInfo" style="margin:0 0 12px"></p>
-      <div class="cal-hint-line"><button class="btn" id="baselineClearBtn" onclick="clearBaselineFromDialog()">Clear this baseline</button></div>
-      <hr class="modal-sep">
-      <div class="field"><label for="baselineCompareSelect">Compare with (Gantt bars, Baseline and Variance columns)</label><select id="baselineCompareSelect" onchange="setCompareBaseline(this.value)"></select></div>
-      <hr class="modal-sep">
-      <div class="field"><label>Actual dates</label>
-        <p class="cal-hint" id="baselineActualsInfo" style="margin:0 0 8px"></p>
-        <div class="cal-hint-line"><button class="btn" id="baselineApplyBtn" onclick="applyActualsToSchedule()">Apply actual dates to the schedule</button></div></div>
-      <p class="cal-hint">A baseline is a frozen copy of every task's Start and Finish, taken only when you set it. Milestone keeps up to eleven (Baseline and Baseline 1–10). Start and Finish Variance show how far the current schedule has moved from the baseline you compare with, in working days (positive = later).</p>
+      <p class="cal-hint" style="margin:0">A baseline is a frozen copy of every task's Start and Finish, taken only when you set it — so you can see later how far the plan has moved. Up to eleven are kept.</p>
+      <section class="cal-sec">
+        <div class="cal-sec-title">Take or replace a baseline</div>
+        <div class="bl-grid">
+          <div class="field"><label for="baselineSlotSelect">Baseline</label><select id="baselineSlotSelect" onchange="renderBaselineModal()"></select></div>
+          <div class="field"><label>Apply to</label>
+            <div class="radio-col">
+              <label class="radio-row"><input type="radio" name="baselineScope" id="baselineScopeAll" value="all" checked> <span>The entire plan</span></label>
+              <label class="radio-row"><input type="radio" name="baselineScope" id="baselineScopeSel" value="selected"> <span id="baselineScopeSelLabel">The selected task</span></label>
+            </div></div>
+        </div>
+        <div class="bl-status"><span id="baselineSlotInfo"></span><button class="btn-link danger" id="baselineClearBtn" onclick="clearBaselineFromDialog()">Clear this baseline</button></div>
+      </section>
+      <section class="cal-sec">
+        <div class="cal-sec-title">Compare the chart and columns with</div>
+        <select id="baselineCompareSelect" class="bl-compare" aria-label="Baseline to compare with" onchange="setCompareBaseline(this.value)"></select>
+        <p class="cal-hint" id="baselineCompareHint" style="margin:0"></p>
+      </section>
+      <section class="cal-sec" id="baselineActualsSec">
+        <div class="cal-sec-title">Actual dates</div>
+        <p class="cal-hint" id="baselineActualsInfo" style="margin:0"></p>
+        <div><button class="btn" id="baselineApplyBtn" onclick="applyActualsToSchedule()">Apply actual dates to the schedule</button></div>
+      </section>
     </div>
     <div class="modal-footer">
       <button class="btn" onclick="closeBaselineModal()">Close</button>
@@ -1046,17 +1120,18 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
         <div class="help-section">
           <div class="help-section-title">Building a plan</div>
           <div class="help-row"><i class="fa-solid fa-plus"></i><span><strong>Add Task</strong> inserts a task below the selected one, or at the bottom when nothing is selected. Each task has a start and end date and a % complete, and can be a <strong>milestone</strong> (a one-day diamond).</span></div>
-          <div class="help-row"><i class="fa-solid fa-grip-lines"></i><span><strong>Add empty line</strong> (the lines button next to Add Task) inserts a blank row below the selected task (below its whole block when it is a group) to separate blocks of tasks. It has an ID but no name, dates or WBS, is never scheduled, charted or linked, and can be moved, indented, copied and deleted like any row.</span></div>
+          <div class="help-row"><i class="fa-solid fa-computer-mouse"></i><span><strong>Right-click</strong> a task (in the list, or its row in the chart) for a menu with Edit, Add task, Add empty line, Duplicate, Copy, Cut, Paste, Indent, Outdent and Delete. Right-clicking on the empty part of the list offers Add task, Add empty line and Paste. The buttons for the selected tasks (<strong>Edit, Duplicate, Copy, Delete</strong>) appear in the toolbar while something is selected; with one task <strong>Edit</strong> opens the same dialog as a double-click.</span></div>
+          <div class="help-row"><i class="fa-solid fa-grip-lines"></i><span><strong>Add empty line</strong> (in the menu next to Add Task, or on the right-click menu) inserts a blank row below the selected task (below its whole block when it is a group) to separate blocks of tasks. It has an ID but no name, dates or WBS, is never scheduled, charted or linked, and can be moved, indented, copied and deleted like any row.</span></div>
           <div class="help-row"><i class="fa-solid fa-indent"></i><span><strong>Indent</strong> and <strong>Outdent</strong> build the work breakdown structure. A parent task's own dates and progress roll up from its sub-tasks, and its <strong>WBS</strong> code (such as <code>2.1.3</code>) follows the outline.</span></div>
           <div class="help-row"><i class="fa-solid fa-grip-lines"></i><span><strong>Drag</strong> a task's line up or down to reorder it — a parent brings its sub-tasks along.</span></div>
-          <div class="help-row"><i class="fa-solid fa-clone"></i><span><strong>Clone</strong> (on a task's line, or in the toolbar for the selected task) makes an exact copy right below it, including all its sub-tasks and their sub-tasks. Undo takes it back.</span></div>
+          <div class="help-row"><i class="fa-solid fa-clone"></i><span><strong>Duplicate</strong> (on a task's line, in the toolbar once a task is selected, or on the right-click menu) makes an exact copy right below it, including all its sub-tasks and their sub-tasks. Undo takes it back.</span></div>
           <div class="help-row"><i class="fa-solid fa-angles-up"></i><span>The <strong>double arrow above the ID numbers</strong> steps through the outline: collapse every group, then open the first level, then the next level, and so on until everything is open — then it starts over.</span></div>
         </div>
         <div class="help-divider"></div>
         <div class="help-section">
           <div class="help-section-title">Selecting several tasks</div>
           <div class="help-row"><i class="fa-solid fa-object-group"></i><span><strong>Ctrl/Cmd+click</strong> adds a task to the selection or takes it out; <strong>Shift+click</strong> selects every visible row from the last one you clicked; <strong>Ctrl/Cmd+A</strong> selects all visible tasks; <strong>Esc</strong> (or the “N selected” chip in the toolbar) clears it.</span></div>
-          <div class="help-row"><i class="fa-solid fa-layer-group"></i><span>Indent, Outdent, Clone, Copy and Delete then act on all of them (a group brings its sub-tasks). The <strong>pencil</strong> button opens <strong>Edit tasks</strong>: tick the fields to change — % complete, Resource, Task Mode, Colour, <em>Move dates by</em> a number of working days, <em>Add predecessor</em>, and any custom field you show — and Apply. It is one Undo step.</span></div>
+          <div class="help-row"><i class="fa-solid fa-layer-group"></i><span>Indent, Outdent, Clone, Copy and Delete then act on all of them (a group brings its sub-tasks). The <strong>Edit button</strong> in the toolbar opens the full task dialog for one selected task (the same as a double-click) and, with several selected, <strong>Edit tasks</strong>: tick the fields to change — % complete, Resource, Task Mode, Colour, <em>Move dates by</em> a number of working days, <em>Add predecessor</em>, and any custom field you show — and Apply. It is one Undo step.</span></div>
         </div>
         <div class="help-divider"></div>
         <div class="help-section">
@@ -1068,7 +1143,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
         <div class="help-divider"></div>
         <div class="help-section">
           <div class="help-section-title">Find a task</div>
-          <div class="help-row"><i class="fa-solid fa-magnifying-glass"></i><span><strong>Ctrl/Cmd+K</strong>, <code>/</code> or the <strong>Find</strong> button opens a search: part of a name (every word must match), a WBS code such as <code>2.1</code>, <code>#12</code> for the task with that ID, or <code>@anna</code> for a resource. <strong>Enter</strong> goes to the task — folded groups open, a filter that would hide it steps aside, the row (and in the Gantt view the bar) scrolls into view and flashes. <strong>Shift+Enter</strong> shows only the matches.</span></div>
+          <div class="help-row"><i class="fa-solid fa-magnifying-glass"></i><span><strong>Ctrl/Cmd+K</strong>, <code>/</code> or the <strong>Find</strong> button opens a search: part of a name (every word must match), a WBS code such as <code>2.1</code>, <code>#12</code> for the task with that ID, or <code>@anna</code> for a resource, and <code>status:late</code> for the late tasks (also <code>complete</code>, <code>future</code>, <code>on</code> for on schedule — combine it with words). <strong>Enter</strong> goes to the task — folded groups open, a filter that would hide it steps aside, the row (and in the Gantt view the bar) scrolls into view and flashes. <strong>Shift+Enter</strong> shows only the matches.</span></div>
         </div>
         <div class="help-divider"></div>
         <div class="help-section">
@@ -1098,13 +1173,13 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
           <div class="help-section-title">Task Mode</div>
           <div class="help-row"><i class="fa-solid fa-chart-gantt"></i><span><strong>Auto Scheduled</strong> (chart icon) tasks follow their predecessors and constraints.</span></div>
           <div class="help-row"><i class="fa-solid fa-thumbtack"></i><span><strong>Manually Scheduled</strong> (pushpin) tasks stay exactly where you put them: predecessors never move them, their Start, Finish (a manual milestone's too) and Duration can be free text such as “TBD”, and a warning triangle appears if one starts earlier than its predecessors allow. They are drawn with a dashed bar and left out of the critical path.</span></div>
-          <div class="help-row"><i class="fa-solid fa-toggle-on"></i><span>Click the icon in the <strong>Task Mode</strong> column (or use the Task Mode field in a task's dialog) to switch. Switching to Auto moves the task to the earliest date its links allow. The <strong>New tasks</strong> button at the right of the toolbar chooses the mode new tasks start in — Auto Scheduled by default.</span></div>
+          <div class="help-row"><i class="fa-solid fa-toggle-on"></i><span>Click the icon in the <strong>Task Mode</strong> column (or use the Task Mode field in a task's dialog) to switch. Switching to Auto moves the task to the earliest date its links allow. <strong>New tasks are</strong> in the menu next to Add Task sets the mode a newly added task gets — Auto Scheduled by default.</span></div>
         </div>
         <div class="help-divider"></div>
         <div class="help-section">
           <div class="help-section-title">Dependencies</div>
-          <div class="help-row"><i class="fa-solid fa-link"></i><span>Open a task and add a <strong>predecessor</strong> to link it to another task: Finish-to-Start, Start-to-Start, Finish-to-Finish or Start-to-Finish. In the list you can type them directly, such as <code>3FS+2</code>.</span></div>
-          <div class="help-row"><i class="fa-solid fa-arrows-left-right"></i><span><strong>Lag and lead:</strong> a positive number delays the dependent task, a negative number lets it overlap and start early. <code>3FS+2</code> waits 2 extra days after task 3 finishes; <code>3FS-2</code> starts 2 days before task 3 finishes.</span></div>
+          <div class="help-row"><i class="fa-solid fa-link"></i><span>Open a task and add a <strong>predecessor</strong> to link it to another task: Finish-to-Start, Start-to-Start, Finish-to-Finish or Start-to-Finish. In the list you can type them directly, the way MS Project writes them: <code>3</code>, <code>3FS</code>, <code>3SS+2d</code>, <code>4FF-1w</code>, several separated by <code>,</code> or <code>;</code>.</span></div>
+          <div class="help-row"><i class="fa-solid fa-arrows-left-right"></i><span><strong>Lag and lead:</strong> a positive number delays the dependent task, a negative number lets it overlap and start early. <code>3FS+2</code> waits 2 extra days after task 3 finishes; <code>3FS-2</code> starts 2 days before task 3 finishes. Units are days (<code>d</code>), weeks (<code>w</code>) or hours (<code>h</code>), all counted in working days; elapsed (<code>ed</code>) and percentage lags are not supported.</span></div>
           <div class="help-row"><i class="fa-solid fa-triangle-exclamation"></i><span>A <strong>circular dependency</strong> is flagged with a warning icon and stops auto-scheduling for the tasks involved.</span></div>
         </div>
         <div class="help-divider"></div>
@@ -1128,6 +1203,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
         <div class="help-section">
           <div class="help-section-title">Actual dates and status</div>
           <div class="help-row"><i class="fa-solid fa-circle-play"></i><span><strong>Actual Start</strong> and <strong>Actual Finish</strong> record what really happened, and they <strong>are the schedule</strong>: an Actual Start becomes the task's Start (a running task keeps its duration, so its Finish moves with it) and an Actual Finish becomes its Finish. The tasks that depend on it are re-planned from those dates — later or earlier.</span></div>
+          <div class="help-row"><i class="fa-solid fa-percent"></i><span>Click the <strong>%</strong> cell of a task to type its % complete (0–100; <code>50</code> or <code>50%</code>). A group's % is worked out from its sub-tasks, so it is not editable.</span></div>
           <div class="help-row"><i class="fa-solid fa-circle-check"></i><span>Recording an Actual Finish marks the task <strong>100% complete</strong> and fills an empty Actual Start. A task that has started or finished is not rescheduled any more; a warning triangle appears if its predecessors say it couldn't have started yet.</span></div>
           <div class="help-row"><i class="fa-solid fa-layer-group"></i><span>A group shows the actual dates of the tasks in it: the earliest actual start, and an actual finish once everything in it has finished.</span></div>
           <div class="help-row"><i class="fa-solid fa-gauge-high"></i><span><strong>Remaining Duration</strong> (the duration still to go, from % complete) and <strong>Status</strong> (Complete, On Schedule, Late or Future Task, judged against today) are worked out for you.</span></div>
@@ -1177,7 +1253,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
         <div class="help-divider"></div>
         <div class="help-section">
           <div class="help-section-title">Printing</div>
-          <div class="help-row"><i class="fa-solid fa-print"></i><span><strong>Print / PDF…</strong> (the printer button, the Data menu, or Ctrl/Cmd+P) lays the list and the chart out on pages of the paper you choose — A4, A3, Letter, Legal or Tabloid, landscape or portrait. The whole timeline is fitted to the page width, long plans continue on the next page with the heading repeated, and a live preview shows every page.</span></div>
+          <div class="help-row"><i class="fa-solid fa-print"></i><span><strong>Print / PDF…</strong> (the Data menu, or Ctrl/Cmd+P) lays the list and the chart out on pages of the paper you choose — A4, A3, Letter, Legal or Tabloid, landscape or portrait. The whole timeline is fitted to the page width, long plans continue on the next page with the heading repeated, and a live preview shows every page.</span></div>
           <div class="help-row"><i class="fa-solid fa-sliders"></i><span>Choose the list columns, the time range, the timescale (weeks, months or quarters — automatic by default), and whether to show the baseline, the critical path, dependency arrows, the today line and days off. Tasks print as the list shows them (folded groups and filters apply) unless you expand every group. In your browser's print dialog choose <strong>Save as PDF</strong> for a file.</span></div>
         </div>
         <div class="help-divider"></div>
@@ -1641,7 +1717,7 @@ function resetColumns() {   // resets the view you are in; the other view keeps 
 function toggleColumnsMenu() {
   const menu = document.getElementById('columnsMenu');
   if (menu.classList.contains('open')) { closeColumnsMenu(); return; }
-  closeDataMenu(); closePlanMenu(); closeFilterMenu(); closeTaskModeMenu();
+  closeDataMenu(); closePlanMenu(); closeFilterMenu(); closeTaskModeMenu(); closeToolbarMenus();
   renderColumnsMenu(); positionDropdown('columnsBtn', 'columnsMenu');
   menu.style.maxHeight = Math.max(260, window.innerHeight - document.getElementById('columnsBtn').getBoundingClientRect().bottom - 16) + 'px';
   menu.classList.add('open');
@@ -1971,7 +2047,7 @@ function normalizeData() {
   resetEffectiveCache();
   // New tasks are Auto Scheduled unless the project says otherwise. Every project saved while the default was Manual has
   // 'manual' stored (the default is written on the first save), so a project without the current revision marker is switched to
-  // Auto ONCE; a choice made afterwards (the "New tasks" button) keeps the marker and is never overridden.
+  // Auto ONCE; a choice made afterwards (the Add menu's "New tasks are") keeps the marker and is never overridden.
   if (project.modeRev !== 1) { project.newTaskMode = 'auto'; project.modeRev = 1; }
   if (project.newTaskMode !== 'manual') project.newTaskMode = 'auto';
 }
@@ -2513,14 +2589,11 @@ function updateSelectionUI() {
   const ids = selectedIds(), n = ids.length, has = n > 0;
   document.getElementById('indentBtn').disabled = !has;
   document.getElementById('outdentBtn').disabled = !ids.some(id => byId(id).parentId);
-  document.getElementById('cloneTaskBtn').disabled = !has;
-  document.getElementById('deleteTaskBtn').disabled = !has;
-  document.getElementById('copyBtn').disabled = !has;
+  document.getElementById('selActions').classList.toggle('hidden', !has);   // Edit / Duplicate / Copy / Delete only appear while something is selected
   document.getElementById('bulkEditBtn').disabled = !ids.some(id => !byId(id).spacer);   // an empty line has no fields
-  document.getElementById('bulkEditBtn').title = n > 1 ? `Change a field for all ${n} selected tasks` : 'Change fields of the selected task (or select several with Ctrl/Cmd+click or Shift+click)';
-  const chip = document.getElementById('selChip');
-  chip.classList.toggle('hidden', n < 2);
-  chip.innerHTML = `${n} selected <i class="fa-solid fa-xmark"></i>`;
+  const nEdit = ids.filter(id => !byId(id).spacer).length;
+  document.getElementById('bulkEditBtn').title = nEdit > 1 ? `Change a field for all ${nEdit} selected tasks` : 'Edit the selected task (select several with Ctrl/Cmd+click or Shift+click to change a field for all of them)';
+  document.getElementById('selChip').innerHTML = `${n} selected <i class="fa-solid fa-xmark"></i>`;
 }
 
 function statusColorVar(t) {
@@ -2764,7 +2837,7 @@ function openColumnFilter(event, col) {
   event.stopPropagation();
   const menu = document.getElementById('filterMenu');
   if (menu.classList.contains('open') && filterDraft && filterDraft.col === col) { closeFilterMenu(); return; }
-  closeDataMenu(); closePlanMenu(); closeColumnsMenu(); closeTaskModeMenu();
+  closeDataMenu(); closePlanMenu(); closeColumnsMenu(); closeTaskModeMenu(); closeToolbarMenus();
   const kind = FILTER_COLS[col].kind;
   // The list offers the values that exist in this column among the tasks every *other* column's filter lets through.
   const others = Object.keys(FILTER_COLS).filter(c => c !== col), found = new Set();
@@ -3050,7 +3123,7 @@ function renderGrid() {
           : `<input type="number" min="1" step="1" class="inline-edit" value="${durNum != null ? durNum : ''}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" ${blurAttr('duration')}>`)
       : `<div class="grid-cell-dim${summaryCls}${canEditFinish ? ' editable' : ''}"${canEditFinish ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','duration')"` : ''}>${t.durText != null ? escapeHtml(t.durText) : (durNum != null ? fmtDuration(durNum) : '')}</div>`;
     const predCell = editing('predecessors')
-      ? `<input type="text" class="inline-edit" placeholder="e.g. 3FS+2 (lag), 5SS-1 (lead)" title="Positive = lag (delay), negative = lead (overlap)" value="${escapeHtml(predLabel)}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" ${blurAttr('predecessors')}>`
+      ? `<input type="text" class="inline-edit" title="Like MS Project: 3, 3FS, 3SS+2d, 5FF-1w (a lead), 4h — several separated by , or ;. Positive = lag (delay), negative = lead (overlap); days (d), weeks (w) or hours (h), counted in working days" value="${escapeHtml(predLabel)}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" ${blurAttr('predecessors')}>`
       : `<div class="grid-cell-dim${summaryCls}${!summary ? ' editable' : ''}" title="${escapeHtml(predLabel)}"${!summary ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','predecessors')"` : ''}>${escapeHtml(predLabel)}</div>`;
     // MS Project-style Task Mode column: click for a picker with the two
     // named modes (see openTaskModeMenu()).
@@ -3062,7 +3135,7 @@ function renderGrid() {
       ? dateEditor(field, iso, null, 'dd.mm.yyyy')   // exactly the Start/Finish editor: a manual task gets the typed box + calendar, an auto task the native picker
       : `<div class="grid-cell-dim${summaryCls}${canEditActual && !(t.milestone && field === 'actualFinish') ? ' editable' : ''}"${canEditActual && !(t.milestone && field === 'actualFinish') ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','${field}')"` : ''}>${iso ? fmtDate(iso) : ''}</div>`;
     const resourceCell = editing('resource')
-      ? `<input type="text" class="inline-edit" maxlength="200" value="${escapeHtml(t.resource)}" placeholder="e.g. Anna, Ben" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" ${blurAttr('resource')}>`
+      ? `<input type="text" class="inline-edit" maxlength="200" value="${escapeHtml(t.resource)}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" ${blurAttr('resource')}>`
       : `<div class="grid-cell-dim${summaryCls}${full ? ' editable' : ''}" title="${escapeHtml(t.resource)}"${full ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','resource')"` : ''}>${escapeHtml(t.resource)}</div>`;
     const bl = baselineDates(t.id), sv = scheduleVariance(t.id), bn = baselineName(compareBaseline());
     const blCell = iso => `<div class="grid-cell-dim${summaryCls}" title="${bn}">${fmtDate(iso)}</div>`;
@@ -3079,7 +3152,9 @@ function renderGrid() {
         ${nameCell}
       </div>`,
       start: startCell, end: finishCell, actualStart: actualCell('actualStart', act.start), actualFinish: actualCell('actualFinish', act.end),
-      duration: durationCell, progress: `<div class="grid-cell-dim${summaryCls}">${Math.round(eff.progress)}%</div>`,
+      duration: durationCell, progress: editing('progress')
+        ? `<input type="text" inputmode="numeric" class="inline-edit" maxlength="6" value="${Math.round(eff.progress)}" title="0 – 100" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" ${blurAttr('progress')}>`
+        : `<div class="grid-cell-dim${summaryCls}${!summary ? ' editable' : ''}"${!summary ? ` title="Click to change % complete" onclick="event.stopPropagation();startInlineEdit('${t.id}','progress')"` : ' title="Worked out from its sub-tasks"'}>${Math.round(eff.progress)}%</div>`,
       remaining: `<div class="grid-cell-dim${summaryCls}">${remainingDays(t.id) == null ? '' : fmtRemaining(remainingDays(t.id))}</div>`,
       status: `<div class="grid-cell-dim${summaryCls}">${statusPillHtml(taskStatus(t.id))}</div>`,
       baselineStart: blCell(bl.start), baselineFinish: blCell(bl.end), baselineDuration: `<div class="grid-cell-dim${summaryCls}" title="${bn}">${sv.baseDuration == null ? '' : fmtDuration(sv.baseDuration)}</div>`,
@@ -3337,15 +3412,14 @@ function setTaskMode(id, mode) {
   save(); render();
 }
 
-// One shared popup serves both the per-row mode cells (target = task id) and
-// the "New tasks:" button in the sub-bar (target = 'new').
+// One popup serves the per-row mode cells (target = task id).
 let modeMenuTarget = null;
 function openTaskModeMenu(event, target) {
   event.stopPropagation();
   const menu = document.getElementById('taskModeMenu');
   if (menu.classList.contains('open') && modeMenuTarget === target) { closeTaskModeMenu(); return; }
   modeMenuTarget = target;
-  const current = target === 'new' ? project.newTaskMode : (byId(target) || {}).taskMode;
+  const current = (byId(target) || {}).taskMode;
   menu.innerHTML = TASK_MODES.map(m => `<button class="dropdown-item${m.id === current ? ' active' : ''}" onclick="pickTaskMode('${m.id}')"><i class="fa-solid ${m.icon}"></i>${m.label}${m.id === current ? '<i class="fa-solid fa-check mode-check"></i>' : ''}</button>`).join('');
   const rect = event.currentTarget.getBoundingClientRect();
   menu.classList.add('open');
@@ -3358,13 +3432,20 @@ function closeTaskModeMenu() { document.getElementById('taskModeMenu').classList
 function pickTaskMode(mode) {
   const target = modeMenuTarget;
   closeTaskModeMenu();
-  if (target === 'new') { project.newTaskMode = mode; project.updatedAt = Date.now(); save(); render(); }
-  else if (target) setTaskMode(target, mode);
+  if (target) setTaskMode(target, mode);
 }
-function updateNewTaskModeUI() {
-  const btn = document.getElementById('newTaskModeBtn');
-  const mi = taskModeInfo(project.newTaskMode);
-  btn.innerHTML = `New tasks: <i class="fa-solid ${mi.icon} mode-${project.newTaskMode}" style="margin:0 4px 0 6px"></i>${mi.label}`;
+function updateNewTaskModeUI() {   // what Add Task creates: shown in the Add menu (two radio items) and in the button's tooltip
+  for (const m of TASK_MODES) {
+    const el = document.getElementById(m.id === 'auto' ? 'newModeAuto' : 'newModeManual'), on = project.newTaskMode === m.id;
+    el.classList.toggle('active', on); el.setAttribute('aria-checked', on ? 'true' : 'false');
+    el.innerHTML = `<i class="fa-solid ${m.icon} mode-${m.id}"></i>${m.label}${on ? '<i class="fa-solid fa-check mode-check"></i>' : ''}`;
+  }
+  document.getElementById('addTaskBtn').title = `Add a task below the selected one — new tasks are ${taskModeInfo(project.newTaskMode).label}`;
+}
+function setNewTaskMode(mode) {
+  closeAddMenu();
+  if ((mode !== 'auto' && mode !== 'manual') || project.newTaskMode === mode) return;
+  project.newTaskMode = mode; project.updatedAt = Date.now(); save(); render();
 }
 
 // Inline grid editing (Task view only) — one cell at a time, tracked here
@@ -3485,6 +3566,11 @@ function commitInlineEdit(id, field, rawValue) {
     }
   } else if (field === 'resource') {
     t.resource = val.slice(0, 200);
+  } else if (field === 'progress') {   // % complete of a task that has no sub-tasks (a group's is worked out from them); "50", "50%" and "12,5" are accepted, rounded to a whole number
+    const n = Number(val.replace('%', '').replace(',', '.').trim());
+    if (val === '') { /* left as it was */ }
+    else if (!Number.isFinite(n) || n < 0 || n > 100) showToast('% complete must be a number between 0 and 100', true);
+    else t.progress = Math.round(n);
   } else if (field === 'actualStart' || field === 'actualFinish') {
     const iso = val ? parseUserDate(val) : null;                 // a native date input emits ISO; blank clears the date
     const aS = field === 'actualStart' ? iso : t.actualStart, aF = t.milestone ? aS : (field === 'actualFinish' ? iso : t.actualFinish);
@@ -3515,23 +3601,31 @@ function commitInlineEdit(id, field, rawValue) {
 // token is invalid the whole edit is rejected (returns null) rather than
 // silently dropping just that token, so a typo can't wipe out the rest of
 // an already-valid predecessor list.
+const PRED_LAG_UNIT_OK = /^(|d|day|days|t|tag|tage|tagen|w|wk|wks|week|weeks|wo|woche|wochen|h|hr|hrs|hour|hours|std|stunde|stunden)$/;
+function predBadMessage(tok) {   // why a token of the Predecessors cell was refused
+  const m = /[+-]\s*[\d.,]+\s*([a-zäöü%]*)$/i.exec(tok);
+  if (m) {
+    const u = m[1].toLowerCase();
+    if (u === '%') return `Percentage lags ("${tok}") aren't supported — use days (d), weeks (w) or hours (h)`;
+    if (u.startsWith('e')) return `Elapsed lags ("${tok}") aren't supported — lags count working days`;
+    if (!PRED_LAG_UNIT_OK.test(u)) return `Can't read the lag in "${tok}" — use days (d), weeks (w) or hours (h)`;
+    return `A lag can be at most ${MAX_LAG_DAYS.toLocaleString('en')} days ("${tok}")`;
+  }
+  return `Can't parse "${tok}"`;
+}
 function parsePredecessorString(str, taskId) {
-  const result = [];
-  const seen = new Set();
-  for (const tok of str.split(',').map(s => s.trim()).filter(Boolean)) {
-    const m = tok.match(/^(\d+)\s*(FS|SS|FF|SF)?\s*([+-]\d+)?$/i);
-    if (!m) { showToast(`Can't parse "${tok}" — predecessors unchanged`, true); return null; }
-    const n = parseInt(m[1], 10);
-    const targetId = taskIdByDisplayId(n);
+  const { links, bad } = parsePredText(str, true);   // the same reader as paste and import: 3, 3FS, 3SS+2d, 4FF-1w, 5;6 — and the German EA / AA / EE / AE
+  if (bad.length) { showToast(`${predBadMessage(bad[0])} — predecessors unchanged`, true); return null; }
+  const result = [], seen = new Set();
+  for (const l of links) {
+    const n = parseInt(l.ref, 10), targetId = taskIdByDisplayId(n);
     if (!targetId) { showToast(`No task #${n} — predecessors unchanged`, true); return null; }
     if (targetId === taskId) { showToast("A task can't depend on itself — predecessors unchanged", true); return null; }
     if (hasChildren(targetId)) { showToast("Can't depend on a summary task — predecessors unchanged", true); return null; }
     if (byId(targetId).spacer) { showToast("Can't depend on an empty line — predecessors unchanged", true); return null; }
     if (seen.has(targetId)) continue;
     seen.add(targetId);
-    const lagN = m[3] ? parseInt(m[3], 10) : 0;
-    if (Math.abs(lagN) > MAX_LAG_DAYS) { showToast(`A lag can be at most ${MAX_LAG_DAYS.toLocaleString('en')} days — predecessors unchanged`, true); return null; }
-    result.push({ id: targetId, type: (m[2] || 'FS').toUpperCase(), lag: lagN });
+    result.push({ id: targetId, type: l.type, lag: l.lag });
   }
   return result;
 }
@@ -4059,12 +4153,21 @@ function openTaskModal(id, isNew) {
   renderCustomFieldsTab(t.custom || {});
   setTaskModalTab('general');   // it always opens on the General tab
   updateModalComputed();
+  taskModalSnapshot = taskModalState();
   document.getElementById('taskModalBg').classList.add('open');
   setTimeout(() => document.getElementById('taskNameInput').focus(), 30);
 }
+// Closing with × / Escape / a click outside asks first when something was changed (Cancel is an explicit "throw it away" and does not).
+let taskModalSnapshot = null;
+function taskModalState() { return JSON.stringify([...document.querySelectorAll('#taskModalBg input, #taskModalBg select, #taskModalBg textarea')].map(el => el.type === 'checkbox' || el.type === 'radio' ? el.checked : el.value)) + (document.querySelector('#taskColorSwatches .selected') ? document.querySelector('#taskColorSwatches .selected').outerHTML : ''); }
+function taskModalDirty() { return taskModalSnapshot !== null && document.getElementById('taskModalBg').classList.contains('open') && taskModalState() !== taskModalSnapshot; }
+function requestCloseTaskModal() {
+  if (!taskModalDirty()) { closeTaskModal(); return; }
+  openConfirmModal({ title: 'Discard your changes?', body: 'You changed this task but did not save it.', confirmLabel: 'Discard changes', cancelLabel: 'Keep editing', action() { closeTaskModal(); } });
+}
 function closeTaskModal() {
   document.getElementById('taskModalBg').classList.remove('open');
-  editingTaskId = null;
+  editingTaskId = null; taskModalSnapshot = null;
 }
 function onConstraintTypeChange() {
   const cinfo = constraintTypeInfo(document.getElementById('taskConstraintTypeInput').value);
@@ -4127,6 +4230,7 @@ function openBaselineModal() {
   const hasSel = !!(selectedTaskId && byId(selectedTaskId));
   document.getElementById('baselineScopeSel').disabled = !hasSel;
   document.getElementById('baselineScopeSelLabel').textContent = hasSel ? `The selected task “${byId(selectedTaskId).name}”${hasChildren(selectedTaskId) ? ' and the tasks in it' : ''}` : 'The selected task (none selected)';
+  document.getElementById('baselineScopeSel').closest('label').title = hasSel ? '' : 'Select a task in the list first to baseline only that task';
   document.getElementById('baselineScopeAll').checked = true;
   renderBaselineModal();
   document.getElementById('baselineModalBg').classList.add('open');
@@ -4138,7 +4242,8 @@ function renderBaselineModal() {   // labels and buttons follow the chosen slot 
   const sel = document.getElementById('baselineSlotSelect'), cmp = document.getElementById('baselineCompareSelect');
   for (const o of sel.options) { const n = Number(o.value), c = baselineTasksWith(n).length, m = project.baselines && project.baselines[n]; o.textContent = `${baselineName(n)} — ${c ? `set${m ? ' ' + fmtDate(m.setAt) : ''} · ${c} task${c === 1 ? '' : 's'}` : 'not set'}`; }
   const setSlots = setBaselineSlots();
-  cmp.innerHTML = setSlots.length ? setSlots.map(n => `<option value="${n}">${baselineName(n)}</option>`).join('') : '<option value="0">(no baseline set yet)</option>';
+  cmp.innerHTML = setSlots.length ? setSlots.map(n => { const m = project.baselines && project.baselines[n]; return `<option value="${n}">${baselineName(n)}${m ? ' — set ' + fmtDate(m.setAt) : ''}</option>`; }).join('') : '<option value="0">— none set yet —</option>';
+  document.getElementById('baselineCompareHint').textContent = setSlots.length ? 'Drawn as the thin grey line under the Gantt bars and used by the Baseline and Variance columns (positive = later than the baseline).' : 'Set a baseline above first — then the Gantt chart and the Baseline / Variance columns can compare with it.';
   cmp.disabled = !setSlots.length; if (setSlots.length) cmp.value = String(setSlots.includes(compareBaseline()) ? compareBaseline() : setSlots[0]);
   document.getElementById('baselineSlotInfo').textContent = count ? `${baselineName(slot)} was set${meta ? ' on ' + fmtDate(meta.setAt) : ''} for ${count} task${count === 1 ? '' : 's'}. Setting it again replaces it (for the tasks you apply it to).` : `${baselineName(slot)} is not set. Setting it saves the current Start and Finish of the tasks you choose.`;
   document.getElementById('baselineSetBtn').textContent = count ? `Set ${baselineName(slot)} again` : `Set ${baselineName(slot)}`;
@@ -4146,6 +4251,7 @@ function renderBaselineModal() {   // labels and buttons follow the chosen slot 
   const stale = actualsNotApplied();
   document.getElementById('baselineActualsInfo').textContent = stale.length ? `${stale.length} task${stale.length === 1 ? ' has' : 's have'} an actual date that is not in the schedule yet (plans from before this version kept them beside it). Applying them moves Start / Finish to the actual dates (a running task keeps its duration) and re-plans what follows. Set a baseline first if you want to keep the plan.` : 'Every actual date is already in the schedule.';
   document.getElementById('baselineApplyBtn').disabled = !stale.length;
+  document.getElementById('baselineActualsSec').classList.toggle('hidden', !stale.length);   // only shown when something needs doing (older plans kept actual dates beside the schedule)
 }
 // Snapshot helpers so every change can be undone from the toast.
 function snapshotBaselines(list) { return { tasks: list.map(t => ({ t, b: t.baselines ? JSON.parse(JSON.stringify(t.baselines)) : undefined, u: t.updatedAt })), meta: project.baselines ? JSON.parse(JSON.stringify(project.baselines)) : undefined, cmp: project.compareBaseline, pu: project.updatedAt }; }
@@ -4329,11 +4435,27 @@ function openCalendarModal() {
   fillHolidayPresets();
   for (const id of ['holFrom', 'holTo', 'holName']) document.getElementById(id).value = '';
   document.getElementById('holYearly').checked = false; document.getElementById('holYearly').disabled = false;
+  document.getElementById('calendarDays').onchange = updateCalendarSummary;
+  const how = document.querySelector('#calendarModalBg .cal-how'); if (how) how.open = false;
   renderHolidayList();
+  calSnapshot = calendarDraftState();
   document.getElementById('calendarModalBg').classList.add('open');
   setTimeout(() => { const i = document.querySelector('#calendarDays input'); if (i) i.focus(); }, 40);
 }
 function closeCalendarModal() { document.getElementById('calendarModalBg').classList.remove('open'); }
+// What the dialog holds right now (chips + the list): × / Escape / a click outside ask before throwing edits away.
+let calSnapshot = null;
+function calendarDraftState() { return JSON.stringify([[...document.querySelectorAll('#calendarDays input:checked')].map(i => i.value), calHolidays]); }
+function calendarDirty() { return calSnapshot !== null && document.getElementById('calendarModalBg').classList.contains('open') && calendarDraftState() !== calSnapshot; }
+function requestCloseCalendarModal() {
+  if (!calendarDirty()) { closeCalendarModal(); return; }
+  openConfirmModal({ title: 'Discard your changes?', body: 'You changed the working calendar but did not save it.', confirmLabel: 'Discard changes', cancelLabel: 'Keep editing', action() { closeCalendarModal(); } });
+}
+function updateCalendarSummary() {   // the chip in the header: what the calendar would be if you saved now
+  const days = [...document.querySelectorAll('#calendarDays input:checked')].map(i => Number(i.value)).sort((a, b) => a - b), n = calHolidays.length;
+  document.getElementById('calendarSummaryLive').textContent = days.length ? calendarLabel(days) + (n ? ` · ${n} holiday${n === 1 ? '' : 's'}` : '') : 'No working day picked';
+}
+function clearHolidays() { if (!calHolidays.length) return; calHolidays = []; renderHolidayList(); }
 function fmtHolidayWhen(h) {
   if (h.yearly) return fmtDate(h.date).slice(0, 6);   // 25.12.
   return h.to ? `${fmtDate(h.date)} – ${fmtDate(h.to)}` : fmtDate(h.date);
@@ -4344,6 +4466,10 @@ function renderHolidayList() {
     const days = h.to ? `${dayNumber(h.to) - dayNumber(h.date) + 1} days` : '';
     return `<div class="hol-row"><span class="hol-when">${fmtHolidayWhen(h)}</span><span class="hol-name" title="${escapeHtml(h.name || '')}">${escapeHtml(h.name || '')}</span>${days ? `<span class="hol-days">${days}</span>` : ''}${h.yearly ? '<span class="hol-tag">every year</span>' : ''}<button type="button" aria-label="Remove ${escapeHtml(fmtHolidayWhen(h))}" title="Remove" onclick="removeHoliday(${i})"><i class="fa-solid fa-xmark"></i></button></div>`;
   }).join('');
+  const n = calHolidays.length;
+  document.getElementById('holCount').textContent = n ? `${n} day${n === 1 ? '' : 's'}` : '';
+  document.getElementById('holClearBtn').classList.toggle('hidden', !n);
+  updateCalendarSummary();
 }
 function holToChanged() {   // "every year" only makes sense for a single day
   const to = document.getElementById('holTo').value, y = document.getElementById('holYearly');
@@ -4620,11 +4746,12 @@ function showToast(msg, isError, undoAction, actionLabel) {
 }
 function triggerToastUndo() { if (toastUndoAction) { toastUndoAction(); toastUndoAction = null; } document.getElementById('toast').classList.remove('show'); }
 
-function openConfirmModal({ title, body, action, confirmLabel, confirmClass }) {
+function openConfirmModal({ title, body, action, confirmLabel, confirmClass, cancelLabel }) {
   modalTarget = { action };
   document.getElementById('confirmModalTitle').textContent = title || 'Confirm';
   document.getElementById('confirmModalBody').innerHTML = body || '';
   document.getElementById('confirmModalActionBtn').textContent = confirmLabel || 'Delete';
+  document.getElementById('confirmModalCancelBtn').textContent = cancelLabel || 'Cancel';
   document.getElementById('confirmModalActionBtn').className = confirmClass || 'btn btn-primary btn-danger';   // callers that aren't destructive pass a plainer class
   document.getElementById('confirmModalBg').classList.add('open');
 }
@@ -4889,7 +5016,7 @@ function parseTableDuration(str) {
 }
 // MS Project's predecessor text: "3", "3FS", "3SS+2d", "4;5FF-1 day", German "3EA+2 Tage" → [{ ref, type, lag }] (ref is the number as written)
 const PRED_TYPES = { FS: 'FS', SS: 'SS', FF: 'FF', SF: 'SF', EA: 'FS', AA: 'SS', EE: 'FF', AE: 'SF' };
-function parsePredText(str) {
+function parsePredText(str, strict) {   // strict (the list's Predecessors cell): a lag unit must be one we know — d / w / h — so "+2ed" (elapsed) is refused instead of read as working days
   const out = [], bad = [];
   for (const tok of String(str || '').split(/[;,]/).map(x => x.trim()).filter(Boolean)) {
     const m = /^(\d+)\s*(FS|SS|FF|SF|EA|AA|EE|AE)?\s*(?:([+-])\s*(\d+(?:[.,]\d+)?)\s*([a-zäöü%]*))?$/i.exec(tok);
@@ -4897,7 +5024,7 @@ function parsePredText(str) {
     let lag = 0;
     if (m[3]) {
       const n = parseFloat(m[4].replace(',', '.')), u = (m[5] || '').toLowerCase();
-      if (u === '%') { bad.push(tok); continue; }
+      if (u === '%' || (strict && !PRED_LAG_UNIT_OK.test(u))) { bad.push(tok); continue; }
       lag = /^(w|wk|wks|week|weeks|wo|woche|wochen)$/.test(u) ? n * 5 : /^(h|hr|hrs|hour|hours|std|stunde|stunden)$/.test(u) ? n / 8 : n;
       if (!(lag <= MAX_LAG_DAYS)) { bad.push(tok); continue; }
       lag = Math.round(lag) * (m[3] === '-' ? -1 : 1);
@@ -5107,8 +5234,28 @@ function parseMspdi(xmlText) {
    pinned, like one you just added), it becomes the selection and scrolls into view — in the Gantt view the bar too — with a short flash.
    Shift+Enter turns the matches into a Task Name filter instead. */
 let searchIdx = 0, searchHits = [];
-function taskPathText(t) { const out = []; let p = t.parentId; while (p) { const a = byId(p); if (!a) break; out.unshift(a.name); p = a.parentId; } return out.join(' › '); }
+function taskPathParts(t) { const out = []; let p = t.parentId; while (p) { const a = byId(p); if (!a) break; out.unshift(a.name); p = a.parentId; } return out; }
+function taskPathText(t) { return taskPathParts(t).join(' › '); }
+// Long results, kept short: the group path shows only the nearest two ancestors ("… › Phase 2 › Design"; the tooltip has all of it) and a long name is
+// cut around the first match, so what was searched for is never hidden behind the ellipsis.
+function shortPathText(parts) { return parts.length > 2 ? '… › ' + parts.slice(-2).join(' › ') : parts.join(' › '); }
+function nameAroundMatch(name, q, max = 70) {
+  if (name.length <= max) return name;
+  const terms = q.replace(/^@/, '').trim().toLowerCase().split(/\s+/).filter(w => w && !/^#\d+$/.test(w) && !/^status:/.test(w)), low = name.toLowerCase();
+  let at = -1; for (const w of terms) { const i = low.indexOf(w); if (i >= 0 && (at < 0 || i < at)) at = i; }
+  if (at < 0 || at + 12 <= max) return name.slice(0, max - 1).trimEnd() + '…';
+  const start = Math.max(0, at - 20), end = Math.min(name.length, start + max);
+  return (start > 0 ? '…' : '') + name.slice(start, end).trim() + (end < name.length ? '…' : '');
+}
+// "status:late" (or complete / done, on schedule, future) narrows any search to tasks with that status; on its own it lists them all.
 function searchTasks(q) {
+  const stat = []; q = q.replace(/(^|\s)status:(\S*)/gi, (m, sp, v) => { stat.push(v.toLowerCase()); return ' '; }).trim();
+  if (!stat.length) return searchTasksBase(q);
+  const want = new Set(stat.map(v => v.startsWith('c') || v === 'done' ? 'Complete' : v.startsWith('l') ? 'Late' : v.startsWith('f') ? 'Future Task' : v.startsWith('o') || v.startsWith('s') ? 'On Schedule' : v).filter(Boolean));
+  const base = q ? searchTasksBase(q) : tasks.filter(t => !t.spacer).map(t => ({ t, score: 1 })).sort((a, b) => taskDisplayId(a.t.id) - taskDisplayId(b.t.id));
+  return base.filter(h => want.has(taskStatus(h.t.id)));
+}
+function searchTasksBase(q) {
   q = q.trim().toLowerCase(); if (!q) return [];
   const idm = /^#(\d+)$/.exec(q);
   if (idm) { const id = taskIdByDisplayId(parseInt(idm[1], 10)); return id && !byId(id).spacer ? [{ t: byId(id), score: 10 }] : []; }
@@ -5147,15 +5294,16 @@ function openSearch() {
 function closeSearch() { document.getElementById('searchModalBg').classList.remove('open'); }
 function renderSearch() {
   const q = document.getElementById('searchInput').value, box = document.getElementById('searchResults');
-  searchHits = searchTasks(q).slice(0, 50); searchIdx = 0;
-  if (!q.trim()) box.innerHTML = `<div class="search-empty">Type part of a task name — every word must match.<br>Or a WBS code such as <code>2.1</code>, a task number such as <code>#12</code>, or <code>@anna</code> for a resource.<br>${tasks.length} task${tasks.length === 1 ? '' : 's'} in this plan.</div>`;
+  const all = searchTasks(q); searchHits = all.slice(0, 50); searchIdx = 0;
+  if (!q.trim()) box.innerHTML = `<div class="search-empty"><div class="search-lead">Type part of a task name — every word must match.</div><div class="search-total">${tasks.filter(t => !t.spacer).length} task${tasks.filter(t => !t.spacer).length === 1 ? '' : 's'} in this plan</div></div>`;
   else if (!searchHits.length) box.innerHTML = `<div class="search-empty">No task matches “${escapeHtml(q.trim())}”.</div>`;
   else box.innerHTML = searchHits.map(({ t }, i) => {
-    const eff = effectiveDates(t.id), path = taskPathText(t), dates = t.startText != null && !hasChildren(t.id) ? t.startText : eff.start ? (t.milestone ? fmtDate(eff.start) : `${fmtDate(eff.start)} – ${fmtDate(eff.end)}`) : '';
-    return `<div class="sr${i === 0 ? ' active' : ''}" role="option" data-i="${i}" onmousemove="searchSetActive(${i})" onclick="searchGo(${i})"><span class="sr-id">#${taskDisplayId(t.id)}</span><span class="sr-wbs">${wbsCode(t.id)}</span><span class="sr-main"><span class="sr-name">${t.milestone ? '◆ ' : ''}${hilite(t.name, q)}</span>${path ? `<span class="sr-path"> ${escapeHtml(path)}</span>` : ''}</span><span class="sr-side">${escapeHtml(dates)}${t.resource ? `<span class="sr-res">${hilite(t.resource, q)}</span>` : ''}</span></div>`;
+    const eff = effectiveDates(t.id), parts = taskPathParts(t), dates = t.startText != null && !hasChildren(t.id) ? t.startText : eff.start ? (t.milestone ? fmtDate(eff.start) : `${fmtDate(eff.start)} – ${fmtDate(eff.end)}`) : '';
+    return `<div class="sr${i === 0 ? ' active' : ''}" role="option" data-i="${i}" onmousemove="searchSetActive(${i})" onclick="searchGo(${i})"><span class="sr-id">#${taskDisplayId(t.id)}</span><span class="sr-main"><span class="sr-name" title="${escapeHtml(t.name)}">${(st => st ? `<i class="sr-dot st-${st.toLowerCase().replace(' ', '-')}" title="${st}"></i>` : '')(taskStatus(t.id))}${t.milestone ? '◆ ' : ''}${hilite(nameAroundMatch(t.name, q), q)}</span><span class="sr-path" title="${escapeHtml('WBS ' + wbsCode(t.id) + (parts.length ? ' · ' + parts.join(' › ') : ''))}"><span class="sr-wbs">${hilite(wbsCode(t.id), q)}</span>${parts.length ? ' · ' + escapeHtml(shortPathText(parts)) : ''}</span></span><span class="sr-side">${escapeHtml(dates)}${t.resource ? `<span class="sr-res">${hilite(t.resource, q)}</span>` : ''}</span></div>`;
   }).join('');
-  const foot = document.getElementById('searchFoot').querySelector('span:last-child');
+  const foot = document.querySelector('#searchFoot [data-shift]');
   if (foot) foot.style.visibility = searchHits.length > 1 ? 'visible' : 'hidden';
+  document.getElementById('searchCount').textContent = !q.trim() ? '' : all.length > 50 ? `First 50 of ${all.length} — type more to narrow` : `${all.length} result${all.length === 1 ? '' : 's'}`;
 }
 function searchSetActive(i) { searchIdx = i; document.querySelectorAll('#searchResults .sr').forEach((el, k) => el.classList.toggle('active', k === i)); }
 function searchKey(e) {
@@ -5392,6 +5540,57 @@ function doPrint() {
    their tasks (progress, dates); tasks that have started, or have free-text dates, are not moved by "Move dates". */
 const BULK_COLORS = [['', 'Automatic (by status)'], ['blue', 'Blue'], ['teal', 'Teal'], ['purple', 'Purple'], ['amber', 'Amber'], ['pink', 'Pink'], ['green', 'Green'], ['red', 'Red'], ['grey', 'Grey']];
 function bulkCustomCols() { return visibleTaskCols(currentView).filter(isCustomField); }
+/* ------------------------ Add menu and the right-click menu ------------------------ */
+const MOD_KEY = /Mac|iPhone|iPad/.test(navigator.platform || '') ? '⌘' : 'Ctrl+';
+function placeMenu(menu, x, y, alignRightOf) {   // a fixed menu at (x, y) kept inside the window
+  menu.classList.add('open');
+  const w = menu.offsetWidth, h = menu.offsetHeight;
+  menu.style.right = 'auto';
+  menu.style.left = Math.max(8, Math.min(x, window.innerWidth - w - 8)) + 'px';
+  menu.style.top = Math.max(8, Math.min(y, window.innerHeight - h - 8)) + 'px';
+}
+function closeAddMenu() { document.getElementById('addMenu').classList.remove('open'); }
+function closeRowMenu() { document.getElementById('rowMenu').classList.remove('open'); }
+function closeToolbarMenus() { closeAddMenu(); closeRowMenu(); }
+function toggleAddMenu(event) {
+  event.stopPropagation();
+  const menu = document.getElementById('addMenu');
+  if (menu.classList.contains('open')) { closeAddMenu(); return; }
+  closeDataMenu(); closePlanMenu(); closeColumnsMenu(); closeFilterMenu(); closeTaskModeMenu(); closeRowMenu();
+  for (const el of menu.querySelectorAll('[data-kbd]')) el.textContent = MOD_KEY + el.dataset.kbd;
+  const r = document.querySelector('.split-btn').getBoundingClientRect();
+  placeMenu(menu, r.left, r.bottom + 4);
+}
+// The right-click menu: on a task row (the row joins the selection first unless it is in it already) or on the empty part of the list.
+function showRowMenu(x, y, onRow) {
+  const ids = onRow ? selectedIds() : [], n = ids.length, real = ids.filter(id => !byId(id).spacer).length, menu = document.getElementById('rowMenu');
+  const item = (icon, label, fn, o = {}) => `<button class="dropdown-item${o.danger ? ' danger' : ''}" role="menuitem"${o.off ? ' disabled' : ''} onclick="closeRowMenu();${fn}"><i class="${icon}"></i>${label}${o.kbd ? `<span class="item-hint">${o.kbd}</span>` : ''}</button>`;
+  const sep = '<div class="dropdown-sep"></div>', parts = [];
+  if (real) parts.push(item('fa-solid fa-pen-to-square', real === 1 ? 'Edit task…' : `Edit ${real} tasks…`, 'editSelected()'));
+  parts.push(item('fa-solid fa-plus', n ? 'Add task below' : 'Add task', 'addTask()'), item('fa-solid fa-grip-lines', 'Add empty line', 'addSpacer()'));
+  if (n) parts.push(sep, item('fa-regular fa-clone', 'Duplicate', 'cloneSelected()'), item('fa-regular fa-copy', 'Copy', 'copySelectionButton()', { kbd: MOD_KEY + 'C' }), item('fa-solid fa-scissors', 'Cut', 'copySelection(null, true)', { kbd: MOD_KEY + 'X' }));
+  parts.push(n ? '' : sep, item('fa-regular fa-paste', 'Paste', 'pasteButton()', { kbd: MOD_KEY + 'V' }));
+  if (n) parts.push(sep, item('fa-solid fa-indent', 'Indent', 'indentSelected()'), item('fa-solid fa-outdent', 'Outdent', 'outdentSelected()', { off: !ids.some(id => byId(id).parentId) }), sep, item('fa-solid fa-trash', n > 1 ? `Delete ${n} tasks` : 'Delete', 'deleteSelected()', { danger: true, kbd: 'Del' }));
+  menu.innerHTML = parts.join('');
+  closeDataMenu(); closePlanMenu(); closeColumnsMenu(); closeFilterMenu(); closeTaskModeMenu(); closeAddMenu();
+  placeMenu(menu, x, y);
+}
+function onListContextMenu(e) {
+  if (document.querySelector('.modal-bg.open')) return;
+  if (e.target.closest && e.target.closest('.inline-edit, .inline-wrap, input, textarea, select')) return;   // a text box keeps the browser's own menu (cut / copy / paste text)
+  let id = null;
+  const rowEl = e.target.closest && e.target.closest('.grid-row');
+  if (rowEl) id = rowEl.dataset.id;
+  else if (e.currentTarget && e.currentTarget.id === 'ganttRows') { const list = visibleTaskList(), top = e.currentTarget.getBoundingClientRect().top, hit = list[Math.floor((e.clientY - top) / ROW_H)]; if (hit) id = hit.task.id; }
+  e.preventDefault();
+  if (id && !isSelected(id)) { setSelection([id]); render(); }
+  showRowMenu(e.clientX, e.clientY, !!id);
+}
+// The toolbar's Edit button: one task selected opens the same full dialog as a double-click; several open the bulk dialog (empty lines don't count).
+function editSelected() {
+  const ids = selectedIds().filter(id => !byId(id).spacer);
+  if (ids.length === 1) openTaskModal(ids[0]); else if (ids.length > 1) openBulkModal();
+}
 function openBulkModal() {
   const ids = selectedIds().filter(id => !byId(id).spacer); if (!ids.length) return;   // (empty lines have no fields)
   const groups = ids.filter(id => hasChildren(id)).length;
@@ -6456,7 +6655,7 @@ function createPlanRecord(name, data) {
 function resetTransientUI() {
   setSelection([]); editingCell = null; editingPredecessors = [];
   colFilters = newColFilters(); filterPinned.clear(); closeFilterMenu();   // filters belong to the plan you were looking at
-  closeTaskModal(); closeImportModal(); closeDataMenu(); closeColumnsMenu(); closeTaskModeMenu();
+  closeTaskModal(); closeImportModal(); closeDataMenu(); closeColumnsMenu(); closeTaskModeMenu(); closeToolbarMenus();
   clearTimeout(toastTimer); toastUndoAction = null;
   document.getElementById('toast').classList.remove('show');   // an Undo for the old plan must not act on the new one
   resetHistory();   // (and neither must the undo history)
@@ -6721,7 +6920,11 @@ function wireGlobalEvents() {
     // runs, and a detached node is no longer "inside" #filterMenu — without the check the panel closed on every expand.
     if (e.target.isConnected && !e.target.closest('#filterMenu') && !e.target.closest('.col-filter-btn')) closeFilterMenu();
     if (!e.target.closest('#taskModeMenu')) closeTaskModeMenu();
+    if (!e.target.closest('#addMenu') && !e.target.closest('#addMenuBtn')) closeAddMenu();
+    if (!e.target.closest('#rowMenu')) closeRowMenu();
   });
+  for (const id of ['gridRows', 'ganttRows']) document.getElementById(id).addEventListener('contextmenu', onListContextMenu);
+  window.addEventListener('blur', closeToolbarMenus);
   document.addEventListener('keydown', (e) => {
     if ((e.ctrlKey || e.metaKey) && !e.altKey && (e.key.toLowerCase() === 'z' || e.key.toLowerCase() === 'y')) {   // Ctrl/Cmd+Z undo, +Shift+Z or Ctrl+Y redo
       const tag = (e.target || {}).tagName || '';
@@ -6739,6 +6942,9 @@ function wireGlobalEvents() {
     if ((e.key === 'Delete' || e.key === 'Backspace') && !typingNow && !modalOpen && !editingCell && selectedIds().length) { e.preventDefault(); deleteSelected(); return; }
     if (e.key !== 'Escape') return;
     if (document.getElementById('fieldNameModalBg').classList.contains('open')) { closeFieldNameModal(); return; }   // only the topmost dialog: the task dialog underneath keeps its unsaved edits
+    if (document.getElementById('confirmModalBg').classList.contains('open') && (taskModalDirty() || calendarDirty())) { closeConfirmModal(); return; }   // the "discard your changes?" question: Escape = keep editing
+    if (taskModalDirty()) { requestCloseTaskModal(); return; }
+    if (calendarDirty()) { requestCloseCalendarModal(); return; }
     // Escape closes whatever overlay is open first; only when there is none — and
     // the user isn't typing in a field, where Escape already means "cancel this
     // edit" — does it clear the task selection.
@@ -6749,12 +6955,14 @@ function wireGlobalEvents() {
       || document.getElementById('planMenu').classList.contains('open')
       || document.getElementById('filterMenu').classList.contains('open')
       || document.getElementById('columnsMenu').classList.contains('open')
-      || document.getElementById('taskModeMenu').classList.contains('open');
+      || document.getElementById('taskModeMenu').classList.contains('open')
+      || document.getElementById('addMenu').classList.contains('open')
+      || document.getElementById('rowMenu').classList.contains('open');
     // e.target, not document.activeElement: an inline editor's own Escape handler re-renders and destroys the
     // focused field before this runs, so by now activeElement is already <body>.
     const typing = /^(INPUT|TEXTAREA|SELECT)$/.test((e.target || {}).tagName || '');
     for (const id of modalIds) document.getElementById(id).classList.remove('open');
-    closeDataMenu(); closePlanMenu(); closeFilterMenu(); closeColumnsMenu(); closeTaskModeMenu();
+    closeDataMenu(); closePlanMenu(); closeFilterMenu(); closeColumnsMenu(); closeTaskModeMenu(); closeToolbarMenus();
     if (!overlayOpen && editingCell) { cancelInlineEdit(); return; }   // an inline editor that hasn't received focus yet (it gets it a frame after it appears)
     if (!overlayOpen && !typing && (selectedTaskId || selectedTaskIds.size)) { setSelection([]); render(); }
   });

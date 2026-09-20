@@ -15,20 +15,20 @@ with sync_playwright() as p:
     boot(); pg.evaluate("() => localStorage.clear()"); reload()
 
     # ---- a fresh install
-    check("fresh install: the 'New tasks' button reads Auto Scheduled", "Auto Scheduled" in pg.inner_text("#newTaskModeBtn"), pg.inner_text("#newTaskModeBtn"))
+    check("fresh install: the 'New tasks' button reads Auto Scheduled", "Auto Scheduled" in pg.evaluate("() => document.querySelector('#addMenu .dropdown-item.active').textContent"))
     pg.click("#addTaskBtn"); pg.wait_for_selector("#taskModalBg.open")
     check("...a new task is Auto Scheduled, and the dialog shows it", pg.evaluate("() => tasks[0].taskMode") == "auto" and pg.eval_on_selector("#taskModeInput", "e => e.value") == "auto")
     pg.fill("#taskNameInput", "First"); pg.click("#taskModalBg .btn-primary"); pg.wait_for_timeout(120)
     check("...and its row uses the Auto icon (chart), not the pushpin", pg.locator(".task-mode-cell i.mode-auto").count() == 1 and pg.locator(".task-mode-cell i.mode-manual").count() == 0)
     # ---- choosing Manual is remembered
-    pg.locator("#newTaskModeBtn").click(); pg.wait_for_selector("#taskModeMenu.open"); pg.click("#taskModeMenu .dropdown-item:has-text('Manually Scheduled')"); pg.wait_for_timeout(100)
-    check("choosing Manually Scheduled for new tasks works", mode() == "manual" and "Manually Scheduled" in pg.inner_text("#newTaskModeBtn"))
+    pg.click("#addMenuBtn"); pg.wait_for_selector("#addMenu.open"); pg.click("#newModeManual"); pg.wait_for_timeout(100)
+    check("choosing Manually Scheduled for new tasks works", mode() == "manual" and "Manually Scheduled" in pg.evaluate("() => document.querySelector('#addMenu .dropdown-item.active').textContent"))
     pg.click("#addTaskBtn"); pg.wait_for_selector("#taskModalBg.open"); pg.evaluate("() => closeTaskModal()")
     check("...new tasks are then Manual", pg.evaluate("() => tasks[tasks.length - 1].taskMode") == "manual")
     reload()
     check("...and that choice survives a reload (the one-time switch never overrides it)", mode() == "manual", mode())
     check("the project carries the revision marker", pg.evaluate("() => project.modeRev") == 1)
-    pg.locator("#newTaskModeBtn").click(); pg.wait_for_selector("#taskModeMenu.open"); pg.click("#taskModeMenu .dropdown-item:has-text('Auto Scheduled')"); pg.wait_for_timeout(100)
+    pg.click("#addMenuBtn"); pg.wait_for_selector("#addMenu.open"); pg.click("#newModeAuto"); pg.wait_for_timeout(100)
     reload(); check("switching back to Auto is remembered too", mode() == "auto")
 
     # ---- a project saved while Manual was the default (no marker, 'manual' stored)

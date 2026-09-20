@@ -1,0 +1,138 @@
+# -*- coding: utf-8 -*-
+"""Usability of the Edit Task, Working calendar, Baselines and Find dialogs: they fit a laptop screen, group their fields, warn before throwing edits
+away, show a live calendar summary, count and mark search results, and search by status."""
+from playwright.sync_api import sync_playwright
+import os
+URL = os.environ.get("MILESTONE_URL", "http://127.0.0.1:8937/milestone.html")
+errors, results = [], []
+def check(name, cond, detail=""):
+    results.append(bool(cond)); print(("PASS  " if cond else "FAIL  ") + name + (f"   [{str(detail)[:500]}]" if not cond and detail else ""))
+
+SEED = """() => { tasks.length = 0; deletedTaskIds.length = 0; setSelection([]); colFilters = newColFilters(); filterPinned.clear(); editingCell = null; delete project.holidays; delete project.workDays; delete project.baselines; delete project.compareBaseline; historyCoalesceMs = 0;
+  const mk = (id, n, o, e) => Object.assign({ id, name: n, parentId: null, order: o, startDate: '2026-09-07', endDate: '2026-09-11', progress: 0, milestone: false, color: null, predecessors: [], collapsed: false, updatedAt: 1, constraintType: 'ASAP', constraintDate: null, taskMode: 'auto', resource: 'Anna', actualStart: null, actualFinish: null }, e || {});
+  tasks.push(mk('g', 'Website relaunch', 0), mk('a', 'Design', 0, { parentId: 'g', startDate: '2025-01-06', endDate: '2025-01-10', progress: 100 }), mk('b', 'Build', 1, { parentId: 'g', startDate: '2025-01-13', endDate: '2025-01-24', progress: 30, predecessors: [{ id: 'a', type: 'FS', lag: 0 }] }), mk('c', 'Design review', 2, { parentId: 'g', startDate: '2035-05-07', endDate: '2035-05-11' }), mk('m', 'Go live', 3, { milestone: true, startDate: '2035-06-01', endDate: '2035-06-01' }));
+  currentView = 'tasks'; normalizeData(); save(); render(); resetHistory(); }"""
+with sync_playwright() as p:
+    b = p.chromium.launch(headless=True)
+    ctx = b.new_context(viewport={"width": 1440, "height": 800}); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker")
+    pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
+    pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn")
+    ev = pg.evaluate
+    def fresh(): ev(SEED); pg.wait_for_timeout(120)
+    open_ = lambda id_: ev("(i) => document.getElementById(i).classList.contains('open')", id_)
+    fits = lambda sel: ev("(s) => { const b = document.querySelector(s + ' .modal-body'); return b.scrollHeight <= b.clientHeight + 1; }", sel)
+    top = lambda sel: round(pg.locator(sel).bounding_box()["y"])
+    mid = lambda sel: (lambda r: r["y"] + r["height"] / 2)(pg.locator(sel).bounding_box())
+
+    # ------------------------------------------------------------------ Edit Task
+    fresh(); ev("() => openTaskModal('b')"); pg.wait_for_timeout(300)
+    check("Edit Task fits an 800px-high window without scrolling (predecessors, constraint and colour all in view)", fits("#taskModalBg") and pg.locator("#predecessorRows").is_visible() and pg.locator("#taskColorSwatches").is_visible() and pg.locator("#taskConstraintTypeInput").is_visible())
+    check("...Start, Finish, Duration and % share one row; so do Actual Start, Actual Finish, Remaining and Status", len({top("#taskStartInput"), top("#taskEndInput"), top("#taskDurationInput"), top("#taskProgressInput")}) == 1 and len({top("#taskActualStartInput"), top("#taskActualFinishInput"), top("#taskRemainingInfo"), top("#taskStatusInfo")}) == 1)
+    check("...Task Name and Task Mode share a row, Resource and Milestone too", abs(top("#taskNameInput") - top("#taskModeInput")) <= 1 and abs(top("#taskResourceInput") - top("#taskMilestoneInput")) <= 12)
+    check("...the WBS code is in the title, Remaining and Status still show", "WBS 1.2" in pg.inner_text("#taskModalIdBadge") and "days" in pg.inner_text("#taskRemainingInfo") and pg.inner_text("#taskStatusInfo").strip() != "")
+    pg.check("#taskMilestoneInput"); pg.wait_for_timeout(100)
+    check("a milestone hides Finish, Duration and Actual Finish", not pg.locator("#taskEndInput").is_visible() and not pg.locator("#taskDurationInput").is_visible() and not pg.locator("#taskActualFinishInput").is_visible())
+    pg.uncheck("#taskMilestoneInput")
+    ev("() => document.getElementById('taskModalBg').querySelector('.modal-footer .btn').click()"); pg.wait_for_timeout(250)
+    check("Cancel closes without asking, whatever was changed", not open_("taskModalBg") and not open_("confirmModalBg"))
+    ev("() => openTaskModal('b')"); pg.wait_for_timeout(250); pg.click("#taskModalBg .modal-header button"); pg.wait_for_timeout(200)
+    check("× on an untouched dialog closes it without asking", not open_("taskModalBg") and not open_("confirmModalBg"))
+    ev("() => openTaskModal('b')"); pg.wait_for_timeout(250); pg.fill("#taskNameInput", "Build phase"); pg.click("#taskModalBg .modal-header button"); pg.wait_for_timeout(200)
+    check("× after a change asks 'Discard your changes?' — with 'Keep editing' and 'Discard changes'", open_("taskModalBg") and open_("confirmModalBg") and "Discard your changes" in pg.inner_text("#confirmModalTitle") and pg.inner_text("#confirmModalCancelBtn") == "Keep editing" and pg.inner_text("#confirmModalActionBtn") == "Discard changes")
+    pg.click("#confirmModalCancelBtn"); pg.wait_for_timeout(150)
+    check("Keep editing returns to the dialog with the edit still in the box", open_("taskModalBg") and not open_("confirmModalBg") and pg.input_value("#taskNameInput") == "Build phase")
+    pg.keyboard.press("Escape"); pg.wait_for_timeout(150)
+    check("Escape after a change asks too (and the dialog stays open behind the question)", open_("taskModalBg") and open_("confirmModalBg"))
+    pg.keyboard.press("Escape"); pg.wait_for_timeout(150)
+    check("Escape on the question means 'keep editing'", open_("taskModalBg") and not open_("confirmModalBg") and pg.input_value("#taskNameInput") == "Build phase")
+    pg.mouse.click(20, 400); pg.wait_for_timeout(200)
+    check("a click outside the dialog asks as well", open_("taskModalBg") and open_("confirmModalBg"))
+    pg.click("#confirmModalActionBtn"); pg.wait_for_timeout(200)
+    check("Discard changes closes the dialog and the task keeps its name", not open_("taskModalBg") and ev("() => byId('b').name") == "Build")
+    ev("() => openTaskModal('b')"); pg.wait_for_timeout(250); pg.fill("#taskProgressInput", "55"); pg.click("#taskModalBg .btn-primary"); pg.wait_for_timeout(250)
+    check("Save closes without any question and stores the change", not open_("taskModalBg") and not open_("confirmModalBg") and ev("() => byId('b').progress") == 55)
+    ev("() => openTaskModal('b')"); pg.wait_for_timeout(250); pg.click("#taskTabBtnCustom"); pg.fill("#cf_text1", "x"); pg.keyboard.press("Escape"); pg.wait_for_timeout(150)
+    check("an edit on the Custom fields tab counts too", open_("confirmModalBg")); pg.click("#confirmModalActionBtn"); pg.wait_for_timeout(200)
+    ev("() => openTaskModal('b')"); pg.wait_for_timeout(250); pg.fill("#taskNameInput", "Build 2"); pg.press("#taskNameInput", "Enter"); pg.wait_for_timeout(250)
+    check("Enter in the name box saves the task", not open_("taskModalBg") and ev("() => byId('b').name") == "Build 2")
+    ev("() => { byId('b').name = 'Build'; save(); render(); }")
+    fresh(); ev("() => deleteTaskFlow('c')"); pg.wait_for_timeout(150)
+    check("...a delete confirmation shows 'Cancel' and 'Delete' again", pg.inner_text("#confirmModalCancelBtn") == "Cancel" and pg.inner_text("#confirmModalActionBtn") == "Delete"); pg.keyboard.press("Escape"); pg.wait_for_timeout(100)
+
+    # ------------------------------------------------------------------ Working calendar
+    fresh(); ev("() => openCalendarModal()"); pg.wait_for_timeout(300)
+    check("the calendar dialog fits without scrolling and has a summary chip in its header ('Mon–Fri')", fits("#calendarModalBg") and pg.inner_text("#calendarSummaryLive") == "Mon–Fri", pg.inner_text("#calendarSummaryLive"))
+    check("...sections: Working week, Public holidays, Another day off, Days off in this plan", [t.strip().split("\n")[0].strip().upper() for t in pg.locator("#calendarModalBg .cal-sec-title").all_inner_texts()] == ["WORKING WEEK OF “MY PROJECT”", "PUBLIC HOLIDAYS", "ANOTHER DAY OFF A SINGLE DAY, A BREAK, OR A DAY THAT COMES BACK EVERY YEAR", "DAYS OFF IN THIS PLAN"] or len(pg.locator("#calendarModalBg .cal-sec-title").all()) == 4)
+    check("...the region, both years and the Add button are on ONE row (they used to stack)", max(abs(mid(x) - mid("#holRegion")) for x in ["#holYearFrom", "#holYearTo", "#calendarModalBg .hol-preset .btn"]) <= 3)
+    check("...the two dates of a break are side by side, the name and Add on the row below", abs(top("#holFrom") - top("#holTo")) <= 1 and top("#holName") > top("#holFrom") and abs(top("#holName") - top("#calendarModalBg .hol-add .btn")) <= 2)
+    check("...the long explanation is folded away ('How this works')", ev("() => !document.querySelector('#calendarModalBg .cal-how').open") and not pg.locator("#calendarModalBg .cal-hint").is_visible())
+    check("...and the footer says changes apply on Save", "when you save" in pg.inner_text("#calendarModalBg .foot-note"))
+    check("the empty list explains itself and 'Clear all' is hidden", not pg.locator("#holClearBtn").is_visible() and ev("() => getComputedStyle(document.getElementById('holList'), '::before').content").startswith('"No days off'))
+    pg.click("#calendarDays .cal-day:has-text('Sat')"); pg.wait_for_timeout(80)
+    check("ticking Saturday updates the chip live ('Mon–Sat')", pg.inner_text("#calendarSummaryLive") == "Mon–Sat", pg.inner_text("#calendarSummaryLive"))
+    pg.fill("#holFrom", "2026-12-24"); pg.fill("#holName", "Xmas Eve"); pg.click("#calendarModalBg .hol-add .btn"); pg.wait_for_timeout(100)
+    check("adding a day off updates the chip ('· 1 holiday'), the count ('1 day') and shows 'Clear all'", "1 holiday" in pg.inner_text("#calendarSummaryLive") and pg.inner_text("#holCount") == "1 day" and pg.locator("#holClearBtn").is_visible(), (pg.inner_text("#calendarSummaryLive"), pg.inner_text("#holCount")))
+    pg.click("#calendarModalBg .modal-header button"); pg.wait_for_timeout(150)
+    check("× after a change asks before discarding", open_("calendarModalBg") and open_("confirmModalBg") and "working calendar" in pg.inner_text("#confirmModalBody")); pg.click("#confirmModalCancelBtn"); pg.wait_for_timeout(350)
+    pg.click("#holClearBtn"); pg.wait_for_timeout(80)
+    check("Clear all empties the list (and the chip drops the holiday)", pg.locator("#holList .hol-row").count() == 0 and "holiday" not in pg.inner_text("#calendarSummaryLive"))
+    pg.click("#calendarModalBg .modal-footer .btn:has-text('Cancel')"); pg.wait_for_timeout(150)
+    check("Cancel closes without asking", not open_("calendarModalBg") and not open_("confirmModalBg") and ev("() => !project.holidays && !project.workDays"))
+    ev("() => openCalendarModal()"); pg.wait_for_timeout(250); pg.click("#calendarModalBg .modal-header button"); pg.wait_for_timeout(150)
+    check("an untouched calendar dialog closes with × without asking", not open_("calendarModalBg") and not open_("confirmModalBg"))
+    ev("() => openCalendarModal()"); pg.wait_for_timeout(250); pg.click("#calendarDays .cal-day:has-text('Sat')"); pg.click("#calendarModalBg .btn-primary"); pg.wait_for_timeout(200)
+    check("Save stores the calendar without asking", not open_("confirmModalBg") and ev("() => currentWorkDays().join()") == "1,2,3,4,5,6")
+
+    # ------------------------------------------------------------------ Baselines
+    fresh(); ev("() => openBaselineModal()"); pg.wait_for_timeout(300)
+    bx = pg.locator("#baselineModalBg .modal").bounding_box()
+    check("the baseline dialog is 520px wide and fits without scrolling", round(bx["width"]) == 520 and fits("#baselineModalBg"), bx)
+    check("...'Baseline' and 'Apply to' sit side by side; the 'Actual dates' section is hidden while there is nothing to apply", abs(top("#baselineSlotSelect") - top("#baselineScopeAll")) <= 12 and not pg.locator("#baselineActualsSec").is_visible())
+    check("...nothing set yet: the compare list says so and the hint tells what to do first", "none set" in pg.inner_text("#baselineCompareSelect") and "Set a baseline" in pg.inner_text("#baselineCompareHint") and pg.is_disabled("#baselineCompareSelect"))
+    check("...the 'selected task' choice is disabled with a reason", pg.is_disabled("#baselineScopeSel") and "Select a task" in (ev("() => document.getElementById('baselineScopeSel').closest('label').title")))
+    pg.click("#baselineSetBtn"); pg.wait_for_timeout(200)
+    check("after setting one, the compare list names it with its date and the hint explains the chart", "Baseline — set" in pg.inner_text("#baselineCompareSelect") and "grey line" in pg.inner_text("#baselineCompareHint") and not pg.is_disabled("#baselineCompareSelect"), pg.inner_text("#baselineCompareSelect"))
+    ev("() => { byId('b').actualStart = '2025-01-15'; byId('b').startDate = '2025-01-13'; renderBaselineModal(); }"); pg.wait_for_timeout(100)
+    check("a task with an actual date that is not in the schedule brings the 'Actual dates' section back", pg.locator("#baselineActualsSec").is_visible() and not pg.is_disabled("#baselineApplyBtn"))
+
+    # ------------------------------------------------------------------ Find
+    fresh(); ev("() => closeBaselineModal && closeBaselineModal()"); ev("() => openSearch()"); pg.wait_for_timeout(150); pg.keyboard.type("design"); pg.wait_for_timeout(250)
+    check("Find shows a result count ('2 results')", pg.inner_text("#searchCount") == "2 results", pg.inner_text("#searchCount"))
+    check("...every result carries a status dot (Design is complete, Design review is in the future)", pg.locator("#searchResults .sr-dot").count() == 2 and pg.locator("#searchResults .sr-dot.st-complete").count() == 1 and pg.locator("#searchResults .sr-dot.st-future-task").count() == 1)
+    check("...the 'show only the matches' hint is visible with two results, hidden with one", pg.locator("#searchFoot [data-shift]").is_visible())
+    pg.fill("#searchInput", "go live"); pg.wait_for_timeout(200)
+    check("...one result: '1 result' and no 'show only' hint", pg.inner_text("#searchCount") == "1 result" and not pg.locator("#searchFoot [data-shift]").is_visible())
+    pg.fill("#searchInput", "status:late"); pg.wait_for_timeout(200)
+    check("'status:late' lists the late tasks (Build: 30 %, long past its finish)", [t.strip() for t in pg.locator("#searchResults .sr-name").all_inner_texts()] == ["Build"], pg.locator("#searchResults .sr-name").all_inner_texts())
+    pg.fill("#searchInput", "status:complete"); pg.wait_for_timeout(200)
+    check("'status:complete' lists what is done", [t.strip() for t in pg.locator("#searchResults .sr-name").all_inner_texts()] == ["Design"], pg.locator("#searchResults .sr-name").all_inner_texts())
+    pg.fill("#searchInput", "status:future review"); pg.wait_for_timeout(200)
+    check("it combines with words ('status:future review' → Design review)", [t.strip() for t in pg.locator("#searchResults .sr-name").all_inner_texts()] == ["Design review"], pg.locator("#searchResults .sr-name").all_inner_texts())
+    pg.fill("#searchInput", "status:late go"); pg.wait_for_timeout(200)
+    check("...and 'status:late go' finds nothing", pg.locator("#searchResults .sr").count() == 0 and "No task matches" in pg.inner_text("#searchResults"))
+    pg.fill("#searchInput", ""); pg.wait_for_timeout(150)
+    check("the empty box shows no examples — just the one-line hint and the task count", "every word must match" in pg.inner_text("#searchResults") and pg.locator("#searchResults code").count() == 0 and "status:late" not in pg.inner_text("#searchResults") and pg.inner_text("#searchCount") == "")
+    # long results: two lines, WBS, shortened path, name cut around the match
+    ev("""() => { const mk = (id, n, o, e) => Object.assign({ id, name: n, parentId: null, order: o, startDate: '2026-09-07', endDate: '2026-09-11', progress: 0, milestone: false, color: null, predecessors: [], collapsed: false, updatedAt: 1, constraintType: 'ASAP', constraintDate: null, taskMode: 'auto', resource: 'Anna', actualStart: null, actualFinish: null }, e || {});
+      tasks.push(mk('n1', 'Programme 2026', 20), mk('n2', 'Phase 2 — Implementation and rollout across all regional offices', 0, { parentId: 'n1' }), mk('n3', 'Workstream C: Customer portal', 0, { parentId: 'n2' }), mk('n4', 'Foundations', 0, { parentId: 'n3' }),
+        mk('n5', 'Agree the remediation plan for the accessibility findings of the external audit with all the stakeholders of the frobnicate components', 0, { parentId: 'n4' })); normalizeData(); save(); render(); }""")
+    pg.fill("#searchInput", "frobnicate"); pg.wait_for_timeout(250)
+    row = pg.locator("#searchResults .sr").first
+    check("a result has two lines: the name on the first, the WBS and path on the second", row.locator(".sr-name").count() == 1 and row.locator(".sr-path").count() == 1 and abs(row.locator(".sr-path").bounding_box()["y"] - row.locator(".sr-name").bounding_box()["y"]) >= 12)
+    check("...the WBS code is shown again (first thing on the second line)", row.locator(".sr-path .sr-wbs").inner_text() == "21.1.1.1.1" or row.locator(".sr-path .sr-wbs").inner_text().count(".") == 4, row.locator(".sr-path .sr-wbs").inner_text())
+    check("...with four ancestors the path shows only the nearest two, led by '…'", row.locator(".sr-path").inner_text().split("·")[1].strip() == "… › Workstream C: Customer portal › Foundations", row.locator(".sr-path").inner_text())
+    check("...the tooltip of the line has the whole path", "Programme 2026 › Phase 2" in row.locator(".sr-path").get_attribute("title") and "WBS " in row.locator(".sr-path").get_attribute("title"))
+    nm = row.locator(".sr-name").inner_text()
+    check("a long name is cut around the match: the match is visible, the start is ellipsised, the tooltip has the whole name", "frobnicate" in nm and nm.startswith("…") and len(nm) < 90 and "Agree the remediation" in (row.locator(".sr-name").get_attribute("title") or ""), nm)
+    check("...and the match is highlighted", row.locator(".sr-name mark").inner_text().lower() == "frobnicate")
+    pg.fill("#searchInput", "agree"); pg.wait_for_timeout(200)
+    nm = pg.locator("#searchResults .sr .sr-name").first.inner_text()
+    check("a match near the start keeps the start and cuts the end instead", nm.startswith("Agree") and nm.endswith("…"), nm)
+    pg.fill("#searchInput", "design"); pg.wait_for_timeout(200)
+    check("short paths stay whole (two ancestors or fewer show no '…')", "…" not in pg.locator("#searchResults .sr-path").first.inner_text())
+    ev("() => { for (let i = 0; i < 60; i++) tasks.push(Object.assign({}, tasks[1], { id: 'x' + i, name: 'Bulk item ' + i, order: 10 + i, parentId: null })); normalizeData(); save(); render(); }")
+    pg.fill("#searchInput", "bulk item"); pg.wait_for_timeout(250)
+    check("with more than 50 matches the count says 'First 50 of 60'", "First 50 of 60" in pg.inner_text("#searchCount") and pg.locator("#searchResults .sr").count() == 50, pg.inner_text("#searchCount"))
+    pg.keyboard.press("Escape")
+    check("no console errors", not errors, errors[:5])
+    print("console errors/warnings:", errors[:5]); print(f"{sum(results)}/{len(results)} passed"); b.close()

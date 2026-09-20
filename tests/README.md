@@ -29,6 +29,10 @@ set `MILESTONE_URL` / `--url` to test another address. Suites run three at a tim
 | `verify_bulk`, `verify_search`, `verify_import`, `verify_print`, `verify_holiday_presets` | multi-select, bulk edit and copy/paste of rows (also from Excel); the Find palette; MS Project XML and CSV import; print / PDF pages; public-holiday presets |
 | `verify_inline_select` | selecting text in an inline editor (double-click a word, drag out of the box) keeps the edit open |
 | `verify_spacer` | empty lines (spacer rows): the button, placement, no WBS / dates / links, and every feature that must cope with one |
+| `verify_toolbar` | the grouped toolbar: Add Task split button and its menu, selection buttons, the right-click menu (list and chart) |
+| `verify_progress_inline` | editing % complete in the list: leaf tasks, accepted formats, refusals, groups read-only, both views |
+| `verify_dialogs` | Edit Task / Working calendar / Baselines / Find usability: layout, discard warning, live summary, result count, status search |
+| `verify_pred_syntax` | the Predecessors cell reads MS Project syntax (units, ; separator, EA/AA/EE/AE) and refuses elapsed / % lags |
 | `verify_help` | the tabbed Help dialog: topics, keyboard, contrast in both themes, narrow layout |
 | `verify_sync`, `verify_plans` | file merge between two simulated devices, conflicts; plans, file linking, the write race |
 | `verify_columns`, `verify_gantt_columns`, `verify_gantt_list`, `verify_custom_fields`, `verify_filters`, `verify_fixed_widths`, `verify_column_lines`, `verify_hscroll`, `verify_date_editors`, `verify_funnel_hover`, `verify_mode_header` | the task list: columns per view, custom fields, filters, widths, lines, scrolling, editors |

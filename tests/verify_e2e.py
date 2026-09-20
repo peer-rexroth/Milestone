@@ -34,7 +34,7 @@ with sync_playwright() as p:
 
     # ============================================================ 1. an empty plan
     check("a fresh plan shows the empty state and a working Add Task button", "No tasks yet" in pg.inner_text("#gridRows") and pg.locator("#addTaskBtn").is_enabled())
-    check("the toolbar buttons that need a task are disabled until one is selected", pg.is_disabled("#indentBtn") and pg.is_disabled("#deleteTaskBtn") and pg.is_disabled("#cloneTaskBtn"))
+    check("the toolbar buttons that need a task are disabled (Indent) or not shown (Delete, Duplicate) until one is selected", pg.is_disabled("#indentBtn") and not pg.is_visible("#deleteTaskBtn") and not pg.is_visible("#cloneTaskBtn"))
     # ============================================================ 2. building the plan (through the dialog)
     add_task("Kick-off", "2026-09-07", "2026-09-07"); add_task("Design", "2026-09-07", "2026-09-11"); add_task("Sketches", "2026-09-07", "2026-09-09"); add_task("Review", "2026-09-10", "2026-09-11"); add_task("Build", "2026-09-14", "2026-09-25"); add_task("Test", "2026-09-28", "2026-10-02")
     check("six tasks added through the dialog: six rows, in the order added (each below the previously selected one)", rows() == 6 and [t["name"] for t in pg.evaluate("() => visibleTaskList().map(v => v.task)")] == ["Kick-off", "Design", "Sketches", "Review", "Build", "Test"])

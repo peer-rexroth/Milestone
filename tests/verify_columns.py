@@ -293,9 +293,9 @@ with sync_playwright() as p:
     info = lambda: (pg.inner_text("#taskWbsInfo").strip(), pg.inner_text("#taskRemainingInfo").strip(), pg.inner_text("#taskStatusInfo").strip())
     open_dialog("Solo")
     labels = [l.strip() for l in pg.locator("#taskModalBg .modal-body label").all_inner_texts() if l.strip()]
-    want = ["Task Name", "Task Mode", "Resource", "Milestone (zero-duration)", "Start", "Finish", "Duration (days)", "% Complete", "Actual Start", "Actual Finish", "WBS", "Remaining Duration", "Status", "Constraint", "Color", "Predecessors"]
-    check("dialog: every field is there — including WBS, Remaining Duration and Status", all(w in labels for w in want), [w for w in want if w not in labels])
-    check("dialog: WBS, Remaining Duration and Status are read-only displays, not inputs", pg.locator("#taskWbsInfo, #taskRemainingInfo, #taskStatusInfo").evaluate_all("els => els.every(e => e.tagName === 'DIV')"))
+    want = ["Task Name", "Task Mode", "Resource", "Milestone", "Start", "Finish", "Duration (days)", "% Complete", "Actual Start", "Actual Finish", "Remaining", "Status", "Constraint", "Color", "Predecessors"]
+    check("dialog: every field is there — Remaining and Status among them, and the WBS code in the title", all(w in labels for w in want) and "WBS" in pg.inner_text("#taskModalIdBadge"), [w for w in want if w not in labels])
+    check("dialog: Remaining and Status are read-only displays, not inputs", pg.locator("#taskRemainingInfo, #taskStatusInfo").evaluate_all("els => els.every(e => e.tagName === 'DIV')") and pg.locator("#taskWbsInfo").count() == 1)
     dur = 10; rem = int(dur * 40 / 100 * 10 + 0.5) / 10
     check("dialog: shows the task's WBS, remaining duration (10 days at 60% -> 4 days) and status", info() == ("2", "4 days", "On Schedule"), info())
     # live updates as the fields are edited

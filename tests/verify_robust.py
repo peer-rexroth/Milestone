@@ -266,7 +266,7 @@ with sync_playwright() as p:
 
     # ============================================================ 6. accessibility basics of the new UI
     a11y = ev("""() => { const bad = []; const label = el => (el.getAttribute('aria-label') || el.title || el.textContent || el.value || el.placeholder || '').trim();   // (textContent: a closed dialog has no innerText)
-      for (const id of ['undoBtn', 'redoBtn', 'copyBtn', 'pasteBtn', 'bulkEditBtn', 'deleteTaskBtn', 'cloneTaskBtn', 'indentBtn', 'outdentBtn', 'printBtn', 'searchBtn', 'selChip']) { const el = document.getElementById(id); if (!el || !label(el)) bad.push('button ' + id); }
+      for (const id of ['undoBtn', 'redoBtn', 'copyBtn', 'pasteBtn', 'bulkEditBtn', 'deleteTaskBtn', 'cloneTaskBtn', 'indentBtn', 'outdentBtn', 'addMenuBtn', 'searchBtn', 'selChip']) { const el = document.getElementById(id); if (!el || !label(el)) bad.push('button ' + id); }
       for (const modal of ['searchModalBg', 'bulkModalBg', 'foreignImportModalBg', 'printModalBg', 'calendarModalBg', 'helpModalBg']) for (const el of document.querySelectorAll('#' + modal + ' button')) if (!label(el)) bad.push(modal + ' button without a name: ' + el.outerHTML.slice(0, 60));
       for (const modal of ['searchModalBg', 'bulkModalBg', 'foreignImportModalBg', 'printModalBg', 'calendarModalBg']) for (const el of document.querySelectorAll('#' + modal + ' input:not([type=hidden]), #' + modal + ' select')) { const has = el.getAttribute('aria-label') || el.getAttribute('aria-labelledby') || (el.id && document.querySelector('label[for="' + el.id + '"]')) || el.closest('label') || el.placeholder || el.title; if (!has) bad.push(modal + ' field without a label: ' + (el.id || el.outerHTML.slice(0, 50))); }
       return bad; }""")
