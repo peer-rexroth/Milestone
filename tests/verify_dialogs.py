@@ -8,7 +8,7 @@ errors, results = [], []
 def check(name, cond, detail=""):
     results.append(bool(cond)); print(("PASS  " if cond else "FAIL  ") + name + (f"   [{str(detail)[:500]}]" if not cond and detail else ""))
 
-SEED = """() => { tasks.length = 0; deletedTaskIds.length = 0; setSelection([]); colFilters = newColFilters(); filterPinned.clear(); editingCell = null; delete project.holidays; delete project.workDays; delete project.baselines; delete project.compareBaseline; historyCoalesceMs = 0;
+SEED = """() => { tasks.length = 0; deletedTaskIds.length = 0; setSelection([]); colFilters = newColFilters(); filterPinned.clear(); editingCell = null; delete project.holidays; delete project.workDays; delete project.baselines; delete project.compareBaseline; project.fieldNames = { text1: 'Cost centre' }; historyCoalesceMs = 0;
   const mk = (id, n, o, e) => Object.assign({ id, name: n, parentId: null, order: o, startDate: '2026-09-07', endDate: '2026-09-11', progress: 0, milestone: false, color: null, predecessors: [], collapsed: false, updatedAt: 1, constraintType: 'ASAP', constraintDate: null, taskMode: 'auto', resource: 'Anna', actualStart: null, actualFinish: null }, e || {});
   tasks.push(mk('g', 'Website relaunch', 0), mk('a', 'Design', 0, { parentId: 'g', startDate: '2025-01-06', endDate: '2025-01-10', progress: 100 }), mk('b', 'Build', 1, { parentId: 'g', startDate: '2025-01-13', endDate: '2025-01-24', progress: 30, predecessors: [{ id: 'a', type: 'FS', lag: 0 }] }), mk('c', 'Design review', 2, { parentId: 'g', startDate: '2035-05-07', endDate: '2035-05-11' }), mk('m', 'Go live', 3, { milestone: true, startDate: '2035-06-01', endDate: '2035-06-01' }));
   currentView = 'tasks'; normalizeData(); save(); render(); resetHistory(); }"""
@@ -30,6 +30,8 @@ with sync_playwright() as p:
     check("...Start, Finish, Duration and % share one row; so do Actual Start, Actual Finish, Remaining and Status", len({top("#taskStartInput"), top("#taskEndInput"), top("#taskDurationInput"), top("#taskProgressInput")}) == 1 and len({top("#taskActualStartInput"), top("#taskActualFinishInput"), top("#taskRemainingInfo"), top("#taskStatusInfo")}) == 1)
     check("...Task Name and Task Mode share a row, Resource and Milestone too", abs(top("#taskNameInput") - top("#taskModeInput")) <= 1 and abs(top("#taskResourceInput") - top("#taskMilestoneInput")) <= 12)
     check("...the WBS code is in the title, Remaining and Status still show", "WBS 1.2" in pg.inner_text("#taskModalIdBadge") and "days" in pg.inner_text("#taskRemainingInfo") and pg.inner_text("#taskStatusInfo").strip() != "")
+    check("Task Mode is wide enough for 'Manually Scheduled' (the text fits inside the box beside the arrow)", ev("() => { const el = document.getElementById('taskModeInput'), cs = getComputedStyle(el), c = document.createElement('canvas').getContext('2d'); c.font = cs.fontSize + ' ' + cs.fontFamily; return c.measureText('Manually Scheduled').width + parseFloat(cs.paddingLeft) + 26 <= el.getBoundingClientRect().width; }"))
+    check("...Task Name and Resource take the rest of the width and the Milestone tick sits under Task Mode", pg.locator("#taskNameInput").bounding_box()["width"] > pg.locator("#taskModeInput").bounding_box()["width"] * 2 and abs(pg.locator("#taskMilestoneInput").bounding_box()["x"] - pg.locator("#taskModeInput").bounding_box()["x"]) <= 12)
     pg.check("#taskMilestoneInput"); pg.wait_for_timeout(100)
     check("a milestone hides Finish, Duration and Actual Finish", not pg.locator("#taskEndInput").is_visible() and not pg.locator("#taskDurationInput").is_visible() and not pg.locator("#taskActualFinishInput").is_visible())
     pg.uncheck("#taskMilestoneInput")
@@ -134,5 +136,13 @@ with sync_playwright() as p:
     pg.fill("#searchInput", "bulk item"); pg.wait_for_timeout(250)
     check("with more than 50 matches the count says 'First 50 of 60'", "First 50 of 60" in pg.inner_text("#searchCount") and pg.locator("#searchResults .sr").count() == 50, pg.inner_text("#searchCount"))
     pg.keyboard.press("Escape")
+    # every dropdown has room between its arrow and the right edge (the native arrow sat against it)
+    bad = ev("""() => [...document.querySelectorAll('select')].filter(s => { const c = getComputedStyle(s); return c.appearance !== 'none' || parseFloat(c.paddingRight) < 28 || !c.backgroundImage.startsWith('url') || !c.backgroundPosition.includes('12px'); }).map(s => s.id || s.className)""")
+    check("every dropdown draws its own chevron 12px from the right edge with 32px of padding (no native arrow against the edge)", bad == [], bad)
+    ev("() => { theme = 'light'; applyTheme(); }")
+    light = ev("() => getComputedStyle(document.getElementById('taskModeInput')).backgroundImage")
+    ev("() => { theme = 'dark'; applyTheme(); }")
+    dark = ev("() => getComputedStyle(document.getElementById('taskModeInput')).backgroundImage")
+    check("...in both themes, in the colour of the theme (grey-blue on light, lighter on dark)", "656d76" in light and "9198a1" in dark, (light[:80], dark[:80]))
     check("no console errors", not errors, errors[:5])
     print("console errors/warnings:", errors[:5]); print(f"{sum(results)}/{len(results)} passed"); b.close()

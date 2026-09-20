@@ -14,7 +14,8 @@ def fmt(iso): y, m, dd = iso.split("-"); return f"{dd}.{m}.{y}"
 
 OLD_ORDER = ["mode", "wbs", "name", "start", "end", "actualStart", "actualFinish", "duration", "progress", "preds", "remaining", "status", "resource"]   # the 13 columns of an install from before the baseline columns
 DEFAULT_ORDER = ["mode", "wbs", "name", "start", "end", "actualStart", "actualFinish", "duration", "progress", "preds", "remaining", "status", "resource", "baselineStart", "baselineFinish", "baselineDuration", "startVariance", "finishVariance", "durationVariance"]
-DEFAULT_ORDER += [k + str(i) for k in ("text", "number", "date", "flag") for i in range(1, 6)]   # the 20 custom fields, hidden by default
+# (the 20 custom fields are in the registry too, but the Columns menu lists only the ones a plan uses — none here)
+ALL_ORDER = DEFAULT_ORDER + [k + str(i) for k in ("text", "number", "date", "flag") for i in range(1, 6)]   # what colOrder itself holds
 OLD_SHOWN = ["mode", "wbs", "name", "start", "end", "duration", "progress", "preds"]   # what an install from before Actual Start/Finish and Status became default columns still shows
 DEFAULT_SHOWN = ["mode", "wbs", "name", "start", "end", "actualStart", "actualFinish", "duration", "progress", "preds", "status"]
 
@@ -76,7 +77,7 @@ with sync_playwright() as p:
     pg.reload(); pg.wait_for_selector("#addTaskBtn"); pg.wait_for_timeout(200)
     check("...and survives a reload", head_cols() == before, (head_cols(), before))
     open_cols(); pg.click("#columnsMenu .btn-link:has-text('Reset')"); pg.wait_for_timeout(100)
-    check("Reset to default restores columns and order", head_cols() == DEFAULT_SHOWN and pg.evaluate("() => colOrder") == DEFAULT_ORDER)
+    check("Reset to default restores columns and order", head_cols() == DEFAULT_SHOWN and pg.evaluate("() => colOrder") == ALL_ORDER)
     close_cols()
     pg.click("#columnsBtn"); pg.click("body", position={"x": 5, "y": 400}); pg.wait_for_timeout(100)
     check("clicking elsewhere closes the menu", pg.locator("#columnsMenu.open").count() == 0)
@@ -103,7 +104,7 @@ with sync_playwright() as p:
     check("prefs from an older version (no Remaining/Status yet): those two are added, each as its default says (Remaining hidden, Status shown)", "remaining" not in head_now and "status" in head_now and "remaining" in pg.evaluate("() => colOrder") and "status" in pg.evaluate("() => colOrder"), head_now)
     check("...a column the user had hidden stays hidden, the visible ones keep their saved order", "mode" not in head_now and head_now == ["name", "start", "end", "duration", "progress", "preds", "resource", "actualStart", "actualFinish", "wbs", "status"], head_now)
     with_prefs({"order": ["bogus", "name", "start"], "hidden": ["name", "nothing"]})
-    check("garbage in the prefs is ignored; Task Name can never be hidden", "name" in head_cols() and "bogus" not in pg.evaluate("() => colOrder") and set(pg.evaluate("() => colOrder")) == set(DEFAULT_ORDER) and len(pg.evaluate("() => colOrder")) == len(DEFAULT_ORDER), (head_cols(), pg.evaluate("() => colOrder")))
+    check("garbage in the prefs is ignored; Task Name can never be hidden", "name" in head_cols() and "bogus" not in pg.evaluate("() => colOrder") and set(pg.evaluate("() => colOrder")) == set(ALL_ORDER) and len(pg.evaluate("() => colOrder")) == len(ALL_ORDER), (head_cols(), pg.evaluate("() => colOrder")))
     with_prefs(None)
 
     # ============================================================ Resource, Actual Start/Finish

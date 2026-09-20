@@ -12,7 +12,7 @@ with sync_playwright() as p:
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
     pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn")
     pg.evaluate(SEED, [{"name": "Auto", "s": "2026-09-07", "e": "2026-09-11"}, {"name": "Man", "s": "2026-09-07", "e": "2026-09-11", "extra": {"taskMode": "manual"}}])
-    pg.evaluate("() => { for (const c of ['actualStart', 'actualFinish', 'date1']) colHidden.delete(c); render(); }"); pg.wait_for_timeout(150)
+    pg.evaluate("() => { project.fieldNames = { date1: 'Due' }; normalizeData(); for (const c of ['actualStart', 'actualFinish', 'date1']) colHidden.delete(c); render(); }"); pg.wait_for_timeout(150)
     hc = lambda: pg.evaluate("() => [...document.querySelectorAll('#gridHeader .col-filter-btn')].map(b => b.dataset.col)")
     tid = lambda n: pg.evaluate("n => tasks.find(t => t.name === n).id", n)
     def open_editor(name, col):

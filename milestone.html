@@ -153,17 +153,31 @@ button:focus:not(:focus-visible) { outline: none; }
 .tab-badge { min-width: 18px; padding: 0 5px; border-radius: 999px; background: color-mix(in srgb, var(--accent) 16%, var(--panel)); color: var(--accent); font-size: 11px; line-height: 17px; text-align: center; }
 .tab-pane { display: flex; flex-direction: column; gap: 12px; }
 .cf-hint { font-size: 12.5px; color: var(--text-dim); line-height: 1.5; }
-.cf-section + .cf-section { margin-top: 12px; }
-.cf-title { margin-bottom: 6px; font-size: 11.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-faint); }
+.cf-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.cf-bar-note { font-size: 12.5px; color: var(--text-dim); }
+.cf-bar-actions { display: flex; align-items: center; gap: 10px; }
+.cf-caret { font-size: 9px; margin-left: 2px; }
+.cf-empty { padding: 18px 14px; border: 1px dashed var(--border); border-radius: 8px; color: var(--text-dim); font-size: 13px; line-height: 1.5; text-align: center; }
+#cfAddMenu { z-index: 130; min-width: 230px; margin-top: 4px; }
+.fields-rows { display: flex; flex-direction: column; gap: 6px; }
+.fld-row { display: grid; grid-template-columns: 92px 1fr 64px 28px; gap: 8px; align-items: center; }
+.fld-kind { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 600; color: var(--text-dim); }
+.fld-kind i { width: 14px; text-align: center; color: var(--text-faint); }
+.fld-name { padding: 7px 9px; border: 1px solid var(--border); border-radius: 7px; background: var(--panel); color: var(--text); min-width: 0; }
+.fld-name:disabled { opacity: .5; text-decoration: line-through; }
+.fld-name.bad { border-color: var(--danger); }
+.fld-uses { font-size: 11.5px; color: var(--text-faint); text-align: right; white-space: nowrap; }
+.fld-remove { width: 26px; height: 26px; border: none; border-radius: 6px; background: transparent; color: var(--text-faint); }
+.fld-remove:hover { background: var(--panel-2); color: var(--danger); }
+.fld-row.removed .fld-remove:hover { color: var(--accent); }
+.fld-empty { padding: 14px; border: 1px dashed var(--border); border-radius: 8px; color: var(--text-faint); font-size: 12.5px; text-align: center; }
+.cols-foot { padding: 8px 12px 4px; border-top: 1px solid var(--border); margin-top: 4px; }
 .cf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.cf-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
-.cf-flags { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; }
+.cf-flags { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; margin-top: 12px; }
 .cf-label { display: flex; align-items: center; gap: 4px; }
 .cf-flag { display: flex; align-items: center; gap: 4px; font-size: 13px; }
 .cf-flag label { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; padding: 4px 2px; cursor: pointer; }
 .cf-flag input { width: 15px; height: 15px; margin: 0; }
-.cf-rename, .cols-rename { flex-shrink: 0; width: 20px; height: 20px; padding: 0; border: none; border-radius: 4px; background: transparent; color: var(--text-faint); font-size: 9px; }
-.cf-rename:hover, .cols-rename:hover { background: var(--panel-2); color: var(--text); }
 .custom-flag { justify-content: center; }
 .custom-flag i { color: var(--task-green); }
 /* ---- column chooser ---- */
@@ -584,6 +598,8 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 .cal-sec .bl-compare { width: 100%; padding: 8px 10px; }
 /* Edit Task: four columns */
 .field-grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.field-grid-nm { display: grid; grid-template-columns: minmax(0, 1fr) 190px; gap: 12px 10px; }   /* Task Name / Resource take what is left; Task Mode (and the Milestone box under it) is wide enough for "Manually Scheduled" */
+.field-grid-nm input[type=text], .field-grid-nm select { padding: 8px 8px; }
 .field-grid-4 > .span2 { grid-column: span 2; } .field-grid-4 > .span3 { grid-column: span 3; }
 .field-grid-4 input[type=date], .field-grid-4 input[type=number], .field-grid-4 input[type=text], .field-grid-4 select { padding: 8px 8px; }
 .ms-field { align-self: end; padding-bottom: 9px; }   /* the task dialog: a lot of fields, so more room before it scrolls */
@@ -671,6 +687,15 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 .file-sync-help { margin-top: 10px; border-top: 1px solid var(--border); padding-top: 10px; }
 .file-sync-help summary { cursor: pointer; font-size: 12.5px; color: var(--text-dim); font-weight: 600; }
 .file-sync-help-body { font-size: 12px; color: var(--text-dim); margin-top: 8px; line-height: 1.5; }
+/* Every dropdown: a drawn chevron with room to the right edge (the native one sat right against it). Last in the sheet so it wins over the per-dialog select rules. */
+select:not([multiple]):not([size]) {
+  -webkit-appearance: none; appearance: none; padding-right: 32px;
+  background-repeat: no-repeat; background-position: right 12px center; background-size: 11px 7px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='11' height='7' viewBox='0 0 11 7'><path d='M1 1l4.5 4.5L10 1' fill='none' stroke='%239198a1' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+}
+html[data-theme="light"] select:not([multiple]):not([size]) {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='11' height='7' viewBox='0 0 11 7'><path d='M1 1l4.5 4.5L10 1' fill='none' stroke='%23656d76' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+}
 </style>
 </head>
 <body>
@@ -778,11 +803,13 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
     </div>
     <div class="modal-body">
       <div class="tab-pane" id="taskTabGeneral">
-      <div class="field-grid-4">
-        <div class="field span3"><label for="taskNameInput">Task Name</label><input type="text" id="taskNameInput" placeholder="Task name" onkeydown="if(event.key==='Enter'){event.preventDefault();saveTaskFromModal();}"></div>
+      <div class="field-grid-nm">
+        <div class="field"><label for="taskNameInput">Task Name</label><input type="text" id="taskNameInput" placeholder="Task name" onkeydown="if(event.key==='Enter'){event.preventDefault();saveTaskFromModal();}"></div>
         <div class="field"><label for="taskModeInput">Task Mode</label><select id="taskModeInput"><option value="manual">Manually Scheduled</option><option value="auto">Auto Scheduled</option></select></div>
-        <div class="field span3"><label for="taskResourceInput">Resource</label><input type="text" id="taskResourceInput" maxlength="200"></div>
+        <div class="field"><label for="taskResourceInput">Resource</label><input type="text" id="taskResourceInput" maxlength="200"></div>
         <div class="checkbox-row ms-field"><input type="checkbox" id="taskMilestoneInput" onchange="onMilestoneToggle()"><label for="taskMilestoneInput">Milestone</label></div>
+      </div>
+      <div class="field-grid-4">
         <div class="field"><label for="taskStartInput">Start</label><input type="date" id="taskStartInput" onchange="onTaskStartChange()"></div>
         <div class="field" id="taskEndField"><label for="taskEndInput">Finish</label><input type="date" id="taskEndInput" onchange="onTaskEndChange()"></div>
         <div class="field" id="taskDurationField"><label for="taskDurationInput" title="Working days, counted on the plan's working calendar">Duration (days)</label><input type="number" min="1" max="9999" id="taskDurationInput" onchange="onTaskDurationChange()"></div>
@@ -819,7 +846,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
       </div>
       </div>
       <div class="tab-pane hidden" id="taskTabCustom">
-        <div class="cf-hint">Your own fields for this task. Rename them with the pencil — names are kept with this plan. They stay out of the task list until you tick them under <strong>Columns</strong>.</div>
+        <div class="cf-bar"><span class="cf-bar-note">Your own fields for this plan's tasks</span><span class="cf-bar-actions"><button class="btn-link" type="button" onclick="openFieldsModal()">Manage fields…</button><button class="btn btn-sm" type="button" id="cfAddBtn" onclick="toggleCfAddMenu(event)" aria-haspopup="menu"><i class="fa-solid fa-plus"></i>Add field<i class="fa-solid fa-chevron-down cf-caret"></i></button></span></div>
         <div id="taskCustomFields"></div>
       </div>
     </div>
@@ -1001,20 +1028,22 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 </div>
 
 <!-- Rename custom field (opens above the task dialog, so it sits after it in the page) -->
-<div class="modal-bg" id="fieldNameModalBg" onclick="if(event.target===this) closeFieldNameModal()">
-  <div class="modal narrow">
-    <div class="modal-header"><h2 id="fieldNameTitle">Rename field</h2><button onclick="closeFieldNameModal()">&times;</button></div>
+<div class="modal-bg" id="fieldsModalBg" onclick="if(event.target===this) requestCloseFieldsModal()">
+  <div class="modal mid">
+    <div class="modal-header"><h2>Custom fields</h2><button onclick="requestCloseFieldsModal()" aria-label="Close">&times;</button></div>
     <div class="modal-body">
-      <div class="field"><label for="fieldNameInput">Name</label><input type="text" id="fieldNameInput" maxlength="40" onkeydown="if(event.key==='Enter'){event.preventDefault();saveFieldName()}"></div>
-      <p id="fieldNameHint" style="font-size:12.5px;color:var(--text-dim);margin:0;line-height:1.5"></p>
+      <p class="cal-hint" style="margin:0">Fields of your own for the tasks of “<span id="fieldsPlanName"></span>” — text, numbers, dates and yes/no ticks. They are kept with this plan; tick them under <strong>Columns</strong> to show them in the list.</p>
+      <div class="fields-rows" id="fieldsRows"></div>
+      <div><button class="btn" type="button" id="fieldsAddBtn" onclick="toggleCfAddMenu(event)" aria-haspopup="menu"><i class="fa-solid fa-plus"></i>Add field<i class="fa-solid fa-chevron-down cf-caret"></i></button></div>
     </div>
     <div class="modal-footer">
-      <button class="btn" id="fieldNameResetBtn" onclick="saveFieldName(true)" style="margin-right:auto">Use default name</button>
-      <button class="btn" onclick="closeFieldNameModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="saveFieldName()">Save</button>
+      <span class="foot-note" id="fieldsNote"></span>
+      <button class="btn" onclick="closeFieldsModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveFieldsModal()">Save</button>
     </div>
   </div>
 </div>
+<div class="dropdown-menu" id="cfAddMenu" role="menu"></div>
 
 <div class="modal-bg" id="calendarModalBg" onclick="if(event.target===this) requestCloseCalendarModal()">
   <div class="modal wide">
@@ -1234,8 +1263,8 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
         <div class="help-divider"></div>
         <div class="help-section">
           <div class="help-section-title">Custom fields</div>
-          <div class="help-row"><i class="fa-solid fa-shapes"></i><span>Every task can carry up to 20 fields of your own: <strong>Text1–5</strong>, <strong>Number1–5</strong>, <strong>Date1–5</strong> and <strong>Flag1–5</strong> (a yes/no tick). Fill them in on the task dialog's <strong>Custom fields</strong> tab, or — once ticked under Columns, where they start hidden — straight in the list (click a cell; a flag toggles).</span></div>
-          <div class="help-row"><i class="fa-solid fa-pen"></i><span>Use the pencil beside a field to <strong>rename</strong> it, for instance Text1 to <em>Cost centre</em>. The name is saved with the plan, so another plan can call the same field something else. Custom fields can be filtered like any column and are included in the Excel export.</span></div>
+          <div class="help-row"><i class="fa-solid fa-shapes"></i><span>Every task can carry fields of your own — text, numbers, dates and yes/no ticks (up to five of each). <strong>Add field</strong> on the task dialog's <strong>Custom fields</strong> tab (or <strong>Manage custom fields…</strong> under Columns) creates one; the tab shows only the fields you use. Fill them in on that tab or — once ticked under Columns, where they start hidden — straight in the list (click a cell; a flag toggles).</span></div>
+          <div class="help-row"><i class="fa-solid fa-pen"></i><span>In <strong>Manage fields</strong> you name, rename and remove fields (removing one deletes its values; Undo brings them back). The names are saved with the plan, so another plan can use its own. Custom fields can be filtered like any column and are included in the Excel export.</span></div>
         </div>
         <div class="help-divider"></div>
         <div class="help-section">
@@ -1405,6 +1434,12 @@ const CUSTOM_KINDS = [
 const CUSTOM_FIELDS = {};
 for (const k of CUSTOM_KINDS) for (let i = 1; i <= 5; i++) CUSTOM_FIELDS[k.kind + i] = { id: k.kind + i, kind: k.kind, defaultName: k.label + i };
 function isCustomField(id) { return Object.prototype.hasOwnProperty.call(CUSTOM_FIELDS, id); }
+// A field is IN USE (shown in the task dialog, the Columns menu and the exports) when the plan has given it a name or some task has a value in it —
+// so a plan from before this existed loses nothing, and a field taken away (Manage fields → ✕) is one with no name and no values left.
+let _customActive = null;
+function activeCustomSet() { if (!_customActive) { _customActive = new Set(Object.keys(CUSTOM_FIELDS).filter(id => project && project.fieldNames && project.fieldNames[id])); for (const t of tasks) if (t.custom) for (const id of Object.keys(t.custom)) if (isCustomField(id)) _customActive.add(id); } return _customActive; }
+function isCustomActive(id) { return isCustomField(id) && activeCustomSet().has(id); }
+function activeCustomFields() { return Object.keys(CUSTOM_FIELDS).filter(isCustomActive); }   // canonical order: Text1-5, Number1-5, Date1-5, Flag1-5
 function customFieldName(id) { const n = project && project.fieldNames && project.fieldNames[id]; return n || CUSTOM_FIELDS[id].defaultName; }
 for (const f of Object.values(CUSTOM_FIELDS)) {
   const k = CUSTOM_KINDS.find(x => x.kind === f.kind);
@@ -1710,10 +1745,12 @@ function loadPrefs() {
 // The columns the list of a view shows: each view keeps its own choice (Tasks view: colOrder / colHidden, Gantt view: gColOrder / gColHidden).
 function viewColOrder(view = currentView) { return view === 'gantt' ? gColOrder : colOrder; }
 function viewColHidden(view = currentView) { return view === 'gantt' ? gColHidden : colHidden; }
-function visibleTaskCols(view = currentView) { const hidden = viewColHidden(view); return viewColOrder(view).filter(id => !hidden.has(id) || TASK_COLS[id].locked); }
+function visibleTaskCols(view = currentView) { const hidden = viewColHidden(view); return viewColOrder(view).filter(id => (!hidden.has(id) || TASK_COLS[id].locked) && (!TASK_COLS[id].custom || isCustomActive(id))); }   // (a custom field this plan does not use is never a column, whatever this device saved)
+function columnListed(id) { return !TASK_COLS[id].custom || isCustomActive(id); }   // rows of the Columns menu
 function toggleColumn(id, show) { if (TASK_COLS[id].locked) return; const hidden = viewColHidden(); if (show) hidden.delete(id); else hidden.add(id); save(); render(); renderColumnsMenu(); }
 function moveColumn(id, dir) {
-  const order = viewColOrder(), i = order.indexOf(id), j = i + dir;
+  const order = viewColOrder(), i = order.indexOf(id); let j = i + dir;
+  while (j >= 0 && j < order.length && !columnListed(order[j])) j += dir;   // (skips the custom fields the menu does not list)
   if (i < 0 || j < 0 || j >= order.length) return;
   [order[i], order[j]] = [order[j], order[i]];
   save(); render(); renderColumnsMenu();
@@ -1733,17 +1770,17 @@ function toggleColumnsMenu() {
 }
 function closeColumnsMenu() { document.getElementById('columnsMenu').classList.remove('open'); }
 function renderColumnsMenu() {
-  const shown = new Set(visibleTaskCols()), menu = document.getElementById('columnsMenu'), scroll = menu.scrollTop, order = viewColOrder(), vname = currentView === 'gantt' ? 'Gantt view' : 'Tasks view';
+  const shown = new Set(visibleTaskCols()), menu = document.getElementById('columnsMenu'), scroll = menu.scrollTop, order = viewColOrder().filter(columnListed), vname = currentView === 'gantt' ? 'Gantt view' : 'Tasks view';
   menu.innerHTML =
     `<div class="cols-head"><strong>Columns · ${vname}</strong><button class="btn-link" onclick="resetColumns()">Reset to default</button></div>` +
     `<div class="cols-hint">Tick the columns the list shows in the ${vname}; use the arrows to reorder them. The ${currentView === 'gantt' ? 'Tasks' : 'Gantt'} view keeps its own choice.</div>` +
     order.map((id, i) => {
       const c = TASK_COLS[id], lab = escapeHtml(c.label);
       return `<div class="cols-row"><label class="cols-check${c.locked ? ' locked' : ''}"><input type="checkbox" data-col="${id}"${shown.has(id) ? ' checked' : ''}${c.locked ? ' disabled' : ''} onchange="toggleColumn('${id}', this.checked)"><span>${lab}</span>${c.locked ? '<span class="cols-tag">always shown</span>' : ''}</label>` +
-        (c.custom ? `<button class="cols-rename" title="Rename this field (kept with this plan)" aria-label="Rename ${lab}" onclick="openFieldNameModal('${id}')"><i class="fa-solid fa-pen"></i></button>` : '') +
         `<span class="cols-move"><button aria-label="Move ${lab} up" onclick="moveColumn('${id}',-1)"${i === 0 ? ' disabled' : ''}><i class="fa-solid fa-chevron-up"></i></button><button aria-label="Move ${lab} down" onclick="moveColumn('${id}',1)"${i === order.length - 1 ? ' disabled' : ''}><i class="fa-solid fa-chevron-down"></i></button></span></div>`;
-    }).join('');
-  menu.scrollTop = scroll;   // 31 rows: re-rendering after a tick or a move must not jump back to the top
+    }).join('') +
+    `<div class="cols-foot"><button class="btn-link" onclick="closeColumnsMenu();openFieldsModal()"><i class="fa-solid fa-sliders"></i> ${activeCustomFields().length ? 'Manage custom fields…' : 'Add a custom field…'}</button></div>`;
+  menu.scrollTop = scroll;   // the rows: re-rendering after a tick or a move must not jump back to the top
 }
 function loadPlanData(id) {
   const idx = readPlansIndex();
@@ -2194,7 +2231,7 @@ function effectiveDates(id) {
   _effCache.set(id, result);
   return result;
 }
-function resetEffectiveCache() { _effCache.clear(); _actCache.clear(); _baseCache.clear(); _filterShow.clear(); }
+function resetEffectiveCache() { _effCache.clear(); _actCache.clear(); _baseCache.clear(); _filterShow.clear(); _customActive = null; }
 
 /* ======================== Scheduling & critical path ===================== */
 function successorsMap() {
@@ -4170,8 +4207,20 @@ function openTaskModal(id, isNew) {
 }
 // Closing with × / Escape / a click outside asks first when something was changed (Cancel is an explicit "throw it away" and does not).
 let taskModalSnapshot = null;
-function taskModalState() { return JSON.stringify([...document.querySelectorAll('#taskModalBg input, #taskModalBg select, #taskModalBg textarea')].map(el => el.type === 'checkbox' || el.type === 'radio' ? el.checked : el.value)) + (document.querySelector('#taskColorSwatches .selected') ? document.querySelector('#taskColorSwatches .selected').outerHTML : ''); }
-function taskModalDirty() { return taskModalSnapshot !== null && document.getElementById('taskModalBg').classList.contains('open') && taskModalState() !== taskModalSnapshot; }
+// What the dialog holds: every control with an id by id (custom-field inputs come and go with the Manage dialog, so a control that is new since the snapshot counts only once it has a value),
+// the ones without an id (predecessor rows) as a list, and the chosen colour.
+function taskModalState() {
+  const byIdMap = {}, rest = [];
+  for (const el of document.querySelectorAll('#taskModalBg input, #taskModalBg select, #taskModalBg textarea')) { const v = el.type === 'checkbox' || el.type === 'radio' ? el.checked : el.value; if (el.id) byIdMap[el.id] = v; else rest.push(v); }
+  return JSON.stringify({ byIdMap, rest, color: document.querySelector('#taskColorSwatches .selected') ? document.querySelector('#taskColorSwatches .selected').outerHTML : '' });
+}
+function taskModalDirty() {
+  if (taskModalSnapshot === null || !document.getElementById('taskModalBg').classList.contains('open')) return false;
+  const a = JSON.parse(taskModalSnapshot), b = JSON.parse(taskModalState());
+  if (JSON.stringify(a.rest) !== JSON.stringify(b.rest) || a.color !== b.color) return true;
+  for (const [k, v] of Object.entries(b.byIdMap)) { if (k in a.byIdMap ? a.byIdMap[k] !== v : (v === true || (typeof v === 'string' && v !== ''))) return true; }
+  return false;
+}
 function requestCloseTaskModal() {
   if (!taskModalDirty()) { closeTaskModal(); return; }
   openConfirmModal({ title: 'Discard your changes?', body: 'You changed this task but did not save it.', confirmLabel: 'Discard changes', cancelLabel: 'Keep editing', action() { closeTaskModal(); } });
@@ -4220,7 +4269,6 @@ function updateModalComputed() {
 // Renaming a custom field. The name is stored on the PLAN (project.fieldNames), so it is saved, exported and synced with it and
 // another plan keeps its own. It has to be unique among the custom fields and the standard columns, or two columns would
 // look the same.
-let fieldNameTarget = null;
 /* ------------------------------ Baselines (plan menu → Baseline…) ------------------------------ */
 function baselineTasksWith(n) { return tasks.filter(t => t.baselines && t.baselines[n]); }
 function setBaselineSlots() { return Array.from({ length: BASELINE_SLOTS }, (_, n) => n).filter(n => tasks.some(t => t.baselines && t.baselines[n])); }   // a slot counts as set when a task has it
@@ -4513,33 +4561,107 @@ function saveCalendar() {
   save(); render(); closeCalendarModal();
   showToast(`Working calendar: ${calendarSummary()}`);
 }
-function openFieldNameModal(id) {
-  fieldNameTarget = id;
-  const f = CUSTOM_FIELDS[id], overridden = !!(project.fieldNames && project.fieldNames[id]);
-  document.getElementById('fieldNameTitle').textContent = `Rename “${customFieldName(id)}”`;
-  document.getElementById('fieldNameInput').value = customFieldName(id);
-  document.getElementById('fieldNameHint').textContent = `Default name: ${f.defaultName}. The name is kept with this plan (“${project.name}”); other plans have their own.`;
-  document.getElementById('fieldNameResetBtn').disabled = !overridden;
-  document.getElementById('fieldNameModalBg').classList.add('open');
-  // A timer, not requestAnimationFrame: the dialog fades in, and an element can't take focus while it is still invisible —
-  // at the first animation frame it still is, so the cursor never arrived (the task dialog uses a timer for the same reason).
-  setTimeout(() => { const i = document.getElementById('fieldNameInput'); i.focus(); i.select(); }, 40);
+/* ---- Custom fields: the Add-field menu and the Manage dialog (names, adding, removing). A field is in use when it has a name or a value (see activeCustomSet). ---- */
+const FIELD_KIND_INFO = { text: { icon: 'fa-font', label: 'Text', hint: 'free text' }, number: { icon: 'fa-hashtag', label: 'Number', hint: 'a number' }, date: { icon: 'fa-calendar-day', label: 'Date', hint: 'a date' }, flag: { icon: 'fa-flag', label: 'Yes / No', hint: 'a tick' } };
+let fieldsDraft = null, fieldsOrig = null;   // the dialog's working copy: [{ id, kind, name, orig, isNew, removed, uses }]
+function freeFieldSlot(kind) { const used = new Set([...activeCustomFields(), ...(fieldsDraft || []).map(r => r.id)]); for (let i = 1; i <= 5; i++) if (!used.has(kind + i)) return kind + i; return null; }
+function closeCfAddMenu() { document.getElementById('cfAddMenu').classList.remove('open'); }
+function toggleCfAddMenu(event) {
+  event.stopPropagation();
+  const menu = document.getElementById('cfAddMenu');
+  if (menu.classList.contains('open')) { closeCfAddMenu(); return; }
+  menu.innerHTML = CUSTOM_KINDS.map(k => {
+    const info = FIELD_KIND_INFO[k.kind], free = freeFieldSlot(k.kind);
+    return `<button class="dropdown-item" role="menuitem"${free ? '' : ' disabled'} onclick="chooseNewFieldKind('${k.kind}')"><i class="fa-solid ${info.icon}"></i>${info.label}<span class="item-hint">${free ? info.hint : 'all 5 in use'}</span></button>`;
+  }).join('');
+  const r = event.currentTarget.getBoundingClientRect();
+  placeMenu(menu, r.left, r.bottom);
 }
-function closeFieldNameModal() { document.getElementById('fieldNameModalBg').classList.remove('open'); fieldNameTarget = null; }
-function saveFieldName(useDefault) {
-  const id = fieldNameTarget; if (!id) return;
-  let name = useDefault ? '' : document.getElementById('fieldNameInput').value.trim().slice(0, 40);
-  if (name === CUSTOM_FIELDS[id].defaultName) name = '';                    // typing the default name is the same as resetting it
-  if (name) {
-    const taken = [...Object.keys(TASK_COLS).filter(c => c !== id).map(c => TASK_COLS[c].label), 'ID'].some(l => l.toLowerCase() === name.toLowerCase());
-    if (taken) { showToast(`“${name}” is already the name of another column`, true); return; }
+function chooseNewFieldKind(kind) {
+  closeCfAddMenu();
+  if (document.getElementById('fieldsModalBg').classList.contains('open')) fieldsAddRow(kind); else openFieldsModal(kind);
+}
+function openFieldsModal(addKind) {
+  closePlanMenu && closePlanMenu();
+  fieldsDraft = activeCustomFields().map(id => ({ id, kind: CUSTOM_FIELDS[id].kind, name: customFieldName(id), orig: customFieldName(id), isNew: false, removed: false, uses: tasks.filter(t => customValue(t, id) !== undefined).length }));
+  fieldsOrig = JSON.stringify(fieldsDraft);
+  document.getElementById('fieldsPlanName').textContent = project.name;
+  renderFieldsRows();
+  document.getElementById('fieldsModalBg').classList.add('open');
+  if (addKind) fieldsAddRow(addKind);
+  else setTimeout(() => { const i = document.querySelector('#fieldsRows .fld-name'); if (i) i.focus(); }, 40);
+}
+function closeFieldsModal() { document.getElementById('fieldsModalBg').classList.remove('open'); fieldsDraft = null; fieldsOrig = null; closeCfAddMenu(); }
+function fieldsDirty() { return fieldsDraft !== null && document.getElementById('fieldsModalBg').classList.contains('open') && JSON.stringify(fieldsDraft) !== fieldsOrig; }
+function requestCloseFieldsModal() {
+  if (!fieldsDirty()) { closeFieldsModal(); return; }
+  openConfirmModal({ title: 'Discard your changes?', body: 'You changed the custom fields but did not save them.', confirmLabel: 'Discard changes', cancelLabel: 'Keep editing', action() { closeFieldsModal(); } });
+}
+function renderFieldsRows() {
+  const box = document.getElementById('fieldsRows');
+  box.innerHTML = fieldsDraft.length ? fieldsDraft.map((r, i) => {
+    const info = FIELD_KIND_INFO[r.kind], uses = r.isNew ? '' : r.uses ? `${r.uses} task${r.uses === 1 ? '' : 's'}` : '—';
+    return `<div class="fld-row${r.removed ? ' removed' : ''}" data-i="${i}"><span class="fld-kind"><i class="fa-solid ${info.icon}"></i>${info.label}</span><input type="text" class="fld-name" maxlength="40" value="${escapeHtml(r.name)}" ${r.removed ? 'disabled ' : ''}aria-label="Name of the ${info.label.toLowerCase()} field" oninput="fieldsNameInput(${i}, this)" onkeydown="if(event.key==='Enter'){event.preventDefault();saveFieldsModal();}"><span class="fld-uses">${uses}</span><button type="button" class="fld-remove" onclick="fieldsToggleRemove(${i})" title="${r.removed ? 'Keep this field' : r.isNew ? 'Discard this new field' : 'Remove this field' + (r.uses ? ' and its values' : '')}" aria-label="${r.removed ? 'Keep' : 'Remove'} ${escapeHtml(r.name || info.label)}"><i class="fa-solid ${r.removed ? 'fa-rotate-left' : 'fa-xmark'}"></i></button></div>`;
+  }).join('') : '<div class="fld-empty">No custom fields yet — use “Add field” to keep extra information on your tasks.</div>';
+  const removing = fieldsDraft.filter(r => r.removed && !r.isNew).length;
+  document.getElementById('fieldsNote').textContent = removing ? `${removing} field${removing === 1 ? '' : 's'} will be removed when you save.` : '';
+}
+function fieldsNameInput(i, el) { fieldsDraft[i].name = el.value; el.classList.remove('bad'); }
+function fieldsAddRow(kind) {
+  const id = freeFieldSlot(kind); if (!id) { showToast(`All five ${FIELD_KIND_INFO[kind].label.toLowerCase()} fields are in use`, true); return; }
+  fieldsDraft.push({ id, kind, name: '', orig: '', isNew: true, removed: false, uses: 0 });
+  renderFieldsRows();
+  setTimeout(() => { const els = document.querySelectorAll('#fieldsRows .fld-name'); if (els.length) els[els.length - 1].focus(); }, 30);
+}
+function fieldsToggleRemove(i) {
+  const r = fieldsDraft[i];
+  if (r.isNew) fieldsDraft.splice(i, 1); else r.removed = !r.removed;
+  renderFieldsRows();
+}
+// A name has to be 1–40 characters and unique among the custom fields and the standard columns; "Text3" and the like are the defaults of unused fields, so they are refused.
+function fieldNameProblem(r, rows) {
+  const name = r.name.trim();
+  if (!name) return r.isNew ? 'Give the new field a name' : null;
+  if (name.length > 40) return 'A field name can be at most 40 characters';
+  if (/^(text|number|date|flag)[1-5]$/i.test(name) && name !== CUSTOM_FIELDS[r.id].defaultName) return `“${name}” is a reserved name — pick another`;
+  if (name === CUSTOM_FIELDS[r.id].defaultName && r.isNew) return `“${name}” is a reserved name — pick another`;
+  const taken = [...Object.keys(TASK_COLS).filter(c => !TASK_COLS[c].custom).map(c => TASK_COLS[c].label), 'ID', ...rows.filter(o => o !== r && !o.removed).map(o => o.name.trim() || (o.isNew ? '' : customFieldName(o.id)))];
+  if (taken.some(l => l && l.toLowerCase() === name.toLowerCase())) return `“${name}” is already the name of another column or field`;
+  return null;
+}
+function saveFieldsModal() {
+  const rows = fieldsDraft; if (!rows) return;
+  for (let i = 0; i < rows.length; i++) {
+    if (rows[i].removed) continue;
+    const msg = fieldNameProblem(rows[i], rows);
+    if (msg) { showToast(msg, true); const el = document.querySelectorAll('#fieldsRows .fld-name')[i]; if (el) { el.classList.add('bad'); el.focus(); } return; }
   }
-  const names = Object.assign({}, project.fieldNames);
-  if (name) names[id] = name; else delete names[id];
-  project.fieldNames = names; project.updatedAt = Date.now();
+  const gone = rows.filter(r => r.removed && !r.isNew), withValues = gone.filter(r => r.uses), nTasks = new Set(tasks.filter(t => gone.some(r => customValue(t, r.id) !== undefined)).map(t => t.id)).size;
+  if (withValues.length) {
+    openConfirmModal({ title: 'Remove custom fields?', body: `Remove ${withValues.map(r => `“${escapeHtml(r.orig)}”`).join(', ')}? The values on ${nTasks} task${nTasks === 1 ? '' : 's'} are deleted too — Undo (Ctrl+Z) brings them back.`, confirmLabel: 'Remove', action() { applyFieldsDraft(); } });
+    return;
+  }
+  applyFieldsDraft();
+}
+function applyFieldsDraft() {
+  const rows = fieldsDraft; if (!rows) return;
+  const names = Object.assign({}, project.fieldNames), now = Date.now();
+  for (const r of rows) {
+    if (r.removed) {
+      if (r.isNew) continue;
+      delete names[r.id];
+      for (const t of tasks) if (customValue(t, r.id) !== undefined) { setCustomValue(t, r.id, null); t.updatedAt = now; }
+      if (colFilters[r.id]) colFilters[r.id] = null;
+      continue;
+    }
+    const nm = r.name.trim();
+    if (nm && nm !== CUSTOM_FIELDS[r.id].defaultName) names[r.id] = nm; else if (!r.isNew) delete names[r.id];
+  }
+  if (Object.keys(names).length) project.fieldNames = names; else delete project.fieldNames;
+  project.updatedAt = now;
   const inDialog = document.getElementById('taskModalBg').classList.contains('open'), inMenu = document.getElementById('columnsMenu').classList.contains('open');
-  const typed = inDialog ? readCustomInputs() : null;                       // keep what is typed in the dialog while its labels change
-  closeFieldNameModal(); save(); render();
+  const typed = inDialog ? readCustomInputs() : null;                       // keep what is typed in the task dialog while its fields change
+  closeFieldsModal(); resetEffectiveCache(); save(); render();
   if (inMenu) renderColumnsMenu();
   if (inDialog) renderCustomFieldsTab(typed);
 }
@@ -4551,20 +4673,21 @@ function setTaskModalTab(tab) {
     document.getElementById(id).classList.toggle('active', on); document.getElementById(id).setAttribute('aria-selected', on);
   }
 }
-// The Custom fields tab: Text, Number, Date and Flag sections, five fields each, labelled with the plan's own names.
-// `values` is what to show (the task's stored values, or — after a rename — what is currently typed).
+// The Custom fields tab: only the fields this plan uses (see activeCustomSet) — text, number and date fields in two columns, flags as ticks below.
+// `values` is what to show (the task's stored values, or — after the fields changed — what is currently typed).
 function renderCustomFieldsTab(values) {
   const field = id => {
     const f = CUSTOM_FIELDS[id], v = values[id], name = escapeHtml(customFieldName(id));
-    const pencil = `<button type="button" class="cf-rename" title="Rename this field" aria-label="Rename ${name}" onclick="openFieldNameModal('${id}')"><i class="fa-solid fa-pen"></i></button>`;
-    if (f.kind === 'flag') return `<div class="cf-flag"><label><input type="checkbox" id="cf_${id}"${v ? ' checked' : ''}><span>${name}</span></label>${pencil}</div>`;
     const input = f.kind === 'date' ? `<input type="date" id="cf_${id}" value="${escapeHtml(v || '')}">`
       : f.kind === 'number' ? `<input type="number" step="any" id="cf_${id}" value="${v === undefined || v === '' ? '' : escapeHtml(String(v))}">`
       : `<input type="text" id="cf_${id}" maxlength="255" value="${escapeHtml(v || '')}">`;
-    return `<div class="field"><label class="cf-label" for="cf_${id}"><span>${name}</span>${pencil}</label>${input}</div>`;
+    return `<div class="field"><label class="cf-label" for="cf_${id}"><span>${name}</span></label>${input}</div>`;
   };
-  document.getElementById('taskCustomFields').innerHTML = CUSTOM_KINDS.map(k =>
-    `<div class="cf-section"><div class="cf-title">${k.label}</div><div class="${k.kind === 'flag' ? 'cf-flags' : k.kind === 'text' ? 'cf-grid' : 'cf-grid cf-grid-3'}">${Object.keys(CUSTOM_FIELDS).filter(id => CUSTOM_FIELDS[id].kind === k.kind).map(field).join('')}</div></div>`).join('');
+  const flag = id => `<div class="cf-flag"><label><input type="checkbox" id="cf_${id}"${values[id] ? ' checked' : ''}><span>${escapeHtml(customFieldName(id))}</span></label></div>`;
+  const act = activeCustomFields(), plain = act.filter(id => CUSTOM_FIELDS[id].kind !== 'flag'), flags = act.filter(id => CUSTOM_FIELDS[id].kind === 'flag');
+  document.getElementById('taskCustomFields').innerHTML = act.length
+    ? (plain.length ? `<div class="cf-grid">${plain.map(field).join('')}</div>` : '') + (flags.length ? `<div class="cf-flags">${flags.map(flag).join('')}</div>` : '')
+    : '<div class="cf-empty">No custom fields yet.<br>Use <strong>Add field</strong> for text, a number, a date or a yes/no tick that you want on every task.</div>';
   updateCustomBadge();
 }
 function readCustomInputs() {
@@ -6087,7 +6210,7 @@ function buildXlsx(opts) {
   };
   for (const id of Object.keys(CUSTOM_FIELDS)) XCOLS[id] = [customFieldName(id), { text: 22, number: 13, date: 13, flag: 9 }[CUSTOM_FIELDS[id].kind]];
   // "All columns" adds the custom fields that are in use (renamed, or holding a value somewhere) — not twenty empty columns.
-  const customInUse = id => !!(project.fieldNames && project.fieldNames[id]) || tasks.some(t => customValue(t, id) !== undefined);
+  const customInUse = isCustomActive;
   const keys = opts.columns === 'all' ? ['id', ...DEFAULT_COL_ORDER.filter(id => !isCustomField(id) || customInUse(id))] : ['id', ...visibleTaskCols('tasks')];   // the Tasks sheet = the Tasks view's own choice, wherever the export is started from
   const ncol = keys.length, colOf = k => keys.indexOf(k) + 1, lastCol = xlsxCol(ncol);
   keys.forEach((k, i) => tasksSheet.width(i + 1, i + 1, XCOLS[k][1]));
@@ -6670,7 +6793,7 @@ function createPlanRecord(name, data) {
 function resetTransientUI() {
   setSelection([]); editingCell = null; editingPredecessors = [];
   colFilters = newColFilters(); filterPinned.clear(); closeFilterMenu();   // filters belong to the plan you were looking at
-  closeTaskModal(); closeImportModal(); closeDataMenu(); closeColumnsMenu(); closeTaskModeMenu(); closeToolbarMenus();
+  closeTaskModal(); closeFieldsModal(); closeImportModal(); closeDataMenu(); closeColumnsMenu(); closeTaskModeMenu(); closeToolbarMenus();
   clearTimeout(toastTimer); toastUndoAction = null;
   document.getElementById('toast').classList.remove('show');   // an Undo for the old plan must not act on the new one
   resetHistory();   // (and neither must the undo history)
@@ -6937,6 +7060,7 @@ function wireGlobalEvents() {
     if (!e.target.closest('#taskModeMenu')) closeTaskModeMenu();
     if (!e.target.closest('#addMenu') && !e.target.closest('#addMenuBtn')) closeAddMenu();
     if (!e.target.closest('#rowMenu')) closeRowMenu();
+    if (!e.target.closest('#cfAddMenu') && !e.target.closest('#cfAddBtn') && !e.target.closest('#fieldsAddBtn')) closeCfAddMenu();
   });
   for (const id of ['gridRows', 'ganttRows']) document.getElementById(id).addEventListener('contextmenu', onListContextMenu);
   window.addEventListener('blur', closeToolbarMenus);
@@ -6956,7 +7080,8 @@ function wireGlobalEvents() {
     if (e.key === '/' && !typingNow && !modalOpen && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); openSearch(); return; }
     if ((e.key === 'Delete' || e.key === 'Backspace') && !typingNow && !modalOpen && !editingCell && selectedIds().length) { e.preventDefault(); deleteSelected(); return; }
     if (e.key !== 'Escape') return;
-    if (document.getElementById('fieldNameModalBg').classList.contains('open')) { closeFieldNameModal(); return; }   // only the topmost dialog: the task dialog underneath keeps its unsaved edits
+    if (document.getElementById('cfAddMenu').classList.contains('open')) { closeCfAddMenu(); return; }
+    if (document.getElementById('fieldsModalBg').classList.contains('open')) { if (document.getElementById('confirmModalBg').classList.contains('open')) closeConfirmModal(); else requestCloseFieldsModal(); return; }   // only the topmost dialog: the task dialog underneath keeps its unsaved edits
     if (document.getElementById('confirmModalBg').classList.contains('open') && (taskModalDirty() || calendarDirty())) { closeConfirmModal(); return; }   // the "discard your changes?" question: Escape = keep editing
     if (taskModalDirty()) { requestCloseTaskModal(); return; }
     if (calendarDirty()) { requestCloseCalendarModal(); return; }

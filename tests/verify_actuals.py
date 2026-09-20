@@ -11,7 +11,7 @@ MK = """(specs) => { tasks.length = 0; selectedTaskId = null; colFilters = newCo
   const ids = {}; let n = 0;
   for (const sp of specs) { const t = Object.assign({id: genId(), name: sp.name, parentId: null, order: n++, startDate: sp.s, endDate: sp.e, progress: 0, milestone: false, color: null, predecessors: [], collapsed: false, updatedAt: 1, constraintType: 'ASAP', constraintDate: null, taskMode: sp.mode || 'auto', resource: '', actualStart: null, actualFinish: null}, sp.extra || {}); tasks.push(t); ids[sp.name] = t.id; }
   for (const sp of specs) if (sp.preds) tasks.find(t => t.name === sp.name).predecessors = sp.preds.map(([n, type, lag]) => ({id: ids[n], type, lag}));
-  colHidden.delete('actualStart'); colHidden.delete('actualFinish'); colHidden.delete('date1'); currentView = 'tasks'; save(); render(); }"""
+  colHidden.delete('actualStart'); colHidden.delete('actualFinish'); colHidden.delete('date1'); project.fieldNames = { date1: 'Due' }; normalizeData(); currentView = 'tasks'; save(); render(); }"""
 
 with sync_playwright() as p:
     b = p.chromium.launch(headless=True)

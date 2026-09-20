@@ -155,7 +155,7 @@ with sync_playwright() as p:
     pg.fill("#bulkVal-progress", ""); pg.uncheck("#bulkOn-progress"); pg.select_option("#bulkVal-mode", "manual"); pg.click("#bulkModalBg .modal-footer .btn-primary"); pg.wait_for_timeout(150)
     check("Task Mode can be set for the selection (A becomes Manually Scheduled)", get("A", "taskMode") == "manual")
     # custom fields
-    ev("() => { colHidden.delete('text1'); colHidden.delete('number1'); colHidden.delete('flag1'); render(); }")
+    ev("() => { project.fieldNames = { text1: 'Cost centre', number1: 'Budget', flag1: 'Approved' }; normalizeData(); colHidden.delete('text1'); colHidden.delete('number1'); colHidden.delete('flag1'); render(); }")
     click("A"); click("B", ["Meta"]); pg.click("#bulkEditBtn"); pg.wait_for_selector("#bulkModalBg.open"); pg.wait_for_timeout(120)
     check("custom fields that are shown as columns are offered (Text1, Number1, Flag1)", all(pg.locator(f"#bulkOn-{c}").count() == 1 for c in ("text1", "number1", "flag1")) and pg.locator("#bulkOn-text2").count() == 0)
     pg.fill("#bulkVal-text1", "Cost centre 7"); pg.fill("#bulkVal-number1", "12,5"); pg.select_option("#bulkVal-flag1", "1"); pg.click("#bulkModalBg .modal-footer .btn-primary"); pg.wait_for_timeout(150)
