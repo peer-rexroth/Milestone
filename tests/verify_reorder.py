@@ -135,7 +135,7 @@ with sync_playwright() as p:
     check("editing then Enter still saves", "Renamed" in names(), names())
     check("the row is draggable again after the edit", by_id(two_id).get_attribute("draggable") == "true")
 
-    seed(); row("One").dblclick(position={"x": 700, "y": 20}); pg.wait_for_selector("#taskModalBg.open")
+    seed(); row("One").locator("> div").first.dblclick(); pg.wait_for_selector("#taskModalBg.open")
     check("double-click on the line still opens the task dialog", True)
     pg.keyboard.press("Escape"); pg.wait_for_timeout(100)
 

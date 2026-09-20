@@ -47,13 +47,13 @@ with sync_playwright() as p:
     pg.click("#collapseToggleBtn"); pg.wait_for_timeout(150); collapsed = rows(); pg.click("#collapseToggleBtn"); pg.wait_for_timeout(150)
     check("the header toggle steps through the outline (all collapsed -> all open)", collapsed == 4 and rows() == 6, (collapsed, rows()))
     # ============================================================ 4. dependencies (dialog) and scheduling
-    pg.locator(f".grid-row[data-id='{T('Build')['id']}']").dblclick(); pg.wait_for_selector("#taskModalBg.open"); pg.wait_for_timeout(120)
+    pg.locator(f".grid-row[data-id='{T('Build')['id']}']").locator("> div").first.dblclick(); pg.wait_for_selector("#taskModalBg.open"); pg.wait_for_timeout(120)
     pg.click("#taskModalBg button:has-text('Add predecessor')"); pg.fill(".pred-id-input", str(pg.evaluate("() => taskDisplayId(tasks.find(t => t.name === 'Review').id)"))); pg.dispatch_event(".pred-id-input", "change")
     pg.click("#taskModalBg .btn-primary"); pg.wait_for_timeout(200)
     check("Build depends on Review (FS): it starts the next working day after Review's finish and keeps its 10 working days", dates("Build") == ["2026-09-14", "2026-09-25"], dates("Build"))
     inline("Review", "end", "2026-09-16")
     check("Review's Finish moved to 16.09: Build (Auto) is pushed to start 17.09 and keeps its length (10 working days -> 30.09)", dates("Build") == ["2026-09-17", "2026-09-30"], dates("Build"))
-    pg.locator(f".grid-row[data-id='{T('Test')['id']}']").dblclick(); pg.wait_for_selector("#taskModalBg.open"); pg.wait_for_timeout(120)
+    pg.locator(f".grid-row[data-id='{T('Test')['id']}']").locator("> div").first.dblclick(); pg.wait_for_selector("#taskModalBg.open"); pg.wait_for_timeout(120)
     pg.click("#taskModalBg button:has-text('Add predecessor')"); pg.fill(".pred-id-input", str(pg.evaluate("() => taskDisplayId(tasks.find(t => t.name === 'Build').id)"))); pg.dispatch_event(".pred-id-input", "change"); pg.click("#taskModalBg .btn-primary"); pg.wait_for_timeout(200)
     check("...and Test follows Build (chain Review -> Build -> Test)", dates("Test")[0] == "2026-10-01", dates("Test"))
     # ============================================================ 5. inline editing
@@ -105,7 +105,7 @@ with sync_playwright() as p:
     check("Delete asks for confirmation, then removes the task and offers Undo", T("Test") is None and "deleted" in toast().lower())
     pg.click("#toastUndoBtn"); pg.wait_for_timeout(200); check("Undo brings the task back with its dependency on Build", T("Test") is not None and len(T("Test")["predecessors"]) == 1)
     # ============================================================ 11. dialog: milestone, constraint, custom field, colour
-    pg.locator(f".grid-row[data-id='{T('Project kick-off')['id']}']").dblclick(); pg.wait_for_selector("#taskModalBg.open"); pg.wait_for_timeout(150)
+    pg.locator(f".grid-row[data-id='{T('Project kick-off')['id']}']").locator("> div").first.dblclick(); pg.wait_for_selector("#taskModalBg.open"); pg.wait_for_timeout(150)
     pg.check("#taskMilestoneInput"); pg.click("#taskModalBg .btn-primary"); pg.wait_for_timeout(200)
     check("marking a task as a milestone gives it one date", T("Project kick-off")["milestone"] and dates("Project kick-off")[0] == dates("Project kick-off")[1])
     # ============================================================ 12. share: Excel and JSON, import, backups

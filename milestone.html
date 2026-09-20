@@ -3066,7 +3066,7 @@ function renderGrid() {
       preds: predCell, resource: resourceCell,
       ...Object.fromEntries(cols.filter(isCustomField).map(id => [id, customCellHtml(t, id, summaryCls, editing(id), blurAttr(id), (f, iso) => dateEditor(f, iso, null, 'dd.mm.yyyy'))]))
     };
-    return `<div class="grid-row${isSelected(t.id) ? ' selected' : ''}" data-id="${t.id}" onclick="selectTask('${t.id}', event)" ondblclick="openTaskModal('${t.id}')" draggable="${editingCell && editingCell.id === t.id ? 'false' : 'true'}" ondragstart="dragStartTask(event,'${t.id}')" ondragend="dragEndTask()" ondragover="dragOverTask(event,'${t.id}')" ondrop="dropOnTask(event,'${t.id}')">
+    return `<div class="grid-row${isSelected(t.id) ? ' selected' : ''}" data-id="${t.id}" onclick="selectTask('${t.id}', event)" ondblclick="rowDblClick(event, '${t.id}')" draggable="${editingCell && editingCell.id === t.id ? 'false' : 'true'}" ondragstart="dragStartTask(event,'${t.id}')" ondragend="dragEndTask()" ondragover="dragOverTask(event,'${t.id}')" ondrop="dropOnTask(event,'${t.id}')">
       <div class="grid-cell-dim" style="text-align:center">${taskDisplayId(t.id)}</div>
       ${cols.map(c => cells[c]).join('')}
       ${full ? `<div class="grid-actions">
@@ -3077,8 +3077,14 @@ function renderGrid() {
     </div>`;
   }).join('');
 }
+// A cell being edited keeps its editor while you work in it: selecting text with the mouse — a double-click on a word, or a drag that ends outside
+// the box — sends a click / double-click to the ROW (the nearest ancestor of where the press and the release happened), which used to select the row
+// (re-rendering it, so the editor vanished) or open the task dialog. A press that started inside an editor is not a click on the row.
+let mouseDownInEditor = false;
+function rowDblClick(ev, id) { if (ev && ev.target && ev.target.closest && ev.target.closest('.inline-edit, .inline-wrap')) return; openTaskModal(id); }
 // Click selects one task; Ctrl/Cmd+click adds or removes one; Shift+click selects the visible rows from the last clicked one.
 function selectTask(id, ev) {
+  if (mouseDownInEditor && editingCell) { mouseDownInEditor = false; return; }
   pruneSelection();
   if (ev && (ev.ctrlKey || ev.metaKey)) {
     const set = new Set(selectedTaskIds); if (set.has(id)) set.delete(id); else set.add(id);
@@ -6701,6 +6707,7 @@ function wireGlobalEvents() {
     if (!overlayOpen && !typing && (selectedTaskId || selectedTaskIds.size)) { setSelection([]); render(); }
   });
   document.getElementById('toastUndoBtn').addEventListener('click', triggerToastUndo);
+  document.addEventListener('mousedown', e => { mouseDownInEditor = !!(editingCell && e.target && e.target.closest && e.target.closest('.inline-edit, .inline-wrap')); }, true);
   document.addEventListener('copy', e => { if (clipboardActive(e) && selectedIds().length) { e.preventDefault(); copySelection(e.clipboardData, false); } });
   document.addEventListener('cut', e => { if (clipboardActive(e) && selectedIds().length) { e.preventDefault(); copySelection(e.clipboardData, true); } });
   document.addEventListener('paste', e => { if (!clipboardActive(e)) return; e.preventDefault(); pasteFrom(e.clipboardData.getData('text/plain'), e.clipboardData.getData('application/x-milestone-tasks')); });
