@@ -155,7 +155,7 @@ with sync_playwright() as p:
         done_end = s0 + datetime.timedelta(days=int(dur * d["progress"] / 100 + 0.5) - 1)   # JS Math.round: halves round up
         if d["summary"]: solid, light = "24292F", "AEB6BF"
         else:
-            col = PAL[d["color"]] if d["color"] else ("0969DA" if d["progress"] >= 100 else "CF222E" if (e0 < today and d["progress"] < 100) else "0969DA" if d["progress"] > 0 else "8C959F")
+            col = ("0969DA" if d["progress"] >= 100 else "CF222E" if (e0 < today and d["progress"] < 100) else "0969DA" if d["progress"] > 0 else "8C959F")
             solid, light = col, tint(col)
         for j, w_ in enumerate(weeks):
             c = gs.cell(5 + i, 5 + j); wend = w_ + datetime.timedelta(days=6)

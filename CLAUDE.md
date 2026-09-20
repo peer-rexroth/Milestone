@@ -40,7 +40,7 @@ A **task**:
   startDate: 'YYYY-MM-DD', endDate: 'YYYY-MM-DD',   // equal when milestone is true
   progress: 0-100,
   milestone: Boolean,
-  color: null | 'blue'|'teal'|'purple'|'amber'|'pink'|'green'|'red'|'grey',  // null = auto (by status)
+  color: null | 'blue'|'teal'|'purple'|'amber'|'pink'|'green'|'red'|'grey',  // null = none; colours the task's ROW in the list (see "Row colour"), never its bar
   predecessors: [{ id: taskId, type: 'FS'|'SS'|'FF'|'SF', lag: Number }],  // days, can be negative
   collapsed: Boolean,   // hierarchy expand/collapse state
   taskMode: 'manual' | 'auto',            // MS Project Task Mode — see "Task Mode" below
@@ -320,7 +320,7 @@ The grid pane (task table) and the Gantt pane share one implicit vertical scroll
 - **Width**: a resizable per-device preference `gridPaneWidth` (default **640px**, was 400; `GRID_PANE_REV = 1` — a width saved by the earlier sidebar is not kept), dragged with `#gridResizeHandle` (a thin strip on the pane's right edge, Gantt view only; live via `--grid-pane-width`, saved on mouseup). It is clamped to `[max(320, frozen columns + 60px), min(1800, window − 240px)]` (`minGridPaneWidth()`, `applyGridPaneWidth()`, also re-applied on window resize and after every render; `frozenMinWidth` is set by `updateFrozenColumns()`), so the frozen columns never fill the whole list and the chart never disappears.
 Covered by `verify_gantt_list.py`.
 
-Bar color (`statusColorVar()`) is either the task's own explicit `color` override, or derived from status: complete (100%) → `--status-complete`, overdue (end date in the past, not complete) → `--danger`, in-progress (progress > 0) → `--accent`, otherwise `--status-not-started`. A bar's unfilled portion is `color-mix(in srgb, var(--bar-color) 22%, var(--panel))` and its progress fill is the solid color — this is why the fixed palette only needs one solid hex per token rather than Pulse's paired solid/`-bg` tokens.
+Bar color (`statusColorVar()`) is derived from **status only** (a task's own `color` no longer overrides it — see "Row colour"): complete (100%) → `--status-complete`, overdue (end date in the past, not complete) → `--danger`, in-progress (progress > 0) → `--accent`, otherwise `--status-not-started`. A bar's unfilled portion is `color-mix(in srgb, var(--bar-color) 22%, var(--panel))` and its progress fill is the solid color — this is why the fixed palette only needs one solid hex per token rather than Pulse's paired solid/`-bg` tokens.
 
 **Timescale** (`ZOOMS`: Week 14 px/day, Month 5, Year 1.5; the tabs in the top bar are generated from it). **Year is the default** (`DEFAULT_ZOOM`, an explicit user request), and the **Day scale was removed** at the user's request (a saved `'day'` falls back to Year). Every header tick spans its whole period — `renderGanttHeaderTicks()` returns `{ left, width, html|label, title, … }` and `renderGantt()` clips a tick that begins before the chart (the week/month/quarter holding the first day) to the left edge; `.gantt-tick` is `overflow: hidden` so a label is truncated, never spilled into the next tick. Ticks carry a `zoom-<id>` class. The header is always one row (`--row-h`) tall.
 
@@ -406,6 +406,14 @@ An explicit user request after the bar had become "scrambled" — eleven identic
 - **`placeMenu()`** positions a fixed menu inside the window; the menus share `.dropdown-menu` / `.dropdown-item` / `.dropdown-sep` / `.menu-head`. Every "close all menus" site calls `closeToolbarMenus()` too.
 - **Wrapping** (unchanged): `.subbar` has `flex-wrap: wrap` and `min-height: 46px`, so a narrow window gives it a second row and every button stays reachable (the top bar is unchanged and clips its last icons below about 880px). `verify_layout.py` checks the toolbars at seven widths and every dialog at three window sizes, in both themes.
 - Covered by `verify_toolbar.py` (47 checks: the bar with and without a selection, the Add menu and its closing rules, the mode choice, every right-click menu item, multi-selection, empty lines, the empty area, text boxes, dialogs, the Gantt view).
+
+### Row colour
+
+A task's `color` (Edit Task → **Row colour**, or bulk edit) is a **label for its row**, not for its bar (an explicit user request; before, it replaced the bar's status colour, which hid the status of exactly the tasks the user had picked out, and the list had no colour at all). Built without an "bars: by status / by task colour" setting — the user skipped that option, so **bars are always status-coloured**: `statusColorVar()` no longer looks at `t.color`; `taskColorVar()` is the colour itself.
+- **List** (both views — it is the same list): `.grid-row.colored` with `--row-accent` = the task's `--task-<colour>` (the palette follows the theme). The row background is `color-mix(accent 9%, panel)` (`--row-bg`, so the frozen cells paint it too; hover 15%, selected mixes the selection accent in), and a **4px stripe at the left edge**: the first cell's box-shadow `-6px 0 0 var(--row-bg), -10px 0 0 var(--row-accent), inset -1px 0 0 var(--border)` — the 10px row padding is painted by that cell, which is why the stripe is drawn there. A group can be coloured; its sub-tasks are not affected.
+- **Chart**: `.gantt-row-bg.colored` gets the same 9% tint behind the bars, so the eye ties list and bars together.
+- **Print**: a coloured row gets a 14% tint over the whole row and a 2.6-unit stripe at the left (`XLSX_COLORS` = the light theme's palette). **Excel**: the list cells of a coloured task (Tasks sheet and the Gantt sheet's list part) get an 18% tint (`xlsxTint`); the Gantt sheet's bars follow the status.
+- The dialog's swatches: eight colours and a "No colour" choice (`fa-xmark`); bulk edit says "Row colour" / "No colour". Covered by `verify_row_color.py` (21 checks).
 
 ### Dialog usability (Edit Task, Working calendar, Baselines, Find)
 

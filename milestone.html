@@ -298,6 +298,12 @@ button:focus:not(:focus-visible) { outline: none; }
 .grid-row { border-bottom: 1px solid var(--border); font-size: 12.5px; cursor: default; position: relative; --row-bg: var(--panel); background: var(--row-bg); }   /* --row-bg: the row's background, also painted by the frozen cells so what scrolls underneath doesn't show through */
 .grid-row.spacer-row { --row-bg: color-mix(in srgb, var(--panel-2) 50%, var(--panel)); }   /* an empty line: a blank row, faintly tinted so it reads as a separator */
 .grid-row:hover { --row-bg: var(--panel-2); }
+/* a task's colour: a 4px stripe at the row's left edge and a light tint of the same colour (list and chart row alike); selection and hover still show through */
+.grid-row.colored { --row-bg: color-mix(in srgb, var(--row-accent) 9%, var(--panel)); }
+.grid-row.colored:hover { --row-bg: color-mix(in srgb, var(--row-accent) 15%, var(--panel-2)); }
+.grid-row.colored.selected { --row-bg: color-mix(in srgb, var(--row-accent) 12%, color-mix(in srgb, var(--accent) 12%, var(--panel))); }
+.main .grid-row.colored > :first-child { box-shadow: -6px 0 0 0 var(--row-bg), -10px 0 0 0 var(--row-accent), inset -1px 0 0 var(--border); }
+.gantt-row-bg.colored { background: color-mix(in srgb, var(--row-accent) 9%, transparent); }
 .grid-row.selected { --row-bg: color-mix(in srgb, var(--accent) 10%, var(--panel)); }
 .grid-row.grabbing { cursor: grabbing; }
 .grid-row.dragging { opacity: .4; }
@@ -803,7 +809,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
         </div>
       </div>
       <div class="field">
-        <label>Color</label>
+        <label title="Colours the task's row in the list (and its stripe in the chart)">Row colour</label>
         <div class="color-swatches" id="taskColorSwatches"></div>
       </div>
       <div class="field">
@@ -917,7 +923,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
       <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-progress"> % complete</label><div class="bulk-ctl"><input type="number" id="bulkVal-progress" min="0" max="100" step="1" placeholder="0 – 100" aria-label="% complete"></div></div>
       <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-resource"> Resource</label><div class="bulk-ctl"><input type="text" id="bulkVal-resource" maxlength="200" placeholder="Empty clears the resource" aria-label="Resource"></div></div>
       <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-mode"> Task Mode</label><div class="bulk-ctl"><select id="bulkVal-mode" aria-label="Task Mode"><option value="auto">Auto Scheduled</option><option value="manual">Manually Scheduled</option></select></div></div>
-      <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-color"> Colour</label><div class="bulk-ctl"><select id="bulkVal-color" aria-label="Colour"></select></div></div>
+      <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-color"> Row colour</label><div class="bulk-ctl"><select id="bulkVal-color" aria-label="Row colour"></select></div></div>
       <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-shift"> Move dates by</label><div class="bulk-ctl"><input type="number" id="bulkVal-shift" step="1" placeholder="working days (negative = earlier)" aria-label="Working days to move by"><span class="bulk-hint">working days</span></div></div>
       <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-pred"> Add predecessor</label><div class="bulk-ctl"><input type="number" id="bulkVal-predId" min="1" step="1" placeholder="task #" aria-label="Predecessor task number"><select id="bulkVal-predType" aria-label="Link type"><option value="FS">Finish-to-Start</option><option value="SS">Start-to-Start</option><option value="FF">Finish-to-Finish</option><option value="SF">Start-to-Finish</option></select><input type="number" id="bulkVal-predLag" step="1" placeholder="lag" style="max-width:70px" aria-label="Lag in working days"></div></div>
       <div id="bulkCustom"></div>
@@ -1123,6 +1129,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
           <div class="help-section-title">Building a plan</div>
           <div class="help-row"><i class="fa-solid fa-plus"></i><span><strong>Add Task</strong> inserts a task below the selected one, or at the bottom when nothing is selected. Each task has a start and end date and a % complete, and can be a <strong>milestone</strong> (a one-day diamond).</span></div>
           <div class="help-row"><i class="fa-solid fa-computer-mouse"></i><span><strong>Right-click</strong> a task (in the list, or its row in the chart) for a menu with Edit, Add task, Add empty line, Duplicate, Copy, Cut, Paste, Indent, Outdent and Delete. Right-clicking on the empty part of the list offers Add task, Add empty line and Paste. The buttons for the selected tasks (<strong>Edit, Duplicate, Copy, Delete</strong>) appear in the toolbar while something is selected; with one task <strong>Edit</strong> opens the same dialog as a double-click.</span></div>
+          <div class="help-row"><i class="fa-solid fa-palette"></i><span><strong>Row colour</strong> (in the task dialog, or under Edit for several tasks) marks a task in the list with a stripe at its left edge and a light tint of the same colour — also behind its bar in the Gantt chart, and in the printout and the Excel export. The bars themselves keep their <strong>status</strong> colours: green complete, red late, blue in progress, grey not started.</span></div>
           <div class="help-row"><i class="fa-solid fa-grip-lines"></i><span><strong>Add empty line</strong> (in the menu next to Add Task, or on the right-click menu) inserts a blank row below the selected task (below its whole block when it is a group) to separate blocks of tasks. It has an ID but no name, dates or WBS, is never scheduled, charted or linked, and can be moved, indented, copied and deleted like any row.</span></div>
           <div class="help-row"><i class="fa-solid fa-indent"></i><span><strong>Indent</strong> and <strong>Outdent</strong> build the work breakdown structure. A parent task's own dates and progress roll up from its sub-tasks, and its <strong>WBS</strong> code (such as <code>2.1.3</code>) follows the outline.</span></div>
           <div class="help-row"><i class="fa-solid fa-grip-lines"></i><span><strong>Drag</strong> a task's line up or down to reorder it — a parent brings its sub-tasks along.</span></div>
@@ -1133,7 +1140,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
         <div class="help-section">
           <div class="help-section-title">Selecting several tasks</div>
           <div class="help-row"><i class="fa-solid fa-object-group"></i><span><strong>Ctrl/Cmd+click</strong> adds a task to the selection or takes it out; <strong>Shift+click</strong> selects every visible row from the last one you clicked; <strong>Ctrl/Cmd+A</strong> selects all visible tasks; <strong>Esc</strong> (or the “N selected” chip in the toolbar) clears it.</span></div>
-          <div class="help-row"><i class="fa-solid fa-layer-group"></i><span>Indent, Outdent, Clone, Copy and Delete then act on all of them (a group brings its sub-tasks). The <strong>Edit button</strong> in the toolbar opens the full task dialog for one selected task (the same as a double-click) and, with several selected, <strong>Edit tasks</strong>: tick the fields to change — % complete, Resource, Task Mode, Colour, <em>Move dates by</em> a number of working days, <em>Add predecessor</em>, and any custom field you show — and Apply. It is one Undo step.</span></div>
+          <div class="help-row"><i class="fa-solid fa-layer-group"></i><span>Indent, Outdent, Clone, Copy and Delete then act on all of them (a group brings its sub-tasks). The <strong>Edit button</strong> in the toolbar opens the full task dialog for one selected task (the same as a double-click) and, with several selected, <strong>Edit tasks</strong>: tick the fields to change — % complete, Resource, Task Mode, Row colour, <em>Move dates by</em> a number of working days, <em>Add predecessor</em>, and any custom field you show — and Apply. It is one Undo step.</span></div>
         </div>
         <div class="help-divider"></div>
         <div class="help-section">
@@ -2598,8 +2605,10 @@ function updateSelectionUI() {
   document.getElementById('selChip').innerHTML = `${n} selected <i class="fa-solid fa-xmark"></i>`;
 }
 
+// A bar is coloured by STATUS only (complete / late / in progress / not started). A task's own colour is a label for its ROW (see taskColorVar):
+// letting it override the bar hid the status of exactly the tasks the user had picked out.
+function taskColorVar(t) { return t && t.color ? `var(--task-${t.color})` : null; }
 function statusColorVar(t) {
-  if (t.color) return `var(--task-${t.color})`;
   if (t.progress >= 100) return 'var(--status-complete)';
   const eff = effectiveDates(t.id);
   if (eff.end && dayNumber(eff.end) < dayNumber(todayStr()) && t.progress < 100) return 'var(--danger)';
@@ -3168,7 +3177,7 @@ function renderGrid() {
       for (const c of cols) cells[c] = '<div class="grid-cell-dim"></div>';
       cells.name = `<div class="grid-name" style="--depth:${depth}"><button class="chevron empty" tabindex="-1"><i class="fa-solid fa-chevron-down"></i></button><span class="name-text spacer-label" title="Empty line — it only separates tasks"></span></div>`;
     }
-    return `<div class="grid-row${isSelected(t.id) ? ' selected' : ''}${t.spacer ? ' spacer-row' : ''}" data-id="${t.id}" onclick="selectTask('${t.id}', event)" ondblclick="rowDblClick(event, '${t.id}')" draggable="${editingCell && editingCell.id === t.id ? 'false' : 'true'}" ondragstart="dragStartTask(event,'${t.id}')" ondragend="dragEndTask()" ondragover="dragOverTask(event,'${t.id}')" ondrop="dropOnTask(event,'${t.id}')">
+    return `<div class="grid-row${isSelected(t.id) ? ' selected' : ''}${t.spacer ? ' spacer-row' : ''}${t.color ? ' colored' : ''}"${t.color ? ` style="--row-accent:var(--task-${t.color})"` : ''} data-id="${t.id}" onclick="selectTask('${t.id}', event)" ondblclick="rowDblClick(event, '${t.id}')" draggable="${editingCell && editingCell.id === t.id ? 'false' : 'true'}" ondragstart="dragStartTask(event,'${t.id}')" ondragend="dragEndTask()" ondragover="dragOverTask(event,'${t.id}')" ondrop="dropOnTask(event,'${t.id}')">
       <div class="grid-cell-dim" style="text-align:center">${taskDisplayId(t.id)}</div>
       ${cols.map(c => cells[c]).join('')}
       ${full ? `<div class="grid-actions">
@@ -3732,7 +3741,7 @@ function renderGantt() {
   let html = '';
   list.forEach(({ task: t }, idx) => {
     const top = idx * ROW_H;
-    html += `<div class="gantt-row-bg${isSelected(t.id) ? ' selected' : ''}${t.spacer ? ' spacer' : ''}" style="top:${top}px;width:${totalW}px" data-row-id="${t.id}"></div>`;
+    html += `<div class="gantt-row-bg${isSelected(t.id) ? ' selected' : ''}${t.spacer ? ' spacer' : ''}${t.color ? ' colored' : ''}" style="top:${top}px;width:${totalW}px${t.color ? `;--row-accent:var(--task-${t.color})` : ''}" data-row-id="${t.id}"></div>`;
   });
   if (px >= 4 && (workDaySet().size < 7 || holSet.size)) {   // shade the days off (not at Year zoom: 1.5px a day would just be noise)
     for (let n = dateRange.start; n < dateRange.end;) {
@@ -4630,7 +4639,7 @@ function updateDurationDisplay() {
 function renderColorSwatches(selected) {
   const el = document.getElementById('taskColorSwatches');
   el.dataset.value = selected || '';
-  el.innerHTML = `<div class="swatch auto${!selected ? ' selected' : ''}" onclick="pickTaskColor(null)" title="Auto (by status)">A</div>` +
+  el.innerHTML = `<div class="swatch auto${!selected ? ' selected' : ''}" onclick="pickTaskColor(null)" title="No colour"><i class="fa-solid fa-xmark"></i></div>` +
     TASK_COLORS.map(c => `<div class="swatch${selected === c.id ? ' selected' : ''}" style="background:var(--task-${c.id})" onclick="pickTaskColor('${c.id}')" title="${c.label}"></div>`).join('');
 }
 function pickTaskColor(id) { renderColorSwatches(id); document.getElementById('taskColorSwatches').dataset.value = id || ''; }
@@ -5431,7 +5440,11 @@ function buildPrintPages(o) {
     }
     // body: zebra rows, days off, gridlines, today
     const bodyTop = top0, bodyH = slice.length * rowH;
-    slice.forEach(({ task: t }, i) => { const y = bodyTop + i * rowH, group = hasChildren(t.id); if (group || i % 2) out.push(`<rect x="0" y="${y}" width="${W}" height="${rowH}" fill="${group ? '#EEF1F5' : '#F8F9FB'}"/>`); });
+    slice.forEach(({ task: t }, i) => {
+      const y = bodyTop + i * rowH, group = hasChildren(t.id), ch = t.color && XLSX_COLORS[t.color] ? '#' + XLSX_COLORS[t.color] : null;
+      if (ch) out.push(`<rect x="0" y="${y}" width="${W}" height="${rowH}" fill="${tint(ch, 0.14)}"/><rect x="0" y="${y}" width="2.6" height="${rowH}" fill="${ch}"/>`);   // a task's colour: a light tint over the whole row and a stripe at its left edge
+      else if (group || i % 2) out.push(`<rect x="0" y="${y}" width="${W}" height="${rowH}" fill="${group ? '#EEF1F5' : '#F8F9FB'}"/>`);
+    });
     if (o.shade && pxd >= 2.4 && (workDaySet().size < 7 || holSet.size)) {
       for (let d = d0; d <= d1;) { if (isWorkNum(d)) { d++; continue; } let e = d; while (e + 1 <= d1 && !isWorkNum(e + 1)) e++; out.push(`<rect x="${xOf(d)}" y="${bodyTop}" width="${(e - d + 1) * pxd}" height="${bodyH}" fill="#E6E9ED" opacity="0.55"/>`); d = e + 1; }
     }
@@ -5540,7 +5553,7 @@ function doPrint() {
 /* ============================== Bulk edit ================================
    Tick the fields to change, fill them in, Apply: every selected task gets them, in one Undo step. Groups keep what is worked out from
    their tasks (progress, dates); tasks that have started, or have free-text dates, are not moved by "Move dates". */
-const BULK_COLORS = [['', 'Automatic (by status)'], ['blue', 'Blue'], ['teal', 'Teal'], ['purple', 'Purple'], ['amber', 'Amber'], ['pink', 'Pink'], ['green', 'Green'], ['red', 'Red'], ['grey', 'Grey']];
+const BULK_COLORS = [['', 'No colour'], ['blue', 'Blue'], ['teal', 'Teal'], ['purple', 'Purple'], ['amber', 'Amber'], ['pink', 'Pink'], ['green', 'Green'], ['red', 'Red'], ['grey', 'Grey']];
 function bulkCustomCols() { return visibleTaskCols(currentView).filter(isCustomField); }
 /* ------------------------ Add menu and the right-click menu ------------------------ */
 const MOD_KEY = /Mac|iPhone|iPad/.test(navigator.platform || '') ? '⌘' : 'Ctrl+';
@@ -6087,7 +6100,7 @@ function buildXlsx(opts) {
   function writeTaskRow(sheet, r, ks, colFn, t, depth) {
     const eff = effectiveDates(t.id), summary = hasChildren(t.id), manual = t.taskMode === 'manual', act = actualDates(t.id);
     const ownDates = !summary || manual, startIso = ownDates ? t.startDate : eff.start, endIso = ownDates ? t.endDate : eff.end;
-    const base = { border: box, fill: summary ? SUM : null, bold: summary };
+    const base = { border: box, fill: t.color && XLSX_COLORS[t.color] ? xlsxTint(XLSX_COLORS[t.color], 0.18) : summary ? SUM : null, bold: summary };   // a task's colour tints its row in the list
     const S = o => book.style(Object.assign({}, base, o));
     const dateCell = (c, text, iso) => text != null ? sheet.cell(r, c, text, S({ h: 'center', italic: true, color: DIM, bold: false }))
       : iso ? sheet.cell(r, c, xlsxSerial(iso), S({ h: 'center', num: dateFmt })) : sheet.cell(r, c, null, S({}));
