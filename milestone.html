@@ -358,6 +358,22 @@ input.inline-edit { width: 100%; min-width: 0; padding: 3px 6px; border: 1px sol
 .baseline-info .bi-sep { color: var(--text-faint); }
 .var-late { color: var(--danger) !important; }
 .var-early { color: var(--task-green) !important; }
+.hol-add { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.hol-add input[type=date] { width: 138px; }
+.hol-add input[type=text] { flex: 1 1 140px; min-width: 120px; }
+.hol-to { color: var(--text-dim); font-size: 12.5px; }
+.hol-yearly { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; color: var(--text-dim); white-space: nowrap; }
+.hol-yearly input:disabled + * , .hol-yearly:has(input:disabled) { opacity: .5; }
+.hol-list { margin-top: 8px; max-height: 190px; overflow-y: auto; border: 1px solid var(--border); border-radius: 6px; }
+.hol-list:empty::before { content: 'No holidays yet'; display: block; padding: 10px 12px; color: var(--text-faint); font-size: 12.5px; }
+.hol-row { display: flex; align-items: center; gap: 10px; padding: 5px 8px 5px 12px; font-size: 13px; border-bottom: 1px solid var(--border); }
+.hol-row:last-child { border-bottom: 0; }
+.hol-row .hol-when { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.hol-row .hol-name { flex: 1; min-width: 0; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hol-row .hol-tag { font-size: 11px; color: var(--text-dim); border: 1px solid var(--border); border-radius: 10px; padding: 0 7px; white-space: nowrap; }
+.hol-row .hol-days { font-size: 11.5px; color: var(--text-faint); white-space: nowrap; }
+.hol-row button { background: none; border: 0; color: var(--text-dim); cursor: pointer; padding: 3px 6px; border-radius: 4px; }
+.hol-row button:hover { background: var(--panel-2); color: var(--danger); }
 .cal-hint { font-size: 12.5px; color: var(--text-dim); margin: 12px 0 0; line-height: 1.5; }
 .gantt-nonwork { position: absolute; top: 0; background: color-mix(in srgb, var(--text) 5%, transparent); pointer-events: none; }
 .grid-name .mismatch-warn { color: var(--task-amber); flex-shrink: 0; font-size: 11px; }
@@ -545,6 +561,8 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 </div>
 
 <div class="subbar">
+  <button class="icon-btn" id="undoBtn" onclick="historyUndo()" title="Undo (Ctrl+Z)" disabled><i class="fa-solid fa-rotate-left"></i></button>
+  <button class="icon-btn" id="redoBtn" onclick="historyRedo()" title="Redo (Ctrl+Shift+Z)" disabled><i class="fa-solid fa-rotate-right"></i></button>
   <button class="btn" id="addTaskBtn" onclick="addTask()"><i class="fa-solid fa-plus"></i>Add Task</button>
   <button class="icon-btn" id="indentBtn" onclick="indentSelected()" title="Indent (make sub-task)"><i class="fa-solid fa-indent"></i></button>
   <button class="icon-btn" id="outdentBtn" onclick="outdentSelected()" title="Outdent"><i class="fa-solid fa-outdent"></i></button>
@@ -746,12 +764,22 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 </div>
 
 <div class="modal-bg" id="calendarModalBg" onclick="if(event.target===this) closeCalendarModal()">
-  <div class="modal narrow">
+  <div class="modal roomy">
     <div class="modal-header"><h2>Working calendar</h2><button onclick="closeCalendarModal()">&times;</button></div>
     <div class="modal-body">
       <div class="field"><label>Working days of “<span id="calendarPlanName"></span>”</label>
         <div class="cal-days" id="calendarDays"></div></div>
-      <p class="cal-hint">Durations, lags and dependencies count working days only. Auto Scheduled tasks start and finish on working days; Manually Scheduled tasks keep the dates you give them. Days off are shaded in the Gantt chart. Dates already in the plan are not moved when you change this, and other plans keep their own calendar.</p>
+      <div class="field"><label for="holFrom">Holidays and other days off</label>
+        <div class="hol-add">
+          <input type="date" id="holFrom" title="The day off, or the first day of a longer break" onkeydown="if(event.key==='Enter'){event.preventDefault();addHoliday();}">
+          <span class="hol-to">to</span>
+          <input type="date" id="holTo" title="Last day of a longer break (leave empty for a single day)" onchange="holToChanged()" onkeydown="if(event.key==='Enter'){event.preventDefault();addHoliday();}">
+          <input type="text" id="holName" maxlength="60" placeholder="Name (optional)" onkeydown="if(event.key==='Enter'){event.preventDefault();addHoliday();}">
+          <label class="hol-yearly" title="A single day that comes back every year, such as 25 December"><input type="checkbox" id="holYearly"> Every year</label>
+          <button class="btn" type="button" onclick="addHoliday()"><i class="fa-solid fa-plus"></i>Add</button>
+        </div>
+        <div class="hol-list" id="holList"></div></div>
+      <p class="cal-hint">Durations, lags and dependencies count working days only — weekdays that work and are not a holiday. Auto Scheduled tasks start and finish on working days; Manually Scheduled tasks keep the dates you give them. Days off are shaded in the Gantt chart. Dates already in the plan are not moved when you change this, and other plans keep their own calendar.</p>
     </div>
     <div class="modal-footer">
       <button class="btn" onclick="closeCalendarModal()">Cancel</button>
@@ -808,13 +836,14 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
     <div class="modal-body help-body">
       <div><div class="help-section-title">The basics</div>Add tasks with the + Add Task button. Each task has a start/end date, a % complete, and can be a milestone (a zero-duration diamond). Use Indent/Outdent to build a work breakdown structure — a parent task's own dates and progress roll up automatically from its children. Drag a task's line up or down to reorder it (a parent brings its sub-tasks along). Add Task inserts below the selected task, or at the bottom when nothing is selected; press Escape to clear the selection. The <strong>Clone</strong> button (on a task's line, and in the toolbar for the selected task) makes an exact copy right below it — including all its sub-tasks and their sub-tasks — and Undo takes it back. The double arrow above the ID numbers steps through the outline: click it to collapse every group, then again to open the first level, again for the next level, and so on until everything is open — then it starts over.</div>
       <div><div class="help-section-title">Filtering</div>Click the funnel in a column header (Task Mode, Task Name, Start, Finish, Duration, %, Predecessors) for an Excel-style filter. Each column offers what fits its data: dates get rules (equals, before, after, between, or relative to today such as this week, next month or year to date) and a Year › Month › Day list; text columns get contains / begins with / ends with / equals and their negatives; numbers get equals, greater or less than, and between. Every column also has a list of its values to tick, with a search box and (Blanks) for tasks that have no value. Filters on several columns combine, so a task must match all of them. A group stays visible while any sub-task inside it matches, and stays open while a filter is on. The bar under the toolbar shows what is filtered and how many tasks are showing; click × on a chip, or Clear all, to remove it. Filters are only for looking — they aren't saved, and a task you add or edit stays visible until you filter again.</div>Click the funnel next to Start or Finish (in either view) for an Excel-style filter: pick a rule (equals, before, after, between, or relative to today such as this week, next month or year to date), or tick individual dates in the Year › Month › Day list — type in the search box to narrow it, and use (Blanks) for tasks without a real date. The two columns combine, so a task must match both. A group stays visible while any sub-task inside it matches, and stays open while a filter is on. The bar under the toolbar shows what is filtered and how many tasks are showing; click × on a chip, or Clear all, to remove it. Filters are only for looking — they aren't saved, and a task you add or edit stays visible until you filter again.</div>
-      <div><div class="help-section-title">Working calendar</div>Each plan has its own working days — Monday to Friday unless you change it (plan menu → <strong>Working calendar…</strong>). Durations, lags and dependencies count working days only, so a 5-day task that starts on a Monday finishes on that Friday and its successor starts the next Monday. Auto Scheduled tasks start and finish on working days (a date you type or drag to on a day off moves to the nearest working day); Manually Scheduled tasks keep exactly the dates you give them. Days off are shaded in the Gantt chart. Changing the calendar never moves dates that are already in the plan.</div>
+      <div><div class="help-section-title">Working calendar</div>Each plan has its own working days — Monday to Friday unless you change it (plan menu → <strong>Working calendar…</strong>). Durations, lags and dependencies count working days only, so a 5-day task that starts on a Monday finishes on that Friday and its successor starts the next Monday. Auto Scheduled tasks start and finish on working days (a date you type or drag to on a day off moves to the nearest working day); Manually Scheduled tasks keep exactly the dates you give them. Add <strong>holidays and other days off</strong> in the same dialog: a single day, a longer break (from … to …) or a day that comes back every year, each with an optional name — they count as days off exactly like weekends. Days off are shaded in the Gantt chart. Changing the calendar or the holidays never moves dates that are already in the plan.</div>
+      <div><div class="help-section-title">Undo and redo</div>The two round arrows at the left of the toolbar (or <strong>Ctrl/Cmd+Z</strong>, and <strong>Ctrl/Cmd+Shift+Z</strong> or <strong>Ctrl+Y</strong> to redo) take back and repeat your changes one step at a time — an edit together with everything it moved in the schedule, an added or deleted task, a baseline, a change of the working calendar. The toast says what was undone and offers the opposite step. The history is kept in memory only: it starts empty when you open the app or switch to another plan, and it is cleared when changes from another device are merged in, so undo can never take back somebody else's work. In a text field Ctrl+Z is the browser's own.</div>
       <div><div class="help-section-title">Baselines and variance</div>The bar is the <strong>current schedule</strong>. To keep the original plan, set a <strong>baseline</strong> (plan menu → <strong>Baseline…</strong>): a frozen copy of every task's Start and Finish — only ever taken when you ask. You can keep up to eleven (Baseline and Baseline 1–10) and choose which one to compare with. The baseline shows as a thin grey line under each bar in the Gantt chart (the ruler button hides it), and the <strong>Start Variance</strong>, <strong>Finish Variance</strong>, <strong>Baseline Start/Finish/Duration</strong> and <strong>Duration Variance</strong> columns (in the column picker) show how far each task has moved, in working days — positive means later than the baseline. When you record an actual date, it becomes the task's Start or Finish (a task that is still running keeps its duration), and the tasks that follow are re-planned from it.</div>
       <div><div class="help-section-title">Columns and extra fields</div>Besides name, dates, duration, % and predecessors, a task can carry a <strong>Resource</strong> (who does the work), an <strong>Actual Start</strong> and <strong>Actual Finish</strong> (what really happened — they overwrite Start and Finish; recording an Actual Finish marks the task 100% complete and fills an empty Actual Start), and has a <strong>WBS</strong> code such as 2.1.3 that is worked out from the outline (shown by default). <strong>Remaining Duration</strong> (the duration still to go, from % complete) and <strong>Status</strong> (Complete, On Schedule, Late or Future Task, judged against today) are worked out for you too. Resource, Actual Start/Finish, Remaining Duration and Status aren't shown by default: click <strong>Columns</strong> in the toolbar (Tasks view) to tick the columns you want and reorder them; your choice is remembered on this device. Click a Resource or actual-date cell to edit it, or use the task dialog. A group shows the actual dates of the tasks in it (its earliest actual start, and an actual finish once everything in it has finished). <strong>Actual dates are the schedule</strong>: recording an Actual Start makes it the task's Start (a task that is still running keeps its duration, so its Finish moves with it), an Actual Finish makes it the Finish, and the tasks that <strong>depend</strong> on it are re-planned from those dates (a late start or finish pushes them later). A task that has itself already started or finished (it has an actual date) is not rescheduled any more: its planned dates stay as they are, and a warning triangle appears if its predecessors say it couldn't have started yet.</div>
       <div><div class="help-section-title">Custom fields</div>Every task can carry up to 20 fields of your own: <strong>Text1–5</strong>, <strong>Number1–5</strong>, <strong>Date1–5</strong> and <strong>Flag1–5</strong> (a yes/no tick). Fill them in on the task dialog's <strong>Custom fields</strong> tab, or — once you have ticked them under <strong>Columns</strong>, where they start hidden — straight in the list (click a cell; a flag toggles). Use the pencil beside a field to rename it, for instance Text1 to <em>Cost centre</em>: the name is saved with the plan, so another plan can call the same field something else. Custom fields can be filtered like any column and are included in the Excel export.</div>
       <div><div class="help-section-title">Task Mode</div>Every task is either Manually Scheduled (pushpin) or Auto Scheduled (chart icon) — click the icon in the Task Mode column, or use the Task Mode field in a task's dialog. An Auto task follows its predecessors and constraints. A Manual task stays exactly where you put it: predecessors never move it, its Start, Finish and Duration can be free text such as "TBD", and a warning triangle appears if it starts earlier than its predecessors allow. Manual tasks are drawn with a dashed bar, and are left out of the critical path. Switching a task to Auto moves it to the earliest date its links allow. The "New tasks" button at the right of the toolbar chooses the mode new tasks start in (Auto Scheduled by default).</div>
-      <div><div class="help-section-title">Dependencies</div>Open a task and add a predecessor to link it to another task (Finish-to-Start, Start-to-Start, Finish-to-Finish or Start-to-Finish). Give it a lead or lag in days: a positive number delays the dependent task (lag), a negative number lets it overlap and start early (lead) — e.g. "3FS+2" waits 2 extra days after task 3 finishes, "3FS-2" starts 2 days before task 3 finishes. An Auto task always sits at the <strong>earliest date its links allow</strong>, as in MS Project: move a predecessor later and the dependent tasks are pushed later, make it shorter, finish it early (record an Actual Finish) or delete it and they are pulled earlier. The date you choose for yourself is kept: typing a <strong>Start</strong> (or dragging the bar, or changing it in a task's dialog) pins the task with a <em>Start No Earlier Than</em> constraint at that date, a typed <strong>Finish</strong> sets <em>Finish No Earlier Than</em> — links can still push the task later, but never pull it before that date. Change or remove the constraint in the task's dialog; a task with no links has nothing to be pulled by and stays where it is. Manual tasks and tasks that have already started are never moved. A circular dependency is flagged with a warning icon and stops auto-scheduling for the tasks involved.</div>
-      <div><div class="help-section-title">The Gantt chart</div>The left side of the Gantt view is the same task list as in the Tasks view — the same filters, editing and buttons — with the chart to its right. <strong>Columns</strong> chooses the columns of the view you are in: the Gantt view remembers its own set (Mode, Name, Start and Finish to begin with) apart from the Tasks view's. Drag the thin strip between them to change how much room the list gets; the list scrolls sideways by itself when it has more columns than fit, and its ID … Task Name columns stay in place. Drag a bar to reschedule it, drag its edges to resize, or drag the small circle on its right edge onto another task to create a dependency. Click a bar or row to edit it. The Week / Month / Year buttons change the scale: Year (the default) shows quarters, and Week is labelled by calendar week (CW, weeks start on Monday, ISO 8601). The route icon in the toolbar highlights the critical path — the chain of tasks with zero slack that determines the overall project end date.</div>
+      <div><div class="help-section-title">Dependencies</div>Open a task and add a predecessor to link it to another task (Finish-to-Start, Start-to-Start, Finish-to-Finish or Start-to-Finish). Give it a lead or lag in days: a positive number delays the dependent task (lag), a negative number lets it overlap and start early (lead) — e.g. "3FS+2" waits 2 extra days after task 3 finishes, "3FS-2" starts 2 days before task 3 finishes. An Auto task always sits at the <strong>earliest date its links allow</strong>, as in MS Project: move a predecessor later and the dependent tasks are pushed later, make it shorter, finish it early (record an Actual Finish) or delete it and they are pulled earlier. The date you choose for yourself is kept: if you type a <strong>Start</strong> later than its links allow (or drag the bar later, or change it in a task's dialog) — a deliberate delay — the task is kept there with a <em>Start No Earlier Than</em> constraint at that date, and a later <strong>Finish</strong> gets <em>Finish No Earlier Than</em>: links can still push the task later, but never pull it before that date. A date that is not a delay adds no constraint (a milestone or a task with no links stays a plain as-soon-as-possible task). Change or remove a constraint in the task's dialog. Manual tasks and tasks that have already started are never moved. A circular dependency is flagged with a warning icon and stops auto-scheduling for the tasks involved.</div>
+      <div><div class="help-section-title">The Gantt chart</div>The left side of the Gantt view is the same task list as in the Tasks view — the same filters, editing and buttons — with the chart to its right. <strong>Columns</strong> chooses the columns of the view you are in: the Gantt view remembers its own set (Mode, Name, Start and Finish to begin with) apart from the Tasks view's. Drag the thin strip between them to change how much room the list gets; the list scrolls sideways by itself when it has more columns than fit, and its ID … Task Name columns stay in place. Drag a bar to reschedule it, drag its edges to resize, or drag the small circle on its right edge onto another task to create a dependency. Click a bar or row to edit it. The Week / Month / Year buttons change the scale: Year (the default) shows quarters, and Week is labelled by calendar week (CW, weeks start on Monday, ISO 8601). The route icon in the toolbar highlights the critical path — the chain of tasks with no float left that determines the project's finish. It follows the real schedule and all four link types (Finish-to-Start, Start-to-Start, Finish-to-Finish, Start-to-Finish) with their lags and leads, counted in working days; Manual tasks and summary tasks are left out.</div>
       <div><div class="help-section-title">Plans</div>The plan name at the top left is a switcher: click it to move between plans, start a new one, open an existing file as a plan, or rename, duplicate or delete the current plan. Each plan has its own tasks, its own daily backups and — optionally — its own linked file, so switching plans also switches which file is kept in sync. Deleting a plan only removes it from this browser; its file is never touched. Every plan must live in a file (Chrome/Edge), so New plan and Duplicate ask you where to save it.</div>
       <div><div class="help-section-title">Data &amp; sync</div>Everything lives in this browser's local storage — nothing ever leaves your machine except into the files you choose. Every plan is kept in a plain JSON file on your disk (linking one is required, in Chrome/Edge): every change is saved to it automatically, and inside an iCloud Drive/OneDrive/Dropbox folder it keeps your own devices in step. You can disconnect a plan's file (click the file name at the top right, or use the plan menu) — the file is kept, and Milestone asks you to choose a file for the plan straight away. If the file is moved or deleted, Milestone asks you to create or find it again. Data → Export/Import moves a full JSON snapshot of the current plan in or out, and Export to Excel saves a formatted .xlsx workbook (a task list plus an optional Gantt chart sheet — each sheet uses the columns you chose in its own view); Local Backups keeps a rolling daily snapshot. <strong>Working together on one file:</strong> when several people (or devices) use the same linked file, Milestone reads the file before it writes, so a save never wipes out someone else's work. Changes to <em>different</em> things — even different fields of the same task — are all kept. If you and someone else changed the <em>same</em> field, the newer edit is kept and an amber <strong>conflicts</strong> badge appears next to the file name: click it to see both versions and take the other one if it should have won. Tasks that depend on something that moved are re-planned after a merge.</div>
       <div class="help-tip">Nothing here ever leaves your machine except into the files you choose.</div>
@@ -1037,32 +1066,53 @@ function dayNumberToIso(n) { const d = new Date(n * DAY_MS); return `${d.getUTCF
 function addDays(iso, n) { return dayNumberToIso(dayNumber(iso) + n); }
 /* ============================ Working calendar ==============================
    Per plan: project.workDays lists the weekdays (0 = Sunday … 6 = Saturday) on which work happens; absent = Monday–Friday.
-   Durations, lags and dependencies count WORKING days; Auto Scheduled tasks start and finish on working days. Everything is
-   done on UTC day numbers, so two devices in different timezones agree. */
+   project.holidays lists days off on top of that: [{ date, to?, name?, yearly? }] — one day, a range (`to` = its last day) or a
+   single day that repeats every year. Durations, lags and dependencies count WORKING days (a weekday that works and is not a
+   holiday); Auto Scheduled tasks start and finish on working days. Everything is done on UTC day numbers, so two devices in
+   different timezones agree. */
 const DEFAULT_WORK_DAYS = [1, 2, 3, 4, 5];
-let calListRef, calSet = new Set(DEFAULT_WORK_DAYS);
-function workDaySet() {   // cached by the identity of project.workDays (it is only ever replaced, never edited in place)
+const HOLIDAY_YEARS = [2000, 2100];   // a yearly holiday is expanded for these years
+let calListRef, calHolRef, calSet = new Set(DEFAULT_WORK_DAYS), holSet = new Set(), holSorted = [], holNames = new Map();
+function workDaySet() {   // cached by the identity of project.workDays / project.holidays (they are only ever replaced, never edited in place)
   const list = project && Array.isArray(project.workDays) && project.workDays.length ? project.workDays : null;
-  if (list !== calListRef) { calListRef = list; calSet = new Set(list || DEFAULT_WORK_DAYS); }
+  const hol = project && Array.isArray(project.holidays) && project.holidays.length ? project.holidays : null;
+  if (list !== calListRef || hol !== calHolRef) { calListRef = list; calHolRef = hol; calSet = new Set(list || DEFAULT_WORK_DAYS); buildHolidayIndex(hol); }
   return calSet;
 }
+function buildHolidayIndex(list) {
+  holSet = new Set(); holNames = new Map();
+  const add = (n, name) => { if (holSet.size < 40000) { holSet.add(n); if (name && !holNames.has(n)) holNames.set(n, name); } };
+  for (const h of list || []) {
+    const a = dayNumber(h.date);
+    if (h.yearly) {
+      const [, m, d] = h.date.split('-').map(Number);
+      for (let y = HOLIDAY_YEARS[0]; y <= HOLIDAY_YEARS[1]; y++) { const n = Math.floor(Date.UTC(y, m - 1, d) / DAY_MS); if (new Date(n * DAY_MS).getUTCMonth() === m - 1) add(n, h.name); }   // (29 Feb only in leap years)
+    } else { const b = h.to ? dayNumber(h.to) : a; for (let n = a; n <= b && n - a < 3700; n++) add(n, h.name); }
+  }
+  holSorted = [...holSet].filter(n => calSet.has(weekdayOf(n))).sort((x, y) => x - y);   // the holidays that take a WORKING weekday away
+}
+function holidayName(n) { workDaySet(); return holNames.get(n) || ''; }
 function weekdayOf(n) { return ((n + 4) % 7 + 7) % 7; }   // day number -> 0 = Sunday (1970-01-01 was a Thursday)
-function isWorkNum(n) { return workDaySet().has(weekdayOf(n)); }
+function isWorkNum(n) { return workDaySet().has(weekdayOf(n)) && !holSet.has(n); }
 function nextWorkNum(n) { while (!isWorkNum(n)) n++; return n; }   // on or after
 function prevWorkNum(n) { while (!isWorkNum(n)) n--; return n; }   // on or before
 function addWorkNum(n, k) {   // n is a working day; move |k| working days forward (k > 0) or back (k < 0)
   if (!k) return n;
   const dir = k > 0 ? 1 : -1, per = workDaySet().size;
   let left = Math.abs(k);
-  const weeks = Math.floor(left / per); n += dir * weeks * 7; left -= weeks * per;   // a whole week of working days is exactly 7 calendar days
+  if (!holSet.size) { const weeks = Math.floor(left / per); n += dir * weeks * 7; left -= weeks * per; }   // a whole week of working days is exactly 7 calendar days (unless there are holidays: then count day by day)
   while (left > 0) { n += dir; if (isWorkNum(n)) left--; }
   return n;
 }
 function countWorkNum(a, b) {   // working days in [a, b], both ends included
   if (b < a) return 0;
-  const weeks = Math.floor((b - a + 1) / 7);
-  let c = weeks * workDaySet().size;
-  for (let n = a + weeks * 7; n <= b; n++) if (isWorkNum(n)) c++;
+  const weeks = Math.floor((b - a + 1) / 7), set = workDaySet();
+  let c = weeks * set.size;
+  for (let n = a + weeks * 7; n <= b; n++) if (set.has(weekdayOf(n))) c++;   // (weekdays that work, holidays not yet taken off)
+  if (holSorted.length) {   // ...minus the holidays that fall inside [a, b] (binary search in the sorted list)
+    const lb = x => { let lo = 0, hi = holSorted.length; while (lo < hi) { const mid = (lo + hi) >> 1; if (holSorted[mid] < x) lo = mid + 1; else hi = mid; } return lo; };
+    c -= lb(b + 1) - lb(a);
+  }
   return c;
 }
 function isWorkDay(iso) { return isWorkNum(dayNumber(iso)); }
@@ -1076,6 +1126,9 @@ function durationDays(startIso, endIso) { return Math.max(1, countWorkNum(dayNum
 function finishFor(startIso, dur) { return shiftWork(startIso, Math.max(1, dur) - 1); }
 const WEEKDAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], WEEKDAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
 function currentWorkDays() { return [...workDaySet()].sort((a, b) => a - b); }
+function holidayCount() { return project && Array.isArray(project.holidays) ? project.holidays.length : 0; }
+// e.g. "Mon–Fri" or "Mon–Fri · 9 holidays"
+function calendarSummary() { const n = holidayCount(); return calendarLabel() + (n ? ` · ${n} holiday${n === 1 ? '' : 's'}` : ''); }
 function calendarLabel(days = currentWorkDays()) {
   const key = days.join('');
   if (key === '12345') return 'Mon–Fri';
@@ -1243,9 +1296,97 @@ function persistLocal() {
 }
 function save() {
   normalizeData();
+  recordHistory();
   persistLocal();
   maybeSnapshotBackup();
   queueFileSyncWrite();
+}
+/* ============================== Undo / redo ================================
+   Every change the user makes goes through save(); recordHistory() compares the plan (project + tasks + tombstones, the very text
+   that is written to the file) with what it was after the previous save and, when something other than updatedAt stamps changed,
+   pushes the previous state on the undo stack. So EVERYTHING that can be edited is undoable, including what a cascade moved, and
+   there is nothing to label per action. The history lives in memory only: it starts empty on load, is dropped when the plan is
+   switched, and — so that undo can never revert somebody else's work — when another device's changes are merged in. */
+const HISTORY_MAX = 100, HISTORY_MAX_CHARS = 40e6;
+let historyCoalesceMs = 300;   // saves closer together than this belong to one gesture and share one undo step
+let undoStack = [], redoStack = [], histText = null, histSig = null, histBusy = false, histLastAt = 0;
+const stateSig = text => text.replace(/"(updatedAt|deletedAt)": \d+/g, '"$1": 0');   // timestamps are not changes
+function resetHistory() { undoStack = []; redoStack = []; histText = canonicalText(); histSig = stateSig(histText); histLastAt = 0; updateUndoUI(); }
+function recordHistory() {
+  if (histBusy) return;
+  const text = canonicalText(), sig = stateSig(text);
+  if (histText === null || sig === histSig) { histText = text; histSig = sig; return; }   // nothing but updatedAt stamps moved: not a change
+  const now = Date.now();
+  if (!undoStack.length || now - histLastAt >= historyCoalesceMs) {
+    undoStack.push({ text: histText });
+    let chars = undoStack.reduce((n, e) => n + e.text.length, 0);
+    while (undoStack.length > HISTORY_MAX || (chars > HISTORY_MAX_CHARS && undoStack.length > 1)) chars -= undoStack.shift().text.length;
+  }
+  histLastAt = now; redoStack = [];
+  histText = text; histSig = sig;
+  updateUndoUI();
+}
+function taskSig(t) { const c = Object.assign({}, t); delete c.updatedAt; return stableStringify(c); }
+const CHANGE_FIELDS = { name: 'Name', startDate: 'Start', endDate: 'Finish', startText: 'Start', endText: 'Finish', durText: 'Duration', progress: '% complete', predecessors: 'Predecessors', taskMode: 'Task Mode', milestone: 'Milestone', resource: 'Resource', actualStart: 'Actual Start', actualFinish: 'Actual Finish', color: 'Colour', constraintType: 'Constraint', constraintDate: 'Constraint', custom: 'Custom field', baselines: 'Baseline', parentId: 'Position', order: 'Position' };
+// A short description of what changed between two plan texts, e.g. `Start of "Design"` — used in the Undo / Redo toast.
+function describeChange(beforeText, afterText) {
+  const B = JSON.parse(beforeText), A = JSON.parse(afterText);
+  const bm = new Map(B.tasks.map(t => [t.id, t])), am = new Map(A.tasks.map(t => [t.id, t]));
+  const added = A.tasks.filter(t => !bm.has(t.id)), removed = B.tasks.filter(t => !am.has(t.id));
+  const changed = A.tasks.filter(t => bm.has(t.id) && taskSig(t) !== taskSig(bm.get(t.id)));
+  const q = t => `"${t.name}"`, n = k => `${k} other task${k === 1 ? '' : 's'}`;
+  const top = list => list.find(t => !t.parentId || !list.some(x => x.id === t.parentId)) || list[0];
+  if (added.length && !removed.length && !changed.length) return added.length === 1 ? `Add ${q(added[0])}` : `Add ${q(top(added))} and ${added.length - 1} sub-task${added.length === 2 ? '' : 's'}`;
+  if (removed.length && !added.length && !changed.length) return removed.length === 1 ? `Delete ${q(removed[0])}` : `Delete ${q(top(removed))} and ${removed.length - 1} sub-task${removed.length === 2 ? '' : 's'}`;
+  if (changed.length && !added.length && !removed.length) {
+    // what you edited is the task upstream of the others a cascade moved: the changed task none of the other changed tasks feeds
+    const ids = new Set(changed.map(t => t.id));
+    const a = changed.find(t => !t.predecessors.some(p => ids.has(p.id))) || changed[0], b = bm.get(a.id);
+    const keys = [...new Set(Object.keys(a).concat(Object.keys(b)))].filter(k => k !== 'updatedAt' && stableStringify(a[k]) !== stableStringify(b[k]));
+    const labels = [...new Set(keys.map(k => CHANGE_FIELDS[k] || k))];
+    return (labels.length && labels.length <= 2 ? `${labels.join(' and ')} of ${q(a)}` : `Edit ${q(a)}`) + (changed.length > 1 ? ` and ${n(changed.length - 1)}` : '');
+  }
+  if (added.length || removed.length) { const all = added.length ? added : removed; return `${q(top(all))} and ${n(changed.length + added.length + removed.length - 1)}`; }
+  return 'Plan settings';
+}
+// Make the plan look like `text`. Changed tasks get a fresh updatedAt and a task that comes back loses its tombstone, so a sync
+// with another device keeps the restored state instead of undoing the undo; a task that goes away is tombstoned.
+function applySnapshot(text) {
+  const target = JSON.parse(text), now = Date.now(), cur = new Map(tasks.map(t => [t.id, t]));
+  const next = target.tasks.map(tt => { const c = cur.get(tt.id); if (c && taskSig(c) === taskSig(tt)) return c; tt.updatedAt = now; return tt; });
+  const keep = new Set(next.map(t => t.id));
+  const list = deletedTaskIds.filter(d => !keep.has(d.id));
+  for (const t of tasks) if (!keep.has(t.id)) tombstone(list, t.id);
+  const strip = pr => { const c = Object.assign({}, pr); delete c.updatedAt; return stableStringify(c); };
+  if (strip(project) !== strip(target.project)) { project = target.project; project.updatedAt = now; }
+  tasks = next; deletedTaskIds = list;
+  normalizeData();
+}
+function stepHistory(dir) {
+  const from = dir === 'undo' ? undoStack : redoStack, to = dir === 'undo' ? redoStack : undoStack;
+  if (!from.length) { showToast(dir === 'undo' ? 'Nothing to undo' : 'Nothing to redo'); return false; }
+  if (editingCell) cancelInlineEdit();
+  const e = from.pop(), now = histText;
+  to.push({ text: now });
+  const what = dir === 'undo' ? describeChange(e.text, now) : describeChange(now, e.text);   // what was undone / redone: the change that led from the earlier state to the later one
+  histBusy = true;
+  try {
+    applySnapshot(e.text);
+    if (selectedTaskId && !byId(selectedTaskId)) selectedTaskId = null;
+    save(); render();
+  } finally { histBusy = false; }
+  histText = canonicalText(); histSig = stateSig(histText); histLastAt = 0;
+  clearTimeout(toastTimer); toastUndoAction = null;   // a toast Undo (delete, clone …) would now act on a state that is gone
+  showToast(`${dir === 'undo' ? 'Undid' : 'Redid'}: ${what}`, false, () => stepHistory(dir === 'undo' ? 'redo' : 'undo'), dir === 'undo' ? 'Redo' : 'Undo');
+  updateUndoUI();
+  return true;
+}
+function historyUndo() { return stepHistory('undo'); }
+function historyRedo() { return stepHistory('redo'); }
+function updateUndoUI() {
+  const u = document.getElementById('undoBtn'), r = document.getElementById('redoBtn');
+  if (u) { u.disabled = !undoStack.length; u.title = undoStack.length ? `Undo (Ctrl+Z) — ${undoStack.length} step${undoStack.length === 1 ? '' : 's'} available` : 'Nothing to undo'; }
+  if (r) { r.disabled = !redoStack.length; r.title = redoStack.length ? `Redo (Ctrl+Shift+Z) — ${redoStack.length} step${redoStack.length === 1 ? '' : 's'}` : 'Nothing to redo'; }
 }
 function isFreshLocalState() { return tasks.length === 0 && (project.updatedAt || 0) === 0; }
 
@@ -1269,6 +1410,26 @@ function setCustomValue(t, id, value) {           // null/''/false clears
   const c = Object.assign({}, t.custom);
   if (value === null || value === undefined || value === '' || value === false) delete c[id]; else c[id] = value;
   if (Object.keys(c).length) t.custom = c; else delete t.custom;
+}
+// Sanitises project.holidays: entries { date, to?, name?, yearly? } with real ISO dates, `to` after `date` (a range of at most ~10 years),
+// `yearly` only for a single day, a name of at most 60 characters, no duplicates, sorted, at most 400. Returns null when nothing is left.
+function cleanHolidays(src) {
+  if (!Array.isArray(src)) return null;
+  const isoOk = v => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) && dayNumberToIso(dayNumber(v)) === v;
+  const out = [], seen = new Set();
+  for (const h of src) {
+    if (!h || typeof h !== 'object' || !isoOk(h.date)) continue;
+    const e = { date: h.date };
+    if (isoOk(h.to) && dayNumber(h.to) > dayNumber(h.date) && dayNumber(h.to) - dayNumber(h.date) < 3660) e.to = h.to;
+    if (h.yearly === true && !e.to) e.yearly = true;
+    const name = typeof h.name === 'string' ? h.name.trim().slice(0, 60) : ''; if (name) e.name = name;
+    const key = e.date + '|' + (e.to || '') + '|' + (e.yearly ? 'y' : '');
+    if (seen.has(key)) continue;
+    seen.add(key); out.push(e);
+    if (out.length >= 400) break;
+  }
+  out.sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : (a.to || '') < (b.to || '') ? -1 : (a.to || '') > (b.to || '') ? 1 : 0);
+  return out.length ? out : null;
 }
 function normalizeData() {
   const ids = new Set(tasks.map(t => t.id));
@@ -1373,6 +1534,7 @@ function normalizeData() {
     const wd = Array.isArray(project.workDays) ? [...new Set(project.workDays.map(Number).filter(n => Number.isInteger(n) && n >= 0 && n <= 6))].sort((a, b) => a - b) : [];
     if (wd.length && wd.join() !== DEFAULT_WORK_DAYS.join()) { if (!Array.isArray(project.workDays) || project.workDays.join() !== wd.join()) project.workDays = wd; }
     else delete project.workDays;
+    { const hl = cleanHolidays(project.holidays); if (!hl) delete project.holidays; else if (stableStringify(hl) !== stableStringify(project.holidays)) project.holidays = hl; }
   }
   {   // custom field names: only known fields, trimmed, and only those that differ from the default
     const names = {};
@@ -1542,18 +1704,27 @@ function successorsMap() {
   for (const t of tasks) for (const p of t.predecessors) (map[p.id] = map[p.id] || []).push({ id: t.id, type: p.type, lag: p.lag });
   return map;
 }
+// The tasks that are MEMBERS of a dependency cycle: the strongly connected components (Tarjan) with more than one task, plus a task that
+// lists itself. A task that merely sits downstream of a cycle is not a member — the scheduler places it by its links like any other.
+// (Exact and independent of the order the tasks are in, so every device and every run agree.)
 function taskCycleSet() {
-  const bad = new Set();
-  const visited = new Set();
-  function dfs(id, stack) {
-    if (stack.has(id)) { for (const s of stack) bad.add(s); bad.add(id); return; }
-    if (visited.has(id)) return;
-    stack = new Set(stack); stack.add(id);
-    const t = byId(id);
-    if (t) for (const p of t.predecessors) dfs(p.id, stack);
-    visited.add(id);
+  const bad = new Set(), map = new Map(tasks.map(t => [t.id, t])), idx = new Map(), low = new Map(), onStack = new Set(), stack = [];
+  let counter = 0;
+  function strong(id) {
+    idx.set(id, counter); low.set(id, counter); counter++; stack.push(id); onStack.add(id);
+    for (const p of map.get(id).predecessors) {
+      if (p.id === id) bad.add(id);
+      if (!map.has(p.id)) continue;
+      if (!idx.has(p.id)) { strong(p.id); low.set(id, Math.min(low.get(id), low.get(p.id))); }
+      else if (onStack.has(p.id)) low.set(id, Math.min(low.get(id), idx.get(p.id)));
+    }
+    if (low.get(id) === idx.get(id)) {
+      const comp = []; let w;
+      do { w = stack.pop(); onStack.delete(w); comp.push(w); } while (w !== id);
+      if (comp.length > 1) for (const c of comp) bad.add(c);
+    }
   }
-  for (const t of tasks) dfs(t.id, new Set());
+  for (const t of tasks) if (!idx.has(t.id)) strong(t.id);
   return bad;
 }
 // A dependency reads its predecessor's Start / Finish. As in MS Project those ARE what really happened once an actual date is recorded
@@ -1730,15 +1901,21 @@ function placeByLinks(task) {
   task.updatedAt = Date.now();
   return true;
 }
-// Typing a Start or Finish for an Auto task, or dragging its bar, pins it there the way MS Project does: Start No Earlier Than
-// (Finish No Earlier Than for a finish) at that date. Its links can still push it later, but never pull it before the date the user
-// chose. A constraint the user set on purpose (must start on, no later than …) is left alone; manual and started tasks are not
-// scheduled by their links at all.
+// A date the user types for an Auto task (or a bar they drag) is kept when it is a real DELAY: later than what the task's links allow.
+// Then the task gets Start No Earlier Than (Finish No Earlier Than for a finish) at that date — its links can still push it later,
+// never pull it before the date the user chose (this is what MS Project does for every typed date; here it is only done when it
+// matters, so a milestone or a task that sits where its links put it, or has no links, gets no constraint it does not need).
+// A date that is NOT a delay adds nothing; an existing Start/Finish No Earlier Than on that side is dropped (the date the user has just
+// typed is no longer held back by it). A constraint set on purpose (must start on, no later than …) is left alone, and manual, started,
+// group and free-text tasks are not placed by their links at all.
 function pinToDate(t, basis) {
   if (t.taskMode === 'manual' || hasChildren(t.id) || isStarted(t) || isUnscheduled(t)) return;
-  if (!['ASAP', 'ALAP', 'SNET', 'FNET'].includes(t.constraintType || 'ASAP')) return;
-  t.constraintType = basis === 'finish' ? 'FNET' : 'SNET';
-  t.constraintDate = basis === 'finish' ? t.endDate : t.startDate;
+  const type = t.constraintType || 'ASAP', sameSide = basis === 'finish' ? 'FNET' : 'SNET';
+  if (!['ASAP', 'ALAP', 'SNET', 'FNET'].includes(type)) return;
+  const cs = constraintStart(t, false);   // the earliest the LINKS allow (nothing to compare with when there are none)
+  const delayed = !!cs && (basis === 'finish' ? dayNumber(t.endDate) > dayNumber(finishFor(cs, durationDays(t.startDate, t.endDate))) : dayNumber(t.startDate) > dayNumber(cs));
+  if (delayed) { t.constraintType = sameSide; t.constraintDate = basis === 'finish' ? t.endDate : t.startDate; }
+  else if (type === sameSide) { t.constraintType = 'ASAP'; t.constraintDate = null; }
 }
 // Walks forward through the successors of `changedId`, putting each Auto task where its links say (earlier or later) and going on
 // to ITS successors whenever one moved. A task in taskMode 'manual' (MS Project's Manually Scheduled), one that has already
@@ -1800,36 +1977,46 @@ function topoOrder(ids, preds) {
   }
   return out;
 }
-// A simplified CPM pass: treats every dependency as Finish-to-Start for
-// slack purposes (SS/FF/SF links still drive real scheduling above, just
-// not this specific slack calculation) — a documented v1 simplification.
-function computeCriticalPath() {
+// Critical path: the forward pass IS the schedule — each task's early dates are the Start / Finish it has (Auto tasks sit at the
+// earliest their links allow; a date the user pinned is respected) — and a backward pass from the project's finish (the latest Finish
+// of any task) gives every task its late dates. All four link types (FS/SS/FF/SF) and their lags and leads are honoured, in WORKING
+// days (weekends, days off and holidays included). Total float = working days between the early and the late finish; a task with
+// none left is critical. Only leaf tasks that the scheduler places take part: groups, Manual tasks and dependency cycles do not
+// (MS Project does not compute criticality for them either).
+// Returns { critical: Set of ids, float: Map id -> total float in working days }.
+function criticalPathAnalysis() {
   const cyclic = taskCycleSet();
   const leaves = tasks.filter(t => !hasChildren(t.id) && !cyclic.has(t.id) && t.taskMode !== 'manual');
-  const ids = leaves.map(t => t.id);
-  const dur = {}; for (const t of leaves) dur[t.id] = Math.max(1, durationDays(t.startDate, t.endDate));
-  const preds = {}; for (const t of leaves) preds[t.id] = t.predecessors.map(p => p.id).filter(pid => ids.includes(pid));
+  const ids = leaves.map(t => t.id), inNet = new Set(ids);
+  const es = {}, ef = {}, dur = {};
+  for (const t of leaves) { es[t.id] = linkStart(t); ef[t.id] = dayNumber(linkEnd(t)) < dayNumber(es[t.id]) ? es[t.id] : linkEnd(t); dur[t.id] = Math.max(1, durationDays(es[t.id], ef[t.id])); }
+  const preds = {}, succLinks = {};
+  for (const id of ids) succLinks[id] = [];
+  for (const t of leaves) { preds[t.id] = t.predecessors.map(p => p.id).filter(pid => inNet.has(pid)); for (const p of t.predecessors) if (inNet.has(p.id)) succLinks[p.id].push({ sid: t.id, type: p.type, lag: p.lag || 0 }); }
   const order = topoOrder(ids, preds);
-  const succOf = {}; for (const id of ids) succOf[id] = [];
-  for (const id of ids) for (const pid of preds[id]) if (succOf[pid]) succOf[pid].push(id);
-  const ES = {}, EF = {};
-  for (const id of order) {
-    let es = 0;
-    for (const pid of preds[id]) es = Math.max(es, EF[pid] || 0);
-    ES[id] = es; EF[id] = es + dur[id];
-  }
-  const projectEnd = order.length ? Math.max(...order.map(id => EF[id] || 0)) : 0;
-  const LS = {}, LF = {};
+  let projectEnd = null;
+  for (const id of order) if (projectEnd === null || dayNumber(ef[id]) > dayNumber(projectEnd)) projectEnd = ef[id];
+  const LS = {}, LF = {}, float = new Map(), critical = new Set();
   for (let i = order.length - 1; i >= 0; i--) {
     const id = order[i];
     let lf = projectEnd;
-    if (succOf[id].length) lf = Math.min(...succOf[id].map(sid => LS[sid] !== undefined ? LS[sid] : projectEnd));
-    LF[id] = lf; LS[id] = lf - dur[id];
+    for (const { sid, type, lag } of succLinks[id]) {
+      if (LS[sid] === undefined) continue;
+      let c;
+      if (type === 'SS') c = shiftWork(shiftWork(LS[sid], -lag), dur[id] - 1);         // its start no later than the successor's late start − lag
+      else if (type === 'FF') c = shiftWork(LF[sid], -lag);                            // its finish no later than the successor's late finish − lag
+      else if (type === 'SF') c = shiftWork(shiftWork(LF[sid], -lag), dur[id] - 1);    // its start no later than the successor's late finish − lag
+      else c = shiftWork(LS[sid], -(1 + lag));                                         // FS: the working day before the successor may start, less the lag
+      if (dayNumber(c) < dayNumber(lf)) lf = c;
+    }
+    LF[id] = lf; LS[id] = shiftWork(lf, -(dur[id] - 1));
+    const slack = workDiff(ef[id], lf);   // negative when the task already finishes later than its late finish allows
+    float.set(id, slack);
+    if (slack <= 0) critical.add(id);
   }
-  const critical = new Set();
-  for (const id of order) if ((LS[id] - ES[id]) <= 0) critical.add(id);
-  return critical;
+  return { critical, float };
 }
+function computeCriticalPath() { return criticalPathAnalysis().critical; }
 
 /* ================================ Render ================================= */
 let dateRange = { start: 0, end: 0 };
@@ -2826,7 +3013,7 @@ function commitInlineEdit(id, field, rawValue) {
       if (isStart) t.startText = val.slice(0, 60); else t.endText = val.slice(0, 60);
     }
     clampTaskDates(t);
-    if (snapToWorkDays(t)) showToast(`Moved to a working day — this plan works ${calendarLabel()}`);
+    if (snapToWorkDays(t)) showToast(`Moved to a working day — this plan works ${calendarLabel()}${holidayCount() ? ', without its holidays' : ''}`);
     if (iso) pinToDate(t, isStart ? 'start' : 'finish');
     applyConstraints(id);
   } else if (field === 'duration') {
@@ -3001,7 +3188,7 @@ function renderGantt() {
     const top = idx * ROW_H;
     html += `<div class="gantt-row-bg${t.id === selectedTaskId ? ' selected' : ''}" style="top:${top}px;width:${totalW}px" data-row-id="${t.id}"></div>`;
   });
-  if (px >= 4 && workDaySet().size < 7) {   // shade the days off (not at Year zoom: 1.5px a day would just be noise)
+  if (px >= 4 && (workDaySet().size < 7 || holSet.size)) {   // shade the days off (not at Year zoom: 1.5px a day would just be noise)
     for (let n = dateRange.start; n < dateRange.end;) {
       if (isWorkNum(n)) { n++; continue; }
       let m = n; while (m + 1 < dateRange.end && !isWorkNum(m + 1)) m++;
@@ -3282,6 +3469,7 @@ function cloneTask(id) {
     for (const x of tasks) { const kept = x.predecessors.filter(p => !newIds.has(p.id)); if (kept.length !== x.predecessors.length && !newIds.has(x.id)) { x.predecessors = kept; lost.push(x.id); } }
     tasks = tasks.filter(x => !newIds.has(x.id));
     for (const c of copies) tombstone(deletedTaskIds, c.id);
+    normalizeData();
     for (const id of lost) if (byId(id)) applyConstraints(id);
     for (const pid of parentsNow) releaseGroup(pid);   // a parent that had a copy as its only task is an ordinary task again
     for (const m of moved) { m.t.order = m.order; m.t.updatedAt = Date.now(); }
@@ -3326,6 +3514,9 @@ function deleteTaskFlow(id) {
         for (const r of removed) tasks.push(r);
         for (const { taskId, pred } of strippedLinks) { const ot = byId(taskId); if (ot) ot.predecessors.push(pred); }
         for (const r of replanned) if (r.t.startDate === r.ns && r.t.endDate === r.ne) { r.t.startDate = r.s; r.t.endDate = r.e; r.t.updatedAt = r.u; }   // (what the re-check moved goes back too — unless it was edited since)
+        const linksBefore = new Map(tasks.map(t => [t.id, t.predecessors.length]));
+        normalizeData();   // (first: a link to what is a group by now is dropped here, and the task that had it needs placing by what is left)
+        for (const t of tasks) if (linksBefore.get(t.id) !== t.predecessors.length) applyConstraints(t.id);
         const cycNow = taskCycleSet();   // edits made in the meantime may have moved a predecessor: the restored tasks and links are checked against the schedule as it is now
         for (const rid of new Set([...removed.map(r => r.id), ...strippedLinks.map(l => l.taskId)])) if (!offBefore.has(rid) && offItsLinks(byId(rid), cycNow)) applyConstraints(rid);
         save(); render();
@@ -3514,24 +3705,62 @@ function applyActualsToSchedule() {
     normalizeData(); save(); render(); renderBaselineModal();
   });
 }
+let calHolidays = [];   // the dialog's working copy of project.holidays
 function openCalendarModal() {
   closePlanMenu();
   document.getElementById('calendarPlanName').textContent = project.name;
   const on = workDaySet();
   document.getElementById('calendarDays').innerHTML = WEEKDAY_ORDER.map(d =>
     `<label class="cal-day"><input type="checkbox" value="${d}"${on.has(d) ? ' checked' : ''}><span>${WEEKDAY_NAMES[d]}</span></label>`).join('');
+  calHolidays = (project.holidays || []).map(h => Object.assign({}, h));
+  for (const id of ['holFrom', 'holTo', 'holName']) document.getElementById(id).value = '';
+  document.getElementById('holYearly').checked = false; document.getElementById('holYearly').disabled = false;
+  renderHolidayList();
   document.getElementById('calendarModalBg').classList.add('open');
   setTimeout(() => { const i = document.querySelector('#calendarDays input'); if (i) i.focus(); }, 40);
 }
 function closeCalendarModal() { document.getElementById('calendarModalBg').classList.remove('open'); }
+function fmtHolidayWhen(h) {
+  if (h.yearly) return fmtDate(h.date).slice(0, 6);   // 25.12.
+  return h.to ? `${fmtDate(h.date)} – ${fmtDate(h.to)}` : fmtDate(h.date);
+}
+function renderHolidayList() {
+  calHolidays = cleanHolidays(calHolidays) || [];
+  document.getElementById('holList').innerHTML = calHolidays.map((h, i) => {
+    const days = h.to ? `${dayNumber(h.to) - dayNumber(h.date) + 1} days` : '';
+    return `<div class="hol-row"><span class="hol-when">${fmtHolidayWhen(h)}</span><span class="hol-name" title="${escapeHtml(h.name || '')}">${escapeHtml(h.name || '')}</span>${days ? `<span class="hol-days">${days}</span>` : ''}${h.yearly ? '<span class="hol-tag">every year</span>' : ''}<button type="button" aria-label="Remove ${escapeHtml(fmtHolidayWhen(h))}" title="Remove" onclick="removeHoliday(${i})"><i class="fa-solid fa-xmark"></i></button></div>`;
+  }).join('');
+}
+function holToChanged() {   // "every year" only makes sense for a single day
+  const to = document.getElementById('holTo').value, y = document.getElementById('holYearly');
+  if (to) y.checked = false;
+  y.disabled = !!to;
+}
+function addHoliday() {
+  const from = document.getElementById('holFrom').value, to = document.getElementById('holTo').value;
+  if (!from) { showToast('Pick the day off first', true); document.getElementById('holFrom').focus(); return; }
+  if (to && dayNumber(to) <= dayNumber(from)) { showToast('The last day must be after the first day', true); return; }
+  const h = { date: from };
+  if (to) h.to = to; else if (document.getElementById('holYearly').checked) h.yearly = true;
+  const name = document.getElementById('holName').value.trim(); if (name) h.name = name;
+  calHolidays.push(h);
+  renderHolidayList();
+  for (const id of ['holFrom', 'holTo', 'holName']) document.getElementById(id).value = '';
+  document.getElementById('holYearly').checked = false; document.getElementById('holYearly').disabled = false;
+  document.getElementById('holFrom').focus();
+}
+function removeHoliday(i) { calHolidays.splice(i, 1); renderHolidayList(); }
 function saveCalendar() {
   const days = [...document.querySelectorAll('#calendarDays input:checked')].map(i => Number(i.value)).sort((a, b) => a - b);
   if (!days.length) { showToast('Pick at least one working day', true); return; }
-  if (days.join() === currentWorkDays().join()) { closeCalendarModal(); return; }
-  project.workDays = days; project.updatedAt = Date.now();
-  normalizeData();   // drops it again if it is the default
+  const hol = cleanHolidays(calHolidays);
+  if (days.join() === currentWorkDays().join() && stableStringify(hol) === stableStringify(project.holidays || null)) { closeCalendarModal(); return; }
+  project.workDays = days;
+  if (hol) project.holidays = hol; else delete project.holidays;
+  project.updatedAt = Date.now();
+  normalizeData();   // drops workDays again if it is the default
   save(); render(); closeCalendarModal();
-  showToast(`Working calendar: ${calendarLabel()}`);
+  showToast(`Working calendar: ${calendarSummary()}`);
 }
 function openFieldNameModal(id) {
   fieldNameTarget = id;
@@ -3922,6 +4151,7 @@ function fmtConflictValue(key, v) {
   if (/Date$/.test(key) || key === 'actualStart' || key === 'actualFinish') return typeof v === 'string' ? fmtDate(v) : String(v);
   if (key === 'predecessors') return Array.isArray(v) && v.length ? v.map(p => `${taskDisplayId(p.id) || '?'}${p.type}${p.lag ? (p.lag > 0 ? '+' : '') + p.lag : ''}`).join(', ') : 'none';
   if (key === 'workDays' && Array.isArray(v)) return calendarLabel(v);
+  if (key === 'holidays' && Array.isArray(v)) return v.length ? `${v.length} holiday${v.length === 1 ? '' : 's'}` : 'none';
   if (typeof v === 'boolean') return v ? 'Yes' : 'No';
   if (typeof v === 'object') { const j = JSON.stringify(v); return j.length > 70 ? j.slice(0, 67) + '…' : j; }
   return String(v);
@@ -4523,7 +4753,7 @@ function mergeFromFile(data, how) {
   const conflicts = [], changedIds = new Map();
   const changed = mergeData(data, { respectTombstones: true, base, conflicts, changedIds });
   let moved = 0;
-  if (changed) { moved = replanAfterMerge(changedIds); normalizeData(); persistLocal(); render(); }
+  if (changed) { moved = replanAfterMerge(changedIds); normalizeData(); persistLocal(); resetHistory(); render(); }   // (undo must never revert what somebody else did: the history starts over)
   const nConflicts = reportSyncConflicts(conflicts);
   if (changed && !nConflicts) showToast((how === 'write' ? 'Merged changes from another device before saving' : 'Synced changes from another device') + (moved ? ` — ${moved} task${moved === 1 ? '' : 's'} re-planned` : ''));
   return { changed, moved, conflicts: nConflicts };
@@ -4747,6 +4977,7 @@ function resetTransientUI() {
   closeTaskModal(); closeImportModal(); closeDataMenu(); closeColumnsMenu(); closeTaskModeMenu();
   clearTimeout(toastTimer); toastUndoAction = null;
   document.getElementById('toast').classList.remove('show');   // an Undo for the old plan must not act on the new one
+  resetHistory();   // (and neither must the undo history)
 }
 async function switchPlan(id) {
   closePlanMenu();
@@ -4800,7 +5031,7 @@ function renderPlanMenu() {
     `<div class="dropdown-sep"></div>` +
     `<button class="dropdown-item" id="planRenameItem" onclick="openPlanModal('rename')"><i class="fa-solid fa-pen"></i>Rename plan…</button>` +
     `<button class="dropdown-item" id="planBaselineItem" onclick="openBaselineModal()"><i class="fa-solid fa-ruler-horizontal"></i>Baseline…<span class="item-hint">${escapeHtml(baselineMenuHint())}</span></button>` +
-    `<button class="dropdown-item" id="planCalendarItem" onclick="openCalendarModal()"><i class="fa-regular fa-calendar-days"></i>Working calendar…<span class="item-hint">${escapeHtml(calendarLabel())}</span></button>` +
+    `<button class="dropdown-item" id="planCalendarItem" onclick="openCalendarModal()"><i class="fa-regular fa-calendar-days"></i>Working calendar…<span class="item-hint">${escapeHtml(calendarSummary())}</span></button>` +
     `<button class="dropdown-item" id="planDuplicateItem" onclick="duplicatePlan()"><i class="fa-regular fa-copy"></i>Duplicate plan</button>` +
     (fileSyncSupported() ? `<button class="dropdown-item" id="planDisconnectItem" onclick="disconnectFile()"${syncFileHandle ? '' : ' disabled title="This plan isn’t linked to a file"'}><i class="fa-solid fa-link-slash"></i>Disconnect file…</button>` : '') +
     `<button class="dropdown-item" id="planDeleteItem" onclick="deleteCurrentPlan()"${idx.plans.length < 2 ? ' disabled title="You need at least one plan"' : ''}><i class="fa-solid fa-trash"></i>Delete plan…</button>`;
@@ -4993,6 +5224,14 @@ function wireGlobalEvents() {
     if (!e.target.closest('#taskModeMenu')) closeTaskModeMenu();
   });
   document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && !e.altKey && (e.key.toLowerCase() === 'z' || e.key.toLowerCase() === 'y')) {   // Ctrl/Cmd+Z undo, +Shift+Z or Ctrl+Y redo
+      const tag = (e.target || {}).tagName || '';
+      if (/^(INPUT|TEXTAREA|SELECT)$/.test(tag) || (e.target || {}).isContentEditable) return;   // in a text field Ctrl+Z is the browser's own
+      if (document.querySelector('.modal-bg.open')) return;
+      e.preventDefault();
+      if (e.key.toLowerCase() === 'y' || e.shiftKey) historyRedo(); else historyUndo();
+      return;
+    }
     if (e.key !== 'Escape') return;
     if (document.getElementById('fieldNameModalBg').classList.contains('open')) { closeFieldNameModal(); return; }   // only the topmost dialog: the task dialog underneath keeps its unsaved edits
     // Escape closes whatever overlay is open first; only when there is none — and
@@ -5022,6 +5261,7 @@ function wireGlobalEvents() {
 
 document.addEventListener('DOMContentLoaded', () => {
   load();
+  resetHistory();
   applyTheme(); applyGridPaneWidth();
   document.title = project.name + ' · Milestone';
   wireGlobalEvents();
