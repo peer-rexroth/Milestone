@@ -335,6 +335,19 @@ input.inline-edit { width: 100%; min-width: 0; padding: 3px 6px; border: 1px sol
 .cal-day span { display: inline-block; min-width: 44px; padding: 6px 0; text-align: center; border: 1px solid var(--border); border-radius: 6px; background: var(--panel); color: var(--text-dim); font-size: 12.5px; font-weight: 600; }
 .cal-day input:checked + span { background: var(--accent); border-color: var(--accent); color: #fff; }
 .cal-day input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.conflict-btn { color: var(--task-amber); border-color: color-mix(in srgb, var(--task-amber) 50%, var(--border)); }
+.conflict-btn i { margin-right: 6px; }
+.conflict-card { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; }
+.conflict-title { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.conflict-title i { color: var(--text-faint); }
+.conflict-time { margin-left: auto; font-size: 11.5px; color: var(--text-faint); }
+.conflict-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-bottom: 8px; }
+.conflict-table th { text-align: left; font-weight: 600; color: var(--text-faint); padding: 3px 8px 3px 0; }
+.conflict-table td { padding: 3px 8px 3px 0; color: var(--text-dim); vertical-align: top; }
+.conflict-table td:first-child { color: var(--text); font-weight: 600; white-space: nowrap; }
+.conflict-table td.kept { color: var(--text); }
+.kept-tag { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: var(--task-green); margin-left: 4px; }
+.conflict-actions { display: flex; align-items: center; gap: 8px; }
 .radio-col { display: flex; flex-direction: column; gap: 2px; }
 .radio-row { display: flex; align-items: center; gap: 8px; font-size: 13px; padding: 3px 0; cursor: pointer; }
 .radio-row input[disabled] + span { color: var(--text-faint); }
@@ -512,6 +525,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
   <div class="topbar-divider"></div>
   <div class="dropdown-wrap">
     <button class="btn" id="fileSyncBtn" onclick="onFileSyncBtnClick()"></button>
+    <button class="btn conflict-btn hidden" id="syncConflictBtn" onclick="openSyncConflictsModal()"></button>
   </div>
   <div class="dropdown-wrap">
     <button class="btn" id="dataMenuBtn" onclick="toggleDataMenu()"><i class="fa-solid fa-database"></i>Data</button>
@@ -667,7 +681,8 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
       </div>
       <div class="field"><label>Columns</label>
         <label class="checkbox-row"><input type="radio" name="excelCols" value="shown" checked><span>As shown in the task list</span></label>
-        <label class="checkbox-row"><input type="radio" name="excelCols" value="all"><span>All columns (also WBS, Actual Start/Finish, Resource and the custom fields in use)</span></label>
+        <label class="checkbox-row"><input type="radio" name="excelCols" value="all"><span>All columns (also WBS, Actual Start/Finish, Resource, baselines and the custom fields in use)</span></label>
+        <div style="font-size:12px;color:var(--text-dim);margin-top:4px;line-height:1.45">The Tasks sheet follows the columns of the <strong>Tasks view</strong>; the Gantt sheet's list follows those of the <strong>Gantt view</strong> (each view keeps its own choice).</div>
       </div>
       <label class="checkbox-row"><input type="checkbox" id="excelGantt" checked>Add a Gantt chart sheet</label>
     </div>
@@ -772,6 +787,20 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
   </div>
 </div>
 
+<div class="modal-bg" id="syncConflictsModalBg" onclick="if(event.target===this) closeSyncConflictsModal()">
+  <div class="modal">
+    <div class="modal-header"><h2>Changes made on both sides</h2><button onclick="closeSyncConflictsModal()">&times;</button></div>
+    <div class="modal-body">
+      <p class="cal-hint" style="margin:0 0 12px">You and someone else changed the same thing since you last synced. The newer edit was kept automatically — check the ones that matter, and take the other version if it should have won.</p>
+      <div id="syncConflictsBody"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="clearSyncConflicts()" style="margin-right:auto">Dismiss all</button>
+      <button class="btn btn-primary" onclick="closeSyncConflictsModal()">Close</button>
+    </div>
+  </div>
+</div>
+
 <!-- Help modal -->
 <div class="modal-bg" id="helpModalBg" onclick="if(event.target===this) closeHelpModal()">
   <div class="modal wide">
@@ -785,9 +814,9 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
       <div><div class="help-section-title">Custom fields</div>Every task can carry up to 20 fields of your own: <strong>Text1–5</strong>, <strong>Number1–5</strong>, <strong>Date1–5</strong> and <strong>Flag1–5</strong> (a yes/no tick). Fill them in on the task dialog's <strong>Custom fields</strong> tab, or — once you have ticked them under <strong>Columns</strong>, where they start hidden — straight in the list (click a cell; a flag toggles). Use the pencil beside a field to rename it, for instance Text1 to <em>Cost centre</em>: the name is saved with the plan, so another plan can call the same field something else. Custom fields can be filtered like any column and are included in the Excel export.</div>
       <div><div class="help-section-title">Task Mode</div>Every task is either Manually Scheduled (pushpin) or Auto Scheduled (chart icon) — click the icon in the Task Mode column, or use the Task Mode field in a task's dialog. An Auto task follows its predecessors and constraints. A Manual task stays exactly where you put it: predecessors never move it, its Start, Finish and Duration can be free text such as "TBD", and a warning triangle appears if it starts earlier than its predecessors allow. Manual tasks are drawn with a dashed bar, and are left out of the critical path. Switching a task to Auto moves it to the earliest date its links allow. The "New tasks" button at the right of the toolbar chooses the mode new tasks start in (Auto Scheduled by default).</div>
       <div><div class="help-section-title">Dependencies</div>Open a task and add a predecessor to link it to another task (Finish-to-Start, Start-to-Start, Finish-to-Finish or Start-to-Finish). Give it a lead or lag in days: a positive number delays the dependent task (lag), a negative number lets it overlap and start early (lead) — e.g. "3FS+2" waits 2 extra days after task 3 finishes, "3FS-2" starts 2 days before task 3 finishes. Moving a task forward automatically pushes any dependent tasks forward too — it never pulls a task earlier on its own. A circular dependency is flagged with a warning icon and stops auto-scheduling for the tasks involved.</div>
-      <div><div class="help-section-title">The Gantt chart</div>The left side of the Gantt view is the same task list as in the Tasks view — the same columns (pick them with <strong>Columns</strong>), filters, editing and buttons — with the chart to its right. Drag the thin strip between them to change how much room the list gets; the list scrolls sideways by itself when it has more columns than fit, and its ID … Task Name columns stay in place. Drag a bar to reschedule it, drag its edges to resize, or drag the small circle on its right edge onto another task to create a dependency. Click a bar or row to edit it. The Week / Month / Year buttons change the scale: Year (the default) shows quarters, and Week is labelled by calendar week (CW, weeks start on Monday, ISO 8601). The route icon in the toolbar highlights the critical path — the chain of tasks with zero slack that determines the overall project end date.</div>
+      <div><div class="help-section-title">The Gantt chart</div>The left side of the Gantt view is the same task list as in the Tasks view — the same filters, editing and buttons — with the chart to its right. <strong>Columns</strong> chooses the columns of the view you are in: the Gantt view remembers its own set (Mode, Name, Start and Finish to begin with) apart from the Tasks view's. Drag the thin strip between them to change how much room the list gets; the list scrolls sideways by itself when it has more columns than fit, and its ID … Task Name columns stay in place. Drag a bar to reschedule it, drag its edges to resize, or drag the small circle on its right edge onto another task to create a dependency. Click a bar or row to edit it. The Week / Month / Year buttons change the scale: Year (the default) shows quarters, and Week is labelled by calendar week (CW, weeks start on Monday, ISO 8601). The route icon in the toolbar highlights the critical path — the chain of tasks with zero slack that determines the overall project end date.</div>
       <div><div class="help-section-title">Plans</div>The plan name at the top left is a switcher: click it to move between plans, start a new one, open an existing file as a plan, or rename, duplicate or delete the current plan. Each plan has its own tasks, its own daily backups and — optionally — its own linked file, so switching plans also switches which file is kept in sync. Deleting a plan only removes it from this browser; its file is never touched. Every plan must live in a file (Chrome/Edge), so New plan and Duplicate ask you where to save it.</div>
-      <div><div class="help-section-title">Data &amp; sync</div>Everything lives in this browser's local storage — nothing ever leaves your machine except into the files you choose. Every plan is kept in a plain JSON file on your disk (linking one is required, in Chrome/Edge): every change is saved to it automatically, and inside an iCloud Drive/OneDrive/Dropbox folder it keeps your own devices in step. You can disconnect a plan's file (click the file name at the top right, or use the plan menu) — the file is kept, and Milestone asks you to choose a file for the plan straight away. If the file is moved or deleted, Milestone asks you to create or find it again. Data → Export/Import moves a full JSON snapshot of the current plan in or out, and Export to Excel saves a formatted .xlsx workbook (a task list plus an optional Gantt chart sheet); Local Backups keeps a rolling daily snapshot.</div>
+      <div><div class="help-section-title">Data &amp; sync</div>Everything lives in this browser's local storage — nothing ever leaves your machine except into the files you choose. Every plan is kept in a plain JSON file on your disk (linking one is required, in Chrome/Edge): every change is saved to it automatically, and inside an iCloud Drive/OneDrive/Dropbox folder it keeps your own devices in step. You can disconnect a plan's file (click the file name at the top right, or use the plan menu) — the file is kept, and Milestone asks you to choose a file for the plan straight away. If the file is moved or deleted, Milestone asks you to create or find it again. Data → Export/Import moves a full JSON snapshot of the current plan in or out, and Export to Excel saves a formatted .xlsx workbook (a task list plus an optional Gantt chart sheet — each sheet uses the columns you chose in its own view); Local Backups keeps a rolling daily snapshot. <strong>Working together on one file:</strong> when several people (or devices) use the same linked file, Milestone reads the file before it writes, so a save never wipes out someone else's work. Changes to <em>different</em> things — even different fields of the same task — are all kept. If you and someone else changed the <em>same</em> field, the newer edit is kept and an amber <strong>conflicts</strong> badge appears next to the file name: click it to see both versions and take the other one if it should have won. Tasks that depend on something that moved are re-planned after a merge.</div>
       <div class="help-tip">Nothing here ever leaves your machine except into the files you choose.</div>
     </div>
     <div class="modal-footer"><button class="btn" onclick="closeHelpModal()">Close</button></div>
@@ -863,13 +892,14 @@ const TASK_COLS = {
   name:         { label: 'Task Name',     width: 'minmax(160px,1fr)', dflt: true, locked: true },
   start:        { label: 'Start',         width: '104px',             dflt: true },
   end:          { label: 'Finish',        width: '104px',             dflt: true },
-  actualStart:  { label: 'Actual Start',  width: '104px',             dflt: false },   // header: Actual / Start
-  actualFinish: { label: 'Actual Finish', width: '104px',             dflt: false },   // header: Actual / Finish
+  actualStart:  { label: 'Actual Start',  width: '104px',             dflt: true },   // header: Actual / Start
+  actualFinish: { label: 'Actual Finish', width: '104px',             dflt: true },   // header: Actual / Finish
   duration:     { label: 'Duration',      width: '104px',             dflt: true },
   progress:     { label: '% Complete',    width: '56px',              dflt: true },
   preds:        { label: 'Predecessors',  width: '136px',             dflt: true },   // just wide enough for its header: text 95px + gap 3px + funnel 18px + the 2×8px cell inset = 132px, plus a little slack for other fonts
   remaining:    { label: 'Remaining Duration', width: '110px',        dflt: false },
-  status:       { label: 'Status',        width: '108px',             dflt: false },
+  status:       { label: 'Status',        width: '108px',             dflt: true },
+  resource:     { label: 'Resource',      width: '140px',             dflt: false },   // fixed like every column but Task Name; longer text is cut with an ellipsis (the cell's tooltip and the editor show all of it)
   // Baseline columns (all hidden by default): the baseline chosen in the Baseline dialog (project.compareBaseline, "Baseline" unless changed)
   baselineStart:    { label: 'Baseline Start',    width: '104px', dflt: false },   // header: Baseline / Start
   baselineFinish:   { label: 'Baseline Finish',   width: '104px', dflt: false },
@@ -877,7 +907,6 @@ const TASK_COLS = {
   startVariance:    { label: 'Start Variance',    width: '104px', dflt: false },   // Start minus Baseline Start, in working days
   finishVariance:   { label: 'Finish Variance',   width: '104px', dflt: false },
   durationVariance: { label: 'Duration Variance', width: '104px', dflt: false },
-  resource:     { label: 'Resource',      width: '140px',             dflt: false }   // fixed like every column but Task Name; longer text is cut with an ellipsis (the cell's tooltip and the editor show all of it)
 };
 // ---- Custom fields: Text1-5, Number1-5, Date1-5, Flag1-5. A task keeps its values in `task.custom` ({ text1: 'x', number2: 4.5,
 // date3: '2026-09-01', flag4: true } — only fields that have a value are present). The field NAMES live on the plan
@@ -958,7 +987,17 @@ let deletedTaskIds = [];
 let theme = 'light';
 let zoom = DEFAULT_ZOOM;
 let colOrder = [...DEFAULT_COL_ORDER];                                       // every optional column, in the user's order
-let colHidden = new Set(DEFAULT_COL_ORDER.filter(c => !TASK_COLS[c].dflt));   // ...and which of them are hidden
+let colHidden = new Set(DEFAULT_COL_ORDER.filter(c => !TASK_COLS[c].dflt));   // ...and which of them are hidden  (these two are the TASKS view's set)
+// The GANTT view's list has a set of its own (an explicit user request: "the columns shown in the Gantt view should save a separate
+// set"): the same columns to choose from, its own order and visibility. Its default (chosen by the user from the Columns menu): the
+// order below and these columns shown.
+const GANTT_DEFAULT_SHOWN = ['mode', 'wbs', 'name', 'start', 'end', 'duration', 'baselineStart', 'baselineFinish', 'durationVariance'];
+const GANTT_DEFAULT_ORDER = (() => {   // explicit: it is NOT the Tasks view's order (Duration comes before the actual dates, Resource after the baseline columns)
+  const head = ['mode', 'wbs', 'name', 'start', 'end', 'duration', 'actualStart', 'actualFinish', 'progress', 'preds', 'remaining', 'status', 'baselineStart', 'baselineFinish', 'baselineDuration', 'startVariance', 'finishVariance', 'durationVariance', 'resource'];
+  return [...head, ...DEFAULT_COL_ORDER.filter(c => !head.includes(c))];   // then the custom fields
+})();
+let gColOrder = [...GANTT_DEFAULT_ORDER];
+let gColHidden = new Set(DEFAULT_COL_ORDER.filter(c => !GANTT_DEFAULT_SHOWN.includes(c)));
 let currentView = 'tasks';
 let gridPaneWidth = 640;
 const GRID_PANE_MIN_WIDTH = 320, GRID_PANE_MAX_WIDTH = 1800, GRID_PANE_DEFAULT = 640, GRID_PANE_REV = 1;   // (REV: the list used to be a 400px sidebar; a width saved back then isn't kept)
@@ -1054,7 +1093,7 @@ function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c
 function byId(id) { return tasks.find(t => t.id === id); }
 
 /* ============================ Persistence =============================== */
-function prefsPayload() { return { theme, zoom, zoomRev: ZOOM_DEFAULT_REV, view: currentView, gridPaneWidth, gridPaneRev: GRID_PANE_REV, showBaseline, cols: { order: colOrder, hidden: [...colHidden], rev: COLS_REV } }; }
+function prefsPayload() { return { theme, zoom, zoomRev: ZOOM_DEFAULT_REV, view: currentView, gridPaneWidth, gridPaneRev: GRID_PANE_REV, showBaseline, cols: { order: colOrder, hidden: [...colHidden], rev: COLS_REV }, gcols: { order: gColOrder, hidden: [...gColHidden] } }; }
 function syncPayload() { return { version: APP_VERSION, project, tasks, deletedTaskIds }; }
 
 function planDataKey(id) { return PLAN_DATA_PREFIX + id; }
@@ -1126,16 +1165,30 @@ function loadPrefs() {
   for (const id of DEFAULT_COL_ORDER) if ((!savedOrder || !savedOrder.includes(id)) && !TASK_COLS[id].dflt) colHidden.add(id);
   for (let r = (Number(sc.rev) || 0) + 1; r <= COLS_REV; r++) for (const id of (COLS_REV_SHOWN[r] || [])) colHidden.delete(id);
   colHidden.delete('name');
+  {   // the Gantt view's own set: what is saved, plus any column this version knows and the save doesn't (appended, hidden), never Task Name hidden
+    const gc = d.gcols && typeof d.gcols === 'object' ? d.gcols : {}, gOrder = Array.isArray(gc.order) ? gc.order.filter(known) : null;
+    gColOrder = gOrder ? [...new Set([...gOrder, ...GANTT_DEFAULT_ORDER])] : [...GANTT_DEFAULT_ORDER];
+    gColHidden = new Set(Array.isArray(gc.hidden) ? gc.hidden.filter(known) : DEFAULT_COL_ORDER.filter(c => !GANTT_DEFAULT_SHOWN.includes(c)));
+    for (const id of DEFAULT_COL_ORDER) if ((!gOrder || !gOrder.includes(id)) && !GANTT_DEFAULT_SHOWN.includes(id)) gColHidden.add(id);
+    gColHidden.delete('name');
+  }
 }
-function visibleTaskCols() { return colOrder.filter(id => !colHidden.has(id) || TASK_COLS[id].locked); }
-function toggleColumn(id, show) { if (TASK_COLS[id].locked) return; if (show) colHidden.delete(id); else colHidden.add(id); save(); render(); renderColumnsMenu(); }
+// The columns the list of a view shows: each view keeps its own choice (Tasks view: colOrder / colHidden, Gantt view: gColOrder / gColHidden).
+function viewColOrder(view = currentView) { return view === 'gantt' ? gColOrder : colOrder; }
+function viewColHidden(view = currentView) { return view === 'gantt' ? gColHidden : colHidden; }
+function visibleTaskCols(view = currentView) { const hidden = viewColHidden(view); return viewColOrder(view).filter(id => !hidden.has(id) || TASK_COLS[id].locked); }
+function toggleColumn(id, show) { if (TASK_COLS[id].locked) return; const hidden = viewColHidden(); if (show) hidden.delete(id); else hidden.add(id); save(); render(); renderColumnsMenu(); }
 function moveColumn(id, dir) {
-  const i = colOrder.indexOf(id), j = i + dir;
-  if (i < 0 || j < 0 || j >= colOrder.length) return;
-  [colOrder[i], colOrder[j]] = [colOrder[j], colOrder[i]];
+  const order = viewColOrder(), i = order.indexOf(id), j = i + dir;
+  if (i < 0 || j < 0 || j >= order.length) return;
+  [order[i], order[j]] = [order[j], order[i]];
   save(); render(); renderColumnsMenu();
 }
-function resetColumns() { colOrder = [...DEFAULT_COL_ORDER]; colHidden = new Set(DEFAULT_COL_ORDER.filter(c => !TASK_COLS[c].dflt)); save(); render(); renderColumnsMenu(); }
+function resetColumns() {   // resets the view you are in; the other view keeps its choice
+  if (currentView === 'gantt') { gColOrder = [...GANTT_DEFAULT_ORDER]; gColHidden = new Set(DEFAULT_COL_ORDER.filter(c => !GANTT_DEFAULT_SHOWN.includes(c))); }
+  else { colOrder = [...DEFAULT_COL_ORDER]; colHidden = new Set(DEFAULT_COL_ORDER.filter(c => !TASK_COLS[c].dflt)); }
+  save(); render(); renderColumnsMenu();
+}
 function toggleColumnsMenu() {
   const menu = document.getElementById('columnsMenu');
   if (menu.classList.contains('open')) { closeColumnsMenu(); return; }
@@ -1146,15 +1199,15 @@ function toggleColumnsMenu() {
 }
 function closeColumnsMenu() { document.getElementById('columnsMenu').classList.remove('open'); }
 function renderColumnsMenu() {
-  const shown = new Set(visibleTaskCols()), menu = document.getElementById('columnsMenu'), scroll = menu.scrollTop;
+  const shown = new Set(visibleTaskCols()), menu = document.getElementById('columnsMenu'), scroll = menu.scrollTop, order = viewColOrder(), vname = currentView === 'gantt' ? 'Gantt view' : 'Tasks view';
   menu.innerHTML =
-    `<div class="cols-head"><strong>Columns</strong><button class="btn-link" onclick="resetColumns()">Reset to default</button></div>` +
-    `<div class="cols-hint">Tick the columns the task list shows; use the arrows to reorder them.</div>` +
-    colOrder.map((id, i) => {
+    `<div class="cols-head"><strong>Columns · ${vname}</strong><button class="btn-link" onclick="resetColumns()">Reset to default</button></div>` +
+    `<div class="cols-hint">Tick the columns the list shows in the ${vname}; use the arrows to reorder them. The ${currentView === 'gantt' ? 'Tasks' : 'Gantt'} view keeps its own choice.</div>` +
+    order.map((id, i) => {
       const c = TASK_COLS[id], lab = escapeHtml(c.label);
       return `<div class="cols-row"><label class="cols-check${c.locked ? ' locked' : ''}"><input type="checkbox" data-col="${id}"${shown.has(id) ? ' checked' : ''}${c.locked ? ' disabled' : ''} onchange="toggleColumn('${id}', this.checked)"><span>${lab}</span>${c.locked ? '<span class="cols-tag">always shown</span>' : ''}</label>` +
         (c.custom ? `<button class="cols-rename" title="Rename this field (kept with this plan)" aria-label="Rename ${lab}" onclick="openFieldNameModal('${id}')"><i class="fa-solid fa-pen"></i></button>` : '') +
-        `<span class="cols-move"><button aria-label="Move ${lab} up" onclick="moveColumn('${id}',-1)"${i === 0 ? ' disabled' : ''}><i class="fa-solid fa-chevron-up"></i></button><button aria-label="Move ${lab} down" onclick="moveColumn('${id}',1)"${i === colOrder.length - 1 ? ' disabled' : ''}><i class="fa-solid fa-chevron-down"></i></button></span></div>`;
+        `<span class="cols-move"><button aria-label="Move ${lab} up" onclick="moveColumn('${id}',-1)"${i === 0 ? ' disabled' : ''}><i class="fa-solid fa-chevron-up"></i></button><button aria-label="Move ${lab} down" onclick="moveColumn('${id}',1)"${i === order.length - 1 ? ' disabled' : ''}><i class="fa-solid fa-chevron-down"></i></button></span></div>`;
     }).join('');
   menu.scrollTop = scroll;   // 31 rows: re-rendering after a tick or a move must not jump back to the top
 }
@@ -1242,6 +1295,7 @@ function normalizeData() {
     t.resource = typeof t.resource === 'string' ? t.resource.slice(0, 200) : '';
     { const cv = cleanCustomValues(t.custom); if (cv) t.custom = cv; else delete t.custom; }
     for (const f of ['actualStart', 'actualFinish']) t[f] = parseUserDate(typeof t[f] === 'string' ? t[f] : '');   // a real date or null
+    if (t.actualStart && t.actualFinish && dayNumber(t.actualFinish) < dayNumber(t.actualStart)) t.actualFinish = t.actualStart;   // (a Start/Finish edit of a started task edits its actual dates: they can't cross)
     if (t.milestone) t.actualFinish = t.actualStart;   // a milestone happens on one date: its actual finish is its actual start
     if (!CONSTRAINT_TYPES.some(c => c.id === t.constraintType)) t.constraintType = 'ASAP';
     const cinfo = constraintTypeInfo(t.constraintType);
@@ -1328,6 +1382,18 @@ function normalizeData() {
     }
     if (Object.keys(names).length) project.fieldNames = names; else delete project.fieldNames;
   }
+  // An automatic group's own Start/Finish are never used while it has tasks in it (it shows their rollup), but they are what it falls back to
+  // when it stops being a group (its last sub-task is moved out or deleted): keep them equal to the rollup so that fallback is sensible.
+  resetEffectiveCache();
+  for (const t of tasks) if (parentIds.has(t.id)) {
+    t.milestone = false;   // a task with tasks in it can't be a milestone
+    if (t.taskMode === 'manual') continue;
+    const e = effectiveDates(t.id); if (!e.start || !e.end) continue;
+    const st = isWorkDay(e.start) ? e.start : nextWorkDay(e.start);                       // (on working days, like any Auto task it may turn back into)
+    let en = isWorkDay(e.end) ? e.end : prevWorkDay(e.end); if (dayNumber(en) < dayNumber(st)) en = st;
+    if (t.startDate !== st || t.endDate !== en) { t.startDate = st; t.endDate = en; }
+  }
+  resetEffectiveCache();
   // New tasks are Auto Scheduled unless the project says otherwise. Every project saved while the default was Manual has
   // 'manual' stored (the default is written on the first save), so a project without the current revision marker is switched to
   // Auto ONCE; a choice made afterwards (the "New tasks" button) keeps the marker and is never overridden.
@@ -1616,6 +1682,15 @@ function constraintViolated(task) {
 // An Auto Scheduled task starts and finishes on working days: a start on a day off moves to the next working day, a finish on a
 // day off back to the previous one (never before the start). Manual tasks keep exactly the dates they were given. Returns true
 // when something moved.
+// Start / Finish / Actual dates of one task made consistent immediately (normalizeData() does the same for everything on save, but a cascade
+// that runs before it would schedule the successors off crossed dates): Finish not before Start, a milestone one date, a finished task's
+// Actual Finish not before its Actual Start and equal to its Finish.
+function clampTaskDates(t) {
+  if (dayNumber(t.endDate) < dayNumber(t.startDate)) t.endDate = t.startDate;
+  if (t.milestone) t.endDate = t.startDate;
+  if (t.actualStart && t.actualFinish && dayNumber(t.actualFinish) < dayNumber(t.actualStart)) t.actualFinish = t.actualStart;
+  if (t.actualFinish && t.endDate !== t.actualFinish) t.endDate = t.actualFinish;
+}
 function snapToWorkDays(t) {
   if (t.taskMode === 'manual' || hasChildren(t.id) || isUnscheduled(t) || isStarted(t)) return false;   // (a started task's dates are facts)
   const s0 = t.startDate, e0 = t.endDate;
@@ -1688,6 +1763,18 @@ function applyConstraints(taskId) {
   }
   cascadeSchedule(taskId);
 }
+// Does an Auto task the scheduler would place sit earlier than its links allow right now?
+function startsBeforeLinks(t, cyc = taskCycleSet()) {
+  if (!t || cyc.has(t.id) || hasChildren(t.id) || t.taskMode === 'manual' || isStarted(t)) return false;
+  const cs = constraintStart(t);
+  return !!cs && dayNumber(cs) > dayNumber(t.startDate);
+}
+// Breaking a dependency cycle (a link removed, a task deleted, a task turned into a group) releases every task that was exempt
+// because of it — the scheduler never placed them, so they may sit before their links allow. Pass taskCycleSet() taken BEFORE the change.
+function releaseFromCycles(before) {
+  const after = taskCycleSet();
+  for (const id of before) if (!after.has(id) && byId(id)) applyConstraints(id);
+}
 function topoOrder(ids, preds) {
   const idSet = new Set(ids);
   const indeg = {}; for (const id of idSet) indeg[id] = 0;
@@ -1756,6 +1843,7 @@ function computeDateRange() {
 function currentZoom() { return ZOOMS.find(z => z.id === zoom) || ZOOMS.find(z => z.id === DEFAULT_ZOOM); }
 
 function render() {
+  if (selectedTaskId && !byId(selectedTaskId)) selectedTaskId = null;
   resetEffectiveCache();
   resetIdCache();
   updateProjectNameUI();
@@ -1786,7 +1874,7 @@ function renderMainViewTabs() {
   document.getElementById('baselineBtn').classList.toggle('hidden', currentView !== 'gantt');
   document.getElementById('ganttControlsDivider').classList.toggle('hidden', currentView !== 'gantt');
 }
-function setView(id) { currentView = id; editingCell = null; save(); render(); }
+function setView(id) { currentView = id; editingCell = null; closeColumnsMenu(); save(); render(); }
 
 function updateProjectNameUI() {
   document.getElementById('planBtnName').textContent = project.name;
@@ -1811,9 +1899,11 @@ function updateCriticalPathUI() {
 function toggleBaseline() { showBaseline = !showBaseline; save(); render(); }
 function toggleCriticalPath() { showCriticalPath = !showCriticalPath; render(); }
 function updateSelectionUI() {
-  const has = !!selectedTaskId;
+  const sel = selectedTaskId ? byId(selectedTaskId) : null;
+  if (selectedTaskId && !sel) selectedTaskId = null;   // the selected task is gone (deleted on another device, replaced by an import or a merge)
+  const has = !!sel;
   document.getElementById('indentBtn').disabled = !has;
-  document.getElementById('outdentBtn').disabled = !has || !byId(selectedTaskId).parentId;
+  document.getElementById('outdentBtn').disabled = !has || !sel.parentId;
   document.getElementById('cloneTaskBtn').disabled = !has;
   document.getElementById('deleteTaskBtn').disabled = !has;
 }
@@ -2508,7 +2598,7 @@ function moveTask(id, targetId, zone) {
       index = zone === 'before' ? ti : ti + 1;
     }
   }
-  const oldParentId = t.parentId || null, oldOrder = t.order;
+  const oldParentId = t.parentId || null, oldOrder = t.order, cyc0 = taskCycleSet();
   const dest = childrenOf(parentId).filter(s => s.id !== id);
   dest.splice(index, 0, t);
   t.parentId = parentId;
@@ -2520,7 +2610,7 @@ function moveTask(id, targetId, zone) {
   if (!changed) return; // dropped back where it already was
   t.updatedAt = Date.now();
   selectedTaskId = id;
-  normalizeData(); save(); render();
+  normalizeData(); releaseGroup(oldParentId); releaseFromCycles(cyc0); save(); render();
 }
 // A custom-field cell. Text / Number / Date edit in place (a click opens the editor); a Flag toggles on click. Any task can have
 // them — groups and milestones included — and nothing is rolled up.
@@ -2724,6 +2814,7 @@ function commitInlineEdit(id, field, rawValue) {
       // Anything that isn't a date — including blank — is kept as free text.
       if (isStart) t.startText = val.slice(0, 60); else t.endText = val.slice(0, 60);
     }
+    clampTaskDates(t);
     if (snapToWorkDays(t)) showToast(`Moved to a working day — this plan works ${calendarLabel()}`);
     applyConstraints(id);
   } else if (field === 'duration') {
@@ -2733,7 +2824,7 @@ function commitInlineEdit(id, field, rawValue) {
       else t.durText = val.slice(0, 60);
     } else {
       const d = parseInt(val, 10);
-      if (Number.isFinite(d) && d >= 1 && !t.milestone) { snapToWorkDays(t); t.endDate = finishFor(t.startDate, d); if (t.actualFinish) t.actualFinish = t.endDate; }
+      if (Number.isFinite(d) && d >= 1 && !t.milestone) { snapToWorkDays(t); t.endDate = finishFor(t.startDate, d); if (t.actualFinish) t.actualFinish = t.endDate; clampTaskDates(t); }
     }
     applyConstraints(id);
   } else if (isCustomField(field)) {
@@ -2758,11 +2849,13 @@ function commitInlineEdit(id, field, rawValue) {
       t[field] = iso; if (t.milestone) t.actualFinish = t.actualStart;
       if (recordActualFinish(t, previousFinish)) showToast('Actual Finish recorded — marked 100% complete');
       applyActualDates(t);   // the actual dates overwrite Start / Finish (MS Project)
+      clampTaskDates(t);
+      if (!isStarted(t)) snapToWorkDays(t);   // (an actual date on a day off leaves with it)
       cascadeSchedule(id);   // ...and successors are scheduled off them
     }
   } else if (field === 'predecessors') {
     const parsed = parsePredecessorString(val, id);
-    if (parsed !== null) { t.predecessors = parsed; applyConstraints(id); }
+    if (parsed !== null) { const cyc0 = taskCycleSet(); t.predecessors = parsed; releaseFromCycles(cyc0); applyConstraints(id); }
   }
   t.updatedAt = Date.now();
   save();
@@ -3113,13 +3206,17 @@ function indentSelected() {
   const siblings = childrenOf(t.parentId || null);
   const idx = siblings.findIndex(s => s.id === id);
   if (idx <= 0) return;
-  const newParent = siblings[idx - 1];
+  const newParent = siblings[idx - 1], cyc0 = taskCycleSet();
   t.parentId = newParent.id;
   const newSiblings = childrenOf(newParent.id);
   t.order = newSiblings.length ? Math.max(...newSiblings.map(s => s.order)) + 1 : 0;
   t.updatedAt = Date.now();
+  normalizeData(); releaseFromCycles(cyc0);   // the new parent is a group now: its links are dropped, which can break a cycle
   save(); render();
 }
+// A group that has just lost its last task is an ordinary task again, so its own links and constraint (ignored while it was a group)
+// apply from now on: place it.
+function releaseGroup(id) { if (id && byId(id) && !hasChildren(id)) applyConstraints(id); }
 function outdentSelected() {
   const id = selectedTaskId; if (!id) return;
   const t = byId(id); if (!t.parentId) return;
@@ -3128,6 +3225,7 @@ function outdentSelected() {
   const siblings = childrenOf(t.parentId);
   t.order = siblings.length ? Math.max(...siblings.map(s => s.order)) + 1 : 0;
   t.updatedAt = Date.now();
+  normalizeData(); releaseGroup(oldParent && oldParent.id);
   save(); render();
 }
 // Clone a task together with everything below it. The copy is an exact one (dates, %, actuals, mode, constraint, colour,
@@ -3139,6 +3237,7 @@ function cloneTask(id) {
   const src = byId(id); if (!src) return;
   const subtree = [src, ...descendantIds(id).map(byId).filter(Boolean)];
   const idMap = new Map(subtree.map(t => [t.id, genId()]));
+  const inCycle = taskCycleSet(), cycleSrc = new Map([...idMap].map(([from, to]) => [to, from]));
   const now = Date.now();
   const copies = subtree.map(t => {
     const c = JSON.parse(JSON.stringify(t));
@@ -3160,7 +3259,9 @@ function cloneTask(id) {
   for (const c of copies) filterPinned.add(c.id);   // a filter must not hide what you just cloned
   const prevSelected = selectedTaskId;
   selectedTaskId = root.id;
-  normalizeData(); save(); render();
+  normalizeData();
+  for (const c of copies) if (inCycle.has(cycleSrc.get(c.id))) applyConstraints(c.id);   // a copy is exact (even a task the user placed ahead of its links), except that the copy of a dependency-cycle member — which the scheduler never placed — is not in the cycle and is placed by its links now
+  save(); render();
   const newIds = new Set(copies.map(c => c.id));
   showToast(copies.length > 1 ? `Cloned "${src.name}" with ${copies.length - 1} sub-task${copies.length === 2 ? '' : 's'}` : `Cloned "${src.name}"`, false, () => {
     tasks = tasks.filter(x => !newIds.has(x.id));
@@ -3181,7 +3282,8 @@ function deleteTaskFlow(id) {
     body: count > 1 ? `Delete "${escapeHtml(t.name)}" and ${count - 1} sub-task${count - 1 === 1 ? '' : 's'}? This can be undone.` : `Delete "${escapeHtml(t.name)}"? This can be undone.`,
     confirmLabel: 'Delete',
     action() {
-      const removed = tasks.filter(x => allIds.includes(x.id));
+      const removed = tasks.filter(x => allIds.includes(x.id)), cyc0 = taskCycleSet();
+      const earlyBefore = new Set(tasks.filter(x => startsBeforeLinks(x, cyc0)).map(x => x.id));   // already ahead of their links before the delete: Undo leaves those as they were
       const strippedLinks = [];
       for (const other of tasks) {
         if (allIds.includes(other.id)) continue;
@@ -3195,11 +3297,19 @@ function deleteTaskFlow(id) {
       tasks = tasks.filter(x => !allIds.includes(x.id));
       for (const rid of allIds) tombstone(deletedTaskIds, rid);
       if (selectedTaskId && allIds.includes(selectedTaskId)) selectedTaskId = null;
+      const freed = [...new Set(removed.map(r => r.parentId).filter(pid => pid && !allIds.includes(pid)))].filter(pid => byId(pid) && !hasChildren(pid));   // groups that lost their last task
+      const cycAfter = taskCycleSet(), unCycled = [...cyc0].filter(id => byId(id) && !cycAfter.has(id));   // tasks the delete released from a dependency cycle
+      const replanned = [...new Set([...strippedLinks.map(l => l.taskId), ...freed, ...unCycled])].map(id => byId(id)).filter(Boolean).map(t => ({ t, s: t.startDate, e: t.endDate, u: t.updatedAt }));
+      for (const { t } of replanned) applyConstraints(t.id);
+      for (const r of replanned) { r.ns = r.t.startDate; r.ne = r.t.endDate; }   // where the re-plan put them: Undo only takes them back if they are still there
       save(); render();
       showToast(count > 1 ? `${count} tasks deleted` : 'Task deleted', false, () => {
         for (const rid of allIds) untombstone(deletedTaskIds, rid);
         for (const r of removed) tasks.push(r);
         for (const { taskId, pred } of strippedLinks) { const ot = byId(taskId); if (ot) ot.predecessors.push(pred); }
+        for (const r of replanned) if (r.t.startDate === r.ns && r.t.endDate === r.ne) { r.t.startDate = r.s; r.t.endDate = r.e; r.t.updatedAt = r.u; }   // (what the re-check moved goes back too — unless it was edited since)
+        const cycNow = taskCycleSet();   // edits made in the meantime may have moved a predecessor: the restored tasks and links are checked against the schedule as it is now
+        for (const rid of new Set([...removed.map(r => r.id), ...strippedLinks.map(l => l.taskId)])) if (!earlyBefore.has(rid) && startsBeforeLinks(byId(rid), cycNow)) applyConstraints(rid);
         save(); render();
       });
     }
@@ -3600,9 +3710,10 @@ function saveTaskFromModal() {
   t.progress = Math.max(0, Math.min(100, parseInt(document.getElementById('taskProgressInput').value) || 0));
   t.resource = document.getElementById('taskResourceInput').value.trim().slice(0, 200);
   const previousFinish = t.actualFinish;
-  if (!isGroup) { t.actualStart = aStart; t.actualFinish = aEnd; recordActualFinish(t, previousFinish); applyActualDates(t); }
+  if (!isGroup) { t.actualStart = aStart; t.actualFinish = aEnd; recordActualFinish(t, previousFinish); applyActualDates(t); clampTaskDates(t); if (!isStarted(t)) snapToWorkDays(t); }
   { const cv = cleanCustomValues(readCustomInputs()); if (cv) t.custom = cv; else delete t.custom; }
   t.color = document.getElementById('taskColorSwatches').dataset.value || null;
+  const cyc0 = taskCycleSet();
   t.predecessors = editingPredecessors.filter(p => p.id);
   t.constraintType = document.getElementById('taskConstraintTypeInput').value;
   const cinfo = constraintTypeInfo(t.constraintType);
@@ -3618,6 +3729,7 @@ function saveTaskFromModal() {
   t.updatedAt = Date.now();
   normalizeData();
   if (switchingToAuto) rescheduleAsAuto(t); else applyConstraints(t.id);
+  releaseFromCycles(cyc0);
   save(); render();
   closeTaskModal();
 }
@@ -3672,16 +3784,64 @@ function positionDropdown(btnId, menuId, align) {
 function toggleDataMenu() { positionDropdown('dataMenuBtn', 'dataMenu'); document.getElementById('dataMenu').classList.toggle('open'); }
 function closeDataMenu() { document.getElementById('dataMenu').classList.remove('open'); }
 
-/* ============================ Merge (sync/import) ========================= */
+/* ============================ Merge (sync/import) =========================
+   Several people (or devices) can work on the same linked file. What they share is the file; what each of them has in common with it
+   is the state it had at their last sync (`lastSyncedSnapshot`, kept per plan) — the BASE of a three-way merge:
+   - a field only the other side changed is taken from them, a field only you changed is kept, a field both changed the same way is
+     fine, and a field both changed DIFFERENTLY is a conflict: the newer edit wins (ties are broken by content, so every device picks
+     the same winner) and the conflict is reported (see "Sync conflicts" below);
+   - without a base (first link, an import, an older file) it falls back to "the newer whole task wins", with no conflict reporting;
+   - deletions are tombstones (a delete wins unless the task was edited after it), the project settings merge field by field too. */
+function stableStringify(v, indent) {   // JSON with sorted object keys: equal states give equal text on every device
+  const walk = x => Array.isArray(x) ? x.map(walk) : x && typeof x === 'object' ? Object.fromEntries(Object.keys(x).sort().map(k => [k, walk(x[k])])) : x;
+  return JSON.stringify(walk(v), null, indent);
+}
+const sjv = v => v === undefined ? '∅' : stableStringify(v);
+// The text written to the file: sorted keys, tasks and tombstones in id order — so two devices that agree write the same bytes.
+function canonicalText() {
+  const d = syncPayload(), byIdAsc = (a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+  return stableStringify({ version: d.version, project: d.project, tasks: [...d.tasks].sort(byIdAsc), deletedTaskIds: [...d.deletedTaskIds].sort(byIdAsc) }, 2);
+}
+// Three-way merge of one record (a task, or the project). Mutates `mine`; returns which fields it took from `theirs` and the conflicts.
+function threeWayMerge(mine, theirs, base) {
+  const took = [], fields = [];
+  const mt = mine.updatedAt || 0, tt = theirs.updatedAt || 0;
+  const theirsNewer = tt > mt || (tt === mt && sjv(theirs) > sjv(mine));
+  const keys = new Set([...Object.keys(mine), ...Object.keys(theirs), ...Object.keys(base)]);
+  keys.delete('updatedAt'); keys.delete('id');
+  for (const k of keys) {
+    const m = sjv(mine[k]), t = sjv(theirs[k]), b = sjv(base[k]);
+    if (t === m || t === b) continue;                                    // the same, or only I changed it: mine stands
+    const take = () => { took.push(k); if (theirs[k] === undefined) delete mine[k]; else mine[k] = theirs[k]; };
+    if (m === b) { take(); continue; }                                   // only they changed it
+    fields.push({ key: k, mine: mine[k] === undefined ? undefined : JSON.parse(JSON.stringify(mine[k])), theirs: theirs[k] === undefined ? undefined : JSON.parse(JSON.stringify(theirs[k])), kept: theirsNewer ? 'theirs' : 'mine' });
+    if (theirsNewer) take();
+  }
+  if (took.length) mine.updatedAt = Math.max(mt, tt);
+  return { took, fields };
+}
+// opts: respectTombstones (default true), base (the parsed last-synced payload, or none), conflicts (array to fill), changedIds (Map id -> Set of fields the merge changed).
 function mergeData(data, opts = {}) {
   const respectTombstones = opts.respectTombstones !== false;
+  const base = opts.base || null, conflicts = opts.conflicts || [], touched = opts.changedIds || new Map();
+  const baseTasks = base ? new Map((base.tasks || []).map(t => [t.id, t])) : null;
+  const mark = (id, key) => { if (!touched.has(id)) touched.set(id, new Set()); touched.get(id).add(key); };
   let changed = false;
   for (const it of (data.deletedTaskIds || [])) {
     const existing = deletedTaskIds.find(d => d.id === it.id);
     if (!existing) { deletedTaskIds.push(it); changed = true; }
     else if (it.deletedAt > existing.deletedAt) { existing.deletedAt = it.deletedAt; changed = true; }
   }
-  if (data.project && (data.project.updatedAt || 0) > (project.updatedAt || 0)) { project = data.project; changed = true; }
+  if (data.project) {
+    if (base && base.project) {
+      const r = threeWayMerge(project, data.project, base.project);
+      if (r.took.length) changed = true;
+      if (r.fields.length) conflicts.push({ kind: 'plan', id: null, name: 'Plan settings', fields: r.fields.filter(f => f.key !== 'collapsed') });
+    } else {
+      const pt = data.project.updatedAt || 0, mt = project.updatedAt || 0;
+      if (pt > mt || (pt === mt && sjv(data.project) > sjv(project) && sjv(data.project) !== sjv(project))) { project = data.project; changed = true; }
+    }
+  }
   for (const it of (data.tasks || [])) {
     const tomb = deletedTaskIds.find(d => d.id === it.id);
     if (respectTombstones && tomb) {
@@ -3689,8 +3849,20 @@ function mergeData(data, opts = {}) {
       deletedTaskIds = deletedTaskIds.filter(d => d.id !== it.id);
     }
     const existing = tasks.find(t => t.id === it.id);
-    if (!existing) { tasks.push(it); changed = true; }
-    else if ((it.updatedAt || 0) > (existing.updatedAt || 0)) { Object.assign(existing, it); changed = true; }
+    if (!existing) { tasks.push(it); changed = true; mark(it.id, '*'); continue; }
+    const bt = baseTasks && baseTasks.get(it.id);
+    if (bt) {
+      const r = threeWayMerge(existing, it, bt);
+      if (r.took.length) { changed = true; r.took.forEach(k => mark(it.id, k)); }
+      const fields = r.fields.filter(f => f.key !== 'collapsed');   // (whether a group is folded is not worth a conflict)
+      if (fields.length) conflicts.push({ kind: 'task', id: it.id, name: existing.name, fields });
+    } else {
+      const et = existing.updatedAt || 0, nt = it.updatedAt || 0;
+      if (nt > et || (nt === et && sjv(it) > sjv(existing) && sjv(it) !== sjv(existing))) {
+        for (const k of Object.keys(existing)) if (!(k in it)) delete existing[k];   // a field the other side removed is removed here too
+        Object.assign(existing, it); changed = true; mark(it.id, '*');
+      }
+    }
   }
   if (respectTombstones) {
     const before = tasks.length;
@@ -3701,6 +3873,81 @@ function mergeData(data, opts = {}) {
     if (tasks.length !== before) changed = true;
   }
   return changed;
+}
+// After a merge the plan can be inconsistent (one person moved a predecessor, another edited its successor): actual dates that arrived
+// win over the schedule, then every task the merge touched is re-checked against its links and constraints (push-later only, like any
+// edit; manual and started tasks are left alone). Returns how many tasks that moved.
+function replanAfterMerge(touched) {
+  if (!touched || !touched.size) return 0;
+  const before = new Map(tasks.map(t => [t.id, t.startDate + '|' + t.endDate]));
+  for (const [id, fields] of touched) {
+    const t = byId(id);
+    if (t && !hasChildren(id) && (fields.has('actualStart') || fields.has('actualFinish'))) applyActualDates(t);
+  }
+  for (const id of touched.keys()) if (byId(id)) applyConstraints(id);
+  return tasks.filter(t => before.has(t.id) && before.get(t.id) !== t.startDate + '|' + t.endDate).length;
+}
+
+/* ============================== Sync conflicts ==============================
+   A conflict = both sides changed the same field of the same task (or plan setting) since they last agreed. The merge has already
+   picked the newer edit; this only makes that visible — and reversible: Review lists them and lets you take the other version. */
+let syncConflictLog = [];   // session only (a heads-up for whoever is at the keyboard, not history)
+const CONFLICT_LABELS = { name: 'Name', startDate: 'Start', endDate: 'Finish', progress: '% Complete', resource: 'Resource', predecessors: 'Predecessors', taskMode: 'Task mode', actualStart: 'Actual Start', actualFinish: 'Actual Finish', parentId: 'Parent', order: 'Position', color: 'Colour', milestone: 'Milestone', constraintType: 'Constraint', constraintDate: 'Constraint date', startText: 'Start (text)', endText: 'Finish (text)', durText: 'Duration (text)', custom: 'Custom fields', baselines: 'Baselines', workDays: 'Working days', compareBaseline: 'Compared baseline', fieldNames: 'Custom field names', newTaskMode: 'New task mode' };
+function conflictLabel(key) { return CONFLICT_LABELS[key] || key; }
+function fmtConflictValue(key, v) {
+  if (v === undefined || v === null || v === '') return '—';
+  if (/Date$/.test(key) || key === 'actualStart' || key === 'actualFinish') return typeof v === 'string' ? fmtDate(v) : String(v);
+  if (key === 'predecessors') return Array.isArray(v) && v.length ? v.map(p => `${taskDisplayId(p.id) || '?'}${p.type}${p.lag ? (p.lag > 0 ? '+' : '') + p.lag : ''}`).join(', ') : 'none';
+  if (key === 'workDays' && Array.isArray(v)) return calendarLabel(v);
+  if (typeof v === 'boolean') return v ? 'Yes' : 'No';
+  if (typeof v === 'object') { const j = JSON.stringify(v); return j.length > 70 ? j.slice(0, 67) + '…' : j; }
+  return String(v);
+}
+function reportSyncConflicts(list) {
+  const items = (list || []).filter(c => c.fields.length);
+  for (const c of items) { c.at = Date.now(); syncConflictLog.push(c); }
+  updateSyncConflictsUI();
+  if (items.length) showToast(`${items.length} change${items.length === 1 ? ' was' : 's were'} made on both sides — the newer one was kept`, false, () => openSyncConflictsModal(), 'Review');
+  return items.length;
+}
+function updateSyncConflictsUI() {
+  const btn = document.getElementById('syncConflictBtn'); if (!btn) return;
+  const n = syncConflictLog.length;
+  btn.classList.toggle('hidden', !n);
+  btn.innerHTML = `<i class="fa-solid fa-code-merge"></i>${n} conflict${n === 1 ? '' : 's'}`;
+  btn.title = 'Both you and someone else changed the same thing — the newer edit was kept. Click to review.';
+}
+function openSyncConflictsModal() { renderSyncConflictsModal(); document.getElementById('syncConflictsModalBg').classList.add('open'); }
+function closeSyncConflictsModal() { document.getElementById('syncConflictsModalBg').classList.remove('open'); }
+function renderSyncConflictsModal() {
+  const body = document.getElementById('syncConflictsBody');
+  body.innerHTML = syncConflictLog.length ? syncConflictLog.map((c, i) => `<div class="conflict-card">
+      <div class="conflict-title">${c.kind === 'plan' ? '<i class="fa-solid fa-gear"></i>' : '<i class="fa-solid fa-list-check"></i>'}<strong>${escapeHtml(c.name || 'Untitled')}</strong><span class="conflict-time">${new Date(c.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span></div>
+      <table class="conflict-table"><tr><th></th><th>Yours</th><th>The other version</th></tr>${c.fields.map(f => `<tr><td>${escapeHtml(conflictLabel(f.key))}</td>
+        <td class="${f.kept === 'mine' ? 'kept' : ''}">${escapeHtml(fmtConflictValue(f.key, f.mine))}${f.kept === 'mine' ? ' <span class="kept-tag">kept</span>' : ''}</td>
+        <td class="${f.kept === 'theirs' ? 'kept' : ''}">${escapeHtml(fmtConflictValue(f.key, f.theirs))}${f.kept === 'theirs' ? ' <span class="kept-tag">kept</span>' : ''}</td></tr>`).join('')}</table>
+      <div class="conflict-actions"><button class="btn" ${c.fields.every(f => f.kept === 'mine') ? 'disabled' : ''} onclick="resolveSyncConflict(${i}, 'mine')">Use mine</button><button class="btn" ${c.fields.every(f => f.kept === 'theirs') ? 'disabled' : ''} onclick="resolveSyncConflict(${i}, 'theirs')">Use theirs</button><button class="btn-link" onclick="dismissSyncConflict(${i})">Dismiss</button></div></div>`).join('')
+    : '<p class="cal-hint">Nothing to review.</p>';
+}
+function dismissSyncConflict(i) { syncConflictLog.splice(i, 1); updateSyncConflictsUI(); renderSyncConflictsModal(); if (!syncConflictLog.length) closeSyncConflictsModal(); }
+function clearSyncConflicts() { syncConflictLog = []; updateSyncConflictsUI(); closeSyncConflictsModal(); }
+function resolveSyncConflict(i, which) {
+  const c = syncConflictLog[i]; if (!c) return;
+  const target = c.kind === 'plan' ? project : byId(c.id);
+  if (!target) { dismissSyncConflict(i); showToast('That task no longer exists', true); return; }
+  for (const f of c.fields) {
+    const v = which === 'mine' ? f.mine : f.theirs;
+    if (v === undefined) delete target[f.key]; else target[f.key] = JSON.parse(JSON.stringify(v));
+  }
+  target.updatedAt = Date.now();
+  if (c.kind === 'task') {
+    if (target.actualStart || target.actualFinish) applyActualDates(target);
+    applyConstraints(target.id);
+  }
+  syncConflictLog.splice(i, 1);
+  normalizeData(); save(); render(); updateSyncConflictsUI(); renderSyncConflictsModal();
+  if (!syncConflictLog.length) closeSyncConflictsModal();
+  showToast(which === 'mine' ? 'Kept your version' : 'Took the other version');
 }
 
 /* =============================== Export / Import =========================== */
@@ -3893,7 +4140,7 @@ function buildXlsx(opts) {
   for (const id of Object.keys(CUSTOM_FIELDS)) XCOLS[id] = [customFieldName(id), { text: 22, number: 13, date: 13, flag: 9 }[CUSTOM_FIELDS[id].kind]];
   // "All columns" adds the custom fields that are in use (renamed, or holding a value somewhere) — not twenty empty columns.
   const customInUse = id => !!(project.fieldNames && project.fieldNames[id]) || tasks.some(t => customValue(t, id) !== undefined);
-  const keys = opts.columns === 'all' ? ['id', ...DEFAULT_COL_ORDER.filter(id => !isCustomField(id) || customInUse(id))] : ['id', ...visibleTaskCols()];
+  const keys = opts.columns === 'all' ? ['id', ...DEFAULT_COL_ORDER.filter(id => !isCustomField(id) || customInUse(id))] : ['id', ...visibleTaskCols('tasks')];   // the Tasks sheet = the Tasks view's own choice, wherever the export is started from
   const ncol = keys.length, colOf = k => keys.indexOf(k) + 1, lastCol = xlsxCol(ncol);
   keys.forEach((k, i) => tasksSheet.width(i + 1, i + 1, XCOLS[k][1]));
   tasksSheet.opts.freeze = { cols: colOf('name'), rows: 4 };       // frozen through the Task Name column, wherever it sits
@@ -3901,65 +4148,68 @@ function buildXlsx(opts) {
   tasksSheet.cell(2, 1, `Exported ${fmtDate(todayStr())} · ${scopeText}`, subStyle); tasksSheet.merge(2, 1, 2, ncol); tasksSheet.height(2, 16);
   tasksSheet.height(3, 6);
   keys.forEach((k, i) => tasksSheet.cell(4, i + 1, XCOLS[k][0], headStyle)); tasksSheet.height(4, 26);
-  const HR = 4;
-  rowsIn.forEach(({ task: t, depth }, i) => {
-    const r = HR + 1 + i, eff = effectiveDates(t.id), summary = hasChildren(t.id), manual = t.taskMode === 'manual', act = actualDates(t.id);
+  // Writes one task's cells for the columns `ks` (colFn: column key -> 1-based column) — the Tasks sheet and the Gantt sheet's list part use it, each with its own view's columns.
+  function writeTaskRow(sheet, r, ks, colFn, t, depth) {
+    const eff = effectiveDates(t.id), summary = hasChildren(t.id), manual = t.taskMode === 'manual', act = actualDates(t.id);
     const ownDates = !summary || manual, startIso = ownDates ? t.startDate : eff.start, endIso = ownDates ? t.endDate : eff.end;
     const base = { border: box, fill: summary ? SUM : null, bold: summary };
     const S = o => book.style(Object.assign({}, base, o));
-    const dateCell = (c, text, iso) => text != null ? tasksSheet.cell(r, c, text, S({ h: 'center', italic: true, color: DIM, bold: false }))
-      : iso ? tasksSheet.cell(r, c, xlsxSerial(iso), S({ h: 'center', num: dateFmt })) : tasksSheet.cell(r, c, null, S({}));
-    for (const k of keys) {
-      const c = colOf(k);
+    const dateCell = (c, text, iso) => text != null ? sheet.cell(r, c, text, S({ h: 'center', italic: true, color: DIM, bold: false }))
+      : iso ? sheet.cell(r, c, xlsxSerial(iso), S({ h: 'center', num: dateFmt })) : sheet.cell(r, c, null, S({}));
+    for (const k of ks) {
+      const c = colFn(k);
       switch (k) {
-        case 'id': tasksSheet.cell(r, c, taskDisplayId(t.id), S({ h: 'center', color: DIM, bold: false })); break;
-        case 'mode': tasksSheet.cell(r, c, manual ? 'Manual' : 'Auto', S({ h: 'center', color: manual ? '9A6700' : DIM, bold: false })); break;
-        case 'wbs': tasksSheet.cell(r, c, wbsCode(t.id), S({ h: 'left' })); break;
-        case 'name': tasksSheet.cell(r, c, (t.milestone ? '◆ ' : '') + t.name, S({ h: 'left', indent: depth })); break;
+        case 'id': sheet.cell(r, c, taskDisplayId(t.id), S({ h: 'center', color: DIM, bold: false })); break;
+        case 'mode': sheet.cell(r, c, manual ? 'Manual' : 'Auto', S({ h: 'center', color: manual ? '9A6700' : DIM, bold: false })); break;
+        case 'wbs': sheet.cell(r, c, wbsCode(t.id), S({ h: 'left' })); break;
+        case 'name': sheet.cell(r, c, (t.milestone ? '◆ ' : '') + t.name, S({ h: 'left', indent: depth })); break;
         case 'start': dateCell(c, t.startText, startIso); break;
         case 'end': dateCell(c, t.endText, endIso); break;
         case 'actualStart': dateCell(c, null, act.start); break;
         case 'actualFinish': dateCell(c, null, act.end); break;
         case 'baselineStart': dateCell(c, null, baselineDates(t.id).start); break;
         case 'baselineFinish': dateCell(c, null, baselineDates(t.id).end); break;
-        case 'baselineDuration': { const bd = scheduleVariance(t.id).baseDuration; tasksSheet.cell(r, c, bd, S({ h: 'center', num: bd == null ? undefined : durFmt })); break; }
+        case 'baselineDuration': { const bd = scheduleVariance(t.id).baseDuration; sheet.cell(r, c, bd, S({ h: 'center', num: bd == null ? undefined : durFmt })); break; }
         case 'startVariance': case 'finishVariance': case 'durationVariance': {
           const sv = scheduleVariance(t.id), n = { startVariance: sv.start, finishVariance: sv.finish, durationVariance: sv.duration }[k];
-          tasksSheet.cell(r, c, n, S({ h: 'center', num: '+0" days";-0" days";0" days"', color: n > 0 ? 'CF222E' : n < 0 ? '1A7F37' : DIM, bold: false })); break;
+          sheet.cell(r, c, n, S({ h: 'center', num: '+0" days";-0" days";0" days"', color: n > 0 ? 'CF222E' : n < 0 ? '1A7F37' : DIM, bold: false })); break;
         }
         case 'duration': {
           const durNum = !isUnscheduled(t) && startIso && endIso ? durationDays(startIso, endIso) : null;
-          if (t.durText != null) tasksSheet.cell(r, c, t.durText, S({ h: 'center', italic: true, color: DIM, bold: false }));
-          else if (durNum != null) tasksSheet.cell(r, c, durNum, S({ h: 'center', num: durFmt }));
-          else tasksSheet.cell(r, c, null, S({}));
+          if (t.durText != null) sheet.cell(r, c, t.durText, S({ h: 'center', italic: true, color: DIM, bold: false }));
+          else if (durNum != null) sheet.cell(r, c, durNum, S({ h: 'center', num: durFmt }));
+          else sheet.cell(r, c, null, S({}));
           break;
         }
-        case 'progress': tasksSheet.cell(r, c, Math.round(eff.progress) / 100, S({ h: 'center', num: '0%' })); break;
-        case 'remaining': { const rem = remainingDays(t.id); tasksSheet.cell(r, c, rem, S({ h: 'center', num: Number.isInteger(rem) ? durFmt : '0.0" days"' })); break; }
-        case 'status': { const st = taskStatus(t.id); tasksSheet.cell(r, c, st, S({ h: 'center', bold: true, color: { 'Complete': '1A7F37', 'On Schedule': '0969DA', 'Late': 'CF222E', 'Future Task': DIM }[st] || DIM })); break; }
-        case 'preds': tasksSheet.cell(r, c, predecessorLabel(t) || null, S({ h: 'left' })); break;
-        case 'resource': tasksSheet.cell(r, c, (t.resource || '').trim() || null, S({ h: 'left' })); break;
+        case 'progress': sheet.cell(r, c, Math.round(eff.progress) / 100, S({ h: 'center', num: '0%' })); break;
+        case 'remaining': { const rem = remainingDays(t.id); sheet.cell(r, c, rem, S({ h: 'center', num: Number.isInteger(rem) ? durFmt : '0.0" days"' })); break; }
+        case 'status': { const st = taskStatus(t.id); sheet.cell(r, c, st, S({ h: 'center', bold: true, color: { 'Complete': '1A7F37', 'On Schedule': '0969DA', 'Late': 'CF222E', 'Future Task': DIM }[st] || DIM })); break; }
+        case 'preds': sheet.cell(r, c, predecessorLabel(t) || null, S({ h: 'left' })); break;
+        case 'resource': sheet.cell(r, c, (t.resource || '').trim() || null, S({ h: 'left' })); break;
         default:
           if (isCustomField(k)) {
             const kind = CUSTOM_FIELDS[k].kind, v = customValue(t, k);
             if (kind === 'date') dateCell(c, null, v || null);
-            else if (kind === 'number') tasksSheet.cell(r, c, v === undefined ? null : v, S({ h: 'center' }));
-            else if (kind === 'flag') tasksSheet.cell(r, c, v ? 'Yes' : 'No', S({ h: 'center' }));
-            else tasksSheet.cell(r, c, v || null, S({ h: 'left' }));
+            else if (kind === 'number') sheet.cell(r, c, v === undefined ? null : v, S({ h: 'center' }));
+            else if (kind === 'flag') sheet.cell(r, c, v ? 'Yes' : 'No', S({ h: 'center' }));
+            else sheet.cell(r, c, v || null, S({ h: 'left' }));
           }
       }
     }
-    tasksSheet.height(r, 19);
-  });
+    sheet.height(r, 19);
+  }
+  const HR = 4;
+  rowsIn.forEach(({ task: t, depth }, i) => writeTaskRow(tasksSheet, HR + 1 + i, keys, colOf, t, depth));
   const last = HR + Math.max(1, rowsIn.length);
   tasksSheet.opts.filter = `A${HR}:${lastCol}${last}`;
   if (rowsIn.length && keys.includes('progress')) { const pc = xlsxCol(colOf('progress')); tasksSheet.dataBar(`${pc}${HR + 1}:${pc}${last}`, '63BE7B'); }
   const sheets = [{ name: 'Tasks', sheet: tasksSheet, filter: tasksSheet.opts.filter, titles: `Tasks!$${HR}:$${HR}` }];
 
-  // ---------------- Gantt sheet: A ID, B Task Name, C Start, D Finish, then one column per calendar week (or month)
+  // ---------------- Gantt sheet: ID and the Gantt view's own columns (Task Name … by default Mode, WBS, Name, Start, Finish, Duration, Baseline …), then one column per calendar week (or month)
   const scheduled = rowsIn.filter(({ task: t }) => effectiveDates(t.id).start);
   if (opts.gantt && scheduled.length) {
-    const g = xlsxSheet(sst, { tab: '1A7F37', grid: false, freeze: { cols: 4, rows: 4 }, fitWidth: 0, fitHeight: 1 });
+    const gkeys = ['id', ...visibleTaskCols('gantt')], gcolOf = k => gkeys.indexOf(k) + 1, gn = gkeys.length;
+    const g = xlsxSheet(sst, { tab: '1A7F37', grid: false, freeze: { cols: gcolOf('name'), rows: 4 }, fitWidth: 0, fitHeight: 1 });
     let minD = Infinity, maxD = -Infinity;
     for (const { task: t } of scheduled) { const e = effectiveDates(t.id); minD = Math.min(minD, dayNumber(e.start)); maxD = Math.max(maxD, dayNumber(e.end)); }
     const monday = d => d - (((d + 3) % 7) + 7) % 7, periods = [];
@@ -3975,12 +4225,12 @@ function buildXlsx(opts) {
         y = ny; m = nm;
       }
     }
-    const FIRST = 5, todayD = dayNumber(todayStr());
-    [6, 40, 12, 12].forEach((w, i) => g.width(i + 1, i + 1, w));
+    const FIRST = gn + 1, todayD = dayNumber(todayStr());
+    gkeys.forEach((k, i) => g.width(i + 1, i + 1, XCOLS[k][1]));
     g.width(FIRST, FIRST + periods.length - 1, weekly ? 3.6 : 5.5);
-    g.cell(1, 1, project.name, titleStyle); g.merge(1, 1, 1, 4); g.height(1, 28);
-    g.cell(2, 1, (weekly ? `Calendar weeks (${CAL_WEEK_LABEL}), Monday to Sunday` : 'Months') + ' · solid = done, light = still to do, dark = group, ◆ = milestone', subStyle); g.merge(2, 1, 2, 4); g.height(2, 16);
-    ['ID', 'Task Name', 'Start', 'Finish'].forEach((h, i) => { g.cell(3, i + 1, h, headStyle); g.cell(4, i + 1, null, headStyle); g.merge(3, i + 1, 4, i + 1); });
+    g.cell(1, 1, project.name, titleStyle); g.merge(1, 1, 1, gn); g.height(1, 28);
+    g.cell(2, 1, (weekly ? `Calendar weeks (${CAL_WEEK_LABEL}), Monday to Sunday` : 'Months') + ' · solid = done, light = still to do, dark = group, ◆ = milestone', subStyle); g.merge(2, 1, 2, gn); g.height(2, 16);
+    gkeys.forEach((k, i) => { g.cell(3, i + 1, XCOLS[k][0], headStyle); g.cell(4, i + 1, null, headStyle); g.merge(3, i + 1, 4, i + 1); });
     g.height(3, 18); g.height(4, weekly ? 40 : 22);
     // header: the month (or year) merged over its columns, then CW n (or the month name); this week's column is highlighted
     const isStart = i => i === 0 || periods[i].group !== periods[i - 1].group;
@@ -3997,11 +4247,7 @@ function buildXlsx(opts) {
     });
     scheduled.forEach(({ task: t, depth }, idx) => {
       const r = 5 + idx, eff = effectiveDates(t.id), summary = hasChildren(t.id);
-      const base = { border: box, fill: summary ? SUM : null, bold: summary };
-      const S = o => book.style(Object.assign({}, base, o));
-      g.cell(r, 1, taskDisplayId(t.id), S({ h: 'center', color: DIM, bold: false }));
-      g.cell(r, 2, (t.milestone ? '◆ ' : '') + t.name, S({ h: 'left', indent: depth }));
-      g.cell(r, 3, xlsxSerial(eff.start), S({ h: 'center', num: dateFmt })); g.cell(r, 4, xlsxSerial(eff.end), S({ h: 'center', num: dateFmt }));
+      writeTaskRow(g, r, gkeys, gcolOf, t, depth);
       const s0 = dayNumber(eff.start), e0 = dayNumber(eff.end), doneEnd = s0 + Math.round((e0 - s0 + 1) * eff.progress / 100) - 1;
       const color = summary ? HEAD : statusColorHex(t), light = summary ? 'AEB6BF' : xlsxTint(color, 0.28);
       periods.forEach((p, i) => {
@@ -4212,6 +4458,7 @@ async function linkExistingFile() {
 async function finishLinking(handle, isNew) {
   const planId = currentPlanId, epoch = planEpoch;
   syncFileHandle = handle;
+  lastSyncedSnapshot = null;   // a file we have just linked has no shared history with this plan yet (an existing file becomes the base once it has been read)
   await _fsPut(planHandleKey(planId), handle);
   setPlanFileName(planId, handle.name);
   if (!isNew) {
@@ -4224,6 +4471,7 @@ async function finishLinking(handle, isNew) {
         if (Array.isArray(data.tasks)) {
           if (isFreshLocalState()) { project = data.project || project; tasks = data.tasks; deletedTaskIds = data.deletedTaskIds || []; }
           else mergeData(data, { respectTombstones: true });
+          setSyncBase(planId, text);   // (what the file said when we joined it)
         }
       }
     } catch (e) { console.warn('Milestone: could not read linked file', e); }
@@ -4237,24 +4485,56 @@ async function finishLinking(handle, isNew) {
   closeFileSyncModal();
   showToast('File linked');
 }
+// The last state this plan and its file agreed on = the base of the three-way merge (see "Merge"). Kept per plan in localStorage, so
+// work done offline can still be merged field by field after a reload.
+const SYNC_BASE_PREFIX = 'milestone-syncbase-';
+function setSyncBase(planId, text) {
+  lastSyncedSnapshot = text; lastSyncedAt = Date.now();
+  try { localStorage.setItem(SYNC_BASE_PREFIX + planId, text); } catch (e) { /* storage full: after a reload the next merge simply has no base */ }
+}
+function readSyncBase(planId) { try { return localStorage.getItem(SYNC_BASE_PREFIX + planId); } catch (e) { return null; } }
+// Merge a file's data into this plan: three-way against the last-synced state, conflicts reported, the schedule re-checked.
+function mergeFromFile(data, how) {
+  let base = null;
+  try { base = lastSyncedSnapshot ? JSON.parse(lastSyncedSnapshot) : null; } catch (e) { base = null; }
+  const conflicts = [], changedIds = new Map();
+  const changed = mergeData(data, { respectTombstones: true, base, conflicts, changedIds });
+  let moved = 0;
+  if (changed) { moved = replanAfterMerge(changedIds); normalizeData(); persistLocal(); render(); }
+  const nConflicts = reportSyncConflicts(conflicts);
+  if (changed && !nConflicts) showToast((how === 'write' ? 'Merged changes from another device before saving' : 'Synced changes from another device') + (moved ? ` — ${moved} task${moved === 1 ? '' : 's'} re-planned` : ''));
+  return { changed, moved, conflicts: nConflicts };
+}
 async function writeSyncFile() {
   const handle = syncFileHandle;
   if (!handle) return;
   // Everything this write needs is captured now, before the first await: if the user switches plans while it is in
   // flight it still finishes writing *this* plan's data to *this* plan's file, and (epoch check) leaves the newly
   // opened plan's sync state alone.
-  const epoch = planEpoch;
-  const text = JSON.stringify(syncPayload(), null, 2);
+  const epoch = planEpoch, planId = currentPlanId;
+  let text = canonicalText();
   try {
     const perm = await handle.queryPermission({ mode: 'readwrite' });
     if (perm !== 'granted') { if (epoch === planEpoch) { fileSyncStatus = 'lapsed'; updateFileSyncUI(); } return; }
     if (epoch === planEpoch && text === lastSyncedSnapshot) return;
+    // Someone else may have written the file since we last synced. Writing our copy over it would erase their work, so read it first and
+    // merge it in — the file then gets the combined result.
+    let fileText = null;
+    try { fileText = await (await handle.getFile()).text(); } catch (e) { fileText = null; }   // (gone or unreadable: nothing to merge; the write below re-creates it or reports the problem)
+    if (epoch === planEpoch && fileText && fileText !== lastSyncedSnapshot) {
+      let data = null;
+      try { data = JSON.parse(fileText); } catch (e) { data = null; }
+      if (data && Array.isArray(data.tasks) && mergeFromFile(data, 'write').changed) text = canonicalText();
+    }
+    if (fileText === text) {   // the file already says exactly this
+      if (epoch === planEpoch) { setSyncBase(planId, text); fileSyncStatus = 'linked'; updateFileSyncUI(); }
+      return;
+    }
     const writable = await handle.createWritable();
     await writable.write(text);
     await writable.close();
     if (epoch !== planEpoch) return;
-    lastSyncedSnapshot = text;
-    lastSyncedAt = Date.now();
+    setSyncBase(planId, text);
     fileSyncStatus = 'linked';
   } catch (e) {
     if (e && e.name === 'NotFoundError') { if (epoch === planEpoch) markFileMissing(); return; }
@@ -4296,14 +4576,9 @@ async function pollFileSync() {
     if (text === lastSyncedSnapshot) return;
     const data = JSON.parse(text);
     if (!Array.isArray(data.tasks)) return;
-    const changed = mergeData(data, { respectTombstones: true });
-    lastSyncedSnapshot = text; lastSyncedAt = Date.now();
-    if (changed) {
-      normalizeData();
-      persistLocal();
-      render();
-      showToast('Synced changes from another device');
-    }
+    const res = mergeFromFile(data, 'poll');
+    setSyncBase(currentPlanId, text);
+    if (res.changed || canonicalText() !== text) queueFileSyncWrite();   // the merged result is now the truth (and this side's own wins are not in the file yet): put it back, so the others get what only this side had
   } catch (e) {
     if (e && e.name === 'NotFoundError') { if (epoch === planEpoch) markFileMissing(); return; }
     console.warn('Milestone: poll failed', e);
@@ -4330,6 +4605,7 @@ async function unlinkFile() {
   if (planId !== currentPlanId) return;
   planEpoch++;                              // anything still in flight for the old file is now ignored
   syncFileHandle = null; lastSyncedSnapshot = null; lastSyncedAt = 0; fileSyncWritePending = false;
+  try { localStorage.removeItem(SYNC_BASE_PREFIX + planId); } catch (e) { /* ignore */ }
   fileSyncStatus = 'unlinked';
   stopFileSyncPolling();
   await _fsDel(planHandleKey(planId));
@@ -4368,7 +4644,8 @@ async function _fsMigrateLegacyKey() {
 // switch) and start syncing. Sync state belongs to the *current plan*, so it is reset first.
 async function activatePlanFile(interactive) {
   const epoch = planEpoch, planId = currentPlanId;
-  syncFileHandle = null; lastSyncedSnapshot = null; lastSyncedAt = 0;
+  syncFileHandle = null; lastSyncedSnapshot = readSyncBase(planId); lastSyncedAt = 0;
+  syncConflictLog = []; updateSyncConflictsUI();   // (conflicts belong to the plan they happened in)
   if (!fileSyncSupported()) { fileSyncStatus = 'unsupported'; updateFileSyncUI(); return; }
   fileSyncStatus = 'checking'; updateFileSyncUI();
   try {
@@ -4385,7 +4662,7 @@ async function activatePlanFile(interactive) {
         await pollFileSync();
         if (epoch !== planEpoch) return;
         if (fileSyncStatus === 'linked') {   // (the poll may just have found the file missing)
-          lastSyncedSnapshot = JSON.stringify(syncPayload());
+          if (canonicalText() !== lastSyncedSnapshot) queueFileSyncWrite();   // edits made while offline, or a file that was never written by this version
           startFileSyncPolling();
           render();
         }
@@ -4408,6 +4685,7 @@ function onFileSyncBtnClick() {
   else disconnectFile();   // linked: offers to disconnect (with a confirmation)
 }
 function updateFileSyncUI() {
+  updateSyncConflictsUI();
   const btn = document.getElementById('fileSyncBtn');
   if (fileSyncStatus === 'unsupported') { btn.classList.add('hidden'); return; }
   btn.classList.remove('hidden');
@@ -4611,6 +4889,7 @@ async function doDeleteCurrentPlan() {
   if (!(await switchPlan(next.id))) return;   // also flushes the file one last time
   localStorage.removeItem(planDataKey(id));
   localStorage.removeItem(planBackupsKey(id));
+  try { localStorage.removeItem(SYNC_BASE_PREFIX + id); } catch (e) { /* ignore */ }
   try { await _fsDel(planHandleKey(id)); } catch (e) { /* handle already gone */ }
   updatePlansIndex(i => { i.plans = i.plans.filter(p => p.id !== id); });
   showToast(`Deleted “${rec.name}”`, false, () => undoDeletePlan(saved), 'Undo');
@@ -4696,7 +4975,7 @@ function wireGlobalEvents() {
     // Escape closes whatever overlay is open first; only when there is none — and
     // the user isn't typing in a field, where Escape already means "cancel this
     // edit" — does it clear the task selection.
-    const modalIds = ['taskModalBg', 'confirmModalBg', 'calendarModalBg', 'baselineModalBg', 'planModalBg', 'excelModalBg', 'importModalBg', 'backupsModalBg', 'helpModalBg', 'aboutModalBg'];
+    const modalIds = ['taskModalBg', 'confirmModalBg', 'calendarModalBg', 'baselineModalBg', 'syncConflictsModalBg', 'planModalBg', 'excelModalBg', 'importModalBg', 'backupsModalBg', 'helpModalBg', 'aboutModalBg'];
     const overlayOpen = modalIds.some(id => document.getElementById(id).classList.contains('open'))
       || document.getElementById('fileSyncModalBg').classList.contains('open')   // mandatory: Escape can't close it
       || document.getElementById('dataMenu').classList.contains('open')
