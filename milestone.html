@@ -335,6 +335,16 @@ input.inline-edit { width: 100%; min-width: 0; padding: 3px 6px; border: 1px sol
 .cal-day span { display: inline-block; min-width: 44px; padding: 6px 0; text-align: center; border: 1px solid var(--border); border-radius: 6px; background: var(--panel); color: var(--text-dim); font-size: 12.5px; font-weight: 600; }
 .cal-day input:checked + span { background: var(--accent); border-color: var(--accent); color: #fff; }
 .cal-day input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.radio-col { display: flex; flex-direction: column; gap: 2px; }
+.radio-row { display: flex; align-items: center; gap: 8px; font-size: 13px; padding: 3px 0; cursor: pointer; }
+.radio-row input[disabled] + span { color: var(--text-faint); }
+.cal-hint-line { margin: 0 0 4px; }
+.modal-sep { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+.baseline-info { font-size: 12.5px; color: var(--text-dim); margin: 0 0 10px; display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: baseline; }
+.baseline-info strong { color: var(--text); font-weight: 600; }
+.baseline-info .bi-sep { color: var(--text-faint); }
+.var-late { color: var(--danger) !important; }
+.var-early { color: var(--task-green) !important; }
 .cal-hint { font-size: 12.5px; color: var(--text-dim); margin: 12px 0 0; line-height: 1.5; }
 .gantt-nonwork { position: absolute; top: 0; background: color-mix(in srgb, var(--text) 5%, transparent); pointer-events: none; }
 .grid-name .mismatch-warn { color: var(--task-amber); flex-shrink: 0; font-size: 11px; }
@@ -388,9 +398,8 @@ input.inline-edit[type=date]::-webkit-calendar-picker-indicator { margin: 0 0 0 
 .gantt-bar.manual .fill { opacity: .5; }
 .gantt-bar.mismatch { box-shadow: 0 0 0 2px var(--task-amber); }
 .gantt-rollup { position: absolute; height: 4px; border-radius: 2px; background: var(--bar-color, var(--accent)); opacity: .75; pointer-events: none; }
-.gantt-actual { position: absolute; height: 4px; border-radius: 2px; background: var(--actual-color, var(--accent)); pointer-events: none; z-index: 1; }
-.gantt-actual.running::after { content: ''; position: absolute; right: -5px; top: -2px; border-left: 5px solid var(--actual-color, var(--accent)); border-top: 4px solid transparent; border-bottom: 4px solid transparent; }   /* an arrow head: still running */
-.gantt-actual-ms { position: absolute; width: 7px; height: 7px; transform: rotate(45deg); background: var(--actual-color, var(--accent)); border: 1px solid var(--panel); pointer-events: none; z-index: 1; }
+.gantt-base { position: absolute; height: 4px; border-radius: 2px; background: var(--text-faint); opacity: .85; pointer-events: none; z-index: 1; }
+.gantt-base-ms { position: absolute; width: 7px; height: 7px; transform: rotate(45deg); border: 1.5px solid var(--text-faint); background: var(--panel); pointer-events: none; z-index: 1; }
 .gantt-bracket { position: absolute; width: 10px; height: 20px; border: 2px solid var(--text-dim); cursor: pointer; }
 .gantt-bracket.br-start { border-right: none; }
 .gantt-bracket.br-end { border-left: none; }
@@ -497,6 +506,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
   <div class="view-tabs" id="mainViewTabs"></div>
   <div class="topbar-divider" id="ganttControlsDivider"></div>
   <div class="view-tabs" id="zoomTabs"></div>
+  <button class="icon-btn" id="baselineBtn" onclick="toggleBaseline()" title="Show the baseline under the bars"><i class="fa-solid fa-ruler-horizontal"></i></button>
   <button class="icon-btn" id="criticalPathBtn" onclick="toggleCriticalPath()" title="Highlight critical path"><i class="fa-solid fa-route"></i></button>
   <div class="topbar-spacer"></div>
   <div class="topbar-divider"></div>
@@ -580,6 +590,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
         <div class="field" id="taskActualFinishField" title="Recording an Actual Finish marks the task 100% complete"><label>Actual Finish</label><input type="date" id="taskActualFinishInput" onchange="onActualFinishChange()"></div>
       </div>
       <div class="pred-empty hidden" id="taskActualsNote"></div>
+      <div class="baseline-info hidden" id="taskBaselineInfo" title="From the plan's baseline (plan menu → Baseline…)"></div>
       <div class="field-row-3 calc-row" title="Worked out by Milestone — not entered">
         <div class="field"><label>WBS</label><div class="ro-value" id="taskWbsInfo"></div></div>
         <div class="field"><label>Remaining Duration</label><div class="ro-value" id="taskRemainingInfo"></div></div>
@@ -734,6 +745,33 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
   </div>
 </div>
 
+<div class="modal-bg" id="baselineModalBg" onclick="if(event.target===this) closeBaselineModal()">
+  <div class="modal narrow">
+    <div class="modal-header"><h2>Baseline</h2><button onclick="closeBaselineModal()">&times;</button></div>
+    <div class="modal-body">
+      <div class="field"><label for="baselineSlotSelect">Baseline to set</label><select id="baselineSlotSelect" onchange="renderBaselineModal()"></select></div>
+      <div class="field"><label>Apply to</label>
+        <div class="radio-col">
+          <label class="radio-row"><input type="radio" name="baselineScope" id="baselineScopeAll" value="all" checked> <span>The entire plan</span></label>
+          <label class="radio-row"><input type="radio" name="baselineScope" id="baselineScopeSel" value="selected"> <span id="baselineScopeSelLabel">The selected task</span></label>
+        </div></div>
+      <p class="cal-hint" id="baselineSlotInfo" style="margin:0 0 12px"></p>
+      <div class="cal-hint-line"><button class="btn" id="baselineClearBtn" onclick="clearBaselineFromDialog()">Clear this baseline</button></div>
+      <hr class="modal-sep">
+      <div class="field"><label for="baselineCompareSelect">Compare with (Gantt bars, Baseline and Variance columns)</label><select id="baselineCompareSelect" onchange="setCompareBaseline(this.value)"></select></div>
+      <hr class="modal-sep">
+      <div class="field"><label>Actual dates</label>
+        <p class="cal-hint" id="baselineActualsInfo" style="margin:0 0 8px"></p>
+        <div class="cal-hint-line"><button class="btn" id="baselineApplyBtn" onclick="applyActualsToSchedule()">Apply actual dates to the schedule</button></div></div>
+      <p class="cal-hint">A baseline is a frozen copy of every task's Start and Finish, taken only when you set it. Milestone keeps up to eleven (Baseline and Baseline 1–10). Start and Finish Variance show how far the current schedule has moved from the baseline you compare with, in working days (positive = later).</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeBaselineModal()">Close</button>
+      <button class="btn btn-primary" id="baselineSetBtn" onclick="setBaselineFromDialog()">Set baseline</button>
+    </div>
+  </div>
+</div>
+
 <!-- Help modal -->
 <div class="modal-bg" id="helpModalBg" onclick="if(event.target===this) closeHelpModal()">
   <div class="modal wide">
@@ -742,8 +780,8 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
       <div><div class="help-section-title">The basics</div>Add tasks with the + Add Task button. Each task has a start/end date, a % complete, and can be a milestone (a zero-duration diamond). Use Indent/Outdent to build a work breakdown structure — a parent task's own dates and progress roll up automatically from its children. Drag a task's line up or down to reorder it (a parent brings its sub-tasks along). Add Task inserts below the selected task, or at the bottom when nothing is selected; press Escape to clear the selection. The <strong>Clone</strong> button (on a task's line, and in the toolbar for the selected task) makes an exact copy right below it — including all its sub-tasks and their sub-tasks — and Undo takes it back. The double arrow above the ID numbers steps through the outline: click it to collapse every group, then again to open the first level, again for the next level, and so on until everything is open — then it starts over.</div>
       <div><div class="help-section-title">Filtering</div>Click the funnel in a column header (Task Mode, Task Name, Start, Finish, Duration, %, Predecessors) for an Excel-style filter. Each column offers what fits its data: dates get rules (equals, before, after, between, or relative to today such as this week, next month or year to date) and a Year › Month › Day list; text columns get contains / begins with / ends with / equals and their negatives; numbers get equals, greater or less than, and between. Every column also has a list of its values to tick, with a search box and (Blanks) for tasks that have no value. Filters on several columns combine, so a task must match all of them. A group stays visible while any sub-task inside it matches, and stays open while a filter is on. The bar under the toolbar shows what is filtered and how many tasks are showing; click × on a chip, or Clear all, to remove it. Filters are only for looking — they aren't saved, and a task you add or edit stays visible until you filter again.</div>Click the funnel next to Start or Finish (in either view) for an Excel-style filter: pick a rule (equals, before, after, between, or relative to today such as this week, next month or year to date), or tick individual dates in the Year › Month › Day list — type in the search box to narrow it, and use (Blanks) for tasks without a real date. The two columns combine, so a task must match both. A group stays visible while any sub-task inside it matches, and stays open while a filter is on. The bar under the toolbar shows what is filtered and how many tasks are showing; click × on a chip, or Clear all, to remove it. Filters are only for looking — they aren't saved, and a task you add or edit stays visible until you filter again.</div>
       <div><div class="help-section-title">Working calendar</div>Each plan has its own working days — Monday to Friday unless you change it (plan menu → <strong>Working calendar…</strong>). Durations, lags and dependencies count working days only, so a 5-day task that starts on a Monday finishes on that Friday and its successor starts the next Monday. Auto Scheduled tasks start and finish on working days (a date you type or drag to on a day off moves to the nearest working day); Manually Scheduled tasks keep exactly the dates you give them. Days off are shaded in the Gantt chart. Changing the calendar never moves dates that are already in the plan.</div>
-      <div><div class="help-section-title">Planned and actual in the Gantt chart</div>The bar is the plan. Under it a thin line shows what really happened, from the actual start to the actual finish: <strong>green</strong> when the task finished on time, <strong>red</strong> when it finished late (or is still running past its planned finish), <strong>blue</strong> with an arrow head while it is still running within plan. A milestone shows a small diamond at the day it was reached. Hover a bar for the actual dates.</div>
-      <div><div class="help-section-title">Columns and extra fields</div>Besides name, dates, duration, % and predecessors, a task can carry a <strong>Resource</strong> (who does the work), an <strong>Actual Start</strong> and <strong>Actual Finish</strong> (what really happened, kept separate from the plan; recording an Actual Finish marks the task 100% complete and fills an empty Actual Start), and has a <strong>WBS</strong> code such as 2.1.3 that is worked out from the outline (shown by default). <strong>Remaining Duration</strong> (the duration still to go, from % complete) and <strong>Status</strong> (Complete, On Schedule, Late or Future Task, judged against today) are worked out for you too. Resource, Actual Start/Finish, Remaining Duration and Status aren't shown by default: click <strong>Columns</strong> in the toolbar (Tasks view) to tick the columns you want and reorder them; your choice is remembered on this device. Click a Resource or actual-date cell to edit it, or use the task dialog. A group shows the actual dates of the tasks in it (its earliest actual start, and an actual finish once everything in it has finished). The tasks that <strong>depend</strong> on a task are scheduled from what really happened: from its actual dates once it has them, and a task that has started but not finished is expected to finish its planned duration after the day it really started (a late start pushes its successors later). A task that has itself already started or finished (it has an actual date) is not rescheduled any more: its planned dates stay as they are, and a warning triangle appears if its predecessors say it couldn't have started yet.</div>
+      <div><div class="help-section-title">Baselines and variance</div>The bar is the <strong>current schedule</strong>. To keep the original plan, set a <strong>baseline</strong> (plan menu → <strong>Baseline…</strong>): a frozen copy of every task's Start and Finish — only ever taken when you ask. You can keep up to eleven (Baseline and Baseline 1–10) and choose which one to compare with. The baseline shows as a thin grey line under each bar in the Gantt chart (the ruler button hides it), and the <strong>Start Variance</strong>, <strong>Finish Variance</strong>, <strong>Baseline Start/Finish/Duration</strong> and <strong>Duration Variance</strong> columns (in the column picker) show how far each task has moved, in working days — positive means later than the baseline. When you record an actual date, it becomes the task's Start or Finish (a task that is still running keeps its duration), and the tasks that follow are re-planned from it.</div>
+      <div><div class="help-section-title">Columns and extra fields</div>Besides name, dates, duration, % and predecessors, a task can carry a <strong>Resource</strong> (who does the work), an <strong>Actual Start</strong> and <strong>Actual Finish</strong> (what really happened — they overwrite Start and Finish; recording an Actual Finish marks the task 100% complete and fills an empty Actual Start), and has a <strong>WBS</strong> code such as 2.1.3 that is worked out from the outline (shown by default). <strong>Remaining Duration</strong> (the duration still to go, from % complete) and <strong>Status</strong> (Complete, On Schedule, Late or Future Task, judged against today) are worked out for you too. Resource, Actual Start/Finish, Remaining Duration and Status aren't shown by default: click <strong>Columns</strong> in the toolbar (Tasks view) to tick the columns you want and reorder them; your choice is remembered on this device. Click a Resource or actual-date cell to edit it, or use the task dialog. A group shows the actual dates of the tasks in it (its earliest actual start, and an actual finish once everything in it has finished). <strong>Actual dates are the schedule</strong>: recording an Actual Start makes it the task's Start (a task that is still running keeps its duration, so its Finish moves with it), an Actual Finish makes it the Finish, and the tasks that <strong>depend</strong> on it are re-planned from those dates (a late start or finish pushes them later). A task that has itself already started or finished (it has an actual date) is not rescheduled any more: its planned dates stay as they are, and a warning triangle appears if its predecessors say it couldn't have started yet.</div>
       <div><div class="help-section-title">Custom fields</div>Every task can carry up to 20 fields of your own: <strong>Text1–5</strong>, <strong>Number1–5</strong>, <strong>Date1–5</strong> and <strong>Flag1–5</strong> (a yes/no tick). Fill them in on the task dialog's <strong>Custom fields</strong> tab, or — once you have ticked them under <strong>Columns</strong>, where they start hidden — straight in the list (click a cell; a flag toggles). Use the pencil beside a field to rename it, for instance Text1 to <em>Cost centre</em>: the name is saved with the plan, so another plan can call the same field something else. Custom fields can be filtered like any column and are included in the Excel export.</div>
       <div><div class="help-section-title">Task Mode</div>Every task is either Manually Scheduled (pushpin) or Auto Scheduled (chart icon) — click the icon in the Task Mode column, or use the Task Mode field in a task's dialog. An Auto task follows its predecessors and constraints. A Manual task stays exactly where you put it: predecessors never move it, its Start, Finish and Duration can be free text such as "TBD", and a warning triangle appears if it starts earlier than its predecessors allow. Manual tasks are drawn with a dashed bar, and are left out of the critical path. Switching a task to Auto moves it to the earliest date its links allow. The "New tasks" button at the right of the toolbar chooses the mode new tasks start in (Auto Scheduled by default).</div>
       <div><div class="help-section-title">Dependencies</div>Open a task and add a predecessor to link it to another task (Finish-to-Start, Start-to-Start, Finish-to-Finish or Start-to-Finish). Give it a lead or lag in days: a positive number delays the dependent task (lag), a negative number lets it overlap and start early (lead) — e.g. "3FS+2" waits 2 extra days after task 3 finishes, "3FS-2" starts 2 days before task 3 finishes. Moving a task forward automatically pushes any dependent tasks forward too — it never pulls a task earlier on its own. A circular dependency is flagged with a warning icon and stops auto-scheduling for the tasks involved.</div>
@@ -832,6 +870,13 @@ const TASK_COLS = {
   preds:        { label: 'Predecessors',  width: '136px',             dflt: true },   // just wide enough for its header: text 95px + gap 3px + funnel 18px + the 2×8px cell inset = 132px, plus a little slack for other fonts
   remaining:    { label: 'Remaining Duration', width: '110px',        dflt: false },
   status:       { label: 'Status',        width: '108px',             dflt: false },
+  // Baseline columns (all hidden by default): the baseline chosen in the Baseline dialog (project.compareBaseline, "Baseline" unless changed)
+  baselineStart:    { label: 'Baseline Start',    width: '104px', dflt: false },   // header: Baseline / Start
+  baselineFinish:   { label: 'Baseline Finish',   width: '104px', dflt: false },
+  baselineDuration: { label: 'Baseline Duration', width: '104px', dflt: false },
+  startVariance:    { label: 'Start Variance',    width: '104px', dflt: false },   // Start minus Baseline Start, in working days
+  finishVariance:   { label: 'Finish Variance',   width: '104px', dflt: false },
+  durationVariance: { label: 'Duration Variance', width: '104px', dflt: false },
   resource:     { label: 'Resource',      width: '140px',             dflt: false }   // fixed like every column but Task Name; longer text is cut with an ellipsis (the cell's tooltip and the editor show all of it)
 };
 // ---- Custom fields: Text1-5, Number1-5, Date1-5, Flag1-5. A task keeps its values in `task.custom` ({ text1: 'x', number2: 4.5,
@@ -918,6 +963,7 @@ let currentView = 'tasks';
 let gridPaneWidth = 400;
 const GRID_PANE_MIN_WIDTH = 240, GRID_PANE_MAX_WIDTH = 720;
 let showCriticalPath = false;
+let showBaseline = true;   // the compared baseline as thin bars under the Gantt bars
 let selectedTaskId = null;
 
 let editingTaskId = null;
@@ -1008,7 +1054,7 @@ function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c
 function byId(id) { return tasks.find(t => t.id === id); }
 
 /* ============================ Persistence =============================== */
-function prefsPayload() { return { theme, zoom, zoomRev: ZOOM_DEFAULT_REV, view: currentView, gridPaneWidth, cols: { order: colOrder, hidden: [...colHidden], rev: COLS_REV } }; }
+function prefsPayload() { return { theme, zoom, zoomRev: ZOOM_DEFAULT_REV, view: currentView, gridPaneWidth, showBaseline, cols: { order: colOrder, hidden: [...colHidden], rev: COLS_REV } }; }
 function syncPayload() { return { version: APP_VERSION, project, tasks, deletedTaskIds }; }
 
 function planDataKey(id) { return PLAN_DATA_PREFIX + id; }
@@ -1070,6 +1116,7 @@ function loadPrefs() {
   // saved by the very first save(), so without the revision check nobody would ever see a changed default.
   zoom = (d.zoomRev === ZOOM_DEFAULT_REV && ZOOMS.some(z => z.id === d.zoom)) ? d.zoom : DEFAULT_ZOOM;
   currentView = d.view === 'gantt' ? 'gantt' : 'tasks';
+  showBaseline = d.showBaseline !== false;
   gridPaneWidth = Number.isFinite(d.gridPaneWidth) ? Math.max(GRID_PANE_MIN_WIDTH, Math.min(GRID_PANE_MAX_WIDTH, d.gridPaneWidth)) : 400;
   // Task list columns. A column the saved prefs don't know yet (added by a later version) is appended and follows its default.
   const known = id => !!TASK_COLS[id], sc = d.cols && typeof d.cols === 'object' ? d.cols : {};
@@ -1241,10 +1288,33 @@ function normalizeData() {
     }
   }
 
+  // ---- baselines (MS Project style, up to 11: "Baseline" and "Baseline 1" … "Baseline 10"): a leaf task's frozen snapshots of its Start /
+  // Finish, {slot: [start, finish]}; a group has none of its own (it shows a rollup). They are only ever set by the user (plan menu → Baseline…).
+  const ISO = /^\d{4}-\d{2}-\d{2}$/;
+  for (const t of tasks) {
+    const clean = {};
+    if (!parentIds.has(t.id) && t.baselines && typeof t.baselines === 'object') for (let n = 0; n < BASELINE_SLOTS; n++) {
+      const b = t.baselines[n];
+      if (Array.isArray(b) && ISO.test(b[0] || '') && ISO.test(b[1] || '') && dayNumber(b[1]) >= dayNumber(b[0])) clean[n] = [b[0], t.milestone ? b[0] : b[1]];
+    }
+    if (Object.keys(clean).length) t.baselines = clean; else delete t.baselines;
+  }
+
   deletedTaskIds = Array.isArray(deletedTaskIds) ? deletedTaskIds.filter(d => d && d.id) : [];
   if (!project || typeof project !== 'object') project = { name: 'My Project', updatedAt: 0 };
   if (typeof project.name !== 'string' || !project.name.trim()) project.name = 'My Project';
   if (typeof project.updatedAt !== 'number') project.updatedAt = 0;
+  {   // baseline metadata: which slots are set (and when), and which one the Gantt and the variance columns compare with (0 = "Baseline")
+    const meta = {};
+    if (project.baselines && typeof project.baselines === 'object') for (let n = 0; n < BASELINE_SLOTS; n++) {
+      const m = project.baselines[n];
+      if (m && typeof m === 'object' && typeof m.setAt === 'string' && ISO.test(m.setAt) && tasks.some(t => t.baselines && t.baselines[n])) meta[n] = { setAt: m.setAt };
+    }
+    if (Object.keys(meta).length) project.baselines = meta; else delete project.baselines;
+    const cb = Number(project.compareBaseline);
+    if (Number.isInteger(cb) && cb > 0 && cb < BASELINE_SLOTS && tasks.some(t => t.baselines && t.baselines[cb])) project.compareBaseline = cb; else delete project.compareBaseline;
+    delete project.baselineRev; delete project.baselineSetAt;
+  }
   {   // the working calendar: distinct weekdays 0-6; nothing stored when it is the default Mon-Fri (or unusable)
     const wd = Array.isArray(project.workDays) ? [...new Set(project.workDays.map(Number).filter(n => Number.isInteger(n) && n >= 0 && n <= 6))].sort((a, b) => a - b) : [];
     if (wd.length && wd.join() !== DEFAULT_WORK_DAYS.join()) { if (!Array.isArray(project.workDays) || project.workDays.join() !== wd.join()) project.workDays = wd; }
@@ -1398,7 +1468,7 @@ function effectiveDates(id) {
   _effCache.set(id, result);
   return result;
 }
-function resetEffectiveCache() { _effCache.clear(); _actCache.clear(); _filterShow.clear(); }
+function resetEffectiveCache() { _effCache.clear(); _actCache.clear(); _baseCache.clear(); _filterShow.clear(); }
 
 /* ======================== Scheduling & critical path ===================== */
 function successorsMap() {
@@ -1420,10 +1490,11 @@ function taskCycleSet() {
   for (const t of tasks) dfs(t.id, new Set());
   return bad;
 }
-// What a dependency reads from its predecessor: the dates it ACTUALLY had, and the planned ones only where nothing has
-// happened yet (as MS Project does). A task that has started but not finished is projected to finish where its planned
-// duration, counted from the day it REALLY started, ends — so a task that began late finishes late (and one that began early,
-// early), instead of the plan's finish being trusted. (Summary tasks can't be predecessors.)
+// A dependency reads its predecessor's Start / Finish. As in MS Project those ARE what really happened once an actual date is recorded
+// (applyActualDates() overwrites them), so normally there is nothing extra to look up. The one exception is a task whose actual dates
+// have not been applied to its schedule yet (a plan from before this model, until you edit them or use "Apply actual dates" in the
+// Baseline dialog): it is read as before — from the actual dates, a running task projected from its real start. (Summary tasks can't
+// be predecessors.)
 function linkStart(pred) { return pred.actualStart || pred.startDate; }
 function linkEnd(pred) {
   if (pred.actualFinish) return pred.actualFinish;
@@ -1440,6 +1511,65 @@ function recordActualFinish(t, previousFinish) {
   if (!t.actualStart) t.actualStart = dayNumber(t.startDate) <= dayNumber(t.actualFinish) ? t.startDate : t.actualFinish;
   return changed;
 }
+/* ====================== Baseline, actual dates and variance (MS Project style) ======================
+   Start / Finish are the CURRENT schedule. A BASELINE (task.baselines[slot] = [start, finish]; up to 11 slots) is a frozen snapshot of it,
+   taken only when the user asks (plan menu → Baseline…); Start Variance = Start - Baseline Start and Finish Variance = Finish -
+   Baseline Finish, in working days (positive = later than the baseline), against the baseline chosen with project.compareBaseline. Recording an ACTUAL date overwrites the schedule with it: Actual Start becomes Start (and a
+   task that hasn't finished keeps its duration, so its Finish moves with it), Actual Finish becomes Finish. Successors are then
+   scheduled from those dates like from any other. A group has no baseline of its own: it shows the rollup of the tasks in it. */
+// The actual dates ARE the schedule: Start = Actual Start, and Finish = Actual Finish — or, still running, the Finish that keeps the
+// task's duration counted from the real start. Idempotent (nothing moves when the dates already agree).
+function applyActualDates(t) {
+  if (hasChildren(t.id)) return;
+  const as = t.actualStart, af = t.actualFinish;
+  if (!as && !af) return;
+  const dur = t.milestone ? 1 : durationDays(t.startDate, t.endDate);
+  if (as && t.startDate !== as) {
+    t.startDate = as; t.startText = null;
+    if (!af) t.endDate = t.milestone ? as : finishFor(as, dur);
+  }
+  if (af && t.endDate !== af) t.endDate = af;
+  if (t.endText != null && af) t.endText = null;
+  if (t.milestone) t.endDate = t.startDate;
+  if (dayNumber(t.endDate) < dayNumber(t.startDate)) t.endDate = t.startDate;
+  t.durText = null;
+}
+// Working days from a to b (negative when b is earlier); both snap forward to a working day first.
+function workDiff(aIso, bIso) {
+  const a = nextWorkNum(dayNumber(aIso)), b = nextWorkNum(dayNumber(bIso));
+  return b >= a ? countWorkNum(a, b) - 1 : -(countWorkNum(b, a) - 1);
+}
+const BASELINE_SLOTS = 11;   // MS Project: "Baseline" and "Baseline 1" … "Baseline 10"
+const _baseCache = new Map();
+function baselineName(n) { return n === 0 ? 'Baseline' : `Baseline ${n}`; }
+// The baseline the Gantt bars, the Baseline columns and the variances compare with (project.compareBaseline, default 0).
+function compareBaseline() { const c = project && project.compareBaseline; return Number.isInteger(c) && c > 0 && c < BASELINE_SLOTS ? c : 0; }
+// A task's baseline `n` as shown: its own; a group rolls up (the earliest baseline start and the latest baseline finish of the tasks in
+// it that HAVE that baseline).
+function baselineDates(id, n = compareBaseline()) {
+  const key = id + '|' + n;
+  if (_baseCache.has(key)) return _baseCache.get(key);
+  const t = byId(id), kids = childrenOf(id);
+  let r = { start: null, end: null };
+  if (t && !kids.length) { const b = t.baselines && t.baselines[n]; if (b) r = { start: b[0], end: b[1] }; }
+  else if (t) for (const k of kids) {
+    const b = baselineDates(k.id, n);
+    if (b.start && (!r.start || b.start < r.start)) r.start = b.start;
+    if (b.end && (!r.end || b.end > r.end)) r.end = b.end;
+  }
+  _baseCache.set(key, r);
+  return r;
+}
+// The variances against baseline `n` in working days (null = no baseline, or nothing to compare against): current schedule minus baseline.
+function scheduleVariance(id, n = compareBaseline()) {
+  const blank = { start: null, finish: null, duration: null, baseDuration: null };
+  const t = byId(id); if (!t || (!hasChildren(id) && isUnscheduled(t))) return blank;
+  const b = baselineDates(id, n), e = effectiveDates(id);
+  if (!b.start || !b.end || !e.start || !e.end) return blank;
+  const baseDuration = durationDays(b.start, b.end);
+  return { start: workDiff(b.start, e.start), finish: workDiff(b.end, e.end), duration: durationDays(e.start, e.end) - baseDuration, baseDuration };
+}
+function fmtVariance(n) { return n == null ? '' : `${n > 0 ? '+' : ''}${n} day${Math.abs(n) === 1 ? '' : 's'}`; }
 function constraintStart(task, includeConstraint = true) {
   let cs = null;
   const dur = durationDays(task.startDate, task.endDate);
@@ -1487,7 +1617,7 @@ function constraintViolated(task) {
 // day off back to the previous one (never before the start). Manual tasks keep exactly the dates they were given. Returns true
 // when something moved.
 function snapToWorkDays(t) {
-  if (t.taskMode === 'manual' || hasChildren(t.id) || isUnscheduled(t)) return false;
+  if (t.taskMode === 'manual' || hasChildren(t.id) || isUnscheduled(t) || isStarted(t)) return false;   // (a started task's dates are facts)
   const s0 = t.startDate, e0 = t.endDate;
   if (!isWorkDay(t.startDate)) t.startDate = nextWorkDay(t.startDate);
   if (t.milestone) t.endDate = t.startDate;
@@ -1615,9 +1745,9 @@ function computeDateRange() {
     if (s) { start = Math.min(start, dayNumber(t.startDate)); end = Math.max(end, dayNumber(t.startDate)); }
     if (e) { start = Math.min(start, dayNumber(t.endDate)); end = Math.max(end, dayNumber(t.endDate)); }
   }
-  for (const t of tasks) {   // ...and what actually happened: the actual bars must fit too (a task still running is drawn up to today)
-    const a = actualDates(t.id);
-    for (const iso of [a.start, a.end, a.start && !a.end ? todayStr() : null]) if (iso) { start = Math.min(start, dayNumber(iso)); end = Math.max(end, dayNumber(iso)); }
+  if (showBaseline) for (const t of tasks) {   // ...and the baseline drawn under the bars
+    const bd = baselineDates(t.id);
+    for (const iso of [bd.start, bd.end]) if (iso) { start = Math.min(start, dayNumber(iso)); end = Math.max(end, dayNumber(iso)); }
   }
   if (start === Infinity) { const t0 = dayNumber(todayStr()); return { start: t0 - 7, end: t0 + 30 }; }
   const pad = Math.max(3, Math.round((end - start) * 0.06));
@@ -1654,6 +1784,7 @@ function renderMainViewTabs() {
   document.getElementById('zoomTabs').classList.toggle('hidden', currentView !== 'gantt');
   document.getElementById('columnsBtn').classList.toggle('hidden', currentView !== 'tasks');   // the Gantt view's list is fixed
   document.getElementById('criticalPathBtn').classList.toggle('hidden', currentView !== 'gantt');
+  document.getElementById('baselineBtn').classList.toggle('hidden', currentView !== 'gantt');
   document.getElementById('ganttControlsDivider').classList.toggle('hidden', currentView !== 'gantt');
 }
 function setView(id) { currentView = id; editingCell = null; save(); render(); }
@@ -1675,7 +1806,10 @@ function renderZoomTabs() {
 function setZoom(id) { zoom = id; save(); render(); }
 function updateCriticalPathUI() {
   document.getElementById('criticalPathBtn').classList.toggle('active', showCriticalPath);
+  document.getElementById('baselineBtn').classList.toggle('active', showBaseline);
+  document.getElementById('baselineBtn').title = `${showBaseline ? 'Hide' : 'Show'} ${baselineName(compareBaseline())} under the bars`;
 }
+function toggleBaseline() { showBaseline = !showBaseline; save(); render(); }
 function toggleCriticalPath() { showCriticalPath = !showCriticalPath; render(); }
 function updateSelectionUI() {
   const has = !!selectedTaskId;
@@ -1717,6 +1851,12 @@ const FILTER_COLS = {
   progress:     { label: '% Complete',    kind: 'number' },
   remaining:    { label: 'Remaining Duration', kind: 'number' },
   status:       { label: 'Status',        kind: 'list' },
+  baselineStart:    { label: 'Baseline Start',    kind: 'date' },
+  baselineFinish:   { label: 'Baseline Finish',   kind: 'date' },
+  baselineDuration: { label: 'Baseline Duration', kind: 'number' },
+  startVariance:    { label: 'Start Variance',    kind: 'number' },
+  finishVariance:   { label: 'Finish Variance',   kind: 'number' },
+  durationVariance: { label: 'Duration Variance', kind: 'number' },
   preds:        { label: 'Predecessors',  kind: 'text' },
   resource:     { label: 'Resource',      kind: 'text' }
 };
@@ -1763,6 +1903,12 @@ function filterColValue(t, col) {
     case 'wbs': return wbsCode(t.id) || null;
     case 'remaining': return remainingDays(t.id);
     case 'status': return taskStatus(t.id);
+    case 'baselineStart': return baselineDates(t.id).start;
+    case 'baselineFinish': return baselineDates(t.id).end;
+    case 'baselineDuration': return scheduleVariance(t.id).baseDuration;
+    case 'startVariance': return scheduleVariance(t.id).start;
+    case 'finishVariance': return scheduleVariance(t.id).finish;
+    case 'durationVariance': return scheduleVariance(t.id).duration;
     case 'actualStart': return actualDates(t.id).start;
     case 'actualFinish': return actualDates(t.id).end;
     case 'resource': return (t.resource || '').trim() || null;
@@ -2137,6 +2283,8 @@ function renderGrid() {
     mode: colHeadHtml(full ? 'Task\nMode' : '', 'mode'), wbs: colHeadHtml('WBS', 'wbs'), name: colHeadHtml('Task Name', 'name'), start: colHeadHtml('Start', 'start'), end: colHeadHtml('Finish', 'end'),
     actualStart: colHeadHtml('Actual\nStart', 'actualStart'), actualFinish: colHeadHtml('Actual\nFinish', 'actualFinish'), duration: colHeadHtml('Duration', 'duration'),
     progress: colHeadHtml('%', 'progress'), remaining: colHeadHtml('Remaining\nDuration', 'remaining'), status: colHeadHtml('Status', 'status'),
+    baselineStart: colHeadHtml('Baseline\nStart', 'baselineStart'), baselineFinish: colHeadHtml('Baseline\nFinish', 'baselineFinish'), baselineDuration: colHeadHtml('Baseline\nDuration', 'baselineDuration'),
+    startVariance: colHeadHtml('Start\nVariance', 'startVariance'), finishVariance: colHeadHtml('Finish\nVariance', 'finishVariance'), durationVariance: colHeadHtml('Duration\nVariance', 'durationVariance'),
     preds: colHeadHtml('Predecessors', 'preds'), resource: colHeadHtml('Resource', 'resource'),
     ...Object.fromEntries(Object.keys(CUSTOM_FIELDS).map(id => [id, colHeadHtml(customFieldName(id), id)]))
   };
@@ -2207,6 +2355,9 @@ function renderGrid() {
     const resourceCell = editing('resource')
       ? `<input type="text" class="inline-edit" maxlength="200" value="${escapeHtml(t.resource)}" placeholder="e.g. Anna, Ben" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" ${blurAttr('resource')}>`
       : `<div class="grid-cell-dim${summaryCls}${full ? ' editable' : ''}" title="${escapeHtml(t.resource)}"${full ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','resource')"` : ''}>${escapeHtml(t.resource)}</div>`;
+    const bl = baselineDates(t.id), sv = scheduleVariance(t.id), bn = baselineName(compareBaseline());
+    const blCell = iso => `<div class="grid-cell-dim${summaryCls}" title="${bn}">${fmtDate(iso)}</div>`;
+    const varCell = n => `<div class="grid-cell-dim${summaryCls}${n > 0 ? ' var-late' : n < 0 ? ' var-early' : ''}" title="${bn}">${fmtVariance(n)}</div>`;
     const cells = {
       mode: modeCell,
       wbs: `<div class="grid-cell-dim${summaryCls}">${escapeHtml(wbsCode(t.id))}</div>`,
@@ -2222,6 +2373,8 @@ function renderGrid() {
       duration: durationCell, progress: `<div class="grid-cell-dim${summaryCls}">${Math.round(eff.progress)}%</div>`,
       remaining: `<div class="grid-cell-dim${summaryCls}">${remainingDays(t.id) == null ? '' : fmtRemaining(remainingDays(t.id))}</div>`,
       status: `<div class="grid-cell-dim${summaryCls}">${statusPillHtml(taskStatus(t.id))}</div>`,
+      baselineStart: blCell(bl.start), baselineFinish: blCell(bl.end), baselineDuration: `<div class="grid-cell-dim${summaryCls}" title="${bn}">${sv.baseDuration == null ? '' : fmtDuration(sv.baseDuration)}</div>`,
+      startVariance: varCell(sv.start), finishVariance: varCell(sv.finish), durationVariance: varCell(sv.duration),
       preds: predCell, resource: resourceCell,
       ...Object.fromEntries(cols.filter(isCustomField).map(id => [id, customCellHtml(t, id, summaryCls, editing(id), blurAttr(id), (f, iso) => dateEditor(f, iso, null, 'dd.mm.yyyy'))]))
     };
@@ -2563,8 +2716,8 @@ function commitInlineEdit(id, field, rawValue) {
     const isStart = field === 'start';
     const iso = manual ? parseUserDate(val) : (/^\d{4}-\d{2}-\d{2}$/.test(val) ? val : null);
     if (iso) {
-      if (isStart) { t.startDate = iso; t.startText = null; if (t.milestone) { t.endDate = iso; t.endText = null; } }
-      else if (!t.milestone) { t.endDate = iso; t.endText = null; }
+      if (isStart) { t.startDate = iso; t.startText = null; if (t.milestone) { t.endDate = iso; t.endText = null; } if (t.actualStart) { t.actualStart = iso; if (t.milestone) t.actualFinish = iso; } }   // (a started task's Start IS its Actual Start)
+      else if (!t.milestone) { t.endDate = iso; t.endText = null; if (t.actualFinish) t.actualFinish = iso; }
       if (!isUnscheduled(t)) t.durText = null;
     } else if (manual && !(t.milestone && !isStart)) {
       // Anything that isn't a date — including blank — is kept as free text.
@@ -2575,11 +2728,11 @@ function commitInlineEdit(id, field, rawValue) {
   } else if (field === 'duration') {
     if (manual) {
       const n = /^\d+$/.test(val) ? parseInt(val, 10) : NaN;
-      if (Number.isFinite(n) && n >= 1 && !isUnscheduled(t) && !t.milestone) { t.endDate = finishFor(t.startDate, n); t.durText = null; }
+      if (Number.isFinite(n) && n >= 1 && !isUnscheduled(t) && !t.milestone) { t.endDate = finishFor(t.startDate, n); t.durText = null; if (t.actualFinish) t.actualFinish = t.endDate; }
       else t.durText = val.slice(0, 60);
     } else {
       const d = parseInt(val, 10);
-      if (Number.isFinite(d) && d >= 1 && !t.milestone) { snapToWorkDays(t); t.endDate = finishFor(t.startDate, d); }
+      if (Number.isFinite(d) && d >= 1 && !t.milestone) { snapToWorkDays(t); t.endDate = finishFor(t.startDate, d); if (t.actualFinish) t.actualFinish = t.endDate; }
     }
     applyConstraints(id);
   } else if (isCustomField(field)) {
@@ -2603,7 +2756,8 @@ function commitInlineEdit(id, field, rawValue) {
       const previousFinish = t.actualFinish;
       t[field] = iso; if (t.milestone) t.actualFinish = t.actualStart;
       if (recordActualFinish(t, previousFinish)) showToast('Actual Finish recorded — marked 100% complete');
-      cascadeSchedule(id);   // successors are scheduled off what actually happened
+      applyActualDates(t);   // the actual dates overwrite Start / Finish (MS Project)
+      cascadeSchedule(id);   // ...and successors are scheduled off them
     }
   } else if (field === 'predecessors') {
     const parsed = parsePredecessorString(val, id);
@@ -2689,31 +2843,20 @@ function renderGanttHeaderTicks(range, px) {
   return ticks;
 }
 
-// The actual span of a task (Gantt): a thin bar under the planned one from the day it really started to the day it really
-// finished — or, if it is still running, up to today with an arrow head. Green: finished on time, red: finished late (or running
-// past its planned finish), blue: running within plan. A milestone gets a small diamond at the day it was reached. Groups show the
-// rollup (earliest actual start, finish once everything below is done).
-function actualStatus(t) {
-  const a = actualDates(t.id), s = a.start || a.end;
-  if (!s) return null;
-  const plannedEnd = effectiveDates(t.id).end, ref = a.end || todayStr();
-  const lateDays = plannedEnd && dayNumber(ref) > dayNumber(plannedEnd) ? countWorkNum(dayNumber(plannedEnd) + 1, dayNumber(ref)) : 0;
-  const late = !!plannedEnd && dayNumber(ref) > dayNumber(plannedEnd);
-  return { start: s, end: a.end, running: !a.end, late, lateDays, color: late ? 'var(--danger)' : a.end ? 'var(--task-green)' : 'var(--accent)' };
+// The baseline under a task's bar (Gantt, MS Project's Tracking Gantt): a thin grey line from the baseline start to the baseline
+// finish — the current bar (which already IS the actual position once a task has started) is compared with it. A milestone gets a
+// hollow diamond. A group shows the rollup of its tasks' baselines. Which baseline: project.compareBaseline; hidden with the ruler button.
+function baselineNote(t) {   // appended to the bar's tooltip
+  const b = baselineDates(t.id); if (!showBaseline || !b.start || !b.end) return '';
+  const v = scheduleVariance(t.id);
+  return ` — ${baselineName(compareBaseline())}: ${fmtDate(b.start)}${t.milestone || b.end === b.start ? '' : ' – ' + fmtDate(b.end)}${v.start != null ? ` (start ${fmtVariance(v.start)}, finish ${fmtVariance(v.finish)})` : ''}`;
 }
-function actualNote(t) {   // appended to the planned bar's tooltip
-  const a = actualStatus(t); if (!a) return '';
-  const span = t.milestone ? `reached ${fmtDate(a.start)}` : `${fmtDate(a.start)} – ${a.end ? fmtDate(a.end) : 'in progress'}`;
-  const slip = a.late ? (a.running ? ' — past its planned finish' : a.lateDays ? ` — finished ${a.lateDays} working day${a.lateDays === 1 ? '' : 's'} late` : ' — finished late') : (a.end ? ' — on time' : '');
-  return ` — Actual: ${span}${slip}`;
-}
-function actualBarHtml(t, idx, px) {
-  const a = actualStatus(t); if (!a) return '';
-  const rowTop = idx * ROW_H;
-  if (t.milestone) return `<div class="gantt-actual-ms" style="left:${(dayNumber(a.start) - dateRange.start) * px - 3.5}px;top:${rowTop + ROW_H - 10}px;--actual-color:${a.color}"></div>`;
-  const e = a.end || (dayNumber(todayStr()) > dayNumber(a.start) ? todayStr() : a.start);
-  const left = (dayNumber(a.start) - dateRange.start) * px, width = Math.max(3, (dayNumber(e) - dayNumber(a.start) + 1) * px - 2);
-  return `<div class="gantt-actual${a.running ? ' running' : ''}" data-actual-for="${t.id}" style="left:${left}px;width:${width}px;top:${rowTop + ROW_H - 5}px;--actual-color:${a.color}"></div>`;
+function baselineBarHtml(t, idx, px) {
+  if (!showBaseline) return '';
+  const b = baselineDates(t.id); if (!b.start || !b.end) return '';
+  const rowTop = idx * ROW_H, rs = dateRange.start;
+  if (t.milestone) return `<div class="gantt-base-ms" style="left:${(dayNumber(b.start) - rs) * px - 3.5}px;top:${rowTop + ROW_H - 10}px"></div>`;
+  return `<div class="gantt-base" data-base-for="${t.id}" style="left:${(dayNumber(b.start) - rs) * px}px;width:${Math.max(3, (dayNumber(b.end) - dayNumber(b.start) + 1) * px - 2)}px;top:${rowTop + ROW_H - 5}px"></div>`;
 }
 function renderGantt() {
   const z = currentZoom();
@@ -2789,12 +2932,12 @@ function renderGantt() {
     if (t.milestone) {
       const cx = left; const cy = idx * ROW_H + ROW_H / 2;
       barGeom[t.id] = { left: cx - 8, width: 16, top: cy - 8, right: cx + 8, midY: cy, milestone: true };
-      html += `<div class="gantt-milestone${cls}" style="left:${cx - 8}px;top:${cy - 8}px;--bar-color:${color}" title="${escapeHtml(t.name)}${modeNote}${escapeHtml(actualNote(t))}" onmousedown="onBarMouseDown(event,'${t.id}','move')"></div>`;
+      html += `<div class="gantt-milestone${cls}" style="left:${cx - 8}px;top:${cy - 8}px;--bar-color:${color}" title="${escapeHtml(t.name)}${modeNote}${escapeHtml(baselineNote(t))}" onmousedown="onBarMouseDown(event,'${t.id}','move')"></div>`;
     } else {
       const width = Math.max(6, (dayNumber(eff.end) - dayNumber(eff.start) + 1) * px - 2);
       const midY = top + 10;
       barGeom[t.id] = { left, width, top, right: left + width, midY };
-      html += `<div class="gantt-bar${cls}" data-id="${t.id}" style="left:${left}px;width:${width}px;top:${top}px;--bar-color:${color}" title="${escapeHtml(t.name)} (${Math.round(eff.progress)}%)${modeNote}${escapeHtml(actualNote(t))}" onmousedown="onBarMouseDown(event,'${t.id}','move')">
+      html += `<div class="gantt-bar${cls}" data-id="${t.id}" style="left:${left}px;width:${width}px;top:${top}px;--bar-color:${color}" title="${escapeHtml(t.name)} (${Math.round(eff.progress)}%)${modeNote}${escapeHtml(baselineNote(t))}" onmousedown="onBarMouseDown(event,'${t.id}','move')">
         <div class="fill" style="width:${Math.min(100, Math.max(0, eff.progress))}%"></div>
         <div class="bar-label">${escapeHtml(t.name)}</div>
         <div class="resize-handle left" onmousedown="event.stopPropagation();onBarMouseDown(event,'${t.id}','resize-left')"></div>
@@ -2803,7 +2946,7 @@ function renderGantt() {
       </div>`;
     }
   });
-  list.forEach(({ task: t }, idx) => { html += actualBarHtml(t, idx, px); });   // after the planned bars, so they sit on top
+  list.forEach(({ task: t }, idx) => { html += baselineBarHtml(t, idx, px); });   // under the bars
   document.getElementById('ganttRows').innerHTML = html;
 
   const svg = document.getElementById('ganttDeps');
@@ -3130,6 +3273,17 @@ function updateModalComputed() {
     const aS = v('taskActualStartInput') || null;
     status = statusOf({ start: scheduled ? start : null, end: scheduled ? end : null, progress, actualStart: aS, actualEnd: milestone ? aS : (v('taskActualFinishInput') || null) });
   }
+  {   // the baseline and how far the schedule has moved from it, from what is typed right now
+    const b = baselineDates(t.id), box = $('taskBaselineInfo'), sv = hasChildren(t.id) ? scheduleVariance(t.id) : null;
+    const ms = $('taskMilestoneInput').checked, st = v('taskStartInput') || null, en = ms ? st : (v('taskEndInput') || st);
+    if (!b.start || !b.end || (!hasChildren(t.id) && isUnscheduled(t) && st === modalOrigDates.start && en === modalOrigDates.end)) box.classList.add('hidden');
+    else {
+      const startV = sv ? sv.start : (st ? workDiff(b.start, st) : null), finV = sv ? sv.finish : (en ? workDiff(b.end, en) : null);
+      const cls = n => n > 0 ? 'var-late' : n < 0 ? 'var-early' : '';
+      box.innerHTML = `<span>Baseline</span> <strong>${fmtDate(b.start)}${b.end !== b.start ? ' – ' + fmtDate(b.end) : ''}</strong><span class="bi-sep">·</span><span>Start variance</span> <strong class="${cls(startV)}">${fmtVariance(startV) || '—'}</strong><span class="bi-sep">·</span><span>Finish variance</span> <strong class="${cls(finV)}">${fmtVariance(finV) || '—'}</strong>`;
+      box.classList.remove('hidden');
+    }
+  }
   $('taskWbsInfo').textContent = wbsCode(t.id);
   $('taskRemainingInfo').textContent = remaining == null ? '—' : fmtRemaining(remaining);
   $('taskStatusInfo').innerHTML = statusPillHtml(status) || '—';
@@ -3138,6 +3292,99 @@ function updateModalComputed() {
 // another plan keeps its own. It has to be unique among the custom fields and the standard columns, or two columns would
 // look the same.
 let fieldNameTarget = null;
+/* ------------------------------ Baselines (plan menu → Baseline…) ------------------------------ */
+function baselineTasksWith(n) { return tasks.filter(t => t.baselines && t.baselines[n]); }
+function setBaselineSlots() { return Array.from({ length: BASELINE_SLOTS }, (_, n) => n).filter(n => tasks.some(t => t.baselines && t.baselines[n])); }   // a slot counts as set when a task has it
+function baselineMenuHint() {
+  const set = setBaselineSlots().length;
+  return set ? `${set} set` : 'not set';
+}
+function baselineScopeTasks(scope) {   // the leaf tasks a set/clear applies to
+  const root = scope === 'selected' && selectedTaskId && byId(selectedTaskId) ? [byId(selectedTaskId), ...descendantIds(selectedTaskId).map(byId)] : tasks;
+  return root.filter(t => t && !hasChildren(t.id));
+}
+function openBaselineModal() {
+  closePlanMenu();
+  const sel = document.getElementById('baselineSlotSelect');
+  sel.innerHTML = Array.from({ length: BASELINE_SLOTS }, (_, n) => `<option value="${n}">${baselineName(n)}</option>`).join('');
+  const firstFree = Array.from({ length: BASELINE_SLOTS }, (_, n) => n).find(n => !baselineTasksWith(n).length);
+  sel.value = String(firstFree == null ? 0 : firstFree);
+  const hasSel = !!(selectedTaskId && byId(selectedTaskId));
+  document.getElementById('baselineScopeSel').disabled = !hasSel;
+  document.getElementById('baselineScopeSelLabel').textContent = hasSel ? `The selected task “${byId(selectedTaskId).name}”${hasChildren(selectedTaskId) ? ' and the tasks in it' : ''}` : 'The selected task (none selected)';
+  document.getElementById('baselineScopeAll').checked = true;
+  renderBaselineModal();
+  document.getElementById('baselineModalBg').classList.add('open');
+  setTimeout(() => sel.focus(), 40);
+}
+function closeBaselineModal() { document.getElementById('baselineModalBg').classList.remove('open'); }
+function renderBaselineModal() {   // labels and buttons follow the chosen slot (called on open, on change and after every set/clear)
+  const slot = Number(document.getElementById('baselineSlotSelect').value), meta = project.baselines && project.baselines[slot], count = baselineTasksWith(slot).length;
+  const sel = document.getElementById('baselineSlotSelect'), cmp = document.getElementById('baselineCompareSelect');
+  for (const o of sel.options) { const n = Number(o.value), c = baselineTasksWith(n).length, m = project.baselines && project.baselines[n]; o.textContent = `${baselineName(n)} — ${c ? `set${m ? ' ' + fmtDate(m.setAt) : ''} · ${c} task${c === 1 ? '' : 's'}` : 'not set'}`; }
+  const setSlots = setBaselineSlots();
+  cmp.innerHTML = setSlots.length ? setSlots.map(n => `<option value="${n}">${baselineName(n)}</option>`).join('') : '<option value="0">(no baseline set yet)</option>';
+  cmp.disabled = !setSlots.length; if (setSlots.length) cmp.value = String(setSlots.includes(compareBaseline()) ? compareBaseline() : setSlots[0]);
+  document.getElementById('baselineSlotInfo').textContent = count ? `${baselineName(slot)} was set${meta ? ' on ' + fmtDate(meta.setAt) : ''} for ${count} task${count === 1 ? '' : 's'}. Setting it again replaces it (for the tasks you apply it to).` : `${baselineName(slot)} is not set. Setting it saves the current Start and Finish of the tasks you choose.`;
+  document.getElementById('baselineSetBtn').textContent = count ? `Set ${baselineName(slot)} again` : `Set ${baselineName(slot)}`;
+  document.getElementById('baselineClearBtn').disabled = !count;
+  const stale = actualsNotApplied();
+  document.getElementById('baselineActualsInfo').textContent = stale.length ? `${stale.length} task${stale.length === 1 ? ' has' : 's have'} an actual date that is not in the schedule yet (plans from before this version kept them beside it). Applying them moves Start / Finish to the actual dates (a running task keeps its duration) and re-plans what follows. Set a baseline first if you want to keep the plan.` : 'Every actual date is already in the schedule.';
+  document.getElementById('baselineApplyBtn').disabled = !stale.length;
+}
+// Snapshot helpers so every change can be undone from the toast.
+function snapshotBaselines(list) { return { tasks: list.map(t => ({ t, b: t.baselines ? JSON.parse(JSON.stringify(t.baselines)) : undefined, u: t.updatedAt })), meta: project.baselines ? JSON.parse(JSON.stringify(project.baselines)) : undefined, cmp: project.compareBaseline, pu: project.updatedAt }; }
+function restoreBaselines(snap) {
+  for (const { t, b, u } of snap.tasks) { if (b) t.baselines = b; else delete t.baselines; t.updatedAt = u; }
+  if (snap.meta) project.baselines = snap.meta; else delete project.baselines;
+  if (snap.cmp) project.compareBaseline = snap.cmp; else delete project.compareBaseline;
+  project.updatedAt = Date.now(); normalizeData(); save(); render();
+}
+function applyBaselineChange(slot, scope, clear) {
+  const targets = baselineScopeTasks(scope).filter(t => clear ? !!(t.baselines && t.baselines[slot]) : !isUnscheduled(t));
+  if (!targets.length) { showToast(clear ? `${baselineName(slot)} is not set for those tasks` : 'There are no scheduled tasks to baseline', true); return false; }
+  const snap = snapshotBaselines(tasks), now = Date.now(), noneSetYet = !setBaselineSlots().length;
+  for (const t of targets) {
+    const b = Object.assign({}, t.baselines);
+    if (clear) delete b[slot]; else b[slot] = [t.startDate, t.milestone ? t.startDate : t.endDate];
+    if (Object.keys(b).length) t.baselines = b; else delete t.baselines;
+    t.updatedAt = now;
+  }
+  const meta = Object.assign({}, project.baselines);
+  if (clear) { if (!baselineTasksWith(slot).length) { delete meta[slot]; if (compareBaseline() === slot) delete project.compareBaseline; } }
+  else { meta[slot] = { setAt: todayStr() }; if (noneSetYet) project.compareBaseline = slot; }   // the first baseline you set is the one shown
+  if (Object.keys(meta).length) project.baselines = meta; else delete project.baselines;
+  project.updatedAt = now; normalizeData(); save(); render();
+  const n = targets.length;
+  showToast(`${baselineName(slot)} ${clear ? 'cleared' : 'set'} for ${n} task${n === 1 ? '' : 's'}`, false, () => restoreBaselines(snap));
+  return true;
+}
+function setBaselineFromDialog() {
+  const slot = Number(document.getElementById('baselineSlotSelect').value), scope = document.getElementById('baselineScopeSel').checked ? 'selected' : 'all';
+  if (applyBaselineChange(slot, scope, false)) renderBaselineModal();
+}
+function clearBaselineFromDialog() {
+  const slot = Number(document.getElementById('baselineSlotSelect').value), scope = document.getElementById('baselineScopeSel').checked ? 'selected' : 'all';
+  if (applyBaselineChange(slot, scope, true)) renderBaselineModal();
+}
+function setCompareBaseline(v) {
+  const n = Number(v);
+  if (n > 0 && n < BASELINE_SLOTS) project.compareBaseline = n; else delete project.compareBaseline;
+  project.updatedAt = Date.now(); save(); render(); renderBaselineModal();
+}
+// Tasks (not groups) whose actual dates are not in their Start / Finish yet — plans from before "actual dates ARE the schedule".
+function actualsNotApplied() { return tasks.filter(t => !hasChildren(t.id) && ((t.actualStart && t.startDate !== t.actualStart) || (t.actualFinish && t.endDate !== t.actualFinish))); }
+function applyActualsToSchedule() {
+  const targets = actualsNotApplied(); if (!targets.length) return;
+  const before = tasks.map(t => ({ t, s: t.startDate, e: t.endDate, st: t.startText, et: t.endText, dt: t.durText, u: t.updatedAt })), now = Date.now();
+  for (const t of targets) { applyActualDates(t); t.updatedAt = now; }
+  for (const t of targets) cascadeSchedule(t.id);
+  normalizeData(); save(); render(); renderBaselineModal();
+  showToast(`Actual dates applied to ${targets.length} task${targets.length === 1 ? '' : 's'}`, false, () => {
+    for (const x of before) { x.t.startDate = x.s; x.t.endDate = x.e; x.t.startText = x.st; x.t.endText = x.et; x.t.durText = x.dt; x.t.updatedAt = x.u; }
+    normalizeData(); save(); render(); renderBaselineModal();
+  });
+}
 function openCalendarModal() {
   closePlanMenu();
   document.getElementById('calendarPlanName').textContent = project.name;
@@ -3227,10 +3474,21 @@ function onActualFinishChange() {
   document.getElementById('taskProgressInput').value = 100;
   const as = document.getElementById('taskActualStartInput');
   if (!as.value) { const st = document.getElementById('taskStartInput').value; as.value = st && dayNumber(st) <= dayNumber(f) ? st : f; }
+  document.getElementById('taskStartInput').value = as.value;    // the actual dates ARE the schedule (MS Project): Start = Actual Start, Finish = Actual Finish
+  document.getElementById('taskEndInput').value = f;
+  updateDurationDisplay(); updateModalComputed();
 }
-// A milestone has one date: its actual date is its actual finish, so recording it completes the milestone.
+// The actual start becomes the Start (a task still running keeps its duration, so its Finish moves along); a milestone has one date:
+// its actual date is its actual finish, so recording it completes the milestone.
 function onActualStartChange() {
-  if (document.getElementById('taskMilestoneInput').checked && document.getElementById('taskActualStartInput').value) document.getElementById('taskProgressInput').value = 100;
+  const a = document.getElementById('taskActualStartInput').value;
+  if (!a) return;
+  const startEl = document.getElementById('taskStartInput'), endEl = document.getElementById('taskEndInput');
+  const dur = Math.max(1, parseInt(document.getElementById('taskDurationInput').value) || 1);
+  startEl.value = a;
+  if (document.getElementById('taskMilestoneInput').checked) { endEl.value = a; document.getElementById('taskProgressInput').value = 100; }
+  else if (!document.getElementById('taskActualFinishInput').value) endEl.value = finishFor(a, dur);
+  updateDurationDisplay(); updateModalComputed();
 }
 function onMilestoneToggle() {
   const on = document.getElementById('taskMilestoneInput').checked;
@@ -3242,7 +3500,9 @@ function onMilestoneToggle() {
 const dialogIsAuto = () => document.getElementById('taskModeInput').value === 'auto';
 function onTaskStartChange() {
   let s = document.getElementById('taskStartInput').value; if (!s) return;
-  if (dialogIsAuto() && !isWorkDay(s)) { s = nextWorkDay(s); document.getElementById('taskStartInput').value = s; }   // an Auto task starts on a working day
+  const as = document.getElementById('taskActualStartInput');
+  if (dialogIsAuto() && !as.value && !isWorkDay(s)) { s = nextWorkDay(s); document.getElementById('taskStartInput').value = s; }   // an Auto task starts on a working day (an actual date is a fact)
+  if (as.value) as.value = s;   // once the task has started its Start IS its Actual Start
   const endEl = document.getElementById('taskEndInput');
   if (document.getElementById('taskMilestoneInput').checked) endEl.value = s;
   else if (!endEl.value || dayNumber(endEl.value) < dayNumber(s)) endEl.value = s;
@@ -3250,9 +3510,10 @@ function onTaskStartChange() {
 }
 function onTaskEndChange() {
   const s = document.getElementById('taskStartInput').value;
-  const endEl = document.getElementById('taskEndInput');
-  if (endEl.value && dialogIsAuto() && !isWorkDay(endEl.value)) endEl.value = prevWorkDay(endEl.value);   // ...and finishes on one
+  const endEl = document.getElementById('taskEndInput'), af = document.getElementById('taskActualFinishInput');
+  if (endEl.value && dialogIsAuto() && !af.value && !isWorkDay(endEl.value)) endEl.value = prevWorkDay(endEl.value);   // ...and finishes on one
   if (dayNumber(endEl.value) < dayNumber(s)) endEl.value = s;
+  if (af.value) af.value = endEl.value;   // a finished task's Finish IS its Actual Finish
   updateDurationDisplay();
 }
 function onTaskDurationChange() {
@@ -3260,6 +3521,7 @@ function onTaskDurationChange() {
   let s = document.getElementById('taskStartInput').value;
   if (dialogIsAuto() && !isWorkDay(s)) { s = nextWorkDay(s); document.getElementById('taskStartInput').value = s; }
   document.getElementById('taskEndInput').value = finishFor(s, d);
+  if (document.getElementById('taskActualFinishInput').value) document.getElementById('taskActualFinishInput').value = document.getElementById('taskEndInput').value;
 }
 function updateDurationDisplay() {
   const s = document.getElementById('taskStartInput').value, e = document.getElementById('taskEndInput').value;
@@ -3337,7 +3599,7 @@ function saveTaskFromModal() {
   t.progress = Math.max(0, Math.min(100, parseInt(document.getElementById('taskProgressInput').value) || 0));
   t.resource = document.getElementById('taskResourceInput').value.trim().slice(0, 200);
   const previousFinish = t.actualFinish;
-  if (!isGroup) { t.actualStart = aStart; t.actualFinish = aEnd; recordActualFinish(t, previousFinish); }
+  if (!isGroup) { t.actualStart = aStart; t.actualFinish = aEnd; recordActualFinish(t, previousFinish); applyActualDates(t); }
   { const cv = cleanCustomValues(readCustomInputs()); if (cv) t.custom = cv; else delete t.custom; }
   t.color = document.getElementById('taskColorSwatches').dataset.value || null;
   t.predecessors = editingPredecessors.filter(p => p.id);
@@ -3625,7 +3887,7 @@ function buildXlsx(opts) {
   // ---------------- Tasks sheet: ID, then the task list's own visible columns in the user's order (or all of them)
   const XCOLS = {
     id: ['ID', 6], mode: ['Mode', 10], wbs: ['WBS', 9], name: ['Task Name', 46], start: ['Start', 13], end: ['Finish', 13], actualStart: ['Actual Start', 13],
-    actualFinish: ['Actual Finish', 13], duration: ['Duration', 12], progress: ['% Complete', 13], remaining: ['Remaining Duration', 13], status: ['Status', 13], preds: ['Predecessors', 18], resource: ['Resource', 22]
+    actualFinish: ['Actual Finish', 13], baselineStart: ['Baseline Start', 13], baselineFinish: ['Baseline Finish', 13], baselineDuration: ['Baseline Duration', 13], startVariance: ['Start Variance', 13], finishVariance: ['Finish Variance', 13], durationVariance: ['Duration Variance', 13], duration: ['Duration', 12], progress: ['% Complete', 13], remaining: ['Remaining Duration', 13], status: ['Status', 13], preds: ['Predecessors', 18], resource: ['Resource', 22]
   };
   for (const id of Object.keys(CUSTOM_FIELDS)) XCOLS[id] = [customFieldName(id), { text: 22, number: 13, date: 13, flag: 9 }[CUSTOM_FIELDS[id].kind]];
   // "All columns" adds the custom fields that are in use (renamed, or holding a value somewhere) — not twenty empty columns.
@@ -3657,6 +3919,13 @@ function buildXlsx(opts) {
         case 'end': dateCell(c, t.endText, endIso); break;
         case 'actualStart': dateCell(c, null, act.start); break;
         case 'actualFinish': dateCell(c, null, act.end); break;
+        case 'baselineStart': dateCell(c, null, baselineDates(t.id).start); break;
+        case 'baselineFinish': dateCell(c, null, baselineDates(t.id).end); break;
+        case 'baselineDuration': { const bd = scheduleVariance(t.id).baseDuration; tasksSheet.cell(r, c, bd, S({ h: 'center', num: bd == null ? undefined : durFmt })); break; }
+        case 'startVariance': case 'finishVariance': case 'durationVariance': {
+          const sv = scheduleVariance(t.id), n = { startVariance: sv.start, finishVariance: sv.finish, durationVariance: sv.duration }[k];
+          tasksSheet.cell(r, c, n, S({ h: 'center', num: '+0" days";-0" days";0" days"', color: n > 0 ? 'CF222E' : n < 0 ? '1A7F37' : DIM, bold: false })); break;
+        }
         case 'duration': {
           const durNum = !isUnscheduled(t) && startIso && endIso ? durationDays(startIso, endIso) : null;
           if (t.durText != null) tasksSheet.cell(r, c, t.durText, S({ h: 'center', italic: true, color: DIM, bold: false }));
@@ -4228,6 +4497,7 @@ function renderPlanMenu() {
     (fileSyncSupported() ? `<button class="dropdown-item" id="planOpenFileItem" onclick="openFileAsPlan()"><i class="fa-solid fa-folder-open"></i>Open file as plan…</button>` : '') +
     `<div class="dropdown-sep"></div>` +
     `<button class="dropdown-item" id="planRenameItem" onclick="openPlanModal('rename')"><i class="fa-solid fa-pen"></i>Rename plan…</button>` +
+    `<button class="dropdown-item" id="planBaselineItem" onclick="openBaselineModal()"><i class="fa-solid fa-ruler-horizontal"></i>Baseline…<span class="item-hint">${escapeHtml(baselineMenuHint())}</span></button>` +
     `<button class="dropdown-item" id="planCalendarItem" onclick="openCalendarModal()"><i class="fa-regular fa-calendar-days"></i>Working calendar…<span class="item-hint">${escapeHtml(calendarLabel())}</span></button>` +
     `<button class="dropdown-item" id="planDuplicateItem" onclick="duplicatePlan()"><i class="fa-regular fa-copy"></i>Duplicate plan</button>` +
     (fileSyncSupported() ? `<button class="dropdown-item" id="planDisconnectItem" onclick="disconnectFile()"${syncFileHandle ? '' : ' disabled title="This plan isn’t linked to a file"'}><i class="fa-solid fa-link-slash"></i>Disconnect file…</button>` : '') +
@@ -4420,7 +4690,7 @@ function wireGlobalEvents() {
     // Escape closes whatever overlay is open first; only when there is none — and
     // the user isn't typing in a field, where Escape already means "cancel this
     // edit" — does it clear the task selection.
-    const modalIds = ['taskModalBg', 'confirmModalBg', 'calendarModalBg', 'planModalBg', 'excelModalBg', 'importModalBg', 'backupsModalBg', 'helpModalBg', 'aboutModalBg'];
+    const modalIds = ['taskModalBg', 'confirmModalBg', 'calendarModalBg', 'baselineModalBg', 'planModalBg', 'excelModalBg', 'importModalBg', 'backupsModalBg', 'helpModalBg', 'aboutModalBg'];
     const overlayOpen = modalIds.some(id => document.getElementById(id).classList.contains('open'))
       || document.getElementById('fileSyncModalBg').classList.contains('open')   // mandatory: Escape can't close it
       || document.getElementById('dataMenu').classList.contains('open')
