@@ -813,7 +813,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
       <div><div class="help-section-title">Columns and extra fields</div>Besides name, dates, duration, % and predecessors, a task can carry a <strong>Resource</strong> (who does the work), an <strong>Actual Start</strong> and <strong>Actual Finish</strong> (what really happened — they overwrite Start and Finish; recording an Actual Finish marks the task 100% complete and fills an empty Actual Start), and has a <strong>WBS</strong> code such as 2.1.3 that is worked out from the outline (shown by default). <strong>Remaining Duration</strong> (the duration still to go, from % complete) and <strong>Status</strong> (Complete, On Schedule, Late or Future Task, judged against today) are worked out for you too. Resource, Actual Start/Finish, Remaining Duration and Status aren't shown by default: click <strong>Columns</strong> in the toolbar (Tasks view) to tick the columns you want and reorder them; your choice is remembered on this device. Click a Resource or actual-date cell to edit it, or use the task dialog. A group shows the actual dates of the tasks in it (its earliest actual start, and an actual finish once everything in it has finished). <strong>Actual dates are the schedule</strong>: recording an Actual Start makes it the task's Start (a task that is still running keeps its duration, so its Finish moves with it), an Actual Finish makes it the Finish, and the tasks that <strong>depend</strong> on it are re-planned from those dates (a late start or finish pushes them later). A task that has itself already started or finished (it has an actual date) is not rescheduled any more: its planned dates stay as they are, and a warning triangle appears if its predecessors say it couldn't have started yet.</div>
       <div><div class="help-section-title">Custom fields</div>Every task can carry up to 20 fields of your own: <strong>Text1–5</strong>, <strong>Number1–5</strong>, <strong>Date1–5</strong> and <strong>Flag1–5</strong> (a yes/no tick). Fill them in on the task dialog's <strong>Custom fields</strong> tab, or — once you have ticked them under <strong>Columns</strong>, where they start hidden — straight in the list (click a cell; a flag toggles). Use the pencil beside a field to rename it, for instance Text1 to <em>Cost centre</em>: the name is saved with the plan, so another plan can call the same field something else. Custom fields can be filtered like any column and are included in the Excel export.</div>
       <div><div class="help-section-title">Task Mode</div>Every task is either Manually Scheduled (pushpin) or Auto Scheduled (chart icon) — click the icon in the Task Mode column, or use the Task Mode field in a task's dialog. An Auto task follows its predecessors and constraints. A Manual task stays exactly where you put it: predecessors never move it, its Start, Finish and Duration can be free text such as "TBD", and a warning triangle appears if it starts earlier than its predecessors allow. Manual tasks are drawn with a dashed bar, and are left out of the critical path. Switching a task to Auto moves it to the earliest date its links allow. The "New tasks" button at the right of the toolbar chooses the mode new tasks start in (Auto Scheduled by default).</div>
-      <div><div class="help-section-title">Dependencies</div>Open a task and add a predecessor to link it to another task (Finish-to-Start, Start-to-Start, Finish-to-Finish or Start-to-Finish). Give it a lead or lag in days: a positive number delays the dependent task (lag), a negative number lets it overlap and start early (lead) — e.g. "3FS+2" waits 2 extra days after task 3 finishes, "3FS-2" starts 2 days before task 3 finishes. Moving a task forward automatically pushes any dependent tasks forward too — it never pulls a task earlier on its own. A circular dependency is flagged with a warning icon and stops auto-scheduling for the tasks involved.</div>
+      <div><div class="help-section-title">Dependencies</div>Open a task and add a predecessor to link it to another task (Finish-to-Start, Start-to-Start, Finish-to-Finish or Start-to-Finish). Give it a lead or lag in days: a positive number delays the dependent task (lag), a negative number lets it overlap and start early (lead) — e.g. "3FS+2" waits 2 extra days after task 3 finishes, "3FS-2" starts 2 days before task 3 finishes. An Auto task always sits at the <strong>earliest date its links allow</strong>, as in MS Project: move a predecessor later and the dependent tasks are pushed later, make it shorter, finish it early (record an Actual Finish) or delete it and they are pulled earlier. The date you choose for yourself is kept: typing a <strong>Start</strong> (or dragging the bar, or changing it in a task's dialog) pins the task with a <em>Start No Earlier Than</em> constraint at that date, a typed <strong>Finish</strong> sets <em>Finish No Earlier Than</em> — links can still push the task later, but never pull it before that date. Change or remove the constraint in the task's dialog; a task with no links has nothing to be pulled by and stays where it is. Manual tasks and tasks that have already started are never moved. A circular dependency is flagged with a warning icon and stops auto-scheduling for the tasks involved.</div>
       <div><div class="help-section-title">The Gantt chart</div>The left side of the Gantt view is the same task list as in the Tasks view — the same filters, editing and buttons — with the chart to its right. <strong>Columns</strong> chooses the columns of the view you are in: the Gantt view remembers its own set (Mode, Name, Start and Finish to begin with) apart from the Tasks view's. Drag the thin strip between them to change how much room the list gets; the list scrolls sideways by itself when it has more columns than fit, and its ID … Task Name columns stay in place. Drag a bar to reschedule it, drag its edges to resize, or drag the small circle on its right edge onto another task to create a dependency. Click a bar or row to edit it. The Week / Month / Year buttons change the scale: Year (the default) shows quarters, and Week is labelled by calendar week (CW, weeks start on Monday, ISO 8601). The route icon in the toolbar highlights the critical path — the chain of tasks with zero slack that determines the overall project end date.</div>
       <div><div class="help-section-title">Plans</div>The plan name at the top left is a switcher: click it to move between plans, start a new one, open an existing file as a plan, or rename, duplicate or delete the current plan. Each plan has its own tasks, its own daily backups and — optionally — its own linked file, so switching plans also switches which file is kept in sync. Deleting a plan only removes it from this browser; its file is never touched. Every plan must live in a file (Chrome/Edge), so New plan and Duplicate ask you where to save it.</div>
       <div><div class="help-section-title">Data &amp; sync</div>Everything lives in this browser's local storage — nothing ever leaves your machine except into the files you choose. Every plan is kept in a plain JSON file on your disk (linking one is required, in Chrome/Edge): every change is saved to it automatically, and inside an iCloud Drive/OneDrive/Dropbox folder it keeps your own devices in step. You can disconnect a plan's file (click the file name at the top right, or use the plan menu) — the file is kept, and Milestone asks you to choose a file for the plan straight away. If the file is moved or deleted, Milestone asks you to create or find it again. Data → Export/Import moves a full JSON snapshot of the current plan in or out, and Export to Excel saves a formatted .xlsx workbook (a task list plus an optional Gantt chart sheet — each sheet uses the columns you chose in its own view); Local Backups keeps a rolling daily snapshot. <strong>Working together on one file:</strong> when several people (or devices) use the same linked file, Milestone reads the file before it writes, so a save never wipes out someone else's work. Changes to <em>different</em> things — even different fields of the same task — are all kept. If you and someone else changed the <em>same</em> field, the newer edit is kept and an amber <strong>conflicts</strong> badge appears next to the file name: click it to see both versions and take the other one if it should have won. Tasks that depend on something that moved are re-planned after a merge.</div>
@@ -1717,13 +1717,33 @@ function scheduleMismatch(t) {
   const have = started ? (t.actualStart || t.startDate) : t.startDate;
   return cs && dayNumber(cs) > dayNumber(have) ? cs : null;
 }
-// Only ever pushes a dependent task LATER, never pulls one earlier — a
-// manual placement ahead of its own constraint is left alone (surfaced as
-// a visual warning, not silently corrected) so a deliberate early start
-// is never overwritten by this cascade. A task in taskMode 'manual' (MS
-// Project's Manually Scheduled) is skipped the same way a cyclic one is —
-// its own dates are never rewritten by the cascade, though it still keeps
-// whatever dates it has for its own successors' constraintStart() to read.
+// MS Project's scheduling rule for an Auto Scheduled task: it sits at the EARLIEST date its links and its constraint allow — later
+// when a predecessor moves out, earlier when one moves in, finishes early or goes away. (Before, this app only ever pushed a task
+// later.) What keeps a date the user chose is the constraint that choosing it sets — see pinToDate(). Returns true when it moved.
+// A task with nothing to schedule against (no usable link, no constraint date) keeps its dates.
+function placeByLinks(task) {
+  const cs = constraintStart(task);
+  if (!cs || dayNumber(cs) === dayNumber(task.startDate)) return false;
+  const dur = durationDays(task.startDate, task.endDate);
+  task.startDate = cs;
+  task.endDate = finishFor(cs, dur);
+  task.updatedAt = Date.now();
+  return true;
+}
+// Typing a Start or Finish for an Auto task, or dragging its bar, pins it there the way MS Project does: Start No Earlier Than
+// (Finish No Earlier Than for a finish) at that date. Its links can still push it later, but never pull it before the date the user
+// chose. A constraint the user set on purpose (must start on, no later than …) is left alone; manual and started tasks are not
+// scheduled by their links at all.
+function pinToDate(t, basis) {
+  if (t.taskMode === 'manual' || hasChildren(t.id) || isStarted(t) || isUnscheduled(t)) return;
+  if (!['ASAP', 'ALAP', 'SNET', 'FNET'].includes(t.constraintType || 'ASAP')) return;
+  t.constraintType = basis === 'finish' ? 'FNET' : 'SNET';
+  t.constraintDate = basis === 'finish' ? t.endDate : t.startDate;
+}
+// Walks forward through the successors of `changedId`, putting each Auto task where its links say (earlier or later) and going on
+// to ITS successors whenever one moved. A task in taskMode 'manual' (MS Project's Manually Scheduled), one that has already
+// started, and one in a dependency cycle are skipped — their own dates are never rewritten by the cascade, though they keep the dates
+// they have for their own successors' constraintStart() to read. (An early manual placement is surfaced by scheduleMismatch().)
 function cascadeSchedule(changedId) {
   const cyclic = taskCycleSet();
   const succ = successorsMap();
@@ -1735,45 +1755,36 @@ function cascadeSchedule(changedId) {
     if (cyclic.has(id) || hasChildren(id)) continue;
     const task = byId(id);
     if (!task || task.taskMode === 'manual' || isStarted(task)) continue;   // a manual task and a task that has already started keep their planned dates
-    const cs = constraintStart(task);
-    if (cs && dayNumber(cs) > dayNumber(task.startDate)) {
-      const dur = durationDays(task.startDate, task.endDate);
-      task.startDate = cs;
-      task.endDate = finishFor(cs, dur);
-      task.updatedAt = Date.now();
-      for (const s of (succ[id] || [])) queue.push(s.id);
-    }
+    if (placeByLinks(task)) for (const s of (succ[id] || [])) queue.push(s.id);
   }
 }
-// Use after a task's own predecessor list just changed (adding/removing a
-// link) — cascadeSchedule() alone only pushes a task's *successors*, so a
-// task that just gained a predecessor needs its own constraint checked
-// first or it would sit wherever it already was, dependency ignored.
+// Use after a task's own predecessor list or dates just changed — cascadeSchedule() alone only places a task's *successors*, so a
+// task that just gained or lost a predecessor needs its own place worked out first.
 function applyConstraints(taskId) {
   const cyclic = taskCycleSet();
   const task = byId(taskId);
-  if (!cyclic.has(taskId) && !hasChildren(taskId) && task && task.taskMode !== 'manual' && !isStarted(task)) {
-    const cs = constraintStart(task);
-    if (cs && dayNumber(cs) > dayNumber(task.startDate)) {
-      const dur = durationDays(task.startDate, task.endDate);
-      task.startDate = cs;
-      task.endDate = finishFor(cs, dur);
-      task.updatedAt = Date.now();
-    }
-  }
+  if (!cyclic.has(taskId) && !hasChildren(taskId) && task && task.taskMode !== 'manual' && !isStarted(task)) placeByLinks(task);
   cascadeSchedule(taskId);
 }
-// Does an Auto task the scheduler would place sit earlier than its links allow right now?
-function startsBeforeLinks(t, cyc = taskCycleSet()) {
+// Does an Auto task the scheduler would place sit somewhere other than its links say right now?
+function offItsLinks(t, cyc = taskCycleSet()) {
   if (!t || cyc.has(t.id) || hasChildren(t.id) || t.taskMode === 'manual' || isStarted(t)) return false;
   const cs = constraintStart(t);
-  return !!cs && dayNumber(cs) > dayNumber(t.startDate);
+  return !!cs && dayNumber(cs) !== dayNumber(t.startDate);
 }
 // Breaking a dependency cycle (a link removed, a task deleted, a task turned into a group) releases every task that was exempt
 // because of it — the scheduler never placed them, so they may sit before their links allow. Pass taskCycleSet() taken BEFORE the change.
 function releaseFromCycles(before) {
   const after = taskCycleSet();
   for (const id of before) if (!after.has(id) && byId(id)) applyConstraints(id);
+}
+// A structural change (indent, drag-move) can turn a task into a group; normalizeData() then drops the group's own links and every
+// link that pointed at it. The tasks that lost a link are placed again (they may now sit later than their remaining links say), and
+// so are those released from a dependency cycle. Take the snapshot BEFORE the change, call replanChangedLinks() AFTER normalizeData().
+function linkSnapshot() { return { cyc: taskCycleSet(), counts: new Map(tasks.map(t => [t.id, t.predecessors.length])) }; }
+function replanChangedLinks(snap) {
+  for (const t of tasks) if (snap.counts.has(t.id) && t.predecessors.length !== snap.counts.get(t.id) && byId(t.id)) applyConstraints(t.id);
+  releaseFromCycles(snap.cyc);
 }
 function topoOrder(ids, preds) {
   const idSet = new Set(ids);
@@ -2598,7 +2609,7 @@ function moveTask(id, targetId, zone) {
       index = zone === 'before' ? ti : ti + 1;
     }
   }
-  const oldParentId = t.parentId || null, oldOrder = t.order, cyc0 = taskCycleSet();
+  const oldParentId = t.parentId || null, oldOrder = t.order, snap = linkSnapshot();
   const dest = childrenOf(parentId).filter(s => s.id !== id);
   dest.splice(index, 0, t);
   t.parentId = parentId;
@@ -2610,7 +2621,7 @@ function moveTask(id, targetId, zone) {
   if (!changed) return; // dropped back where it already was
   t.updatedAt = Date.now();
   selectedTaskId = id;
-  normalizeData(); releaseGroup(oldParentId); releaseFromCycles(cyc0); save(); render();
+  normalizeData(); releaseGroup(oldParentId); replanChangedLinks(snap); save(); render();
 }
 // A custom-field cell. Text / Number / Date edit in place (a click opens the editor); a Flag toggles on click. Any task can have
 // them — groups and milestones included — and nothing is rolled up.
@@ -2816,6 +2827,7 @@ function commitInlineEdit(id, field, rawValue) {
     }
     clampTaskDates(t);
     if (snapToWorkDays(t)) showToast(`Moved to a working day — this plan works ${calendarLabel()}`);
+    if (iso) pinToDate(t, isStart ? 'start' : 'finish');
     applyConstraints(id);
   } else if (field === 'duration') {
     if (manual) {
@@ -3116,14 +3128,15 @@ function onDragMouseUp() {
   window.removeEventListener('mousemove', onDragMouseMove);
   window.removeEventListener('mouseup', onDragMouseUp);
   if (!dragState) return;
-  const { taskId, moved, previewStart, previewEnd } = dragState;
+  const { taskId, moved, previewStart, previewEnd } = dragState, dragMode = dragState.mode;
   dragState = null;
   if (!moved) { openTaskModal(taskId); return; }
   const t = byId(taskId);
   t.startDate = previewStart; t.endDate = t.milestone ? previewStart : previewEnd;
   t.durText = null;
   t.updatedAt = Date.now();
-  cascadeSchedule(t.id);
+  pinToDate(t, dragMode === 'resize-right' ? 'finish' : 'start');
+  applyConstraints(t.id);
   save(); render();
 }
 
@@ -3206,12 +3219,12 @@ function indentSelected() {
   const siblings = childrenOf(t.parentId || null);
   const idx = siblings.findIndex(s => s.id === id);
   if (idx <= 0) return;
-  const newParent = siblings[idx - 1], cyc0 = taskCycleSet();
+  const newParent = siblings[idx - 1], snap = linkSnapshot();
   t.parentId = newParent.id;
   const newSiblings = childrenOf(newParent.id);
   t.order = newSiblings.length ? Math.max(...newSiblings.map(s => s.order)) + 1 : 0;
   t.updatedAt = Date.now();
-  normalizeData(); releaseFromCycles(cyc0);   // the new parent is a group now: its links are dropped, which can break a cycle
+  normalizeData(); replanChangedLinks(snap);   // the new parent is a group now: its links (and those pointing at it) are dropped
   save(); render();
 }
 // A group that has just lost its last task is an ordinary task again, so its own links and constraint (ignored while it was a group)
@@ -3264,8 +3277,13 @@ function cloneTask(id) {
   save(); render();
   const newIds = new Set(copies.map(c => c.id));
   showToast(copies.length > 1 ? `Cloned "${src.name}" with ${copies.length - 1} sub-task${copies.length === 2 ? '' : 's'}` : `Cloned "${src.name}"`, false, () => {
+    const parentsNow = [...new Set(copies.map(c => (byId(c.id) || {}).parentId).filter(pid => pid && !newIds.has(pid)))];   // where the copies are NOW (they may have been moved since)
+    const lost = [];   // tasks that were linked to a copy in the meantime lose that link: they are placed again by what is left
+    for (const x of tasks) { const kept = x.predecessors.filter(p => !newIds.has(p.id)); if (kept.length !== x.predecessors.length && !newIds.has(x.id)) { x.predecessors = kept; lost.push(x.id); } }
     tasks = tasks.filter(x => !newIds.has(x.id));
     for (const c of copies) tombstone(deletedTaskIds, c.id);
+    for (const id of lost) if (byId(id)) applyConstraints(id);
+    for (const pid of parentsNow) releaseGroup(pid);   // a parent that had a copy as its only task is an ordinary task again
     for (const m of moved) { m.t.order = m.order; m.t.updatedAt = Date.now(); }
     selectedTaskId = byId(prevSelected) ? prevSelected : null;
     save(); render();
@@ -3283,7 +3301,7 @@ function deleteTaskFlow(id) {
     confirmLabel: 'Delete',
     action() {
       const removed = tasks.filter(x => allIds.includes(x.id)), cyc0 = taskCycleSet();
-      const earlyBefore = new Set(tasks.filter(x => startsBeforeLinks(x, cyc0)).map(x => x.id));   // already ahead of their links before the delete: Undo leaves those as they were
+      const offBefore = new Set(tasks.filter(x => offItsLinks(x, cyc0)).map(x => x.id));   // already off their links before the delete: Undo leaves those as they were
       const strippedLinks = [];
       for (const other of tasks) {
         if (allIds.includes(other.id)) continue;
@@ -3309,7 +3327,7 @@ function deleteTaskFlow(id) {
         for (const { taskId, pred } of strippedLinks) { const ot = byId(taskId); if (ot) ot.predecessors.push(pred); }
         for (const r of replanned) if (r.t.startDate === r.ns && r.t.endDate === r.ne) { r.t.startDate = r.s; r.t.endDate = r.e; r.t.updatedAt = r.u; }   // (what the re-check moved goes back too — unless it was edited since)
         const cycNow = taskCycleSet();   // edits made in the meantime may have moved a predecessor: the restored tasks and links are checked against the schedule as it is now
-        for (const rid of new Set([...removed.map(r => r.id), ...strippedLinks.map(l => l.taskId)])) if (!earlyBefore.has(rid) && startsBeforeLinks(byId(rid), cycNow)) applyConstraints(rid);
+        for (const rid of new Set([...removed.map(r => r.id), ...strippedLinks.map(l => l.taskId)])) if (!offBefore.has(rid) && offItsLinks(byId(rid), cycNow)) applyConstraints(rid);
         save(); render();
       });
     }
@@ -3713,11 +3731,16 @@ function saveTaskFromModal() {
   if (!isGroup) { t.actualStart = aStart; t.actualFinish = aEnd; recordActualFinish(t, previousFinish); applyActualDates(t); clampTaskDates(t); if (!isStarted(t)) snapToWorkDays(t); }
   { const cv = cleanCustomValues(readCustomInputs()); if (cv) t.custom = cv; else delete t.custom; }
   t.color = document.getElementById('taskColorSwatches').dataset.value || null;
-  const cyc0 = taskCycleSet();
+  const cyc0 = taskCycleSet(), prevCType = t.constraintType, prevCDate = t.constraintDate;
   t.predecessors = editingPredecessors.filter(p => p.id);
   t.constraintType = document.getElementById('taskConstraintTypeInput').value;
   const cinfo = constraintTypeInfo(t.constraintType);
   t.constraintDate = cinfo.hasDate ? (document.getElementById('taskConstraintDateInput').value || t.startDate) : null;
+  // Changing a date in the dialog pins the task there (Start / Finish No Earlier Than) unless the constraint itself was changed.
+  if (t.constraintType === prevCType && t.constraintDate === prevCDate) {
+    if (t.startDate !== modalOrigDates.start) pinToDate(t, 'start');
+    else if (t.endDate !== modalOrigDates.end && !t.milestone) pinToDate(t, 'finish');
+  }
   // "Must Start/Finish On" is a hard pin — apply it immediately, the same
   // moment the constraint is set, rather than waiting for the cascade
   // below to merely treat it as a lower bound (see constraintStart()).
