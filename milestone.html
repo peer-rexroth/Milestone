@@ -396,7 +396,7 @@ input.inline-edit { width: 100%; min-width: 0; padding: 3px 6px; border: 1px sol
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
 .modal-bg.search-bg { align-items: flex-start; padding-top: 12vh; }   /* (.modal-bg centres; the palette must stay put at the top while its content grows and shrinks) */
-.modal.search-modal { width: 960px; max-width: 94vw; max-height: 70vh; overflow: hidden; }   /* 960px: the results show the name, its groups, the dates and the resource side by side */
+.modal.search-modal { width: 640px; max-width: 94vw; max-height: 47vh; overflow: hidden; }   /* 640px wide and 47vh high (a third smaller than it was): two-line results — name, WBS and path, dates and resource */
 .search-box { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
 .search-box > i { color: var(--text-faint); }
 .search-box input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; color: var(--text); font-size: 15px; }
@@ -1303,13 +1303,13 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
       <div class="help-pane" id="helpPane-data" role="tabpanel" aria-labelledby="helpTab-data" hidden>
         <div class="help-section">
           <div class="help-section-title">Plans</div>
-          <div class="help-row"><i class="fa-solid fa-folder-tree"></i><span>The <strong>plan name</strong> at the top left is a switcher: move between plans, start a new one, open an existing file as a plan, or rename, duplicate or delete the current plan.</span></div>
           <div class="help-row"><i class="fa-solid fa-file-lines"></i><span>Each plan has its own tasks, its own daily backups and its own linked file, so switching plans also switches which file is kept in sync. Deleting a plan only removes it from this browser; its file is never touched.</span></div>
         </div>
         <div class="help-divider"></div>
         <div class="help-section">
           <div class="help-section-title">Files and sync</div>
           <div class="help-row"><i class="fa-solid fa-hard-drive"></i><span>Every plan is kept in a plain <strong>JSON file</strong> on your disk (linking one is required, in Chrome/Edge). Every change is saved to it automatically, and inside an iCloud Drive, OneDrive or Dropbox folder it keeps your own devices in step. <strong>New plan</strong> and <strong>Duplicate</strong> ask where to save the file.</span></div>
+          <div class="help-row"><i class="fa-solid fa-folder-tree"></i><span><strong>Conflicted copies.</strong> When two devices save at once, OneDrive or Dropbox keeps one file and renames the other (<code>plan-DESKTOP-4F2.json</code>, <code>plan (1).json</code>). Choose <strong>Watch folder for conflicted copies…</strong> in the plan menu and Milestone merges them in — the newer version of each task wins — and renames them <code>merged_…</code>. Nothing is deleted; the merge is listed for review.</span></div>
           <div class="help-row"><i class="fa-solid fa-link-slash"></i><span>You can <strong>disconnect</strong> a plan's file (click the file name at the top right, or use the plan menu) — the file is kept, and Milestone asks you to choose one straight away. If the file is moved or deleted, Milestone asks you to create or find it again.</span></div>
         </div>
         <div class="help-divider"></div>
@@ -4876,7 +4876,7 @@ function showToast(msg, isError, undoAction, actionLabel) {
   if (undoAction) { btn.textContent = actionLabel || 'Undo'; btn.classList.remove('hidden'); } else { btn.classList.add('hidden'); }
   el.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('show'), undoAction ? 6000 : 2600);
+  toastTimer = setTimeout(() => el.classList.remove('show'), actionLabel && actionLabel !== 'Undo' && actionLabel !== 'Review' ? 14000 : undoAction ? 6000 : 2600);
 }
 function triggerToastUndo() { if (toastUndoAction) { toastUndoAction(); toastUndoAction = null; } document.getElementById('toast').classList.remove('show'); }
 
@@ -5041,16 +5041,19 @@ function reportSyncConflicts(list) {
 }
 function updateSyncConflictsUI() {
   const btn = document.getElementById('syncConflictBtn'); if (!btn) return;
-  const n = syncConflictLog.length;
+  const n = syncConflictLog.length, onlyFiles = n && syncConflictLog.every(c => c.kind === 'file');
   btn.classList.toggle('hidden', !n);
-  btn.innerHTML = `<i class="fa-solid fa-code-merge"></i>${n} conflict${n === 1 ? '' : 's'}`;
+  btn.innerHTML = `<i class="fa-solid fa-code-merge"></i>${onlyFiles ? `${n} merged cop${n === 1 ? 'y' : 'ies'}` : `${n} conflict${n === 1 ? '' : 's'}`}`;
   btn.title = 'Both you and someone else changed the same thing — the newer edit was kept. Click to review.';
 }
 function openSyncConflictsModal() { renderSyncConflictsModal(); document.getElementById('syncConflictsModalBg').classList.add('open'); }
 function closeSyncConflictsModal() { document.getElementById('syncConflictsModalBg').classList.remove('open'); }
 function renderSyncConflictsModal() {
   const body = document.getElementById('syncConflictsBody');
-  body.innerHTML = syncConflictLog.length ? syncConflictLog.map((c, i) => `<div class="conflict-card">
+  body.innerHTML = syncConflictLog.length ? syncConflictLog.map((c, i) => c.kind === 'file' ? `<div class="conflict-card">
+      <div class="conflict-title"><i class="fa-solid fa-file-circle-check"></i><strong>${escapeHtml(c.name)}</strong><span class="conflict-time">${new Date(c.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span></div>
+      <p class="cal-hint" style="margin:0 0 8px">A conflicted copy of this plan's file (the sync service made it when two devices saved at the same time). ${c.changed ? `It was merged into the plan — ${c.tasks} task${c.tasks === 1 ? '' : 's'} changed${c.moved ? `, ${c.moved} re-planned` : ''}; the newer version of each task was kept.` : 'It held nothing this plan did not already have.'} ${c.renamedTo ? `The file was renamed <strong>${escapeHtml(c.renamedTo)}</strong> and is kept.` : 'It could not be renamed and will be checked again.'}</p>
+      <div class="conflict-actions"><button class="btn" onclick="dismissSyncConflict(${i})">Dismiss</button></div></div>` : `<div class="conflict-card">
       <div class="conflict-title">${c.kind === 'plan' ? '<i class="fa-solid fa-gear"></i>' : '<i class="fa-solid fa-list-check"></i>'}<strong>${escapeHtml(c.name || 'Untitled')}</strong><span class="conflict-time">${new Date(c.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span></div>
       <table class="conflict-table"><tr><th></th><th>Yours</th><th>The other version</th></tr>${c.fields.map(f => `<tr><td>${escapeHtml(conflictLabel(f.key))}</td>
         <td class="${f.kept === 'mine' ? 'kept' : ''}">${escapeHtml(fmtConflictValue(f.key, f.mine))}${f.kept === 'mine' ? ' <span class="kept-tag">kept</span>' : ''}</td>
@@ -6556,6 +6559,7 @@ async function finishLinking(handle, isNew) {
   startFileSyncPolling();
   closeFileSyncModal();
   showToast('File linked');
+  setTimeout(maybeOfferWatch, 1100);
 }
 // The last state this plan and its file agreed on = the base of the three-way merge (see "Merge"). Kept per plan in localStorage, so
 // work done offline can still be merged field by field after a reload.
@@ -6634,7 +6638,8 @@ async function flushFileSync() {
 }
 function startFileSyncPolling() { stopFileSyncPolling(); fileSyncPollTimer = setInterval(pollFileSync, FILE_SYNC_POLL_MS); }
 function stopFileSyncPolling() { if (fileSyncPollTimer) { clearInterval(fileSyncPollTimer); fileSyncPollTimer = null; } }
-async function pollFileSync() {
+async function pollFileSync() { await pollFileSyncCore(); await scanConflictCopies(); }   // (copies can appear while the file itself stays byte-identical)
+async function pollFileSyncCore() {
   const handle = syncFileHandle;
   if (!handle) return;
   const epoch = planEpoch;   // if the plan changes while we wait on the file, this data belongs to the old plan: drop it
@@ -6663,10 +6668,120 @@ async function reconnectFile() {
   try {
     const perm = await handle.requestPermission({ mode: 'readwrite' });
     if (epoch !== planEpoch) return;
+    if (perm === 'granted' && syncDirHandle) { try { await syncDirHandle.requestPermission({ mode: 'readwrite' }); } catch (e) { /* ignore */ } }
     if (perm === 'granted') { fileSyncStatus = 'linked'; await pollFileSync(); await writeSyncFile(); if (epoch === planEpoch) { startFileSyncPolling(); showToast('Reconnected'); } }
     else showToast('Permission not granted', true);
   } catch (e) { showToast('Reconnect failed', true); }
   if (epoch === planEpoch) updateFileSyncUI();
+}
+/* ------------------ Conflicted copies (OneDrive, Dropbox, SharePoint …) ------------------
+   When two devices write the plan file before the sync service has delivered either version, the service keeps one under the real name and renames the
+   other — "cbm-DESKTOP-4F2.json", "cbm (1).json", "cbm (John's conflicted copy).json". The file we are linked to is read by its exact name only, so a copy
+   like that (and the work in it) would stay invisible. A browser cannot list the folder of a linked FILE, so the user may let the app watch that folder
+   (plan menu → "Watch folder for conflicted copies…", or the offer after linking); the handle is kept per plan. Every poll then looks for copies, merges each
+   into the plan with the ordinary merge (the newer version of a task wins) and renames it `merged_<name>` — never deletes it. The same idea as Pulse's. */
+let syncDirHandle = null, strayScanBusy = false;
+const STRAY_MERGED_PREFIX = 'merged_';
+function planDirKey(id) { return 'plandir:' + id; }
+// A copy is a .json file whose name starts with the plan file's base name, is not the file itself, not one this app already renamed, not the file of another
+// plan on this device, and not one of this app's own dated exports ("cbm-2026-09-21.json").
+function isStrayCopyName(name, exactName, otherPlanFiles) {
+  const base = exactName.replace(/\.json$/i, '');
+  return name !== exactName && /\.json$/i.test(name) && !name.startsWith(STRAY_MERGED_PREFIX) && name.startsWith(base) && !otherPlanFiles.has(name) && !/-\d{4}-\d{2}-\d{2}(\s\(\d+\))?\.json$/i.test(name);
+}
+function strayMergedName(name, n) { return n > 1 ? `${STRAY_MERGED_PREFIX}${n}_${name}` : `${STRAY_MERGED_PREFIX}${name}`; }
+// Another plan's file in the same folder can start with this plan's name ("cbm.json" and "cbm-2.json"): a copy has to be of THIS plan — the same plan name,
+// or at least one task id in common (copies share their history; two plans share nothing).
+function looksLikeThisPlan(data) {
+  if (data.project && typeof data.project.name === 'string' && data.project.name === project.name) return true;
+  return data.tasks.some(t => t && byId(t.id));
+}
+async function dirHasFile(dir, name) { try { await dir.getFileHandle(name); return true; } catch (e) { return false; } }
+async function renameConflictCopy(dir, name, text) {   // (no rename in the File System Access API: write under the new name, then remove the old one)
+  let n = 1, target = strayMergedName(name, n);
+  while (await dirHasFile(dir, target)) target = strayMergedName(name, ++n);
+  const h = await dir.getFileHandle(target, { create: true }), w = await h.createWritable();
+  await w.write(text); await w.close();
+  await dir.removeEntry(name);
+  return target;
+}
+function absorbConflictCopy(data) {   // the ordinary merge with no shared base: the newer version of a task wins, deletions are respected
+  const conflicts = [], changedIds = new Map();
+  const changed = mergeData(data, { respectTombstones: true, base: null, conflicts, changedIds });
+  let moved = 0;
+  if (changed) { moved = replanAfterMerge(changedIds); normalizeData(); persistLocal(); resetHistory(); render(); }
+  return { changed, tasks: changedIds.size, moved };
+}
+// Returns how many copies were absorbed. Safe to call any time: it does nothing without a watched folder, a linked file and permission.
+async function scanConflictCopies() {
+  const dir = syncDirHandle, fh = syncFileHandle;
+  if (!dir || !fh || strayScanBusy) return 0;
+  const epoch = planEpoch, planId = currentPlanId, done = [];
+  strayScanBusy = true;
+  try {
+    if ((await dir.queryPermission({ mode: 'readwrite' })) !== 'granted' || epoch !== planEpoch) return 0;
+    const idx = readPlansIndex(), others = new Set((idx ? idx.plans : []).filter(pl => pl.id !== planId && pl.fileName).map(pl => pl.fileName));
+    const entries = [];
+    for await (const e of dir.values()) if (e.kind === 'file' && isStrayCopyName(e.name, fh.name, others)) entries.push(e);
+    for (const e of entries) {
+      if (epoch !== planEpoch) break;
+      let text, data;
+      try { text = await (await e.getFile()).text(); data = JSON.parse(text); } catch (err) { continue; }   // (unreadable or not JSON: not ours, leave it alone)
+      if (!data || !Array.isArray(data.tasks) || !looksLikeThisPlan(data) || epoch !== planEpoch) continue;
+      const res = absorbConflictCopy(data);
+      let target = null;
+      try { target = await renameConflictCopy(dir, e.name, text); } catch (err) { console.warn('Milestone: could not rename the conflicted copy', e.name, err); }
+      done.push({ kind: 'file', name: e.name, renamedTo: target, tasks: res.tasks, changed: res.changed, moved: res.moved, fields: [], at: Date.now() });
+    }
+  } catch (e) { console.warn('Milestone: scan for conflicted copies failed', e); }
+  finally { strayScanBusy = false; }
+  if (done.length && epoch === planEpoch) {
+    for (const d of done) syncConflictLog.push(d);
+    updateSyncConflictsUI();
+    const n = done.length, changedTasks = done.reduce((a, d) => a + (d.changed ? d.tasks : 0), 0);
+    showToast(`Merged ${n} conflicted cop${n === 1 ? 'y' : 'ies'} (${done.slice(0, 2).map(d => d.name).join(', ')}${n > 2 ? ', …' : ''})${changedTasks ? ` — ${changedTasks} task${changedTasks === 1 ? '' : 's'} changed` : ' — nothing new in them'}`, false, () => openSyncConflictsModal(), 'Review');
+    if (done.some(d => d.changed)) queueFileSyncWrite();   // the combined result goes back to the file the other devices read
+  }
+  return done.length;
+}
+function watchingFolder() { return !!syncDirHandle; }
+async function chooseWatchFolder() {
+  closePlanMenu();
+  if (!syncFileHandle || typeof window.showDirectoryPicker !== 'function') { showToast('This browser can’t watch a folder', true); return; }
+  const planId = currentPlanId, epoch = planEpoch;
+  try {
+    let dir;
+    try { dir = await window.showDirectoryPicker({ id: 'milestone-watch', mode: 'readwrite', startIn: syncFileHandle }); }
+    catch (e) { if (e.name === 'TypeError') dir = await window.showDirectoryPicker({ mode: 'readwrite' }); else throw e; }   // (a browser that does not know startIn)
+    if (epoch !== planEpoch) return;
+    const path = dir.resolve ? await dir.resolve(syncFileHandle).catch(() => null) : null;
+    if (!path || path.length !== 1) { showToast(`Pick the folder that directly contains “${syncFileHandle.name}”`, true); return; }
+    syncDirHandle = dir; await _fsPut(planDirKey(planId), dir);
+    try { localStorage.setItem('milestone-watchasked-' + planId, '1'); } catch (e) { /* ignore */ }
+    updateFileSyncUI();
+    showToast('Watching this folder for conflicted copies');
+    await scanConflictCopies();
+  } catch (e) { if (e.name !== 'AbortError') { console.warn('Milestone: could not open the folder', e); showToast('Could not open the folder', true); } }
+}
+async function stopWatchingFolder() {
+  closePlanMenu();
+  const planId = currentPlanId; syncDirHandle = null;
+  try { await _fsDel(planDirKey(planId)); } catch (e) { /* already gone */ }
+  updateFileSyncUI(); showToast('No longer watching the folder');
+}
+async function allowWatchAccess() {   // the browser forgot the permission for the folder (a click can ask again)
+  closePlanMenu();
+  try { if (syncDirHandle && (await syncDirHandle.requestPermission({ mode: 'readwrite' })) === 'granted') { showToast('Watching this folder for conflicted copies'); await scanConflictCopies(); } else showToast('Permission not granted', true); } catch (e) { showToast('Could not ask for permission', true); }
+  updateFileSyncUI();
+}
+async function watchPermissionGranted() { try { return !!syncDirHandle && (await syncDirHandle.queryPermission({ mode: 'readwrite' })) === 'granted'; } catch (e) { return false; } }
+// Once per plan and device, after a file has been linked: offer to watch its folder (the toast's button is the click the folder picker needs).
+function maybeOfferWatch() {
+  try {
+    if (!syncFileHandle || syncDirHandle || typeof window.showDirectoryPicker !== 'function' || localStorage.getItem('milestone-watchasked-' + currentPlanId)) return;
+    localStorage.setItem('milestone-watchasked-' + currentPlanId, '1');
+  } catch (e) { return; }
+  showToast('Using OneDrive, Dropbox or SharePoint? Let Milestone watch this folder so conflicted copies of the file are merged in', false, chooseWatchFolder, 'Watch folder');
 }
 // Disconnect the current plan from its file — only ever on the user's say-so (see disconnectFile()). The file keeps
 // everything saved up to now and is never deleted. Linking is mandatory, so the link dialog opens straight away and the
@@ -6676,7 +6791,8 @@ async function unlinkFile() {
   await flushFileSync();                    // last write, so the file is complete when we let go of it
   if (planId !== currentPlanId) return;
   planEpoch++;                              // anything still in flight for the old file is now ignored
-  syncFileHandle = null; lastSyncedSnapshot = null; lastSyncedAt = 0; fileSyncWritePending = false;
+  syncFileHandle = null; syncDirHandle = null; lastSyncedSnapshot = null; lastSyncedAt = 0; fileSyncWritePending = false;
+  try { await _fsDel(planDirKey(planId)); } catch (e) { /* none */ }
   try { localStorage.removeItem(SYNC_BASE_PREFIX + planId); } catch (e) { /* ignore */ }
   fileSyncStatus = 'unlinked';
   stopFileSyncPolling();
@@ -6716,7 +6832,7 @@ async function _fsMigrateLegacyKey() {
 // switch) and start syncing. Sync state belongs to the *current plan*, so it is reset first.
 async function activatePlanFile(interactive) {
   const epoch = planEpoch, planId = currentPlanId;
-  syncFileHandle = null; lastSyncedSnapshot = readSyncBase(planId); lastSyncedAt = 0;
+  syncFileHandle = null; syncDirHandle = null; lastSyncedSnapshot = readSyncBase(planId); lastSyncedAt = 0;
   syncConflictLog = []; updateSyncConflictsUI();   // (conflicts belong to the plan they happened in)
   if (!fileSyncSupported()) { fileSyncStatus = 'unsupported'; updateFileSyncUI(); return; }
   fileSyncStatus = 'checking'; updateFileSyncUI();
@@ -6729,6 +6845,13 @@ async function activatePlanFile(interactive) {
       let perm = await handle.queryPermission({ mode: 'readwrite' });
       if (perm !== 'granted' && interactive) { try { perm = await handle.requestPermission({ mode: 'readwrite' }); } catch (e) { /* needs a fresher click — falls back to Reconnect */ } }
       if (epoch !== planEpoch) return;
+      try {   // the watched folder, if the user chose one for this plan (its permission is asked again with the file's, when this runs from a click)
+        const dir = await _fsGet(planDirKey(planId));
+        if (dir && dir.kind === 'directory' && epoch === planEpoch) {
+          syncDirHandle = dir;
+          if (interactive && perm === 'granted' && (await dir.queryPermission({ mode: 'readwrite' })) !== 'granted') { try { await dir.requestPermission({ mode: 'readwrite' }); } catch (e) { /* asked again from the plan menu */ } }
+        }
+      } catch (e) { syncDirHandle = null; }
       if (perm === 'granted') {
         fileSyncStatus = 'linked';
         await pollFileSync();
@@ -6766,7 +6889,7 @@ function updateFileSyncUI() {
   else if (fileSyncStatus === 'unlinked') { btn.innerHTML = '<i class="fa-solid fa-link"></i>Link file'; btn.style.color = 'var(--task-amber)'; btn.title = 'Not saved to a file — only kept in this browser. Click to choose a file.'; }
   else if (fileSyncStatus === 'missing') { btn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>File missing'; btn.style.color = 'var(--danger)'; btn.title = 'The linked file was moved or deleted — click to fix'; }
   else if (fileSyncStatus === 'lapsed') { btn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>Reconnect'; btn.style.color = 'var(--danger)'; btn.title = 'Permission was lost — click to reconnect'; }
-  else { btn.innerHTML = `<i class="fa-solid fa-check" style="color:var(--task-green)"></i>${escapeHtml(syncFileHandle ? syncFileHandle.name : 'Linked')}`; btn.title = syncFileHandle ? `This plan is saved to ${syncFileHandle.name} — click to disconnect` : 'Linked'; }
+  else { btn.innerHTML = `<i class="fa-solid fa-check" style="color:var(--task-green)"></i>${escapeHtml(syncFileHandle ? syncFileHandle.name : 'Linked')}`; btn.title = syncFileHandle ? `This plan is saved to ${syncFileHandle.name}${syncDirHandle ? ' (its folder is watched for conflicted copies)' : ''} — click to disconnect` : 'Linked'; }
 }
 
 /* ================================== Plans =================================== */
@@ -6847,6 +6970,7 @@ function renderPlanMenu() {
     `<div class="dropdown-sep"></div>` +
     `<button class="dropdown-item" id="planNewItem" onclick="openPlanModal('new')"><i class="fa-solid fa-plus"></i>New plan…</button>` +
     (fileSyncSupported() ? `<button class="dropdown-item" id="planOpenFileItem" onclick="openFileAsPlan()"><i class="fa-solid fa-folder-open"></i>Open file as plan…</button>` : '') +
+    (fileSyncSupported() && typeof window.showDirectoryPicker === 'function' ? `<button class="dropdown-item" id="planWatchItem" onclick="${syncDirHandle ? 'stopWatchingFolder()' : 'chooseWatchFolder()'}"${syncFileHandle ? '' : ' disabled title="This plan isn’t linked to a file"'} title="OneDrive, Dropbox and SharePoint keep a second copy of the file when two devices save at the same time — watching its folder lets Milestone merge those copies in"><i class="fa-solid fa-folder-tree"></i>${syncDirHandle ? 'Stop watching for conflicted copies' : 'Watch folder for conflicted copies…'}<span class="item-hint">${syncDirHandle ? 'on' : 'off'}</span></button>` : '') +
     `<div class="dropdown-sep"></div>` +
     `<button class="dropdown-item" id="planRenameItem" onclick="openPlanModal('rename')"><i class="fa-solid fa-pen"></i>Rename plan…</button>` +
     `<button class="dropdown-item" id="planBaselineItem" onclick="openBaselineModal()"><i class="fa-solid fa-ruler-horizontal"></i>Baseline…<span class="item-hint">${escapeHtml(baselineMenuHint())}</span></button>` +
@@ -6898,7 +7022,8 @@ async function createLinkedPlan(name, data) {
     await w.close();
     await _fsPut(planHandleKey(id), handle);
     setPlanFileName(id, handle.name);
-    return await switchPlan(id);
+    const ok = await switchPlan(id); if (ok) setTimeout(maybeOfferWatch, 1500);
+    return ok;
   } catch (e) { console.warn('Milestone: could not create plan file', e); showToast('Could not create file', true); return false; }
 }
 
@@ -6926,6 +7051,7 @@ async function openFileAsPlan() {
   if (await switchPlan(id)) {
     if (empty) await writeSyncFile();   // give a blank file its first content
     showToast(`Opened “${name}”`);
+    setTimeout(maybeOfferWatch, 1800);
   }
 }
 
@@ -6958,12 +7084,12 @@ async function doDeleteCurrentPlan() {
   const rec = Object.assign({}, planRecord(idx, id), { name: project.name });
   const next = idx.plans[pos + 1] || idx.plans[pos - 1];
   persistLocal();
-  const saved = { rec, pos, data: localStorage.getItem(planDataKey(id)), backups: localStorage.getItem(planBackupsKey(id)), handle: syncFileHandle };
+  const saved = { rec, pos, data: localStorage.getItem(planDataKey(id)), backups: localStorage.getItem(planBackupsKey(id)), handle: syncFileHandle, dir: syncDirHandle };
   if (!(await switchPlan(next.id))) return;   // also flushes the file one last time
   localStorage.removeItem(planDataKey(id));
   localStorage.removeItem(planBackupsKey(id));
   try { localStorage.removeItem(SYNC_BASE_PREFIX + id); } catch (e) { /* ignore */ }
-  try { await _fsDel(planHandleKey(id)); } catch (e) { /* handle already gone */ }
+  try { await _fsDel(planHandleKey(id)); await _fsDel(planDirKey(id)); } catch (e) { /* handle already gone */ }
   updatePlansIndex(i => { i.plans = i.plans.filter(p => p.id !== id); });
   showToast(`Deleted “${rec.name}”`, false, () => undoDeletePlan(saved), 'Undo');
 }
@@ -6972,6 +7098,7 @@ async function undoDeletePlan(saved) {
   if (saved.data !== null) localStorage.setItem(planDataKey(id), saved.data);
   if (saved.backups !== null) localStorage.setItem(planBackupsKey(id), saved.backups);
   if (saved.handle) { try { await _fsPut(planHandleKey(id), saved.handle); } catch (e) { /* plan comes back unlinked */ } }
+  if (saved.dir) { try { await _fsPut(planDirKey(id), saved.dir); } catch (e) { /* the folder is simply not watched any more */ } }
   updatePlansIndex(i => { if (!planRecord(i, id)) i.plans.splice(Math.min(saved.pos, i.plans.length), 0, saved.rec); });
   await switchPlan(id);
   showToast('Plan restored');
