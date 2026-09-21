@@ -310,6 +310,7 @@ button:focus:not(:focus-visible) { outline: none; }
 /* ...and the same lines run on down the empty area under the last task (the rows are transparent, so they line up exactly) */
 .main .grid-rows { background-image: var(--col-lines-r, none); background-position: var(--col-pos-r, 0 0); background-size: 1px 100%; background-repeat: no-repeat; background-attachment: local; }   /* local: the lines below the last task scroll sideways with the content */
 .grid-row { border-bottom: 1px solid var(--border); font-size: 12.5px; cursor: default; position: relative; --row-bg: var(--panel); background: var(--row-bg); }   /* --row-bg: the row's background, also painted by the frozen cells so what scrolls underneath doesn't show through */
+.virt-spacer { pointer-events: none; }
 .grid-row.spacer-row { --row-bg: color-mix(in srgb, var(--panel-2) 50%, var(--panel)); }   /* an empty line: a blank row, faintly tinted so it reads as a separator */
 .grid-row:hover { --row-bg: var(--panel-2); }
 /* a task's colour: a 4px stripe at the row's left edge and a light tint of the same colour (list and chart row alike); selection and hover still show through */
@@ -1403,6 +1404,32 @@ const MAX_BACKUPS = 7;
 const FILE_SYNC_POLL_MS = 45000;
 const DAY_MS = 86400000;
 const ROW_H = 32, HEAD_H = 42;   // (HEAD_H = --head-h)
+/* ---- Large plans: only the rows that can be seen are built ----
+   Every row is exactly ROW_H tall, so a plan of more than VIRTUAL_THRESHOLD rows builds just the rows in view plus VIRTUAL_BUFFER above and below
+   (the list between two spacers, the chart's row backgrounds and bars, the dependency arrows that touch the window); scrolling builds the next
+   rows when the view nears the edge of what is built. A smaller plan is built whole, as before. */
+const VIRTUAL_THRESHOLD = 150, VIRTUAL_BUFFER = 30;
+let renderedWin = { from: 0, to: 0, n: 0, virtual: false };
+function viewScroller() { return document.getElementById(currentView === 'gantt' ? 'ganttPaneOuter' : 'gridRows'); }
+function rowWindow(n) {
+  if (n <= VIRTUAL_THRESHOLD) return { from: 0, to: n, virtual: false };
+  const sc = viewScroller(), st = sc ? sc.scrollTop : 0, h = (sc && sc.clientHeight) || 800;
+  return { from: Math.max(0, Math.floor(st / ROW_H) - VIRTUAL_BUFFER), to: Math.min(n, Math.ceil((st + h) / ROW_H) + VIRTUAL_BUFFER), virtual: true };
+}
+let winRaf = 0;
+function onRowsScroll() {
+  if (!renderedWin.virtual || winRaf) return;
+  winRaf = requestAnimationFrame(() => { winRaf = 0; refreshWindowIfNeeded(false); });
+}
+// Rebuild the rows when the view has come within a few rows of the edge of what is built (or `force`). An open editor or a drag keeps the rows it is using.
+function refreshWindowIfNeeded(force) {
+  if (!renderedWin.virtual || editingCell || draggedTaskId || dragState) return;
+  const sc = viewScroller(), st = sc.scrollTop, vFrom = Math.floor(st / ROW_H), vTo = Math.ceil((st + sc.clientHeight) / ROW_H), margin = Math.floor(VIRTUAL_BUFFER / 3);
+  if (!force && !(vFrom < renderedWin.from + margin && renderedWin.from > 0) && !(vTo > renderedWin.to - margin && renderedWin.to < renderedWin.n)) return;
+  _kidsCache = childMap();
+  try { renderGrid(); updateFrozenColumns(); if (currentView === 'gantt') renderGantt(); } finally { _kidsCache = null; }
+  if (currentView === 'gantt') document.getElementById('gridRows').scrollTop = st; else sc.scrollTop = st;
+}
 
 const ZOOMS = [
   { id: 'week',  label: 'Week',  pxPerDay: 14 },
@@ -2013,6 +2040,7 @@ function normalizeData() {
     if (t.parentId === t.id) t.parentId = null;
     if (t.parentId && !ids.has(t.parentId)) t.parentId = null;
   }
+  const byIdN = new Map(tasks.map(t => [t.id, t]));   // (one lookup table: tasks.find() per step made this loop quadratic)
   for (const t of tasks) {
     if (!t.parentId) continue;
     const seen = new Set([t.id]);
@@ -2020,7 +2048,7 @@ function normalizeData() {
     while (cur && cur.parentId) {
       if (seen.has(cur.parentId)) { t.parentId = null; break; }
       seen.add(cur.parentId);
-      cur = tasks.find(x => x.id === cur.parentId);
+      cur = byIdN.get(cur.parentId);
     }
   }
 
@@ -2028,7 +2056,7 @@ function normalizeData() {
     const sp = new Map(tasks.filter(t => t.spacer).map(t => [t.id, t]));
     if (sp.size) for (const t of tasks) for (let guard = 0; t.parentId && sp.has(t.parentId) && guard < 1000; guard++) t.parentId = sp.get(t.parentId).parentId || null;
   }
-  const parentIds = new Set(tasks.filter(t => tasks.some(x => x.parentId === t.id)).map(t => t.id));
+  const parentIds = new Set(tasks.map(t => t.parentId).filter(pid => pid && byIdN.has(pid)));   // (the tasks that have tasks in them)
   const spacerIds = new Set(tasks.filter(t => t.spacer).map(t => t.id));
   for (const t of tasks) {
     // A summary task's dates/progress roll up from its children — it can't
@@ -2093,6 +2121,8 @@ function normalizeData() {
   // (Repeated until nothing changes: a group whose tasks are all unscheduled falls back to its OWN stored dates, which this very step may snap
   // to a working day — a group above it may already have read the old value, and the answer would depend on the order of the tasks.)
   for (const t of tasks) if (parentIds.has(t.id)) t.milestone = false;   // a task with tasks in it can't be a milestone
+  _kidsCache = childMap();   // (nothing below changes who is whose child: the index is built once)
+  try {
   for (let pass = 0; pass < 8; pass++) {
     resetEffectiveCache();
     let moved = false;
@@ -2105,6 +2135,7 @@ function normalizeData() {
     }
     if (!moved) break;
   }
+  } finally { _kidsCache = null; }
   resetEffectiveCache();
   // New tasks are Auto Scheduled unless the project says otherwise. Every project saved while the default was Manual has
   // 'manual' stored (the default is written on the first save), so a project without the current revision marker is switched to
@@ -2114,17 +2145,26 @@ function normalizeData() {
 }
 
 /* =========================== Hierarchy helpers =========================== */
-function childrenOf(parentId) { return tasks.filter(t => (t.parentId || null) === parentId).sort((a, b) => a.order - b.order); }
-function hasChildren(id) { return tasks.some(t => t.parentId === id); }
+// While a render pass runs (render(), a row-window refresh) nothing changes the plan, so the parent → children index is built once for the pass instead of
+// filtering every task on every call — with 2,000 tasks that was 4,000 filters per render. Outside a pass the plain filter is used (the plan changes there).
+let _kidsCache = null;
+function childrenOf(parentId) { const k = parentId || null; if (_kidsCache) return (_kidsCache.get(k) || []).slice(); return tasks.filter(t => (t.parentId || null) === k).sort((a, b) => a.order - b.order); }
+function hasChildren(id) { return _kidsCache ? _kidsCache.has(id) : tasks.some(t => t.parentId === id); }
 function descendantIds(id) {
   const out = []; const stack = [id];
   while (stack.length) { const cur = stack.pop(); for (const c of childrenOf(cur)) { out.push(c.id); stack.push(c.id); } }
   return out;
 }
+function childMap() {   // parent id (null = top level) -> its children in order, built in one pass (childrenOf() filters the whole plan on every call)
+  const m = new Map();
+  for (const t of tasks) { const k = t.parentId || null; if (!m.has(k)) m.set(k, []); m.get(k).push(t); }
+  for (const a of m.values()) a.sort((x, y) => x.order - y.order);
+  return m;
+}
 function visibleTaskList() {
-  const out = [], filtering = filtersActive();
+  const out = [], filtering = filtersActive(), kids = childMap();
   (function walk(parentId, depth) {
-    for (const t of childrenOf(parentId)) {
+    for (const t of kids.get(parentId) || []) {
       if (filtering && !filterShows(t)) continue;
       out.push({ task: t, depth });
       if (!t.collapsed || filtering) walk(t.id, depth + 1);   // while filtering, groups are shown open so the matches inside them are seen
@@ -2144,8 +2184,9 @@ function ensureIdCache() {
   if (_idIndexCache) return;
   _idIndexCache = new Map(); _idReverseCache = new Map();
   let n = 0;
+  const kids = childMap();
   (function walk(parentId) {
-    for (const t of childrenOf(parentId)) { n++; _idIndexCache.set(t.id, n); _idReverseCache.set(n, t.id); walk(t.id); }
+    for (const t of kids.get(parentId) || []) { n++; _idIndexCache.set(t.id, n); _idReverseCache.set(n, t.id); walk(t.id); }
   })(null);
 }
 function taskDisplayId(id) { ensureIdCache(); return _idIndexCache.get(id) || '?'; }
@@ -2156,7 +2197,8 @@ function taskIdByDisplayId(n) { ensureIdCache(); return _idReverseCache.get(n) |
 function wbsCode(id) {
   if (!_wbsCache) {
     _wbsCache = new Map();
-    (function walk(pid, prefix) { let i = 0; for (const t of childrenOf(pid)) { if (t.spacer) continue; i++; const code = prefix ? `${prefix}.${i}` : String(i); _wbsCache.set(t.id, code); walk(t.id, code); } })(null, '');   // (an empty line has no WBS code and does not count)
+    const kids = childMap();
+    (function walk(pid, prefix) { let i = 0; for (const t of kids.get(pid) || []) { if (t.spacer) continue; i++; const code = prefix ? `${prefix}.${i}` : String(i); _wbsCache.set(t.id, code); walk(t.id, code); } })(null, '');   // (an empty line has no WBS code and does not count)
   }
   return _wbsCache.get(id) || '';
 }
@@ -2594,6 +2636,10 @@ function render() {
   pruneSelection();
   resetEffectiveCache();
   resetIdCache();
+  _kidsCache = childMap();
+  try { renderPass(); } finally { _kidsCache = null; }
+}
+function renderPass() {
   updateProjectNameUI();
   renderMainViewTabs();
   renderZoomTabs();
@@ -2602,7 +2648,7 @@ function render() {
   syncHeaderScroll();
   updateColumnLines();
   updateFrozenColumns();
-  renderGantt();
+  if (currentView === 'gantt') renderGantt();   // (the chart is hidden in the Tasks view: it is built when you switch to it)
   renderFilterBar();
   updateCollapseButtons();
   updateFileSyncUI();
@@ -3114,7 +3160,7 @@ function syncHeaderScroll() {
   clip.scrollLeft = rows.scrollLeft;
   document.getElementById('gridPane').classList.toggle('h-scrolled', rows.scrollLeft > 0);
 }
-document.getElementById('gridRows').addEventListener('scroll', syncHeaderScroll, { passive: true });
+document.getElementById('gridRows').addEventListener('scroll', () => { syncHeaderScroll(); onRowsScroll(); }, { passive: true });
 document.getElementById('gridHeaderClip').addEventListener('wheel', (e) => { if (e.deltaX) { document.getElementById('gridRows').scrollLeft += e.deltaX; e.preventDefault(); } }, { passive: false });
 if (typeof ResizeObserver !== 'undefined') new ResizeObserver(() => { updateColumnLines(); syncHeaderScroll(); }).observe(document.getElementById('gridPane'));
 else window.addEventListener('resize', updateColumnLines);
@@ -3146,7 +3192,10 @@ function renderGrid() {
     return;
   }
   const cyclic = taskCycleSet();
-  el.innerHTML = list.map(({ task: t, depth }) => {
+  if (list.length > VIRTUAL_THRESHOLD && currentView === 'gantt') { const outer = document.getElementById('ganttPaneOuter'); if (outer) el.scrollTop = outer.scrollTop; }   // (the chart drives the list)
+  const win = rowWindow(list.length); renderedWin = { from: win.from, to: win.to, n: list.length, virtual: win.virtual };
+  const spacer = px => px > 0 ? `<div class="virt-spacer" style="height:${px}px"></div>` : '';
+  el.innerHTML = (win.virtual ? spacer(win.from * ROW_H) : '') + list.slice(win.from, win.to).map(({ task: t, depth }) => {
     const eff = effectiveDates(t.id);
     const summary = hasChildren(t.id);
     // Compact MS-Project-style reference — "3FS+2", "5SS" — an ID plus
@@ -3238,7 +3287,7 @@ function renderGrid() {
         <button class="icon-btn btn-danger" onclick="event.stopPropagation();deleteTaskFlow('${t.id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
       </div>` : ''}
     </div>`;
-  }).join('');
+  }).join('') + (win.virtual ? spacer((list.length - win.to) * ROW_H) : '');
 }
 // A cell being edited keeps its editor while you work in it: selecting text with the mouse — a double-click on a word, or a drag that ends outside
 // the box — sends a click / double-click to the ROW (the nearest ancestor of where the press and the release happened), which used to select the row
@@ -3339,7 +3388,7 @@ function dropOnTask(event, targetId) {
 }
 // Dropping in the blank space below the last row moves the task to the end of the top level.
 function dragOverEnd(event) {
-  if (!draggedTaskId || event.target.closest('.grid-row')) return;
+  if (!draggedTaskId || event.target.closest('.grid-row, .virt-spacer')) return;
   event.preventDefault();
   event.dataTransfer.dropEffect = 'move';
   if (dropIndicatorEl !== event.currentTarget) clearDropIndicators();
@@ -3347,7 +3396,7 @@ function dragOverEnd(event) {
   event.currentTarget.classList.add('drop-end');
 }
 function dropOnEnd(event) {
-  if (!draggedTaskId || event.target.closest('.grid-row')) return;
+  if (!draggedTaskId || event.target.closest('.grid-row, .virt-spacer')) return;
   event.preventDefault();
   const id = draggedTaskId;
   dragEndTask();
@@ -3790,9 +3839,10 @@ function renderGantt() {
   const critical = showCriticalPath ? computeCriticalPath() : new Set();
   const todayLeft = (dayNumber(todayStr()) - dateRange.start) * px;
   barGeom = {};
+  const win = rowWindow(list.length);
   let html = '';
-  list.forEach(({ task: t }, idx) => {
-    const top = idx * ROW_H;
+  list.slice(win.from, win.to).forEach(({ task: t }, k) => {
+    const idx = win.from + k, top = idx * ROW_H;
     html += `<div class="gantt-row-bg${isSelected(t.id) ? ' selected' : ''}${t.spacer ? ' spacer' : ''}${t.color ? ' colored' : ''}" style="top:${top}px;width:${totalW}px${t.color ? `;--row-accent:var(--task-${t.color})` : ''}" data-row-id="${t.id}"></div>`;
   });
   if (px >= 4 && (workDaySet().size < 7 || holSet.size)) {   // shade the days off (not at Year zoom: 1.5px a day would just be noise)
@@ -3808,6 +3858,14 @@ function renderGantt() {
   list.forEach(({ task: t }, idx) => {
     const top = idx * ROW_H + (ROW_H - 20) / 2;
     const eff = effectiveDates(t.id);
+    if (idx < win.from || idx >= win.to) {   // outside the rows that are built: only the geometry (the arrows and Find need it)
+      if (eff.start) {
+        const left0 = (dayNumber(eff.start) - dateRange.start) * px;
+        if (t.milestone) { const cy = idx * ROW_H + ROW_H / 2; barGeom[t.id] = { left: left0 - 8, width: 16, top: cy - 8, right: left0 + 8, midY: cy, milestone: true }; }
+        else { const width0 = Math.max(6, (dayNumber(eff.end) - dayNumber(eff.start) + 1) * px - 2); barGeom[t.id] = { left: left0, width: width0, top, right: left0 + width0, midY: top + 10 }; }
+      }
+      return;
+    }
     if (!eff.start) {
       // A manual task with exactly one known date gets a bracket at it, as in
       // MS Project; one with neither (or a rollup-less summary) has no mark.
@@ -3846,7 +3904,7 @@ function renderGantt() {
       </div>`;
     }
   });
-  list.forEach(({ task: t }, idx) => { html += baselineBarHtml(t, idx, px); });   // under the bars
+  list.slice(win.from, win.to).forEach(({ task: t }, k) => { html += baselineBarHtml(t, win.from + k, px); });   // under the bars
   document.getElementById('ganttRows').innerHTML = html;
 
   const svg = document.getElementById('ganttDeps');
@@ -3856,6 +3914,7 @@ function renderGantt() {
     for (const p of t.predecessors) {
       const from = barGeom[p.id], to = barGeom[t.id];
       if (!from || !to) continue;
+      if (win.virtual && (Math.max(from.midY, to.midY) < win.from * ROW_H - ROW_H || Math.min(from.midY, to.midY) > win.to * ROW_H + ROW_H)) continue;   // an arrow that does not reach the built rows
       const isCritical = critical.has(t.id) && critical.has(p.id);
       const x1 = from.right, y1 = from.midY, x2 = to.left, y2 = to.midY;
       const midX = x1 + Math.max(14, (x2 - x1) / 2);
@@ -5481,12 +5540,15 @@ function jumpToTask(id) {
   setSelection([id]);
   render();
   requestAnimationFrame(() => {
-    const row = document.querySelector(`#gridRows .grid-row[data-id="${id}"]`);
+    const idx = visibleTaskList().findIndex(v => v.task.id === id);
     if (currentView === 'gantt') {
-      const outer = document.getElementById('ganttPaneOuter'), g = barGeom[id], top = (visibleTaskList().findIndex(v => v.task.id === id)) * ROW_H;
+      const outer = document.getElementById('ganttPaneOuter'), g = barGeom[id], top = idx * ROW_H;
       outer.scrollTop = Math.max(0, top - outer.clientHeight / 2 + ROW_H);
       if (g) outer.scrollLeft = Math.max(0, (g.left != null ? g.left : g.cx || 0) - outer.clientWidth / 3);
-    } else if (row) row.scrollIntoView({ block: 'center' });
+    } else if (renderedWin.virtual && idx >= 0) { const gr = document.getElementById('gridRows'); gr.scrollTop = Math.max(0, idx * ROW_H - gr.clientHeight / 2 + ROW_H); }   // (a large plan: the row may not be built yet)
+    refreshWindowIfNeeded(true);   // build the rows around the target now — the scroll event only arrives later
+    const row = document.querySelector(`#gridRows .grid-row[data-id="${id}"]`);
+    if (currentView !== 'gantt' && row) row.scrollIntoView({ block: 'center' });
     for (const el of document.querySelectorAll(`.grid-row[data-id="${id}"], .gantt-row-bg[data-row-id="${id}"]`)) { el.classList.add('jump-flash'); setTimeout(() => el.classList.remove('jump-flash'), 1500); }
   });
 }
@@ -7285,6 +7347,7 @@ function wireScrollSync() {
     if (syncing) return; syncing = true;
     gridRows.scrollTop = ganttOuter.scrollTop;
     syncing = false;
+    onRowsScroll();
   });
 }
 
