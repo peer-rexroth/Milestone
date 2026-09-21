@@ -48,8 +48,8 @@ with sync_playwright() as p:
     check("the plan menu has 'Stop watching for conflicted copies' (on)", "Stop watching" in pg.inner_text("#planWatchItem") and "on" in pg.inner_text("#planWatchItem").split("\n")[-1]); pg.keyboard.press("Escape")
 
     # ---------------------------------------------------------------- what counts as a copy
-    check("copy names: OneDrive style, numbered and 'conflicted copy' names are copies", ev("() => ['cbm-DESKTOP-4F2.json', 'cbm (1).json', 'cbm (John\\'s conflicted copy 2026-09-21).json', 'cbm copy.json'].every(n => isStrayCopyName(n, 'cbm.json', new Set()))"))
-    check("...the file itself, files already renamed, another plan's file, the app's own dated exports and other extensions are not", ev("() => ['cbm.json', 'merged_cbm-DESKTOP.json', 'merged_2_cbm-X.json', 'cbm-other.json', 'cbm-2026-09-21.json', 'cbm-2026-09-21 (1).json', 'cbm-DESKTOP.txt', 'other.json'].map(n => isStrayCopyName(n, 'cbm.json', new Set(['cbm-other.json'])))") == [False] * 8)
+    check("copy names: OneDrive style, numbered and 'conflicted copy' names are copies", ev("() => ['cbm-DESKTOP-4F2.json', 'cbm (1).json', 'cbm (John\\'s conflicted copy 2026-09-21).json', 'cbm copy.json', 'WORKSTATION01_cbm.json', 'DESKTOP-4F2_cbm.json', 'PC-cbm.json', 'CBM-laptop.JSON'].every(n => isStrayCopyName(n, 'cbm.json', new Set()))"))
+    check("...the file itself, files already renamed, another plan's file, the app's own dated exports and other extensions are not", ev("() => ['cbm.json', 'merged_cbm-DESKTOP.json', 'merged_2_cbm-X.json', 'merged_cbm.json', 'cbm-other.json', 'cbm-2026-09-21.json', 'cbm-2026-09-21 (1).json', 'cbm-DESKTOP.txt', 'other.json', 'WORKSTATION01_cbm.txt', 'WORKSTATION01_other.json'].map(n => isStrayCopyName(n, 'cbm.json', new Set(['cbm-other.json'])))") == [False] * 11)
 
     # ---------------------------------------------------------------- absorbing copies
     base_a = T("ta", "Alpha", 10)
@@ -93,11 +93,11 @@ with sync_playwright() as p:
     check("the plan's file itself was never treated as a copy", "cbm.json" in ls() and json.loads(read("cbm.json"))["tasks"] is not None)
     ev("() => stopWatchingFolder()"); pg.wait_for_timeout(300)
     check("stopping the watch forgets the folder (handle removed, menu says 'Watch folder…')", ev("() => watchingFolder()") is False and ev("async () => !(await _fsGet(planDirKey(currentPlanId)))"))
-    put("cbm-LAPTOP.json", PLAN([T("tq", "Should not be read", 999)]))
-    check("without a watched folder a copy is left alone", ev("() => scanConflictCopies()") == 0 and "cbm-LAPTOP.json" in ls() and "Should not be read" not in names())
+    put("WORKSTATION01_cbm.json", PLAN([T("tq", "Should not be read", 999)]))
+    check("without a watched folder a copy is left alone", ev("() => scanConflictCopies()") == 0 and "WORKSTATION01_cbm.json" in ls() and "Should not be read" not in names())
     pg.click("#planMenuBtn"); check("the plan menu offers 'Watch folder for conflicted copies…' again", "Watch folder for conflicted copies" in pg.inner_text("#planWatchItem")); pg.keyboard.press("Escape")
     ev("() => chooseWatchFolder()"); pg.wait_for_timeout(500)
-    check("choosing the folder again absorbs what accumulated meanwhile (LAPTOP's task arrives)", "Should not be read" in names() and "merged_cbm-LAPTOP.json" in ls(), names())
+    check("choosing the folder again absorbs what accumulated meanwhile — a 'WORKSTATION01_cbm.json' (workstation name, underscore, file name) is a copy too", "Should not be read" in names() and "merged_WORKSTATION01_cbm.json" in ls(), (names(), ls()))
     # a folder that is not the file's folder is refused
     ev("""() => { window.__realPicker = window.showDirectoryPicker; window.showDirectoryPicker = async () => { const r = await navigator.storage.getDirectory(); return r.getDirectoryHandle('elsewhere', { create: true }); }; }""")
     ev("() => stopWatchingFolder()"); pg.wait_for_timeout(200); ev("() => chooseWatchFolder()"); pg.wait_for_timeout(400)

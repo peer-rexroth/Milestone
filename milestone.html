@@ -1309,7 +1309,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <div class="help-section">
           <div class="help-section-title">Files and sync</div>
           <div class="help-row"><i class="fa-solid fa-hard-drive"></i><span>Every plan is kept in a plain <strong>JSON file</strong> on your disk (linking one is required, in Chrome/Edge). Every change is saved to it automatically, and inside an iCloud Drive, OneDrive or Dropbox folder it keeps your own devices in step. <strong>New plan</strong> and <strong>Duplicate</strong> ask where to save the file.</span></div>
-          <div class="help-row"><i class="fa-solid fa-folder-tree"></i><span><strong>Conflicted copies.</strong> When two devices save at once, OneDrive or Dropbox keeps one file and renames the other (<code>plan-DESKTOP-4F2.json</code>, <code>plan (1).json</code>). Choose <strong>Watch folder for conflicted copies…</strong> in the plan menu and Milestone merges them in — the newer version of each task wins — and renames them <code>merged_…</code>. Nothing is deleted; the merge is listed for review.</span></div>
+          <div class="help-row"><i class="fa-solid fa-folder-tree"></i><span><strong>Conflicted copies.</strong> When two devices save at once, OneDrive or Dropbox keeps one file and renames the other (<code>plan-DESKTOP-4F2.json</code>, <code>plan (1).json</code>, <code>PC_plan.json</code>). Choose <strong>Watch folder for conflicted copies…</strong> in the plan menu and Milestone merges them in — the newer version of each task wins — and renames them <code>merged_…</code>. Nothing is deleted; the merge is listed for review.</span></div>
           <div class="help-row"><i class="fa-solid fa-link-slash"></i><span>You can <strong>disconnect</strong> a plan's file (click the file name at the top right, or use the plan menu) — the file is kept, and Milestone asks you to choose one straight away. If the file is moved or deleted, Milestone asks you to create or find it again.</span></div>
         </div>
         <div class="help-divider"></div>
@@ -6683,11 +6683,13 @@ async function reconnectFile() {
 let syncDirHandle = null, strayScanBusy = false;
 const STRAY_MERGED_PREFIX = 'merged_';
 function planDirKey(id) { return 'plandir:' + id; }
-// A copy is a .json file whose name starts with the plan file's base name, is not the file itself, not one this app already renamed, not the file of another
-// plan on this device, and not one of this app's own dated exports ("cbm-2026-09-21.json").
+// A copy is a .json file whose name STARTS with the plan file's base name ("cbm-DESKTOP-4F2.json", "cbm (1).json") or ENDS with it after a workstation name and
+// a "_" or "-" ("WORKSTATION01_cbm.json", "PC-cbm.json"), compared case-insensitively — and is not the file itself, not one this app already renamed, not the
+// file of another plan on this device, and not one of this app's own dated exports ("cbm-2026-09-21.json").
 function isStrayCopyName(name, exactName, otherPlanFiles) {
-  const base = exactName.replace(/\.json$/i, '');
-  return name !== exactName && /\.json$/i.test(name) && !name.startsWith(STRAY_MERGED_PREFIX) && name.startsWith(base) && !otherPlanFiles.has(name) && !/-\d{4}-\d{2}-\d{2}(\s\(\d+\))?\.json$/i.test(name);
+  const n = name.toLowerCase(), e = exactName.toLowerCase(), b = e.replace(/\.json$/i, '');
+  const similar = n.startsWith(b) || n.endsWith('_' + e) || n.endsWith('-' + e);
+  return n !== e && /\.json$/i.test(n) && !n.startsWith(STRAY_MERGED_PREFIX) && similar && !otherPlanFiles.has(name) && !/-\d{4}-\d{2}-\d{2}(\s\(\d+\))?\.json$/i.test(n);
 }
 function strayMergedName(name, n) { return n > 1 ? `${STRAY_MERGED_PREFIX}${n}_${name}` : `${STRAY_MERGED_PREFIX}${name}`; }
 // Another plan's file in the same folder can start with this plan's name ("cbm.json" and "cbm-2.json"): a copy has to be of THIS plan — the same plan name,
