@@ -252,5 +252,11 @@ with sync_playwright() as p:
     ev("() => setSelection([])")
     check("pasting an empty clipboard does nothing", (clip_paste("   ", ""), len(ev("() => tasks")))[1] == before)
     check("the Copy button and the Add menu's Paste work (Copy remembers the selection, Paste puts it back below the selected task)", (click("Existing"), pg.click("#copyBtn"), pg.wait_for_timeout(100), pg.click("#addMenuBtn"), pg.click("#pasteBtn"), pg.wait_for_timeout(300), names().count("Existing"))[6] == 2, names())
+    # the dialog looks like the others: rounded, padded, bordered fields, and the whole predecessor row fits its width
+    ev("() => { setSelection(tasks.slice(0, 2).map(t => t.id)); render(); openBulkModal(); }"); pg.wait_for_timeout(300)
+    look = ev("""() => [...document.querySelectorAll('#bulkModalBg .bulk-ctl input, #bulkModalBg .bulk-ctl select')].filter(e => e.offsetParent).map(e => { const c = getComputedStyle(e); return [e.id, parseFloat(c.borderRadius), parseFloat(c.paddingLeft), parseFloat(c.borderTopWidth)]; })""")
+    check("the bulk-edit fields are rounded (7px), padded (10px) and bordered like the other dialogs' fields, not the browser's plain boxes", len(look) >= 8 and all(r == 7 and p_ == 10 and w == 1 for _, r, p_, w in look), look)
+    check("...the dialog is 520px wide and the link type shows in full ('FS' with a tooltip), none of the three predecessor fields is cut off", round(pg.locator("#bulkModalBg .modal").bounding_box()["width"]) == 520 and ev("() => ['bulkVal-predId', 'bulkVal-predType', 'bulkVal-predLag'].every(i => { const e = document.getElementById(i); return e.getBoundingClientRect().width >= 60; })") and ev("() => document.getElementById('bulkVal-predType').selectedOptions[0].textContent") == "FS")
+    pg.keyboard.press("Escape"); pg.wait_for_timeout(200)
     check("no console errors", not errors, errors[:5])
     print("console errors/warnings:", errors[:5]); print(f"{sum(results)}/{len(results)} passed"); b.close()

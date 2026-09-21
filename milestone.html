@@ -367,6 +367,13 @@ input.inline-edit { width: 100%; min-width: 0; padding: 3px 6px; border: 1px sol
 .bulk-on { display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; }
 .bulk-ctl { display: flex; gap: 6px; align-items: center; min-width: 0; }
 .bulk-ctl input, .bulk-ctl select { min-width: 0; flex: 1; }
+/* the same look as every other dialog's fields: rounded, padded, bordered (they used to be the browser's plain boxes) */
+.bulk-ctl input[type=text], .bulk-ctl input[type=number], .bulk-ctl input[type=date], .bulk-ctl select { padding: 8px 10px; border: 1px solid var(--border); border-radius: 7px; background-color: var(--panel); color: var(--text); font-size: 13px; }
+.bulk-ctl input::placeholder { color: var(--text-faint); }
+.bulk-on input { width: 15px; height: 15px; margin: 0; }
+#bulkVal-predId, #bulkVal-predLag { flex: 0 0 76px; max-width: none; }   /* the link type between them gets the rest */
+#bulkVal-shift { flex: 0 0 150px; max-width: none; }
+#bulkCustom { display: flex; flex-direction: column; gap: 12px; }
 .bulk-ctl input[type=number] { max-width: 120px; }
 .bulk-sep { border-top: 1px solid var(--border); margin: 2px 0; }
 .bulk-hint { font-size: 12px; color: var(--text-dim); margin: 0; }
@@ -433,6 +440,11 @@ input.inline-edit { width: 100%; min-width: 0; padding: 3px 6px; border: 1px sol
 .cal-day input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
 .conflict-btn { color: var(--task-amber); border-color: color-mix(in srgb, var(--task-amber) 50%, var(--border)); }
 .conflict-btn i { margin-right: 6px; }
+.watch-hint { display: inline-flex; align-items: center; gap: 2px; }
+.watch-btn { color: var(--text-dim); border-style: dashed; padding: 6px 10px; font-size: 12.5px; }
+.watch-btn i { margin-right: 6px; }
+.watch-x { border: none; background: transparent; color: var(--text-faint); font-size: 16px; line-height: 1; padding: 2px 6px; border-radius: 5px; }
+.watch-x:hover { color: var(--text); background: var(--panel-2); }
 .conflict-card { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; }
 .conflict-title { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .conflict-title i { color: var(--text-faint); }
@@ -720,6 +732,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
   <div class="dropdown-wrap">
     <button class="btn" id="fileSyncBtn" onclick="onFileSyncBtnClick()"></button>
     <button class="btn conflict-btn hidden" id="syncConflictBtn" onclick="openSyncConflictsModal()"></button>
+    <span class="watch-hint hidden" id="watchHint"><button class="btn watch-btn" id="watchHintBtn" onclick="chooseWatchFolder()" title="OneDrive, Dropbox and SharePoint keep a second copy of the file when two devices save at the same time. Let Milestone watch this file's folder and it merges those copies in."><i class="fa-solid fa-folder-tree"></i>Watch for conflicts</button><button class="watch-x" onclick="declineWatch()" title="Don't remind me for this plan (the plan menu still has it)" aria-label="Don't remind me">&times;</button></span>
   </div>
   <div class="dropdown-wrap">
     <button class="btn" id="dataMenuBtn" onclick="toggleDataMenu()"><i class="fa-solid fa-database"></i>Data</button>
@@ -727,6 +740,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
       <button class="dropdown-item" onclick="exportProject()"><i class="fa-solid fa-file-export"></i>Export JSON</button>
       <button class="dropdown-item" onclick="triggerImport()"><i class="fa-solid fa-file-import"></i>Import JSON</button>
       <button class="dropdown-item" id="foreignImportItem" onclick="triggerForeignImport()"><i class="fa-solid fa-diagram-project"></i>Import MS Project XML / CSV…</button>
+      <button class="dropdown-item" id="mspdiExportItem" onclick="exportMspdi()"><i class="fa-solid fa-file-code"></i>Export MS Project XML</button>
       <button class="dropdown-item" id="excelExportItem" onclick="openExcelExport()"><i class="fa-solid fa-file-excel"></i>Export to Excel…</button>
       <button class="dropdown-item" id="printItem" onclick="openPrintModal()"><i class="fa-solid fa-print"></i>Print / PDF…</button>
       <div class="dropdown-sep"></div>
@@ -943,7 +957,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
 </div>
 
 <div class="modal-bg" id="bulkModalBg" onclick="if(event.target===this) closeBulkModal()">
-  <div class="modal">
+  <div class="modal mid">
     <div class="modal-header"><h2 id="bulkTitle">Edit tasks</h2><button onclick="closeBulkModal()" aria-label="Close">&times;</button></div>
     <div class="modal-body">
       <p class="bulk-hint" id="bulkHint"></p>
@@ -951,8 +965,8 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
       <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-resource"> Resource</label><div class="bulk-ctl"><input type="text" id="bulkVal-resource" maxlength="200" placeholder="Empty clears the resource" aria-label="Resource"></div></div>
       <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-mode"> Task Mode</label><div class="bulk-ctl"><select id="bulkVal-mode" aria-label="Task Mode"><option value="auto">Auto Scheduled</option><option value="manual">Manually Scheduled</option></select></div></div>
       <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-color"> Row colour</label><div class="bulk-ctl"><select id="bulkVal-color" aria-label="Row colour"></select></div></div>
-      <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-shift"> Move dates by</label><div class="bulk-ctl"><input type="number" id="bulkVal-shift" step="1" placeholder="working days (negative = earlier)" aria-label="Working days to move by"><span class="bulk-hint">working days</span></div></div>
-      <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-pred"> Add predecessor</label><div class="bulk-ctl"><input type="number" id="bulkVal-predId" min="1" step="1" placeholder="task #" aria-label="Predecessor task number"><select id="bulkVal-predType" aria-label="Link type"><option value="FS">Finish-to-Start</option><option value="SS">Start-to-Start</option><option value="FF">Finish-to-Finish</option><option value="SF">Start-to-Finish</option></select><input type="number" id="bulkVal-predLag" step="1" placeholder="lag" style="max-width:70px" aria-label="Lag in working days"></div></div>
+      <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-shift"> Move dates by</label><div class="bulk-ctl"><input type="number" id="bulkVal-shift" step="1" placeholder="− earlier, + later" aria-label="Working days to move by"><span class="bulk-hint">working days</span></div></div>
+      <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-pred"> Add predecessor</label><div class="bulk-ctl"><input type="number" id="bulkVal-predId" min="1" step="1" placeholder="task #" aria-label="Predecessor task number"><select id="bulkVal-predType" aria-label="Link type: Finish-to-Start, Start-to-Start, Finish-to-Finish or Start-to-Finish" title="Link type: FS Finish-to-Start, SS Start-to-Start, FF Finish-to-Finish, SF Start-to-Finish"><option value="FS" title="Finish-to-Start">FS</option><option value="SS" title="Start-to-Start">SS</option><option value="FF" title="Finish-to-Finish">FF</option><option value="SF" title="Start-to-Finish">SF</option></select><input type="number" id="bulkVal-predLag" step="1" placeholder="lag" aria-label="Lag in working days"></div></div>
       <div id="bulkCustom"></div>
     </div>
     <div class="modal-footer"><button class="btn" onclick="closeBulkModal()">Cancel</button><button class="btn btn-primary" onclick="applyBulkEdit()">Apply</button></div>
@@ -1309,7 +1323,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <div class="help-section">
           <div class="help-section-title">Files and sync</div>
           <div class="help-row"><i class="fa-solid fa-hard-drive"></i><span>Every plan is kept in a plain <strong>JSON file</strong> on your disk (linking one is required, in Chrome/Edge). Every change is saved to it automatically, and inside an iCloud Drive, OneDrive or Dropbox folder it keeps your own devices in step. <strong>New plan</strong> and <strong>Duplicate</strong> ask where to save the file.</span></div>
-          <div class="help-row"><i class="fa-solid fa-folder-tree"></i><span><strong>Conflicted copies.</strong> When two devices save at once, OneDrive or Dropbox keeps one file and renames the other (<code>plan-DESKTOP-4F2.json</code>, <code>plan (1).json</code>, <code>PC_plan.json</code>). Choose <strong>Watch folder for conflicted copies…</strong> in the plan menu and Milestone merges them in — the newer version of each task wins — and renames them <code>merged_…</code>. Nothing is deleted; the merge is listed for review.</span></div>
+          <div class="help-row"><i class="fa-solid fa-folder-tree"></i><span><strong>Conflicted copies.</strong> When two devices save at once, OneDrive or Dropbox keeps one file and renames the other (<code>plan-DESKTOP-4F2.json</code>, <code>plan (1).json</code>, <code>plan_PC.json</code>). Choose <strong>Watch folder for conflicted copies…</strong> in the plan menu and Milestone merges them in — the newer version of each task wins — and renames them <code>merged_…</code>. Nothing is deleted; the merge is listed for review. A <strong>Watch for conflicts</strong> reminder stays next to the file button until you choose.</span></div>
           <div class="help-row"><i class="fa-solid fa-link-slash"></i><span>You can <strong>disconnect</strong> a plan's file (click the file name at the top right, or use the plan menu) — the file is kept, and Milestone asks you to choose one straight away. If the file is moved or deleted, Milestone asks you to create or find it again.</span></div>
         </div>
         <div class="help-divider"></div>
@@ -1324,6 +1338,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
           <div class="help-row"><i class="fa-solid fa-file-export"></i><span><strong>Data → Export / Import</strong> moves a full JSON snapshot of the current plan out or in.</span></div>
           <div class="help-row"><i class="fa-solid fa-file-excel"></i><span><strong>Export to Excel</strong> saves a formatted .xlsx workbook: a task list plus an optional Gantt chart sheet, each sheet using the columns you chose in its own view.</span></div>
           <div class="help-row"><i class="fa-solid fa-diagram-project"></i><span><strong>Import MS Project XML / CSV…</strong> reads a plan saved from MS Project as XML (File → Save As → XML Format): tasks and their outline, dates, % complete, actual dates, links with lags, manual mode, constraints, resources, baselines, the working week and the holidays.</span></div>
+          <div class="help-row"><i class="fa-solid fa-file-code"></i><span><strong>Export MS Project XML</strong> (Data menu) saves the whole plan as a <code>.xml</code> file that MS Project opens: <em>File → Open</em>, file type “XML Format”. Outline, dates, durations, links with lag, constraints, actual dates, baselines, resources, the working week and holidays go along; empty lines are left out, and custom-field values and TBD dates go into the task’s Notes.</span></div>
           <div class="help-row"><i class="fa-solid fa-file-csv"></i><span>It also reads a <strong>CSV</strong> with a header row — English or German column names such as Task Name, Start, Finish, Duration, Predecessors, Outline Level. A preview shows what was found; you add the tasks to this plan or replace its tasks (a backup file is downloaded first).</span></div>
           <div class="help-row"><i class="fa-solid fa-print"></i><span><strong>Print / PDF…</strong> is under Data as well — see the Gantt chart topic.</span></div>
           <div class="help-row"><i class="fa-solid fa-clock-rotate-left"></i><span><strong>Local Backups</strong> keeps a rolling daily snapshot of every plan in this browser.</span></div>
@@ -5052,7 +5067,7 @@ function renderSyncConflictsModal() {
   const body = document.getElementById('syncConflictsBody');
   body.innerHTML = syncConflictLog.length ? syncConflictLog.map((c, i) => c.kind === 'file' ? `<div class="conflict-card">
       <div class="conflict-title"><i class="fa-solid fa-file-circle-check"></i><strong>${escapeHtml(c.name)}</strong><span class="conflict-time">${new Date(c.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span></div>
-      <p class="cal-hint" style="margin:0 0 8px">A conflicted copy of this plan's file (the sync service made it when two devices saved at the same time). ${c.changed ? `It was merged into the plan — ${c.tasks} task${c.tasks === 1 ? '' : 's'} changed${c.moved ? `, ${c.moved} re-planned` : ''}; the newer version of each task was kept.` : 'It held nothing this plan did not already have.'} ${c.renamedTo ? `The file was renamed <strong>${escapeHtml(c.renamedTo)}</strong> and is kept.` : 'It could not be renamed and will be checked again.'}</p>
+      <p class="cal-hint" style="margin:0 0 8px">A conflicted copy of this plan's file (the sync service made it when two devices saved at the same time). ${c.changed ? `It was merged into the plan — ${c.tasks} task${c.tasks === 1 ? '' : 's'} changed${c.moved ? `, ${c.moved} re-planned` : ''}; the newer version of each task was kept.` : 'It held nothing this plan did not already have.'} ${c.renamedTo ? `The file was renamed <strong>${escapeHtml(c.renamedTo)}</strong> and is kept.` : 'It could not be renamed (the folder or the sync service did not allow it), so it stays where it is and is not read again until you reload the app.'}</p>
       <div class="conflict-actions"><button class="btn" onclick="dismissSyncConflict(${i})">Dismiss</button></div></div>` : `<div class="conflict-card">
       <div class="conflict-title">${c.kind === 'plan' ? '<i class="fa-solid fa-gear"></i>' : '<i class="fa-solid fa-list-check"></i>'}<strong>${escapeHtml(c.name || 'Untitled')}</strong><span class="conflict-time">${new Date(c.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span></div>
       <table class="conflict-table"><tr><th></th><th>Yours</th><th>The other version</th></tr>${c.fields.map(f => `<tr><td>${escapeHtml(conflictLabel(f.key))}</td>
@@ -6366,6 +6381,80 @@ function downloadBlob(blob, filename) {
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 10000);
 }
+/* ---------------------- Export to MS Project (MSPDI XML) ----------------------
+   The inverse of parseMspdi(): "Microsoft Project XML" (the MSPDI format), which MS Project opens with File → Open (file type XML) and which most other
+   planners read. Every element is written in the order of the MSPDI schema (Project, Task, Calendar, PredecessorLink … are xs:sequence — MS Project rejects
+   a misordered file). Durations are working days × 8 h (480 min/day), dates are 08:00 (start) / 17:00 (finish), the working week and the holidays go into
+   the project's base calendar, resources into Resources + Assignments, baselines 0–10 into each task's Baseline elements. Empty lines are left out; custom
+   field values and free-text dates go into the task's Notes (the extended-attribute field ids could not be verified without MS Project). */
+function buildMspdi() {
+  const list = exportTaskRows('all').filter(r => !r.task.spacer), rows = list.map(r => r.task);
+  const uid = new Map(rows.map((t, i) => [t.id, i + 1])), esc = xmlEsc;
+  const T = (n, v) => v === undefined || v === null ? '' : `<${n}>${esc(v)}</${n}>`;
+  const dt = (iso, time = '08:00:00') => `${iso}T${time}`, hours = d => `PT${Math.round(d * 8)}H0M0S`;
+  const CT = { ASAP: 0, ALAP: 1, MSO: 2, MFO: 3, SNET: 4, SNLT: 5, FNET: 6, FNLT: 7 }, LT = { FF: 0, FS: 1, SF: 2, SS: 3 };
+  let d0 = Infinity, d1 = -Infinity;
+  for (const t of rows) { const e = effectiveDates(t.id); if (e.start && e.end) { d0 = Math.min(d0, dayNumber(e.start)); d1 = Math.max(d1, dayNumber(e.end)); } }
+  if (!Number.isFinite(d0)) d0 = d1 = dayNumber(todayStr());
+  const startIso = dayNumberToIso(d0), endIso = dayNumberToIso(d1), now = new Date().toISOString().slice(0, 19), title = project.name || 'Project';
+  // ---- resources
+  const resNames = []; const resOf = t => String(t.resource || '').split(/[,;]/).map(x => x.trim()).filter(Boolean);
+  for (const t of rows) if (!hasChildren(t.id)) for (const n of resOf(t)) if (!resNames.includes(n)) resNames.push(n);
+  // ---- calendar
+  const wd = new Set(currentWorkDays()), yrs = [Number(startIso.slice(0, 4)) - 1, Number(endIso.slice(0, 4)) + 1];
+  const weekDays = [1, 2, 3, 4, 5, 6, 7].map(dtp => wd.has(dtp - 1)
+    ? `<WeekDay>${T('DayType', dtp)}${T('DayWorking', 1)}<WorkingTimes><WorkingTime><FromTime>08:00:00</FromTime><ToTime>12:00:00</ToTime></WorkingTime><WorkingTime><FromTime>13:00:00</FromTime><ToTime>17:00:00</ToTime></WorkingTime></WorkingTimes></WeekDay>`
+    : `<WeekDay>${T('DayType', dtp)}${T('DayWorking', 0)}</WeekDay>`).join('');
+  const exc = [];
+  for (const h of (project.holidays || [])) {
+    const spans = h.yearly ? [] : [[h.date, h.to || h.date]];
+    if (h.yearly) for (let y = yrs[0]; y <= yrs[1]; y++) { const iso = `${y}${h.date.slice(4)}`; if (dayNumberToIso(dayNumber(iso)) === iso) spans.push([iso, iso]); }
+    for (const [a, b2] of spans) exc.push(`<Exception>${T('EnteredByOccurrences', 0)}<TimePeriod>${T('FromDate', dt(a, '00:00:00'))}${T('ToDate', dt(b2, '23:59:00'))}</TimePeriod>${T('Occurrences', 1)}${h.name ? T('Name', h.name) : ''}${T('Type', 1)}${T('DayWorking', 0)}</Exception>`);
+  }
+  // ---- tasks
+  const parts = [];
+  rows.forEach((t, i) => {
+    const u = i + 1, group = hasChildren(t.id), e = effectiveDates(t.id), manual = t.taskMode === 'manual', unsched = isUnscheduled(t) && !group;
+    const depth = list[i].depth + 1, act = actualDates(t.id), has = !!(e.start && e.end), dur = has ? (t.milestone && !group ? 0 : durationDays(e.start, e.end)) : null;
+    const notes = [];
+    if (unsched) { const bits = [t.startText != null && `Start: ${t.startText || '(blank)'}`, t.endText != null && `Finish: ${t.endText || '(blank)'}`, t.durText != null && `Duration: ${t.durText}`].filter(Boolean); if (bits.length) notes.push(bits.join(' · ')); }
+    if (group && t.resource) notes.push(`Resource: ${t.resource}`);
+    for (const id of Object.keys(CUSTOM_FIELDS)) { const v = customValue(t, id); if (v !== undefined) notes.push(`${customFieldName(id)}: ${CUSTOM_FIELDS[id].kind === 'flag' ? (v ? 'Yes' : 'No') : CUSTOM_FIELDS[id].kind === 'date' ? fmtDate(v) : v}`); }
+    let x = `<Task>${T('UID', u)}${T('ID', u)}${T('Name', t.name)}${T('Active', 1)}${T('Manual', manual ? 1 : 0)}${T('Type', 0)}${T('IsNull', 0)}${T('WBS', wbsCode(t.id))}${T('OutlineNumber', wbsCode(t.id))}${T('OutlineLevel', depth)}${T('Priority', 500)}`;
+    if (has) {
+      x += T('Start', dt(e.start)) + T('Finish', dt(e.end, t.milestone && !group ? '08:00:00' : '17:00:00')) + T('Duration', hours(dur));
+      if (manual) x += T('ManualStart', dt(e.start)) + T('ManualFinish', dt(e.end, t.milestone && !group ? '08:00:00' : '17:00:00')) + T('ManualDuration', hours(dur));
+    }
+    x += T('DurationFormat', 7) + T('Milestone', t.milestone && !group ? 1 : 0) + T('Summary', group ? 1 : 0) + T('PercentComplete', Math.round(e.progress)) + T('PercentWorkComplete', Math.round(e.progress));
+    if (act.start && !group) x += T('ActualStart', dt(act.start));
+    if (act.end && !group) x += T('ActualFinish', dt(act.end, t.milestone ? '08:00:00' : '17:00:00'));
+    const ct = CT[t.constraintType] || 0;
+    if (!group && ct) { const info = constraintTypeInfo(t.constraintType); x += T('ConstraintType', ct) + (info.hasDate && t.constraintDate ? T('ConstraintDate', dt(t.constraintDate, info.basis === 'finish' ? '17:00:00' : '08:00:00')) : ''); }
+    else x += T('ConstraintType', 0);
+    if (notes.length) x += T('Notes', notes.join('\n'));
+    if (!group) for (const p of t.predecessors) if (uid.has(p.id)) x += `<PredecessorLink>${T('PredecessorUID', uid.get(p.id))}${T('Type', LT[p.type] == null ? 1 : LT[p.type])}${T('CrossProject', 0)}${T('LinkLag', Math.round((p.lag || 0) * 4800))}${T('LagFormat', 7)}</PredecessorLink>`;
+    for (let n = 0; n < BASELINE_SLOTS; n++) { const b = baselineDates(t.id, n); if (b && b.start && b.end) x += `<Baseline>${T('Number', n)}${T('Start', dt(b.start))}${T('Finish', dt(b.end, t.milestone && !group ? '08:00:00' : '17:00:00'))}${T('Duration', hours(t.milestone && !group ? 0 : durationDays(b.start, b.end)))}${T('DurationFormat', 7)}</Baseline>`; }
+    parts.push(x + '</Task>');
+  });
+  const assignments = []; let au = 0;
+  rows.forEach((t, i) => { if (!hasChildren(t.id)) for (const n of resOf(t)) assignments.push(`<Assignment>${T('UID', ++au)}${T('TaskUID', i + 1)}${T('ResourceUID', resNames.indexOf(n) + 1)}${T('Units', 1)}</Assignment>`); });
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Project xmlns="http://schemas.microsoft.com/project">` +
+    `${T('SaveVersion', 14)}${T('Name', fileBase(title) + '.xml')}${T('Title', title)}${T('CreationDate', now)}${T('LastSaved', now)}${T('ScheduleFromStart', 1)}${T('StartDate', dt(startIso))}${T('FinishDate', dt(endIso, '17:00:00'))}` +
+    `${T('CalendarUID', 1)}${T('DefaultStartTime', '08:00:00')}${T('DefaultFinishTime', '17:00:00')}${T('MinutesPerDay', 480)}${T('MinutesPerWeek', 480 * Math.max(1, wd.size))}${T('DaysPerMonth', 20)}${T('DefaultTaskType', 0)}${T('DurationFormat', 7)}${T('WorkFormat', 2)}${T('WeekStartDay', 1)}` +
+    `<Calendars><Calendar>${T('UID', 1)}${T('Name', 'Standard')}${T('IsBaseCalendar', 1)}${T('IsBaselineCalendar', 0)}<WeekDays>${weekDays}</WeekDays>${exc.length ? `<Exceptions>${exc.join('')}</Exceptions>` : ''}</Calendar></Calendars>` +
+    `<Tasks>${parts.join('')}</Tasks>` +
+    `<Resources>${resNames.map((n, i) => `<Resource>${T('UID', i + 1)}${T('ID', i + 1)}${T('Name', n)}${T('Type', 1)}${T('IsNull', 0)}${T('MaxUnits', 1)}</Resource>`).join('')}</Resources>` +
+    `<Assignments>${assignments.join('')}</Assignments></Project>`;
+}
+function exportMspdi() {
+  closeDataMenu();
+  const n = tasks.filter(t => !t.spacer).length;
+  if (!n) { showToast('Nothing to export yet — add a task first', true); return; }
+  let xml; try { xml = buildMspdi(); } catch (e) { console.warn('Milestone: MS Project export failed', e); showToast('The MS Project export failed', true); return; }
+  const name = `${fileBase(project.name)}.xml`;
+  downloadBlob(new Blob([xml], { type: 'application/xml' }), name);
+  showToast(`Exported ${n} task${n === 1 ? '' : 's'} to ${name} — in MS Project: File → Open, file type “XML Format”`);
+}
 function openExcelExport() {
   closeDataMenu();
   if (!tasks.length) { showToast('Nothing to export yet — add a task first', true); return; }
@@ -6680,16 +6769,16 @@ async function reconnectFile() {
    like that (and the work in it) would stay invisible. A browser cannot list the folder of a linked FILE, so the user may let the app watch that folder
    (plan menu → "Watch folder for conflicted copies…", or the offer after linking); the handle is kept per plan. Every poll then looks for copies, merges each
    into the plan with the ordinary merge (the newer version of a task wins) and renames it `merged_<name>` — never deletes it. The same idea as Pulse's. */
-let syncDirHandle = null, strayScanBusy = false;
+let syncDirHandle = null, strayScanBusy = false, syncDirPerm = null;   // syncDirPerm: 'granted' | 'prompt' | 'denied' | null (unknown / not watching)
+const strayFailed = new Set();   // '<planId>:<file name>' of copies that could not be renamed: not read again this session (they would be merged again and again)
 const STRAY_MERGED_PREFIX = 'merged_';
 function planDirKey(id) { return 'plandir:' + id; }
-// A copy is a .json file whose name STARTS with the plan file's base name ("cbm-DESKTOP-4F2.json", "cbm (1).json") or ENDS with it after a workstation name and
-// a "_" or "-" ("WORKSTATION01_cbm.json", "PC-cbm.json"), compared case-insensitively — and is not the file itself, not one this app already renamed, not the
-// file of another plan on this device, and not one of this app's own dated exports ("cbm-2026-09-21.json").
+// A copy is a .json file whose name STARTS with the plan file's base name and carries something after it — the workstation, a number, a note:
+// "cbm-DESKTOP-4F2.json", "cbm_WORKSTATION01.json", "cbm (1).json" (compared case-insensitively) — and is not the file itself, not one this app already
+// renamed, not the file of another plan on this device, and not one of this app's own dated exports ("cbm-2026-09-21.json").
 function isStrayCopyName(name, exactName, otherPlanFiles) {
   const n = name.toLowerCase(), e = exactName.toLowerCase(), b = e.replace(/\.json$/i, '');
-  const similar = n.startsWith(b) || n.endsWith('_' + e) || n.endsWith('-' + e);
-  return n !== e && /\.json$/i.test(n) && !n.startsWith(STRAY_MERGED_PREFIX) && similar && !otherPlanFiles.has(name) && !/-\d{4}-\d{2}-\d{2}(\s\(\d+\))?\.json$/i.test(n);
+  return n !== e && /\.json$/i.test(n) && !n.startsWith(STRAY_MERGED_PREFIX) && n.startsWith(b) && !otherPlanFiles.has(name) && !/-\d{4}-\d{2}-\d{2}(\s\(\d+\))?\.json$/i.test(n);
 }
 function strayMergedName(name, n) { return n > 1 ? `${STRAY_MERGED_PREFIX}${n}_${name}` : `${STRAY_MERGED_PREFIX}${name}`; }
 // Another plan's file in the same folder can start with this plan's name ("cbm.json" and "cbm-2.json"): a copy has to be of THIS plan — the same plan name,
@@ -6704,7 +6793,8 @@ async function renameConflictCopy(dir, name, text) {   // (no rename in the File
   while (await dirHasFile(dir, target)) target = strayMergedName(name, ++n);
   const h = await dir.getFileHandle(target, { create: true }), w = await h.createWritable();
   await w.write(text); await w.close();
-  await dir.removeEntry(name);
+  try { await dir.removeEntry(name); }
+  catch (err) { try { await dir.removeEntry(target); } catch (e2) { /* the extra copy stays: harmless, it is a merged_ file */ } throw err; }   // (no half-done rename: the original stays, the duplicate goes)
   return target;
 }
 function absorbConflictCopy(data) {   // the ordinary merge with no shared base: the newer version of a task wins, deletions are respected
@@ -6721,18 +6811,21 @@ async function scanConflictCopies() {
   const epoch = planEpoch, planId = currentPlanId, done = [];
   strayScanBusy = true;
   try {
-    if ((await dir.queryPermission({ mode: 'readwrite' })) !== 'granted' || epoch !== planEpoch) return 0;
+    const perm = await refreshDirPerm(dir);
+    if (epoch !== planEpoch) return 0;
+    if (perm !== 'granted') return 0;   // (the file button and the plan menu say so — see updateFileSyncUI / allowWatchAccess)
     const idx = readPlansIndex(), others = new Set((idx ? idx.plans : []).filter(pl => pl.id !== planId && pl.fileName).map(pl => pl.fileName));
     const entries = [];
     for await (const e of dir.values()) if (e.kind === 'file' && isStrayCopyName(e.name, fh.name, others)) entries.push(e);
     for (const e of entries) {
       if (epoch !== planEpoch) break;
+      if (strayFailed.has(planId + ':' + e.name)) continue;   // could not be renamed earlier this session: not merged over and over
       let text, data;
       try { text = await (await e.getFile()).text(); data = JSON.parse(text); } catch (err) { continue; }   // (unreadable or not JSON: not ours, leave it alone)
       if (!data || !Array.isArray(data.tasks) || !looksLikeThisPlan(data) || epoch !== planEpoch) continue;
       const res = absorbConflictCopy(data);
       let target = null;
-      try { target = await renameConflictCopy(dir, e.name, text); } catch (err) { console.warn('Milestone: could not rename the conflicted copy', e.name, err); }
+      try { target = await renameConflictCopy(dir, e.name, text); } catch (err) { strayFailed.add(planId + ':' + e.name); console.warn('Milestone: could not rename the conflicted copy', e.name, err); }
       done.push({ kind: 'file', name: e.name, renamedTo: target, tasks: res.tasks, changed: res.changed, moved: res.moved, fields: [], at: Date.now() });
     }
   } catch (e) { console.warn('Milestone: scan for conflicted copies failed', e); }
@@ -6740,13 +6833,28 @@ async function scanConflictCopies() {
   if (done.length && epoch === planEpoch) {
     for (const d of done) syncConflictLog.push(d);
     updateSyncConflictsUI();
-    const n = done.length, changedTasks = done.reduce((a, d) => a + (d.changed ? d.tasks : 0), 0);
-    showToast(`Merged ${n} conflicted cop${n === 1 ? 'y' : 'ies'} (${done.slice(0, 2).map(d => d.name).join(', ')}${n > 2 ? ', …' : ''})${changedTasks ? ` — ${changedTasks} task${changedTasks === 1 ? '' : 's'} changed` : ' — nothing new in them'}`, false, () => openSyncConflictsModal(), 'Review');
+    const n = done.length, changedTasks = done.reduce((a, d) => a + (d.changed ? d.tasks : 0), 0), failed = done.filter(d => !d.renamedTo);
+    showToast(`Merged ${n} conflicted cop${n === 1 ? 'y' : 'ies'} (${done.slice(0, 2).map(d => d.name).join(', ')}${n > 2 ? ', …' : ''})${changedTasks ? ` — ${changedTasks} task${changedTasks === 1 ? '' : 's'} changed` : ' — nothing new in them'}${failed.length ? `. Could not rename ${failed.length === 1 ? 'it' : `${failed.length} of them`} — the file stays in the folder and is not read again until you reload` : ''}`, !!failed.length, () => openSyncConflictsModal(), 'Review');
     if (done.some(d => d.changed)) queueFileSyncWrite();   // the combined result goes back to the file the other devices read
   }
   return done.length;
 }
+async function refreshDirPerm(dir = syncDirHandle) {
+  let perm = null;
+  if (dir) { try { perm = await dir.queryPermission({ mode: 'readwrite' }); } catch (e) { perm = 'denied'; } }
+  const changed = perm !== syncDirPerm; syncDirPerm = perm;
+  if (changed) updateFileSyncUI();
+  return perm;
+}
 function watchingFolder() { return !!syncDirHandle; }
+function watchNeedsPermission() { return !!syncDirHandle && syncDirPerm !== null && syncDirPerm !== 'granted'; }
+function watchDeclined() { try { return !!localStorage.getItem('milestone-watchdeclined-' + currentPlanId); } catch (e) { return false; } }
+function declineWatch() { try { localStorage.setItem('milestone-watchdeclined-' + currentPlanId, '1'); } catch (e) { /* ignore */ } updateWatchHint(); showToast('Not reminding you again for this plan — the plan menu still has “Watch folder for conflicted copies…”'); }
+// The reminder next to the file button: a linked plan whose folder is not watched (unless the user said no for this plan).
+function updateWatchHint() {
+  const el = document.getElementById('watchHint'); if (!el) return;
+  el.classList.toggle('hidden', !(fileSyncStatus === 'linked' && syncFileHandle && !syncDirHandle && typeof window.showDirectoryPicker === 'function' && !watchDeclined()));
+}
 async function chooseWatchFolder() {
   closePlanMenu();
   if (!syncFileHandle || typeof window.showDirectoryPicker !== 'function') { showToast('This browser can’t watch a folder', true); return; }
@@ -6758,7 +6866,7 @@ async function chooseWatchFolder() {
     if (epoch !== planEpoch) return;
     const path = dir.resolve ? await dir.resolve(syncFileHandle).catch(() => null) : null;
     if (!path || path.length !== 1) { showToast(`Pick the folder that directly contains “${syncFileHandle.name}”`, true); return; }
-    syncDirHandle = dir; await _fsPut(planDirKey(planId), dir);
+    syncDirHandle = dir; syncDirPerm = 'granted'; strayFailed.clear(); await _fsPut(planDirKey(planId), dir);
     try { localStorage.setItem('milestone-watchasked-' + planId, '1'); } catch (e) { /* ignore */ }
     updateFileSyncUI();
     showToast('Watching this folder for conflicted copies');
@@ -6767,16 +6875,15 @@ async function chooseWatchFolder() {
 }
 async function stopWatchingFolder() {
   closePlanMenu();
-  const planId = currentPlanId; syncDirHandle = null;
+  const planId = currentPlanId; syncDirHandle = null; syncDirPerm = null;
   try { await _fsDel(planDirKey(planId)); } catch (e) { /* already gone */ }
   updateFileSyncUI(); showToast('No longer watching the folder');
 }
 async function allowWatchAccess() {   // the browser forgot the permission for the folder (a click can ask again)
   closePlanMenu();
-  try { if (syncDirHandle && (await syncDirHandle.requestPermission({ mode: 'readwrite' })) === 'granted') { showToast('Watching this folder for conflicted copies'); await scanConflictCopies(); } else showToast('Permission not granted', true); } catch (e) { showToast('Could not ask for permission', true); }
+  try { if (syncDirHandle && (await syncDirHandle.requestPermission({ mode: 'readwrite' })) === 'granted') { await refreshDirPerm(); showToast('Watching this folder for conflicted copies'); await scanConflictCopies(); } else { await refreshDirPerm(); showToast('Permission not granted', true); } } catch (e) { showToast('Could not ask for permission', true); }
   updateFileSyncUI();
 }
-async function watchPermissionGranted() { try { return !!syncDirHandle && (await syncDirHandle.queryPermission({ mode: 'readwrite' })) === 'granted'; } catch (e) { return false; } }
 // Once per plan and device, after a file has been linked: offer to watch its folder (the toast's button is the click the folder picker needs).
 function maybeOfferWatch() {
   try {
@@ -6793,7 +6900,7 @@ async function unlinkFile() {
   await flushFileSync();                    // last write, so the file is complete when we let go of it
   if (planId !== currentPlanId) return;
   planEpoch++;                              // anything still in flight for the old file is now ignored
-  syncFileHandle = null; syncDirHandle = null; lastSyncedSnapshot = null; lastSyncedAt = 0; fileSyncWritePending = false;
+  syncFileHandle = null; syncDirHandle = null; syncDirPerm = null; lastSyncedSnapshot = null; lastSyncedAt = 0; fileSyncWritePending = false;
   try { await _fsDel(planDirKey(planId)); } catch (e) { /* none */ }
   try { localStorage.removeItem(SYNC_BASE_PREFIX + planId); } catch (e) { /* ignore */ }
   fileSyncStatus = 'unlinked';
@@ -6834,7 +6941,7 @@ async function _fsMigrateLegacyKey() {
 // switch) and start syncing. Sync state belongs to the *current plan*, so it is reset first.
 async function activatePlanFile(interactive) {
   const epoch = planEpoch, planId = currentPlanId;
-  syncFileHandle = null; syncDirHandle = null; lastSyncedSnapshot = readSyncBase(planId); lastSyncedAt = 0;
+  syncFileHandle = null; syncDirHandle = null; syncDirPerm = null; lastSyncedSnapshot = readSyncBase(planId); lastSyncedAt = 0;
   syncConflictLog = []; updateSyncConflictsUI();   // (conflicts belong to the plan they happened in)
   if (!fileSyncSupported()) { fileSyncStatus = 'unsupported'; updateFileSyncUI(); return; }
   fileSyncStatus = 'checking'; updateFileSyncUI();
@@ -6852,6 +6959,7 @@ async function activatePlanFile(interactive) {
         if (dir && dir.kind === 'directory' && epoch === planEpoch) {
           syncDirHandle = dir;
           if (interactive && perm === 'granted' && (await dir.queryPermission({ mode: 'readwrite' })) !== 'granted') { try { await dir.requestPermission({ mode: 'readwrite' }); } catch (e) { /* asked again from the plan menu */ } }
+          await refreshDirPerm(dir);
         }
       } catch (e) { syncDirHandle = null; }
       if (perm === 'granted') {
@@ -6879,19 +6987,22 @@ function onFileSyncBtnClick() {
   if (fileSyncStatus === 'unsupported' || fileSyncStatus === 'checking') return;
   if (fileSyncStatus === 'unlinked' || fileSyncStatus === 'missing') openFileSyncModal();
   else if (fileSyncStatus === 'lapsed') reconnectFile();
+  else if (watchNeedsPermission()) allowWatchAccess();   // the watched folder lost its permission: this click can ask for it again
   else disconnectFile();   // linked: offers to disconnect (with a confirmation)
 }
 function updateFileSyncUI() {
   updateSyncConflictsUI();
   const btn = document.getElementById('fileSyncBtn');
-  if (fileSyncStatus === 'unsupported') { btn.classList.add('hidden'); return; }
+  if (fileSyncStatus === 'unsupported') { btn.classList.add('hidden'); updateWatchHint(); return; }
   btn.classList.remove('hidden');
   btn.style.color = ''; btn.style.cursor = '';
   if (fileSyncStatus === 'checking') { btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; btn.title = 'Checking this plan’s linked file…'; }
   else if (fileSyncStatus === 'unlinked') { btn.innerHTML = '<i class="fa-solid fa-link"></i>Link file'; btn.style.color = 'var(--task-amber)'; btn.title = 'Not saved to a file — only kept in this browser. Click to choose a file.'; }
   else if (fileSyncStatus === 'missing') { btn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>File missing'; btn.style.color = 'var(--danger)'; btn.title = 'The linked file was moved or deleted — click to fix'; }
   else if (fileSyncStatus === 'lapsed') { btn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>Reconnect'; btn.style.color = 'var(--danger)'; btn.title = 'Permission was lost — click to reconnect'; }
+  else if (watchNeedsPermission()) { btn.innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="color:var(--task-amber)"></i>${escapeHtml(syncFileHandle ? syncFileHandle.name : 'Linked')}`; btn.title = `${syncFileHandle ? syncFileHandle.name : 'The file'} is saved, but the folder watched for conflicted copies needs your permission again — click to allow`; }
   else { btn.innerHTML = `<i class="fa-solid fa-check" style="color:var(--task-green)"></i>${escapeHtml(syncFileHandle ? syncFileHandle.name : 'Linked')}`; btn.title = syncFileHandle ? `This plan is saved to ${syncFileHandle.name}${syncDirHandle ? ' (its folder is watched for conflicted copies)' : ''} — click to disconnect` : 'Linked'; }
+  updateWatchHint();
 }
 
 /* ================================== Plans =================================== */
@@ -6972,6 +7083,7 @@ function renderPlanMenu() {
     `<div class="dropdown-sep"></div>` +
     `<button class="dropdown-item" id="planNewItem" onclick="openPlanModal('new')"><i class="fa-solid fa-plus"></i>New plan…</button>` +
     (fileSyncSupported() ? `<button class="dropdown-item" id="planOpenFileItem" onclick="openFileAsPlan()"><i class="fa-solid fa-folder-open"></i>Open file as plan…</button>` : '') +
+    (fileSyncSupported() && typeof window.showDirectoryPicker === 'function' && watchNeedsPermission() ? `<button class="dropdown-item" id="planWatchAllowItem" onclick="allowWatchAccess()"><i class="fa-solid fa-triangle-exclamation" style="color:var(--task-amber)"></i>Allow access to the watched folder…<span class="item-hint" style="color:var(--task-amber)">needs permission</span></button>` : '') +
     (fileSyncSupported() && typeof window.showDirectoryPicker === 'function' ? `<button class="dropdown-item" id="planWatchItem" onclick="${syncDirHandle ? 'stopWatchingFolder()' : 'chooseWatchFolder()'}"${syncFileHandle ? '' : ' disabled title="This plan isn’t linked to a file"'} title="OneDrive, Dropbox and SharePoint keep a second copy of the file when two devices save at the same time — watching its folder lets Milestone merge those copies in"><i class="fa-solid fa-folder-tree"></i>${syncDirHandle ? 'Stop watching for conflicted copies' : 'Watch folder for conflicted copies…'}<span class="item-hint">${syncDirHandle ? 'on' : 'off'}</span></button>` : '') +
     `<div class="dropdown-sep"></div>` +
     `<button class="dropdown-item" id="planRenameItem" onclick="openPlanModal('rename')"><i class="fa-solid fa-pen"></i>Rename plan…</button>` +
