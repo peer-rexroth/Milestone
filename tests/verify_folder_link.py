@@ -56,7 +56,7 @@ with sync_playwright() as p:
 
     # ---------------------------------------------------------------- linking an existing file (merged), then creating
     pg.click("#linkFolderBtn"); pg.wait_for_selector("#folderFilesModalBg.open"); pg.click("#folderFilesList .folder-row:has-text('Cost plan.json')"); pg.click("#folderFilesOkBtn"); pg.wait_for_selector("#fileSyncModalBg:not(.open)"); settle()
-    check("linking an existing plan file merges its tasks into the plan and links plan, file and folder", ev("() => tasks.map(t => t.name).sort()") == ["A", "B", "C"] and ev("() => fileSyncStatus") == "linked" and ev("() => watchingFolder()") is True and "Cost plan.json" in pg.inner_text("#fileSyncBtn"), ev("() => tasks.map(t => t.name)"))
+    check("linking an existing plan file merges its tasks into the plan and links plan, file and folder", ev("() => tasks.map(t => t.name).sort()") == ["A", "B", "C"] and ev("() => fileSyncStatus") == "linked" and ev("() => watchingFolder()") is True and "Cost plan.json" in (pg.get_attribute("#fileSyncBtn", "title") or ""), ev("() => tasks.map(t => t.name)"))
     check("...the toast says where it linked, and the folder is watched (tooltip)", "Linked to Cost plan.json" in toast() and "watched" in (pg.get_attribute("#fileSyncBtn", "title") or ""), toast())
     picks = ev("() => window.__picks")
     check("...the rest of the folder is not touched (Other.json is as it was)", json.loads(ev("async () => { const r = await navigator.storage.getDirectory(); return (await (await r.getFileHandle('Other.json')).getFile()).text(); }"))["tasks"][0]["name"] == "X")
@@ -66,7 +66,7 @@ with sync_playwright() as p:
     check("Open plan from folder: the dialog has no 'create' row, says 'Open a plan', and Cost plan.json (this plan's own file) is greyed out", pg.locator("#folderFilesList .folder-row[data-i='new']").count() == 0 and "Open a plan" in pg.inner_text("#folderFilesTitle") and pg.locator("#folderFilesList .folder-row.taken:has-text('Cost plan.json')").count() == 1)
     check("...the button says 'Open plan'", pg.inner_text("#folderFilesOkBtn") == "Open plan")
     pg.click("#folderFilesList .folder-row:has-text('Other.json')"); pg.click("#folderFilesOkBtn"); pg.wait_for_timeout(500); settle()
-    check("opening 'Other.json' makes a new plan named after its project, linked to it and its folder", ev("() => project.name") == "Other" and ev("() => tasks.map(t => t.name)") == ["X"] and ev("() => watchingFolder()") is True and "Other.json" in pg.inner_text("#fileSyncBtn") and ev("() => JSON.parse(localStorage.getItem('milestone-plans')).plans.length") == 2)
+    check("opening 'Other.json' makes a new plan named after its project, linked to it and its folder", ev("() => project.name") == "Other" and ev("() => tasks.map(t => t.name)") == ["X"] and ev("() => watchingFolder()") is True and "Other.json" in (pg.get_attribute("#fileSyncBtn", "title") or "") and ev("() => JSON.parse(localStorage.getItem('milestone-plans')).plans.length") == 2)
 
     # ---------------------------------------------------------------- reload
     pg.reload(); pg.wait_for_selector("#addTaskBtn"); pg.wait_for_function("() => fileSyncStatus !== 'checking'"); pg.wait_for_timeout(300)
@@ -83,7 +83,7 @@ with sync_playwright() as p:
     pg.click("#linkSameFolderBtn"); pg.wait_for_selector("#folderFilesModalBg.open")
     check("...it lists the same folder WITHOUT asking the browser for a folder again", ev("() => window.__picks") == before and pg.locator("#folderFilesList .folder-row:has-text('Cost plan.json')").count() == 1)
     pg.click("#folderNewName"); pg.fill("#folderNewName", "Other again.json"); pg.click("#folderFilesOkBtn"); pg.wait_for_selector("#fileSyncModalBg:not(.open)"); settle()
-    check("...and a new file created there takes the plan's tasks", ev("() => fileSyncStatus") == "linked" and "Other again.json" in ls() and "Other again.json" in pg.inner_text("#fileSyncBtn"), ls())
+    check("...and a new file created there takes the plan's tasks", ev("() => fileSyncStatus") == "linked" and "Other again.json" in ls() and "Other again.json" in (pg.get_attribute("#fileSyncBtn", "title") or ""), ls())
 
     # ---------------------------------------------------------------- disconnect forgets both
     ev("() => unlinkFile()"); pg.wait_for_timeout(500)

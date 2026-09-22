@@ -120,7 +120,8 @@ with sync_playwright() as p:
     pg.click("#folderFilesModalBg .modal-footer .btn:has-text('Back')"); pg.wait_for_timeout(150)
     check("Back returns to the link dialog, still open and unlinked", B.modal_open() and B.status() == "unlinked" and not pg.evaluate("() => document.getElementById('folderFilesModalBg').classList.contains('open')"))
     B.modal_link_new("plan-a.json")
-    check("creating a file in the chosen folder links the plan and closes the dialog", B.status() == "linked" and not B.modal_open() and "plan-a.json" in pg.inner_text("#fileSyncBtn"))
+    check("creating a file in the chosen folder links the plan and closes the dialog", B.status() == "linked" and not B.modal_open() and "plan-a.json" in (pg.get_attribute("#fileSyncBtn", "title") or ""))
+    check("...the button itself just says 'Linked' (the filename is only in the tooltip, to keep the topbar clean)", pg.inner_text("#fileSyncBtn").strip() == "Linked", pg.inner_text("#fileSyncBtn"))
     check("the file was created with the plan in it", B.file_tasks("plan-a.json") == [], B.file_tasks("plan-a.json"))
     B.add("A1"); B.settle()
     check("edits are written to the file", B.file_tasks("plan-a.json") == ["A1"], B.file_tasks("plan-a.json"))
@@ -133,14 +134,14 @@ with sync_playwright() as p:
     pg.fill("#planNameInput", "Plan B"); pg.evaluate("() => window.__pick = '__abort__'"); pg.click("#planSubmitBtn"); pg.wait_for_timeout(400)
     check("cancelling the save dialog creates no plan", len(B.index()["plans"]) == n0 and B.pname() == "Alpha", (len(B.index()["plans"]), B.pname()))
     pg.evaluate("() => window.__pick = null"); pg.click("#planSubmitBtn"); pg.wait_for_selector("#planModalBg:not(.open)"); B.settle()
-    check("choosing a folder creates the plan and its file (named after the plan), opens it, linked", B.pname() == "Plan B" and B.status() == "linked" and B.file_tasks("Plan B.json") == [] and "Plan B.json" in pg.inner_text("#fileSyncBtn"), (B.pname(), B.status()))
+    check("choosing a folder creates the plan and its file (named after the plan), opens it, linked", B.pname() == "Plan B" and B.status() == "linked" and B.file_tasks("Plan B.json") == [] and "Plan B.json" in (pg.get_attribute("#fileSyncBtn", "title") or ""), (B.pname(), B.status()))
     check("...and it never passes through an unlinked state (no dialog)", not B.modal_open())
     B.add("B1"); B.settle()
     check("plan B writes only to plan B's file", B.file_tasks("Plan B.json") == ["B1"] and B.file_tasks("plan-a.json") == ["A1"])
     # a file name that is taken is never reused for a new plan
     B.write_file("Taken.json", "{}")
     B.open_menu(); pg.click("#planNewItem"); pg.wait_for_selector("#planModalBg.open"); pg.fill("#planNameInput", "Taken"); pg.click("#planSubmitBtn"); pg.wait_for_selector("#planModalBg:not(.open)"); B.settle()
-    check("a new plan never reuses an existing file: 'Taken' gets 'Taken 2.json', the old 'Taken.json' is untouched", B.status() == "linked" and "Taken 2.json" in pg.inner_text("#fileSyncBtn") and B.read_file("Taken.json") == "{}", pg.inner_text("#fileSyncBtn"))
+    check("a new plan never reuses an existing file: 'Taken' gets 'Taken 2.json', the old 'Taken.json' is untouched", B.status() == "linked" and "Taken 2.json" in (pg.get_attribute("#fileSyncBtn", "title") or "") and B.read_file("Taken.json") == "{}", pg.get_attribute("#fileSyncBtn", "title"))
     n0 += 1
     B.switch_ui("Alpha")
 
@@ -155,7 +156,7 @@ with sync_playwright() as p:
 
     # --- switching + per-plan files + the write race
     B.switch_ui("Alpha")
-    check("switching re-points sync to that plan's file", B.status() == "linked" and "plan-a.json" in pg.inner_text("#fileSyncBtn"), pg.inner_text("#fileSyncBtn"))
+    check("switching re-points sync to that plan's file", B.status() == "linked" and "plan-a.json" in (pg.get_attribute("#fileSyncBtn", "title") or ""), pg.get_attribute("#fileSyncBtn", "title"))
     B.add("A2"); B.settle()
     check("after round trips each file holds only its own plan", B.file_tasks("plan-a.json") == ["A1", "A2"] and B.file_tasks("Plan B.json") == ["B1"] and B.file_tasks("Alpha copy.json") == ["A1", "COPY"])
     for i in range(3):
@@ -179,7 +180,7 @@ with sync_playwright() as p:
     pg.evaluate("() => chooseFolderForPlan('link')"); pg.wait_for_selector("#folderFilesModalBg.open")
     check("the folder's file list shows another plan's file as taken (greyed out, 'Already linked to the plan …') and it cannot be chosen", pg.locator("#folderFilesList .folder-row.taken:has-text('plan-a.json')").count() == 1 and "Already linked to the plan" in pg.inner_text("#folderFilesList .folder-row.taken:has-text('plan-a.json')") and pg.locator("#folderFilesList .folder-row.taken input").first.is_disabled())
     pg.click("#folderFilesModalBg .modal-footer .btn:has-text('Back')"); pg.wait_for_timeout(150)
-    check("...and the plan stays linked to its own file", B.status() == "linked" and "Plan B.json" in pg.inner_text("#fileSyncBtn"))
+    check("...and the plan stays linked to its own file", B.status() == "linked" and "Plan B.json" in (pg.get_attribute("#fileSyncBtn", "title") or ""))
 
     # --- the linked file goes missing
     pg.evaluate("async () => { const r = await navigator.storage.getDirectory(); await r.removeEntry('Plan B.json'); }")
@@ -228,7 +229,7 @@ with sync_playwright() as p:
     check("nothing is written to the old file any more", B.file_tasks("orphan.json") == ["D0", "D1"])
     B.modal_link_new("connect-new.json")
     check("connect a NEW file: it gets all of the plan's tasks, the old file stays as it was", B.status() == "linked" and B.file_tasks("connect-new.json") == ["D0", "D1", "D2"] and B.file_tasks("orphan.json") == ["D0", "D1"], (B.file_tasks("connect-new.json"), B.file_tasks("orphan.json")))
-    check("...and the button shows the new file", "connect-new.json" in pg.inner_text("#fileSyncBtn"))
+    check("...and the button's tooltip shows the new file", "connect-new.json" in (pg.get_attribute("#fileSyncBtn", "title") or ""))
     B.add("D3"); B.settle()
     check("later edits go to the new file only", B.file_tasks("connect-new.json")[-1] == "D3" and B.file_tasks("orphan.json") == ["D0", "D1"])
 
@@ -242,8 +243,8 @@ with sync_playwright() as p:
     # the same file can be connected again after disconnecting it
     pg.click("#fileSyncBtn"); pg.wait_for_selector("#confirmModalBg.open"); pg.click("#confirmModalActionBtn"); pg.wait_for_selector("#fileSyncModalBg.open", timeout=4000)
     B.modal_link_existing("different.json")
-    check("reconnecting the very same file works", B.status() == "linked" and "different.json" in pg.inner_text("#fileSyncBtn"))
-    B.boot(); check("after a reload the new link is remembered (no dialog)", B.status() == "linked" and not B.modal_open() and "different.json" in pg.inner_text("#fileSyncBtn"))
+    check("reconnecting the very same file works", B.status() == "linked" and "different.json" in (pg.get_attribute("#fileSyncBtn", "title") or ""))
+    B.boot(); check("after a reload the new link is remembered (no dialog)", B.status() == "linked" and not B.modal_open() and "different.json" in (pg.get_attribute("#fileSyncBtn", "title") or ""))
 
     # --- open an existing plan file as a plan (the file is picked from the folder's list)
     B.write_file("from-disk.json", json.dumps({"version": 1, "project": {"name": "From Disk", "updatedAt": 9}, "tasks": [dict(LEG[0], name="Disk 1"), dict(LEG[1], name="Disk 2")], "deletedTaskIds": []}))
@@ -262,7 +263,7 @@ with sync_playwright() as p:
     B.switch_ui("Plan B"); B.boot()
     check("reload: the plan reopens still linked (no dialog)", B.pname() == "Plan B" and B.status() == "linked" and not B.modal_open(), (B.pname(), B.status()))
     B.switch_ui("From Disk")
-    check("...and other plans re-link on switch", B.status() == "linked" and "from-disk.json" in pg.inner_text("#fileSyncBtn"))
+    check("...and other plans re-link on switch", B.status() == "linked" and "from-disk.json" in (pg.get_attribute("#fileSyncBtn", "title") or ""))
 
     # --- migration with a legacy handle; and no resurrection once it is gone
     pg.evaluate("""async (legacy) => {
