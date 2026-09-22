@@ -87,6 +87,18 @@ with sync_playwright() as p:
     check("the Cost row is hidden when the plan has never set a rate", pg.evaluate("() => document.getElementById('taskCostRow').classList.contains('hidden')"))
     pg.keyboard.press("Escape")
 
+    # ---------------------------------------------------------------- default position, and the migration for an install that already had columns saved
+    check("Cost / Cost to Date default right after Resource, before the baseline/variance columns, in BOTH views", ev("() => { const t = DEFAULT_COL_ORDER.indexOf('resource'), g = GANTT_DEFAULT_ORDER.indexOf('resource'); return DEFAULT_COL_ORDER.slice(t, t + 3).join() === 'resource,cost,costToDate' && GANTT_DEFAULT_ORDER.slice(g, g + 3).join() === 'resource,cost,costToDate'; }"))
+    stale_order = ["mode", "wbs", "name", "start", "end", "actualStart", "actualFinish", "duration", "progress", "preds", "remaining", "status", "baselineStart", "baselineFinish", "baselineDuration", "startVariance", "finishVariance", "durationVariance", "resource", "text1"]
+    pg.evaluate("o => localStorage.setItem('milestone-prefs', JSON.stringify({theme: 'light', cols: {order: o, hidden: [], rev: 1}, gcols: {order: o, hidden: []}}))", stale_order)
+    pg.reload(); pg.wait_for_selector("#addTaskBtn"); pg.wait_for_timeout(150)
+    check("a Tasks-view order saved BEFORE cost tracking existed (with a custom field already placed) is corrected once: Cost/Cost to Date land right after Resource, not after the custom field", ev("() => colOrder.slice(colOrder.indexOf('resource'), colOrder.indexOf('resource') + 3).join()") == "resource,cost,costToDate", ev("() => colOrder"))
+    check("...the same correction reaches the Gantt view's own saved order (gcols never had a revision counter before this)", ev("() => gColOrder.slice(gColOrder.indexOf('resource'), gColOrder.indexOf('resource') + 3).join()") == "resource,cost,costToDate", ev("() => gColOrder"))
+    ev("() => { moveColumn('cost', 1); moveColumn('cost', 1); save(); }")   # the user is then free to move it again themselves
+    moved_to = ev("() => colOrder.indexOf('cost')")
+    pg.reload(); pg.wait_for_selector("#addTaskBtn"); pg.wait_for_timeout(150)
+    check("...and a later reload does not fight that manual move back (the migration only ever runs once, gcols now saves its own revision)", ev("() => colOrder.indexOf('cost')") == moved_to)
+
     check("no console errors or page errors across the whole run", not errors, errors[:5])
     n_ok, n_all = sum(results), len(results)
     print(f"\n{n_ok}/{n_all} checks passed")

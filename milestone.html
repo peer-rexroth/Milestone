@@ -1545,7 +1545,7 @@ const TASK_COLS = {
   remaining:    { label: 'Remaining Duration', width: '110px',        dflt: false },
   status:       { label: 'Status',        width: '108px',             dflt: true },
   resource:     { label: 'Resource',      width: '140px',             dflt: false },   // fixed like every column but Task Name; longer text is cut with an ellipsis (the cell's tooltip and the editor show all of it)
-  cost:         { label: 'Cost',          width: '96px',              dflt: false },   // resource rate × duration, rolled up — see taskCost()
+  cost:         { label: 'Cost',          width: '96px',              dflt: false },   // resource rate × duration, rolled up — see taskCost() — right after Resource (an explicit user request)
   costToDate:   { label: 'Cost to Date',  width: '96px',              dflt: false },   // header: Cost / to Date — cost × % complete, rolled up bottom-up — see taskCostToDate()
   // Baseline columns (all hidden by default): the baseline chosen in the Baseline dialog (project.compareBaseline, "Baseline" unless changed)
   baselineStart:    { label: 'Baseline Start',    width: '104px', dflt: false },   // header: Baseline / Start
@@ -1582,8 +1582,25 @@ for (const f of Object.values(CUSTOM_FIELDS)) {
 const DEFAULT_COL_ORDER = Object.keys(TASK_COLS);
 // Bump COLS_REV when a column becomes shown-by-default: an install's saved choice already lists it as hidden (the defaults
 // are written by its first save), so loadPrefs() switches the columns listed here on ONCE for anyone still on an older revision.
-const COLS_REV = 1;
+const COLS_REV = 2;
 const COLS_REV_SHOWN = { 1: ['wbs'] };
+// Bump COLS_REV (same counter) and list directives here when a column's DEFAULT position moves: merging a saved order with
+// the new default only ever APPENDS a column that save has never seen — at the very end, after every custom field too — so
+// simply moving cost/costToDate earlier in DEFAULT_COL_ORDER did nothing for an install that had already saved them at the
+// old spot (right after Resource, from when cost tracking first shipped) or, worse, had never saved them at all and got them
+// tacked on after its own custom fields on the very next load. Applied ONCE, same revision-catchup loop as COLS_REV_SHOWN,
+// to both this view's colOrder AND the Gantt view's gColOrder (an explicit user request: "both fields should be listed under
+// Resource" — a real, already-customized install, not just a fresh one).
+const COLS_REV_MOVE = { 2: [{ id: 'cost', after: 'resource' }, { id: 'costToDate', after: 'cost' }] };
+function applyColsRevMove(order, moves) {
+  for (const { id, after } of moves) {
+    const i = order.indexOf(id);
+    if (i < 0) continue;   // not in this order (e.g. never saved) — the merge below already placed it at its current default
+    order.splice(i, 1);
+    const j = order.indexOf(after);
+    order.splice(j < 0 ? order.length : j + 1, 0, id);
+  }
+}
 const DEFAULT_ZOOM = 'year';        // the standard Gantt scale
 const ZOOM_DEFAULT_REV = 1;         // bump to reset everybody's saved scale to DEFAULT_ZOOM once (see loadPrefs)
 const CAL_WEEK_LABEL = 'CW';   // week scale is labelled by ISO calendar week: "CW 37"
@@ -1796,7 +1813,7 @@ function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c
 function byId(id) { return tasks.find(t => t.id === id); }
 
 /* ============================ Persistence =============================== */
-function prefsPayload() { return { theme, zoom, zoomRev: ZOOM_DEFAULT_REV, view: currentView, gridPaneWidth, gridPaneRev: GRID_PANE_REV, showBaseline, cols: { order: colOrder, hidden: [...colHidden], rev: COLS_REV }, gcols: { order: gColOrder, hidden: [...gColHidden] } }; }
+function prefsPayload() { return { theme, zoom, zoomRev: ZOOM_DEFAULT_REV, view: currentView, gridPaneWidth, gridPaneRev: GRID_PANE_REV, showBaseline, cols: { order: colOrder, hidden: [...colHidden], rev: COLS_REV }, gcols: { order: gColOrder, hidden: [...gColHidden], rev: COLS_REV } }; }
 function syncPayload() { return { version: APP_VERSION, project, tasks, deletedTaskIds }; }
 
 function planDataKey(id) { return PLAN_DATA_PREFIX + id; }
@@ -1866,7 +1883,7 @@ function loadPrefs() {
   colOrder = savedOrder ? [...new Set([...savedOrder, ...DEFAULT_COL_ORDER])] : [...DEFAULT_COL_ORDER];
   colHidden = new Set(Array.isArray(sc.hidden) ? sc.hidden.filter(known) : []);
   for (const id of DEFAULT_COL_ORDER) if ((!savedOrder || !savedOrder.includes(id)) && !TASK_COLS[id].dflt) colHidden.add(id);
-  for (let r = (Number(sc.rev) || 0) + 1; r <= COLS_REV; r++) for (const id of (COLS_REV_SHOWN[r] || [])) colHidden.delete(id);
+  for (let r = (Number(sc.rev) || 0) + 1; r <= COLS_REV; r++) { for (const id of (COLS_REV_SHOWN[r] || [])) colHidden.delete(id); applyColsRevMove(colOrder, COLS_REV_MOVE[r] || []); }
   colHidden.delete('name');
   {   // the Gantt view's own set: what is saved, plus any column this version knows and the save doesn't (appended, hidden), never Task Name hidden
     const gc = d.gcols && typeof d.gcols === 'object' ? d.gcols : {}, gOrder = Array.isArray(gc.order) ? gc.order.filter(known) : null;
@@ -1874,6 +1891,9 @@ function loadPrefs() {
     gColHidden = new Set(Array.isArray(gc.hidden) ? gc.hidden.filter(known) : DEFAULT_COL_ORDER.filter(c => !GANTT_DEFAULT_SHOWN.includes(c)));
     for (const id of DEFAULT_COL_ORDER) if ((!gOrder || !gOrder.includes(id)) && !GANTT_DEFAULT_SHOWN.includes(id)) gColHidden.add(id);
     gColHidden.delete('name');
+    // Gantt's own column revision (a separate counter from cols.rev, gcols never had one before COLS_REV_MOVE — an install
+    // predating it starts at 0, same as the Tasks view's own default when nothing was ever saved).
+    for (let r = (Number(gc.rev) || 0) + 1; r <= COLS_REV; r++) { for (const id of (COLS_REV_SHOWN[r] || [])) gColHidden.delete(id); applyColsRevMove(gColOrder, COLS_REV_MOVE[r] || []); }
   }
 }
 // The columns the list of a view shows: each view keeps its own choice (Tasks view: colOrder / colHidden, Gantt view: gColOrder / gColHidden).
