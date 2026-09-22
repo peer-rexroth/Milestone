@@ -1175,6 +1175,24 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
   </div>
 </div>
 
+<div class="modal-bg" id="rescheduleModalBg" onclick="if(event.target===this) closeRescheduleModal()">
+  <div class="modal mid">
+    <div class="modal-header"><h2>Reschedule remaining work</h2><button onclick="closeRescheduleModal()" aria-label="Close">&times;</button></div>
+    <div class="modal-body">
+      <p class="cal-hint" style="margin:0">Catches the plan up with reality as of a date you choose: a task that should already have started moves there, and an in-progress task whose remaining work won't fit keeps going from that date. Finished tasks, and tasks ahead of schedule, are left alone.</p>
+      <section class="cal-sec">
+        <div class="cal-sec-title">Status date</div>
+        <input type="date" id="rescheduleDateInput" onchange="renderRescheduleModal()">
+        <p class="cal-hint" id="rescheduleHint" style="margin:0"></p>
+      </section>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeRescheduleModal()">Cancel</button>
+      <button class="btn btn-primary" id="rescheduleBtn" onclick="runReschedule()">Reschedule</button>
+    </div>
+  </div>
+</div>
+
 
 <div class="modal-bg" id="syncConflictsModalBg" onclick="if(event.target===this) closeSyncConflictsModal()">
   <div class="modal">
@@ -1303,6 +1321,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
           <div class="help-row"><i class="fa-solid fa-ruler-horizontal"></i><span>The bar is the <strong>current schedule</strong>. To keep the original plan, set a <strong>baseline</strong> (plan menu → <strong>Baseline…</strong>): a frozen copy of every task's Start and Finish, only ever taken when you ask. Keep up to eleven — Baseline and Baseline 1–10 — and choose which one to compare with.</span></div>
           <div class="help-row"><i class="fa-solid fa-minus"></i><span>The baseline shows as a thin grey line under each bar in the Gantt chart (the ruler button hides it).</span></div>
           <div class="help-row"><i class="fa-solid fa-plus-minus"></i><span>The <strong>Start Variance</strong>, <strong>Finish Variance</strong>, <strong>Baseline Start/Finish/Duration</strong> and <strong>Duration Variance</strong> columns show how far each task has moved, in working days — positive means later than the baseline.</span></div>
+          <div class="help-row"><i class="fa-solid fa-calendar-check"></i><span><strong>Reschedule remaining work…</strong> (plan menu) catches the plan up with a status date you choose: an overdue task moves there, an in-progress task keeps its remaining work from that date if it would otherwise finish later. Finished tasks and tasks ahead of schedule are left alone.</span></div>
         </div>
       </div>
       <div class="help-pane" id="helpPane-list" role="tabpanel" aria-labelledby="helpTab-list" hidden>
@@ -2697,6 +2716,57 @@ function criticalPathAnalysis() {
   return { critical, float };
 }
 function computeCriticalPath() { return criticalPathAnalysis().critical; }
+
+/* ---- Reschedule remaining work from a status date (MS Project's "Update Project…") — an explicit user request: the one
+   gap this app's own "Known v1 limitations" had flagged as the kind that actually matters for a plan used throughout a
+   live project, not just at kickoff. What it does NOT need is a new propagation mechanism: a single topological sweep
+   (topoOrder(), the same helper criticalPathAnalysis() already uses) both applies the status-date rule AND cascades it —
+   by the time a task is visited, every task it depends on (if also in the network) has already been updated, so
+   constraintStart()/targetStart() reading its CURRENT stored dates already reflects the delay. No separate
+   cascadeSchedule() calls needed. */
+function rescheduleFromStatusDate(statusIso) {
+  const cyclic = taskCycleSet();
+  const leaves = tasks.filter(t => !hasChildren(t.id) && !cyclic.has(t.id) && t.taskMode !== 'manual');
+  const ids = leaves.map(t => t.id), inNet = new Set(ids);
+  const preds = {}; for (const t of leaves) preds[t.id] = t.predecessors.map(p => p.id).filter(pid => inNet.has(pid));
+  const order = topoOrder(ids, preds);
+  const statusNum = dayNumber(statusIso), touched = [];
+  for (const id of order) {
+    const t = byId(id);
+    if (t.progress >= 100 || t.actualFinish) continue;   // complete: a fact, never moved by this (or anything else)
+    if (!isStarted(t)) {
+      // Not started: a floor at the status date, but only when it is actually overdue (its planned start already at or
+      // before the status date) — a genuinely future task is left alone. Folded together with the ordinary
+      // predecessor-driven floor (targetStart(), ALAP-aware) so a task pushed here by an upstream delay is caught too,
+      // whether or not it is itself overdue.
+      const cs = targetStart(t);
+      const floor = dayNumber(t.startDate) <= statusNum ? nextWorkDay(statusIso) : null;
+      let target = cs;
+      if (floor !== null && (target === null || dayNumber(floor) > dayNumber(target))) target = floor;
+      if (target === null || dayNumber(target) === dayNumber(t.startDate)) continue;
+      const dur = t.milestone ? 1 : durationDays(t.startDate, t.endDate);
+      t.startDate = target; t.endDate = t.milestone ? target : finishFor(target, dur);
+    } else {
+      // Started, not finished: what already happened stays (Actual Start is a fact) — only the FINISH may move, and only
+      // OUT: the remaining work (duration × (1 − % complete), the same figure Remaining Duration shows) counted from the
+      // status date forward, never pulling a task that is ahead of schedule earlier than it already sits.
+      const dur = durationDays(t.startDate, t.endDate);
+      const remaining = Math.max(1, Math.round(remainingOf(dur, t.progress)));
+      const projected = finishFor(nextWorkDay(statusIso), remaining);
+      if (dayNumber(projected) <= dayNumber(t.endDate)) continue;
+      t.endDate = projected;
+    }
+    t.updatedAt = Date.now();
+    touched.push(id);
+  }
+  return touched;
+}
+// A cheap, non-mutating estimate for the dialog's hint — every incomplete, placeable task, not the exact count that will
+// actually move (some may already be correctly placed); the toast after Reschedule gives the real number.
+function rescheduleCandidates() {
+  const cyclic = taskCycleSet();
+  return tasks.filter(t => !t.spacer && !hasChildren(t.id) && !cyclic.has(t.id) && t.taskMode !== 'manual' && t.progress < 100 && !t.actualFinish);
+}
 
 /* ================================ Render ================================= */
 let dateRange = { start: 0, end: 0 };
@@ -4525,6 +4595,30 @@ function applyActualsToSchedule() {
   showToast(`Actual dates applied to ${targets.length} task${targets.length === 1 ? '' : 's'}`, false, () => {
     for (const x of before) { x.t.startDate = x.s; x.t.endDate = x.e; x.t.startText = x.st; x.t.endText = x.et; x.t.durText = x.dt; x.t.updatedAt = x.u; }
     normalizeData(); save(); render(); renderBaselineModal();
+  });
+}
+function openRescheduleModal() {
+  closePlanMenu();
+  document.getElementById('rescheduleDateInput').value = todayStr();
+  renderRescheduleModal();
+  document.getElementById('rescheduleModalBg').classList.add('open');
+}
+function closeRescheduleModal() { document.getElementById('rescheduleModalBg').classList.remove('open'); }
+function renderRescheduleModal() {
+  const n = rescheduleCandidates().length;
+  document.getElementById('rescheduleHint').textContent = n ? `${n} task${n === 1 ? ' is' : 's are'} not finished yet — Reschedule moves whichever of them are overdue or behind.` : 'Every task is already finished — nothing to reschedule.';
+  document.getElementById('rescheduleBtn').disabled = !n;
+}
+function runReschedule() {
+  const iso = document.getElementById('rescheduleDateInput').value || todayStr();
+  const before = tasks.map(t => ({ t, s: t.startDate, e: t.endDate, u: t.updatedAt }));
+  const touched = rescheduleFromStatusDate(iso);
+  closeRescheduleModal();
+  if (!touched.length) { showToast('Nothing needed to move'); return; }
+  normalizeData(); save(); render();
+  showToast(`Rescheduled ${touched.length} task${touched.length === 1 ? '' : 's'} from ${fmtDate(iso)}`, false, () => {
+    for (const x of before) { x.t.startDate = x.s; x.t.endDate = x.e; x.t.updatedAt = x.u; }
+    normalizeData(); save(); render();
   });
 }
 /* ============================ Public-holiday presets ============================
@@ -7332,6 +7426,7 @@ function renderPlanMenu() {
     `<div class="dropdown-sep"></div>` +
     `<button class="dropdown-item" id="planRenameItem" onclick="openPlanModal('rename')"><i class="fa-solid fa-pen"></i>Rename plan…</button>` +
     `<button class="dropdown-item" id="planBaselineItem" onclick="openBaselineModal()"><i class="fa-solid fa-ruler-horizontal"></i>Baseline…<span class="item-hint">${escapeHtml(baselineMenuHint())}</span></button>` +
+    `<button class="dropdown-item" id="planRescheduleItem" onclick="openRescheduleModal()"><i class="fa-solid fa-calendar-check"></i>Reschedule remaining work…</button>` +
     `<button class="dropdown-item" id="planCalendarItem" onclick="openCalendarModal()"><i class="fa-regular fa-calendar-days"></i>Working calendar…<span class="item-hint">${escapeHtml(calendarSummary())}</span></button>` +
     `<button class="dropdown-item" id="planDuplicateItem" onclick="duplicatePlan()"><i class="fa-regular fa-copy"></i>Duplicate plan</button>` +
     (fileSyncSupported() ? `<button class="dropdown-item" id="planDisconnectItem" onclick="disconnectFile()"${syncFileHandle ? '' : ' disabled title="This plan isn’t linked to a file"'}><i class="fa-solid fa-link-slash"></i>Disconnect folder…</button>` : '') +
@@ -7568,7 +7663,7 @@ function wireGlobalEvents() {
     // Escape closes whatever overlay is open first; only when there is none — and
     // the user isn't typing in a field, where Escape already means "cancel this
     // edit" — does it clear the task selection.
-    const modalIds = ['taskModalBg', 'folderFilesModalBg', 'confirmModalBg', 'calendarModalBg', 'baselineModalBg', 'syncConflictsModalBg', 'planModalBg', 'excelModalBg', 'importModalBg', 'foreignImportModalBg', 'bulkModalBg', 'searchModalBg', 'printModalBg', 'backupsModalBg', 'helpModalBg', 'aboutModalBg'];
+    const modalIds = ['taskModalBg', 'folderFilesModalBg', 'confirmModalBg', 'calendarModalBg', 'baselineModalBg', 'rescheduleModalBg', 'syncConflictsModalBg', 'planModalBg', 'excelModalBg', 'importModalBg', 'foreignImportModalBg', 'bulkModalBg', 'searchModalBg', 'printModalBg', 'backupsModalBg', 'helpModalBg', 'aboutModalBg'];
     const overlayOpen = modalIds.some(id => document.getElementById(id).classList.contains('open'))
       || document.getElementById('fileSyncModalBg').classList.contains('open')   // mandatory: Escape can't close it
       || document.getElementById('dataMenu').classList.contains('open')
