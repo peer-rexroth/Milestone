@@ -279,6 +279,27 @@ button:focus:not(:focus-visible) { outline: none; }
 .main .grid-header > div, .main .grid-row > div { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .main.view-tasks .gantt-pane-outer { display: none; }
 .main.view-gantt .grid-rows { overflow-x: scroll; }   /* Gantt view: sideways by itself (always a track, like the chart's own scrollbar, so both panes end at the same height); vertically the chart drives it (wireScrollSync) */
+.main.view-resources .grid-pane, .main.view-resources .gantt-pane-outer { display: none; }
+.resources-pane { display: none; flex: 1; overflow-y: auto; padding: 20px 28px 40px; }
+.main.view-resources .resources-pane { display: block; }
+.res-card { max-width: 900px; margin: 0 auto 18px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--panel); overflow: hidden; }
+.res-head { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.res-name { font-weight: 700; font-size: 15px; flex: 1; min-width: 120px; }
+.res-stat { font-size: 12.5px; color: var(--text-dim); white-space: nowrap; }
+.res-stat strong { color: var(--text); font-weight: 600; }
+.res-warn { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 99px; color: var(--danger); background: color-mix(in srgb, var(--danger) 12%, var(--panel)); white-space: nowrap; }
+.res-overlap-list { padding: 8px 18px; border-bottom: 1px solid var(--border); background: color-mix(in srgb, var(--danger) 5%, var(--panel)); display: flex; flex-direction: column; gap: 3px; }
+.res-overlap-row { font-size: 12px; color: var(--text-dim); }
+.res-overlap-row strong { color: var(--text); }
+.res-tasks { display: flex; flex-direction: column; }
+.res-task-row { display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center; padding: 8px 18px; cursor: pointer; border-bottom: 1px solid var(--border); }
+.res-task-row:last-child { border-bottom: none; }
+.res-task-row:hover { background: var(--panel-2); }
+.res-task-row .rt-name { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.res-task-row .rt-dates { font-size: 12px; color: var(--text-dim); white-space: nowrap; }
+.res-task-row .rt-dur { font-size: 12px; color: var(--text-faint); white-space: nowrap; text-align: right; }
+.res-empty { max-width: 480px; margin: 60px auto; text-align: center; color: var(--text-dim); font-size: 13.5px; line-height: 1.6; }
+.res-empty i { font-size: 26px; color: var(--text-faint); margin-bottom: 10px; display: block; }
 /* Tasks view: a fine vertical line between the columns, in the same colour as the divider between list and chart in the Gantt view.
    The tracks are fr/px mixes, so the lines can't be cell borders (the 6px gaps and the editors would fight them): updateColumnLines()
    reads the real track positions and hands them over as --col-lines-h (header) / --col-lines-r (rows); each row paints them on a
@@ -623,6 +644,11 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 .bl-grid .field select { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 7px; background: var(--panel); color: var(--text); }
 .bl-status { display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: var(--text-dim); line-height: 1.45; }
 .bl-status span { flex: 1; }
+.rates-list { display: flex; flex-direction: column; gap: 2px; max-height: 42vh; overflow-y: auto; }
+.rate-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 7px 2px; border-bottom: 1px solid var(--border); }
+.rate-row:last-child { border-bottom: none; }
+.rate-row .rate-name { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rate-row .rate-input { width: 100px; text-align: right; }
 .btn-link.danger { color: var(--danger); }
 .btn-link.danger:disabled { color: var(--text-faint); }
 .cal-sec .bl-compare { width: 100%; padding: 8px 10px; }
@@ -773,7 +799,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
   <button class="icon-btn" onclick="openAboutModal()" title="About"><i class="fa-solid fa-circle-info"></i></button>
 </div>
 
-<div class="subbar">
+<div class="subbar" id="subbar">
   <button class="icon-btn" id="undoBtn" onclick="historyUndo()" title="Undo (Ctrl+Z)" disabled><i class="fa-solid fa-rotate-left"></i></button>
   <button class="icon-btn" id="redoBtn" onclick="historyRedo()" title="Redo (Ctrl+Shift+Z)" disabled><i class="fa-solid fa-rotate-right"></i></button>
   <span class="tb-sep"></span>
@@ -823,6 +849,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
       <svg class="gantt-deps" id="ganttDeps"></svg>
     </div>
   </div>
+  <div class="resources-pane" id="resourcesPane"></div>
 </div>
 
 <!-- Task modal -->
@@ -856,6 +883,10 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <span id="taskWbsInfo" class="hidden"></span>
       </div>
       <div class="pred-empty hidden" id="taskActualsNote"></div>
+      <div class="field-grid-4 calc-row hidden" id="taskCostRow" title="Set resource rates in the plan menu → Resource rates…">
+        <div class="field" title="Rate × duration, for every resource assigned — not entered"><label>Cost</label><div class="ro-value" id="taskCostInfo"></div></div>
+        <div class="field" title="Cost × % complete — not entered"><label>Cost to Date</label><div class="ro-value" id="taskCostToDateInfo"></div></div>
+      </div>
       <div class="baseline-info hidden" id="taskBaselineInfo" title="From the plan's baseline (plan menu → Baseline…)"></div>
       <div class="field-grid-4">
         <div class="field span2">
@@ -1175,6 +1206,27 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
   </div>
 </div>
 
+<div class="modal-bg" id="ratesModalBg" onclick="if(event.target===this) closeRatesModal()">
+  <div class="modal mid">
+    <div class="modal-header"><h2>Resource rates</h2><button onclick="closeRatesModal()" aria-label="Close">&times;</button></div>
+    <div class="modal-body">
+      <section class="cal-sec">
+        <div class="cal-sec-title">Currency</div>
+        <input type="text" id="ratesCurrencyInput" maxlength="3" style="width:70px">
+      </section>
+      <section class="cal-sec">
+        <div class="cal-sec-title">Daily rate per resource</div>
+        <p class="cal-hint" id="ratesHint" style="margin:0"></p>
+        <div class="rates-list" id="ratesList"></div>
+      </section>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeRatesModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveRatesModal()">Save</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-bg" id="syncConflictsModalBg" onclick="if(event.target===this) closeSyncConflictsModal()">
   <div class="modal">
     <div class="modal-header"><h2>Changes made on both sides</h2><button onclick="closeSyncConflictsModal()">&times;</button></div>
@@ -1315,6 +1367,8 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
           <div class="help-section-title">Custom fields</div>
           <div class="help-row"><i class="fa-solid fa-shapes"></i><span>Every task can carry fields of your own — text, numbers, dates and yes/no ticks (up to five of each). <strong>Add field</strong> on the task dialog's <strong>Custom fields</strong> tab (or <strong>Manage custom fields…</strong> under Columns) creates one; the tab shows only the fields you use. Fill them in on that tab or — once ticked under Columns, where they start hidden — straight in the list (click a cell; a flag toggles).</span></div>
           <div class="help-row"><i class="fa-solid fa-pen"></i><span>In <strong>Manage fields</strong> you name, rename and remove fields (removing one deletes its values; Undo brings them back). The names are saved with the plan, so another plan can use its own. Custom fields can be filtered like any column and are included in the Excel export.</span></div>
+          <div class="help-row"><i class="fa-solid fa-coins"></i><span><strong>Cost tracking.</strong> Set a daily rate per resource in the plan menu (<strong>Resource rates…</strong>). A task’s Cost is the sum of its assigned resources’ rates × its duration, rolled up for groups; Cost to Date scales it by % complete. Both are hidden columns — add them under Columns.</span></div>
+          <div class="help-row"><i class="fa-solid fa-users"></i><span>The <strong>Resources</strong> view lists everyone named in a Resource field: their tasks, total working days, cost (once rates are set) and any days two of their tasks overlap — there is no per-task % allocation, so an overlap always means double-booked. Click a task to jump to it.</span></div>
         </div>
         <div class="help-divider"></div>
         <div class="help-section">
@@ -1491,6 +1545,8 @@ const TASK_COLS = {
   remaining:    { label: 'Remaining Duration', width: '110px',        dflt: false },
   status:       { label: 'Status',        width: '108px',             dflt: true },
   resource:     { label: 'Resource',      width: '140px',             dflt: false },   // fixed like every column but Task Name; longer text is cut with an ellipsis (the cell's tooltip and the editor show all of it)
+  cost:         { label: 'Cost',          width: '96px',              dflt: false },   // resource rate × duration, rolled up — see taskCost()
+  costToDate:   { label: 'Cost to Date',  width: '96px',              dflt: false },   // header: Cost / to Date — cost × % complete, rolled up bottom-up — see taskCostToDate()
   // Baseline columns (all hidden by default): the baseline chosen in the Baseline dialog (project.compareBaseline, "Baseline" unless changed)
   baselineStart:    { label: 'Baseline Start',    width: '104px', dflt: false },   // header: Baseline / Start
   baselineFinish:   { label: 'Baseline Finish',   width: '104px', dflt: false },
@@ -1545,13 +1601,13 @@ const DEP_TYPE_LABELS = { FS: 'Finish→Start', SS: 'Start→Start', FF: 'Finish
 // constraint date binds the task's start or its finish; `bound` says
 // whether it's a lower bound (folds into the forward-scheduling cascade
 // exactly like a predecessor's own earliest-start push — see
-// constraintStart() below), an upper bound (never auto-enforced by this
-// app's forward-only cascade, only flagged when violated — see
-// constraintViolated(), the same "surface it, don't silently override a
-// deliberate placement" stance the cascade already takes for manual
-// placement ahead of a predecessor), or exact (pinned immediately when set
-// — see saveTaskFromModal() — and thereafter treated as a lower bound with
-// violation flagged if a predecessor later forces it past that date).
+// constraintStart() below), an upper bound (capped by the same cascade
+// whenever a predecessor push would exceed it — "constraints always win
+// here" — with constraintViolated() catching only what a cap can't: a date
+// already past the bound with nothing having pushed it there), or exact
+// (pinned immediately when set — see saveTaskFromModal() — and thereafter
+// treated as a lower bound with violation flagged if a predecessor later
+// forces it past that date).
 const CONSTRAINT_TYPES = [
   { id: 'ASAP', label: 'As Soon As Possible', hasDate: false },
   { id: 'ALAP', label: 'As Late As Possible', hasDate: false },
@@ -2247,6 +2303,111 @@ function remainingDays(id) {
   return remainingOf(durationDays(e.start, e.end), e.progress);
 }
 function fmtRemaining(v) { return v === 1 ? '1 day' : `${v} days`; }
+// Cost tracking (an explicit user request): a plan-level rate per RESOURCE NAME (project.resourceRates, e.g. { Anna: 500 } —
+// only names with a non-zero rate stored, like fieldNames only stores names that differ from default), a daily figure like
+// duration itself. A task's own cost is duration (working days) × the sum of its assigned resources' rates — Resource is a
+// free-text, comma-separated list ("Anna, Ben"), so a task with two people assigned costs both rates for the same days (no
+// per-resource % allocation is modelled). Milestones and free-text (TBD) tasks cost nothing, the same "blank" rule Remaining
+// Duration already follows — there is no duration to rate against. A group's cost is the SUM of its descendant leaves' own
+// cost, computed bottom-up via childrenOf() (actualDates()'s own pattern) rather than rate × the group's rolled-up duration,
+// since a group has no resource of its own. "Cost to date" is the same sum, but each leaf's cost is first scaled by its OWN
+// progress — deliberately bottom-up rather than (group cost) × (group's rolled-up progress): effectiveDates() rolls up
+// progress as a CALENDAR-day-weighted average, which would not, in general, agree with a cost-weighted figure.
+function resourceRate(name) { return (project.resourceRates && project.resourceRates[name]) || 0; }
+function taskResourceNames(t) { return (t.resource || '').split(',').map(s => s.trim()).filter(Boolean); }
+function leafTaskCost(t) {
+  if (t.milestone || isUnscheduled(t)) return 0;
+  const dur = durationDays(t.startDate, t.endDate);
+  return taskResourceNames(t).reduce((sum, n) => sum + resourceRate(n) * dur, 0);
+}
+const _costCache = new Map(), _costToDateCache = new Map();
+function taskCost(id) {
+  if (_costCache.has(id)) return _costCache.get(id);
+  const t = byId(id), kids = childrenOf(id);
+  const r = !t ? 0 : kids.length ? kids.reduce((sum, k) => sum + taskCost(k.id), 0) : leafTaskCost(t);
+  _costCache.set(id, r);
+  return r;
+}
+function taskCostToDate(id) {
+  if (_costToDateCache.has(id)) return _costToDateCache.get(id);
+  const t = byId(id), kids = childrenOf(id);
+  const r = !t ? 0 : kids.length ? kids.reduce((sum, k) => sum + taskCostToDate(k.id), 0) : leafTaskCost(t) * ((t.progress || 0) / 100);
+  _costToDateCache.set(id, r);
+  return r;
+}
+// Which resource names are IN USE (typed on some task, or given a non-zero rate) — the same "in use" idea custom fields use,
+// so a rate nobody set any more (typed then blanked, or the last task using it was deleted) drops out of the rates dialog
+// without deleting anyone's history: it only ever prunes project.resourceRates itself when the dialog is actually saved.
+function activeResourceNames() {
+  const names = new Set();
+  for (const t of tasks) for (const n of taskResourceNames(t)) names.add(n);
+  if (project.resourceRates) for (const n of Object.keys(project.resourceRates)) names.add(n);
+  return [...names].sort((a, b) => a.localeCompare(b));
+}
+function fmtCost(v) {
+  const sym = (project.currency || '$');
+  return sym + Math.round(v).toLocaleString();
+}
+function ratesSummary() {
+  const n = project.resourceRates ? Object.keys(project.resourceRates).length : 0;
+  return n ? `${n} rate${n === 1 ? '' : 's'} set` : 'None set';
+}
+/* ============================== Resources view ==============================
+   An explicit user request ("resource view / overallocation"): the `resource` field is free text, so there is no resource
+   entity to browse — this reads the SAME field every leaf task already carries and groups by name. A day is overallocated
+   when two or more of a resource's tasks cover it at once (there is no per-task % allocation, so any overlap is a genuine
+   double-booking, not just tight scheduling). Milestones and TBD tasks are excluded, same as leafTaskCost() — nothing is
+   actually worked on either. */
+function resourceWorkload(name) {
+  const items = tasks.filter(t => !t.spacer && !hasChildren(t.id) && !t.milestone && !isUnscheduled(t) && taskResourceNames(t).includes(name));
+  const dayCount = new Map();
+  for (const t of items) for (let d = dayNumber(t.startDate); d <= dayNumber(t.endDate); d++) if (isWorkNum(d)) dayCount.set(d, (dayCount.get(d) || 0) + 1);
+  const overlapDays = [...dayCount.entries()].filter(([, c]) => c > 1).map(([d]) => d).sort((a, b) => a - b);
+  const ranges = [];   // contiguous working-day runs of overlap, the same "one band per run" idea the Gantt's non-working shading uses
+  for (const d of overlapDays) { const last = ranges[ranges.length - 1]; if (last && nextWorkNum(last.end + 1) === d) last.end = d; else ranges.push({ start: d, end: d }); }
+  return {
+    items: items.sort((a, b) => dayNumber(a.startDate) - dayNumber(b.startDate)),
+    overlapRanges: ranges.map(r => ({ start: dayNumberToIso(r.start), end: dayNumberToIso(r.end), tasks: items.filter(t => dayNumber(t.startDate) <= r.end && dayNumber(t.endDate) >= r.start) })),
+    totalDays: items.reduce((sum, t) => sum + durationDays(t.startDate, t.endDate), 0),
+    totalCost: items.reduce((sum, t) => sum + resourceRate(name) * durationDays(t.startDate, t.endDate), 0)   // THIS resource's own earnings — not leafTaskCost(t), which would also add a co-assigned resource's pay on a shared task
+  };
+}
+function goToTaskFromResources(id) { setView('tasks'); jumpToTask(id); }
+function renderResourcesView() {
+  const el = document.getElementById('resourcesPane');
+  const names = activeResourceNames();
+  if (!names.length) { el.innerHTML = `<div class="res-empty"><i class="fa-solid fa-users"></i>No task has a Resource yet. Type a name into a task's Resource field (or column) to see it here — workload, and any days it is double-booked.</div>`; return; }
+  const hasRates = project.resourceRates && Object.keys(project.resourceRates).length;
+  el.innerHTML = names.map(n => {
+    const w = resourceWorkload(n);
+    const overlapHtml = w.overlapRanges.length ? `<div class="res-overlap-list">${w.overlapRanges.map(r =>
+      `<div class="res-overlap-row"><i class="fa-solid fa-triangle-exclamation"></i> ${r.start === r.end ? fmtDate(r.start) : `${fmtDate(r.start)} – ${fmtDate(r.end)}`}: <strong>${r.tasks.map(t => escapeHtml(t.name)).join(', ')}</strong> overlap</div>`).join('')}</div>` : '';
+    const taskRows = w.items.map(t => `<div class="res-task-row" onclick="goToTaskFromResources('${t.id}')" title="Go to this task">
+        <span class="rt-name">${t.color ? `<span class="sr-dot" style="background:${taskColorVar(t)}"></span>` : ''}${escapeHtml(t.name)}</span>
+        <span class="rt-dates">${fmtDate(t.startDate)} – ${fmtDate(t.endDate)}</span>
+        <span class="rt-dur">${fmtDuration(durationDays(t.startDate, t.endDate))}</span>
+      </div>`).join('');
+    return `<div class="res-card">
+      <div class="res-head">
+        <span class="res-name">${escapeHtml(n)}</span>
+        <span class="res-stat"><strong>${w.items.length}</strong> task${w.items.length === 1 ? '' : 's'}</span>
+        <span class="res-stat"><strong>${w.totalDays}</strong> working day${w.totalDays === 1 ? '' : 's'} assigned</span>
+        ${hasRates ? `<span class="res-stat"><strong>${fmtCost(w.totalCost)}</strong> total</span>` : ''}
+        ${w.overlapRanges.length ? `<span class="res-warn"><i class="fa-solid fa-triangle-exclamation"></i>${w.overlapRanges.reduce((s, r) => s + countWorkNum(dayNumber(r.start), dayNumber(r.end)), 0)} day${w.overlapRanges.length === 1 && w.overlapRanges[0].start === w.overlapRanges[0].end ? '' : 's'} double-booked</span>` : ''}
+      </div>
+      ${overlapHtml}
+      <div class="res-tasks">${taskRows}</div>
+    </div>`;
+  }).join('');
+}
+function costCellText(id) {   // blank for a leaf milestone/TBD task (nothing to compute — see leafTaskCost()); a group always shows its rollup
+  const t = byId(id);
+  return t && !hasChildren(id) && (t.milestone || isUnscheduled(t)) ? '' : fmtCost(taskCost(id));
+}
+function costToDateCellText(id) {
+  const t = byId(id);
+  return t && !hasChildren(id) && (t.milestone || isUnscheduled(t)) ? '' : fmtCost(taskCostToDate(id));
+}
 // Status, judged against today (as MS Project does against its status date):
 //   Complete     100% done, or an actual finish recorded
 //   Late         not complete and past its finish, or it should have started by now and hasn't
@@ -2324,7 +2485,7 @@ function effectiveDates(id) {
   _effCache.set(id, result);
   return result;
 }
-function resetEffectiveCache() { _effCache.clear(); _actCache.clear(); _baseCache.clear(); _filterShow.clear(); _customActive = null; }
+function resetEffectiveCache() { _effCache.clear(); _actCache.clear(); _baseCache.clear(); _filterShow.clear(); _customActive = null; _costCache.clear(); _costToDateCache.clear(); }
 
 /* ======================== Scheduling & critical path ===================== */
 function successorsMap() {
@@ -2452,23 +2613,27 @@ function constraintStart(task, includeConstraint = true) {
   }
   // A task's own MSO/SNET/MFO/FNET constraint is a lower bound exactly like
   // a predecessor's earliest-start push — whichever candidate is latest
-  // wins. SNLT/FNLT (upper bounds) and ALAP are deliberately NOT folded in
-  // here: this app's cascade only ever pushes a date later, so an upper
-  // bound can't be "enforced" by it — see constraintViolated() instead,
-  // the same "flag it, don't silently override" treatment real MS Project
-  // gives an over-constrained schedule via its own conflict indicator.
+  // wins.
   const cinfo = constraintTypeInfo(task.constraintType);
   if (includeConstraint && task.constraintDate && (cinfo.bound === 'lower' || cinfo.bound === 'exact')) {
     const c = cinfo.basis === 'finish' ? shiftWork(task.constraintDate, -(dur - 1)) : shiftWork(task.constraintDate, 0);
     if (cs === null || dayNumber(c) > dayNumber(cs)) cs = c;
   }
+  // SNLT/FNLT (upper bounds): once a predecessor push exists (cs !== null), the constraint CAPS it — "constraints always win
+  // here" (an explicit user request to actually enforce these rather than only flag them, see constraintViolated() below).
+  // Only caps an existing push: with nothing pushing the task in the first place (no predecessor, no lower-bound constraint),
+  // cs stays null and the task keeps its own dates undisturbed, same as ever — setting an upper bound alone never yanks a task
+  // backward out of nowhere, matching real MS Project (which flags a conflict rather than moving the task on its own too).
+  if (includeConstraint && cs !== null && task.constraintDate && cinfo.bound === 'upper') {
+    const cap = cinfo.basis === 'finish' ? shiftWork(task.constraintDate, -(dur - 1)) : task.constraintDate;
+    if (dayNumber(cap) < dayNumber(cs)) cs = cap;
+  }
   return cs;
 }
-// Does this task's *current* stored dates actually satisfy its own
-// constraint? MSO/MFO (exact) and SNLT/FNLT (upper bounds) are never
-// force-corrected by the scheduling engine — see constraintStart() above —
-// so this is what surfaces a mismatch instead, the same role
-// taskCycleSet()'s warning icon plays for a circular dependency.
+// Does this task's *current* stored dates actually satisfy its own constraint? SNLT/FNLT are now capped by constraintStart()
+// above whenever a predecessor push exists — this instead catches what that can't: an upper bound the task already exceeds
+// with nothing pushing it there (typed in by hand, imported, or just set on a task that already sat past it), and an exact
+// MSO/MFO date a later predecessor push has moved the task off. The same role taskCycleSet()'s warning icon plays for a cycle.
 function constraintViolated(task) {
   if (!task.constraintDate || task.taskMode === 'manual') return false; // constraints don't apply to manually scheduled tasks
   const cinfo = constraintTypeInfo(task.constraintType);
@@ -2520,8 +2685,47 @@ function scheduleMismatch(t) {
 // when a predecessor moves out, earlier when one moves in, finishes early or goes away. (Before, this app only ever pushed a task
 // later.) What keeps a date the user chose is the constraint that choosing it sets — see pinToDate(). Returns true when it moved.
 // A task with nothing to schedule against (no usable link, no constraint date) keeps its dates.
+// ALAP ("As Late As Possible", a true backward pass — an explicit user request; it used to behave identically to ASAP): the
+// backward twin of constraintStart(), reading successorsMap() instead of the task's own predecessors, so an ALAP task sits at
+// the LATEST date that does not delay any successor's CURRENT position, mirroring the same four link types and their
+// lags/leads. Returns the latest working-day FINISH, or null with no successors to be late against (see alapTargetStart()).
+function constraintLateEnd(task) {
+  let le = null;
+  const dur = durationDays(task.startDate, task.endDate);
+  for (const s of (successorsMap()[task.id] || [])) {
+    const succ = byId(s.id);
+    if (!succ || isUnscheduled(succ)) continue;
+    const lag = s.lag || 0;
+    let c;
+    if (s.type === 'SS') c = shiftWork(shiftWork(linkStart(succ), -lag), dur - 1);
+    else if (s.type === 'FF') c = shiftWork(linkEnd(succ), -lag);
+    else if (s.type === 'SF') c = shiftWork(shiftWork(linkEnd(succ), -lag), dur - 1);
+    else c = shiftWork(linkStart(succ), -(1 + lag)); // FS, default: the working day before the successor may start, minus the lag
+    if (le === null || dayNumber(c) < dayNumber(le)) le = c;
+  }
+  return le;
+}
+function startFor(finishIso, dur) { return shiftWork(finishIso, -(Math.max(1, dur) - 1)); } // finishFor()'s inverse
+// The start date an ALAP task belongs at: as late as its successors currently allow (constraintLateEnd(), converted to a
+// start), but never earlier than what its OWN predecessors/lower-bound constraint require (constraintStart(), the same floor
+// an ASAP task uses) — an over-constrained ALAP task (predecessors need it later than successors allow) keeps the
+// predecessors' date, the same "a real dependency is never silently broken" rule SNLT/FNLT enforcement follows above. With no
+// successors there is nothing local to be late against, so it falls back to constraintStart() — behaves like ASAP — a
+// documented scope limit (real MS Project would push it out to the whole project's finish; see "Task constraints").
+function alapTargetStart(task) {
+  const dur = durationDays(task.startDate, task.endDate);
+  const le = constraintLateEnd(task);
+  const earliest = constraintStart(task);
+  if (le === null) return earliest;
+  const want = startFor(le, dur);
+  return earliest !== null && dayNumber(earliest) > dayNumber(want) ? earliest : want;
+}
+// The date an Auto task's placement logic says it should sit at right now — constraintStart() for every constraint type
+// except ALAP, which uses its own backward twin instead. Shared by placeByLinks(), offItsLinks() and rescheduleAsAuto() so
+// all three treat ALAP identically.
+function targetStart(task) { return task.constraintType === 'ALAP' ? alapTargetStart(task) : constraintStart(task); }
 function placeByLinks(task) {
-  const cs = constraintStart(task);
+  const cs = targetStart(task);
   if (!cs || dayNumber(cs) === dayNumber(task.startDate)) return false;
   const dur = durationDays(task.startDate, task.endDate);
   task.startDate = cs;
@@ -2546,13 +2750,21 @@ function pinToDate(t, basis) {
   else if (type === sameSide) { t.constraintType = 'ASAP'; t.constraintDate = null; }
 }
 // Walks forward through the successors of `changedId`, putting each Auto task where its links say (earlier or later) and going on
-// to ITS successors whenever one moved. A task in taskMode 'manual' (MS Project's Manually Scheduled), one that has already
-// started, and one in a dependency cycle are skipped — their own dates are never rewritten by the cascade, though they keep the dates
-// they have for their own successors' constraintStart() to read. (An early manual placement is surfaced by scheduleMismatch().)
+// to ITS successors whenever one moved — AND, since an ALAP predecessor's own late bound depends on where ITS successors sit,
+// also walks backward through any ALAP predecessor of a task that just moved (or of `changedId` itself), pulling it later (or
+// tightening it earlier) and continuing on to ITS predecessors in turn. One worklist, two directions: a chain that alternates
+// ASAP/ALAP tasks settles in a single pass, the same relaxation-loop shape as the forward-only version this replaced. A task in
+// taskMode 'manual' (MS Project's Manually Scheduled), one that has already started, and one in a dependency cycle are skipped —
+// their own dates are never rewritten by the cascade, though they keep the dates they have for their own successors' /
+// ALAP predecessors' constraintStart() / constraintLateEnd() to read. (An early manual placement is surfaced by scheduleMismatch().)
+function alapPredsOf(id) {   // this task's own predecessors that are ALAP — a change at `id` may let them pull later, or force them earlier
+  const t = byId(id);
+  return t ? t.predecessors.filter(p => { const pt = byId(p.id); return pt && pt.constraintType === 'ALAP'; }).map(p => p.id) : [];
+}
 function cascadeSchedule(changedId) {
   const cyclic = taskCycleSet();
   const succ = successorsMap();
-  const queue = (succ[changedId] || []).map(s => s.id);
+  const queue = [...(succ[changedId] || []).map(s => s.id), ...alapPredsOf(changedId)];
   let iterations = 0;
   const MAX_ITER = 5000;
   while (queue.length && iterations++ < MAX_ITER) {
@@ -2560,7 +2772,7 @@ function cascadeSchedule(changedId) {
     if (cyclic.has(id) || hasChildren(id)) continue;
     const task = byId(id);
     if (!task || task.taskMode === 'manual' || isStarted(task)) continue;   // a manual task and a task that has already started keep their planned dates
-    if (placeByLinks(task)) for (const s of (succ[id] || [])) queue.push(s.id);
+    if (placeByLinks(task)) { for (const s of (succ[id] || [])) queue.push(s.id); for (const pid of alapPredsOf(id)) queue.push(pid); }
   }
 }
 // Use after a task's own predecessor list or dates just changed — cascadeSchedule() alone only places a task's *successors*, so a
@@ -2574,7 +2786,7 @@ function applyConstraints(taskId) {
 // Does an Auto task the scheduler would place sit somewhere other than its links say right now?
 function offItsLinks(t, cyc = taskCycleSet()) {
   if (!t || cyc.has(t.id) || hasChildren(t.id) || t.taskMode === 'manual' || isStarted(t)) return false;
-  const cs = constraintStart(t);
+  const cs = targetStart(t);
   return !!cs && dayNumber(cs) !== dayNumber(t.startDate);
 }
 // Breaking a dependency cycle (a link removed, a task deleted, a task turned into a group) releases every task that was exempt
@@ -2685,6 +2897,7 @@ function renderPass() {
   updateColumnLines();
   updateFrozenColumns();
   if (currentView === 'gantt') renderGantt();   // (the chart is hidden in the Tasks view: it is built when you switch to it)
+  if (currentView === 'resources') renderResourcesView();
   renderFilterBar();
   updateCollapseButtons();
   updateFileSyncUI();
@@ -2693,16 +2906,18 @@ function renderPass() {
   updateSelectionUI();
 }
 
-const MAIN_VIEWS = [{ id: 'tasks', label: 'Tasks' }, { id: 'gantt', label: 'Gantt' }];
+const MAIN_VIEWS = [{ id: 'tasks', label: 'Tasks' }, { id: 'gantt', label: 'Gantt' }, { id: 'resources', label: 'Resources' }];
 function renderMainViewTabs() {
   document.getElementById('mainViewTabs').innerHTML = MAIN_VIEWS.map(v =>
     `<button class="view-tab${v.id === currentView ? ' active' : ''}" onclick="setView('${v.id}')">${v.label}</button>`).join('');
   document.getElementById('main').classList.toggle('view-tasks', currentView === 'tasks');
   document.getElementById('main').classList.toggle('view-gantt', currentView === 'gantt');
+  document.getElementById('main').classList.toggle('view-resources', currentView === 'resources');
   document.getElementById('zoomTabs').classList.toggle('hidden', currentView !== 'gantt');
   document.getElementById('criticalPathBtn').classList.toggle('hidden', currentView !== 'gantt');
   document.getElementById('baselineBtn').classList.toggle('hidden', currentView !== 'gantt');
   document.getElementById('ganttControlsDivider').classList.toggle('hidden', currentView !== 'gantt');
+  document.getElementById('subbar').classList.toggle('hidden', currentView === 'resources');   // Add Task, Find, Columns, filters — nothing here applies to the resource summary
 }
 function setView(id) { currentView = id; editingCell = null; closeColumnsMenu(); save(); render(); }
 
@@ -2780,7 +2995,9 @@ const FILTER_COLS = {
   finishVariance:   { label: 'Finish Variance',   kind: 'number' },
   durationVariance: { label: 'Duration Variance', kind: 'number' },
   preds:        { label: 'Predecessors',  kind: 'text' },
-  resource:     { label: 'Resource',      kind: 'text' }
+  resource:     { label: 'Resource',      kind: 'text' },
+  cost:         { label: 'Cost',          kind: 'number' },
+  costToDate:   { label: 'Cost to Date',  kind: 'number' }
 };
 for (const f of Object.values(CUSTOM_FIELDS)) FILTER_COLS[f.id] = { get label() { return customFieldName(f.id); }, kind: CUSTOM_KINDS.find(x => x.kind === f.kind).filter };
 function newColFilters() { return Object.fromEntries(Object.keys(FILTER_COLS).map(c => [c, null])); }
@@ -2834,6 +3051,8 @@ function filterColValue(t, col) {
     case 'actualStart': return actualDates(t.id).start;
     case 'actualFinish': return actualDates(t.id).end;
     case 'resource': return (t.resource || '').trim() || null;
+    case 'cost': return taskCost(t.id);
+    case 'costToDate': return taskCostToDate(t.id);
     default:
       if (isCustomField(col)) {
         const v = customValue(t, col);
@@ -2851,6 +3070,7 @@ function filterValueLabel(col, v) {
     case 'duration': return fmtDuration(v);
     case 'progress': return v + '%';
     case 'remaining': return fmtRemaining(v);
+    case 'cost': case 'costToDate': return fmtCost(v);
   }
   return String(v);
 }
@@ -3212,6 +3432,7 @@ function renderGrid() {
     baselineStart: colHeadHtml('Baseline\nStart', 'baselineStart'), baselineFinish: colHeadHtml('Baseline\nFinish', 'baselineFinish'), baselineDuration: colHeadHtml('Baseline\nDuration', 'baselineDuration'),
     startVariance: colHeadHtml('Start\nVariance', 'startVariance'), finishVariance: colHeadHtml('Finish\nVariance', 'finishVariance'), durationVariance: colHeadHtml('Duration\nVariance', 'durationVariance'),
     preds: colHeadHtml('Predecessors', 'preds'), resource: colHeadHtml('Resource', 'resource'),
+    cost: colHeadHtml('Cost', 'cost'), costToDate: colHeadHtml('Cost\nto Date', 'costToDate'),
     ...Object.fromEntries(Object.keys(CUSTOM_FIELDS).map(id => [id, colHeadHtml(customFieldName(id), id)]))
   };
   document.getElementById('main').style.setProperty('--task-cols', ['34px', ...cols.map(c => TASK_COLS[c].width), '88px'].join(' '));
@@ -3308,6 +3529,7 @@ function renderGrid() {
       baselineStart: blCell(bl.start), baselineFinish: blCell(bl.end), baselineDuration: `<div class="grid-cell-dim${summaryCls}" title="${bn}">${sv.baseDuration == null ? '' : fmtDuration(sv.baseDuration)}</div>`,
       startVariance: varCell(sv.start), finishVariance: varCell(sv.finish), durationVariance: varCell(sv.duration),
       preds: predCell, resource: resourceCell,
+      cost: `<div class="grid-cell-dim${summaryCls}">${costCellText(t.id)}</div>`, costToDate: `<div class="grid-cell-dim${summaryCls}">${costToDateCellText(t.id)}</div>`,
       ...Object.fromEntries(cols.filter(isCustomField).map(id => [id, customCellHtml(t, id, summaryCls, editing(id), blurAttr(id), (f, iso) => dateEditor(f, iso, null, 'dd.mm.yyyy'))]))
     };
     if (t.spacer) {   // an empty line: the ID and a blank cell in every column (nothing to edit)
@@ -3541,7 +3763,7 @@ function updateCollapseButtons() {
 function rescheduleAsAuto(t) {
   t.startText = t.endText = t.durText = null;
   if (!hasChildren(t.id) && !taskCycleSet().has(t.id) && !isStarted(t)) {
-    const cs = constraintStart(t);
+    const cs = targetStart(t);
     if (cs) {
       const dur = t.milestone ? 1 : durationDays(t.startDate, t.endDate);
       t.startDate = cs;
@@ -4375,6 +4597,25 @@ function updateModalComputed() {
   $('taskWbsInfo').textContent = wbsCode(t.id);
   $('taskRemainingInfo').textContent = remaining == null ? '—' : fmtRemaining(remaining);
   $('taskStatusInfo').innerHTML = statusPillHtml(status) || '—';
+  {   // Cost / Cost to Date, from what is typed right now — only shown once the plan actually has resource rates set
+    const row = $('taskCostRow');
+    if (!project.resourceRates || !Object.keys(project.resourceRates).length) row.classList.add('hidden');
+    else {
+      row.classList.remove('hidden');
+      let cost, costToDate;
+      if (hasChildren(t.id)) { cost = taskCost(t.id); costToDate = taskCostToDate(t.id); }
+      else {
+        const milestone = $('taskMilestoneInput').checked, start = v('taskStartInput') || null, end = milestone ? start : (v('taskEndInput') || start);
+        const progress = Math.max(0, Math.min(100, parseInt(v('taskProgressInput')) || 0));
+        const untouched = start === modalOrigDates.start && end === modalOrigDates.end, scheduled = !!start && !(isUnscheduled(t) && untouched);
+        const names = v('taskResourceInput').split(',').map(s => s.trim()).filter(Boolean);
+        cost = milestone || !scheduled ? 0 : names.reduce((sum, n) => sum + resourceRate(n) * durationDays(start, end), 0);
+        costToDate = cost * (progress / 100);
+      }
+      $('taskCostInfo').textContent = fmtCost(cost);
+      $('taskCostToDateInfo').textContent = fmtCost(costToDate);
+    }
+  }
 }
 // Renaming a custom field. The name is stored on the PLAN (project.fieldNames), so it is saved, exported and synced with it and
 // another plan keeps its own. It has to be unique among the custom fields and the standard columns, or two columns would
@@ -4406,6 +4647,36 @@ function openBaselineModal() {
   setTimeout(() => sel.focus(), 40);
 }
 function closeBaselineModal() { document.getElementById('baselineModalBg').classList.remove('open'); }
+// Resource rates (an explicit user request, "cost tracking"): a plan-level daily rate per resource name and a currency
+// symbol, both on `project` (see leafTaskCost() above). Editing is a plain draft — Cancel/Escape/backdrop discards it —
+// there's nothing here substantial enough to warrant the dirty-check confirm the task/fields dialogs use.
+let ratesDraft = null;
+function openRatesModal() {
+  closePlanMenu();
+  ratesDraft = { currency: project.currency || '$', rates: Object.assign({}, project.resourceRates || {}) };
+  renderRatesModal();
+  document.getElementById('ratesModalBg').classList.add('open');
+  setTimeout(() => document.getElementById('ratesCurrencyInput').focus(), 40);
+}
+function renderRatesModal() {
+  document.getElementById('ratesCurrencyInput').value = ratesDraft.currency;
+  const names = activeResourceNames();
+  document.getElementById('ratesHint').textContent = names.length
+    ? 'A daily rate for each resource in use on this plan, the same unit as Duration. A task’s Cost = the sum of its assigned resources’ rates × its duration.'
+    : 'No task has a Resource yet — type one into a task’s Resource field first, then set its rate here.';
+  document.getElementById('ratesList').innerHTML = names.map(n => `<div class="rate-row"><span class="rate-name" title="${escapeHtml(n)}">${escapeHtml(n)}</span><input type="number" min="0" step="1" class="rate-input" inputmode="decimal" data-name="${escapeHtml(n)}" value="${ratesDraft.rates[n] || ''}" placeholder="0" oninput="ratesDraft.rates[this.dataset.name] = this.value"></div>`).join('');
+}
+function closeRatesModal() { document.getElementById('ratesModalBg').classList.remove('open'); ratesDraft = null; }
+function saveRatesModal() {
+  const currency = (document.getElementById('ratesCurrencyInput').value || '').trim().slice(0, 3) || '$';
+  const rates = {};
+  for (const el of document.querySelectorAll('#ratesList .rate-input')) { const n = parseFloat(el.value); if (n > 0) rates[el.dataset.name] = Math.round(n * 100) / 100; }
+  if (currency === '$') delete project.currency; else project.currency = currency;
+  if (Object.keys(rates).length) project.resourceRates = rates; else delete project.resourceRates;
+  project.updatedAt = Date.now();
+  save(); render(); closeRatesModal();
+  showToast('Resource rates saved');
+}
 function renderBaselineModal() {   // labels and buttons follow the chosen slot (called on open, on change and after every set/clear)
   const slot = Number(document.getElementById('baselineSlotSelect').value), meta = project.baselines && project.baselines[slot], count = baselineTasksWith(slot).length;
   const sel = document.getElementById('baselineSlotSelect'), cmp = document.getElementById('baselineCompareSelect');
@@ -5945,6 +6216,8 @@ function clipCell(t, c, depth) {
     case 'status': return taskStatus(t.id) || '';
     case 'preds': return predecessorLabel(t) || '';
     case 'resource': return (t.resource || '').trim();
+    case 'cost': return costCellText(t.id);
+    case 'costToDate': return costToDateCellText(t.id);
     case 'baselineStart': return baselineDates(t.id).start ? fmtDate(baselineDates(t.id).start) : '';
     case 'baselineFinish': return baselineDates(t.id).end ? fmtDate(baselineDates(t.id).end) : '';
     case 'baselineDuration': { const v = scheduleVariance(t.id).baseDuration; return v == null ? '' : String(v); }
@@ -6322,7 +6595,7 @@ function buildXlsx(opts) {
   // ---------------- Tasks sheet: ID, then the task list's own visible columns in the user's order (or all of them)
   const XCOLS = {
     id: ['ID', 6], mode: ['Mode', 10], wbs: ['WBS', 15], name: ['Task Name', 46], start: ['Start', 13], end: ['Finish', 13], actualStart: ['Actual Start', 13],
-    actualFinish: ['Actual Finish', 13], baselineStart: ['Baseline Start', 13], baselineFinish: ['Baseline Finish', 13], baselineDuration: ['Baseline Duration', 13], startVariance: ['Start Variance', 13], finishVariance: ['Finish Variance', 13], durationVariance: ['Duration Variance', 13], duration: ['Duration', 12], progress: ['% Complete', 13], remaining: ['Remaining Duration', 13], status: ['Status', 13], preds: ['Predecessors', 18], resource: ['Resource', 22]
+    actualFinish: ['Actual Finish', 13], baselineStart: ['Baseline Start', 13], baselineFinish: ['Baseline Finish', 13], baselineDuration: ['Baseline Duration', 13], startVariance: ['Start Variance', 13], finishVariance: ['Finish Variance', 13], durationVariance: ['Duration Variance', 13], duration: ['Duration', 12], progress: ['% Complete', 13], remaining: ['Remaining Duration', 13], status: ['Status', 13], preds: ['Predecessors', 18], resource: ['Resource', 22], cost: ['Cost', 13], costToDate: ['Cost to Date', 13]
   };
   for (const id of Object.keys(CUSTOM_FIELDS)) XCOLS[id] = [customFieldName(id), { text: 22, number: 13, date: 13, flag: 9 }[CUSTOM_FIELDS[id].kind]];
   // "All columns" adds the custom fields that are in use (renamed, or holding a value somewhere) — not twenty empty columns.
@@ -6374,6 +6647,11 @@ function buildXlsx(opts) {
         case 'status': { const st = taskStatus(t.id); sheet.cell(r, c, st, S({ h: 'center', bold: true, color: { 'Complete': '1A7F37', 'On Schedule': '0969DA', 'Late': 'CF222E', 'Future Task': DIM }[st] || DIM })); break; }
         case 'preds': sheet.cell(r, c, predecessorLabel(t) || null, S({ h: 'left' })); break;
         case 'resource': sheet.cell(r, c, (t.resource || '').trim() || null, S({ h: 'left' })); break;
+        case 'cost': case 'costToDate': {
+          const blank = !summary && (t.milestone || isUnscheduled(t));
+          sheet.cell(r, c, blank ? null : (k === 'cost' ? taskCost(t.id) : taskCostToDate(t.id)), S({ h: 'center', num: `"${(project.currency || '$').replace(/"/g, '')}"#,##0` }));
+          break;
+        }
         default:
           if (isCustomField(k)) {
             const kind = CUSTOM_FIELDS[k].kind, v = customValue(t, k);
@@ -7281,6 +7559,7 @@ function renderPlanMenu() {
     `<button class="dropdown-item" id="planRenameItem" onclick="openPlanModal('rename')"><i class="fa-solid fa-pen"></i>Rename plan…</button>` +
     `<button class="dropdown-item" id="planBaselineItem" onclick="openBaselineModal()"><i class="fa-solid fa-ruler-horizontal"></i>Baseline…<span class="item-hint">${escapeHtml(baselineMenuHint())}</span></button>` +
     `<button class="dropdown-item" id="planCalendarItem" onclick="openCalendarModal()"><i class="fa-regular fa-calendar-days"></i>Working calendar…<span class="item-hint">${escapeHtml(calendarSummary())}</span></button>` +
+    `<button class="dropdown-item" id="planRatesItem" onclick="openRatesModal()"><i class="fa-solid fa-coins"></i>Resource rates…<span class="item-hint">${escapeHtml(ratesSummary())}</span></button>` +
     `<button class="dropdown-item" id="planDuplicateItem" onclick="duplicatePlan()"><i class="fa-regular fa-copy"></i>Duplicate plan</button>` +
     (fileSyncSupported() ? `<button class="dropdown-item" id="planDisconnectItem" onclick="disconnectFile()"${syncFileHandle ? '' : ' disabled title="This plan isn’t linked to a file"'}><i class="fa-solid fa-link-slash"></i>Disconnect folder…</button>` : '') +
     `<button class="dropdown-item" id="planDeleteItem" onclick="deleteCurrentPlan()"${idx.plans.length < 2 ? ' disabled title="You need at least one plan"' : ''}><i class="fa-solid fa-trash"></i>Delete plan…</button>`;
@@ -7516,7 +7795,7 @@ function wireGlobalEvents() {
     // Escape closes whatever overlay is open first; only when there is none — and
     // the user isn't typing in a field, where Escape already means "cancel this
     // edit" — does it clear the task selection.
-    const modalIds = ['taskModalBg', 'folderFilesModalBg', 'confirmModalBg', 'calendarModalBg', 'baselineModalBg', 'syncConflictsModalBg', 'planModalBg', 'excelModalBg', 'importModalBg', 'foreignImportModalBg', 'bulkModalBg', 'searchModalBg', 'printModalBg', 'backupsModalBg', 'helpModalBg', 'aboutModalBg'];
+    const modalIds = ['taskModalBg', 'folderFilesModalBg', 'confirmModalBg', 'calendarModalBg', 'baselineModalBg', 'ratesModalBg', 'syncConflictsModalBg', 'planModalBg', 'excelModalBg', 'importModalBg', 'foreignImportModalBg', 'bulkModalBg', 'searchModalBg', 'printModalBg', 'backupsModalBg', 'helpModalBg', 'aboutModalBg'];
     const overlayOpen = modalIds.some(id => document.getElementById(id).classList.contains('open'))
       || document.getElementById('fileSyncModalBg').classList.contains('open')   // mandatory: Escape can't close it
       || document.getElementById('dataMenu').classList.contains('open')

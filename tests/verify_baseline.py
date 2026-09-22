@@ -40,7 +40,7 @@ with sync_playwright() as p:
     # ================================================================ nothing happens by itself
     seed(CH())
     check("a plan has NO baseline until you set one: no task carries one, the project lists none", pg.evaluate("() => tasks.every(t => !t.baselines) && project.baselines === undefined"))
-    check("...the six baseline / variance columns exist in the column picker, hidden by default, after Resource", pg.evaluate("() => { const o = DEFAULT_COL_ORDER; const i = o.indexOf('resource'); return o.slice(i + 1, i + 7).join() === %s && %s.every(c => !TASK_COLS[c].dflt); }" % (json.dumps(",".join(BASECOLS)), json.dumps(BASECOLS)) ))
+    check("...the six baseline / variance columns exist in the column picker, hidden by default, after Cost to Date", pg.evaluate("() => { const o = DEFAULT_COL_ORDER; const i = o.indexOf('costToDate'); return o.slice(i + 1, i + 7).join() === %s && %s.every(c => !TASK_COLS[c].dflt); }" % (json.dumps(",".join(BASECOLS)), json.dumps(BASECOLS)) ))
     check("...and without a baseline their cells are blank", all(txt("A", c) == "" for c in BASECOLS))
     # old data (before this version): actual dates kept beside the plan; opening it changes nothing
     pg.evaluate(SEED, [{"name": "Old", "s": "2026-09-07", "e": "2026-09-11", "extra": {"actualStart": "2026-09-09", "actualFinish": "2026-09-14", "progress": 100}}, {"name": "Run", "s": "2026-09-14", "e": "2026-09-18", "extra": {"actualStart": "2026-09-16"}}])

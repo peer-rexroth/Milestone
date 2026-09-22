@@ -46,7 +46,7 @@ async ([seed, steps, allowCalendar]) => {
     for (const t of tasks) if (isStarted(t)) everStarted.add(t.id);
     if (!calChanged) for (const t of tasks) {   // an Auto task that has not started sits where its links allow (the cascade's promise) — until the calendar is changed (that never moves dates, by design)
       if (t.taskMode === 'manual' || hasChildren(t.id) || cyc.has(t.id) || isStarted(t) || isUnscheduled(t)) continue;
-      const cs = constraintStart(t);
+      const cs = targetStart(t);   // constraintStart() for every constraint type except ALAP, which uses its own backward twin (see "Task constraints")
       if (cs && !everStarted.has(t.id) && dayNumber(cs) !== dayNumber(t.startDate)) bad.push('Auto task is not where its links put it: ' + t.name + ' ' + t.startDate + ' < ' + cs);
       if (!isWorkDay(t.startDate) || (!t.milestone && !isWorkDay(t.endDate))) bad.push('Auto task on a day off: ' + t.name + ' ' + t.startDate + '..' + t.endDate);
     }
@@ -88,7 +88,7 @@ async ([seed, steps, allowCalendar]) => {
     ['calendar', 2, () => { const sets = [[1,2,3,4,5], [1,2,3,4,5,6], [0,1,2,3,4,5,6], [0,2,4], [6,0]]; const d = pick(sets); calChanged = true; if (d.join() === '1,2,3,4,5') delete project.workDays; else project.workDays = d; if (rnd() < .6) { const hl = []; for (let i = ri(6); i > 0; i--) { const h = { date: randDate() }; if (rnd() < .3) h.to = addDays(h.date, 1 + ri(12)); else if (rnd() < .3) h.yearly = true; hl.push(h); } project.holidays = hl; } else delete project.holidays; project.updatedAt = Date.now(); normalizeData(); save(); render(); }],
     ['collapse', 2, () => { const t = anyTask(); if (t && hasChildren(t.id)) toggleCollapse(t.id); else toggleAllCollapsed(); }],
     ['milestone', 2, () => { const t = anyTask(); if (t && !hasChildren(t.id)) { t.milestone = !t.milestone; if (t.milestone) t.endDate = t.startDate; t.updatedAt = Date.now(); normalizeData(); applyConstraints(t.id); save(); render(); } }],
-    ['constraint', 2, () => { const t = anyTask(); if (t && !hasChildren(t.id)) { t.constraintType = pick(['ASAP', 'SNET', 'FNET', 'MSO', 'MFO', 'SNLT', 'FNLT']); t.constraintDate = randDate(); t.updatedAt = Date.now(); normalizeData(); applyConstraints(t.id); save(); render(); } }],
+    ['constraint', 2, () => { const t = anyTask(); if (t && !hasChildren(t.id)) { t.constraintType = pick(['ASAP', 'ALAP', 'SNET', 'FNET', 'MSO', 'MFO', 'SNLT', 'FNLT']); t.constraintDate = randDate(); t.updatedAt = Date.now(); normalizeData(); applyConstraints(t.id); save(); render(); } }],
     ['history', 4, () => { if (rnd() < .7) historyUndo(); else historyRedo(); }],
     ['roundtrip', 3, () => { if (!undoStack.length) return; const s0 = stateSig(canonicalText()); historyUndo(); historyRedo(); if (stateSig(canonicalText()) !== s0) throw new Error('undo followed by redo changed the plan'); }],
     ['undo', 4, () => { if (toastUndoAction) triggerToastUndo(); }],
