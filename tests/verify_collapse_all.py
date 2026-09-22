@@ -9,7 +9,7 @@ MK = """(specs) => { tasks.length = 0; selectedTaskId = null; colFilters = newCo
   for (const sp of specs) { const t = {id: genId(), name: sp[0], parentId: sp[1] ? ids[sp[1]] : null, order: n++, startDate: '2026-09-07', endDate: '2026-09-11', progress: 0, milestone: false, color: null, notes: '', predecessors: [], collapsed: false, updatedAt: 1, constraintType: 'ASAP', constraintDate: null, taskMode: 'auto', resource: '', actualStart: null, actualFinish: null}; tasks.push(t); ids[sp[0]] = t.id; }
   save(); render(); }"""
 with sync_playwright() as p:
-    b = p.chromium.launch(headless=True); ctx = b.new_context(viewport={"width": 1400, "height": 760}); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker")
+    b = p.chromium.launch(headless=True); ctx = b.new_context(viewport={"width": 1400, "height": 760}); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
     pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn")
     names = lambda: pg.evaluate("() => visibleTaskList().map(x => x.task.name)")

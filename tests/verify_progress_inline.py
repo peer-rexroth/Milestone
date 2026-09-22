@@ -12,7 +12,7 @@ SEED = """() => { tasks.length = 0; deletedTaskIds.length = 0; setSelection([]);
   currentView = 'tasks'; normalizeData(); save(); render(); resetHistory(); }"""
 with sync_playwright() as p:
     b = p.chromium.launch(headless=True)
-    ctx = b.new_context(viewport={"width": 1500, "height": 800}); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker")
+    ctx = b.new_context(viewport={"width": 1500, "height": 800}); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
     pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn")
     ev = pg.evaluate

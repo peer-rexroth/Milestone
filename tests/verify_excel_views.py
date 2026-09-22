@@ -10,7 +10,7 @@ SEED = re.search(r'SEED = """(.*?)"""', open(os.path.join(os.path.dirname(os.pat
 SPECS = [{"name": "Design", "s": "2026-09-07", "e": "2026-09-18", "extra": {"resource": "Anna"}}, {"name": "Sketch", "parent": "Design", "s": "2026-09-07", "e": "2026-09-11", "extra": {"progress": 100}}, {"name": "Build", "s": "2026-09-21", "e": "2026-09-30", "preds": [["Sketch", "FS", 0]]}, {"name": "Later", "s": "2026-09-01", "e": "2026-09-02", "extra": {"taskMode": "manual", "startText": "TBD"}}]
 with sync_playwright() as p:
     b = p.chromium.launch(headless=True)
-    ctx = b.new_context(viewport={"width": 1500, "height": 800}, accept_downloads=True); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker")
+    ctx = b.new_context(viewport={"width": 1500, "height": 800}, accept_downloads=True); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
     pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn")
     pg.evaluate(SEED, SPECS); pg.evaluate("() => { applyBaselineChange(0, 'all', false); render(); }")

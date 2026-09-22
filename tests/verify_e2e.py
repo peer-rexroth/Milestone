@@ -9,7 +9,7 @@ def check(name, cond, detail=""):
 # A user's journey through the whole app, with real clicks: build a plan, structure it, link it, track it, look at it, share it.
 with sync_playwright() as p:
     b = p.chromium.launch(headless=True)
-    ctx = b.new_context(viewport={"width": 1600, "height": 900}, accept_downloads=True); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker")
+    ctx = b.new_context(viewport={"width": 1600, "height": 900}, accept_downloads=True); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append("PAGEERROR " + str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
     pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn"); pg.wait_for_timeout(300)
     T = lambda n: pg.evaluate("n => { const t = tasks.find(x => x.name === n); return t ? JSON.parse(JSON.stringify(t)) : null; }", n)

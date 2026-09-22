@@ -60,7 +60,7 @@ def run(seed, actions):
     rnd = random.Random(seed); log = []
     with sync_playwright() as p:
         b = p.chromium.launch(headless=True)
-        ctx = b.new_context(viewport={"width": 1500, "height": 900}, accept_downloads=True); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker")
+        ctx = b.new_context(viewport={"width": 1500, "height": 900}, accept_downloads=True); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
         pg = ctx.new_page(); errs = []
         pg.on("pageerror", lambda e: errs.append("pageerror: " + str(e))); pg.on("console", lambda m: errs.append("console: " + m.text) if m.type == "error" else None)
         pg.on("dialog", lambda d: d.accept()); pg.on("filechooser", lambda fc: None); pg.on("download", lambda d: None)

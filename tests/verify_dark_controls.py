@@ -14,7 +14,7 @@ def icon_contrast(png):
     dk, lt = bg - min(ink), max(ink) - bg
     return ("lighter" if lt > dk else "darker"), max(dk, lt)
 with sync_playwright() as p:
-    b = p.chromium.launch(headless=True); ctx = b.new_context(viewport={"width": 1300, "height": 900}, device_scale_factor=2); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker")
+    b = p.chromium.launch(headless=True); ctx = b.new_context(viewport={"width": 1300, "height": 900}, device_scale_factor=2); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
     pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn")
     pg.evaluate("""() => { tasks.length = 0; tasks.push({id: genId(), name: 'T', parentId: null, order: 0, startDate: '2026-09-19', endDate: '2026-09-22', progress: 0, milestone: false, color: null, notes: '', predecessors: [], collapsed: false, updatedAt: 1, constraintType: 'ASAP', constraintDate: null, taskMode: 'auto', resource: '', actualStart: null, actualFinish: null}); colHidden.delete('actualStart'); save(); render(); }""")

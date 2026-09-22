@@ -10,9 +10,7 @@ def check(name, cond, detail=""):
 # shared text becomes whatever is in its copy — exactly what one file in a synced folder does.
 FS_INIT = """
 window.__pick = null; window.__writes = 0; window.__ignore = false;
-const _mk = async (create, o) => { const r = await navigator.storage.getDirectory(); return r.getFileHandle(window.__pick || 'shared.json', {create}); };
-window.showSaveFilePicker = async (o) => _mk(true, o);
-window.showOpenFilePicker = async (o) => [await _mk(false, o)];
+window.showDirectoryPicker = async () => navigator.storage.getDirectory();   // the "folder" is the private file system's root
 const _cw = FileSystemFileHandle.prototype.createWritable;
 FileSystemFileHandle.prototype.createWritable = async function (...a) { if (!window.__ignore) window.__writes++; return _cw.apply(this, a); };
 """
@@ -41,9 +39,9 @@ def make(b, shared):
         if shared.text is not None: write(shared.text)
         r = fn(); settle(); shared.text = read(); return r
     d.op = op
-    def link_new(): pg.evaluate("() => window.__pick = 'shared.json'"); pg.click("#fileSyncModalBg button:has-text('Create new file')"); pg.wait_for_selector("#fileSyncModalBg:not(.open)"); settle(); shared.text = read()
+    def link_new(): pg.click("#linkFolderBtn"); pg.wait_for_selector("#folderFilesModalBg.open"); pg.fill("#folderNewName", "shared.json"); pg.click("#folderFilesOkBtn"); pg.wait_for_selector("#fileSyncModalBg:not(.open)"); settle(); shared.text = read()
     def link_existing():
-        write(shared.text); pg.evaluate("() => window.__pick = 'shared.json'"); pg.click("#fileSyncModalBg button:has-text('Open existing file')"); pg.wait_for_selector("#fileSyncModalBg:not(.open)"); settle(); shared.text = read()
+        write(shared.text); pg.click("#linkFolderBtn"); pg.wait_for_selector("#folderFilesModalBg.open"); pg.click("#folderFilesList .folder-row:has-text('shared.json')"); pg.click("#folderFilesOkBtn"); pg.wait_for_selector("#fileSyncModalBg:not(.open)"); settle(); shared.text = read()
     d.link_new, d.link_existing = link_new, link_existing
     d.poll = lambda: op(lambda: pg.evaluate("() => pollFileSync()"))
     d.edit = lambda name, **kw: op(lambda: pg.evaluate("([n, kw]) => { const t = tasks.find(x => x.name === n); Object.assign(t, kw); t.updatedAt = Date.now(); save(); }", [name, kw]))

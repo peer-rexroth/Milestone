@@ -6,7 +6,7 @@ def check(n, c, d=""): res.append(bool(c)); print(("PASS  " if c else "FAIL  ") 
 with sync_playwright() as p:
     b = p.chromium.launch(headless=True)
     pg = b.new_page(viewport={"width": 1300, "height": 800}); errs = []
-    pg.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker")
+    pg.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg.on("pageerror", lambda e: errs.append(str(e))); pg.on("console", lambda m: errs.append(m.text) if m.type == "error" else None)
     pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn")
     pg.evaluate("""() => { tasks.length = 0; selectedTaskId = null;

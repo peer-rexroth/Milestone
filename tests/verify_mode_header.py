@@ -5,7 +5,7 @@ errors, results = [], []
 def check(name, cond, detail=""):
     results.append(bool(cond)); print(("PASS  " if cond else "FAIL  ") + name + (f"   [{str(detail)[:250]}]" if not cond and detail else ""))
 with sync_playwright() as p:
-    b = p.chromium.launch(headless=True); ctx = b.new_context(viewport={"width": 1400, "height": 500}); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker")
+    b = p.chromium.launch(headless=True); ctx = b.new_context(viewport={"width": 1400, "height": 500}); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
     pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => { for (const c of ['actualStart', 'actualFinish', 'status']) colHidden.add(c); }")
     pg.evaluate("""() => { tasks.length = 0; ['One', 'Two'].forEach((n, i) => tasks.push({id: genId(), name: n, parentId: null, order: i, startDate: '2026-09-07', endDate: '2026-09-11', progress: 0, milestone: false, color: null, notes: '', predecessors: [], collapsed: false, updatedAt: 1, constraintType: 'ASAP', constraintDate: null, taskMode: i ? 'auto' : 'manual', resource: '', actualStart: null, actualFinish: null})); currentView = 'tasks'; save(); render(); }""")

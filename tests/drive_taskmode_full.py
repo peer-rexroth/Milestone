@@ -15,7 +15,7 @@ def check(name, cond, detail=""):
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=True)
     page = browser.new_page(viewport={"width": 1500, "height": 900})
-    page.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker")
+    page.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     page.on("console", lambda m: errors.append(f"[{m.type}] {m.text}") if m.type in ("error", "warning") else None)
     page.on("pageerror", lambda e: errors.append(f"[pageerror] {e}"))
     page.goto(URL)

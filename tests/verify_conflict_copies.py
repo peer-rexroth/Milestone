@@ -12,8 +12,6 @@ def check(name, cond, detail=""):
 FS_INIT = """
 window.__dirPicks = []; window.__startIn = null;
 const _root = () => navigator.storage.getDirectory();
-window.showSaveFilePicker = async () => (await _root()).getFileHandle('cbm.json', { create: true });
-window.showOpenFilePicker = async () => [await (await _root()).getFileHandle('cbm.json')];
 window.showDirectoryPicker = async (o) => { window.__dirPicks.push(o || {}); window.__startIn = o && o.startIn && o.startIn.name; return _root(); };
 """
 PLAN = lambda tasks, name="Cost plan": {"version": 1, "project": {"name": name, "updatedAt": 5}, "tasks": tasks, "deletedTaskIds": []}
@@ -35,23 +33,14 @@ with sync_playwright() as p:
     settle = lambda: (pg.wait_for_function("() => !fileSyncWriteInFlight && !fileSyncWritePending", timeout=8000), pg.wait_for_timeout(150))
     names = lambda: ev("() => tasks.map(t => t.name).sort()")
 
-    # ---------------------------------------------------------------- link a file, then the offer
-    pg.click("#fileSyncModalBg button:has-text('Create new file')"); pg.wait_for_selector("#fileSyncModalBg:not(.open)"); settle()
+    # ---------------------------------------------------------------- linking is by folder: watching comes with it
+    pg.click("#linkFolderBtn"); pg.wait_for_selector("#folderFilesModalBg.open"); pg.fill("#folderNewName", "cbm.json"); pg.click("#folderFilesOkBtn"); pg.wait_for_selector("#fileSyncModalBg:not(.open)"); settle()
     ev("""(p) => { project.name = 'Cost plan'; tasks.length = 0; tasks.push(p[0], p[1]); normalizeData(); save(); render(); }""", [T("ta", "Alpha", 10), T("tb", "Beta", 10)]); settle()
-    pg.wait_for_timeout(1500)
-    check("after a file is linked, an offer to watch its folder appears (a toast with a 'Watch folder' button)", "watch this folder" in toast() and pg.inner_text("#toastUndoBtn") == "Watch folder" and pg.locator("#toastUndoBtn").is_visible(), toast())
-    check("...nothing is watched yet", ev("() => watchingFolder()") is False)
-    check("...and a reminder stays next to the file button after the toast is gone ('Watch for conflicts')", pg.locator("#watchHint").is_visible() and "Watch for conflicts" in pg.inner_text("#watchHintBtn"))
-    pg.click("#watchHint .watch-x"); pg.wait_for_timeout(150)
-    check("its × says 'don't remind me' for this plan: the reminder goes and stays gone, the choice is remembered", not pg.locator("#watchHint").is_visible() and ev("() => watchDeclined()") is True)
-    ev("() => updateFileSyncUI()")
-    check("...(a redraw does not bring it back)", not pg.locator("#watchHint").is_visible())
-    pg.click("#planMenuBtn"); pg.click("#planWatchItem"); pg.wait_for_timeout(500)   # (declining the reminder leaves the plan menu's item)
-    check("choosing it in the plan menu opens the folder picker at the linked file (startIn) and the folder is watched", ev("() => window.__dirPicks.length") == 1 and ev("() => window.__startIn") == "cbm.json" and ev("() => watchingFolder()") is True, ev("() => window.__startIn"))
-    check("...the handle is kept for this plan (IndexedDB) and the offer is not made again", ev("async () => { const h = await _fsGet(planDirKey(currentPlanId)); return !!h && h.kind === 'directory'; }") and ev("() => !!localStorage.getItem('milestone-watchasked-' + currentPlanId)"))
-    check("once watched, the reminder is not shown", not pg.locator("#watchHint").is_visible())
-    pg.click("#planMenuBtn"); pg.wait_for_timeout(100)
-    check("the plan menu has 'Stop watching for conflicted copies' (on)", "Stop watching" in pg.inner_text("#planWatchItem") and "on" in pg.inner_text("#planWatchItem").split("\n")[-1]); pg.keyboard.press("Escape")
+    pg.wait_for_timeout(300)
+    check("linking a plan means choosing its folder: the folder is watched from the start, with no second step", ev("() => window.__dirPicks.length") == 1 and ev("() => window.__dirPicks[0].id") == "milestone-plans" and ev("() => watchingFolder()") is True and ev("() => syncDirPerm") == "granted", ev("() => window.__dirPicks"))
+    check("...the folder handle is kept for this plan (IndexedDB), next to the file", ev("async () => { const h = await _fsGet(planDirKey(currentPlanId)); const f = await _fsGet(planHandleKey(currentPlanId)); return !!h && h.kind === 'directory' && !!f && f.name === 'cbm.json'; }"))
+    check("...there is no 'watch' reminder and no separate menu item: everything is already covered", not pg.locator("#watchHint").is_visible() and (pg.click("#planMenuBtn"), pg.locator("#planWatchItem").count())[1] == 0); pg.keyboard.press("Escape")
+    check("...and the file button's tooltip says the folder is watched", "watched for conflicted copies" in (pg.get_attribute("#fileSyncBtn", "title") or ""), pg.get_attribute("#fileSyncBtn", "title"))
 
     # ---------------------------------------------------------------- what counts as a copy
     check("copy names: OneDrive style, numbered and 'conflicted copy' names are copies", ev("() => ['cbm-DESKTOP-4F2.json', 'cbm (1).json', 'cbm (John\\'s conflicted copy 2026-09-21).json', 'cbm copy.json', 'cbm_WORKSTATION01.json', 'cbm_DESKTOP-4F2.json', 'CBM_laptop.JSON', 'cbm-PC.json'].every(n => isStrayCopyName(n, 'cbm.json', new Set()))"))
@@ -97,13 +86,14 @@ with sync_playwright() as p:
 
     # ---------------------------------------------------------------- guards and switching it off
     check("the plan's file itself was never treated as a copy", "cbm.json" in ls() and json.loads(read("cbm.json"))["tasks"] is not None)
-    ev("() => stopWatchingFolder()"); pg.wait_for_timeout(300)
-    check("stopping the watch forgets the folder (handle removed, menu says 'Watch folder…')", ev("() => watchingFolder()") is False and ev("async () => !(await _fsGet(planDirKey(currentPlanId)))"))
+    ev("() => stopWatchingFolder()"); pg.wait_for_timeout(300)   # (the state of a plan linked to a single file, from before folders)
+    check("a plan that is linked to a single file (no folder) is not watched: the folder handle is gone", ev("() => watchingFolder()") is False and ev("async () => !(await _fsGet(planDirKey(currentPlanId)))"))
+    ev("() => updateFileSyncUI()")
+    check("...it gets a 'Link folder' reminder next to the file button and 'Link this plan's folder…' in the plan menu", pg.locator("#watchHint").is_visible() and "Link folder" in pg.inner_text("#watchHintBtn") and (pg.click("#planMenuBtn"), "Link this plan" in pg.inner_text("#planWatchItem"))[1]); pg.keyboard.press("Escape")
     put("cbm_WORKSTATION01.json", PLAN([T("tq", "Should not be read", 999)]))
     check("without a watched folder a copy is left alone", ev("() => scanConflictCopies()") == 0 and "cbm_WORKSTATION01.json" in ls() and "Should not be read" not in names())
-    pg.click("#planMenuBtn"); check("the plan menu offers 'Watch folder for conflicted copies…' again", "Watch folder for conflicted copies" in pg.inner_text("#planWatchItem")); pg.keyboard.press("Escape")
     ev("() => chooseWatchFolder()"); pg.wait_for_timeout(500)
-    check("choosing the folder again absorbs what accumulated meanwhile — a 'cbm_WORKSTATION01.json' (file name, underscore, workstation name) is a copy too", "Should not be read" in names() and "merged_cbm_WORKSTATION01.json" in ls(), (names(), ls()))
+    check("linking the folder (the upgrade) absorbs what accumulated meanwhile — a 'cbm_WORKSTATION01.json' (file name, underscore, workstation name) is a copy too", "Should not be read" in names() and "merged_cbm_WORKSTATION01.json" in ls(), (names(), ls()))
     # a folder that is not the file's folder is refused
     ev("""() => { window.__realPicker = window.showDirectoryPicker; window.showDirectoryPicker = async () => { const r = await navigator.storage.getDirectory(); return r.getDirectoryHandle('elsewhere', { create: true }); }; }""")
     ev("() => stopWatchingFolder()"); pg.wait_for_timeout(200); ev("() => chooseWatchFolder()"); pg.wait_for_timeout(400)
@@ -117,7 +107,7 @@ with sync_playwright() as p:
     check("without permission a scan does nothing (the copy is left alone) and the state is known ('prompt')", n == 0 and "cbm_LAPSED.json" in ls() and "Waits for permission" not in names() and ev("() => syncDirPerm") == "prompt", (n, ev("() => syncDirPerm")))
     check("...the file button shows a warning and says the watched folder needs permission", pg.locator("#fileSyncBtn i.fa-triangle-exclamation").count() == 1 and "needs your permission" in (pg.get_attribute("#fileSyncBtn", "title") or ""), pg.get_attribute("#fileSyncBtn", "title"))
     pg.click("#planMenuBtn"); pg.wait_for_timeout(100)
-    check("...the plan menu shows 'Allow access to the watched folder…' (needs permission) above the stop item", pg.locator("#planWatchAllowItem").count() == 1 and "needs permission" in pg.inner_text("#planWatchAllowItem") and "Stop watching" in pg.inner_text("#planWatchItem")); pg.keyboard.press("Escape")
+    check("...the plan menu shows 'Allow access to the watched folder…' (needs permission)", pg.locator("#planWatchAllowItem").count() == 1 and "needs permission" in pg.inner_text("#planWatchAllowItem")); pg.keyboard.press("Escape")
     pg.click("#fileSyncBtn"); pg.wait_for_timeout(600); settle()
     check("clicking the file button asks for the permission again (it does not offer to disconnect), and the waiting copy is merged", not pg.locator("#confirmModalBg.open").count() and "Waits for permission" in names() and "merged_cbm_LAPSED.json" in ls() and ev("() => syncDirPerm") == "granted", (names(), ls()))
     check("...the warning is gone", pg.locator("#fileSyncBtn i.fa-triangle-exclamation").count() == 0 and pg.locator("#fileSyncBtn i.fa-check").count() == 1)

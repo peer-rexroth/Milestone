@@ -9,7 +9,7 @@ def check(name, cond, detail=""):
 with sync_playwright() as p:
     b = p.chromium.launch(headless=True)
     pg = b.new_page(viewport={"width": 1300, "height": 800})
-    pg.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker")
+    pg.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
     pg.on("pageerror", lambda e: errors.append(str(e)))
     pg.goto(URL); pg.wait_for_selector("#addTaskBtn")

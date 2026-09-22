@@ -311,6 +311,23 @@ button:focus:not(:focus-visible) { outline: none; }
 .main .grid-rows { background-image: var(--col-lines-r, none); background-position: var(--col-pos-r, 0 0); background-size: 1px 100%; background-repeat: no-repeat; background-attachment: local; }   /* local: the lines below the last task scroll sideways with the content */
 .grid-row { border-bottom: 1px solid var(--border); font-size: 12.5px; cursor: default; position: relative; --row-bg: var(--panel); background: var(--row-bg); }   /* --row-bg: the row's background, also painted by the frozen cells so what scrolls underneath doesn't show through */
 .virt-spacer { pointer-events: none; }
+.fb-line { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; min-width: 0; }
+.fb-line svg { flex: none; color: var(--text-dim); }
+.fb-line span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.folder-list { display: flex; flex-direction: column; gap: 6px; max-height: 40vh; overflow-y: auto; }
+.folder-row { display: flex; align-items: flex-start; gap: 10px; padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; }
+.folder-row:hover { background: var(--panel-2); }
+.folder-row.chosen { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--panel)); }
+.folder-row.taken { opacity: .55; cursor: default; }
+.folder-row.taken:hover { background: none; }
+.folder-row input[type=radio] { flex: none; margin: 2px 0 0; accent-color: var(--accent); cursor: inherit; }
+.folder-row .fr-main { flex: 1; min-width: 0; }
+.folder-row .fr-name { font-size: 13px; font-weight: 600; word-break: break-all; }
+.folder-row .fr-meta { font-size: 11.5px; color: var(--text-dim); margin-top: 1px; }
+.folder-row .fr-tag { flex: none; font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 99px; color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--panel)); white-space: nowrap; }
+.folder-row .fr-new { margin-top: 6px; }
+.folder-row .fr-new input[type=text] { width: 100%; box-sizing: border-box; padding: 7px 9px; border: 1px solid var(--border); border-radius: 7px; background: var(--panel); color: var(--text); }
+.folder-row .fr-new input[type=text]:focus { outline: none; border-color: var(--accent); }
 .grid-row.spacer-row { --row-bg: color-mix(in srgb, var(--panel-2) 50%, var(--panel)); }   /* an empty line: a blank row, faintly tinted so it reads as a separator */
 .grid-row:hover { --row-bg: var(--panel-2); }
 /* a task's colour: a 4px stripe at the row's left edge and a light tint of the same colour (list and chart row alike); selection and hover still show through */
@@ -733,7 +750,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
   <div class="dropdown-wrap">
     <button class="btn" id="fileSyncBtn" onclick="onFileSyncBtnClick()"></button>
     <button class="btn conflict-btn hidden" id="syncConflictBtn" onclick="openSyncConflictsModal()"></button>
-    <span class="watch-hint hidden" id="watchHint"><button class="btn watch-btn" id="watchHintBtn" onclick="chooseWatchFolder()" title="OneDrive, Dropbox and SharePoint keep a second copy of the file when two devices save at the same time. Let Milestone watch this file's folder and it merges those copies in."><i class="fa-solid fa-folder-tree"></i>Watch for conflicts</button><button class="watch-x" onclick="declineWatch()" title="Don't remind me for this plan (the plan menu still has it)" aria-label="Don't remind me">&times;</button></span>
+    <span class="watch-hint hidden" id="watchHint"><button class="btn watch-btn" id="watchHintBtn" onclick="chooseWatchFolder()" title="This plan is linked to a single file (from before plans were linked by folder). Link the folder it lives in: OneDrive, Dropbox and SharePoint keep a second copy of the file when two devices save at the same time, and Milestone can then merge those copies in."><i class="fa-solid fa-folder-tree"></i>Link folder</button><button class="watch-x" onclick="declineWatch()" title="Don't remind me for this plan (the plan menu still has it)" aria-label="Don't remind me">&times;</button></span>
   </div>
   <div class="dropdown-wrap">
     <button class="btn" id="dataMenuBtn" onclick="toggleDataMenu()"><i class="fa-solid fa-database"></i>Data</button>
@@ -1029,16 +1046,34 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
      switching to such a plan, when the file went missing, and straight after the user disconnects one). -->
 <div class="modal-bg" id="fileSyncModalBg">
   <div class="modal narrow">
-    <div class="modal-header"><h2 id="fileSyncModalTitle">Link a file to continue</h2></div>
+    <div class="modal-header"><h2 id="fileSyncModalTitle">Choose a folder to continue</h2></div>
     <div class="modal-body">
       <p id="fileSyncModalText" style="font-size:13px;color:var(--text-dim);margin:0;line-height:1.5"></p>
-      <button class="btn btn-primary" onclick="linkNewFile()"><i class="fa-solid fa-file-circle-plus"></i>Create new file</button>
-      <button class="btn" onclick="linkExistingFile()"><i class="fa-solid fa-folder-open"></i>Open existing file</button>
+      <button class="btn btn-primary" id="linkFolderBtn" onclick="chooseFolderForPlan('link')"><i class="fa-solid fa-folder-open"></i>Choose folder…</button>
+      <button class="btn hidden" id="linkSameFolderBtn" onclick="chooseFolderForPlan('link', true)"><i class="fa-solid fa-file-circle-question"></i>Pick a file in the same folder</button>
       <details class="file-sync-help">
-        <summary>My file isn't syncing across devices</summary>
-        <div class="file-sync-help-body">Make sure the file lives inside a folder your cloud provider (iCloud Drive, OneDrive, Dropbox, …) actually syncs — picking a file only stores it locally. Milestone rereads it every 45s and on every save, and merges changes so two devices editing at once won't lose work.</div>
+        <summary>My plan isn't syncing across devices</summary>
+        <div class="file-sync-help-body">Choose a folder your cloud provider (iCloud Drive, OneDrive, Dropbox, …) actually syncs — a folder that only exists on this computer stays local. Milestone rereads the file every 45s and on every save and merges changes, so two devices editing at once won't lose work; and because it can see the whole folder it also merges the “conflicted copies” a sync service makes when two devices save at the same moment. Chrome does not allow Desktop, Documents or Downloads themselves — pick a folder inside them.</div>
       </details>
     </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="folderFilesModalBg">
+  <div class="modal mid">
+    <div class="modal-header"><h2 id="folderFilesTitle">Plan file</h2><button onclick="closeFolderFiles()" aria-label="Close">&times;</button></div>
+    <div class="modal-body">
+      <section class="cal-sec">
+        <div class="cal-sec-title">Folder<button class="btn-link" onclick="changeFolder()">Change folder…</button></div>
+        <div class="fb-line"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h4.6l2 2.5h8.4A1.5 1.5 0 0 1 21 9v9.5a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5z"/></svg><span id="folderBarName"></span></div>
+      </section>
+      <section class="cal-sec">
+        <div class="cal-sec-title">Plan file</div>
+        <p class="cal-hint" id="folderFilesHint" style="margin:0"></p>
+        <div class="folder-list" id="folderFilesList" role="radiogroup"></div>
+      </section>
+    </div>
+    <div class="modal-footer"><button class="btn" onclick="closeFolderFiles()">Back</button><button class="btn btn-primary" id="folderFilesOkBtn" onclick="confirmFolderChoice()">Link</button></div>
   </div>
 </div>
 
@@ -1323,9 +1358,10 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <div class="help-divider"></div>
         <div class="help-section">
           <div class="help-section-title">Files and sync</div>
-          <div class="help-row"><i class="fa-solid fa-hard-drive"></i><span>Every plan is kept in a plain <strong>JSON file</strong> on your disk (linking one is required, in Chrome/Edge). Every change is saved to it automatically, and inside an iCloud Drive, OneDrive or Dropbox folder it keeps your own devices in step. <strong>New plan</strong> and <strong>Duplicate</strong> ask where to save the file.</span></div>
-          <div class="help-row"><i class="fa-solid fa-folder-tree"></i><span><strong>Conflicted copies.</strong> When two devices save at once, OneDrive or Dropbox keeps one file and renames the other (<code>plan-DESKTOP-4F2.json</code>, <code>plan (1).json</code>, <code>plan_PC.json</code>). Choose <strong>Watch folder for conflicted copies…</strong> in the plan menu and Milestone merges them in — the newer version of each task wins — and renames them <code>merged_…</code>. Nothing is deleted; the merge is listed for review. A <strong>Watch for conflicts</strong> reminder stays next to the file button until you choose.</span></div>
-          <div class="help-row"><i class="fa-solid fa-link-slash"></i><span>You can <strong>disconnect</strong> a plan's file (click the file name at the top right, or use the plan menu) — the file is kept, and Milestone asks you to choose one straight away. If the file is moved or deleted, Milestone asks you to create or find it again.</span></div>
+          <div class="help-row"><i class="fa-solid fa-hard-drive"></i><span>Every plan is kept as a plain <strong>JSON file in a folder</strong> on your disk (choosing the folder is required, in Chrome/Edge). Every change is saved to it automatically, and in an iCloud Drive, OneDrive or Dropbox folder it keeps your own devices in step. <strong>New plan</strong> and <strong>Duplicate</strong> ask for the folder; <strong>Open plan from folder…</strong> opens a plan file that is already there.</span></div>
+          <div class="help-row"><i class="fa-solid fa-folder-tree"></i><span><strong>Conflicted copies.</strong> When two devices save at once, OneDrive or Dropbox keeps one file and renames the other (<code>plan-DESKTOP-4F2.json</code>, <code>plan (1).json</code>, <code>plan_PC.json</code>). Because Milestone sees the whole folder it merges them in — the newer version of each task wins — and renames them <code>merged_…</code>. Nothing is deleted; the merge is listed for review. A plan linked to a single file (from an older version) shows a <strong>Link folder</strong> reminder next to the file button.</span></div>
+          <div class="help-row"><i class="fa-solid fa-clock-rotate-left"></i><span><strong>Daily backups.</strong> The first time you open a plan or save it each day, Milestone also writes a dated snapshot into a <code>Backups</code> subfolder of its linked folder — one file per day, kept forever. It never overwrites what is already there for the day.</span></div>
+          <div class="help-row"><i class="fa-solid fa-link-slash"></i><span>You can <strong>disconnect</strong> a plan (click the file name at the top right, or use the plan menu) — the file is kept, and Milestone asks you to choose a folder straight away. If the file is moved or deleted, Milestone asks you to pick another file in the same folder or create a new one. Chrome does not allow Desktop, Documents or Downloads themselves as the folder — pick one inside them.</span></div>
         </div>
         <div class="help-divider"></div>
         <div class="help-section">
@@ -6622,16 +6658,17 @@ async function _fsMigrateLegacy() {
   } catch (e) { console.warn('Milestone: legacy file-sync handle migration failed', e); }
 }
 
-function fileSyncSupported() { return typeof window.showOpenFilePicker === 'function'; }
+function fileSyncSupported() { return typeof window.showDirectoryPicker === 'function'; }   // plans are linked by FOLDER (a file inside it): only a folder can be listed for conflicted copies
 // Linking is mandatory wherever the browser can do it (Chrome/Edge). Elsewhere there is no way to write a file, so
 // the app stays usable as browser-only rather than being locked out.
 function fileLinkRequired() { return fileSyncSupported() && (fileSyncStatus === 'unlinked' || fileSyncStatus === 'missing'); }
 function openFileSyncModal() {
-  const missing = fileSyncStatus === 'missing';
-  document.getElementById('fileSyncModalTitle').textContent = missing ? 'Linked file not found' : 'Link a file to continue';
+  const missing = fileSyncStatus === 'missing', rec = (readPlansIndex() && planRecord(readPlansIndex(), currentPlanId)) || {}, fname = rec.fileName || (syncFileHandle && syncFileHandle.name) || 'The file';
+  document.getElementById('fileSyncModalTitle').textContent = missing ? 'Linked file not found' : 'Choose a folder to continue';
   document.getElementById('fileSyncModalText').textContent = missing
-    ? `“${syncFileHandle ? syncFileHandle.name : 'The file'}” was moved, renamed or deleted. Create a new file for “${project.name}” (its current tasks are saved into it), or open the file where it went (its tasks are merged into this plan).`
-    : `Every plan is kept in a JSON file on your disk. Create a new file for “${project.name}” (its current tasks are saved into it), or open an existing one (its tasks are merged into this plan). In a folder synced by iCloud Drive, OneDrive or Dropbox it also keeps your own devices in step.`;
+    ? `“${fname}” was moved, renamed or deleted. Pick the file where it went, or choose a folder and create a new file for “${project.name}” (its current tasks are saved into it).`
+    : `Every plan is kept as a JSON file in a folder on your disk. Choose the folder for “${project.name}” — in a folder synced by iCloud Drive, OneDrive or Dropbox it also keeps your own devices in step, and Milestone merges the conflicted copies a sync service makes. You then create a new file there or pick a plan file that is already in it.`;
+  document.getElementById('linkSameFolderBtn').classList.toggle('hidden', !(missing && syncDirHandle));
   document.getElementById('fileSyncModalBg').classList.add('open');
 }
 // Called once a plan has finished loading and its file has been looked for.
@@ -6644,7 +6681,6 @@ function markFileMissing() {
 }
 function closeFileSyncModal() { document.getElementById('fileSyncModalBg').classList.remove('open'); }
 
-const FILE_PICKER_TYPES = [{ description: 'Milestone data', accept: { 'application/json': ['.json'] } }];
 // A plan name made safe to use as a file name ("Website Relaunch" -> "Website Relaunch").
 function fileBase(name) { return String(name || '').replace(/[\\/:*?"<>|]+/g, '').trim() || 'milestone-data'; }
 
@@ -6667,23 +6703,96 @@ async function refuseIfFileBelongsToAnotherPlan(handle, forNewPlan) {
   return true;
 }
 
-async function linkNewFile() {
-  try {
-    const handle = await window.showSaveFilePicker({ suggestedName: fileBase(project.name) + '.json', types: FILE_PICKER_TYPES });
-    if (await refuseIfFileBelongsToAnotherPlan(handle)) return;
-    await finishLinking(handle, true);
-  } catch (e) { if (e.name !== 'AbortError') showToast('Could not create file', true); }
+// ---- Linking is by FOLDER: the user picks a folder (one permission), the plan file is a file inside it, and the same grant lets Milestone see the folder's
+// other files — the conflicted copies a sync service makes. (A picked FILE can't be listed beside; that is why there is no file linking any more.)
+async function pickPlanFolder() {
+  try { return await window.showDirectoryPicker({ id: 'milestone-plans', mode: 'readwrite' }); }
+  catch (e) { if (!e || e.name !== 'AbortError') { console.warn('Milestone: folder picker failed', e); showToast('That folder can’t be used — pick a folder inside Desktop, Documents or Downloads, not one of them', true); } return null; }
 }
-async function linkExistingFile() {
-  try {
-    const [handle] = await window.showOpenFilePicker({ mode: 'readwrite', types: FILE_PICKER_TYPES });
-    if (await refuseIfFileBelongsToAnotherPlan(handle)) return;
-    await finishLinking(handle, false);
-  } catch (e) { if (e.name !== 'AbortError') showToast('Could not open file', true); }
+async function uniqueFileName(dir, wanted) {   // "Plan.json", then "Plan 2.json", "Plan 3.json" …
+  const base = wanted.replace(/\.json$/i, '');
+  for (let n = 1; n < 1000; n++) { const name = n === 1 ? `${base}.json` : `${base} ${n}.json`; if (!(await dirHasFile(dir, name))) return name; }
+  return `${base} ${Date.now()}.json`;
 }
-async function finishLinking(handle, isNew) {
+// The plan files in a folder: .json files with a task list, newest first (a file the app already renamed merged_… and non-plan files are skipped).
+async function listPlanFiles(dir, exceptPlanId) {
+  const out = [];
+  for await (const e of dir.values()) {
+    if (e.kind !== 'file' || !/\.json$/i.test(e.name) || e.name.startsWith(STRAY_MERGED_PREFIX) || out.length >= 200) continue;
+    try {
+      const file = await e.getFile(); if (file.size > 30e6) continue;
+      const data = JSON.parse(await file.text());
+      if (!data || !Array.isArray(data.tasks)) continue;
+      const other = await findPlanForHandle(e, exceptPlanId).catch(() => null);
+      out.push({ name: e.name, handle: e, planName: (data.project && data.project.name) || '', tasks: data.tasks.length, modified: file.lastModified, takenBy: other ? other.name : null });
+    } catch (err) { /* not a plan file */ }
+  }
+  return out.sort((a, b) => b.modified - a.modified);
+}
+let folderPick = null;   // { mode: 'link' (the current plan) | 'open' (a new plan), dir, cands, choice: index | 'new' }
+async function chooseFolderForPlan(mode, sameFolder) {
+  if (!fileSyncSupported()) return;
+  let dir = null;
+  if (sameFolder && syncDirHandle) { try { if ((await syncDirHandle.queryPermission({ mode: 'readwrite' })) === 'granted') dir = syncDirHandle; } catch (e) { dir = null; } }
+  if (!dir) dir = await pickPlanFolder();
+  if (!dir) return;
+  const cands = await listPlanFiles(dir, mode === 'link' ? currentPlanId : null);
+  let choice = 'new';
+  if (mode === 'link') { const i = cands.findIndex(c => !c.takenBy && c.planName === project.name); if (i >= 0) choice = i; }
+  else choice = Math.max(0, cands.findIndex(c => !c.takenBy));
+  folderPick = { mode, dir, cands, choice, newName: '' };
+  folderPick.newName = await uniqueFileName(dir, fileBase(project.name) + '.json');
+  renderFolderFiles();
+  document.getElementById('folderFilesModalBg').classList.add('open');
+}
+function renderFolderFiles() {
+  const fp = folderPick; if (!fp) return;
+  const open = fp.mode === 'open', pick = i => `onclick="folderChoose(${i})"`;
+  document.getElementById('folderFilesTitle').textContent = open ? 'Open a plan' : 'Choose the plan file';
+  document.getElementById('folderBarName').textContent = fp.dir.name || 'Chosen folder'; document.getElementById('folderBarName').title = fp.dir.name;
+  document.getElementById('folderFilesHint').textContent = open
+    ? (fp.cands.some(c => !c.takenBy) ? 'Pick the plan file to open as a plan.' : 'This folder has no plan file that is free to open.')
+    : (fp.cands.length ? 'Link a plan file that is already here (its tasks are merged into this plan), or create a new one.' : 'This folder has no plan file yet — a new one is created for this plan.');
+  const fmt = c => `${c.planName ? escapeHtml(c.planName) + ' · ' : ''}${c.tasks} task${c.tasks === 1 ? '' : 's'} · ${new Date(c.modified).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}`;
+  document.getElementById('folderFilesList').innerHTML = fp.cands.map((c, i) =>
+    `<div class="folder-row${fp.choice === i ? ' chosen' : ''}${c.takenBy ? ' taken' : ''}" ${c.takenBy ? '' : pick(i)} data-i="${i}" role="radio" aria-checked="${fp.choice === i}"><input type="radio" name="folderChoice" ${fp.choice === i ? 'checked' : ''}${c.takenBy ? ' disabled' : ''} tabindex="-1"><div class="fr-main"><div class="fr-name">${escapeHtml(c.name)}</div><div class="fr-meta">${c.takenBy ? `Already linked to the plan “${escapeHtml(c.takenBy)}”` : fmt(c)}</div></div>${!open && !c.takenBy && c.planName && c.planName === project.name ? '<span class="fr-tag">Same plan name</span>' : ''}</div>`).join('') +
+    (open ? '' : `<div class="folder-row new${fp.choice === 'new' ? ' chosen' : ''}" onclick="folderChoose('new')" data-i="new" role="radio" aria-checked="${fp.choice === 'new'}"><input type="radio" name="folderChoice" ${fp.choice === 'new' ? 'checked' : ''} tabindex="-1"><div class="fr-main"><div class="fr-name">Create a new file</div><div class="fr-new"><input type="text" id="folderNewName" value="${escapeHtml(fp.newName)}" maxlength="120" aria-label="Name of the new file" onclick="event.stopPropagation()" onfocus="folderMarkNew()" oninput="folderPick.newName = this.value; folderMarkNew()" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmFolderChoice();}"></div></div></div>`);
+  const ok = document.getElementById('folderFilesOkBtn');
+  ok.textContent = open ? 'Open plan' : (fp.choice === 'new' ? 'Create and link' : 'Link');
+  ok.disabled = open && (fp.choice === 'new' || !fp.cands[fp.choice]);
+}
+function folderMarkNew() {   // typing in (or focusing) the new-file name chooses "Create a new file" without rebuilding the list (that would take the focus away)
+  if (!folderPick || folderPick.mode === 'open') return; folderPick.choice = 'new';
+  for (const el of document.querySelectorAll('#folderFilesList .folder-row')) { const on = el.dataset.i === 'new'; el.classList.toggle('chosen', on); el.setAttribute('aria-checked', on); const r = el.querySelector('input[type=radio]'); if (r) r.checked = on; }
+  document.getElementById('folderFilesOkBtn').textContent = 'Create and link';
+}
+function folderChoose(i) { if (!folderPick) return; folderPick.choice = i; const keep = document.getElementById('folderNewName') ? document.getElementById('folderNewName').value : null; if (keep !== null) folderPick.newName = keep; renderFolderFiles(); if (i === 'new') { const el = document.getElementById('folderNewName'); if (el) { el.focus(); el.setSelectionRange(0, el.value.replace(/\.json$/i, '').length); } } }
+function changeFolder() { if (folderPick) chooseFolderForPlan(folderPick.mode); }   // a click, so the browser lets it open the folder picker; cancelling keeps this dialog as it was
+function closeFolderFiles() { document.getElementById('folderFilesModalBg').classList.remove('open'); folderPick = null; }
+async function confirmFolderChoice() {
+  const fp = folderPick; if (!fp) return;
+  let handle, isNew = false;
+  try {
+    if (fp.choice === 'new') {
+      if (fp.mode === 'open') return;
+      const typed = (document.getElementById('folderNewName') || { value: fp.newName }).value;
+      const name = fileBase(typed.replace(/\.json$/i, '')) + '.json';
+      if (await dirHasFile(fp.dir, name)) { showToast(`“${name}” already exists in this folder — pick it in the list, or choose another name`, true); return; }
+      handle = await fp.dir.getFileHandle(name, { create: true }); isNew = true;
+    } else {
+      const c = fp.cands[fp.choice]; if (!c || c.takenBy) return;
+      handle = c.handle;
+    }
+  } catch (e) { console.warn('Milestone: could not create the plan file', e); showToast('Could not create the file in that folder', true); return; }
+  const dir = fp.dir, mode = fp.mode;
+  closeFolderFiles();
+  if (mode === 'link') { if (!isNew && await refuseIfFileBelongsToAnotherPlan(handle)) return; await finishLinking(dir, handle, isNew); }
+  else await openPlanFromFile(dir, handle);
+}
+async function finishLinking(dir, handle, isNew) {
   const planId = currentPlanId, epoch = planEpoch;
-  syncFileHandle = handle;
+  syncFileHandle = handle; syncDirHandle = dir; syncDirPerm = 'granted'; strayFailed.clear();
+  await _fsPut(planDirKey(planId), dir);
   lastSyncedSnapshot = null;   // a file we have just linked has no shared history with this plan yet (an existing file becomes the base once it has been read)
   await _fsPut(planHandleKey(planId), handle);
   setPlanFileName(planId, handle.name);
@@ -6709,8 +6818,8 @@ async function finishLinking(handle, isNew) {
   await writeSyncFile();
   startFileSyncPolling();
   closeFileSyncModal();
-  showToast('File linked');
-  setTimeout(maybeOfferWatch, 1100);
+  showToast(`Linked to ${handle.name} in “${dir.name}”`);
+  scanConflictCopies();   // (anything the sync service left in the folder while this plan had no link)
 }
 // The last state this plan and its file agreed on = the base of the three-way merge (see "Merge"). Kept per plan in localStorage, so
 // work done offline can still be merged field by field after a reload.
@@ -6754,7 +6863,7 @@ async function writeSyncFile() {
       if (data && Array.isArray(data.tasks) && mergeFromFile(data, 'write').changed) text = canonicalText();
     }
     if (fileText === text) {   // the file already says exactly this
-      if (epoch === planEpoch) { setSyncBase(planId, text); fileSyncStatus = 'linked'; updateFileSyncUI(); }
+      if (epoch === planEpoch) { setSyncBase(planId, text); fileSyncStatus = 'linked'; updateFileSyncUI(); maybeWriteDailyBackup(); }
       return;
     }
     const writable = await handle.createWritable();
@@ -6763,6 +6872,7 @@ async function writeSyncFile() {
     if (epoch !== planEpoch) return;
     setSyncBase(planId, text);
     fileSyncStatus = 'linked';
+    maybeWriteDailyBackup();
   } catch (e) {
     if (e && e.name === 'NotFoundError') { if (epoch === planEpoch) markFileMissing(); return; }
     console.warn('Milestone: sync write failed', e);
@@ -6817,9 +6927,10 @@ async function reconnectFile() {
   if (!handle) return;
   const epoch = planEpoch;
   try {
-    const perm = await handle.requestPermission({ mode: 'readwrite' });
+    if (syncDirHandle) { try { await syncDirHandle.requestPermission({ mode: 'readwrite' }); await refreshDirPerm(); } catch (e) { /* ignore */ } }   // (the folder's grant covers the file: asked first)
+    let perm = await handle.queryPermission({ mode: 'readwrite' });
+    if (perm !== 'granted') perm = await handle.requestPermission({ mode: 'readwrite' });
     if (epoch !== planEpoch) return;
-    if (perm === 'granted' && syncDirHandle) { try { await syncDirHandle.requestPermission({ mode: 'readwrite' }); } catch (e) { /* ignore */ } }
     if (perm === 'granted') { fileSyncStatus = 'linked'; await pollFileSync(); await writeSyncFile(); if (epoch === planEpoch) { startFileSyncPolling(); showToast('Reconnected'); } }
     else showToast('Permission not granted', true);
   } catch (e) { showToast('Reconnect failed', true); }
@@ -6833,6 +6944,32 @@ async function reconnectFile() {
    into the plan with the ordinary merge (the newer version of a task wins) and renames it `merged_<name>` — never deletes it. The same idea as Pulse's. */
 let syncDirHandle = null, strayScanBusy = false, syncDirPerm = null;   // syncDirPerm: 'granted' | 'prompt' | 'denied' | null (unknown / not watching)
 const strayFailed = new Set();   // '<planId>:<file name>' of copies that could not be renamed: not read again this session (they would be merged again and again)
+/* ------------------ Daily backups (dated snapshots in the linked folder) ------------------
+   Same idea as Pulse's "Daily backups to a linked folder", simplified: Milestone's folder link is already mandatory
+   (see "Linking by folder"), so there is no separate folder to pick — a dated snapshot of the plan just lands in a
+   "Backups" subfolder of the plan's own linked folder, one per day, kept forever (nothing here ever deletes an old
+   one). `dir.values()` (listPlanFiles, scanConflictCopies) only look at files, so the subfolder is already invisible
+   to both without any extra filtering. */
+let lastBackupDate = {};   // planId -> 'YYYY-MM-DD' already confirmed backed up this session (see maybeWriteDailyBackup)
+async function maybeWriteDailyBackup() {
+  const dir = syncDirHandle, fh = syncFileHandle, planId = currentPlanId, epoch = planEpoch;
+  if (!dir || !fh) return;
+  const today = todayStr();
+  if (lastBackupDate[planId] === today) return;   // already confirmed today, this session
+  try {
+    if ((await dir.queryPermission({ mode: 'readwrite' })) !== 'granted') return;   // best-effort: a lapsed grant just means no backup today, never a prompt
+    const backups = await dir.getDirectoryHandle('Backups', { create: true });
+    const name = `${fh.name.replace(/\.json$/i, '')} ${today}.json`;
+    let exists = true;
+    try { await backups.getFileHandle(name); } catch (e) { exists = false; }   // no {create:true}: an existence probe, so a second session (or tab) sharing the folder never clobbers the first writer's file
+    if (!exists) {
+      const writable = await (await backups.getFileHandle(name, { create: true })).createWritable();
+      await writable.write(canonicalText());
+      await writable.close();
+    }
+    if (epoch === planEpoch) lastBackupDate[planId] = today;   // written, or already there: either way today is covered
+  } catch (e) { /* best-effort and silent: a backup problem must never surface as an error over a save that otherwise worked fine */ }
+}
 const STRAY_MERGED_PREFIX = 'merged_';
 function planDirKey(id) { return 'plandir:' + id; }
 // A copy is a .json file whose name STARTS with the plan file's base name and carries something after it — the workstation, a number, a note:
@@ -6946,14 +7083,6 @@ async function allowWatchAccess() {   // the browser forgot the permission for t
   try { if (syncDirHandle && (await syncDirHandle.requestPermission({ mode: 'readwrite' })) === 'granted') { await refreshDirPerm(); showToast('Watching this folder for conflicted copies'); await scanConflictCopies(); } else { await refreshDirPerm(); showToast('Permission not granted', true); } } catch (e) { showToast('Could not ask for permission', true); }
   updateFileSyncUI();
 }
-// Once per plan and device, after a file has been linked: offer to watch its folder (the toast's button is the click the folder picker needs).
-function maybeOfferWatch() {
-  try {
-    if (!syncFileHandle || syncDirHandle || typeof window.showDirectoryPicker !== 'function' || localStorage.getItem('milestone-watchasked-' + currentPlanId)) return;
-    localStorage.setItem('milestone-watchasked-' + currentPlanId, '1');
-  } catch (e) { return; }
-  showToast('Using OneDrive, Dropbox or SharePoint? Let Milestone watch this folder so conflicted copies of the file are merged in', false, chooseWatchFolder, 'Watch folder');
-}
 // Disconnect the current plan from its file — only ever on the user's say-so (see disconnectFile()). The file keeps
 // everything saved up to now and is never deleted. Linking is mandatory, so the link dialog opens straight away and the
 // plan has to be given a file again (the same one, another existing one, or a new one).
@@ -7013,17 +7142,17 @@ async function activatePlanFile(interactive) {
     if (handle && handle.kind === 'file') {
       syncFileHandle = handle;
       if (readPlansIndex() && (planRecord(readPlansIndex(), planId) || {}).fileName !== handle.name) setPlanFileName(planId, handle.name);
-      let perm = await handle.queryPermission({ mode: 'readwrite' });
-      if (perm !== 'granted' && interactive) { try { perm = await handle.requestPermission({ mode: 'readwrite' }); } catch (e) { /* needs a fresher click — falls back to Reconnect */ } }
-      if (epoch !== planEpoch) return;
-      try {   // the watched folder, if the user chose one for this plan (its permission is asked again with the file's, when this runs from a click)
+      try {   // the plan's folder (a plan linked before folders is file-only until its folder is linked): its grant covers the file, so it is asked first
         const dir = await _fsGet(planDirKey(planId));
         if (dir && dir.kind === 'directory' && epoch === planEpoch) {
           syncDirHandle = dir;
-          if (interactive && perm === 'granted' && (await dir.queryPermission({ mode: 'readwrite' })) !== 'granted') { try { await dir.requestPermission({ mode: 'readwrite' }); } catch (e) { /* asked again from the plan menu */ } }
+          if (interactive && (await dir.queryPermission({ mode: 'readwrite' })) !== 'granted') { try { await dir.requestPermission({ mode: 'readwrite' }); } catch (e) { /* asked again by Reconnect */ } }
           await refreshDirPerm(dir);
         }
       } catch (e) { syncDirHandle = null; }
+      let perm = await handle.queryPermission({ mode: 'readwrite' });
+      if (perm !== 'granted' && interactive) { try { perm = await handle.requestPermission({ mode: 'readwrite' }); } catch (e) { /* needs a fresher click — falls back to Reconnect */ } }
+      if (epoch !== planEpoch) return;
       if (perm === 'granted') {
         fileSyncStatus = 'linked';
         await pollFileSync();
@@ -7032,6 +7161,7 @@ async function activatePlanFile(interactive) {
           if (canonicalText() !== lastSyncedSnapshot) queueFileSyncWrite();   // edits made while offline, or a file that was never written by this version
           startFileSyncPolling();
           render();
+          maybeWriteDailyBackup();   // covers opening the app with nothing to sync: the first write-triggering event of the day may be a while off
         }
       } else { fileSyncStatus = 'lapsed'; }
     } else { fileSyncStatus = 'unlinked'; }
@@ -7144,15 +7274,15 @@ function renderPlanMenu() {
     `<div class="plan-list">${list}</div>` +
     `<div class="dropdown-sep"></div>` +
     `<button class="dropdown-item" id="planNewItem" onclick="openPlanModal('new')"><i class="fa-solid fa-plus"></i>New plan…</button>` +
-    (fileSyncSupported() ? `<button class="dropdown-item" id="planOpenFileItem" onclick="openFileAsPlan()"><i class="fa-solid fa-folder-open"></i>Open file as plan…</button>` : '') +
-    (fileSyncSupported() && typeof window.showDirectoryPicker === 'function' && watchNeedsPermission() ? `<button class="dropdown-item" id="planWatchAllowItem" onclick="allowWatchAccess()"><i class="fa-solid fa-triangle-exclamation" style="color:var(--task-amber)"></i>Allow access to the watched folder…<span class="item-hint" style="color:var(--task-amber)">needs permission</span></button>` : '') +
-    (fileSyncSupported() && typeof window.showDirectoryPicker === 'function' ? `<button class="dropdown-item" id="planWatchItem" onclick="${syncDirHandle ? 'stopWatchingFolder()' : 'chooseWatchFolder()'}"${syncFileHandle ? '' : ' disabled title="This plan isn’t linked to a file"'} title="OneDrive, Dropbox and SharePoint keep a second copy of the file when two devices save at the same time — watching its folder lets Milestone merge those copies in"><i class="fa-solid fa-folder-tree"></i>${syncDirHandle ? 'Stop watching for conflicted copies' : 'Watch folder for conflicted copies…'}<span class="item-hint">${syncDirHandle ? 'on' : 'off'}</span></button>` : '') +
+    (fileSyncSupported() ? `<button class="dropdown-item" id="planOpenFileItem" onclick="openFileAsPlan()"><i class="fa-solid fa-folder-open"></i>Open plan from folder…</button>` : '') +
+    (fileSyncSupported() && watchNeedsPermission() ? `<button class="dropdown-item" id="planWatchAllowItem" onclick="allowWatchAccess()"><i class="fa-solid fa-triangle-exclamation" style="color:var(--task-amber)"></i>Allow access to the watched folder…<span class="item-hint" style="color:var(--task-amber)">needs permission</span></button>` : '') +
+    (fileSyncSupported() && syncFileHandle && !syncDirHandle ? `<button class="dropdown-item" id="planWatchItem" onclick="chooseWatchFolder()" title="This plan is linked to a single file. Link the folder it lives in: OneDrive, Dropbox and SharePoint keep a second copy of the file when two devices save at the same time, and Milestone can then merge those copies in"><i class="fa-solid fa-folder-tree"></i>Link this plan’s folder…<span class="item-hint">file only</span></button>` : '') +
     `<div class="dropdown-sep"></div>` +
     `<button class="dropdown-item" id="planRenameItem" onclick="openPlanModal('rename')"><i class="fa-solid fa-pen"></i>Rename plan…</button>` +
     `<button class="dropdown-item" id="planBaselineItem" onclick="openBaselineModal()"><i class="fa-solid fa-ruler-horizontal"></i>Baseline…<span class="item-hint">${escapeHtml(baselineMenuHint())}</span></button>` +
     `<button class="dropdown-item" id="planCalendarItem" onclick="openCalendarModal()"><i class="fa-regular fa-calendar-days"></i>Working calendar…<span class="item-hint">${escapeHtml(calendarSummary())}</span></button>` +
     `<button class="dropdown-item" id="planDuplicateItem" onclick="duplicatePlan()"><i class="fa-regular fa-copy"></i>Duplicate plan</button>` +
-    (fileSyncSupported() ? `<button class="dropdown-item" id="planDisconnectItem" onclick="disconnectFile()"${syncFileHandle ? '' : ' disabled title="This plan isn’t linked to a file"'}><i class="fa-solid fa-link-slash"></i>Disconnect file…</button>` : '') +
+    (fileSyncSupported() ? `<button class="dropdown-item" id="planDisconnectItem" onclick="disconnectFile()"${syncFileHandle ? '' : ' disabled title="This plan isn’t linked to a file"'}><i class="fa-solid fa-link-slash"></i>Disconnect folder…</button>` : '') +
     `<button class="dropdown-item" id="planDeleteItem" onclick="deleteCurrentPlan()"${idx.plans.length < 2 ? ' disabled title="You need at least one plan"' : ''}><i class="fa-solid fa-trash"></i>Delete plan…</button>`;
 }
 
@@ -7164,7 +7294,7 @@ function openPlanModal(mode) {
   const needsFile = fileSyncSupported();
   document.getElementById('planSubmitBtn').textContent = isNew ? (needsFile ? 'Create…' : 'Create') : 'Rename';
   document.getElementById('planModalHint').textContent = !isNew ? '' : needsFile
-    ? 'Every plan lives in a file on your disk. After you name it, you’ll choose where to save it.'
+    ? 'Every plan lives in a file in a folder on your disk. After you name it, you’ll choose the folder.'
     : 'A new plan starts empty and is kept in this browser (this browser can’t save to files).';
   document.getElementById('planModalHint').classList.toggle('hidden', !isNew);
   const input = document.getElementById('planNameInput');
@@ -7185,10 +7315,11 @@ async function submitPlanModal() {
 // gesture), so it comes first; only once a file is chosen is the plan created, written into it and opened.
 // `data` is null for an empty plan, or a payload to start from (Duplicate).
 async function createLinkedPlan(name, data) {
+  if (!fileSyncSupported()) return false;
+  const dir = await pickPlanFolder(); if (!dir) return false;
   let handle;
-  try { handle = await window.showSaveFilePicker({ suggestedName: fileBase(name) + '.json', types: FILE_PICKER_TYPES }); }
-  catch (e) { if (e.name !== 'AbortError') showToast('Could not create file', true); return false; }
-  if (await refuseIfFileBelongsToAnotherPlan(handle, true)) return false;
+  try { handle = await dir.getFileHandle(await uniqueFileName(dir, fileBase(name) + '.json'), { create: true }); }
+  catch (e) { console.warn('Milestone: could not create the plan file', e); showToast('Could not create the file in that folder', true); return false; }
   closePlanModal();
   try {
     const id = createPlanRecord(name, data);
@@ -7196,39 +7327,32 @@ async function createLinkedPlan(name, data) {
     const w = await handle.createWritable();
     await w.write(JSON.stringify(rec, null, 2));
     await w.close();
-    await _fsPut(planHandleKey(id), handle);
+    await _fsPut(planHandleKey(id), handle); await _fsPut(planDirKey(id), dir);
     setPlanFileName(id, handle.name);
-    const ok = await switchPlan(id); if (ok) setTimeout(maybeOfferWatch, 1500);
-    return ok;
+    return await switchPlan(id);
   } catch (e) { console.warn('Milestone: could not create plan file', e); showToast('Could not create file', true); return false; }
 }
 
-async function openFileAsPlan() {
+async function openFileAsPlan() {   // Open plan from folder…: choose the folder, then the plan file in it
   closePlanMenu();
-  if (!fileSyncSupported()) { showToast('Opening files requires Chrome or Edge', true); return; }
-  let handle;
-  try { [handle] = await window.showOpenFilePicker({ mode: 'readwrite', types: FILE_PICKER_TYPES }); }
-  catch (e) { if (e.name !== 'AbortError') showToast('Could not open file', true); return; }
+  if (!fileSyncSupported()) { showToast('Opening a plan from a folder requires Chrome or Edge', true); return; }
+  await chooseFolderForPlan('open');
+}
+async function openPlanFromFile(dir, handle) {
   // Already one of the plans? Then just go there instead of adding a second plan on the same file.
   if (syncFileHandle && await syncFileHandle.isSameEntry(handle).catch(() => false)) { showToast('That file is already open'); return; }
   const existing = await findPlanForHandle(handle, currentPlanId);
   if (existing) { await switchPlan(existing.id); showToast(`Switched to “${existing.name}”`); return; }
-  let data, empty = false;
+  let data;
   try {
-    const text = (await (await handle.getFile()).text()).trim();
-    empty = !text;
-    data = empty ? { tasks: [] } : JSON.parse(text);
+    data = JSON.parse((await (await handle.getFile()).text()).trim());
     if (!data || !Array.isArray(data.tasks)) throw new Error('missing tasks');
   } catch (e) { showToast("That file doesn't look like a Milestone file", true); return; }
   const name = uniquePlanName((data.project && data.project.name) || handle.name.replace(/\.[^.]+$/, ''));
   const id = createPlanRecord(name, data);
-  await _fsPut(planHandleKey(id), handle);
+  await _fsPut(planHandleKey(id), handle); await _fsPut(planDirKey(id), dir);
   setPlanFileName(id, handle.name);
-  if (await switchPlan(id)) {
-    if (empty) await writeSyncFile();   // give a blank file its first content
-    showToast(`Opened “${name}”`);
-    setTimeout(maybeOfferWatch, 1800);
-  }
+  if (await switchPlan(id)) showToast(`Opened “${name}”`);
 }
 
 async function duplicatePlan() {
@@ -7392,7 +7516,7 @@ function wireGlobalEvents() {
     // Escape closes whatever overlay is open first; only when there is none — and
     // the user isn't typing in a field, where Escape already means "cancel this
     // edit" — does it clear the task selection.
-    const modalIds = ['taskModalBg', 'confirmModalBg', 'calendarModalBg', 'baselineModalBg', 'syncConflictsModalBg', 'planModalBg', 'excelModalBg', 'importModalBg', 'foreignImportModalBg', 'bulkModalBg', 'searchModalBg', 'printModalBg', 'backupsModalBg', 'helpModalBg', 'aboutModalBg'];
+    const modalIds = ['taskModalBg', 'folderFilesModalBg', 'confirmModalBg', 'calendarModalBg', 'baselineModalBg', 'syncConflictsModalBg', 'planModalBg', 'excelModalBg', 'importModalBg', 'foreignImportModalBg', 'bulkModalBg', 'searchModalBg', 'printModalBg', 'backupsModalBg', 'helpModalBg', 'aboutModalBg'];
     const overlayOpen = modalIds.some(id => document.getElementById(id).classList.contains('open'))
       || document.getElementById('fileSyncModalBg').classList.contains('open')   // mandatory: Escape can't close it
       || document.getElementById('dataMenu').classList.contains('open')

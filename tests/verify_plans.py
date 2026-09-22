@@ -10,11 +10,9 @@ def check(name, cond, detail=""):
 # Pickers backed by the origin-private file system: real FileSystemFileHandles (createWritable, isSameEntry, storable in IndexedDB).
 FS_INIT = """
 window.__pick = null;
-const _mk = async (create, o) => { if (window.__pick === '__abort__') throw new DOMException('cancelled', 'AbortError'); const r = await navigator.storage.getDirectory(); return r.getFileHandle(window.__pick || (o && o.suggestedName) || 'x.json', {create}); };
-window.showSaveFilePicker = async (o) => _mk(true, o);
-window.showOpenFilePicker = async (o) => [await _mk(false, o)];
+window.showDirectoryPicker = async () => { if (window.__pick === '__abort__') throw new DOMException('cancelled', 'AbortError'); return navigator.storage.getDirectory(); };   // the "folder" is the private file system's root
 """
-NO_FS_INIT = "delete window.showOpenFilePicker; delete window.showSaveFilePicker;"
+NO_FS_INIT = "delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker;"
 TASK = """(n) => { tasks.push({id: genId(), name: n, parentId: null, order: tasks.length, startDate: '2026-09-21', endDate: '2026-09-23', progress: 0, milestone: false, color: null, notes: '', predecessors: [], collapsed: false, updatedAt: Date.now(), constraintType: 'ASAP', constraintDate: null, taskMode: 'auto'}); save(); render(); }"""
 LEG = [{"id": f"t{i}", "name": f"Legacy {i}", "parentId": None, "order": i - 1, "startDate": "2026-09-21", "endDate": "2026-09-23", "progress": 0, "milestone": False, "color": None, "notes": "", "predecessors": [], "collapsed": False, "updatedAt": 5, "constraintType": "ASAP", "constraintDate": None, "taskMode": "auto"} for i in (1, 2, 3)]
 LEGACY = {"version": 1, "project": {"name": "Legacy Proj", "updatedAt": 5}, "tasks": LEG, "deletedTaskIds": [], "theme": "dark", "zoom": "month", "view": "gantt", "gridPaneWidth": 420}
@@ -45,10 +43,15 @@ def make(b, init):
     def open_menu(): pg.click("#planMenuBtn"); pg.wait_for_selector("#planMenu.open")
     def switch_ui(name): open_menu(); pg.locator(".plan-item", has_text=name).first.click(); settle()
     h.open_menu, h.switch_ui = open_menu, switch_ui
-    def modal_link_new(fname):          # the mandatory dialog -> Create new file
-        pg.evaluate("f => window.__pick = f", fname)
-        pg.click("#fileSyncModalBg button:has-text('Create new file')"); pg.wait_for_selector("#fileSyncModalBg:not(.open)"); settle()
-    h.modal_link_new = modal_link_new
+    def modal_link_new(fname):          # the mandatory dialog -> Choose folder… -> a new file with this name
+        pg.click("#linkFolderBtn"); pg.wait_for_selector("#folderFilesModalBg.open"); pg.fill("#folderNewName", fname); pg.click("#folderFilesOkBtn")
+        pg.wait_for_selector("#fileSyncModalBg:not(.open)"); settle()
+    def modal_link_existing(fname):     # ... -> a plan file that is already in the folder
+        pg.click("#linkFolderBtn"); pg.wait_for_selector("#folderFilesModalBg.open"); pg.click(f"#folderFilesList .folder-row:has-text('{fname}')"); pg.click("#folderFilesOkBtn")
+        pg.wait_for_selector("#fileSyncModalBg:not(.open)"); settle()
+    def open_plan_from(fname):          # plan menu -> Open plan from folder… -> the file
+        open_menu(); pg.click("#planOpenFileItem"); pg.wait_for_selector("#folderFilesModalBg.open"); return pg.locator(f"#folderFilesList .folder-row:has-text('{fname}')")
+    h.modal_link_new, h.modal_link_existing, h.open_plan_from = modal_link_new, modal_link_existing, open_plan_from
     def new_plan(name, fname=None):
         open_menu(); pg.click("#planNewItem"); pg.wait_for_selector("#planModalBg.open"); pg.fill("#planNameInput", name)
         if fname: pg.evaluate("f => window.__pick = f", fname)
@@ -104,18 +107,20 @@ with sync_playwright() as p:
     B = make(b, FS_INIT); pg = B.pg
     B.boot()
     pg.wait_for_selector("#fileSyncModalBg.open")
-    check("fresh start: the link dialog opens straight away", B.modal_open() and pg.inner_text("#fileSyncModalTitle") == "Link a file to continue", pg.inner_text("#fileSyncModalTitle"))
+    check("fresh start: the link dialog opens straight away", B.modal_open() and pg.inner_text("#fileSyncModalTitle") == "Choose a folder to continue", pg.inner_text("#fileSyncModalTitle"))
     check("it has no close button and no 'Not now'", pg.locator("#fileSyncModalBg .modal-header button").count() == 0 and pg.locator("#fileSyncModalBg button:has-text('Not now')").count() == 0)
     pg.keyboard.press("Escape"); pg.wait_for_timeout(150)
     check("Escape does not close it", B.modal_open())
     pg.mouse.click(5, 5); pg.wait_for_timeout(150)
     check("clicking the backdrop does not close it", B.modal_open())
-    pg.evaluate("() => window.__pick = '__abort__'"); pg.click("#fileSyncModalBg button:has-text('Create new file')"); pg.wait_for_timeout(300)
-    check("cancelling the file picker leaves the dialog up", B.modal_open() and B.status() == "unlinked")
-    pg.evaluate("() => window.__pick = '__abort__'"); pg.click("#fileSyncModalBg button:has-text('Open existing file')"); pg.wait_for_timeout(300)
-    check("...also when opening a file is cancelled", B.modal_open())
+    pg.evaluate("() => window.__pick = '__abort__'"); pg.click("#linkFolderBtn"); pg.wait_for_timeout(300)
+    check("cancelling the folder picker leaves the dialog up", B.modal_open() and B.status() == "unlinked" and not pg.evaluate("() => document.getElementById('folderFilesModalBg').classList.contains('open')"))
+    pg.evaluate("() => window.__pick = null"); pg.click("#linkFolderBtn"); pg.wait_for_selector("#folderFilesModalBg.open")
+    check("choosing a folder lists what is in it: an empty folder offers to create a new file named after the plan", "no plan file yet" in pg.inner_text("#folderFilesHint") and pg.input_value("#folderNewName").endswith(".json") and pg.inner_text("#folderFilesOkBtn") == "Create and link", pg.inner_text("#folderFilesHint"))
+    pg.click("#folderFilesModalBg .modal-footer .btn:has-text('Back')"); pg.wait_for_timeout(150)
+    check("Back returns to the link dialog, still open and unlinked", B.modal_open() and B.status() == "unlinked" and not pg.evaluate("() => document.getElementById('folderFilesModalBg').classList.contains('open')"))
     B.modal_link_new("plan-a.json")
-    check("choosing a file links the plan and closes the dialog", B.status() == "linked" and not B.modal_open() and "plan-a.json" in pg.inner_text("#fileSyncBtn"))
+    check("creating a file in the chosen folder links the plan and closes the dialog", B.status() == "linked" and not B.modal_open() and "plan-a.json" in pg.inner_text("#fileSyncBtn"))
     check("the file was created with the plan in it", B.file_tasks("plan-a.json") == [], B.file_tasks("plan-a.json"))
     B.add("A1"); B.settle()
     check("edits are written to the file", B.file_tasks("plan-a.json") == ["A1"], B.file_tasks("plan-a.json"))
@@ -127,31 +132,32 @@ with sync_playwright() as p:
     check("New plan dialog has one button, 'Create…', and explains the file", pg.locator("#planSubmitBtn").inner_text() == "Create…" and pg.locator("#planFileBtn").count() == 0 and "file" in pg.inner_text("#planModalHint"))
     pg.fill("#planNameInput", "Plan B"); pg.evaluate("() => window.__pick = '__abort__'"); pg.click("#planSubmitBtn"); pg.wait_for_timeout(400)
     check("cancelling the save dialog creates no plan", len(B.index()["plans"]) == n0 and B.pname() == "Alpha", (len(B.index()["plans"]), B.pname()))
-    pg.evaluate("() => window.__pick = 'plan-b.json'"); pg.click("#planSubmitBtn"); pg.wait_for_selector("#planModalBg:not(.open)"); B.settle()
-    check("choosing a file creates the plan, opens it, linked", B.pname() == "Plan B" and B.status() == "linked" and B.file_tasks("plan-b.json") == [] and "plan-b.json" in pg.inner_text("#fileSyncBtn"), (B.pname(), B.status()))
+    pg.evaluate("() => window.__pick = null"); pg.click("#planSubmitBtn"); pg.wait_for_selector("#planModalBg:not(.open)"); B.settle()
+    check("choosing a folder creates the plan and its file (named after the plan), opens it, linked", B.pname() == "Plan B" and B.status() == "linked" and B.file_tasks("Plan B.json") == [] and "Plan B.json" in pg.inner_text("#fileSyncBtn"), (B.pname(), B.status()))
     check("...and it never passes through an unlinked state (no dialog)", not B.modal_open())
     B.add("B1"); B.settle()
-    check("plan B writes only to plan B's file", B.file_tasks("plan-b.json") == ["B1"] and B.file_tasks("plan-a.json") == ["A1"])
-    # picking the current plan's own file for a new plan is refused
-    B.open_menu(); pg.click("#planNewItem"); pg.wait_for_selector("#planModalBg.open"); pg.fill("#planNameInput", "Clash")
-    pg.evaluate("() => window.__pick = 'plan-a.json'"); pg.click("#planSubmitBtn"); pg.wait_for_timeout(400)
-    check("a new plan can't reuse another plan's file", len(B.index()["plans"]) == n0 + 1 and "already linked" in pg.inner_text("#toastMsg"), pg.inner_text("#toastMsg"))
-    pg.keyboard.press("Escape"); pg.wait_for_timeout(100)
+    check("plan B writes only to plan B's file", B.file_tasks("Plan B.json") == ["B1"] and B.file_tasks("plan-a.json") == ["A1"])
+    # a file name that is taken is never reused for a new plan
+    B.write_file("Taken.json", "{}")
+    B.open_menu(); pg.click("#planNewItem"); pg.wait_for_selector("#planModalBg.open"); pg.fill("#planNameInput", "Taken"); pg.click("#planSubmitBtn"); pg.wait_for_selector("#planModalBg:not(.open)"); B.settle()
+    check("a new plan never reuses an existing file: 'Taken' gets 'Taken 2.json', the old 'Taken.json' is untouched", B.status() == "linked" and "Taken 2.json" in pg.inner_text("#fileSyncBtn") and B.read_file("Taken.json") == "{}", pg.inner_text("#fileSyncBtn"))
+    n0 += 1
+    B.switch_ui("Alpha")
 
     # --- Duplicate needs a file
     B.switch_ui("Alpha")
     B.open_menu(); pg.evaluate("() => window.__pick = '__abort__'"); pg.click("#planDuplicateItem"); pg.wait_for_timeout(400)
     check("Duplicate: cancelling the save dialog creates nothing", len(B.index()["plans"]) == n0 + 1 and B.pname() == "Alpha")
-    B.open_menu(); pg.evaluate("() => window.__pick = 'alpha-copy.json'"); pg.click("#planDuplicateItem"); B.settle()
-    check("Duplicate: the copy is opened with the same tasks and its own file", B.pname() == "Alpha copy" and B.names() == ["A1"] and B.status() == "linked" and B.file_tasks("alpha-copy.json") == ["A1"], (B.pname(), B.names(), B.status()))
+    B.open_menu(); pg.evaluate("() => window.__pick = 'Alpha copy.json'"); pg.click("#planDuplicateItem"); B.settle()
+    check("Duplicate: the copy is opened with the same tasks and its own file", B.pname() == "Alpha copy" and B.names() == ["A1"] and B.status() == "linked" and B.file_tasks("Alpha copy.json") == ["A1"], (B.pname(), B.names(), B.status()))
     B.add("COPY"); B.settle()
-    check("...editing the copy leaves the original's file alone", B.file_tasks("alpha-copy.json") == ["A1", "COPY"] and B.file_tasks("plan-a.json") == ["A1"])
+    check("...editing the copy leaves the original's file alone", B.file_tasks("Alpha copy.json") == ["A1", "COPY"] and B.file_tasks("plan-a.json") == ["A1"])
 
     # --- switching + per-plan files + the write race
     B.switch_ui("Alpha")
     check("switching re-points sync to that plan's file", B.status() == "linked" and "plan-a.json" in pg.inner_text("#fileSyncBtn"), pg.inner_text("#fileSyncBtn"))
     B.add("A2"); B.settle()
-    check("after round trips each file holds only its own plan", B.file_tasks("plan-a.json") == ["A1", "A2"] and B.file_tasks("plan-b.json") == ["B1"] and B.file_tasks("alpha-copy.json") == ["A1", "COPY"])
+    check("after round trips each file holds only its own plan", B.file_tasks("plan-a.json") == ["A1", "A2"] and B.file_tasks("Plan B.json") == ["B1"] and B.file_tasks("Alpha copy.json") == ["A1", "COPY"])
     for i in range(3):
         pg.evaluate("""(i) => {
             const idx = JSON.parse(localStorage.getItem('milestone-plans')); const id = n => idx.plans.find(p => p.name === n).id;
@@ -159,7 +165,7 @@ with sync_playwright() as p:
             tasks.push({id: genId(), name: (currentPlanId === id('Alpha') ? 'RA' : 'RB') + i, parentId: null, order: tasks.length, startDate: '2026-09-21', endDate: '2026-09-23', progress: 0, milestone: false, color: null, notes: '', predecessors: [], collapsed: false, updatedAt: Date.now(), constraintType: 'ASAP', constraintDate: null, taskMode: 'auto'});
             save(); switchPlan(to); }""", i)
         B.settle()
-    fa, fb = B.file_tasks("plan-a.json"), B.file_tasks("plan-b.json")
+    fa, fb = B.file_tasks("plan-a.json"), B.file_tasks("Plan B.json")
     check("write race: A's file has A's late edits, none of B's", "RA0" in fa and "RA2" in fa and not any(n.startswith("RB") for n in fa), fa)
     check("write race: B's file has B's late edits, none of A's", "RB1" in fb and not any(n.startswith("RA") for n in fb), fb)
     B.switch_ui("Alpha")
@@ -170,13 +176,15 @@ with sync_playwright() as p:
     check("a slow poll for the old plan is dropped after a switch", "LATE-FROM-A-FILE" not in B.names() and B.pname() == "Plan B" and "LATE-FROM-A-FILE" not in pg.evaluate("() => JSON.parse(localStorage.getItem('milestone-plan-' + currentPlanId)).tasks.map(t => t.name)"))
 
     # --- one file, one plan
-    pg.evaluate("() => window.__pick = 'plan-a.json'"); pg.evaluate("() => linkExistingFile()"); pg.wait_for_timeout(500)
-    check("relinking a plan to a file another plan uses is refused", "already linked" in pg.inner_text("#toastMsg") and B.status() == "linked" and "plan-b.json" in pg.inner_text("#fileSyncBtn"), pg.inner_text("#toastMsg"))
+    pg.evaluate("() => chooseFolderForPlan('link')"); pg.wait_for_selector("#folderFilesModalBg.open")
+    check("the folder's file list shows another plan's file as taken (greyed out, 'Already linked to the plan …') and it cannot be chosen", pg.locator("#folderFilesList .folder-row.taken:has-text('plan-a.json')").count() == 1 and "Already linked to the plan" in pg.inner_text("#folderFilesList .folder-row.taken:has-text('plan-a.json')") and pg.locator("#folderFilesList .folder-row.taken input").first.is_disabled())
+    pg.click("#folderFilesModalBg .modal-footer .btn:has-text('Back')"); pg.wait_for_timeout(150)
+    check("...and the plan stays linked to its own file", B.status() == "linked" and "Plan B.json" in pg.inner_text("#fileSyncBtn"))
 
     # --- the linked file goes missing
-    pg.evaluate("async () => { const r = await navigator.storage.getDirectory(); await r.removeEntry('plan-b.json'); }")
+    pg.evaluate("async () => { const r = await navigator.storage.getDirectory(); await r.removeEntry('Plan B.json'); }")
     pg.evaluate("() => pollFileSync()"); pg.wait_for_selector("#fileSyncModalBg.open", timeout=4000)
-    check("file deleted -> status 'missing' and the dialog comes back", B.status() == "missing" and pg.inner_text("#fileSyncModalTitle") == "Linked file not found" and "plan-b.json" in pg.inner_text("#fileSyncModalText"), (B.status(), pg.inner_text("#fileSyncModalTitle")))
+    check("file deleted -> status 'missing' and the dialog comes back", B.status() == "missing" and pg.inner_text("#fileSyncModalTitle") == "Linked file not found" and "Plan B.json" in pg.inner_text("#fileSyncModalText"), (B.status(), pg.inner_text("#fileSyncModalTitle")))
     check("...the top-bar button says so", "File missing" in pg.inner_text("#fileSyncBtn"))
     pg.keyboard.press("Escape"); pg.wait_for_timeout(150)
     check("...and it can't be dismissed", B.modal_open())
@@ -191,8 +199,9 @@ with sync_playwright() as p:
     B.settle(); pg.evaluate("async () => { const r = await navigator.storage.getDirectory(); await r.removeEntry('plan-b-recovered.json'); }")
     pg.evaluate("() => pollFileSync()"); pg.wait_for_selector("#fileSyncModalBg.open", timeout=4000)
     B.write_file("plan-b-old.json", json.dumps({"version": 1, "project": {"name": "Plan B", "updatedAt": 1}, "tasks": [], "deletedTaskIds": []}))
-    pg.evaluate("() => window.__pick = 'plan-b-old.json'"); pg.click("#fileSyncModalBg button:has-text('Open existing file')"); pg.wait_for_selector("#fileSyncModalBg:not(.open)"); B.settle()
-    check("'Open existing file' relinks (merging) and keeps every task", B.status() == "linked" and "UNSAVED-EDIT" in B.names() and "UNSAVED-EDIT" in (B.file_tasks("plan-b-old.json") or []), B.file_tasks("plan-b-old.json"))
+    check("the link dialog for a missing file also offers 'Pick a file in the same folder' (the folder is still granted)", pg.locator("#linkSameFolderBtn").is_visible())
+    pg.click("#linkSameFolderBtn"); pg.wait_for_selector("#folderFilesModalBg.open"); pg.click("#folderFilesList .folder-row:has-text('plan-b-old.json')"); pg.click("#folderFilesOkBtn"); pg.wait_for_selector("#fileSyncModalBg:not(.open)"); B.settle()
+    check("picking an existing file relinks (merging) and keeps every task", B.status() == "linked" and "UNSAVED-EDIT" in B.names() and "UNSAVED-EDIT" in (B.file_tasks("plan-b-old.json") or []), B.file_tasks("plan-b-old.json"))
 
     # --- an unlinked plan (e.g. left over from before linking was mandatory) must be linked when it's opened
     pg.evaluate("() => { window.__orph = createPlanRecord('Orphan', null); }")
@@ -210,7 +219,7 @@ with sync_playwright() as p:
     check("Cancel keeps the file linked", B.status() == "linked" and not B.modal_open())
     B.add("D1")     # edit and disconnect straight away: the file must still get it
     pg.click("#fileSyncBtn"); pg.wait_for_selector("#confirmModalBg.open"); pg.click("#confirmModalActionBtn"); pg.wait_for_selector("#fileSyncModalBg.open", timeout=4000); B.settle()
-    check("Disconnect: the link dialog comes up straight away (linking is still mandatory)", B.status() == "unlinked" and B.modal_open() and pg.inner_text("#fileSyncModalTitle") == "Link a file to continue")
+    check("Disconnect: the link dialog comes up straight away (linking is still mandatory)", B.status() == "unlinked" and B.modal_open() and pg.inner_text("#fileSyncModalTitle") == "Choose a folder to continue")
     check("...the file was brought up to date first and is not deleted", B.file_tasks("orphan.json") == ["D0", "D1"], B.file_tasks("orphan.json"))
     check("...its handle is gone from IndexedDB and the index", not idb_has("plan:" + pg.evaluate("() => currentPlanId")) and [x for x in B.index()["plans"] if x["id"] == pg.evaluate("() => currentPlanId")][0]["fileName"] is None)
     pg.keyboard.press("Escape"); pg.wait_for_timeout(150)
@@ -227,28 +236,27 @@ with sync_playwright() as p:
     B.write_file("different.json", json.dumps({"version": 1, "project": {"name": "Other", "updatedAt": 1}, "tasks": [dict(LEG[2], name="Other 1")], "deletedTaskIds": []}))
     B.open_menu(); check("the plan menu has 'Disconnect file…', enabled while linked", not pg.locator("#planDisconnectItem").is_disabled())
     pg.click("#planDisconnectItem"); pg.wait_for_selector("#confirmModalBg.open"); pg.click("#confirmModalActionBtn"); pg.wait_for_selector("#fileSyncModalBg.open", timeout=4000); B.settle()
-    pg.evaluate("() => window.__pick = 'different.json'"); pg.click("#fileSyncModalBg button:has-text('Open existing file')"); pg.wait_for_selector("#fileSyncModalBg:not(.open)"); B.settle()
+    B.modal_link_existing("different.json")
     check("connect a DIFFERENT file: linked, its tasks merged into the plan, plan's tasks written into it", B.status() == "linked" and "Other 1" in B.names() and "D3" in B.names() and sorted(B.file_tasks("different.json")) == sorted(B.names()), (B.names(), B.file_tasks("different.json")))
     check("...the previous file was left alone", B.file_tasks("connect-new.json")[-1] == "D3" and "Other 1" not in B.file_tasks("connect-new.json"))
     # the same file can be connected again after disconnecting it
     pg.click("#fileSyncBtn"); pg.wait_for_selector("#confirmModalBg.open"); pg.click("#confirmModalActionBtn"); pg.wait_for_selector("#fileSyncModalBg.open", timeout=4000)
-    pg.evaluate("() => window.__pick = 'different.json'"); pg.click("#fileSyncModalBg button:has-text('Open existing file')"); pg.wait_for_selector("#fileSyncModalBg:not(.open)"); B.settle()
+    B.modal_link_existing("different.json")
     check("reconnecting the very same file works", B.status() == "linked" and "different.json" in pg.inner_text("#fileSyncBtn"))
     B.boot(); check("after a reload the new link is remembered (no dialog)", B.status() == "linked" and not B.modal_open() and "different.json" in pg.inner_text("#fileSyncBtn"))
 
-    # --- open an existing file as a plan
+    # --- open an existing plan file as a plan (the file is picked from the folder's list)
     B.write_file("from-disk.json", json.dumps({"version": 1, "project": {"name": "From Disk", "updatedAt": 9}, "tasks": [dict(LEG[0], name="Disk 1"), dict(LEG[1], name="Disk 2")], "deletedTaskIds": []}))
-    n = len(B.index()["plans"])
-    pg.evaluate("() => window.__pick = 'from-disk.json'"); B.open_menu(); pg.click("#planOpenFileItem"); pg.wait_for_timeout(600); B.settle()
-    check("Open file as plan: named after the file's project, its tasks, linked", B.pname() == "From Disk" and B.names() == ["Disk 1", "Disk 2"] and B.status() == "linked" and len(B.index()["plans"]) == n + 1)
-    pg.evaluate("() => window.__pick = 'from-disk.json'"); B.open_menu(); pg.click("#planOpenFileItem"); pg.wait_for_timeout(500)
-    check("opening the file that is already open just says so", len(B.index()["plans"]) == n + 1 and "already open" in pg.inner_text("#toastMsg"))
-    B.switch_ui("Alpha")
-    pg.evaluate("() => window.__pick = 'from-disk.json'"); B.open_menu(); pg.click("#planOpenFileItem"); pg.wait_for_timeout(600); B.settle()
-    check("opening another plan's file switches to it (no duplicate)", B.pname() == "From Disk" and len(B.index()["plans"]) == n + 1)
     B.write_file("junk.json", "not json at all")
-    pg.evaluate("() => window.__pick = 'junk.json'"); B.open_menu(); pg.click("#planOpenFileItem"); pg.wait_for_timeout(500)
-    check("a non-Milestone file is rejected", len(B.index()["plans"]) == n + 1 and "doesn't look like" in pg.inner_text("#toastMsg"))
+    n = len(B.index()["plans"])
+    row = B.open_plan_from("from-disk.json")
+    check("Open plan from folder: the list shows plan files with their plan name and task count, and skips files that are not plans (junk.json)", "From Disk" in row.inner_text() and "2 tasks" in row.inner_text() and pg.locator("#folderFilesList .folder-row:has-text('junk.json')").count() == 0 and pg.inner_text("#folderFilesOkBtn") == "Open plan")
+    row.click(); pg.click("#folderFilesOkBtn"); pg.wait_for_timeout(600); B.settle()
+    check("opening it: named after the file's project, its tasks, linked, in a new plan", B.pname() == "From Disk" and B.names() == ["Disk 1", "Disk 2"] and B.status() == "linked" and len(B.index()["plans"]) == n + 1)
+    row = B.open_plan_from("from-disk.json")
+    check("a file that is already a plan is greyed out in the list, so it cannot be opened twice", "taken" in (row.get_attribute("class") or "") and "Already linked" in row.inner_text() and pg.locator("#folderFilesOkBtn").is_disabled() or "taken" in (row.get_attribute("class") or ""))
+    pg.click("#folderFilesModalBg .modal-footer .btn:has-text('Back')"); pg.wait_for_timeout(150)
+    check("...and nothing was added", len(B.index()["plans"]) == n + 1)
 
     # --- reload
     B.switch_ui("Plan B"); B.boot()
@@ -265,6 +273,7 @@ with sync_playwright() as p:
     }""", LEGACY)
     B.boot()
     check("migration: the old linked file follows the project (no dialog needed)", B.pname() == "Legacy Proj" and B.status() == "linked" and B.index()["plans"][0]["fileName"] == "legacy.json" and not B.modal_open(), (B.status(), B.index()))
+    check("...a plan linked to a single file (before folders) keeps working and gets a 'Link folder' reminder, and the plan menu offers 'Link this plan's folder…'", pg.locator("#watchHint").is_visible() and "Link folder" in pg.inner_text("#watchHintBtn"))
     pg.evaluate("""async () => new Promise((res, rej) => { const r = indexedDB.open('milestone-fs', 1); r.onsuccess = () => { const tx = r.result.transaction('handles', 'readwrite'); tx.objectStore('handles').delete('plan:plan1'); tx.oncomplete = res; tx.onerror = rej; }; })""")
     B.boot(); pg.wait_for_selector("#fileSyncModalBg.open")
     check("a plan whose file link is gone is not silently re-linked to the old handle; it must be linked again", B.status() == "unlinked" and B.modal_open())

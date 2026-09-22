@@ -7,7 +7,7 @@ def check(name, cond, detail=""):
     results.append(bool(cond)); print(("PASS  " if cond else "FAIL  ") + name + (f"   [{str(detail)[:250]}]" if not cond and detail else ""))
 TASK = lambda name, mode: {"id": "t" + name.lower(), "name": name, "parentId": None, "order": 0, "startDate": "2026-09-21", "endDate": "2026-09-25", "progress": 0, "milestone": False, "color": None, "predecessors": [], "collapsed": False, "updatedAt": 1, "constraintType": "ASAP", "constraintDate": None, "taskMode": mode}
 with sync_playwright() as p:
-    b = p.chromium.launch(headless=True); ctx = b.new_context(viewport={"width": 1400, "height": 800}); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker")
+    b = p.chromium.launch(headless=True); ctx = b.new_context(viewport={"width": 1400, "height": 800}); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
     boot = lambda: (pg.goto(URL), pg.wait_for_selector("#addTaskBtn"), pg.wait_for_timeout(150))
     reload = lambda: (pg.reload(), pg.wait_for_selector("#addTaskBtn"), pg.wait_for_timeout(150))

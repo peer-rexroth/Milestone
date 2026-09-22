@@ -9,7 +9,7 @@ SEED = re.search(r'SEED = """(.*?)"""', open(os.path.join(os.path.dirname(os.pat
 # 2026-09-07 is a Monday: 07 Mon 08 Tue 09 Wed 10 Thu 11 Fri 12 Sat 13 Sun 14 Mon 15 Tue 16 Wed 17 Thu 18 Fri 19 Sat 21 Mon
 with sync_playwright() as p:
     b = p.chromium.launch(headless=True)
-    ctx = b.new_context(viewport={"width": 1600, "height": 800}); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker")
+    ctx = b.new_context(viewport={"width": 1600, "height": 800}); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
     pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn")
     seed = lambda specs: (pg.evaluate(SEED, specs), pg.wait_for_timeout(100))
