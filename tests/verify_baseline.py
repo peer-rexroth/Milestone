@@ -25,7 +25,7 @@ with sync_playwright() as p:
     def edit(name, col, value):
         cell(name, "end" if col == "finish" else col).click(); pg.wait_for_selector(".inline-edit"); wait_focus(); pg.fill(".inline-edit", value); pg.keyboard.press("Enter"); pg.wait_for_timeout(150)
     def open_dialog():
-        pg.click("#planMenuBtn"); pg.wait_for_selector("#planMenu.open"); pg.click("#planBaselineItem"); pg.wait_for_selector("#baselineModalBg.open"); pg.wait_for_timeout(100)
+        pg.click("#scheduleMenuBtn"); pg.wait_for_selector("#scheduleMenu.open"); pg.click("#planBaselineItem"); pg.wait_for_selector("#baselineModalBg.open"); pg.wait_for_timeout(100)
     def close_dialog(): pg.click("#baselineModalBg .modal-footer .btn >> text=Close"); pg.wait_for_timeout(150)
     def set_slot(slot, scope="all"):
         open_dialog(); pg.select_option("#baselineSlotSelect", str(slot))
@@ -59,7 +59,7 @@ with sync_playwright() as p:
     # ================================================================ the dialog
     seed(CH()); pg.evaluate("() => { tasks.push({id: genId(), name: 'Manual TBD', parentId: null, order: 9, startDate: '2026-09-07', endDate: '2026-09-08', progress: 0, milestone: false, color: null, predecessors: [], collapsed: false, updatedAt: 1, constraintType: 'ASAP', constraintDate: null, taskMode: 'manual', resource: '', actualStart: null, actualFinish: null, startText: 'TBD'}); render(); }")
     check("the plan menu has 'Baseline…' with what is set ('not set' at first)", (open_dialog(), close_dialog()) and True)
-    pg.click("#planMenuBtn"); pg.wait_for_selector("#planMenu.open")
+    pg.click("#scheduleMenuBtn"); pg.wait_for_selector("#scheduleMenu.open")
     check("...its hint says 'not set'", "not set" in pg.inner_text("#planBaselineItem"), pg.inner_text("#planBaselineItem")); pg.keyboard.press("Escape")
     open_dialog()
     opts = pg.evaluate("() => [...document.querySelectorAll('#baselineSlotSelect option')].map(o => o.textContent.split(' — ')[0])")
@@ -74,7 +74,7 @@ with sync_playwright() as p:
     pg.click("#toastUndoBtn"); pg.wait_for_timeout(200)
     check("Undo removes it completely (tasks and project)", base("A") is None and pg.evaluate("() => project.baselines === undefined && tasks.every(t => !t.baselines)"))
     close_dialog(); set_slot(0)
-    pg.click("#planMenuBtn"); pg.wait_for_selector("#planMenu.open")
+    pg.click("#scheduleMenuBtn"); pg.wait_for_selector("#scheduleMenu.open")
     check("the menu hint now says '1 set'", "1 set" in pg.inner_text("#planBaselineItem"), pg.inner_text("#planBaselineItem")); pg.keyboard.press("Escape")
 
     # ================================================================ variances (working days, current schedule minus baseline)

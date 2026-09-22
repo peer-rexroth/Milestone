@@ -753,6 +753,10 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
     <span class="watch-hint hidden" id="watchHint"><button class="btn watch-btn" id="watchHintBtn" onclick="chooseWatchFolder()" title="This plan is linked to a single file (from before plans were linked by folder). Link the folder it lives in: OneDrive, Dropbox and SharePoint keep a second copy of the file when two devices save at the same time, and Milestone can then merge those copies in."><i class="fa-solid fa-folder-tree"></i>Link folder</button><button class="watch-x" onclick="declineWatch()" title="Don't remind me for this plan (the plan menu still has it)" aria-label="Don't remind me">&times;</button></span>
   </div>
   <div class="dropdown-wrap">
+    <button class="btn" id="scheduleMenuBtn" onclick="toggleScheduleMenu()"><i class="fa-solid fa-gauge-high"></i>Schedule</button>
+    <div class="dropdown-menu" id="scheduleMenu"></div>
+  </div>
+  <div class="dropdown-wrap">
     <button class="btn" id="dataMenuBtn" onclick="toggleDataMenu()"><i class="fa-solid fa-database"></i>Data</button>
     <div class="dropdown-menu" id="dataMenu">
       <button class="dropdown-item" onclick="exportProject()"><i class="fa-solid fa-file-export"></i>Export JSON</button>
@@ -856,7 +860,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <span id="taskWbsInfo" class="hidden"></span>
       </div>
       <div class="pred-empty hidden" id="taskActualsNote"></div>
-      <div class="baseline-info hidden" id="taskBaselineInfo" title="From the plan's baseline (plan menu → Baseline…)"></div>
+      <div class="baseline-info hidden" id="taskBaselineInfo" title="From the plan's baseline (Schedule menu → Baseline…)"></div>
       <div class="field-grid-4">
         <div class="field span2">
           <label for="taskConstraintTypeInput">Constraint</label>
@@ -943,7 +947,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
     <div class="modal-header"><h2>Import Data</h2><button onclick="closeImportModal()">&times;</button></div>
     <div class="modal-body">
       <div class="import-mode-row"><div><strong>Merge</strong><div style="font-size:12px;color:var(--text-dim)">Keep existing tasks, add/update from the file</div></div><button class="btn btn-primary" onclick="applyImport('merge')">Merge</button></div>
-      <div class="import-mode-row"><div><strong>Replace</strong><div style="font-size:12px;color:var(--text-dim)">Downloads a safety backup, then overwrites everything</div></div><button class="btn btn-danger" onclick="applyImport('replace')">Replace</button></div>
+      <div class="import-mode-row"><div><strong>Replace</strong><div style="font-size:12px;color:var(--text-dim)">Downloads a safety backup, then overwrites everything</div></div><button class="btn btn-primary btn-danger" onclick="applyImport('replace')">Replace</button></div>
     </div>
     <div class="modal-footer"><button class="btn" onclick="closeImportModal()">Cancel</button></div>
   </div>
@@ -1300,7 +1304,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
       <div class="help-pane" id="helpPane-progress" role="tabpanel" aria-labelledby="helpTab-progress" hidden>
         <div class="help-section">
           <div class="help-section-title">Working calendar</div>
-          <div class="help-row"><i class="fa-solid fa-calendar-week"></i><span>Each plan has its own working days — Monday to Friday unless you change it (plan menu → <strong>Working calendar…</strong>). Durations, lags and dependencies count working days only: a 5-day task that starts on a Monday finishes on that Friday, and its successor starts the next Monday.</span></div>
+          <div class="help-row"><i class="fa-solid fa-calendar-week"></i><span>Each plan has its own working days — Monday to Friday unless you change it (Schedule menu → <strong>Working calendar…</strong>). Durations, lags and dependencies count working days only: a 5-day task that starts on a Monday finishes on that Friday, and its successor starts the next Monday.</span></div>
           <div class="help-row"><i class="fa-solid fa-umbrella-beach"></i><span>Add <strong>holidays and other days off</strong> in the same dialog: a single day, a longer break (from … to …), or a day that comes back every year, each with an optional name. They count as days off exactly like weekends, and are shaded in the Gantt chart.</span></div>
           <div class="help-row"><i class="fa-solid fa-flag"></i><span><strong>Public holidays:</strong> pick a country or region (Germany with each of its states, Austria, Switzerland, the UK, Ireland, the US, Canada, France, the Netherlands, Belgium, Spain, Italy) and the years, then <strong>Add public holidays</strong>. Movable ones (Easter, Ascension, Thanksgiving …) are worked out for each year; days that fall on a day off anyway are left out.</span></div>
           <div class="help-row"><i class="fa-solid fa-circle-exclamation"></i><span>Treat the presets as a starting point: check them against your own calendar — regional and company days differ — and edit or remove any entry.</span></div>
@@ -1318,10 +1322,10 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <div class="help-divider"></div>
         <div class="help-section">
           <div class="help-section-title">Baselines and variance</div>
-          <div class="help-row"><i class="fa-solid fa-ruler-horizontal"></i><span>The bar is the <strong>current schedule</strong>. To keep the original plan, set a <strong>baseline</strong> (plan menu → <strong>Baseline…</strong>): a frozen copy of every task's Start and Finish, only ever taken when you ask. Keep up to eleven — Baseline and Baseline 1–10 — and choose which one to compare with.</span></div>
+          <div class="help-row"><i class="fa-solid fa-ruler-horizontal"></i><span>The bar is the <strong>current schedule</strong>. To keep the original plan, set a <strong>baseline</strong> (Schedule menu → <strong>Baseline…</strong>): a frozen copy of every task's Start and Finish, only ever taken when you ask. Keep up to eleven — Baseline and Baseline 1–10 — and choose which one to compare with.</span></div>
           <div class="help-row"><i class="fa-solid fa-minus"></i><span>The baseline shows as a thin grey line under each bar in the Gantt chart (the ruler button hides it).</span></div>
           <div class="help-row"><i class="fa-solid fa-plus-minus"></i><span>The <strong>Start Variance</strong>, <strong>Finish Variance</strong>, <strong>Baseline Start/Finish/Duration</strong> and <strong>Duration Variance</strong> columns show how far each task has moved, in working days — positive means later than the baseline.</span></div>
-          <div class="help-row"><i class="fa-solid fa-calendar-check"></i><span><strong>Reschedule remaining work…</strong> (plan menu) catches the plan up with a status date you choose: an overdue task moves there, an in-progress task keeps its remaining work from that date if it would otherwise finish later. Finished tasks and tasks ahead of schedule are left alone.</span></div>
+          <div class="help-row"><i class="fa-solid fa-calendar-check"></i><span><strong>Reschedule remaining work…</strong> (Schedule menu) catches the plan up with a status date you choose: an overdue task moves there, an in-progress task keeps its remaining work from that date if it would otherwise finish later. Finished tasks and tasks ahead of schedule are left alone.</span></div>
         </div>
       </div>
       <div class="help-pane" id="helpPane-list" role="tabpanel" aria-labelledby="helpTab-list" hidden>
@@ -2132,7 +2136,7 @@ function normalizeData() {
   }
 
   // ---- baselines (MS Project style, up to 11: "Baseline" and "Baseline 1" … "Baseline 10"): a leaf task's frozen snapshots of its Start /
-  // Finish, {slot: [start, finish]}; a group has none of its own (it shows a rollup). They are only ever set by the user (plan menu → Baseline…).
+  // Finish, {slot: [start, finish]}; a group has none of its own (it shows a rollup). They are only ever set by the user (Schedule menu → Baseline…).
   const ISO = /^\d{4}-\d{2}-\d{2}$/;
   for (const t of tasks) {
     const clean = {};
@@ -2398,7 +2402,7 @@ function recordActualFinish(t, previousFinish) {
 }
 /* ====================== Baseline, actual dates and variance (MS Project style) ======================
    Start / Finish are the CURRENT schedule. A BASELINE (task.baselines[slot] = [start, finish]; up to 11 slots) is a frozen snapshot of it,
-   taken only when the user asks (plan menu → Baseline…); Start Variance = Start - Baseline Start and Finish Variance = Finish -
+   taken only when the user asks (Schedule menu → Baseline…); Start Variance = Start - Baseline Start and Finish Variance = Finish -
    Baseline Finish, in working days (positive = later than the baseline), against the baseline chosen with project.compareBaseline. Recording an ACTUAL date overwrites the schedule with it: Actual Start becomes Start (and a
    task that hasn't finished keeps its duration, so its Finish moves with it), Actual Finish becomes Finish. Successors are then
    scheduled from those dates like from any other. A group has no baseline of its own: it shows the rollup of the tasks in it. */
@@ -4501,7 +4505,7 @@ function updateModalComputed() {
 // Renaming a custom field. The name is stored on the PLAN (project.fieldNames), so it is saved, exported and synced with it and
 // another plan keeps its own. It has to be unique among the custom fields and the standard columns, or two columns would
 // look the same.
-/* ------------------------------ Baselines (plan menu → Baseline…) ------------------------------ */
+/* ------------------------------ Baselines (Schedule menu → Baseline…) ------------------------------ */
 function baselineTasksWith(n) { return tasks.filter(t => t.baselines && t.baselines[n]); }
 function setBaselineSlots() { return Array.from({ length: BASELINE_SLOTS }, (_, n) => n).filter(n => tasks.some(t => t.baselines && t.baselines[n])); }   // a slot counts as set when a task has it
 function baselineMenuHint() {
@@ -4513,7 +4517,7 @@ function baselineScopeTasks(scope) {   // the leaf tasks a set/clear applies to
   return root.filter(t => t && !hasChildren(t.id));
 }
 function openBaselineModal() {
-  closePlanMenu();
+  closeScheduleMenu();
   const sel = document.getElementById('baselineSlotSelect');
   sel.innerHTML = Array.from({ length: BASELINE_SLOTS }, (_, n) => `<option value="${n}">${baselineName(n)}</option>`).join('');
   const firstFree = Array.from({ length: BASELINE_SLOTS }, (_, n) => n).find(n => !baselineTasksWith(n).length);
@@ -4598,7 +4602,7 @@ function applyActualsToSchedule() {
   });
 }
 function openRescheduleModal() {
-  closePlanMenu();
+  closeScheduleMenu();
   document.getElementById('rescheduleDateInput').value = todayStr();
   renderRescheduleModal();
   document.getElementById('rescheduleModalBg').classList.add('open');
@@ -4741,7 +4745,7 @@ function addHolidayPreset() {
 }
 let calHolidays = [];   // the dialog's working copy of project.holidays
 function openCalendarModal() {
-  closePlanMenu();
+  closeScheduleMenu();
   document.getElementById('calendarPlanName').textContent = project.name;
   const on = workDaySet();
   document.getElementById('calendarDays').innerHTML = WEEKDAY_ORDER.map(d =>
@@ -5167,6 +5171,25 @@ function positionDropdown(btnId, menuId, align) {
 }
 function toggleDataMenu() { positionDropdown('dataMenuBtn', 'dataMenu'); document.getElementById('dataMenu').classList.toggle('open'); }
 function closeDataMenu() { document.getElementById('dataMenu').classList.remove('open'); }
+// Baseline / Reschedule / Working calendar used to live at the bottom of the plan (switcher) menu — an explicit user
+// request to split them out: that menu's own job is switching and creating plans, the single most frequent reason
+// anyone opens it, and it had grown to 11+ items spanning four different jobs (switch, create/link, schedule, manage)
+// by nothing more than "the plan menu" being the default place a new plan-level feature got added. Its own dropdown,
+// same toggle/render/close shape as the Data and plan menus.
+function toggleScheduleMenu() {
+  const menu = document.getElementById('scheduleMenu');
+  if (menu.classList.contains('open')) { closeScheduleMenu(); return; }
+  renderScheduleMenu();
+  positionDropdown('scheduleMenuBtn', 'scheduleMenu');
+  menu.classList.add('open');
+}
+function closeScheduleMenu() { document.getElementById('scheduleMenu').classList.remove('open'); }
+function renderScheduleMenu() {
+  document.getElementById('scheduleMenu').innerHTML =
+    `<button class="dropdown-item" id="planBaselineItem" onclick="openBaselineModal()"><i class="fa-solid fa-ruler-horizontal"></i>Baseline…<span class="item-hint">${escapeHtml(baselineMenuHint())}</span></button>` +
+    `<button class="dropdown-item" id="planRescheduleItem" onclick="openRescheduleModal()"><i class="fa-solid fa-calendar-check"></i>Reschedule remaining work…</button>` +
+    `<button class="dropdown-item" id="planCalendarItem" onclick="openCalendarModal()"><i class="fa-regular fa-calendar-days"></i>Working calendar…<span class="item-hint">${escapeHtml(calendarSummary())}</span></button>`;
+}
 
 /* ============================ Merge (sync/import) =========================
    Several people (or devices) can work on the same linked file. What they share is the file; what each of them has in common with it
@@ -7367,7 +7390,7 @@ function createPlanRecord(name, data) {
 function resetTransientUI() {
   setSelection([]); editingCell = null; editingPredecessors = [];
   colFilters = newColFilters(); filterPinned.clear(); closeFilterMenu();   // filters belong to the plan you were looking at
-  closeTaskModal(); closeFieldsModal(); closeImportModal(); closeDataMenu(); closeColumnsMenu(); closeTaskModeMenu(); closeToolbarMenus();
+  closeTaskModal(); closeFieldsModal(); closeImportModal(); closeDataMenu(); closeScheduleMenu(); closeColumnsMenu(); closeTaskModeMenu(); closeToolbarMenus();
   clearTimeout(toastTimer); toastUndoAction = null;
   document.getElementById('toast').classList.remove('show');   // an Undo for the old plan must not act on the new one
   resetHistory();   // (and neither must the undo history)
@@ -7425,9 +7448,6 @@ function renderPlanMenu() {
     (fileSyncSupported() && syncFileHandle && !syncDirHandle ? `<button class="dropdown-item" id="planWatchItem" onclick="chooseWatchFolder()" title="This plan is linked to a single file. Link the folder it lives in: OneDrive, Dropbox and SharePoint keep a second copy of the file when two devices save at the same time, and Milestone can then merge those copies in"><i class="fa-solid fa-folder-tree"></i>Link this plan’s folder…<span class="item-hint">file only</span></button>` : '') +
     `<div class="dropdown-sep"></div>` +
     `<button class="dropdown-item" id="planRenameItem" onclick="openPlanModal('rename')"><i class="fa-solid fa-pen"></i>Rename plan…</button>` +
-    `<button class="dropdown-item" id="planBaselineItem" onclick="openBaselineModal()"><i class="fa-solid fa-ruler-horizontal"></i>Baseline…<span class="item-hint">${escapeHtml(baselineMenuHint())}</span></button>` +
-    `<button class="dropdown-item" id="planRescheduleItem" onclick="openRescheduleModal()"><i class="fa-solid fa-calendar-check"></i>Reschedule remaining work…</button>` +
-    `<button class="dropdown-item" id="planCalendarItem" onclick="openCalendarModal()"><i class="fa-regular fa-calendar-days"></i>Working calendar…<span class="item-hint">${escapeHtml(calendarSummary())}</span></button>` +
     `<button class="dropdown-item" id="planDuplicateItem" onclick="duplicatePlan()"><i class="fa-regular fa-copy"></i>Duplicate plan</button>` +
     (fileSyncSupported() ? `<button class="dropdown-item" id="planDisconnectItem" onclick="disconnectFile()"${syncFileHandle ? '' : ' disabled title="This plan isn’t linked to a file"'}><i class="fa-solid fa-link-slash"></i>Disconnect folder…</button>` : '') +
     `<button class="dropdown-item" id="planDeleteItem" onclick="deleteCurrentPlan()"${idx.plans.length < 2 ? ' disabled title="You need at least one plan"' : ''}><i class="fa-solid fa-trash"></i>Delete plan…</button>`;
@@ -7627,6 +7647,7 @@ function wireGlobalEvents() {
   wireGrabCursor();
   document.addEventListener('click', (e) => {
     if (!e.target.closest('#dataMenuBtn') && !e.target.closest('#dataMenu')) closeDataMenu();
+    if (!e.target.closest('#scheduleMenuBtn') && !e.target.closest('#scheduleMenu')) closeScheduleMenu();
     if (!e.target.closest('#planMenuBtn') && !e.target.closest('#planMenu')) closePlanMenu();
     if (e.target.isConnected && !e.target.closest('#columnsMenu') && !e.target.closest('#columnsBtn')) closeColumnsMenu();   // (isConnected: the menu re-renders on every click)
     // isConnected: clicking an expand arrow re-renders the list, detaching the very button that was clicked before this
@@ -7667,6 +7688,7 @@ function wireGlobalEvents() {
     const overlayOpen = modalIds.some(id => document.getElementById(id).classList.contains('open'))
       || document.getElementById('fileSyncModalBg').classList.contains('open')   // mandatory: Escape can't close it
       || document.getElementById('dataMenu').classList.contains('open')
+      || document.getElementById('scheduleMenu').classList.contains('open')
       || document.getElementById('planMenu').classList.contains('open')
       || document.getElementById('filterMenu').classList.contains('open')
       || document.getElementById('columnsMenu').classList.contains('open')
@@ -7677,7 +7699,7 @@ function wireGlobalEvents() {
     // focused field before this runs, so by now activeElement is already <body>.
     const typing = /^(INPUT|TEXTAREA|SELECT)$/.test((e.target || {}).tagName || '');
     for (const id of modalIds) document.getElementById(id).classList.remove('open');
-    closeDataMenu(); closePlanMenu(); closeFilterMenu(); closeColumnsMenu(); closeTaskModeMenu(); closeToolbarMenus();
+    closeDataMenu(); closeScheduleMenu(); closePlanMenu(); closeFilterMenu(); closeColumnsMenu(); closeTaskModeMenu(); closeToolbarMenus();
     if (!overlayOpen && editingCell) { cancelInlineEdit(); return; }   // an inline editor that hasn't received focus yet (it gets it a frame after it appears)
     if (!overlayOpen && !typing && (selectedTaskId || selectedTaskIds.size)) { setSelection([]); render(); }
   });

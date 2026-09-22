@@ -63,7 +63,7 @@ with sync_playwright() as p:
 
     # ------------------------------------------------------------ the dialog
     ev("() => { tasks.length = 0; delete project.holidays; delete project.workDays; save(); render(); }")
-    pg.click("#planMenuBtn"); pg.wait_for_selector("#planMenu.open"); pg.click("#planCalendarItem"); pg.wait_for_selector("#calendarModalBg.open"); pg.wait_for_timeout(200)
+    pg.click("#scheduleMenuBtn"); pg.wait_for_selector("#scheduleMenu.open"); pg.click("#planCalendarItem"); pg.wait_for_selector("#calendarModalBg.open"); pg.wait_for_timeout(200)
     opts = ev("() => [...document.querySelectorAll('#holRegion optgroup')].map(g => [g.label, g.querySelectorAll('option').length])")
     check("the dialog offers the regions in two groups: Germany (17) and the other countries (13)", opts == [["Germany", 17], ["Other countries and regions", 13]], opts)
     y = ev("() => new Date().getFullYear()")
@@ -91,10 +91,10 @@ with sync_playwright() as p:
     saved = ev("() => project.holidays")
     check("Save stores them as ordinary holidays (single days with their names) in the plan, sorted", saved and all("to" not in h and "yearly" not in h and h.get("name") for h in saved) and [h["date"] for h in saved] == sorted(h["date"] for h in saved), saved[:2])
     check("...and they are in effect: Corpus Christi 04.06.2026 is a day off, so a task on it moves", ev("() => [isWorkDay('2026-06-04'), isWorkDay('2026-06-05')]") == [False, True])
-    check("...the plan menu counts them", "holidays" in pg.evaluate("() => { togglePlanMenu(); return document.getElementById('planCalendarItem').innerText; }"))
+    check("...the schedule menu counts them", "holidays" in pg.evaluate("() => { toggleScheduleMenu(); return document.getElementById('planCalendarItem').innerText; }"))
     pg.keyboard.press("Escape")
     ev("() => { delete project.holidays; save(); }"); pg.reload(); pg.wait_for_selector("#addTaskBtn")
-    pg.click("#planMenuBtn"); pg.wait_for_selector("#planMenu.open"); pg.click("#planCalendarItem"); pg.wait_for_selector("#calendarModalBg.open"); pg.wait_for_timeout(200)
+    pg.click("#scheduleMenuBtn"); pg.wait_for_selector("#scheduleMenu.open"); pg.click("#planCalendarItem"); pg.wait_for_selector("#calendarModalBg.open"); pg.wait_for_timeout(200)
     check("the region you used last is remembered on this device", pg.input_value("#holRegion") == "DE")
     pg.keyboard.press("Escape")
     check("no console errors", not errors, errors[:5])
