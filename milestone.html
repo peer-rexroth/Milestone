@@ -642,6 +642,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 .field-grid-4 input[type=date], .field-grid-4 input[type=number], .field-grid-4 input[type=text], .field-grid-4 select { padding: 8px 8px; }
 .ms-field { align-self: end; padding-bottom: 9px; }   /* the task dialog: a lot of fields, so more room before it scrolls */
 .modal.wide { width: 620px; }
+.modal.wide.minute-mode { width: 960px; }   /* a paired date + time input needs real room for both — see .field-dt */
 .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; border-bottom: 1px solid var(--border); }
 .modal-header h2 { margin: 0; font-size: 16px; }
 .modal-header button { border: none; background: none; font-size: 18px; color: var(--text-dim); width: 28px; height: 28px; border-radius: 6px; }
@@ -654,9 +655,9 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
   padding: 8px 10px; border: 1px solid var(--border); border-radius: 7px; background: var(--panel); color: var(--text); width: 100%;
 }
 .field textarea { resize: vertical; font-family: inherit; }
-.field-dt { display: flex; gap: 6px; }
-.field-dt input[type=date] { flex: 1 1 auto; min-width: 0; }
-.field-dt input[type=time] { flex: 0 0 92px; min-width: 0; }
+.field-dt { display: flex; flex-wrap: wrap; gap: 6px; }
+.field-dt input[type=date] { flex: 1 1 104px; min-width: 104px; }   /* 104px: the native editor's own ~95px plus a little slack, same figure the grid's date columns use; grows to fill any extra room */
+.field-dt input[type=time] { flex: 0 1 92px; min-width: 92px; }   /* stays at its own natural width instead of also growing, so the date gets the extra space */
 .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 /* read-only, calculated values in the task dialog (WBS, Remaining Duration, Status) */
 .calc-row .ro-value { min-height: 34px; display: flex; align-items: center; padding: 6px 10px; border: 1px dashed var(--border); border-radius: 7px; background: var(--panel-2); color: var(--text-dim); font-size: 13px; }
@@ -842,7 +843,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
 
 <!-- Task modal -->
 <div class="modal-bg" id="taskModalBg" onclick="if(event.target===this) requestCloseTaskModal()">
-  <div class="modal wide">
+  <div class="modal wide" id="taskModalInner">
     <div class="modal-header"><h2 id="taskModalTitle">Task<span id="taskModalIdBadge" class="id-badge"></span></h2><button onclick="requestCloseTaskModal()" aria-label="Close">&times;</button></div>
     <div class="modal-tabs" role="tablist">
       <button type="button" class="modal-tab active" id="taskTabBtnGeneral" role="tab" aria-selected="true" onclick="setTaskModalTab('general')">General</button>
@@ -4684,6 +4685,7 @@ function openTaskModal(id, isNew) {
   document.getElementById('taskEndInput').value = t.endDate;
   const minuteMode = minuteModeActive();
   for (const el of document.querySelectorAll('.task-time-input')) el.classList.toggle('hidden', !minuteMode);
+  document.getElementById('taskModalInner').classList.toggle('minute-mode', minuteMode);   // wider: a date input needs real room next to its paired time input
   document.getElementById('taskDurationLabel').textContent = minuteMode ? 'Duration' : 'Duration (days)';
   document.getElementById('taskDurationLabel').title = minuteMode ? "Working time, counted on the plan's working hours — e.g. \"4h\", \"90m\", \"2d\" (a bare number is hours)" : "Working days, counted on the plan's working calendar";
   if (minuteMode) {

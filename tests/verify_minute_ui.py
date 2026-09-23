@@ -68,6 +68,9 @@ with sync_playwright() as p:
     pg.click(f".grid-row[data-id='{tid('A')}'] .icon-btn[title=Edit]"); pg.wait_for_selector("#taskModalBg.open")
     check("in a minute-mode plan the task dialog shows Start/Finish time inputs", pg.is_visible("#taskStartTimeInput") and pg.is_visible("#taskEndTimeInput"))
     check("the Duration label drops '(days)' and its tooltip explains hour/minute entry", pg.inner_text("#taskDurationLabel") == "Duration" and "bare number is hours" in (pg.get_attribute("#taskDurationLabel", "title") or ""))
+    check("the modal widens so the date input isn't squeezed down to icon-only width", pg.eval_on_selector("#taskModalInner", "e => e.classList.contains('minute-mode')") and pg.locator("#taskModalInner").bounding_box()["width"] > 620)
+    date_box = pg.locator("#taskStartInput").bounding_box(); time_box = pg.locator("#taskStartTimeInput").bounding_box()
+    check("...wide enough that the Start date shows its text (not just the calendar icon), same row as its time", date_box["width"] >= 100 and abs(date_box["y"] - time_box["y"]) < 2, (date_box, time_box))
     pg.fill("#taskStartTimeInput", "09:00"); pg.dispatch_event("#taskStartTimeInput", "change")
     pg.fill("#taskDurationInput", "90m"); pg.dispatch_event("#taskDurationInput", "change")
     check("'90m' duration from 09:00 computes Finish 10:30", pg.input_value("#taskEndTimeInput") == "10:30", pg.input_value("#taskEndTimeInput"))
@@ -104,6 +107,7 @@ with sync_playwright() as p:
     pg.click(f".grid-row[data-id='{tid('A')}'] .icon-btn[title=Edit]"); pg.wait_for_selector("#taskModalBg.open")
     check("the task dialog hides the time inputs again in day mode", not pg.is_visible("#taskStartTimeInput"))
     check("the Duration label is back to '(days)'", pg.inner_text("#taskDurationLabel") == "Duration (days)")
+    check("...and the modal narrows back to its standard width", not pg.eval_on_selector("#taskModalInner", "e => e.classList.contains('minute-mode')") and pg.locator("#taskModalInner").bounding_box()["width"] == 620)
     pg.keyboard.press("Escape")
 
     check("no console errors or page errors across the whole run", not errors, errors[:5])
