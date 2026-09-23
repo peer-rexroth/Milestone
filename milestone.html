@@ -610,12 +610,20 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 .cal-sec-title { display: flex; align-items: center; gap: 8px; font-size: 11.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-dim); }
 .cal-sec-title .cal-sec-note { text-transform: none; letter-spacing: 0; font-weight: 500; color: var(--text-faint); }
 .cal-sec-title .btn-link { margin-left: auto; text-transform: none; letter-spacing: 0; }
-.cal-sec input[type=text], .cal-sec input[type=date], .cal-sec input[type=number], .cal-sec select { padding: 7px 9px; border: 1px solid var(--border); border-radius: 7px; background: var(--panel); color: var(--text); min-width: 0; }
-.cal-sec .hol-preset, .cal-sec .hol-add { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.cal-sec input[type=text], .cal-sec input[type=date], .cal-sec input[type=number], .cal-sec input[type=time], .cal-sec select { padding: 7px 9px; border: 1px solid var(--border); border-radius: 7px; background: var(--panel); color: var(--text); min-width: 0; }
+.cal-sec .hol-preset, .cal-sec .hol-add, .cal-sec .wh-break-add { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .cal-sec .hol-preset select { flex: 1 1 200px; }
 .cal-sec .hol-preset input[type=number] { width: 78px; }
 .cal-sec .hol-add input[type=date] { width: 150px; }
 .cal-sec .hol-add input[type=text] { flex: 1 1 200px; min-width: 110px; }
+.cal-sec .wh-break-add input[type=time] { width: 110px; }
+.precision-row { display: flex; flex-direction: column; gap: 8px; }
+.precision-opt { display: flex; align-items: flex-start; gap: 8px; cursor: pointer; font-size: 13px; }
+.precision-opt input { margin-top: 3px; flex-shrink: 0; }
+.precision-opt .cal-sec-note { display: block; font-size: 12px; }
+.workhours-editor { display: flex; flex-direction: column; gap: 10px; padding: 10px 12px; margin-top: 2px; background: var(--panel-2); border-radius: 8px; }
+.wh-day-row { display: flex; align-items: center; gap: 8px; }
+.wh-day-row input[type=time] { width: 110px; }
 .hol-break { flex-basis: 100%; height: 0; }
 .cal-how summary { cursor: pointer; font-size: 12.5px; font-weight: 600; color: var(--text-dim); }
 .cal-how .cal-hint { margin-top: 8px; }
@@ -642,10 +650,13 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 .modal-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 18px; border-top: 1px solid var(--border); }
 .field { display: flex; flex-direction: column; gap: 5px; }
 .field label { font-size: 12px; font-weight: 600; color: var(--text-dim); }
-.field input[type=text], .field input[type=date], .field input[type=number], .field textarea, .field select {
+.field input[type=text], .field input[type=date], .field input[type=time], .field input[type=number], .field textarea, .field select {
   padding: 8px 10px; border: 1px solid var(--border); border-radius: 7px; background: var(--panel); color: var(--text); width: 100%;
 }
 .field textarea { resize: vertical; font-family: inherit; }
+.field-dt { display: flex; gap: 6px; }
+.field-dt input[type=date] { flex: 1 1 auto; min-width: 0; }
+.field-dt input[type=time] { flex: 0 0 92px; min-width: 0; }
 .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 /* read-only, calculated values in the task dialog (WBS, Remaining Duration, Status) */
 .calc-row .ro-value { min-height: 34px; display: flex; align-items: center; padding: 6px 10px; border: 1px dashed var(--border); border-radius: 7px; background: var(--panel-2); color: var(--text-dim); font-size: 13px; }
@@ -846,15 +857,15 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <div class="checkbox-row ms-field"><input type="checkbox" id="taskMilestoneInput" onchange="onMilestoneToggle()"><label for="taskMilestoneInput">Milestone</label></div>
       </div>
       <div class="field-grid-4">
-        <div class="field"><label for="taskStartInput">Start</label><input type="date" id="taskStartInput" onchange="onTaskStartChange()"></div>
-        <div class="field" id="taskEndField"><label for="taskEndInput">Finish</label><input type="date" id="taskEndInput" onchange="onTaskEndChange()"></div>
-        <div class="field" id="taskDurationField"><label for="taskDurationInput" title="Working days, counted on the plan's working calendar">Duration (days)</label><input type="number" min="1" max="9999" id="taskDurationInput" onchange="onTaskDurationChange()"></div>
+        <div class="field"><label for="taskStartInput">Start</label><div class="field-dt"><input type="date" id="taskStartInput" onchange="onTaskStartChange()"><input type="time" id="taskStartTimeInput" class="task-time-input hidden" aria-label="Start time" onchange="onTaskStartChange()"></div></div>
+        <div class="field" id="taskEndField"><label for="taskEndInput">Finish</label><div class="field-dt"><input type="date" id="taskEndInput" onchange="onTaskEndChange()"><input type="time" id="taskEndTimeInput" class="task-time-input hidden" aria-label="Finish time" onchange="onTaskEndChange()"></div></div>
+        <div class="field" id="taskDurationField"><label for="taskDurationInput" id="taskDurationLabel" title="Working days, counted on the plan's working calendar">Duration (days)</label><input type="text" id="taskDurationInput" onchange="onTaskDurationChange()"></div>
         <div class="field"><label for="taskProgressInput">% Complete</label><input type="number" min="0" max="100" id="taskProgressInput"></div>
       </div>
       <div class="pred-empty hidden" id="taskTextDatesNote"></div>
       <div class="field-grid-4 calc-row">
-        <div class="field"><label for="taskActualStartInput">Actual Start</label><input type="date" id="taskActualStartInput" onchange="onActualStartChange()"></div>
-        <div class="field" id="taskActualFinishField" title="Recording an Actual Finish marks the task 100% complete"><label for="taskActualFinishInput">Actual Finish</label><input type="date" id="taskActualFinishInput" onchange="onActualFinishChange()"></div>
+        <div class="field"><label for="taskActualStartInput">Actual Start</label><div class="field-dt"><input type="date" id="taskActualStartInput" onchange="onActualStartChange()"><input type="time" id="taskActualStartTimeInput" class="task-time-input hidden" aria-label="Actual start time" onchange="onActualStartChange()"></div></div>
+        <div class="field" id="taskActualFinishField" title="Recording an Actual Finish marks the task 100% complete"><label for="taskActualFinishInput">Actual Finish</label><div class="field-dt"><input type="date" id="taskActualFinishInput" onchange="onActualFinishChange()"><input type="time" id="taskActualFinishTimeInput" class="task-time-input hidden" aria-label="Actual finish time" onchange="onActualFinishChange()"></div></div>
         <div class="field" title="Worked out by Milestone — not entered"><label>Remaining</label><div class="ro-value" id="taskRemainingInfo"></div></div>
         <div class="field" title="Worked out by Milestone — not entered"><label>Status</label><div class="ro-value" id="taskStatusInfo"></div></div>
         <span id="taskWbsInfo" class="hidden"></span>
@@ -868,7 +879,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         </div>
         <div class="field span2" id="taskConstraintDateField">
           <label id="taskConstraintDateLabel" for="taskConstraintDateInput">Constraint date</label>
-          <input type="date" id="taskConstraintDateInput">
+          <div class="field-dt"><input type="date" id="taskConstraintDateInput"><input type="time" id="taskConstraintTimeInput" class="task-time-input hidden" aria-label="Constraint time"></div>
         </div>
       </div>
       <div class="field">
@@ -1108,6 +1119,31 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <div class="cal-days" id="calendarDays"></div>
       </section>
       <section class="cal-sec">
+        <div class="cal-sec-title">Scheduling precision</div>
+        <div class="precision-row" id="precisionRow">
+          <label class="precision-opt"><input type="radio" name="timeUnit" value="day" id="precisionDay"><span>Days <span class="cal-sec-note">the standard — Start and Finish are whole days</span></span></label>
+          <label class="precision-opt"><input type="radio" name="timeUnit" value="minute" id="precisionMinute"><span>Hours &amp; minutes <span class="cal-sec-note">like MS Project's minute-level scheduling — tasks can start and finish at a specific time of day, several to a day</span></span></label>
+        </div>
+        <div class="workhours-editor hidden" id="workHoursEditor">
+          <div class="wh-day-row">
+            <span class="cal-sec-note">Working day</span>
+            <input type="time" id="whStart" aria-label="Working day starts">
+            <span class="hol-to">to</span>
+            <input type="time" id="whEnd" aria-label="Working day ends">
+          </div>
+          <div>
+            <div class="cal-sec-note">Breaks (lunch, etc.) — not counted as working time</div>
+            <div class="hol-list" id="whBreakList"></div>
+            <div class="wh-break-add">
+              <input type="time" id="whBreakFrom" aria-label="Break starts" onkeydown="if(event.key==='Enter'){event.preventDefault();addWorkBreak();}">
+              <span class="hol-to">to</span>
+              <input type="time" id="whBreakTo" aria-label="Break ends" onkeydown="if(event.key==='Enter'){event.preventDefault();addWorkBreak();}">
+              <button class="btn" type="button" onclick="addWorkBreak()"><i class="fa-solid fa-plus"></i>Add break</button>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="cal-sec">
         <div class="cal-sec-title">Public holidays</div>
         <div class="hol-preset">
           <select id="holRegion" aria-label="Country or region for public holidays"></select>
@@ -1305,6 +1341,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <div class="help-section">
           <div class="help-section-title">Working calendar</div>
           <div class="help-row"><i class="fa-solid fa-calendar-week"></i><span>Each plan has its own working days — Monday to Friday unless you change it (Schedule menu → <strong>Working calendar…</strong>). Durations, lags and dependencies count working days only: a 5-day task that starts on a Monday finishes on that Friday, and its successor starts the next Monday.</span></div>
+          <div class="help-row"><i class="fa-solid fa-clock"></i><span><strong>Scheduling precision</strong> (same dialog): the standard is whole days, but a plan can switch to <strong>Hours &amp; minutes</strong> — like MS Project — so tasks can start and finish at a time of day. Set the working day's start/end and its breaks there too; date fields, Duration (type "4h" or "90m") and the columns adapt once it's on. Switching in keeps a task spanning its whole day; switching back just drops every time.</span></div>
           <div class="help-row"><i class="fa-solid fa-umbrella-beach"></i><span>Add <strong>holidays and other days off</strong> in the same dialog: a single day, a longer break (from … to …), or a day that comes back every year, each with an optional name. They count as days off exactly like weekends, and are shaded in the Gantt chart.</span></div>
           <div class="help-row"><i class="fa-solid fa-flag"></i><span><strong>Public holidays:</strong> pick a country or region (Germany with each of its states, Austria, Switzerland, the UK, Ireland, the US, Canada, France, the Netherlands, Belgium, Spain, Italy) and the years, then <strong>Add public holidays</strong>. Movable ones (Easter, Ascension, Thanksgiving …) are worked out for each year; days that fall on a day off anyway are left out.</span></div>
           <div class="help-row"><i class="fa-solid fa-circle-exclamation"></i><span>Treat the presets as a starting point: check them against your own calendar — regional and company days differ — and edit or remove any entry.</span></div>
@@ -1432,7 +1469,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
 
 <script>
 /* ============================== Constants ============================== */
-const APP_VERSION = 1;
+const APP_VERSION = 2;   // bumped for minute/hour-level scheduling precision — the save format genuinely differs now (project.timeUnit/workHours, five new per-task time fields), though nothing currently reads this number for migration gating
 const APP_BUILD_DATE = '2026-09-13';
 const STORAGE_KEY = 'milestone-v1';
 const BACKUPS_KEY = 'milestone-backups';
@@ -1742,11 +1779,112 @@ function shiftWork(iso, k) { return dayNumberToIso(addWorkNum(nextWorkNum(dayNum
 // entirely on non-working days). finishFor() is its inverse: the finish of a task that starts on/after `startIso`.
 function durationDays(startIso, endIso) { return Math.max(1, countWorkNum(dayNumber(startIso), dayNumber(endIso))); }
 function finishFor(startIso, dur) { return shiftWork(startIso, Math.max(1, dur) - 1); }
+/* ============================ Working hours (minute-mode plans only) ==============================
+   Only consulted when project.timeUnit === 'minute' (see "Scheduling precision"). project.workHours =
+   { start: 'HH:MM', end: 'HH:MM', breaks: [{start,end}] }, absent = the default below (the same 08:00–12:00/13:00–17:00
+   already used by the MS Project XML export). One calendar for every working day — no per-weekday variation, the same
+   simplification project.workDays/holidays already make. Day-openness (weekends, holidays) is entirely owned by
+   isWorkNum()/holSet above; this layer only adds a sub-day constraint on top of it — a holiday or non-working weekday
+   simply contributes zero working minutes, with no separate holiday-handling code needed here. A "moment" is a single
+   integer, dayNumber*1440 + minute-of-day, so day and minute arithmetic share the same comparable/addable shape. */
+const DEFAULT_WORK_HOURS = { start: '08:00', end: '17:00', breaks: [{ start: '12:00', end: '13:00' }] };
+function minuteOfDay(hhmm) { const [h, m] = hhmm.split(':').map(Number); return h * 60 + m; }
+function hhmmOf(min) { return `${pad2(Math.floor(min / 60))}:${pad2(((min % 60) + 60) % 60)}`; }
+function hhmmOk(v) { return typeof v === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(v); }
+let whRef, whWindows = [[480, 1020]], whPerDay = 540;   // cached by the identity of project.workHours (only ever replaced, never edited in place)
+function workHours() { return (project && project.workHours) || DEFAULT_WORK_HOURS; }
+function workWindows() {   // the day's working-minute segments as [start,end) pairs, breaks carved out, sorted, gaps/empties dropped
+  const wh = workHours();
+  if (wh !== whRef) {
+    whRef = wh;
+    const s = minuteOfDay(wh.start), e = minuteOfDay(wh.end);
+    const cuts = (wh.breaks || []).map(b => [minuteOfDay(b.start), minuteOfDay(b.end)]).sort((a, b) => a[0] - b[0]);
+    const win = []; let cur = s;
+    for (const [bs, be] of cuts) { if (bs > cur && cur < e) win.push([cur, Math.min(bs, e)]); cur = Math.max(cur, be); }
+    if (cur < e) win.push([cur, e]);
+    whWindows = win.filter(([a, b]) => b > a);
+    whPerDay = whWindows.reduce((sum, [a, b]) => sum + (b - a), 0) || 1;
+  }
+  return whWindows;
+}
+function workMinutesPerDay() { workWindows(); return whPerDay; }
+// A minute-of-day's position within the day's working-minute sequence (0-based), or -1 when it falls in a break/off-hours.
+function localPos(mod) { let pos = 0; for (const [a, b] of workWindows()) { if (mod >= a && mod < b) return pos + (mod - a); pos += (b - a); } return -1; }
+function localMod(pos) { for (const [a, b] of workWindows()) { const len = b - a; if (pos < len) return a + pos; pos -= len; } return workWindows()[0][0]; }
+function isWorkMinuteNum(mn) { const day = Math.floor(mn / 1440); return isWorkNum(day) && localPos(mn - day * 1440) !== -1; }
+function nextWorkMinuteNum(mn) {   // on or after
+  let day = Math.floor(mn / 1440), mod = mn - day * 1440;
+  if (!isWorkNum(day)) { day = nextWorkNum(day + 1); mod = -1; }
+  const win = workWindows();
+  for (const [a, b] of win) if (mod < b) return day * 1440 + Math.max(mod, a);
+  return nextWorkNum(day + 1) * 1440 + win[0][0];
+}
+function prevWorkMinuteNum(mn) {   // on or before
+  let day = Math.floor(mn / 1440), mod = mn - day * 1440;
+  if (!isWorkNum(day)) { day = prevWorkNum(day - 1); mod = 1440; }
+  const win = workWindows();
+  for (let i = win.length - 1; i >= 0; i--) { const [a, b] = win[i]; if (mod >= a) return day * 1440 + Math.min(mod, b - 1); }
+  const pd = prevWorkNum(day - 1), last = win[win.length - 1];
+  return pd * 1440 + last[1] - 1;
+}
+const MAX_DURATION_MINUTES = MAX_DURATION_DAYS * 1440, MAX_LAG_MINUTES = MAX_LAG_DAYS * 1440;
+// Move k working minutes from mn (a working minute; k may be negative, a lead). O(1): the day component shifts in bulk via
+// the existing addWorkNum() (which already has its own week-shortcut/holiday walk and a 40,000-working-day cap), and only
+// the sub-day remainder is resolved against workWindows() — never a per-minute loop.
+function addWorkMinuteNum(mn, k) {
+  if (!k) return mn;
+  k = Math.max(-MAX_LAG_MINUTES, Math.min(MAX_LAG_MINUTES, k));
+  const per = workMinutesPerDay(), day0 = Math.floor(mn / 1440);
+  let pos = localPos(mn - day0 * 1440); if (pos === -1) pos = 0;
+  const total = pos + k, dayShift = Math.floor(total / per), newPos = total - dayShift * per;
+  return addWorkNum(day0, dayShift) * 1440 + localMod(newPos);
+}
+// Working minutes in [a, b) — half-open (unlike the day layer's inclusive countWorkNum: a duration in minutes is more
+// naturally "how many minutes of work between these two moments" than "+1 for both ends").
+function countWorkMinuteNum(a, b) {
+  if (b <= a) return 0;
+  const dayA = Math.floor(a / 1440), dayB = Math.floor(b / 1440), per = workMinutesPerDay(), win = workWindows();
+  if (dayA === dayB) { let c = 0; const modA = a - dayA * 1440, modB = b - dayA * 1440; for (const [s, e] of win) { const lo = Math.max(s, modA), hi = Math.min(e, modB); if (hi > lo) c += hi - lo; } return isWorkNum(dayA) ? c : 0; }
+  let c = 0;
+  if (isWorkNum(dayA)) { const modA = a - dayA * 1440; for (const [s, e] of win) { const lo = Math.max(s, modA); if (e > lo) c += e - lo; } }
+  c += countWorkNum(dayA + 1, dayB - 1) * per;
+  if (isWorkNum(dayB)) { const modB = b - dayB * 1440; for (const [s, e] of win) { const hi = Math.min(e, modB); if (hi > s) c += hi - s; } }
+  return c;
+}
+function shiftWorkMinute(mn, k) { return addWorkMinuteNum(nextWorkMinuteNum(mn), k); }
+// A task's duration in minutes = the working minutes from start to finish (never less than 1).
+function durationMinutes(startMn, endMn) { return Math.max(1, countWorkMinuteNum(startMn, endMn)); }
+// posInDay()/modOfPos() are boundary-INCLUSIVE (unlike localPos()/localMod(), which exclude a window's own end to match
+// isWorkMinuteNum()'s half-open convention for "is this instant currently workable"). finishMomentFor()/startMomentFor()
+// need that inclusiveness: a task legitimately FINISHES exactly as a break begins (work stopped right then, even though
+// that instant itself isn't "still working"), and a computed START can equally land exactly on a window's own open. Using
+// the plain (exclusive) localMod() here would silently roll a finish that lands exactly on a boundary into the NEXT
+// window, turning e.g. a 1-hour ALAP task that should end right at 12:00 into one that runs until 13:00 instead — caught
+// by verify_minute_schedule.py's ALAP-across-a-break case.
+function posInDay(mod) { let pos = 0; for (const [a, b] of workWindows()) { if (mod >= a && mod <= b) return pos + (mod - a); pos += (b - a); } return null; }
+function modOfPos(pos) { for (const [a, b] of workWindows()) { const len = b - a; if (pos <= len) return a + pos; pos -= len; } const w = workWindows(); return w[w.length - 1][1]; }
+// finishMomentFor()/startMomentFor() are each other's inverses, the moment-space mirror of finishFor()/the local startFor()
+// ALAP uses — same O(1) day-bulk-shift shape as addWorkMinuteNum(), using posInDay()/modOfPos() instead of
+// localPos()/localMod() for the boundary-inclusive reason above. The "-1" in finishMomentFor()'s day-shift division keeps
+// a result that lands exactly on a multiple of the day's working-minute total inside THAT day (at its own close) rather
+// than rolled to the next working day's open — a full 8-hour task starting at 08:00 finishes at 17:00, not 08:00 tomorrow.
+function finishMomentFor(startMn, durMin) {
+  const start = nextWorkMinuteNum(startMn), day0 = Math.floor(start / 1440);
+  const total = posInDay(start - day0 * 1440) + Math.max(1, durMin);
+  const per = workMinutesPerDay(), wholeDays = Math.floor((total - 1) / per);
+  return addWorkNum(day0, wholeDays) * 1440 + modOfPos(total - wholeDays * per);
+}
+function startMomentFor(finishMn, durMin) {
+  const finish = nextWorkMinuteNum(finishMn), day0 = Math.floor(finish / 1440);
+  const total = posInDay(finish - day0 * 1440) - Math.max(1, durMin);
+  const per = workMinutesPerDay(), wholeDays = Math.floor(total / per);
+  return addWorkNum(day0, wholeDays) * 1440 + modOfPos(total - wholeDays * per);
+}
 const WEEKDAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], WEEKDAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
 function currentWorkDays() { return [...workDaySet()].sort((a, b) => a - b); }
 function holidayCount() { return project && Array.isArray(project.holidays) ? project.holidays.length : 0; }
 // e.g. "Mon–Fri" or "Mon–Fri · 9 holidays"
-function calendarSummary() { const n = holidayCount(); return calendarLabel() + (n ? ` · ${n} holiday${n === 1 ? '' : 's'}` : ''); }
+function calendarSummary() { const n = holidayCount(); return calendarLabel() + (n ? ` · ${n} holiday${n === 1 ? '' : 's'}` : '') + (project && project.timeUnit === 'minute' ? ` · ${workHours().start}–${workHours().end}` : ''); }
 function calendarLabel(days = currentWorkDays()) {
   const key = days.join('');
   if (key === '12345') return 'Mon–Fri';
@@ -1757,6 +1895,9 @@ function calendarLabel(days = currentWorkDays()) {
 function fmtDuration(n) { return `${n} day${n === 1 ? '' : 's'}`; }
 function fmtDate(iso) { if (!iso) return ''; const d = parseLocalDate(iso); return `${pad2(d.getDate())}.${pad2(d.getMonth() + 1)}.${d.getFullYear()}`; }
 function fmtDateY(iso) { if (!iso) return ''; return parseLocalDate(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }); }
+// The grid's date(+time) display: in a minute-mode plan an absent time field shows the working day's own open/close (the
+// same default taskMoment() uses), so the cell reflects exactly what the scheduler treats the task as, not a blank.
+function gridDateTimeText(iso, time, showTime, dflt) { if (!iso) return ''; return showTime ? `${fmtDate(iso)} ${time || dflt || workHours().start}` : fmtDate(iso); }
 
 function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
 function isSafeId(id) { return typeof id === 'string' && /^[a-z0-9]+$/i.test(id) && id.length <= 40; }
@@ -2083,6 +2224,15 @@ function normalizeData() {
     const cinfo = constraintTypeInfo(t.constraintType);
     if (!cinfo.hasDate) t.constraintDate = null;
     else if (!/^\d{4}-\d{2}-\d{2}$/.test(t.constraintDate || '')) t.constraintDate = t.startDate;
+    // Time-of-day siblings of the five date fields above — only meaningful (and only ever stored) in a minute-mode plan; an
+    // absent time means "use the working day's own start/end", see taskMoment(). Forced null in a day-mode plan so switching
+    // a plan out of minute mode drops every time-of-day for free, the next time this runs (on load, edit, import or merge).
+    const minuteMode = project && project.timeUnit === 'minute';
+    for (const f of ['startTime', 'endTime', 'actualStartTime', 'actualFinishTime', 'constraintTime']) t[f] = (minuteMode && hhmmOk(t[f])) ? t[f] : null;
+    if (t.milestone) t.endTime = t.startTime;
+    if (!t.actualStart) t.actualStartTime = null;
+    if (!t.actualFinish) t.actualFinishTime = null; else if (t.milestone) t.actualFinishTime = t.actualStartTime;
+    if (!cinfo.hasDate) t.constraintTime = null;
     if (t.taskMode !== 'manual') t.taskMode = 'auto';
     for (const f of ['startText', 'endText', 'durText']) {
       t[f] = (t.taskMode === 'manual' && typeof t[f] === 'string') ? t[f].slice(0, 60) : null;
@@ -2091,6 +2241,7 @@ function normalizeData() {
     if (t.spacer) {   // an empty line holds nothing: no name, links, progress, actual dates, baselines, custom values … (kept Manual so the scheduler and the critical path leave it alone)
       t.name = ''; t.milestone = false; t.progress = 0; t.predecessors = []; t.color = null; t.resource = ''; delete t.custom; delete t.baselines;
       t.actualStart = t.actualFinish = null; t.constraintType = 'ASAP'; t.constraintDate = null; t.taskMode = 'manual'; t.startText = t.endText = t.durText = null; t.collapsed = false;
+      t.startTime = t.endTime = t.actualStartTime = t.actualFinishTime = t.constraintTime = null;
     }
   }
 
@@ -2167,6 +2318,30 @@ function normalizeData() {
     if (wd.length && wd.join() !== DEFAULT_WORK_DAYS.join()) { if (!Array.isArray(project.workDays) || project.workDays.join() !== wd.join()) project.workDays = wd; }
     else delete project.workDays;
     { const hl = cleanHolidays(project.holidays); if (!hl) delete project.holidays; else if (stableStringify(hl) !== stableStringify(project.holidays)) project.holidays = hl; }
+  }
+  {   // scheduling precision: 'minute' opts a plan into time-of-day scheduling; absent/anything else = the standard, whole-day 'day' mode
+    if (project.timeUnit === 'minute') {
+      // workHours entirely absent is left untouched — workHours() already falls back to the FULL default (with its lunch
+      // break); rebuilding it here from an empty {} would default start/end individually but silently drop the break
+      // (nothing in an absent object to carry it), a real bug caught by verify_minute_schedule.py.
+      if (project.workHours && typeof project.workHours === 'object') {
+        const wh = project.workHours;
+        let start = hhmmOk(wh.start) ? wh.start : DEFAULT_WORK_HOURS.start, end = hhmmOk(wh.end) ? wh.end : DEFAULT_WORK_HOURS.end;
+        if (minuteOfDay(end) - minuteOfDay(start) < 1) { start = DEFAULT_WORK_HOURS.start; end = DEFAULT_WORK_HOURS.end; }
+        const breaks = [];
+        if (Array.isArray(wh.breaks)) for (const b of wh.breaks) {
+          if (!b || !hhmmOk(b.start) || !hhmmOk(b.end)) continue;
+          const bs = minuteOfDay(b.start), be = minuteOfDay(b.end);
+          if (be <= bs || bs < minuteOfDay(start) || be > minuteOfDay(end)) continue;
+          breaks.push({ start: b.start, end: b.end });
+        }
+        breaks.sort((a, b) => minuteOfDay(a.start) - minuteOfDay(b.start));
+        const clean = []; for (const b of breaks) { const prev = clean[clean.length - 1]; if (prev && minuteOfDay(b.start) < minuteOfDay(prev.end)) continue; clean.push(b); }
+        const wh2 = { start, end, breaks: clean };
+        project.workHours = stableStringify(wh2) === stableStringify(DEFAULT_WORK_HOURS) ? undefined : wh2;
+        if (!project.workHours) delete project.workHours;
+      }
+    } else { delete project.timeUnit; delete project.workHours; }
   }
   {   // custom field names: only known fields, trimmed, and only those that differ from the default
     const names = {};
@@ -2412,15 +2587,15 @@ function applyActualDates(t) {
   if (hasChildren(t.id)) return;
   const as = t.actualStart, af = t.actualFinish;
   if (!as && !af) return;
-  const dur = t.milestone ? 1 : durationDays(t.startDate, t.endDate);
-  if (as && t.startDate !== as) {
-    t.startDate = as; t.startText = null;
-    if (!af) t.endDate = t.milestone ? as : finishFor(as, dur);
+  const dur = t.milestone ? 1 : durationMoment(taskMoment(t, 'start'), taskMoment(t, 'end'));
+  if (as && (t.startDate !== as || (minuteModeActive() && t.startTime !== t.actualStartTime))) {
+    copyTaskField(t, 'actualStart', 'start'); t.startText = null;
+    if (!af) { if (t.milestone) copyTaskField(t, 'start', 'end'); else setTaskMoment(t, 'end', finishMoment(taskMoment(t, 'start'), dur)); }
   }
-  if (af && t.endDate !== af) t.endDate = af;
+  if (af && (t.endDate !== af || (minuteModeActive() && t.endTime !== t.actualFinishTime))) copyTaskField(t, 'actualFinish', 'end');
   if (t.endText != null && af) t.endText = null;
-  if (t.milestone) t.endDate = t.startDate;
-  if (dayNumber(t.endDate) < dayNumber(t.startDate)) t.endDate = t.startDate;
+  if (t.milestone) copyTaskField(t, 'start', 'end');
+  if (taskMoment(t, 'end') < taskMoment(t, 'start')) copyTaskField(t, 'start', 'end');
   t.durText = null;
 }
 // Working days from a to b (negative when b is earlier); both snap forward to a working day first.
@@ -2459,28 +2634,90 @@ function scheduleVariance(id, n = compareBaseline()) {
   return { start: workDiff(b.start, e.start), finish: workDiff(b.end, e.end), duration: durationDays(e.start, e.end) - baseDuration, baseDuration };
 }
 function fmtVariance(n) { return n == null ? '' : `${n > 0 ? '+' : ''}${n} day${Math.abs(n) === 1 ? '' : 's'}`; }
-function constraintStart(task, includeConstraint = true) {
+/* ============================ Moments (day- or minute-mode scheduling, one shape) ==============================
+   Everything below this point that used to read dayNumber(task.startDate)/shiftWork(...)/durationDays(...) directly now
+   reads taskMoment(task,'start')/shiftMoment(...)/durationMoment(...) instead — one comparable/addable integer that IS
+   dayNumber(task.startDate) in a 'day'-mode plan (bit-identical to before this layer existed: every call below collapses
+   straight back to the exact same day-number arithmetic, just reached through a shared accessor instead of a raw
+   dayNumber() call at each comparison site) and dayNumber(task.startDate)*1440 + minute-of-day in a 'minute'-mode plan. An
+   absent time-of-day field defaults to the working day's own open ('start' sides) or close ('end' sides) — so a task that
+   has never had its time fields touched spans exactly its working day at minute granularity, identical wall-clock
+   behavior to its old day-mode self (this is what makes switching a plan into minute mode non-destructive). This is a
+   purely additive layer: task.startDate/endDate/etc. and every function above (dayNumber, shiftWork, durationDays, …)
+   are completely untouched. */
+const TASK_MOMENT_KEYS = { start: ['startDate', 'startTime'], end: ['endDate', 'endTime'], actualStart: ['actualStart', 'actualStartTime'], actualFinish: ['actualFinish', 'actualFinishTime'], constraint: ['constraintDate', 'constraintTime'] };
+function minuteModeActive() { return !!(project && project.timeUnit === 'minute'); }
+// A task's Start/Finish/Actual Start/Actual Finish/its own constraint date, as one moment (see the block comment above).
+function taskMoment(t, side) {
+  const [dateKey, timeKey] = TASK_MOMENT_KEYS[side], iso = t[dateKey];
+  if (!iso) return null;
+  if (!minuteModeActive()) return dayNumber(iso);
+  const dflt = (side === 'end' || side === 'actualFinish') ? workHours().end : workHours().start;
+  return dayNumber(iso) * 1440 + minuteOfDay(hhmmOk(t[timeKey]) ? t[timeKey] : dflt);
+}
+// Writes a moment back into a task's Start or Finish field pair — the only two sides the scheduler itself ever sets.
+function setTaskMoment(t, side, mn) {
+  const [dateKey, timeKey] = TASK_MOMENT_KEYS[side], day = minuteModeActive() ? Math.floor(mn / 1440) : mn;
+  t[dateKey] = dayNumberToIso(day);
+  if (minuteModeActive()) t[timeKey] = hhmmOf(mn - day * 1440);
+}
+// Copies one of a task's own date(+time in minute mode) field pairs onto another of its own fields, e.g. actualStart -> start.
+function copyTaskField(t, fromSide, toSide) {
+  const [fd, ft] = TASK_MOMENT_KEYS[fromSide], [td, tt] = TASK_MOMENT_KEYS[toSide];
+  t[td] = t[fd];
+  if (minuteModeActive()) t[tt] = t[ft];
+}
+function momentToDate(mn) { return mn === null ? null : dayNumberToIso(minuteModeActive() ? Math.floor(mn / 1440) : mn); }
+// The moment-space mirrors of shiftWork()/durationDays()/finishFor()/startFor(): dispatch to the day or minute working-
+// calendar layer the same way project.timeUnit already picks between isWorkNum()/isWorkMinuteNum() etc.
+function nextWorkMoment(mn) { return minuteModeActive() ? nextWorkMinuteNum(mn) : nextWorkNum(mn); }
+function prevWorkMoment(mn) { return minuteModeActive() ? prevWorkMinuteNum(mn) : prevWorkNum(mn); }
+function isWorkMoment(mn) { return minuteModeActive() ? isWorkMinuteNum(mn) : isWorkNum(mn); }
+function shiftMoment(mn, k) { return minuteModeActive() ? addWorkMinuteNum(nextWorkMinuteNum(mn), k) : addWorkNum(nextWorkNum(mn), k); }
+function durationMoment(startMn, endMn) { return minuteModeActive() ? durationMinutes(startMn, endMn) : Math.max(1, countWorkNum(startMn, endMn)); }
+function finishMoment(startMn, dur) { return minuteModeActive() ? finishMomentFor(startMn, dur) : addWorkNum(nextWorkNum(startMn), Math.max(1, dur) - 1); }
+function startMoment(finishMn, dur) { return minuteModeActive() ? startMomentFor(finishMn, dur) : addWorkNum(nextWorkNum(finishMn), -(Math.max(1, dur) - 1)); }
+// The moment-space mirror of workDiff() (both snap forward first, then the signed working gap) — used by the critical
+// path's own float calculation; workDiff() itself is untouched (baseline variance stays a day-level comparison for now,
+// operating on baseline/effective dates which remain plain ISO days in this phase).
+function momentDiff(aMn, bMn) {
+  const a = shiftMoment(aMn, 0), b = shiftMoment(bMn, 0);
+  return minuteModeActive() ? (b >= a ? countWorkMinuteNum(a, b) : -countWorkMinuteNum(b, a)) : (b >= a ? countWorkNum(a, b) - 1 : -(countWorkNum(b, a) - 1));
+}
+// The moment-space mirrors of linkStart()/linkEnd() above — same rule (actual dates ARE the schedule once applied; a
+// still-running task not yet applied is projected from its real start), just returning a moment instead of an ISO string.
+function linkStartMoment(pred) { return pred.actualStart ? taskMoment(pred, 'actualStart') : taskMoment(pred, 'start'); }
+function linkEndMoment(pred) {
+  if (pred.actualFinish) return taskMoment(pred, 'actualFinish');
+  if (pred.actualStart) return finishMoment(taskMoment(pred, 'actualStart'), durationMoment(taskMoment(pred, 'start'), taskMoment(pred, 'end')));
+  return taskMoment(pred, 'end');
+}
+// Moment-space core (see the block comment above); returns a moment, not an ISO string, so cascadeSchedule/placeByLinks
+// keep full minute precision internally. constraintStart() below is the public, ISO-string-returning wrapper every
+// existing caller (and test) already expects — unchanged in day mode, date-only (time dropped) in minute mode.
+function constraintStartMoment(task, includeConstraint = true) {
   let cs = null;
-  const dur = durationDays(task.startDate, task.endDate);
+  const dur = durationMoment(taskMoment(task, 'start'), taskMoment(task, 'end'));
   for (const p of task.predecessors) {
     const pred = byId(p.id);
     if (!pred || isUnscheduled(pred)) continue;
     const lag = p.lag || 0;
     let c;
-    // Lags and leads are WORKING days (a lead is negative); every result is a working day.
-    if (p.type === 'SS') c = shiftWork(linkStart(pred), lag);
-    else if (p.type === 'FF') c = shiftWork(shiftWork(linkEnd(pred), lag), -(dur - 1));
-    else if (p.type === 'SF') c = shiftWork(shiftWork(linkStart(pred), lag), -(dur - 1));
-    else c = shiftWork(addDays(linkEnd(pred), 1), lag); // FS, default: the working day after the predecessor's finish, plus the lag
-    if (cs === null || dayNumber(c) > dayNumber(cs)) cs = c;
+    // Lags and leads are WORKING days/minutes (a lead is negative); every result is a working moment.
+    if (p.type === 'SS') c = shiftMoment(linkStartMoment(pred), lag);
+    else if (p.type === 'FF') c = startMoment(shiftMoment(linkEndMoment(pred), lag), dur);
+    else if (p.type === 'SF') c = startMoment(shiftMoment(linkStartMoment(pred), lag), dur);
+    else c = shiftMoment(linkEndMoment(pred) + (minuteModeActive() ? 0 : 1), lag); // FS, default: right after the predecessor's finish, plus the lag
+    if (cs === null || c > cs) cs = c;
   }
   // A task's own MSO/SNET/MFO/FNET constraint is a lower bound exactly like
   // a predecessor's earliest-start push — whichever candidate is latest
   // wins.
   const cinfo = constraintTypeInfo(task.constraintType);
   if (includeConstraint && task.constraintDate && (cinfo.bound === 'lower' || cinfo.bound === 'exact')) {
-    const c = cinfo.basis === 'finish' ? shiftWork(task.constraintDate, -(dur - 1)) : shiftWork(task.constraintDate, 0);
-    if (cs === null || dayNumber(c) > dayNumber(cs)) cs = c;
+    const cm = taskMoment(task, 'constraint');
+    const c = cinfo.basis === 'finish' ? startMoment(cm, dur) : shiftMoment(cm, 0);
+    if (cs === null || c > cs) cs = c;
   }
   // SNLT/FNLT (upper bounds): once a predecessor push exists (cs !== null), the constraint CAPS it — "constraints always win
   // here" (an explicit user request to actually enforce these rather than only flag them, see constraintViolated() below).
@@ -2488,11 +2725,13 @@ function constraintStart(task, includeConstraint = true) {
   // cs stays null and the task keeps its own dates undisturbed, same as ever — setting an upper bound alone never yanks a task
   // backward out of nowhere, matching real MS Project (which flags a conflict rather than moving the task on its own too).
   if (includeConstraint && cs !== null && task.constraintDate && cinfo.bound === 'upper') {
-    const cap = cinfo.basis === 'finish' ? shiftWork(task.constraintDate, -(dur - 1)) : task.constraintDate;
-    if (dayNumber(cap) < dayNumber(cs)) cs = cap;
+    const cm = taskMoment(task, 'constraint');
+    const cap = cinfo.basis === 'finish' ? startMoment(cm, dur) : cm;
+    if (cap < cs) cs = cap;
   }
   return cs;
 }
+function constraintStart(task, includeConstraint = true) { return momentToDate(constraintStartMoment(task, includeConstraint)); }
 // Does this task's *current* stored dates actually satisfy its own constraint? SNLT/FNLT are now capped by constraintStart()
 // above whenever a predecessor push exists — this instead catches what that can't: an upper bound the task already exceeds
 // with nothing pushing it there (typed in by hand, imported, or just set on a task that already sat past it), and an exact
@@ -2500,8 +2739,7 @@ function constraintStart(task, includeConstraint = true) {
 function constraintViolated(task) {
   if (!task.constraintDate || task.taskMode === 'manual') return false; // constraints don't apply to manually scheduled tasks
   const cinfo = constraintTypeInfo(task.constraintType);
-  const actual = cinfo.basis === 'finish' ? task.endDate : task.startDate;
-  const want = dayNumber(task.constraintDate), have = dayNumber(actual);
+  const want = taskMoment(task, 'constraint'), have = taskMoment(task, cinfo.basis === 'finish' ? 'end' : 'start');
   if (cinfo.bound === 'exact') return have !== want;
   if (cinfo.bound === 'upper') return have > want;
   return false; // lower bounds are enforced by constraintStart()'s cascade, never violated in steady state
@@ -2513,21 +2751,23 @@ function constraintViolated(task) {
 // that runs before it would schedule the successors off crossed dates): Finish not before Start, a milestone one date, a finished task's
 // Actual Finish not before its Actual Start and equal to its Finish.
 function clampTaskDates(t) {
-  if (dayNumber(t.endDate) < dayNumber(t.startDate)) t.endDate = t.startDate;
-  if (t.milestone) t.endDate = t.startDate;
-  if (t.actualStart && t.actualFinish && dayNumber(t.actualFinish) < dayNumber(t.actualStart)) t.actualFinish = t.actualStart;
-  if (t.actualFinish && t.endDate !== t.actualFinish) t.endDate = t.actualFinish;
+  if (taskMoment(t, 'end') < taskMoment(t, 'start')) copyTaskField(t, 'start', 'end');
+  if (t.milestone) copyTaskField(t, 'start', 'end');
+  if (t.actualStart && t.actualFinish && taskMoment(t, 'actualFinish') < taskMoment(t, 'actualStart')) copyTaskField(t, 'actualStart', 'actualFinish');
+  if (t.actualFinish && (t.endDate !== t.actualFinish || (minuteModeActive() && t.endTime !== t.actualFinishTime))) copyTaskField(t, 'actualFinish', 'end');
 }
 function snapToWorkDays(t) {
   if (t.taskMode === 'manual' || hasChildren(t.id) || isUnscheduled(t) || isStarted(t)) return false;   // (a started task's dates are facts)
-  const s0 = t.startDate, e0 = t.endDate;
-  if (!isWorkDay(t.startDate)) t.startDate = nextWorkDay(t.startDate);
-  if (t.milestone) t.endDate = t.startDate;
+  const s0 = t.startDate, e0 = t.endDate, st0 = t.startTime, et0 = t.endTime;
+  const startMn = taskMoment(t, 'start');
+  if (!isWorkMoment(startMn)) setTaskMoment(t, 'start', nextWorkMoment(startMn));
+  if (t.milestone) copyTaskField(t, 'start', 'end');
   else {
-    if (!isWorkDay(t.endDate)) t.endDate = prevWorkDay(t.endDate);
-    if (dayNumber(t.endDate) < dayNumber(t.startDate)) t.endDate = t.startDate;
+    const endMn = taskMoment(t, 'end');
+    if (!isWorkMoment(endMn)) setTaskMoment(t, 'end', prevWorkMoment(endMn));
+    if (taskMoment(t, 'end') < taskMoment(t, 'start')) copyTaskField(t, 'start', 'end');
   }
-  return t.startDate !== s0 || t.endDate !== e0;
+  return t.startDate !== s0 || t.endDate !== e0 || t.startTime !== st0 || t.endTime !== et0;
 }
 // A task that has started or finished (it has an Actual Start / Actual Finish) is history: what happened is recorded in its actual
 // dates, and scheduling never moves its planned dates any more (see cascadeSchedule / applyConstraints / rescheduleAsAuto) — only
@@ -2540,9 +2780,9 @@ function scheduleMismatch(t) {
   if (hasChildren(t.id) || isUnscheduled(t)) return null;
   const started = isStarted(t);
   if (t.taskMode !== 'manual' && !started) return null;
-  const cs = constraintStart(t, false);
-  const have = started ? (t.actualStart || t.startDate) : t.startDate;
-  return cs && dayNumber(cs) > dayNumber(have) ? cs : null;
+  const cs = constraintStartMoment(t, false);
+  const have = taskMoment(t, started && t.actualStart ? 'actualStart' : 'start');
+  return cs !== null && cs > have ? momentToDate(cs) : null;
 }
 // MS Project's scheduling rule for an Auto Scheduled task: it sits at the EARLIEST date its links and its constraint allow — later
 // when a predecessor moves out, earlier when one moves in, finishes early or goes away. (Before, this app only ever pushed a task
@@ -2552,47 +2792,51 @@ function scheduleMismatch(t) {
 // backward twin of constraintStart(), reading successorsMap() instead of the task's own predecessors, so an ALAP task sits at
 // the LATEST date that does not delay any successor's CURRENT position, mirroring the same four link types and their
 // lags/leads. Returns the latest working-day FINISH, or null with no successors to be late against (see alapTargetStart()).
-function constraintLateEnd(task) {
+function constraintLateEndMoment(task) {
   let le = null;
-  const dur = durationDays(task.startDate, task.endDate);
+  const dur = durationMoment(taskMoment(task, 'start'), taskMoment(task, 'end'));
   for (const s of (successorsMap()[task.id] || [])) {
     const succ = byId(s.id);
     if (!succ || isUnscheduled(succ)) continue;
     const lag = s.lag || 0;
     let c;
-    if (s.type === 'SS') c = shiftWork(shiftWork(linkStart(succ), -lag), dur - 1);
-    else if (s.type === 'FF') c = shiftWork(linkEnd(succ), -lag);
-    else if (s.type === 'SF') c = shiftWork(shiftWork(linkEnd(succ), -lag), dur - 1);
-    else c = shiftWork(linkStart(succ), -(1 + lag)); // FS, default: the working day before the successor may start, minus the lag
-    if (le === null || dayNumber(c) < dayNumber(le)) le = c;
+    if (s.type === 'SS') c = finishMoment(shiftMoment(linkStartMoment(succ), -lag), dur);
+    else if (s.type === 'FF') c = shiftMoment(linkEndMoment(succ), -lag);
+    else if (s.type === 'SF') c = finishMoment(shiftMoment(linkEndMoment(succ), -lag), dur);
+    else c = shiftMoment(linkStartMoment(succ), -(lag + (minuteModeActive() ? 0 : 1))); // FS, default: right before the successor may start, minus the lag
+    if (le === null || c < le) le = c;
   }
   return le;
 }
-function startFor(finishIso, dur) { return shiftWork(finishIso, -(Math.max(1, dur) - 1)); } // finishFor()'s inverse
-// The start date an ALAP task belongs at: as late as its successors currently allow (constraintLateEnd(), converted to a
-// start), but never earlier than what its OWN predecessors/lower-bound constraint require (constraintStart(), the same floor
-// an ASAP task uses) — an over-constrained ALAP task (predecessors need it later than successors allow) keeps the
-// predecessors' date, the same "a real dependency is never silently broken" rule SNLT/FNLT enforcement follows above. With no
-// successors there is nothing local to be late against, so it falls back to constraintStart() — behaves like ASAP — a
-// documented scope limit (real MS Project would push it out to the whole project's finish; see "Task constraints").
-function alapTargetStart(task) {
-  const dur = durationDays(task.startDate, task.endDate);
-  const le = constraintLateEnd(task);
-  const earliest = constraintStart(task);
+function constraintLateEnd(task) { return momentToDate(constraintLateEndMoment(task)); }
+// The start moment an ALAP task belongs at: as late as its successors currently allow (constraintLateEndMoment(), converted
+// to a start via startMoment(), finishMoment()'s inverse), but never earlier than what its OWN predecessors/lower-bound
+// constraint require (constraintStartMoment(), the same floor an ASAP task uses) — an over-constrained ALAP task
+// (predecessors need it later than successors allow) keeps the predecessors' date, the same "a real dependency is never
+// silently broken" rule SNLT/FNLT enforcement follows above. With no successors there is nothing local to be late against,
+// so it falls back to constraintStartMoment() — behaves like ASAP — a documented scope limit (real MS Project would push
+// it out to the whole project's finish; see "Task constraints").
+function alapTargetStartMoment(task) {
+  const dur = durationMoment(taskMoment(task, 'start'), taskMoment(task, 'end'));
+  const le = constraintLateEndMoment(task);
+  const earliest = constraintStartMoment(task);
   if (le === null) return earliest;
-  const want = startFor(le, dur);
-  return earliest !== null && dayNumber(earliest) > dayNumber(want) ? earliest : want;
+  const want = startMoment(le, dur);
+  return earliest !== null && earliest > want ? earliest : want;
 }
-// The date an Auto task's placement logic says it should sit at right now — constraintStart() for every constraint type
-// except ALAP, which uses its own backward twin instead. Shared by placeByLinks(), offItsLinks() and rescheduleAsAuto() so
-// all three treat ALAP identically.
-function targetStart(task) { return task.constraintType === 'ALAP' ? alapTargetStart(task) : constraintStart(task); }
+function alapTargetStart(task) { return momentToDate(alapTargetStartMoment(task)); }
+// The moment an Auto task's placement logic says it should sit at right now — constraintStartMoment() for every constraint
+// type except ALAP, which uses its own backward twin instead. Shared by placeByLinks(), offItsLinks() and
+// rescheduleFromStatusDate() so all three treat ALAP identically.
+function targetStartMoment(task) { return task.constraintType === 'ALAP' ? alapTargetStartMoment(task) : constraintStartMoment(task); }
+function targetStart(task) { return momentToDate(targetStartMoment(task)); }
 function placeByLinks(task) {
-  const cs = targetStart(task);
-  if (!cs || dayNumber(cs) === dayNumber(task.startDate)) return false;
-  const dur = durationDays(task.startDate, task.endDate);
-  task.startDate = cs;
-  task.endDate = finishFor(cs, dur);
+  const cs = targetStartMoment(task);
+  const curStart = taskMoment(task, 'start');
+  if (cs === null || cs === curStart) return false;
+  const dur = durationMoment(curStart, taskMoment(task, 'end'));
+  setTaskMoment(task, 'start', cs);
+  setTaskMoment(task, 'end', finishMoment(cs, dur));
   task.updatedAt = Date.now();
   return true;
 }
@@ -2607,10 +2851,14 @@ function pinToDate(t, basis) {
   if (t.taskMode === 'manual' || hasChildren(t.id) || isStarted(t) || isUnscheduled(t)) return;
   const type = t.constraintType || 'ASAP', sameSide = basis === 'finish' ? 'FNET' : 'SNET';
   if (!['ASAP', 'ALAP', 'SNET', 'FNET'].includes(type)) return;
-  const cs = constraintStart(t, false);   // the earliest the LINKS allow (nothing to compare with when there are none)
-  const delayed = !!cs && (basis === 'finish' ? dayNumber(t.endDate) > dayNumber(finishFor(cs, durationDays(t.startDate, t.endDate))) : dayNumber(t.startDate) > dayNumber(cs));
-  if (delayed) { t.constraintType = sameSide; t.constraintDate = basis === 'finish' ? t.endDate : t.startDate; }
-  else if (type === sameSide) { t.constraintType = 'ASAP'; t.constraintDate = null; }
+  const cs = constraintStartMoment(t, false);   // the earliest the LINKS allow (nothing to compare with when there are none)
+  const curStart = taskMoment(t, 'start'), curEnd = taskMoment(t, 'end');
+  const delayed = cs !== null && (basis === 'finish' ? curEnd > finishMoment(cs, durationMoment(curStart, curEnd)) : curStart > cs);
+  if (delayed) {
+    t.constraintType = sameSide; t.constraintDate = basis === 'finish' ? t.endDate : t.startDate;
+    if (minuteModeActive()) t.constraintTime = basis === 'finish' ? t.endTime : t.startTime;
+  }
+  else if (type === sameSide) { t.constraintType = 'ASAP'; t.constraintDate = null; if (minuteModeActive()) t.constraintTime = null; }
 }
 // Walks forward through the successors of `changedId`, putting each Auto task where its links say (earlier or later) and going on
 // to ITS successors whenever one moved — AND, since an ALAP predecessor's own late bound depends on where ITS successors sit,
@@ -2649,8 +2897,8 @@ function applyConstraints(taskId) {
 // Does an Auto task the scheduler would place sit somewhere other than its links say right now?
 function offItsLinks(t, cyc = taskCycleSet()) {
   if (!t || cyc.has(t.id) || hasChildren(t.id) || t.taskMode === 'manual' || isStarted(t)) return false;
-  const cs = targetStart(t);
-  return !!cs && dayNumber(cs) !== dayNumber(t.startDate);
+  const cs = targetStartMoment(t);
+  return cs !== null && cs !== taskMoment(t, 'start');
 }
 // Breaking a dependency cycle (a link removed, a task deleted, a task turned into a group) releases every task that was exempt
 // because of it — the scheduler never placed them, so they may sit before their links allow. Pass taskCycleSet() taken BEFORE the change.
@@ -2692,13 +2940,13 @@ function criticalPathAnalysis() {
   const leaves = tasks.filter(t => !hasChildren(t.id) && !cyclic.has(t.id) && t.taskMode !== 'manual');
   const ids = leaves.map(t => t.id), inNet = new Set(ids);
   const es = {}, ef = {}, dur = {};
-  for (const t of leaves) { es[t.id] = linkStart(t); ef[t.id] = dayNumber(linkEnd(t)) < dayNumber(es[t.id]) ? es[t.id] : linkEnd(t); dur[t.id] = Math.max(1, durationDays(es[t.id], ef[t.id])); }
+  for (const t of leaves) { es[t.id] = linkStartMoment(t); const raw = linkEndMoment(t); ef[t.id] = raw < es[t.id] ? es[t.id] : raw; dur[t.id] = durationMoment(es[t.id], ef[t.id]); }
   const preds = {}, succLinks = {};
   for (const id of ids) succLinks[id] = [];
   for (const t of leaves) { preds[t.id] = t.predecessors.map(p => p.id).filter(pid => inNet.has(pid)); for (const p of t.predecessors) if (inNet.has(p.id)) succLinks[p.id].push({ sid: t.id, type: p.type, lag: p.lag || 0 }); }
   const order = topoOrder(ids, preds);
   let projectEnd = null;
-  for (const id of order) if (projectEnd === null || dayNumber(ef[id]) > dayNumber(projectEnd)) projectEnd = ef[id];
+  for (const id of order) if (projectEnd === null || ef[id] > projectEnd) projectEnd = ef[id];
   const LS = {}, LF = {}, float = new Map(), critical = new Set();
   for (let i = order.length - 1; i >= 0; i--) {
     const id = order[i];
@@ -2706,14 +2954,14 @@ function criticalPathAnalysis() {
     for (const { sid, type, lag } of succLinks[id]) {
       if (LS[sid] === undefined) continue;
       let c;
-      if (type === 'SS') c = shiftWork(shiftWork(LS[sid], -lag), dur[id] - 1);         // its start no later than the successor's late start − lag
-      else if (type === 'FF') c = shiftWork(LF[sid], -lag);                            // its finish no later than the successor's late finish − lag
-      else if (type === 'SF') c = shiftWork(shiftWork(LF[sid], -lag), dur[id] - 1);    // its start no later than the successor's late finish − lag
-      else c = shiftWork(LS[sid], -(1 + lag));                                         // FS: the working day before the successor may start, less the lag
-      if (dayNumber(c) < dayNumber(lf)) lf = c;
+      if (type === 'SS') c = finishMoment(shiftMoment(LS[sid], -lag), dur[id]);         // its start no later than the successor's late start − lag
+      else if (type === 'FF') c = shiftMoment(LF[sid], -lag);                           // its finish no later than the successor's late finish − lag
+      else if (type === 'SF') c = finishMoment(shiftMoment(LF[sid], -lag), dur[id]);    // its start no later than the successor's late finish − lag
+      else c = shiftMoment(LS[sid], -(lag + (minuteModeActive() ? 0 : 1)));             // FS: right before the successor may start, less the lag
+      if (c < lf) lf = c;
     }
-    LF[id] = lf; LS[id] = shiftWork(lf, -(dur[id] - 1));
-    const slack = workDiff(ef[id], lf);   // negative when the task already finishes later than its late finish allows
+    LF[id] = lf; LS[id] = startMoment(lf, dur[id]);
+    const slack = momentDiff(ef[id], lf);   // negative when the task already finishes later than its late finish allows
     float.set(id, slack);
     if (slack <= 0) critical.add(id);
   }
@@ -2728,37 +2976,43 @@ function computeCriticalPath() { return criticalPathAnalysis().critical; }
    by the time a task is visited, every task it depends on (if also in the network) has already been updated, so
    constraintStart()/targetStart() reading its CURRENT stored dates already reflects the delay. No separate
    cascadeSchedule() calls needed. */
-function rescheduleFromStatusDate(statusIso) {
+// statusTime ('HH:MM') only matters in a minute-mode plan — ignored otherwise; when the plan IS minute-mode and no time
+// is given, it defaults to the working day's own opening time (workHours().start), same default taskMoment() uses.
+function rescheduleFromStatusDate(statusIso, statusTime) {
   const cyclic = taskCycleSet();
   const leaves = tasks.filter(t => !hasChildren(t.id) && !cyclic.has(t.id) && t.taskMode !== 'manual');
   const ids = leaves.map(t => t.id), inNet = new Set(ids);
   const preds = {}; for (const t of leaves) preds[t.id] = t.predecessors.map(p => p.id).filter(pid => inNet.has(pid));
   const order = topoOrder(ids, preds);
-  const statusNum = dayNumber(statusIso), touched = [];
+  const statusDay = dayNumber(statusIso);
+  const statusMoment = minuteModeActive() ? statusDay * 1440 + minuteOfDay(hhmmOk(statusTime) ? statusTime : workHours().start) : statusDay;
+  const touched = [];
   for (const id of order) {
     const t = byId(id);
     if (t.progress >= 100 || t.actualFinish) continue;   // complete: a fact, never moved by this (or anything else)
     if (!isStarted(t)) {
-      // Not started: a floor at the status date, but only when it is actually overdue (its planned start already at or
-      // before the status date) — a genuinely future task is left alone. Folded together with the ordinary
-      // predecessor-driven floor (targetStart(), ALAP-aware) so a task pushed here by an upstream delay is caught too,
-      // whether or not it is itself overdue.
-      const cs = targetStart(t);
-      const floor = dayNumber(t.startDate) <= statusNum ? nextWorkDay(statusIso) : null;
+      // Not started: a floor at the status moment, but only when it is actually overdue (its planned start already at or
+      // before the status moment) — a genuinely future task is left alone. Folded together with the ordinary
+      // predecessor-driven floor (targetStartMoment(), ALAP-aware) so a task pushed here by an upstream delay is caught
+      // too, whether or not it is itself overdue.
+      const cs = targetStartMoment(t);
+      const startMn = taskMoment(t, 'start');
+      const floor = startMn <= statusMoment ? nextWorkMoment(statusMoment) : null;
       let target = cs;
-      if (floor !== null && (target === null || dayNumber(floor) > dayNumber(target))) target = floor;
-      if (target === null || dayNumber(target) === dayNumber(t.startDate)) continue;
-      const dur = t.milestone ? 1 : durationDays(t.startDate, t.endDate);
-      t.startDate = target; t.endDate = t.milestone ? target : finishFor(target, dur);
+      if (floor !== null && (target === null || floor > target)) target = floor;
+      if (target === null || target === startMn) continue;
+      const dur = t.milestone ? 1 : durationMoment(startMn, taskMoment(t, 'end'));
+      setTaskMoment(t, 'start', target);
+      if (t.milestone) copyTaskField(t, 'start', 'end'); else setTaskMoment(t, 'end', finishMoment(target, dur));
     } else {
       // Started, not finished: what already happened stays (Actual Start is a fact) — only the FINISH may move, and only
       // OUT: the remaining work (duration × (1 − % complete), the same figure Remaining Duration shows) counted from the
-      // status date forward, never pulling a task that is ahead of schedule earlier than it already sits.
-      const dur = durationDays(t.startDate, t.endDate);
+      // status moment forward, never pulling a task that is ahead of schedule earlier than it already sits.
+      const dur = durationMoment(taskMoment(t, 'start'), taskMoment(t, 'end'));
       const remaining = Math.max(1, Math.round(remainingOf(dur, t.progress)));
-      const projected = finishFor(nextWorkDay(statusIso), remaining);
-      if (dayNumber(projected) <= dayNumber(t.endDate)) continue;
-      t.endDate = projected;
+      const projected = finishMoment(nextWorkMoment(statusMoment), remaining);
+      if (projected <= taskMoment(t, 'end')) continue;
+      setTaskMoment(t, 'end', projected);
     }
     t.updatedAt = Date.now();
     touched.push(id);
@@ -3327,6 +3581,12 @@ document.getElementById('gridHeaderClip').addEventListener('wheel', (e) => { if 
 if (typeof ResizeObserver !== 'undefined') new ResizeObserver(() => { updateColumnLines(); syncHeaderScroll(); }).observe(document.getElementById('gridPane'));
 else window.addEventListener('resize', updateColumnLines);
 
+// A date column is 104px, sized for the date-only picker (see TASK_COLS above); in a minute-mode plan Start/Finish/Actual
+// Start/Actual Finish need room for a paired time editor and a "07.09.2026 14:30"-length display, so they widen — the
+// "column width should be adapted when switched" the user explicitly asked for. Baselines and custom Date fields stay
+// day-only for now (Phase 4/5), so their width is unaffected.
+const MINUTE_WIDE_COLS = new Set(['start', 'end', 'actualStart', 'actualFinish']);
+function colWidth(id) { return minuteModeActive() && MINUTE_WIDE_COLS.has(id) ? '150px' : TASK_COLS[id].width; }
 function renderGrid() {
   const full = true;   // the same full list in both views (before, the Gantt view had a compact four-column one)
   // The user's visible columns in the user's order (ID first, row actions last) — in both views.
@@ -3340,10 +3600,10 @@ function renderGrid() {
     preds: colHeadHtml('Predecessors', 'preds'), resource: colHeadHtml('Resource', 'resource'),
     ...Object.fromEntries(Object.keys(CUSTOM_FIELDS).map(id => [id, colHeadHtml(customFieldName(id), id)]))
   };
-  document.getElementById('main').style.setProperty('--task-cols', ['34px', ...cols.map(c => TASK_COLS[c].width), '88px'].join(' '));
+  document.getElementById('main').style.setProperty('--task-cols', ['34px', ...cols.map(colWidth), '88px'].join(' '));
   {   // the narrowest the row can get (Task Name at its minimum) + the row's 10px padding on each side: below this width the list scrolls sideways
     const px = w => { const m = /^(\d+(?:\.\d+)?)px$/.exec(w) || /^minmax\((\d+(?:\.\d+)?)px/.exec(w); return m ? parseFloat(m[1]) : 0; };
-    document.getElementById('main').style.setProperty('--grid-min-w', (34 + cols.reduce((a, c) => a + px(TASK_COLS[c].width), 0) + 88 + 20) + 'px');
+    document.getElementById('main').style.setProperty('--grid-min-w', (34 + cols.reduce((a, c) => a + px(colWidth(c)), 0) + 88 + 20) + 'px');
   }
   document.getElementById('gridHeader').innerHTML = `<div class="id-head"><button class="id-toggle" id="collapseToggleBtn" onclick="toggleAllCollapsed()"><i class="fa-solid fa-angles-up"></i></button></div>${cols.map(c => HEAD[c]).join('')}${full ? '<div class="actions-head">Actions</div>' : ''}`;
   const list = visibleTaskList();
@@ -3383,12 +3643,16 @@ function renderGrid() {
       ? `<input type="text" class="inline-edit" value="${escapeHtml(t.name)}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" ${blurAttr('name')}>`
       : `<span class="name-text${summary ? ' summary' : ''}${full ? ' editable' : ''}" title="${escapeHtml(t.name)}"${full ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','name')"` : ''}>${escapeHtml(t.name)}</span>`;
     const summaryCls = summary ? ' summary' : '';
+    // In a minute-mode plan a leaf task's own Start/Finish also show their time (an absent time field shows the working
+    // day's own open/close, exactly what taskMoment() treats it as — see gridDateTimeText()). A group's rolled-up dates
+    // and free text stay date-only; the precise time is edited in the task dialog, not this inline editor.
+    const showTime = minuteModeActive() && ownDates;
     const startCell = editing('start')
       ? dateEditor('start', startIso, t.startText)
-      : `<div class="grid-cell-dim${summaryCls}${canEditDates ? ' editable' : ''}"${canEditDates ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','start')"` : ''}>${t.startText != null ? escapeHtml(t.startText) : fmtDate(startIso)}</div>`;
+      : `<div class="grid-cell-dim${summaryCls}${canEditDates ? ' editable' : ''}"${canEditDates ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','start')"` : ''}>${t.startText != null ? escapeHtml(t.startText) : gridDateTimeText(startIso, t.startTime, showTime)}</div>`;
     const finishCell = editing('finish')
       ? dateEditor('finish', endIso, t.endText)
-      : `<div class="grid-cell-dim${summaryCls}${canEditFinishCell ? ' editable' : ''}"${canEditFinishCell ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','finish')"` : ''}>${t.endText != null ? escapeHtml(t.endText) : t.milestone && t.startText != null ? escapeHtml(t.startText) : fmtDate(endIso)}</div>`;
+      : `<div class="grid-cell-dim${summaryCls}${canEditFinishCell ? ' editable' : ''}"${canEditFinishCell ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','finish')"` : ''}>${t.endText != null ? escapeHtml(t.endText) : t.milestone && t.startText != null ? escapeHtml(t.startText) : gridDateTimeText(endIso, t.endTime, showTime, workHours().end)}</div>`;
     const durKnown = !isUnscheduled(t) && startIso && endIso;
     const durNum = durKnown ? durationDays(startIso, endIso) : null;
     const durationCell = editing('duration')
@@ -3407,7 +3671,7 @@ function renderGrid() {
     const act = actualDates(t.id), canEditActual = full && !summary;   // a group's actual dates are rolled up, so not editable (a milestone's Actual Finish follows its Actual Start)
     const actualCell = (field, iso) => editing(field)
       ? dateEditor(field, iso, null, 'dd.mm.yyyy')   // exactly the Start/Finish editor: a manual task gets the typed box + calendar, an auto task the native picker
-      : `<div class="grid-cell-dim${summaryCls}${canEditActual && !(t.milestone && field === 'actualFinish') ? ' editable' : ''}"${canEditActual && !(t.milestone && field === 'actualFinish') ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','${field}')"` : ''}>${iso ? fmtDate(iso) : ''}</div>`;
+      : `<div class="grid-cell-dim${summaryCls}${canEditActual && !(t.milestone && field === 'actualFinish') ? ' editable' : ''}"${canEditActual && !(t.milestone && field === 'actualFinish') ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','${field}')"` : ''}>${gridDateTimeText(iso, field === 'actualStart' ? t.actualStartTime : t.actualFinishTime, minuteModeActive() && !summary, field === 'actualFinish' ? workHours().end : workHours().start)}</div>`;
     const resourceCell = editing('resource')
       ? `<input type="text" class="inline-edit" maxlength="200" value="${escapeHtml(t.resource)}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" ${blurAttr('resource')}>`
       : `<div class="grid-cell-dim${summaryCls}${full ? ' editable' : ''}" title="${escapeHtml(t.resource)}"${full ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','resource')"` : ''}>${escapeHtml(t.resource)}</div>`;
@@ -4215,7 +4479,8 @@ function addTask() {
     startDate: firstDay, endDate: firstDay, progress: 0, milestone: false,
     color: null, predecessors: [], collapsed: false, updatedAt: Date.now(),
     constraintType: 'ASAP', constraintDate: null, taskMode: project.newTaskMode === 'manual' ? 'manual' : 'auto',
-    resource: '', actualStart: null, actualFinish: null
+    resource: '', actualStart: null, actualFinish: null,
+    startTime: null, endTime: null, actualStartTime: null, actualFinishTime: null, constraintTime: null
   };
   tasks.push(t);
   filterPinned.add(t.id);   // a filter must not hide the task you just added
@@ -4234,7 +4499,8 @@ function addSpacer() {
   const sel = selectedTaskId ? byId(selectedTaskId) : null;
   const parentId = sel ? (sel.parentId || null) : null, insertAt = sel ? childrenOf(parentId).findIndex(s => s.id === sel.id) + 1 : childrenOf(null).length, now = Date.now();
   const t = { id: genId(), name: '', spacer: true, parentId, order: insertAt, startDate: todayStr(), endDate: todayStr(), progress: 0, milestone: false, color: null, predecessors: [],
-    collapsed: false, updatedAt: now, constraintType: 'ASAP', constraintDate: null, taskMode: 'manual', resource: '', actualStart: null, actualFinish: null };
+    collapsed: false, updatedAt: now, constraintType: 'ASAP', constraintDate: null, taskMode: 'manual', resource: '', actualStart: null, actualFinish: null,
+    startTime: null, endTime: null, actualStartTime: null, actualFinishTime: null, constraintTime: null };
   tasks.push(t);
   filterPinned.add(t.id);   // a filter must not hide the line you just added
   const sibs = childrenOf(parentId).filter(s => s.id !== t.id);
@@ -4416,13 +4682,26 @@ function openTaskModal(id, isNew) {
   document.getElementById('taskMilestoneInput').checked = t.milestone;
   document.getElementById('taskStartInput').value = t.startDate;
   document.getElementById('taskEndInput').value = t.endDate;
-  document.getElementById('taskDurationInput').value = durationDays(t.startDate, t.endDate);
+  const minuteMode = minuteModeActive();
+  for (const el of document.querySelectorAll('.task-time-input')) el.classList.toggle('hidden', !minuteMode);
+  document.getElementById('taskDurationLabel').textContent = minuteMode ? 'Duration' : 'Duration (days)';
+  document.getElementById('taskDurationLabel').title = minuteMode ? "Working time, counted on the plan's working hours — e.g. \"4h\", \"90m\", \"2d\" (a bare number is hours)" : "Working days, counted on the plan's working calendar";
+  if (minuteMode) {
+    document.getElementById('taskStartTimeInput').value = t.startTime || workHours().start;
+    document.getElementById('taskEndTimeInput').value = t.endTime || workHours().end;
+    document.getElementById('taskDurationInput').value = fmtDurationMinutes(durationMoment(taskMoment(t, 'start'), taskMoment(t, 'end')));
+  } else {
+    document.getElementById('taskDurationInput').value = durationDays(t.startDate, t.endDate);
+  }
   document.getElementById('taskProgressInput').value = t.progress;
   document.getElementById('taskResourceInput').value = t.resource || '';
   const group = hasChildren(id), act = actualDates(id);   // a group's actual dates are rolled up from its tasks, so read-only
   document.getElementById('taskActualStartInput').value = act.start || '';
   document.getElementById('taskActualFinishInput').value = act.end || '';
+  document.getElementById('taskActualStartTimeInput').value = t.actualStartTime || workHours().start;
+  document.getElementById('taskActualFinishTimeInput').value = t.actualFinishTime || workHours().end;
   document.getElementById('taskActualStartInput').disabled = group; document.getElementById('taskActualFinishInput').disabled = group;
+  document.getElementById('taskActualStartTimeInput').disabled = group; document.getElementById('taskActualFinishTimeInput').disabled = group;
   const actNote = document.getElementById('taskActualsNote');
   actNote.textContent = group ? 'A group shows the actual dates of the tasks in it: the earliest actual start, and an actual finish once every task has finished.' : '';
   actNote.classList.toggle('hidden', !group);
@@ -4430,6 +4709,7 @@ function openTaskModal(id, isNew) {
   const typeSel = document.getElementById('taskConstraintTypeInput');
   typeSel.innerHTML = CONSTRAINT_TYPES.map(c => `<option value="${c.id}"${c.id === t.constraintType ? ' selected' : ''}>${c.label}</option>`).join('');
   document.getElementById('taskConstraintDateInput').value = t.constraintDate || t.startDate;
+  document.getElementById('taskConstraintTimeInput').value = t.constraintTime || workHours().start;
   onConstraintTypeChange();
   editingPredecessors = t.predecessors.map(p => ({ ...p }));
   renderPredecessorRows();
@@ -4744,6 +5024,7 @@ function addHolidayPreset() {
   showToast(added ? `Added ${added} holiday${added === 1 ? '' : 's'} for ${label} ${yrs}${offDays ? ` (${offDays} on days off anyway)` : ''}` : `Nothing new for ${label} ${yrs} — everything is already in the list${offDays ? ' or on a day off' : ''}`);
 }
 let calHolidays = [];   // the dialog's working copy of project.holidays
+let calWorkHours = null;   // the dialog's working copy of project.workHours (only meaningful while "Hours & minutes" is picked)
 function openCalendarModal() {
   closeScheduleMenu();
   document.getElementById('calendarPlanName').textContent = project.name;
@@ -4757,6 +5038,17 @@ function openCalendarModal() {
   document.getElementById('calendarDays').onchange = updateCalendarSummary;
   const how = document.querySelector('#calendarModalBg .cal-how'); if (how) how.open = false;
   renderHolidayList();
+  document.getElementById(project.timeUnit === 'minute' ? 'precisionMinute' : 'precisionDay').checked = true;
+  const wh = workHours();
+  calWorkHours = { start: wh.start, end: wh.end, breaks: (wh.breaks || []).map(b => Object.assign({}, b)) };
+  document.getElementById('whStart').value = calWorkHours.start;
+  document.getElementById('whEnd').value = calWorkHours.end;
+  for (const id of ['whBreakFrom', 'whBreakTo']) document.getElementById(id).value = '';
+  renderWorkBreaks();
+  for (const r of document.querySelectorAll('#precisionRow input')) r.onchange = onPrecisionChange;
+  document.getElementById('whStart').onchange = updateCalendarSummary;
+  document.getElementById('whEnd').onchange = updateCalendarSummary;
+  onPrecisionChange();
   calSnapshot = calendarDraftState();
   document.getElementById('calendarModalBg').classList.add('open');
   setTimeout(() => { const i = document.querySelector('#calendarDays input'); if (i) i.focus(); }, 40);
@@ -4764,7 +5056,11 @@ function openCalendarModal() {
 function closeCalendarModal() { document.getElementById('calendarModalBg').classList.remove('open'); }
 // What the dialog holds right now (chips + the list): × / Escape / a click outside ask before throwing edits away.
 let calSnapshot = null;
-function calendarDraftState() { return JSON.stringify([[...document.querySelectorAll('#calendarDays input:checked')].map(i => i.value), calHolidays]); }
+function calendarDraftState() {
+  const tu = document.querySelector('input[name="timeUnit"]:checked').value;
+  return JSON.stringify([[...document.querySelectorAll('#calendarDays input:checked')].map(i => i.value), calHolidays, tu,
+    tu === 'minute' ? [document.getElementById('whStart').value, document.getElementById('whEnd').value, calWorkHours.breaks] : null]);
+}
 function calendarDirty() { return calSnapshot !== null && document.getElementById('calendarModalBg').classList.contains('open') && calendarDraftState() !== calSnapshot; }
 function requestCloseCalendarModal() {
   if (!calendarDirty()) { closeCalendarModal(); return; }
@@ -4772,7 +5068,9 @@ function requestCloseCalendarModal() {
 }
 function updateCalendarSummary() {   // the chip in the header: what the calendar would be if you saved now
   const days = [...document.querySelectorAll('#calendarDays input:checked')].map(i => Number(i.value)).sort((a, b) => a - b), n = calHolidays.length;
-  document.getElementById('calendarSummaryLive').textContent = days.length ? calendarLabel(days) + (n ? ` · ${n} holiday${n === 1 ? '' : 's'}` : '') : 'No working day picked';
+  const minute = document.getElementById('precisionMinute') && document.getElementById('precisionMinute').checked;
+  const hours = minute ? ` · ${document.getElementById('whStart').value || DEFAULT_WORK_HOURS.start}–${document.getElementById('whEnd').value || DEFAULT_WORK_HOURS.end}` : '';
+  document.getElementById('calendarSummaryLive').textContent = days.length ? calendarLabel(days) + (n ? ` · ${n} holiday${n === 1 ? '' : 's'}` : '') + hours : 'No working day picked';
 }
 function clearHolidays() { if (!calHolidays.length) return; calHolidays = []; renderHolidayList(); }
 function fmtHolidayWhen(h) {
@@ -4809,15 +5107,44 @@ function addHoliday() {
   document.getElementById('holFrom').focus();
 }
 function removeHoliday(i) { calHolidays.splice(i, 1); renderHolidayList(); }
+// Scheduling precision (Day / Hours & minutes) and, only while the latter is picked, the working-day start/end and its
+// breaks — an explicit user request ("like in MS Project... switch to hour/minutes planning"). Folded into this dialog
+// rather than a separate one: it's the same "how work is counted" idea the working week and holidays above already are.
+function onPrecisionChange() {
+  const minute = document.getElementById('precisionMinute').checked;
+  document.getElementById('workHoursEditor').classList.toggle('hidden', !minute);
+  updateCalendarSummary();
+}
+function fmtHhmm(hm) { return hm || ''; }
+function renderWorkBreaks() {
+  document.getElementById('whBreakList').innerHTML = calWorkHours.breaks.map((b, i) =>
+    `<div class="hol-row"><span class="hol-when">${fmtHhmm(b.start)} – ${fmtHhmm(b.end)}</span><span class="hol-name"></span><button type="button" aria-label="Remove break ${fmtHhmm(b.start)}–${fmtHhmm(b.end)}" title="Remove" onclick="removeWorkBreak(${i})"><i class="fa-solid fa-xmark"></i></button></div>`
+  ).join('');
+}
+function addWorkBreak() {
+  const from = document.getElementById('whBreakFrom').value, to = document.getElementById('whBreakTo').value;
+  if (!from || !to) { showToast('Pick both a start and an end time for the break', true); return; }
+  if (to <= from) { showToast('The break must end after it starts', true); return; }
+  calWorkHours.breaks.push({ start: from, end: to });
+  renderWorkBreaks();
+  document.getElementById('whBreakFrom').value = ''; document.getElementById('whBreakTo').value = '';
+  document.getElementById('whBreakFrom').focus();
+}
+function removeWorkBreak(i) { calWorkHours.breaks.splice(i, 1); renderWorkBreaks(); }
 function saveCalendar() {
   const days = [...document.querySelectorAll('#calendarDays input:checked')].map(i => Number(i.value)).sort((a, b) => a - b);
   if (!days.length) { showToast('Pick at least one working day', true); return; }
   const hol = cleanHolidays(calHolidays);
-  if (days.join() === currentWorkDays().join() && stableStringify(hol) === stableStringify(project.holidays || null)) { closeCalendarModal(); return; }
+  const minute = document.getElementById('precisionMinute').checked;
+  const wh = minute ? { start: document.getElementById('whStart').value || DEFAULT_WORK_HOURS.start, end: document.getElementById('whEnd').value || DEFAULT_WORK_HOURS.end, breaks: calWorkHours.breaks } : null;
+  const curMinute = project.timeUnit === 'minute';
+  if (days.join() === currentWorkDays().join() && stableStringify(hol) === stableStringify(project.holidays || null)
+    && minute === curMinute && stableStringify(wh) === (curMinute ? stableStringify(project.workHours || DEFAULT_WORK_HOURS) : null)) { closeCalendarModal(); return; }
   project.workDays = days;
   if (hol) project.holidays = hol; else delete project.holidays;
+  if (minute) { project.timeUnit = 'minute'; project.workHours = wh; } else { delete project.timeUnit; delete project.workHours; }
   project.updatedAt = Date.now();
-  normalizeData();   // drops workDays again if it is the default
+  normalizeData();   // drops workDays/workHours again if they are the default, and nulls every task's time fields when leaving minute mode
   save(); render(); closeCalendarModal();
   showToast(`Working calendar: ${calendarSummary()}`);
 }
@@ -4963,11 +5290,16 @@ function updateCustomBadge() {
 function onActualFinishChange() {
   const f = document.getElementById('taskActualFinishInput').value;
   if (!f) return;
+  const minute = minuteModeActive();
   document.getElementById('taskProgressInput').value = 100;
   const as = document.getElementById('taskActualStartInput');
-  if (!as.value) { const st = document.getElementById('taskStartInput').value; as.value = st && dayNumber(st) <= dayNumber(f) ? st : f; }
+  if (!as.value) {
+    const st = document.getElementById('taskStartInput').value; as.value = st && dayNumber(st) <= dayNumber(f) ? st : f;
+    if (minute) document.getElementById('taskActualStartTimeInput').value = st === as.value ? (document.getElementById('taskStartTimeInput').value || workHours().start) : (document.getElementById('taskActualFinishTimeInput').value || workHours().start);
+  }
   document.getElementById('taskStartInput').value = as.value;    // the actual dates ARE the schedule (MS Project): Start = Actual Start, Finish = Actual Finish
   document.getElementById('taskEndInput').value = f;
+  if (minute) { document.getElementById('taskStartTimeInput').value = document.getElementById('taskActualStartTimeInput').value; document.getElementById('taskEndTimeInput').value = document.getElementById('taskActualFinishTimeInput').value || workHours().end; }
   updateDurationDisplay(); updateModalComputed();
 }
 // The actual start becomes the Start (a task still running keeps its duration, so its Finish moves along); a milestone has one date:
@@ -4975,11 +5307,22 @@ function onActualFinishChange() {
 function onActualStartChange() {
   const a = document.getElementById('taskActualStartInput').value;
   if (!a) return;
-  const startEl = document.getElementById('taskStartInput'), endEl = document.getElementById('taskEndInput');
-  const dur = Math.min(MAX_DURATION_DAYS, Math.max(1, parseInt(document.getElementById('taskDurationInput').value) || 1));
+  const startEl = document.getElementById('taskStartInput'), endEl = document.getElementById('taskEndInput'), minute = minuteModeActive();
   startEl.value = a;
-  if (document.getElementById('taskMilestoneInput').checked) { endEl.value = a; document.getElementById('taskProgressInput').value = 100; }
-  else if (!document.getElementById('taskActualFinishInput').value) endEl.value = finishFor(a, dur);
+  if (minute) document.getElementById('taskStartTimeInput').value = document.getElementById('taskActualStartTimeInput').value || workHours().start;
+  if (document.getElementById('taskMilestoneInput').checked) {
+    endEl.value = a; document.getElementById('taskProgressInput').value = 100;
+    if (minute) document.getElementById('taskEndTimeInput').value = document.getElementById('taskStartTimeInput').value;
+  } else if (!document.getElementById('taskActualFinishInput').value) {
+    if (minute) {
+      const d = Math.min(MAX_DURATION_MINUTES, parseDurationMinutes(document.getElementById('taskDurationInput').value) || 60);
+      const finMn = finishMomentFor(dayNumber(a) * 1440 + minuteOfDay(document.getElementById('taskStartTimeInput').value), d), finDay = Math.floor(finMn / 1440);
+      endEl.value = dayNumberToIso(finDay); document.getElementById('taskEndTimeInput').value = hhmmOf(finMn - finDay * 1440);
+    } else {
+      const dur = Math.min(MAX_DURATION_DAYS, Math.max(1, parseInt(document.getElementById('taskDurationInput').value) || 1));
+      endEl.value = finishFor(a, dur);
+    }
+  }
   updateDurationDisplay(); updateModalComputed();
 }
 function onMilestoneToggle() {
@@ -4987,37 +5330,56 @@ function onMilestoneToggle() {
   document.getElementById('taskEndField').classList.toggle('hidden', on);
   document.getElementById('taskDurationField').classList.toggle('hidden', on);
   document.getElementById('taskActualFinishField').classList.toggle('hidden', on);   // a milestone has one date, planned and actual
-  if (on) document.getElementById('taskEndInput').value = document.getElementById('taskStartInput').value;
+  if (on) {
+    document.getElementById('taskEndInput').value = document.getElementById('taskStartInput').value;
+    if (minuteModeActive()) document.getElementById('taskEndTimeInput').value = document.getElementById('taskStartTimeInput').value;
+  }
 }
 const dialogIsAuto = () => document.getElementById('taskModeInput').value === 'auto';
 function onTaskStartChange() {
   let s = document.getElementById('taskStartInput').value; if (!s) return;
-  const as = document.getElementById('taskActualStartInput');
+  const as = document.getElementById('taskActualStartInput'), minute = minuteModeActive();
   if (dialogIsAuto() && !as.value && !isWorkDay(s)) { s = nextWorkDay(s); document.getElementById('taskStartInput').value = s; }   // an Auto task starts on a working day (an actual date is a fact)
-  if (as.value) as.value = s;   // once the task has started its Start IS its Actual Start
+  if (as.value) { as.value = s; if (minute) document.getElementById('taskActualStartTimeInput').value = document.getElementById('taskStartTimeInput').value; }   // once the task has started its Start IS its Actual Start
   const endEl = document.getElementById('taskEndInput');
-  if (document.getElementById('taskMilestoneInput').checked) endEl.value = s;
-  else if (!endEl.value || dayNumber(endEl.value) < dayNumber(s)) endEl.value = s;
+  if (document.getElementById('taskMilestoneInput').checked) { endEl.value = s; if (minute) document.getElementById('taskEndTimeInput').value = document.getElementById('taskStartTimeInput').value; }
+  else if (!endEl.value || dayNumber(endEl.value) < dayNumber(s)) { endEl.value = s; if (minute) document.getElementById('taskEndTimeInput').value = document.getElementById('taskStartTimeInput').value; }
   updateDurationDisplay();
 }
 function onTaskEndChange() {
-  const s = document.getElementById('taskStartInput').value;
+  const s = document.getElementById('taskStartInput').value, minute = minuteModeActive();
   const endEl = document.getElementById('taskEndInput'), af = document.getElementById('taskActualFinishInput');
   if (endEl.value && dialogIsAuto() && !af.value && !isWorkDay(endEl.value)) endEl.value = prevWorkDay(endEl.value);   // ...and finishes on one
   if (dayNumber(endEl.value) < dayNumber(s)) endEl.value = s;
-  if (af.value) af.value = endEl.value;   // a finished task's Finish IS its Actual Finish
+  if (af.value) { af.value = endEl.value; if (minute) document.getElementById('taskActualFinishTimeInput').value = document.getElementById('taskEndTimeInput').value; }   // a finished task's Finish IS its Actual Finish
   updateDurationDisplay();
 }
 function onTaskDurationChange() {
-  const d = Math.min(MAX_DURATION_DAYS, Math.max(1, parseInt(document.getElementById('taskDurationInput').value) || 1));
   let s = document.getElementById('taskStartInput').value;
   if (dialogIsAuto() && !isWorkDay(s)) { s = nextWorkDay(s); document.getElementById('taskStartInput').value = s; }
-  document.getElementById('taskEndInput').value = finishFor(s, d);
-  if (document.getElementById('taskActualFinishInput').value) document.getElementById('taskActualFinishInput').value = document.getElementById('taskEndInput').value;
+  if (minuteModeActive()) {
+    const d = Math.min(MAX_DURATION_MINUTES, parseDurationMinutes(document.getElementById('taskDurationInput').value) || 60);
+    const startMn = dayNumber(s) * 1440 + minuteOfDay(document.getElementById('taskStartTimeInput').value || workHours().start);
+    const finMn = finishMomentFor(startMn, d), finDay = Math.floor(finMn / 1440);
+    document.getElementById('taskEndInput').value = dayNumberToIso(finDay);
+    document.getElementById('taskEndTimeInput').value = hhmmOf(finMn - finDay * 1440);
+    if (document.getElementById('taskActualFinishInput').value) { document.getElementById('taskActualFinishInput').value = document.getElementById('taskEndInput').value; document.getElementById('taskActualFinishTimeInput').value = document.getElementById('taskEndTimeInput').value; }
+  } else {
+    const d = Math.min(MAX_DURATION_DAYS, Math.max(1, parseInt(document.getElementById('taskDurationInput').value) || 1));
+    document.getElementById('taskEndInput').value = finishFor(s, d);
+    if (document.getElementById('taskActualFinishInput').value) document.getElementById('taskActualFinishInput').value = document.getElementById('taskEndInput').value;
+  }
 }
 function updateDurationDisplay() {
   const s = document.getElementById('taskStartInput').value, e = document.getElementById('taskEndInput').value;
-  if (s && e) document.getElementById('taskDurationInput').value = durationDays(s, e);
+  if (!s || !e) return;
+  if (minuteModeActive()) {
+    const sm = dayNumber(s) * 1440 + minuteOfDay(document.getElementById('taskStartTimeInput').value || workHours().start);
+    const em = dayNumber(e) * 1440 + minuteOfDay(document.getElementById('taskEndTimeInput').value || workHours().end);
+    document.getElementById('taskDurationInput').value = fmtDurationMinutes(durationMinutes(sm, em));
+  } else {
+    document.getElementById('taskDurationInput').value = durationDays(s, e);
+  }
 }
 function renderColorSwatches(selected) {
   const el = document.getElementById('taskColorSwatches');
@@ -5082,6 +5444,8 @@ function saveTaskFromModal() {
   t.milestone = document.getElementById('taskMilestoneInput').checked;
   t.startDate = document.getElementById('taskStartInput').value || todayStr();
   t.endDate = t.milestone ? t.startDate : (document.getElementById('taskEndInput').value || t.startDate);
+  t.startTime = document.getElementById('taskStartTimeInput').value || null;
+  t.endTime = t.milestone ? t.startTime : (document.getElementById('taskEndTimeInput').value || null);
   // Free-text dates survive a save unless that date field was actually changed.
   if (t.startDate !== modalOrigDates.start) t.startText = null;
   if (t.endDate !== modalOrigDates.end) t.endText = null;
@@ -5092,7 +5456,12 @@ function saveTaskFromModal() {
   t.progress = Math.max(0, Math.min(100, parseInt(document.getElementById('taskProgressInput').value) || 0));
   t.resource = document.getElementById('taskResourceInput').value.trim().slice(0, 200);
   const previousFinish = t.actualFinish;
-  if (!isGroup) { t.actualStart = aStart; t.actualFinish = aEnd; recordActualFinish(t, previousFinish); applyActualDates(t); clampTaskDates(t); if (!isStarted(t)) snapToWorkDays(t); }
+  if (!isGroup) {
+    t.actualStart = aStart; t.actualFinish = aEnd;
+    t.actualStartTime = document.getElementById('taskActualStartTimeInput').value || null;
+    t.actualFinishTime = ms ? t.actualStartTime : (document.getElementById('taskActualFinishTimeInput').value || null);
+    recordActualFinish(t, previousFinish); applyActualDates(t); clampTaskDates(t); if (!isStarted(t)) snapToWorkDays(t);
+  }
   { const cv = cleanCustomValues(readCustomInputs()); if (cv) t.custom = cv; else delete t.custom; }
   t.color = document.getElementById('taskColorSwatches').dataset.value || null;
   const cyc0 = taskCycleSet(), prevCType = t.constraintType, prevCDate = t.constraintDate;
@@ -5100,6 +5469,7 @@ function saveTaskFromModal() {
   t.constraintType = document.getElementById('taskConstraintTypeInput').value;
   const cinfo = constraintTypeInfo(t.constraintType);
   t.constraintDate = cinfo.hasDate ? (document.getElementById('taskConstraintDateInput').value || t.startDate) : null;
+  t.constraintTime = cinfo.hasDate ? (document.getElementById('taskConstraintTimeInput').value || null) : null;
   // Changing a date in the dialog pins the task there (Start / Finish No Earlier Than) unless the constraint itself was changed.
   if (t.constraintType === prevCType && t.constraintDate === prevCDate) {
     if (t.startDate !== modalOrigDates.start) pinToDate(t, 'start');
@@ -5109,9 +5479,9 @@ function saveTaskFromModal() {
   // moment the constraint is set, rather than waiting for the cascade
   // below to merely treat it as a lower bound (see constraintStart()).
   if (cinfo.bound === 'exact' && t.taskMode !== 'manual') {
-    const dur = durationDays(t.startDate, t.endDate);
-    if (cinfo.basis === 'finish') { t.endDate = shiftWork(t.constraintDate, 0); t.startDate = shiftWork(t.endDate, -(dur - 1)); }
-    else { t.startDate = shiftWork(t.constraintDate, 0); t.endDate = t.milestone ? t.startDate : finishFor(t.startDate, dur); }
+    const dur = durationMoment(taskMoment(t, 'start'), taskMoment(t, 'end')), cm = taskMoment(t, 'constraint');
+    if (cinfo.basis === 'finish') { setTaskMoment(t, 'end', shiftMoment(cm, 0)); setTaskMoment(t, 'start', startMoment(taskMoment(t, 'end'), dur)); }
+    else { setTaskMoment(t, 'start', shiftMoment(cm, 0)); if (t.milestone) copyTaskField(t, 'start', 'end'); else setTaskMoment(t, 'end', finishMoment(taskMoment(t, 'start'), dur)); }
   }
   t.updatedAt = Date.now();
   normalizeData();
@@ -5414,6 +5784,31 @@ function parseTableDate(str, fmt = 'auto') {
   function y4(v) { return v.length === 2 ? 2000 + +v : +v; }
 }
 // A duration in WORKING days: "5", "5 days", "5d", "5 Tage", "2w", "16h", "1.5 days" …; a trailing ? (estimated) is ignored. null = not a duration.
+// Duration entry for a minute-mode plan's task dialog: same unit vocabulary as parseTableDuration() below, but returns
+// working MINUTES (not rounded to whole days) — "4h"/"90m" are exact, a bare number defaults to HOURS (not days: the
+// point of switching a plan to minute mode is finer entry than a whole day).
+function parseDurationMinutes(str) {
+  const s = String(str == null ? '' : str).trim().toLowerCase();
+  const m = /^(\d+(?:[.,]\d+)?)\s*([a-zäöü]*)$/.exec(s);
+  if (!m) return null;
+  const n = parseFloat(m[1].replace(',', '.')), u = m[2], per = workMinutesPerDay();
+  let minutes;
+  if (['h', 'hr', 'hrs', 'hour', 'hours', 'std', 'stunde', 'stunden', ''].includes(u)) minutes = n * 60;
+  else if (['min', 'mins', 'minute', 'minutes', 'm'].includes(u)) minutes = n;
+  else if (['w', 'wk', 'wks', 'week', 'weeks', 'wo', 'woche', 'wochen'].includes(u)) minutes = n * 5 * per;
+  else if (['d', 'day', 'days', 't', 'tag', 'tage', 'tagen'].includes(u)) minutes = n * per;
+  else return null;
+  if (!(minutes <= MAX_DURATION_MINUTES)) return null;   // not a duration a plan can hold (also NaN, Infinity)
+  const r = Math.round(minutes);
+  return r === 0 && minutes > 0 ? 1 : r;
+}
+function fmtDurationMinutes(min) {
+  const per = workMinutesPerDay();
+  if (per && min % per === 0) { const d = min / per; return `${d} day${d === 1 ? '' : 's'}`; }
+  if (min % 60 === 0) { const h = min / 60; return `${h} hr${h === 1 ? '' : 's'}`; }
+  if (min % 30 === 0) return `${(min / 60).toFixed(1)} hrs`;
+  return `${min} min`;
+}
 function parseTableDuration(str) {
   const s = String(str == null ? '' : str).trim().toLowerCase().replace(/\?$/, '').trim();
   const m = /^(\d+(?:[.,]\d+)?)\s*([a-zäöü]*)$/.exec(s);
@@ -5474,7 +5869,8 @@ const TRUE_WORDS = ['1', 'yes', 'y', 'true', 'ja', 'x', 'wahr', '✓'];
 function isTrueWord(v) { return TRUE_WORDS.includes(String(v || '').trim().toLowerCase()); }
 function newImportedTask(name, parentId, order) {
   return { id: genId() + Math.random().toString(36).slice(2, 5), name: String(name || '').trim().slice(0, 200) || 'Untitled Task', parentId, order, startDate: todayStr(), endDate: todayStr(), progress: 0, milestone: false, color: null,
-    predecessors: [], collapsed: false, updatedAt: Date.now(), constraintType: 'ASAP', constraintDate: null, taskMode: 'auto', resource: '', actualStart: null, actualFinish: null };
+    predecessors: [], collapsed: false, updatedAt: Date.now(), constraintType: 'ASAP', constraintDate: null, taskMode: 'auto', resource: '', actualStart: null, actualFinish: null,
+    startTime: null, endTime: null, actualStartTime: null, actualFinishTime: null, constraintTime: null };
 }
 // Turns rows of cells into tasks. opts: { dateFormat, defaultCols (field names for a table without a header) }.
 function tasksFromTable(rows, opts = {}) {
@@ -6658,7 +7054,10 @@ function buildMspdi() {
   const list = exportTaskRows('all').filter(r => !r.task.spacer), rows = list.map(r => r.task);
   const uid = new Map(rows.map((t, i) => [t.id, i + 1])), esc = xmlEsc;
   const T = (n, v) => v === undefined || v === null ? '' : `<${n}>${esc(v)}</${n}>`;
-  const dt = (iso, time = '08:00:00') => `${iso}T${time}`, hours = d => `PT${Math.round(d * 8)}H0M0S`;
+  // The project's real working hours when it has any (a minute-mode plan's project.workHours), else the same 08:00–12:00/
+  // 13:00–17:00 default this export always used — so a day-mode plan's XML is byte-identical to before this existed.
+  const wh = workHours(), hhmmss = hm => hm + ':00';
+  const dt = (iso, time = hhmmss(wh.start)) => `${iso}T${time}`, hours = d => `PT${Math.round(d * 8)}H0M0S`;
   const CT = { ASAP: 0, ALAP: 1, MSO: 2, MFO: 3, SNET: 4, SNLT: 5, FNET: 6, FNLT: 7 }, LT = { FF: 0, FS: 1, SF: 2, SS: 3 };
   let d0 = Infinity, d1 = -Infinity;
   for (const t of rows) { const e = effectiveDates(t.id); if (e.start && e.end) { d0 = Math.min(d0, dayNumber(e.start)); d1 = Math.max(d1, dayNumber(e.end)); } }
@@ -6669,8 +7068,9 @@ function buildMspdi() {
   for (const t of rows) if (!hasChildren(t.id)) for (const n of resOf(t)) if (!resNames.includes(n)) resNames.push(n);
   // ---- calendar
   const wd = new Set(currentWorkDays()), yrs = [Number(startIso.slice(0, 4)) - 1, Number(endIso.slice(0, 4)) + 1];
+  const workingTimes = workWindows().map(([a, b]) => `<WorkingTime>${T('FromTime', hhmmss(hhmmOf(a)))}${T('ToTime', hhmmss(hhmmOf(b)))}</WorkingTime>`).join('');
   const weekDays = [1, 2, 3, 4, 5, 6, 7].map(dtp => wd.has(dtp - 1)
-    ? `<WeekDay>${T('DayType', dtp)}${T('DayWorking', 1)}<WorkingTimes><WorkingTime><FromTime>08:00:00</FromTime><ToTime>12:00:00</ToTime></WorkingTime><WorkingTime><FromTime>13:00:00</FromTime><ToTime>17:00:00</ToTime></WorkingTime></WorkingTimes></WeekDay>`
+    ? `<WeekDay>${T('DayType', dtp)}${T('DayWorking', 1)}<WorkingTimes>${workingTimes}</WorkingTimes></WeekDay>`
     : `<WeekDay>${T('DayType', dtp)}${T('DayWorking', 0)}</WeekDay>`).join('');
   const exc = [];
   for (const h of (project.holidays || [])) {
@@ -6689,25 +7089,25 @@ function buildMspdi() {
     for (const id of Object.keys(CUSTOM_FIELDS)) { const v = customValue(t, id); if (v !== undefined) notes.push(`${customFieldName(id)}: ${CUSTOM_FIELDS[id].kind === 'flag' ? (v ? 'Yes' : 'No') : CUSTOM_FIELDS[id].kind === 'date' ? fmtDate(v) : v}`); }
     let x = `<Task>${T('UID', u)}${T('ID', u)}${T('Name', t.name)}${T('Active', 1)}${T('Manual', manual ? 1 : 0)}${T('Type', 0)}${T('IsNull', 0)}${T('WBS', wbsCode(t.id))}${T('OutlineNumber', wbsCode(t.id))}${T('OutlineLevel', depth)}${T('Priority', 500)}`;
     if (has) {
-      x += T('Start', dt(e.start)) + T('Finish', dt(e.end, t.milestone && !group ? '08:00:00' : '17:00:00')) + T('Duration', hours(dur));
-      if (manual) x += T('ManualStart', dt(e.start)) + T('ManualFinish', dt(e.end, t.milestone && !group ? '08:00:00' : '17:00:00')) + T('ManualDuration', hours(dur));
+      x += T('Start', dt(e.start)) + T('Finish', dt(e.end, t.milestone && !group ? hhmmss(wh.start) : hhmmss(wh.end))) + T('Duration', hours(dur));
+      if (manual) x += T('ManualStart', dt(e.start)) + T('ManualFinish', dt(e.end, t.milestone && !group ? hhmmss(wh.start) : hhmmss(wh.end))) + T('ManualDuration', hours(dur));
     }
     x += T('DurationFormat', 7) + T('Milestone', t.milestone && !group ? 1 : 0) + T('Summary', group ? 1 : 0) + T('PercentComplete', Math.round(e.progress)) + T('PercentWorkComplete', Math.round(e.progress));
     if (act.start && !group) x += T('ActualStart', dt(act.start));
-    if (act.end && !group) x += T('ActualFinish', dt(act.end, t.milestone ? '08:00:00' : '17:00:00'));
+    if (act.end && !group) x += T('ActualFinish', dt(act.end, t.milestone ? hhmmss(wh.start) : hhmmss(wh.end)));
     const ct = CT[t.constraintType] || 0;
-    if (!group && ct) { const info = constraintTypeInfo(t.constraintType); x += T('ConstraintType', ct) + (info.hasDate && t.constraintDate ? T('ConstraintDate', dt(t.constraintDate, info.basis === 'finish' ? '17:00:00' : '08:00:00')) : ''); }
+    if (!group && ct) { const info = constraintTypeInfo(t.constraintType); x += T('ConstraintType', ct) + (info.hasDate && t.constraintDate ? T('ConstraintDate', dt(t.constraintDate, info.basis === 'finish' ? hhmmss(wh.end) : hhmmss(wh.start))) : ''); }
     else x += T('ConstraintType', 0);
     if (notes.length) x += T('Notes', notes.join('\n'));
     if (!group) for (const p of t.predecessors) if (uid.has(p.id)) x += `<PredecessorLink>${T('PredecessorUID', uid.get(p.id))}${T('Type', LT[p.type] == null ? 1 : LT[p.type])}${T('CrossProject', 0)}${T('LinkLag', Math.round((p.lag || 0) * 4800))}${T('LagFormat', 7)}</PredecessorLink>`;
-    for (let n = 0; n < BASELINE_SLOTS; n++) { const b = baselineDates(t.id, n); if (b && b.start && b.end) x += `<Baseline>${T('Number', n)}${T('Start', dt(b.start))}${T('Finish', dt(b.end, t.milestone && !group ? '08:00:00' : '17:00:00'))}${T('Duration', hours(t.milestone && !group ? 0 : durationDays(b.start, b.end)))}${T('DurationFormat', 7)}</Baseline>`; }
+    for (let n = 0; n < BASELINE_SLOTS; n++) { const b = baselineDates(t.id, n); if (b && b.start && b.end) x += `<Baseline>${T('Number', n)}${T('Start', dt(b.start))}${T('Finish', dt(b.end, t.milestone && !group ? hhmmss(wh.start) : hhmmss(wh.end)))}${T('Duration', hours(t.milestone && !group ? 0 : durationDays(b.start, b.end)))}${T('DurationFormat', 7)}</Baseline>`; }
     parts.push(x + '</Task>');
   });
   const assignments = []; let au = 0;
   rows.forEach((t, i) => { if (!hasChildren(t.id)) for (const n of resOf(t)) assignments.push(`<Assignment>${T('UID', ++au)}${T('TaskUID', i + 1)}${T('ResourceUID', resNames.indexOf(n) + 1)}${T('Units', 1)}</Assignment>`); });
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Project xmlns="http://schemas.microsoft.com/project">` +
-    `${T('SaveVersion', 14)}${T('Name', fileBase(title) + '.xml')}${T('Title', title)}${T('CreationDate', now)}${T('LastSaved', now)}${T('ScheduleFromStart', 1)}${T('StartDate', dt(startIso))}${T('FinishDate', dt(endIso, '17:00:00'))}` +
-    `${T('CalendarUID', 1)}${T('DefaultStartTime', '08:00:00')}${T('DefaultFinishTime', '17:00:00')}${T('MinutesPerDay', 480)}${T('MinutesPerWeek', 480 * Math.max(1, wd.size))}${T('DaysPerMonth', 20)}${T('DefaultTaskType', 0)}${T('DurationFormat', 7)}${T('WorkFormat', 2)}${T('WeekStartDay', 1)}` +
+    `${T('SaveVersion', 14)}${T('Name', fileBase(title) + '.xml')}${T('Title', title)}${T('CreationDate', now)}${T('LastSaved', now)}${T('ScheduleFromStart', 1)}${T('StartDate', dt(startIso))}${T('FinishDate', dt(endIso, hhmmss(wh.end)))}` +
+    `${T('CalendarUID', 1)}${T('DefaultStartTime', hhmmss(wh.start))}${T('DefaultFinishTime', hhmmss(wh.end))}${T('MinutesPerDay', workMinutesPerDay())}${T('MinutesPerWeek', workMinutesPerDay() * Math.max(1, wd.size))}${T('DaysPerMonth', 20)}${T('DefaultTaskType', 0)}${T('DurationFormat', 7)}${T('WorkFormat', 2)}${T('WeekStartDay', 1)}` +
     `<Calendars><Calendar>${T('UID', 1)}${T('Name', 'Standard')}${T('IsBaseCalendar', 1)}${T('IsBaselineCalendar', 0)}<WeekDays>${weekDays}</WeekDays>${exc.length ? `<Exceptions>${exc.join('')}</Exceptions>` : ''}</Calendar></Calendars>` +
     `<Tasks>${parts.join('')}</Tasks>` +
     `<Resources>${resNames.map((n, i) => `<Resource>${T('UID', i + 1)}${T('ID', i + 1)}${T('Name', n)}${T('Type', 1)}${T('IsNull', 0)}${T('MaxUnits', 1)}</Resource>`).join('')}</Resources>` +
