@@ -13,6 +13,7 @@ SEED = """() => { tasks.length = 0; deletedTaskIds.length = 0;
   project.holidays = [{ date: '2026-10-05', name: 'Day off' }]; normalizeData(); save(); setSelection(['a', 'b']); render(); }"""
 DIALOGS = {
   "Edit tasks": ("openBulkModal()", "bulkModalBg"), "Find": ("openSearch()", "searchModalBg"), "Print": ("openPrintModal()", "printModalBg"), "Working calendar": ("openCalendarModal()", "calendarModalBg"),
+  "Scheduling precision": ("openPrecisionModal()", "precisionModalBg"),
   "Help": ("openHelpModal()", "helpModalBg"), "Task": ("openTaskModal('a')", "taskModalBg"), "Baseline": ("openBaselineModal()", "baselineModalBg"), "Excel export": ("openExcelExport()", "excelModalBg"),
   "Import": ("openForeignImport('Task Name,Start,Finish\\nA,07.09.2026,08.09.2026\\nB,09.09.2026,10.09.2026', 'plan.csv')", "foreignImportModalBg"),
 }

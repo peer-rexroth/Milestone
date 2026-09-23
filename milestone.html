@@ -1120,31 +1120,6 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <div class="cal-days" id="calendarDays"></div>
       </section>
       <section class="cal-sec">
-        <div class="cal-sec-title">Scheduling precision</div>
-        <div class="precision-row" id="precisionRow">
-          <label class="precision-opt"><input type="radio" name="timeUnit" value="day" id="precisionDay"><span>Days <span class="cal-sec-note">the standard — Start and Finish are whole days</span></span></label>
-          <label class="precision-opt"><input type="radio" name="timeUnit" value="minute" id="precisionMinute"><span>Hours &amp; minutes <span class="cal-sec-note">like MS Project's minute-level scheduling — tasks can start and finish at a specific time of day, several to a day</span></span></label>
-        </div>
-        <div class="workhours-editor hidden" id="workHoursEditor">
-          <div class="wh-day-row">
-            <span class="cal-sec-note">Working day</span>
-            <input type="time" id="whStart" aria-label="Working day starts">
-            <span class="hol-to">to</span>
-            <input type="time" id="whEnd" aria-label="Working day ends">
-          </div>
-          <div>
-            <div class="cal-sec-note">Breaks (lunch, etc.) — not counted as working time</div>
-            <div class="hol-list" id="whBreakList"></div>
-            <div class="wh-break-add">
-              <input type="time" id="whBreakFrom" aria-label="Break starts" onkeydown="if(event.key==='Enter'){event.preventDefault();addWorkBreak();}">
-              <span class="hol-to">to</span>
-              <input type="time" id="whBreakTo" aria-label="Break ends" onkeydown="if(event.key==='Enter'){event.preventDefault();addWorkBreak();}">
-              <button class="btn" type="button" onclick="addWorkBreak()"><i class="fa-solid fa-plus"></i>Add break</button>
-            </div>
-          </div>
-        </div>
-      </section>
-      <section class="cal-sec">
         <div class="cal-sec-title">Public holidays</div>
         <div class="hol-preset">
           <select id="holRegion" aria-label="Country or region for public holidays"></select>
@@ -1177,6 +1152,44 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
       <span class="foot-note">Changes apply when you save.</span>
       <button class="btn" onclick="closeCalendarModal()">Cancel</button>
       <button class="btn btn-primary" onclick="saveCalendar()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="precisionModalBg" onclick="if(event.target===this) requestClosePrecisionModal()">
+  <div class="modal mid">
+    <div class="modal-header"><h2>Scheduling precision</h2><button onclick="requestClosePrecisionModal()" aria-label="Close">&times;</button></div>
+    <div class="modal-body">
+      <p class="cal-hint" style="margin:0">The standard is whole days. A plan can switch to <strong>Hours &amp; minutes</strong> — like MS Project's minute-level scheduling — so tasks can start and finish at a specific time of day, several to a day.</p>
+      <section class="cal-sec">
+        <div class="precision-row" id="precisionRow">
+          <label class="precision-opt"><input type="radio" name="timeUnit" value="day" id="precisionDay"><span>Days <span class="cal-sec-note">the standard — Start and Finish are whole days</span></span></label>
+          <label class="precision-opt"><input type="radio" name="timeUnit" value="minute" id="precisionMinute"><span>Hours &amp; minutes <span class="cal-sec-note">tasks can start and finish at a specific time of day, several to a day</span></span></label>
+        </div>
+        <div class="workhours-editor hidden" id="workHoursEditor">
+          <div class="wh-day-row">
+            <span class="cal-sec-note">Working day</span>
+            <input type="time" id="whStart" aria-label="Working day starts">
+            <span class="hol-to">to</span>
+            <input type="time" id="whEnd" aria-label="Working day ends">
+          </div>
+          <div>
+            <div class="cal-sec-note">Breaks (lunch, etc.) — not counted as working time</div>
+            <div class="hol-list" id="whBreakList"></div>
+            <div class="wh-break-add">
+              <input type="time" id="whBreakFrom" aria-label="Break starts" onkeydown="if(event.key==='Enter'){event.preventDefault();addWorkBreak();}">
+              <span class="hol-to">to</span>
+              <input type="time" id="whBreakTo" aria-label="Break ends" onkeydown="if(event.key==='Enter'){event.preventDefault();addWorkBreak();}">
+              <button class="btn" type="button" onclick="addWorkBreak()"><i class="fa-solid fa-plus"></i>Add break</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+    <div class="modal-footer">
+      <span class="foot-note">Changes apply when you save.</span>
+      <button class="btn" onclick="closePrecisionModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="savePrecision()">Save</button>
     </div>
   </div>
 </div>
@@ -1342,7 +1355,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <div class="help-section">
           <div class="help-section-title">Working calendar</div>
           <div class="help-row"><i class="fa-solid fa-calendar-week"></i><span>Each plan has its own working days — Monday to Friday unless you change it (Schedule menu → <strong>Working calendar…</strong>). Durations, lags and dependencies count working days only: a 5-day task that starts on a Monday finishes on that Friday, and its successor starts the next Monday.</span></div>
-          <div class="help-row"><i class="fa-solid fa-clock"></i><span><strong>Scheduling precision</strong> (same dialog): the standard is whole days, but a plan can switch to <strong>Hours &amp; minutes</strong> — like MS Project — so tasks can start and finish at a time of day. Set the working day's start/end and its breaks there too; date fields, Duration (type "4h" or "90m") and the columns adapt once it's on. Switching in keeps a task spanning its whole day; switching back just drops every time.</span></div>
+          <div class="help-row"><i class="fa-solid fa-clock"></i><span><strong>Scheduling precision</strong> (Schedule menu → <strong>Scheduling precision…</strong>, its own dialog): the standard is whole days, but a plan can switch to <strong>Hours &amp; minutes</strong> — like MS Project — so tasks can start and finish at a time of day. Set the working day's start/end and its breaks there too; date fields, Duration (type "4h" or "90m") and the columns adapt once it's on. Switching in keeps a task spanning its whole day; switching back just drops every time.</span></div>
           <div class="help-row"><i class="fa-solid fa-umbrella-beach"></i><span>Add <strong>holidays and other days off</strong> in the same dialog: a single day, a longer break (from … to …), or a day that comes back every year, each with an optional name. They count as days off exactly like weekends, and are shaded in the Gantt chart.</span></div>
           <div class="help-row"><i class="fa-solid fa-flag"></i><span><strong>Public holidays:</strong> pick a country or region (Germany with each of its states, Austria, Switzerland, the UK, Ireland, the US, Canada, France, the Netherlands, Belgium, Spain, Italy) and the years, then <strong>Add public holidays</strong>. Movable ones (Easter, Ascension, Thanksgiving …) are worked out for each year; days that fall on a day off anyway are left out.</span></div>
           <div class="help-row"><i class="fa-solid fa-circle-exclamation"></i><span>Treat the presets as a starting point: check them against your own calendar — regional and company days differ — and edit or remove any entry.</span></div>
@@ -1885,7 +1898,7 @@ const WEEKDAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], WEEKDAY
 function currentWorkDays() { return [...workDaySet()].sort((a, b) => a - b); }
 function holidayCount() { return project && Array.isArray(project.holidays) ? project.holidays.length : 0; }
 // e.g. "Mon–Fri" or "Mon–Fri · 9 holidays"
-function calendarSummary() { const n = holidayCount(); return calendarLabel() + (n ? ` · ${n} holiday${n === 1 ? '' : 's'}` : '') + (project && project.timeUnit === 'minute' ? ` · ${workHours().start}–${workHours().end}` : ''); }
+function calendarSummary() { const n = holidayCount(); return calendarLabel() + (n ? ` · ${n} holiday${n === 1 ? '' : 's'}` : ''); }
 function calendarLabel(days = currentWorkDays()) {
   const key = days.join('');
   if (key === '12345') return 'Mon–Fri';
@@ -5064,7 +5077,6 @@ function addHolidayPreset() {
   showToast(added ? `Added ${added} holiday${added === 1 ? '' : 's'} for ${label} ${yrs}${offDays ? ` (${offDays} on days off anyway)` : ''}` : `Nothing new for ${label} ${yrs} — everything is already in the list${offDays ? ' or on a day off' : ''}`);
 }
 let calHolidays = [];   // the dialog's working copy of project.holidays
-let calWorkHours = null;   // the dialog's working copy of project.workHours (only meaningful while "Hours & minutes" is picked)
 function openCalendarModal() {
   closeScheduleMenu();
   document.getElementById('calendarPlanName').textContent = project.name;
@@ -5078,17 +5090,6 @@ function openCalendarModal() {
   document.getElementById('calendarDays').onchange = updateCalendarSummary;
   const how = document.querySelector('#calendarModalBg .cal-how'); if (how) how.open = false;
   renderHolidayList();
-  document.getElementById(project.timeUnit === 'minute' ? 'precisionMinute' : 'precisionDay').checked = true;
-  const wh = workHours();
-  calWorkHours = { start: wh.start, end: wh.end, breaks: (wh.breaks || []).map(b => Object.assign({}, b)) };
-  document.getElementById('whStart').value = calWorkHours.start;
-  document.getElementById('whEnd').value = calWorkHours.end;
-  for (const id of ['whBreakFrom', 'whBreakTo']) document.getElementById(id).value = '';
-  renderWorkBreaks();
-  for (const r of document.querySelectorAll('#precisionRow input')) r.onchange = onPrecisionChange;
-  document.getElementById('whStart').onchange = updateCalendarSummary;
-  document.getElementById('whEnd').onchange = updateCalendarSummary;
-  onPrecisionChange();
   calSnapshot = calendarDraftState();
   document.getElementById('calendarModalBg').classList.add('open');
   setTimeout(() => { const i = document.querySelector('#calendarDays input'); if (i) i.focus(); }, 40);
@@ -5096,11 +5097,7 @@ function openCalendarModal() {
 function closeCalendarModal() { document.getElementById('calendarModalBg').classList.remove('open'); }
 // What the dialog holds right now (chips + the list): × / Escape / a click outside ask before throwing edits away.
 let calSnapshot = null;
-function calendarDraftState() {
-  const tu = document.querySelector('input[name="timeUnit"]:checked').value;
-  return JSON.stringify([[...document.querySelectorAll('#calendarDays input:checked')].map(i => i.value), calHolidays, tu,
-    tu === 'minute' ? [document.getElementById('whStart').value, document.getElementById('whEnd').value, calWorkHours.breaks] : null]);
-}
+function calendarDraftState() { return JSON.stringify([[...document.querySelectorAll('#calendarDays input:checked')].map(i => i.value), calHolidays]); }
 function calendarDirty() { return calSnapshot !== null && document.getElementById('calendarModalBg').classList.contains('open') && calendarDraftState() !== calSnapshot; }
 function requestCloseCalendarModal() {
   if (!calendarDirty()) { closeCalendarModal(); return; }
@@ -5108,9 +5105,7 @@ function requestCloseCalendarModal() {
 }
 function updateCalendarSummary() {   // the chip in the header: what the calendar would be if you saved now
   const days = [...document.querySelectorAll('#calendarDays input:checked')].map(i => Number(i.value)).sort((a, b) => a - b), n = calHolidays.length;
-  const minute = document.getElementById('precisionMinute') && document.getElementById('precisionMinute').checked;
-  const hours = minute ? ` · ${document.getElementById('whStart').value || DEFAULT_WORK_HOURS.start}–${document.getElementById('whEnd').value || DEFAULT_WORK_HOURS.end}` : '';
-  document.getElementById('calendarSummaryLive').textContent = days.length ? calendarLabel(days) + (n ? ` · ${n} holiday${n === 1 ? '' : 's'}` : '') + hours : 'No working day picked';
+  document.getElementById('calendarSummaryLive').textContent = days.length ? calendarLabel(days) + (n ? ` · ${n} holiday${n === 1 ? '' : 's'}` : '') : 'No working day picked';
 }
 function clearHolidays() { if (!calHolidays.length) return; calHolidays = []; renderHolidayList(); }
 function fmtHolidayWhen(h) {
@@ -5147,13 +5142,50 @@ function addHoliday() {
   document.getElementById('holFrom').focus();
 }
 function removeHoliday(i) { calHolidays.splice(i, 1); renderHolidayList(); }
+function saveCalendar() {
+  const days = [...document.querySelectorAll('#calendarDays input:checked')].map(i => Number(i.value)).sort((a, b) => a - b);
+  if (!days.length) { showToast('Pick at least one working day', true); return; }
+  const hol = cleanHolidays(calHolidays);
+  if (days.join() === currentWorkDays().join() && stableStringify(hol) === stableStringify(project.holidays || null)) { closeCalendarModal(); return; }
+  project.workDays = days;
+  if (hol) project.holidays = hol; else delete project.holidays;
+  project.updatedAt = Date.now();
+  normalizeData();   // drops workDays again if it is the default
+  save(); render(); closeCalendarModal();
+  showToast(`Working calendar: ${calendarSummary()}`);
+}
 // Scheduling precision (Day / Hours & minutes) and, only while the latter is picked, the working-day start/end and its
-// breaks — an explicit user request ("like in MS Project... switch to hour/minutes planning"). Folded into this dialog
-// rather than a separate one: it's the same "how work is counted" idea the working week and holidays above already are.
+// breaks — an explicit user request ("like in MS Project... switch to hour/minutes planning"). Its own dialog off the
+// Schedule menu, next to Working calendar rather than folded into it.
+let calWorkHours = null, precisionSnapshot = null;
+function openPrecisionModal() {
+  closeScheduleMenu();
+  document.getElementById(project.timeUnit === 'minute' ? 'precisionMinute' : 'precisionDay').checked = true;
+  const wh = workHours();
+  calWorkHours = { start: wh.start, end: wh.end, breaks: (wh.breaks || []).map(b => Object.assign({}, b)) };
+  document.getElementById('whStart').value = calWorkHours.start;
+  document.getElementById('whEnd').value = calWorkHours.end;
+  for (const id of ['whBreakFrom', 'whBreakTo']) document.getElementById(id).value = '';
+  renderWorkBreaks();
+  for (const r of document.querySelectorAll('#precisionRow input')) r.onchange = onPrecisionChange;
+  onPrecisionChange();
+  precisionSnapshot = precisionDraftState();
+  document.getElementById('precisionModalBg').classList.add('open');
+  setTimeout(() => { const i = document.getElementById(project.timeUnit === 'minute' ? 'precisionMinute' : 'precisionDay'); if (i) i.focus(); }, 40);
+}
+function closePrecisionModal() { document.getElementById('precisionModalBg').classList.remove('open'); }
+function precisionDraftState() {
+  const minute = document.getElementById('precisionMinute').checked;
+  return JSON.stringify([minute, minute ? [document.getElementById('whStart').value, document.getElementById('whEnd').value, calWorkHours.breaks] : null]);
+}
+function precisionDirty() { return precisionSnapshot !== null && document.getElementById('precisionModalBg').classList.contains('open') && precisionDraftState() !== precisionSnapshot; }
+function requestClosePrecisionModal() {
+  if (!precisionDirty()) { closePrecisionModal(); return; }
+  openConfirmModal({ title: 'Discard your changes?', body: 'You changed the scheduling precision but did not save it.', confirmLabel: 'Discard changes', cancelLabel: 'Keep editing', action() { closePrecisionModal(); } });
+}
 function onPrecisionChange() {
   const minute = document.getElementById('precisionMinute').checked;
   document.getElementById('workHoursEditor').classList.toggle('hidden', !minute);
-  updateCalendarSummary();
 }
 function fmtHhmm(hm) { return hm || ''; }
 function renderWorkBreaks() {
@@ -5171,22 +5203,17 @@ function addWorkBreak() {
   document.getElementById('whBreakFrom').focus();
 }
 function removeWorkBreak(i) { calWorkHours.breaks.splice(i, 1); renderWorkBreaks(); }
-function saveCalendar() {
-  const days = [...document.querySelectorAll('#calendarDays input:checked')].map(i => Number(i.value)).sort((a, b) => a - b);
-  if (!days.length) { showToast('Pick at least one working day', true); return; }
-  const hol = cleanHolidays(calHolidays);
+function precisionSummary() { return project && project.timeUnit === 'minute' ? `Hours & minutes · ${workHours().start}–${workHours().end}` : 'Days'; }
+function savePrecision() {
   const minute = document.getElementById('precisionMinute').checked;
   const wh = minute ? { start: document.getElementById('whStart').value || DEFAULT_WORK_HOURS.start, end: document.getElementById('whEnd').value || DEFAULT_WORK_HOURS.end, breaks: calWorkHours.breaks } : null;
   const curMinute = project.timeUnit === 'minute';
-  if (days.join() === currentWorkDays().join() && stableStringify(hol) === stableStringify(project.holidays || null)
-    && minute === curMinute && stableStringify(wh) === (curMinute ? stableStringify(project.workHours || DEFAULT_WORK_HOURS) : null)) { closeCalendarModal(); return; }
-  project.workDays = days;
-  if (hol) project.holidays = hol; else delete project.holidays;
+  if (minute === curMinute && stableStringify(wh) === (curMinute ? stableStringify(project.workHours || DEFAULT_WORK_HOURS) : null)) { closePrecisionModal(); return; }
   if (minute) { project.timeUnit = 'minute'; project.workHours = wh; } else { delete project.timeUnit; delete project.workHours; }
   project.updatedAt = Date.now();
-  normalizeData();   // drops workDays/workHours again if they are the default, and nulls every task's time fields when leaving minute mode
-  save(); render(); closeCalendarModal();
-  showToast(`Working calendar: ${calendarSummary()}`);
+  normalizeData();   // nulls every task's time fields when leaving minute mode
+  save(); render(); closePrecisionModal();
+  showToast(`Scheduling precision: ${precisionSummary()}`);
 }
 /* ---- Custom fields: the Add-field menu and the Manage dialog (names, adding, removing). A field is in use when it has a name or a value (see activeCustomSet). ---- */
 const FIELD_KIND_INFO = { text: { icon: 'fa-font', label: 'Text', hint: 'free text' }, number: { icon: 'fa-hashtag', label: 'Number', hint: 'a number' }, date: { icon: 'fa-calendar-day', label: 'Date', hint: 'a date' }, flag: { icon: 'fa-flag', label: 'Yes / No', hint: 'a tick' } };
@@ -5598,7 +5625,8 @@ function renderScheduleMenu() {
   document.getElementById('scheduleMenu').innerHTML =
     `<button class="dropdown-item" id="planBaselineItem" onclick="openBaselineModal()"><i class="fa-solid fa-ruler-horizontal"></i>Baseline…<span class="item-hint">${escapeHtml(baselineMenuHint())}</span></button>` +
     `<button class="dropdown-item" id="planRescheduleItem" onclick="openRescheduleModal()"><i class="fa-solid fa-calendar-check"></i>Reschedule remaining work…</button>` +
-    `<button class="dropdown-item" id="planCalendarItem" onclick="openCalendarModal()"><i class="fa-regular fa-calendar-days"></i>Working calendar…<span class="item-hint">${escapeHtml(calendarSummary())}</span></button>`;
+    `<button class="dropdown-item" id="planCalendarItem" onclick="openCalendarModal()"><i class="fa-regular fa-calendar-days"></i>Working calendar…<span class="item-hint">${escapeHtml(calendarSummary())}</span></button>` +
+    `<button class="dropdown-item" id="planPrecisionItem" onclick="openPrecisionModal()"><i class="fa-regular fa-clock"></i>Scheduling precision…<span class="item-hint">${escapeHtml(precisionSummary())}</span></button>`;
 }
 
 /* ============================ Merge (sync/import) =========================
@@ -8208,13 +8236,14 @@ function wireGlobalEvents() {
     if (e.key !== 'Escape') return;
     if (document.getElementById('cfAddMenu').classList.contains('open')) { closeCfAddMenu(); return; }
     if (document.getElementById('fieldsModalBg').classList.contains('open')) { if (document.getElementById('confirmModalBg').classList.contains('open')) closeConfirmModal(); else requestCloseFieldsModal(); return; }   // only the topmost dialog: the task dialog underneath keeps its unsaved edits
-    if (document.getElementById('confirmModalBg').classList.contains('open') && (taskModalDirty() || calendarDirty())) { closeConfirmModal(); return; }   // the "discard your changes?" question: Escape = keep editing
+    if (document.getElementById('confirmModalBg').classList.contains('open') && (taskModalDirty() || calendarDirty() || precisionDirty())) { closeConfirmModal(); return; }   // the "discard your changes?" question: Escape = keep editing
     if (taskModalDirty()) { requestCloseTaskModal(); return; }
     if (calendarDirty()) { requestCloseCalendarModal(); return; }
+    if (precisionDirty()) { requestClosePrecisionModal(); return; }
     // Escape closes whatever overlay is open first; only when there is none — and
     // the user isn't typing in a field, where Escape already means "cancel this
     // edit" — does it clear the task selection.
-    const modalIds = ['taskModalBg', 'folderFilesModalBg', 'confirmModalBg', 'calendarModalBg', 'baselineModalBg', 'rescheduleModalBg', 'syncConflictsModalBg', 'planModalBg', 'excelModalBg', 'importModalBg', 'foreignImportModalBg', 'bulkModalBg', 'searchModalBg', 'printModalBg', 'backupsModalBg', 'helpModalBg', 'aboutModalBg'];
+    const modalIds = ['taskModalBg', 'folderFilesModalBg', 'confirmModalBg', 'calendarModalBg', 'precisionModalBg', 'baselineModalBg', 'rescheduleModalBg', 'syncConflictsModalBg', 'planModalBg', 'excelModalBg', 'importModalBg', 'foreignImportModalBg', 'bulkModalBg', 'searchModalBg', 'printModalBg', 'backupsModalBg', 'helpModalBg', 'aboutModalBg'];
     const overlayOpen = modalIds.some(id => document.getElementById(id).classList.contains('open'))
       || document.getElementById('fileSyncModalBg').classList.contains('open')   // mandatory: Escape can't close it
       || document.getElementById('dataMenu').classList.contains('open')

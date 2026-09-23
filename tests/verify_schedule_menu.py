@@ -2,8 +2,9 @@
 """Baseline…, Reschedule remaining work… and Working calendar… moved out of the plan (switcher) menu into their own
 "Schedule" toolbar dropdown — an explicit user request ("is the plan dropdown overloaded?"): that menu had grown to
 11+ items spanning switch/create/schedule/manage, with switching plans — its actual, most frequent job — sitting above
-three dialog-openers. Same toggle/render/close shape as the Data and plan menus (mutual exclusivity, click-outside,
-Escape)."""
+three dialog-openers. Scheduling precision… joined it later as its own dialog (moved out of Working calendar, again on
+request, for its own discoverability). Same toggle/render/close shape as the Data and plan menus (mutual exclusivity,
+click-outside, Escape)."""
 import os
 from playwright.sync_api import sync_playwright
 URL = os.environ.get("MILESTONE_URL", "http://127.0.0.1:8937/milestone.html")
@@ -26,9 +27,11 @@ with sync_playwright() as p:
 
     pg.click("#scheduleMenuBtn"); pg.wait_for_selector("#scheduleMenu.open")
     sched_items = pg.locator("#scheduleMenu .dropdown-item").all_inner_texts()
-    check("the Schedule menu has exactly Baseline, Reschedule remaining work, Working calendar, in that order", len(sched_items) == 3 and "Baseline" in sched_items[0] and "Reschedule remaining work" in sched_items[1] and "Working calendar" in sched_items[2], sched_items)
+    check("the Schedule menu has exactly Baseline, Reschedule remaining work, Working calendar, Scheduling precision, in that order",
+          len(sched_items) == 4 and "Baseline" in sched_items[0] and "Reschedule remaining work" in sched_items[1] and "Working calendar" in sched_items[2] and "Scheduling precision" in sched_items[3], sched_items)
     check("Baseline's hint is there (not set at first)", "not set" in sched_items[0], sched_items[0])
     check("Working calendar's hint is there (Mon–Fri by default)", "Mon–Fri" in sched_items[2], sched_items[2])
+    check("Scheduling precision's hint is there (Days by default)", "Days" in sched_items[3], sched_items[3])
 
     # ---------------------------------------------------------------- opening a dialog from it closes the menu, not the dialog
     pg.click("#planBaselineItem"); pg.wait_for_selector("#baselineModalBg.open")
@@ -45,6 +48,12 @@ with sync_playwright() as p:
     pg.click("#planCalendarItem"); pg.wait_for_selector("#calendarModalBg.open")
     check("opening Working calendar… also closes the Schedule menu", pg.locator("#scheduleMenu.open").count() == 0)
     pg.keyboard.press("Escape")
+
+    pg.click("#scheduleMenuBtn"); pg.wait_for_selector("#scheduleMenu.open")
+    pg.click("#planPrecisionItem"); pg.wait_for_selector("#precisionModalBg.open")
+    check("opening Scheduling precision… also closes the Schedule menu", pg.locator("#scheduleMenu.open").count() == 0)
+    pg.keyboard.press("Escape"); pg.wait_for_timeout(100)
+    check("Escape closes the precision dialog too", pg.locator("#precisionModalBg.open").count() == 0)
 
     # ---------------------------------------------------------------- mutual exclusivity, click-outside, Escape
     pg.click("#scheduleMenuBtn"); pg.wait_for_selector("#scheduleMenu.open")
