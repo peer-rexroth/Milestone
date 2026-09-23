@@ -1362,7 +1362,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
           <div class="help-section-title">Baselines and variance</div>
           <div class="help-row"><i class="fa-solid fa-ruler-horizontal"></i><span>The bar is the <strong>current schedule</strong>. To keep the original plan, set a <strong>baseline</strong> (Schedule menu → <strong>Baseline…</strong>): a frozen copy of every task's Start and Finish, only ever taken when you ask. Keep up to eleven — Baseline and Baseline 1–10 — and choose which one to compare with.</span></div>
           <div class="help-row"><i class="fa-solid fa-minus"></i><span>The baseline shows as a thin grey line under each bar in the Gantt chart (the ruler button hides it).</span></div>
-          <div class="help-row"><i class="fa-solid fa-plus-minus"></i><span>The <strong>Start Variance</strong>, <strong>Finish Variance</strong>, <strong>Baseline Start/Finish/Duration</strong> and <strong>Duration Variance</strong> columns show how far each task has moved, in working days — positive means later than the baseline.</span></div>
+          <div class="help-row"><i class="fa-solid fa-plus-minus"></i><span>The <strong>Start Variance</strong>, <strong>Finish Variance</strong>, <strong>Baseline Start/Finish/Duration</strong> and <strong>Duration Variance</strong> columns show how far each task has moved, in working days (working minutes for a leaf task in an Hours &amp; minutes plan) — positive means later than the baseline.</span></div>
           <div class="help-row"><i class="fa-solid fa-calendar-check"></i><span><strong>Reschedule remaining work…</strong> (Schedule menu) catches the plan up with a status date you choose: an overdue task moves there, an in-progress task keeps its remaining work from that date if it would otherwise finish later. Finished tasks and tasks ahead of schedule are left alone.</span></div>
         </div>
       </div>
@@ -1436,8 +1436,8 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
           <div class="help-section-title">Import, export and backups</div>
           <div class="help-row"><i class="fa-solid fa-file-export"></i><span><strong>Data → Export / Import</strong> moves a full JSON snapshot of the current plan out or in.</span></div>
           <div class="help-row"><i class="fa-solid fa-file-excel"></i><span><strong>Export to Excel</strong> saves a formatted .xlsx workbook: a task list plus an optional Gantt chart sheet, each sheet using the columns you chose in its own view.</span></div>
-          <div class="help-row"><i class="fa-solid fa-diagram-project"></i><span><strong>Import MS Project XML / CSV…</strong> reads a plan saved from MS Project as XML (File → Save As → XML Format): tasks and their outline, dates, % complete, actual dates, links with lags, manual mode, constraints, resources, baselines, the working week and the holidays.</span></div>
-          <div class="help-row"><i class="fa-solid fa-file-code"></i><span><strong>Export MS Project XML</strong> (Data menu) saves the whole plan as a <code>.xml</code> file that MS Project opens: <em>File → Open</em>, file type “XML Format”. Outline, dates, durations, links with lag, constraints, actual dates, baselines, resources, the working week and holidays go along; empty lines are left out, and custom-field values and TBD dates go into the task’s Notes.</span></div>
+          <div class="help-row"><i class="fa-solid fa-diagram-project"></i><span><strong>Import MS Project XML / CSV…</strong> reads a plan saved from MS Project as XML (File → Save As → XML Format): tasks and their outline, dates, % complete, actual dates, links with lags, manual mode, constraints, resources, baselines, the working week and the holidays. A file with real times of day switches the plan to <strong>Hours &amp; minutes</strong> scheduling too (when "Import working calendar" is ticked), recovering the working hours and breaks from it.</span></div>
+          <div class="help-row"><i class="fa-solid fa-file-code"></i><span><strong>Export MS Project XML</strong> (Data menu) saves the whole plan as a <code>.xml</code> file that MS Project opens: <em>File → Open</em>, file type “XML Format”. Outline, dates, durations, links with lag, constraints, actual dates, baselines, resources, the working week and holidays go along, each task's real time of day included for an Hours &amp; minutes plan; empty lines are left out, and custom-field values and TBD dates go into the task’s Notes.</span></div>
           <div class="help-row"><i class="fa-solid fa-file-csv"></i><span>It also reads a <strong>CSV</strong> with a header row — English or German column names such as Task Name, Start, Finish, Duration, Predecessors, Outline Level. A preview shows what was found; you add the tasks to this plan or replace its tasks (a backup file is downloaded first).</span></div>
           <div class="help-row"><i class="fa-solid fa-print"></i><span><strong>Print / PDF…</strong> is under Data as well — see the Gantt chart topic.</span></div>
           <div class="help-row"><i class="fa-solid fa-clock-rotate-left"></i><span><strong>Local Backups</strong> keeps a rolling daily snapshot of every plan in this browser.</span></div>
@@ -2294,7 +2294,15 @@ function normalizeData() {
     const clean = {};
     if (!parentIds.has(t.id) && t.baselines && typeof t.baselines === 'object') for (let n = 0; n < BASELINE_SLOTS; n++) {
       const b = t.baselines[n];
-      if (Array.isArray(b) && ISO.test(b[0] || '') && ISO.test(b[1] || '') && dayNumber(b[1]) >= dayNumber(b[0])) clean[n] = [b[0], t.milestone ? b[0] : b[1]];
+      if (Array.isArray(b) && ISO.test(b[0] || '') && ISO.test(b[1] || '') && dayNumber(b[1]) >= dayNumber(b[0])) {
+        const start = b[0], end = t.milestone ? b[0] : b[1];
+        // A baseline's own time-of-day (b[2]/b[3]) only exists in a minute-mode plan, and only a slot#4/5 array when there's
+        // a real one to keep — a day-mode plan's baselines stay exactly the 2-element [start, end] they always were.
+        if (minuteModeActive()) {
+          const bt = hhmmOk(b[2]) ? b[2] : null, et = t.milestone ? bt : (hhmmOk(b[3]) ? b[3] : null);
+          clean[n] = (bt || et) ? [start, end, bt, et] : [start, end];
+        } else clean[n] = [start, end];
+      }
     }
     if (Object.keys(clean).length) t.baselines = clean; else delete t.baselines;
   }
@@ -2615,9 +2623,11 @@ function baselineDates(id, n = compareBaseline()) {
   const key = id + '|' + n;
   if (_baseCache.has(key)) return _baseCache.get(key);
   const t = byId(id), kids = childrenOf(id);
-  let r = { start: null, end: null };
-  if (t && !kids.length) { const b = t.baselines && t.baselines[n]; if (b) r = { start: b[0], end: b[1] }; }
+  let r = { start: null, end: null, startTime: null, endTime: null };
+  if (t && !kids.length) { const b = t.baselines && t.baselines[n]; if (b) r = { start: b[0], end: b[1], startTime: b[2] || null, endTime: b[3] || null }; }
   else if (t) for (const k of kids) {
+    // A group's own baseline is always a rollup, never a real per-task moment, so it stays day-only — startTime/endTime
+    // are never set here even in a minute-mode plan (see "Scheduling precision (minute mode)" in CLAUDE.md).
     const b = baselineDates(k.id, n);
     if (b.start && (!r.start || b.start < r.start)) r.start = b.start;
     if (b.end && (!r.end || b.end > r.end)) r.end = b.end;
@@ -2625,16 +2635,33 @@ function baselineDates(id, n = compareBaseline()) {
   _baseCache.set(key, r);
   return r;
 }
-// The variances against baseline `n` in working days (null = no baseline, or nothing to compare against): current schedule minus baseline.
+// The variances against baseline `n` in working days (null = no baseline, or nothing to compare against): current schedule
+// minus baseline. In minute mode, a LEAF task's variance is in working minutes instead — a group's baseline is always a
+// day-only rollup (see baselineDates()), so a group's variance stays in days even in a minute-mode plan. Callers that
+// display these numbers decide the unit the same way: varianceIsMinutes(id).
+function varianceIsMinutes(id) { return minuteModeActive() && !hasChildren(id); }
 function scheduleVariance(id, n = compareBaseline()) {
   const blank = { start: null, finish: null, duration: null, baseDuration: null };
   const t = byId(id); if (!t || (!hasChildren(id) && isUnscheduled(t))) return blank;
   const b = baselineDates(id, n), e = effectiveDates(id);
   if (!b.start || !b.end || !e.start || !e.end) return blank;
+  if (varianceIsMinutes(id)) {
+    const bStart = dayNumber(b.start) * 1440 + minuteOfDay(b.startTime || workHours().start);
+    const bEnd = dayNumber(b.end) * 1440 + minuteOfDay(b.endTime || workHours().end);
+    const eStart = taskMoment(t, 'start'), eEnd = taskMoment(t, 'end');
+    const baseDuration = durationMinutes(bStart, bEnd);
+    return { start: momentDiff(bStart, eStart), finish: momentDiff(bEnd, eEnd), duration: durationMinutes(eStart, eEnd) - baseDuration, baseDuration };
+  }
   const baseDuration = durationDays(b.start, b.end);
   return { start: workDiff(b.start, e.start), finish: workDiff(b.end, e.end), duration: durationDays(e.start, e.end) - baseDuration, baseDuration };
 }
 function fmtVariance(n) { return n == null ? '' : `${n > 0 ? '+' : ''}${n} day${Math.abs(n) === 1 ? '' : 's'}`; }
+function fmtVarianceMinutes(n) { return n == null ? '' : `${n > 0 ? '+' : ''}${n < 0 ? '-' : ''}${fmtDurationMinutes(Math.abs(n))}`; }
+function fmtVarianceFor(id, n) { return varianceIsMinutes(id) ? fmtVarianceMinutes(n) : fmtVariance(n); }
+function fmtBaselineDurationFor(id, n) { return n == null ? '' : (varianceIsMinutes(id) ? fmtDurationMinutes(n) : fmtDuration(n)); }
+// The grid's baseline Start/Finish text — an absent baseline time (an older baseline, or the day was never touched at
+// capture time) shows the working day's own open/close, the same default convention taskMoment() uses everywhere else.
+function baselineDateText(id, iso, time, isEnd) { return gridDateTimeText(iso, time, varianceIsMinutes(id), isEnd ? workHours().end : workHours().start); }
 /* ============================ Moments (day- or minute-mode scheduling, one shape) ==============================
    Everything below this point that used to read dayNumber(task.startDate)/shiftWork(...)/durationDays(...) directly now
    reads taskMoment(task,'start')/shiftMoment(...)/durationMoment(...) instead — one comparable/addable integer that IS
@@ -3586,7 +3613,7 @@ else window.addEventListener('resize', updateColumnLines);
 // Start/Actual Finish need room for a paired time editor and a "07.09.2026 14:30"-length display, so they widen — the
 // "column width should be adapted when switched" the user explicitly asked for. Baselines and custom Date fields stay
 // day-only for now (Phase 4/5), so their width is unaffected.
-const MINUTE_WIDE_COLS = new Set(['start', 'end', 'actualStart', 'actualFinish']);
+const MINUTE_WIDE_COLS = new Set(['start', 'end', 'actualStart', 'actualFinish', 'baselineStart', 'baselineFinish']);
 function colWidth(id) { return minuteModeActive() && MINUTE_WIDE_COLS.has(id) ? '150px' : TASK_COLS[id].width; }
 function renderGrid() {
   const full = true;   // the same full list in both views (before, the Gantt view had a compact four-column one)
@@ -3677,8 +3704,8 @@ function renderGrid() {
       ? `<input type="text" class="inline-edit" maxlength="200" value="${escapeHtml(t.resource)}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" ${blurAttr('resource')}>`
       : `<div class="grid-cell-dim${summaryCls}${full ? ' editable' : ''}" title="${escapeHtml(t.resource)}"${full ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','resource')"` : ''}>${escapeHtml(t.resource)}</div>`;
     const bl = baselineDates(t.id), sv = scheduleVariance(t.id), bn = baselineName(compareBaseline());
-    const blCell = iso => `<div class="grid-cell-dim${summaryCls}" title="${bn}">${fmtDate(iso)}</div>`;
-    const varCell = n => `<div class="grid-cell-dim${summaryCls}${n > 0 ? ' var-late' : n < 0 ? ' var-early' : ''}" title="${bn}">${fmtVariance(n)}</div>`;
+    const blCell = (iso, time, isEnd) => `<div class="grid-cell-dim${summaryCls}" title="${bn}">${baselineDateText(t.id, iso, time, isEnd)}</div>`;
+    const varCell = n => `<div class="grid-cell-dim${summaryCls}${n > 0 ? ' var-late' : n < 0 ? ' var-early' : ''}" title="${bn}">${fmtVarianceFor(t.id, n)}</div>`;
     const cells = {
       mode: modeCell,
       wbs: `<div class="grid-cell-dim${summaryCls}">${escapeHtml(wbsCode(t.id))}</div>`,
@@ -3696,7 +3723,7 @@ function renderGrid() {
         : `<div class="grid-cell-dim${summaryCls}${!summary ? ' editable' : ''}"${!summary ? ` title="Click to change % complete" onclick="event.stopPropagation();startInlineEdit('${t.id}','progress')"` : ' title="Worked out from its sub-tasks"'}>${Math.round(eff.progress)}%</div>`,
       remaining: `<div class="grid-cell-dim${summaryCls}">${remainingDays(t.id) == null ? '' : fmtRemaining(remainingDays(t.id))}</div>`,
       status: `<div class="grid-cell-dim${summaryCls}">${statusPillHtml(taskStatus(t.id))}</div>`,
-      baselineStart: blCell(bl.start), baselineFinish: blCell(bl.end), baselineDuration: `<div class="grid-cell-dim${summaryCls}" title="${bn}">${sv.baseDuration == null ? '' : fmtDuration(sv.baseDuration)}</div>`,
+      baselineStart: blCell(bl.start, bl.startTime, false), baselineFinish: blCell(bl.end, bl.endTime, true), baselineDuration: `<div class="grid-cell-dim${summaryCls}" title="${bn}">${fmtBaselineDurationFor(t.id, sv.baseDuration)}</div>`,
       startVariance: varCell(sv.start), finishVariance: varCell(sv.finish), durationVariance: varCell(sv.duration),
       preds: predCell, resource: resourceCell,
       ...Object.fromEntries(cols.filter(isCustomField).map(id => [id, customCellHtml(t, id, summaryCls, editing(id), blurAttr(id), (f, iso) => dateEditor(f, iso, null, 'dd.mm.yyyy'))]))
@@ -4225,7 +4252,8 @@ function renderGanttHeaderTicks(range, px) {
 function baselineNote(t) {   // appended to the bar's tooltip
   const b = baselineDates(t.id); if (!showBaseline || !b.start || !b.end) return '';
   const v = scheduleVariance(t.id);
-  return ` — ${baselineName(compareBaseline())}: ${fmtDate(b.start)}${t.milestone || b.end === b.start ? '' : ' – ' + fmtDate(b.end)}${v.start != null ? ` (start ${fmtVariance(v.start)}, finish ${fmtVariance(v.finish)})` : ''}`;
+  const startText = baselineDateText(t.id, b.start, b.startTime, false);
+  return ` — ${baselineName(compareBaseline())}: ${startText}${t.milestone || b.end === b.start ? '' : ' – ' + baselineDateText(t.id, b.end, b.endTime, true)}${v.start != null ? ` (start ${fmtVarianceFor(t.id, v.start)}, finish ${fmtVarianceFor(t.id, v.finish)})` : ''}`;
 }
 function baselineBarHtml(t, idx, px) {
   if (!showBaseline) return '';
@@ -4770,13 +4798,23 @@ function updateModalComputed() {
     status = statusOf({ start: scheduled ? start : null, end: scheduled ? end : null, progress, actualStart: aS, actualEnd: milestone ? aS : (v('taskActualFinishInput') || null) });
   }
   {   // the baseline and how far the schedule has moved from it, from what is typed right now
-    const b = baselineDates(t.id), box = $('taskBaselineInfo'), sv = hasChildren(t.id) ? scheduleVariance(t.id) : null;
+    const b = baselineDates(t.id), box = $('taskBaselineInfo'), isGroup = hasChildren(t.id), sv = isGroup ? scheduleVariance(t.id) : null;
     const ms = $('taskMilestoneInput').checked, st = v('taskStartInput') || null, en = ms ? st : (v('taskEndInput') || st);
-    if (!b.start || !b.end || (!hasChildren(t.id) && isUnscheduled(t) && st === modalOrigDates.start && en === modalOrigDates.end)) box.classList.add('hidden');
+    if (!b.start || !b.end || (!isGroup && isUnscheduled(t) && st === modalOrigDates.start && en === modalOrigDates.end)) box.classList.add('hidden');
     else {
-      const startV = sv ? sv.start : (st ? workDiff(b.start, st) : null), finV = sv ? sv.finish : (en ? workDiff(b.end, en) : null);
+      const minute = varianceIsMinutes(t.id);
+      let startV, finV;
+      if (sv) { startV = sv.start; finV = sv.finish; }
+      else if (minute) {
+        const stTime = v('taskStartTimeInput') || workHours().start, enTime = ms ? stTime : (v('taskEndTimeInput') || workHours().end);
+        const bStart = dayNumber(b.start) * 1440 + minuteOfDay(b.startTime || workHours().start), bEnd = dayNumber(b.end) * 1440 + minuteOfDay(b.endTime || workHours().end);
+        startV = st ? momentDiff(bStart, dayNumber(st) * 1440 + minuteOfDay(stTime)) : null;
+        finV = en ? momentDiff(bEnd, dayNumber(en) * 1440 + minuteOfDay(enTime)) : null;
+      } else { startV = st ? workDiff(b.start, st) : null; finV = en ? workDiff(b.end, en) : null; }
       const cls = n => n > 0 ? 'var-late' : n < 0 ? 'var-early' : '';
-      box.innerHTML = `<span>Baseline</span> <strong>${fmtDate(b.start)}${b.end !== b.start ? ' – ' + fmtDate(b.end) : ''}</strong><span class="bi-sep">·</span><span>Start variance</span> <strong class="${cls(startV)}">${fmtVariance(startV) || '—'}</strong><span class="bi-sep">·</span><span>Finish variance</span> <strong class="${cls(finV)}">${fmtVariance(finV) || '—'}</strong>`;
+      const startText = baselineDateText(t.id, b.start, b.startTime, false), endText = baselineDateText(t.id, b.end, b.endTime, true);
+      const showRange = b.end !== b.start || (minute && b.endTime !== b.startTime);
+      box.innerHTML = `<span>Baseline</span> <strong>${startText}${showRange ? ' – ' + endText : ''}</strong><span class="bi-sep">·</span><span>Start variance</span> <strong class="${cls(startV)}">${(minute ? fmtVarianceMinutes(startV) : fmtVariance(startV)) || '—'}</strong><span class="bi-sep">·</span><span>Finish variance</span> <strong class="${cls(finV)}">${(minute ? fmtVarianceMinutes(finV) : fmtVariance(finV)) || '—'}</strong>`;
       box.classList.remove('hidden');
     }
   }
@@ -4844,7 +4882,7 @@ function applyBaselineChange(slot, scope, clear) {
   const snap = snapshotBaselines(tasks), now = Date.now(), noneSetYet = !setBaselineSlots().length;
   for (const t of targets) {
     const b = Object.assign({}, t.baselines);
-    if (clear) delete b[slot]; else b[slot] = [t.startDate, t.milestone ? t.startDate : t.endDate];
+    if (clear) delete b[slot]; else b[slot] = [t.startDate, t.milestone ? t.startDate : t.endDate, t.startTime || null, t.milestone ? (t.startTime || null) : (t.endTime || null)];
     if (Object.keys(b).length) t.baselines = b; else delete t.baselines;
     t.updatedAt = now;
   }
@@ -5805,6 +5843,7 @@ function parseDurationMinutes(str) {
   return r === 0 && minutes > 0 ? 1 : r;
 }
 function fmtDurationMinutes(min) {
+  if (min === 0) return '0 min';   // 0 is trivially "divisible" by a whole day too — say so at the finest unit instead of a misleading "0 days" (only reachable via a zero variance; a real duration is always >= 1)
   const per = workMinutesPerDay();
   if (per && min % per === 0) { const d = min / per; return `${d} day${d === 1 ? '' : 's'}`; }
   if (min % 60 === 0) { const h = min / 60; return `${h} hr${h === 1 ? '' : 's'}`; }
@@ -5964,14 +6003,34 @@ function parseMspdi(xmlText) {
   const txt = (el, n) => { const c = one(el, n); return c ? c.textContent.trim() : ''; };
   const list = (el, n) => { const c = one(el, n); return c ? kids(c) : []; };
   const dateOf = v => { const m = /^(\d{4}-\d{2}-\d{2})/.exec(v || ''); return m && dayNumberToIso(dayNumber(m[1])) === m[1] ? m[1] : null; };
+  // A real MS Project file always carries a time-of-day; timeOf() reads it (dateOf() only ever reads the date prefix,
+  // discarding it). Whether to actually SWITCH THE PLAN to minute mode over it is decided below, once every task has been
+  // read: a file is only treated as genuinely minute-precise when something in it deviates from the calendar's own
+  // uniform default open/close (or the calendar itself declares a non-standard day length) — an ordinary MS Project file,
+  // where every task simply starts/ends at the calendar's own 08:00/17:00, imports as a day-mode plan exactly as before.
+  const timeOf = v => { const m = /T(\d{2}):(\d{2})/.exec(v || ''); return m ? `${m[1]}:${m[2]}` : null; };
   const perDay = parseInt(txt(root, 'MinutesPerDay'), 10) || 480;
+  const calStart = (txt(root, 'DefaultStartTime') || '08:00:00').slice(0, 5), calFinish = (txt(root, 'DefaultFinishTime') || '17:00:00').slice(0, 5);
+  let minutePrecision = perDay !== 480;
+  const noteTime = v => { if (v && v !== calStart && v !== calFinish) minutePrecision = true; return v; };
   const project = { name: txt(root, 'Title') || txt(root, 'Name') || '' };
   // calendar: the project's own (CalendarUID), else the first base calendar
   const cals = list(root, 'Calendars'), calUid = txt(root, 'CalendarUID');
   const cal = cals.find(c => txt(c, 'UID') === calUid) || cals.find(c => txt(c, 'IsBaseCalendar') === '1') || cals[0];
+  let calWorkHours = null;   // the first working weekday's own <WorkingTimes> segments, read as { start, end, breaks } — more faithful than DefaultStartTime/DefaultFinishTime alone, since it also recovers any lunch-style break
   if (cal) {
     const wd = new Set(), seen = new Set();
-    for (const w of list(cal, 'WeekDays')) { const dt = parseInt(txt(w, 'DayType'), 10); if (dt >= 1 && dt <= 7 && !one(w, 'TimePeriod')) { seen.add(dt - 1); if (txt(w, 'DayWorking') === '1') wd.add(dt - 1); } }   // 1 = Sunday … 7 = Saturday  →  0 … 6
+    for (const w of list(cal, 'WeekDays')) {
+      const dt = parseInt(txt(w, 'DayType'), 10);
+      if (!(dt >= 1 && dt <= 7) || one(w, 'TimePeriod')) continue;
+      seen.add(dt - 1);
+      if (txt(w, 'DayWorking') !== '1') continue;
+      wd.add(dt - 1);
+      if (!calWorkHours) {
+        const segs = list(w, 'WorkingTimes').filter(k => k.localName === 'WorkingTime').map(wt => [txt(wt, 'FromTime').slice(0, 5), txt(wt, 'ToTime').slice(0, 5)]).filter(([a, b]) => hhmmOk(a) && hhmmOk(b)).sort((a, b) => a[0] < b[0] ? -1 : 1);
+        if (segs.length) { const breaks = []; for (let i = 0; i < segs.length - 1; i++) breaks.push({ start: segs[i][1], end: segs[i + 1][0] }); calWorkHours = { start: segs[0][0], end: segs[segs.length - 1][1], breaks }; }
+      }
+    }
     if (seen.size && wd.size) project.workDays = [...wd].sort((a, b) => a - b);
     const hol = []; let recurring = 0;
     for (const ex of list(cal, 'Exceptions')) {
@@ -6006,21 +6065,41 @@ function parseMspdi(xmlText) {
     if (parent) kidCount.set(parent.id, order + 1);
     const t = newImportedTask(txt(el, 'Name'), parent ? parent.id : null, order);
     const manual = txt(el, 'Manual') === '1';
-    let s = dateOf(txt(el, 'Start')), e = dateOf(txt(el, 'Finish'));
-    if (manual) { s = dateOf(txt(el, 'ManualStart')) || s; e = dateOf(txt(el, 'ManualFinish')) || e; }
+    const startRaw = txt(el, 'Start'), finishRaw = txt(el, 'Finish');
+    let s = dateOf(startRaw), e = dateOf(finishRaw), sTime = timeOf(startRaw), eTime = timeOf(finishRaw);
+    if (manual) {
+      const msRaw = txt(el, 'ManualStart'), mfRaw = txt(el, 'ManualFinish');
+      const s2 = dateOf(msRaw); if (s2) { s = s2; sTime = timeOf(msRaw); }
+      const e2 = dateOf(mfRaw); if (e2) { e = e2; eTime = timeOf(mfRaw); }
+    }
     const dm = /^PT?(?:(\d+)H)?(?:(\d+)M)?/.exec(txt(el, 'Duration')), durMin = dm ? (parseInt(dm[1] || 0, 10) * 60 + parseInt(dm[2] || 0, 10)) : null;
     const ms = txt(el, 'Milestone') === '1' || (durMin === 0 && txt(el, 'Summary') !== '1');
-    if (ms && (s || e)) { s = e = s || e; }
-    if (s && e) { t.startDate = s; t.endDate = dayNumber(e) < dayNumber(s) ? s : e; } else if (s || e) { t.startDate = t.endDate = s || e; }
+    if (ms && (s || e)) { s = e = s || e; sTime = eTime = sTime || eTime; }
+    if (s && e) {
+      const swapped = dayNumber(e) < dayNumber(s);
+      t.startDate = s; t.endDate = swapped ? s : e;
+      t.startTime = noteTime(sTime); t.endTime = noteTime(swapped ? sTime : eTime);
+    } else if (s || e) { t.startDate = t.endDate = s || e; t.startTime = t.endTime = noteTime(sTime || eTime); }
     else { t.taskMode = 'manual'; t.startText = t.endText = 'TBD'; }
     t.milestone = ms && !!(s || e);
     if (manual) t.taskMode = 'manual';
     const pc = parseInt(txt(el, 'PercentComplete'), 10); if (pc >= 0) t.progress = Math.min(100, pc);
-    t.actualStart = dateOf(txt(el, 'ActualStart')); t.actualFinish = dateOf(txt(el, 'ActualFinish'));
+    const asRaw = txt(el, 'ActualStart'), afRaw = txt(el, 'ActualFinish');
+    t.actualStart = dateOf(asRaw); t.actualFinish = dateOf(afRaw);
+    t.actualStartTime = noteTime(timeOf(asRaw)); t.actualFinishTime = noteTime(timeOf(afRaw));
     const ctp = CT[parseInt(txt(el, 'ConstraintType'), 10)];
-    if (ctp && ctp !== 'ASAP') { t.constraintType = ctp; const info = constraintTypeInfo(ctp); if (info.hasDate) t.constraintDate = dateOf(txt(el, 'ConstraintDate')) || t.startDate; }
+    if (ctp && ctp !== 'ASAP') { t.constraintType = ctp; const info = constraintTypeInfo(ctp); if (info.hasDate) { const cdRaw = txt(el, 'ConstraintDate'); t.constraintDate = dateOf(cdRaw) || t.startDate; t.constraintTime = noteTime(timeOf(cdRaw)); } }
     const rs = assigned.get(uid); if (rs) t.resource = rs.join(', ').slice(0, 200);
-    t._base = {}; for (const b of kids(el).filter(k => k.localName === 'Baseline')) { const n = parseInt(txt(b, 'Number'), 10), bs = dateOf(txt(b, 'Start')), bf = dateOf(txt(b, 'Finish')); if (n >= 0 && n <= 10 && bs && bf) { t._base[n] = [bs, dayNumber(bf) < dayNumber(bs) ? bs : bf]; baselineSlots.add(n); } }
+    t._base = {};
+    for (const b of kids(el).filter(k => k.localName === 'Baseline')) {
+      const n = parseInt(txt(b, 'Number'), 10), bStartRaw = txt(b, 'Start'), bFinishRaw = txt(b, 'Finish');
+      const bs = dateOf(bStartRaw), bf = dateOf(bFinishRaw);
+      if (n >= 0 && n <= 10 && bs && bf) {
+        const swapped = dayNumber(bf) < dayNumber(bs), bStartTime = noteTime(timeOf(bStartRaw)), bEndTime = noteTime(swapped ? timeOf(bStartRaw) : timeOf(bFinishRaw));
+        t._base[n] = [bs, swapped ? bs : bf, bStartTime, bEndTime];
+        baselineSlots.add(n);
+      }
+    }
     t._links = kids(el).filter(k => k.localName === 'PredecessorLink').map(l => ({ uid: txt(l, 'PredecessorUID'), type: TYPE[parseInt(txt(l, 'Type'), 10)] || 'FS', lag: Math.round((parseInt(txt(l, 'LinkLag'), 10) || 0) / 10 / perDay), fmt: parseInt(txt(l, 'LagFormat'), 10) }));
     stack.push(t); made.push(t); byUid.set(uid, t);
   }
@@ -6033,12 +6112,27 @@ function parseMspdi(xmlText) {
       if ([4, 6, 8, 10, 12, 20].includes(l.fmt)) elapsed++;
     }
     delete t._links;
+    // minutePrecision is fully settled by now (the whole Tasks scan above is done) — an ordinary (day-only) file's
+    // speculatively-parsed times are cleaned up right here, so parseMspdi()'s own return value is already correct on
+    // its own, the same way normalizeData() would leave it; a caller (or a test) reading the raw result directly never
+    // sees a stray "08:00"/"17:00" a real MSPDI datetime's mandatory time-of-day suffix would otherwise leave behind.
+    if (!minutePrecision) { t.startTime = t.endTime = t.actualStartTime = t.actualFinishTime = t.constraintTime = null; }
     const isGroup = made.some(k => k.parentId === t.id);
-    if (Object.keys(t._base).length && !isGroup) t.baselines = t._base;
+    if (Object.keys(t._base).length && !isGroup) {
+      t.baselines = minutePrecision ? t._base : Object.fromEntries(Object.keys(t._base).map(n => [n, [t._base[n][0], t._base[n][1]]]));
+    }
     delete t._base;
   }
   if (elapsed) warnings.push(`${elapsed} link lag${elapsed === 1 ? '' : 's'} in elapsed time were read as working days`);
   if (baselineSlots.size) { project.baselines = {}; for (const n of baselineSlots) project.baselines[n] = { setAt: dateOf(txt(root, 'CreationDate')) || todayStr() }; }
+  // Only switch the imported plan to minute mode when the file actually needs it (see noteTime() above and the cleanup
+  // just above, which already stripped every speculatively-parsed time field/baseline pair when it doesn't).
+  if (minutePrecision) {
+    project.timeUnit = 'minute';
+    const wh = calWorkHours || { start: calStart, end: calFinish, breaks: [] };
+    if (wh.start !== '08:00' || wh.end !== '17:00' || wh.breaks.length !== 1 || wh.breaks[0].start !== '12:00' || wh.breaks[0].end !== '13:00') project.workHours = wh;
+    warnings.push('Times of day were found in this file — the plan was switched to Hours & minutes scheduling');
+  }
   return { tasks: made, project, warnings, info: { header: true, links, levels: maxLevel, baselines: baselineSlots.size } };
 }
 
@@ -6711,9 +6805,12 @@ function applyImportedTasks(res, mode, opts = {}) {
     if (project0.workDays) project.workDays = project0.workDays;
     if (project0.holidays) project.holidays = mode === 'replace' ? project0.holidays : (project.holidays || []).concat(project0.holidays);
     if (project0.baselines) { project.baselines = Object.assign({}, project.baselines, project0.baselines); if (!project.compareBaseline) { const first = Math.min(...Object.keys(project0.baselines).map(Number)); if (first > 0) project.compareBaseline = first; } }
+    // Scheduling precision travels with the working calendar, not with the tasks — a source file with real times of day
+    // is exactly the kind of thing "import the calendar too" means to carry over (see parseMspdi()'s own detection of it).
+    if (project0.timeUnit === 'minute') { project.timeUnit = 'minute'; if (project0.workHours) project.workHours = project0.workHours; }
     project.updatedAt = Date.now();
     normalizeData();
-  } else for (const t of imported) delete t.baselines;
+  } else { for (const t of imported) { delete t.baselines; t.startTime = t.endTime = t.actualStartTime = t.actualFinishTime = t.constraintTime = null; } }
   for (const t of imported) { applyActualDates(t); clampTaskDates(t); if (!isStarted(t)) snapToWorkDays(t); }
   tasks.push(...imported);
   const roots = imported.filter(t => !t.parentId);
@@ -6779,7 +6876,7 @@ function zipStore(files) {                       // files: [{ name, data: Uint8A
 // XML text/attribute escaping; also drops the control characters XML 1.0 forbids (Excel refuses the file otherwise).
 function xmlEsc(s) { return String(s).replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 function xlsxCol(n) { let s = ''; for (; n > 0; n = Math.floor((n - 1) / 26)) s = String.fromCharCode(65 + ((n - 1) % 26)) + s; return s; }
-function xlsxSerial(iso) { return dayNumber(iso) + 25569; }   // Excel's day 0 is 1899-12-30; dayNumber's is 1970-01-01
+function xlsxSerial(iso, time) { return dayNumber(iso) + 25569 + (time ? minuteOfDay(time) / 1440 : 0); }   // Excel's day 0 is 1899-12-30; dayNumber's is 1970-01-01; a time-of-day is a fraction of a day
 
 function xlsxSharedStrings() {
   const list = [], map = new Map(); let refs = 0;
@@ -6879,7 +6976,7 @@ function buildXlsx(opts) {
   const GRID = 'D8DEE4', HEAD = '24292F', SUM = 'F6F8FA', DIM = '656D76';
   const HEAD_FILL = '00205B';   // Midnight Blue, PANTONE 281 C — the colour of every header cell (task sheet columns, Gantt month band and week/day columns); HEAD stays the dark grey of the summary bars
   const box = { left: ['thin', GRID], right: ['thin', GRID], top: ['thin', GRID], bottom: ['thin', GRID] };
-  const dateFmt = 'dd\\.mm\\.yyyy', durFmt = '[=1]0" day";0" days"';
+  const dateFmt = 'dd\\.mm\\.yyyy', dateTimeFmt = 'dd\\.mm\\.yyyy hh:mm', durFmt = '[=1]0" day";0" days"';
   const nReal = rowsIn.filter(r => !r.task.spacer).length, nAll = tasks.filter(t => !t.spacer).length;
   const scopeText = opts.scope === 'filtered' && filtersActive() ? `${nReal} of ${nAll} tasks (filtered)` : `${nReal} task${nReal === 1 ? '' : 's'}`;
   const titleStyle = book.style({ bold: true, size: 16 }), subStyle = book.style({ size: 10, color: DIM });
@@ -6908,8 +7005,10 @@ function buildXlsx(opts) {
     const ownDates = !summary || manual, startIso = ownDates ? t.startDate : eff.start, endIso = ownDates ? t.endDate : eff.end;
     const base = { border: box, fill: t.color && XLSX_COLORS[t.color] ? xlsxTint(XLSX_COLORS[t.color], 0.18) : summary ? SUM : null, bold: summary };   // a task's colour tints its row in the list
     const S = o => book.style(Object.assign({}, base, o));
-    const dateCell = (c, text, iso) => text != null ? sheet.cell(r, c, text, S({ h: 'center', italic: true, color: DIM, bold: false }))
-      : iso ? sheet.cell(r, c, xlsxSerial(iso), S({ h: 'center', num: dateFmt })) : sheet.cell(r, c, null, S({}));
+    // `time` (an 'HH:MM' string) is only ever passed for a minute-mode plan's own leaf-level date — a group's rolled-up
+    // dates and free-text dates stay date-only, same scope boundary the grid follows (see gridDateTimeText()).
+    const dateCell = (c, text, iso, time) => text != null ? sheet.cell(r, c, text, S({ h: 'center', italic: true, color: DIM, bold: false }))
+      : iso ? sheet.cell(r, c, xlsxSerial(iso, time), S({ h: 'center', num: time ? dateTimeFmt : dateFmt })) : sheet.cell(r, c, null, S({}));
     if (t.spacer) { for (const k of ks) sheet.cell(r, colFn(k), k === 'id' ? taskDisplayId(t.id) : null, S(k === 'id' ? { h: 'center', color: DIM, bold: false } : {})); return; }   // an empty line: its ID and empty cells
     for (const k of ks) {
       const c = colFn(k);
@@ -6918,20 +7017,35 @@ function buildXlsx(opts) {
         case 'mode': sheet.cell(r, c, manual ? 'Manual' : 'Auto', S({ h: 'center', color: manual ? '9A6700' : DIM, bold: false })); break;
         case 'wbs': sheet.cell(r, c, wbsCode(t.id), S({ h: 'left' })); break;
         case 'name': sheet.cell(r, c, (t.milestone ? '◆ ' : '') + t.name, S({ h: 'left', indent: depth })); break;
-        case 'start': dateCell(c, t.startText, startIso); break;
-        case 'end': dateCell(c, t.endText, endIso); break;
-        case 'actualStart': dateCell(c, null, act.start); break;
-        case 'actualFinish': dateCell(c, null, act.end); break;
-        case 'baselineStart': dateCell(c, null, baselineDates(t.id).start); break;
-        case 'baselineFinish': dateCell(c, null, baselineDates(t.id).end); break;
-        case 'baselineDuration': { const bd = scheduleVariance(t.id).baseDuration; sheet.cell(r, c, bd, S({ h: 'center', num: bd == null ? undefined : durFmt })); break; }
+        case 'start': dateCell(c, t.startText, startIso, minuteModeActive() && ownDates ? (t.startTime || workHours().start) : null); break;
+        case 'end': dateCell(c, t.endText, endIso, minuteModeActive() && ownDates ? (t.endTime || workHours().end) : null); break;
+        case 'actualStart': dateCell(c, null, act.start, minuteModeActive() && !summary ? (t.actualStartTime || workHours().start) : null); break;
+        case 'actualFinish': dateCell(c, null, act.end, minuteModeActive() && !summary ? (t.actualFinishTime || workHours().end) : null); break;
+        case 'baselineStart': { const bl = baselineDates(t.id); dateCell(c, null, bl.start, varianceIsMinutes(t.id) ? (bl.startTime || workHours().start) : null); break; }
+        case 'baselineFinish': { const bl = baselineDates(t.id); dateCell(c, null, bl.end, varianceIsMinutes(t.id) ? (bl.endTime || workHours().end) : null); break; }
+        // A minute-mode duration/variance is written as pre-formatted text ("4 hrs", "+30 min") rather than a real number
+        // with a custom format code — Excel's format codes have no clean way to render a raw minute count as hours/minutes
+        // the way `durFmt`'s "day"/"days" trick does for whole days, so the cell trades spreadsheet-math-ability for a
+        // readable value, the same tradeoff a free-text date cell already makes (italic, dim).
+        case 'baselineDuration': {
+          const bd = scheduleVariance(t.id).baseDuration;
+          if (bd == null) sheet.cell(r, c, null, S({}));
+          else if (varianceIsMinutes(t.id)) sheet.cell(r, c, fmtDurationMinutes(bd), S({ h: 'center', italic: true, color: DIM, bold: false }));
+          else sheet.cell(r, c, bd, S({ h: 'center', num: durFmt }));
+          break;
+        }
         case 'startVariance': case 'finishVariance': case 'durationVariance': {
           const sv = scheduleVariance(t.id), n = { startVariance: sv.start, finishVariance: sv.finish, durationVariance: sv.duration }[k];
-          sheet.cell(r, c, n, S({ h: 'center', num: '+0" days";-0" days";0" days"', color: n > 0 ? 'CF222E' : n < 0 ? '1A7F37' : DIM, bold: false })); break;
+          if (n == null) sheet.cell(r, c, null, S({}));
+          else if (varianceIsMinutes(t.id)) sheet.cell(r, c, fmtVarianceMinutes(n), S({ h: 'center', italic: true, color: n > 0 ? 'CF222E' : n < 0 ? '1A7F37' : DIM, bold: false }));
+          else sheet.cell(r, c, n, S({ h: 'center', num: '+0" days";-0" days";0" days"', color: n > 0 ? 'CF222E' : n < 0 ? '1A7F37' : DIM, bold: false }));
+          break;
         }
         case 'duration': {
-          const durNum = !isUnscheduled(t) && startIso && endIso ? durationDays(startIso, endIso) : null;
+          const minuteDur = minuteModeActive() && ownDates && !isUnscheduled(t) && startIso && endIso ? durationMinutes(taskMoment(t, 'start'), taskMoment(t, 'end')) : null;
+          const durNum = minuteDur == null && !isUnscheduled(t) && startIso && endIso ? durationDays(startIso, endIso) : null;
           if (t.durText != null) sheet.cell(r, c, t.durText, S({ h: 'center', italic: true, color: DIM, bold: false }));
+          else if (minuteDur != null) sheet.cell(r, c, fmtDurationMinutes(minuteDur), S({ h: 'center', italic: true, color: DIM, bold: false }));
           else if (durNum != null) sheet.cell(r, c, durNum, S({ h: 'center', num: durFmt }));
           else sheet.cell(r, c, null, S({}));
           break;
@@ -7059,7 +7173,10 @@ function buildMspdi() {
   // The project's real working hours when it has any (a minute-mode plan's project.workHours), else the same 08:00–12:00/
   // 13:00–17:00 default this export always used — so a day-mode plan's XML is byte-identical to before this existed.
   const wh = workHours(), hhmmss = hm => hm + ':00';
-  const dt = (iso, time = hhmmss(wh.start)) => `${iso}T${time}`, hours = d => `PT${Math.round(d * 8)}H0M0S`;
+  const dt = (iso, time = hhmmss(wh.start)) => `${iso}T${time}`, hours = d => `PT${Math.round(d * 8)}H0M0S`, hoursMin = min => `PT${Math.floor(min / 60)}H${min % 60}M0S`;
+  // A leaf task's own real time-of-day when the plan is minute-mode and it has one, else the working day's own open/close
+  // (`side` is one of the five *Time field names; a group has no real time of its own, so it always falls back to `dflt`).
+  const taskTime = (t, side, dflt) => (minuteModeActive() && !hasChildren(t.id) && t[side]) ? t[side] : dflt;
   const CT = { ASAP: 0, ALAP: 1, MSO: 2, MFO: 3, SNET: 4, SNLT: 5, FNET: 6, FNLT: 7 }, LT = { FF: 0, FS: 1, SF: 2, SS: 3 };
   let d0 = Infinity, d1 = -Infinity;
   for (const t of rows) { const e = effectiveDates(t.id); if (e.start && e.end) { d0 = Math.min(d0, dayNumber(e.start)); d1 = Math.max(d1, dayNumber(e.end)); } }
@@ -7084,25 +7201,36 @@ function buildMspdi() {
   const parts = [];
   rows.forEach((t, i) => {
     const u = i + 1, group = hasChildren(t.id), e = effectiveDates(t.id), manual = t.taskMode === 'manual', unsched = isUnscheduled(t) && !group;
-    const depth = list[i].depth + 1, act = actualDates(t.id), has = !!(e.start && e.end), dur = has ? (t.milestone && !group ? 0 : durationDays(e.start, e.end)) : null;
+    const depth = list[i].depth + 1, act = actualDates(t.id), has = !!(e.start && e.end);
+    const minuteLeaf = minuteModeActive() && !group;
+    const durMinutes = has && minuteLeaf ? durationMinutes(taskMoment(t, 'start'), taskMoment(t, 'end')) : null;
+    const dur = has && durMinutes == null ? (t.milestone && !group ? 0 : durationDays(e.start, e.end)) : null;
+    const durXml = durMinutes != null ? hoursMin(t.milestone && !group ? 0 : durMinutes) : hours(dur || 0);
+    const startTime = hhmmss(taskTime(t, 'startTime', wh.start)), endTime = hhmmss(taskTime(t, 'endTime', t.milestone && !group ? wh.start : wh.end));
     const notes = [];
     if (unsched) { const bits = [t.startText != null && `Start: ${t.startText || '(blank)'}`, t.endText != null && `Finish: ${t.endText || '(blank)'}`, t.durText != null && `Duration: ${t.durText}`].filter(Boolean); if (bits.length) notes.push(bits.join(' · ')); }
     if (group && t.resource) notes.push(`Resource: ${t.resource}`);
     for (const id of Object.keys(CUSTOM_FIELDS)) { const v = customValue(t, id); if (v !== undefined) notes.push(`${customFieldName(id)}: ${CUSTOM_FIELDS[id].kind === 'flag' ? (v ? 'Yes' : 'No') : CUSTOM_FIELDS[id].kind === 'date' ? fmtDate(v) : v}`); }
     let x = `<Task>${T('UID', u)}${T('ID', u)}${T('Name', t.name)}${T('Active', 1)}${T('Manual', manual ? 1 : 0)}${T('Type', 0)}${T('IsNull', 0)}${T('WBS', wbsCode(t.id))}${T('OutlineNumber', wbsCode(t.id))}${T('OutlineLevel', depth)}${T('Priority', 500)}`;
     if (has) {
-      x += T('Start', dt(e.start)) + T('Finish', dt(e.end, t.milestone && !group ? hhmmss(wh.start) : hhmmss(wh.end))) + T('Duration', hours(dur));
-      if (manual) x += T('ManualStart', dt(e.start)) + T('ManualFinish', dt(e.end, t.milestone && !group ? hhmmss(wh.start) : hhmmss(wh.end))) + T('ManualDuration', hours(dur));
+      x += T('Start', dt(e.start, startTime)) + T('Finish', dt(e.end, endTime)) + T('Duration', durXml);
+      if (manual) x += T('ManualStart', dt(e.start, startTime)) + T('ManualFinish', dt(e.end, endTime)) + T('ManualDuration', durXml);
     }
     x += T('DurationFormat', 7) + T('Milestone', t.milestone && !group ? 1 : 0) + T('Summary', group ? 1 : 0) + T('PercentComplete', Math.round(e.progress)) + T('PercentWorkComplete', Math.round(e.progress));
-    if (act.start && !group) x += T('ActualStart', dt(act.start));
-    if (act.end && !group) x += T('ActualFinish', dt(act.end, t.milestone ? hhmmss(wh.start) : hhmmss(wh.end)));
+    if (act.start && !group) x += T('ActualStart', dt(act.start, hhmmss(taskTime(t, 'actualStartTime', wh.start))));
+    if (act.end && !group) x += T('ActualFinish', dt(act.end, hhmmss(taskTime(t, 'actualFinishTime', t.milestone ? wh.start : wh.end))));
     const ct = CT[t.constraintType] || 0;
-    if (!group && ct) { const info = constraintTypeInfo(t.constraintType); x += T('ConstraintType', ct) + (info.hasDate && t.constraintDate ? T('ConstraintDate', dt(t.constraintDate, info.basis === 'finish' ? hhmmss(wh.end) : hhmmss(wh.start))) : ''); }
+    if (!group && ct) { const info = constraintTypeInfo(t.constraintType); x += T('ConstraintType', ct) + (info.hasDate && t.constraintDate ? T('ConstraintDate', dt(t.constraintDate, hhmmss(taskTime(t, 'constraintTime', info.basis === 'finish' ? wh.end : wh.start)))) : ''); }
     else x += T('ConstraintType', 0);
     if (notes.length) x += T('Notes', notes.join('\n'));
     if (!group) for (const p of t.predecessors) if (uid.has(p.id)) x += `<PredecessorLink>${T('PredecessorUID', uid.get(p.id))}${T('Type', LT[p.type] == null ? 1 : LT[p.type])}${T('CrossProject', 0)}${T('LinkLag', Math.round((p.lag || 0) * 4800))}${T('LagFormat', 7)}</PredecessorLink>`;
-    for (let n = 0; n < BASELINE_SLOTS; n++) { const b = baselineDates(t.id, n); if (b && b.start && b.end) x += `<Baseline>${T('Number', n)}${T('Start', dt(b.start))}${T('Finish', dt(b.end, t.milestone && !group ? hhmmss(wh.start) : hhmmss(wh.end)))}${T('Duration', hours(t.milestone && !group ? 0 : durationDays(b.start, b.end)))}${T('DurationFormat', 7)}</Baseline>`; }
+    for (let n = 0; n < BASELINE_SLOTS; n++) {
+      const b = baselineDates(t.id, n); if (!b || !b.start || !b.end) continue;
+      const bMinute = varianceIsMinutes(t.id);
+      const bStartTime = hhmmss(bMinute && b.startTime ? b.startTime : wh.start), bEndTime = hhmmss(bMinute && b.endTime ? b.endTime : (t.milestone && !group ? wh.start : wh.end));
+      const bDur = bMinute ? hoursMin(t.milestone && !group ? 0 : durationMinutes(dayNumber(b.start) * 1440 + minuteOfDay(b.startTime || wh.start), dayNumber(b.end) * 1440 + minuteOfDay(b.endTime || wh.end))) : hours(t.milestone && !group ? 0 : durationDays(b.start, b.end));
+      x += `<Baseline>${T('Number', n)}${T('Start', dt(b.start, bStartTime))}${T('Finish', dt(b.end, bEndTime))}${T('Duration', bDur)}${T('DurationFormat', 7)}</Baseline>`;
+    }
     parts.push(x + '</Task>');
   });
   const assignments = []; let au = 0;
