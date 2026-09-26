@@ -629,6 +629,12 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 .precision-opt .cal-sec-note { display: block; font-size: 12px; }
 .workhours-editor { display: flex; flex-direction: column; gap: 10px; padding: 10px 12px; margin-top: 2px; background: var(--panel-2); border-radius: 8px; }
 .wh-day-row { display: flex; align-items: center; gap: 8px; }
+.whd-list { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+.whd-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.whd-row .whd-name { width: 70px; display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; }
+.whd-row input[type=time] { width: 110px; }
+.whd-row .whd-breaks { flex: 1 1 170px; min-width: 140px; }
+.whd-row.off input:not(.whd-on) { opacity: .45; }
 .wh-day-row input[type=time] { width: 110px; }
 .hol-break { flex-basis: 100%; height: 0; }
 .cal-how summary { cursor: pointer; font-size: 12.5px; font-weight: 600; color: var(--text-dim); }
@@ -1036,7 +1042,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
           <label class="print-chk"><input type="radio" name="printRange" id="printRangeAll" checked> The whole plan</label>
           <label class="print-chk"><input type="radio" name="printRange" id="printRangeCustom"> A custom range</label>
           <div class="print-range"><input type="date" id="printFrom" aria-label="From" onfocus="document.getElementById('printRangeCustom').checked = true"><span>to</span><input type="date" id="printTo" aria-label="To" onfocus="document.getElementById('printRangeCustom').checked = true"></div></div>
-        <div class="field"><label for="printScale">Timescale</label><select id="printScale"><option value="auto">Automatic for the length of the plan</option><option value="week">Weeks</option><option value="month">Months</option><option value="quarter">Quarters</option></select></div>
+        <div class="field"><label for="printScale">Timescale</label><select id="printScale"><option value="auto">Automatic for the length of the plan</option><option value="hour">Hours</option><option value="week">Weeks</option><option value="month">Months</option><option value="quarter">Quarters</option></select></div>
         <div class="field"><label>Show</label>
           <label class="print-chk"><input type="checkbox" id="printBaseline"> Baseline under the bars</label>
           <label class="print-chk"><input type="checkbox" id="printCritical"> Critical path</label>
@@ -1188,6 +1194,10 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
               <input type="time" id="whBreakTo" aria-label="Break ends" onkeydown="if(event.key==='Enter'){event.preventDefault();addWorkBreak();}">
               <button class="btn" type="button" onclick="addWorkBreak()"><i class="fa-solid fa-plus"></i>Add break</button>
             </div>
+          </div>
+          <div>
+            <div class="cal-sec-note">Different hours on some days — a short Friday, say. Tick a day and give it its own start, end and breaks.</div>
+            <div class="whd-list" id="whDayRows"></div>
           </div>
         </div>
       </section>
@@ -1364,6 +1374,9 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
           <div class="help-row"><i class="fa-solid fa-clock"></i><span><strong>Scheduling precision</strong> (Schedule menu → <strong>Scheduling precision…</strong>, its own dialog): the standard is whole days, but a plan can switch to <strong>Hours &amp; minutes</strong> — like MS Project — so tasks can start and finish at a time of day. Set the working day's start/end and its breaks there too; date fields, Duration (type "4h" or "90m") and the columns adapt once it's on. Switching in keeps a task spanning its whole day; switching back just drops every time.</span></div>
           <div class="help-row"><i class="fa-solid fa-chart-gantt"></i><span><strong>In an Hours &amp; minutes plan</strong> the chart gets an <strong>Hours</strong> scale (20&nbsp;px an hour, the day over its 24 hours; nights, the lunch break and days off are shaded). Drag a bar, or its edges, in 15-minute steps: an Auto task lands on working time (a move into the lunch break comes out after it), a Manual task goes exactly where you drop it, and linked tasks follow.</span></div>
           <div class="help-row"><i class="fa-solid fa-pen"></i><span>In the list, click a Start, Finish or Actual cell and type <strong>date and time</strong> (<strong>07.09.2026 14:30</strong>) — a date alone keeps the time, a time alone (<strong>14:30</strong>) keeps the date. The Duration cell takes <strong>4h</strong>, <strong>90m</strong>, <strong>2d</strong> or <strong>1w</strong>. The Excel Gantt sheet gets one column per working hour.</span></div>
+          <div class="help-row"><i class="fa-solid fa-business-time"></i><span><strong>Different hours on some days</strong> (Schedule → Scheduling precision…): tick a weekday — a short Friday, say — and give it its own start, end and breaks. A task with no time of its own then starts and finishes at its day's own open and close, and the chart, print-out, Excel and MS Project export follow each day's hours.</span></div>
+          <div class="help-row"><i class="fa-solid fa-link"></i><span><strong>Lags are working time</strong> in an Hours &amp; minutes plan: type <strong>3FS+2h</strong>, <strong>5SS-30m</strong> or <strong>1FS+1d</strong> in the Predecessors cell (d is a working day, w five of them; a bare number is hours), or the same in the task dialog and Edit tasks. Switching a plan to Hours &amp; minutes converts its lags (2 days become 16 hours).</span></div>
+          <div class="help-row"><i class="fa-solid fa-table"></i><span><strong>Paste and CSV import</strong> read a time after a date (<strong>07.09.2026 14:30</strong>, also 2:30 PM), durations like <strong>2.5 hrs</strong> or <strong>90 min</strong>, and minute lags — and copying rows keeps them. A custom <strong>Date</strong> column takes a time too, and <strong>Print / PDF</strong> shows the times and can use an Hours scale.</span></div>
           <div class="help-row"><i class="fa-solid fa-umbrella-beach"></i><span>Add <strong>holidays and other days off</strong> in the same dialog: a single day, a longer break (from … to …), or a day that comes back every year, each with an optional name. They count as days off exactly like weekends, and are shaded in the Gantt chart.</span></div>
           <div class="help-row"><i class="fa-solid fa-flag"></i><span><strong>Public holidays:</strong> pick a country or region (Germany with each of its states, Austria, Switzerland, the UK, Ireland, the US, Canada, France, the Netherlands, Belgium, Spain, Italy) and the years, then <strong>Add public holidays</strong>. Movable ones (Easter, Ascension, Thanksgiving …) are worked out for each year; days that fall on a day off anyway are left out.</span></div>
           <div class="help-row"><i class="fa-solid fa-circle-exclamation"></i><span>Treat the presets as a starting point: check them against your own calendar — regional and company days differ — and edit or remove any entry.</span></div>
@@ -1491,7 +1504,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
 
 <script>
 /* ============================== Constants ============================== */
-const APP_VERSION = 3;   // every save carries it (syncPayload). 2 = minute/hour-level scheduling (project.timeUnit/workHours, five per-task time fields); 3 = the version-skew guard (checkVersionSkew) — no format change
+const APP_VERSION = 4;   // every save carries it (syncPayload). 2 = minute/hour-level scheduling (project.timeUnit/workHours, five per-task time fields); 3 = the version-skew guard (checkVersionSkew) — no format change; 4 = a minute-mode plan's lags are working minutes (project.lagUnit), per-weekday hours (project.workHoursByDay), a custom date field's time (custom.<id>Time)
 const MINUTE_MODE_VERSION = 2;   // the first build that knows minute mode: a minute-mode plan last written by an OLDER build (a stale cached copy of the app, a device not yet updated) may have had its dates moved by a day-only scheduler
 const APP_BUILD_DATE = '2026-09-13';
 const STORAGE_KEY = 'milestone-v1';
@@ -1806,8 +1819,8 @@ function finishFor(startIso, dur) { return shiftWork(startIso, Math.max(1, dur) 
 /* ============================ Working hours (minute-mode plans only) ==============================
    Only consulted when project.timeUnit === 'minute' (see "Scheduling precision"). project.workHours =
    { start: 'HH:MM', end: 'HH:MM', breaks: [{start,end}] }, absent = the default below (the same 08:00–12:00/13:00–17:00
-   already used by the MS Project XML export). One calendar for every working day — no per-weekday variation, the same
-   simplification project.workDays/holidays already make. Day-openness (weekends, holidays) is entirely owned by
+   already used by the MS Project XML export). The same hours for every working day unless
+   project.workHoursByDay overrides some weekday (a short Friday) — hoursInfo() below. Day-openness (weekends, holidays) is entirely owned by
    isWorkNum()/holSet above; this layer only adds a sub-day constraint on top of it — a holiday or non-working weekday
    simply contributes zero working minutes, with no separate holiday-handling code needed here. A "moment" is a single
    integer, dayNumber*1440 + minute-of-day, so day and minute arithmetic share the same comparable/addable shape. */
@@ -1815,72 +1828,106 @@ const DEFAULT_WORK_HOURS = { start: '08:00', end: '17:00', breaks: [{ start: '12
 function minuteOfDay(hhmm) { const [h, m] = hhmm.split(':').map(Number); return h * 60 + m; }
 function hhmmOf(min) { return `${pad2(Math.floor(min / 60))}:${pad2(((min % 60) + 60) % 60)}`; }
 function hhmmOk(v) { return typeof v === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(v); }
-let whRef, whWindows = [[480, 1020]], whPerDay = 540;   // cached by the identity of project.workHours (only ever replaced, never edited in place)
+let whRef, whDayRef, whInfo = null;   // cached by the identity of project.workHours / project.workHoursByDay (only ever replaced, never edited in place)
 function workHours() { return (project && project.workHours) || DEFAULT_WORK_HOURS; }
-function workWindows() {   // the day's working-minute segments as [start,end) pairs, breaks carved out, sorted, gaps/empties dropped
-  const wh = workHours();
-  if (wh !== whRef) {
-    whRef = wh;
-    const s = minuteOfDay(wh.start), e = minuteOfDay(wh.end);
-    const cuts = (wh.breaks || []).map(b => [minuteOfDay(b.start), minuteOfDay(b.end)]).sort((a, b) => a[0] - b[0]);
-    const win = []; let cur = s;
-    for (const [bs, be] of cuts) { if (bs > cur && cur < e) win.push([cur, Math.min(bs, e)]); cur = Math.max(cur, be); }
-    if (cur < e) win.push([cur, e]);
-    whWindows = win.filter(([a, b]) => b > a);
-    whPerDay = whWindows.reduce((sum, [a, b]) => sum + (b - a), 0) || 1;
-  }
-  return whWindows;
+// The working-minute segments of one set of hours as [start,end) pairs, breaks carved out, sorted, gaps/empties dropped, and their total.
+function windowsOfHours(wh) {
+  const s = minuteOfDay(wh.start), e = minuteOfDay(wh.end);
+  const cuts = (wh.breaks || []).map(b => [minuteOfDay(b.start), minuteOfDay(b.end)]).sort((a, b) => a[0] - b[0]);
+  const win = []; let cur = s;
+  for (const [bs, be] of cuts) { if (bs > cur && cur < e) win.push([cur, Math.min(bs, e)]); cur = Math.max(cur, be); }
+  if (cur < e) win.push([cur, e]);
+  const w = win.filter(([a, b]) => b > a);
+  return { win: w, per: w.reduce((sum, [a, b]) => sum + (b - a), 0) || 1 };
 }
-function workMinutesPerDay() { workWindows(); return whPerDay; }
-// A minute-of-day's position within the day's working-minute sequence (0-based), or -1 when it falls in a break/off-hours.
-function localPos(mod) { let pos = 0; for (const [a, b] of workWindows()) { if (mod >= a && mod < b) return pos + (mod - a); pos += (b - a); } return -1; }
-function localMod(pos) { for (const [a, b] of workWindows()) { const len = b - a; if (pos < len) return a + pos; pos -= len; } return workWindows()[0][0]; }
-function isWorkMinuteNum(mn) { const day = Math.floor(mn / 1440); return isWorkNum(day) && localPos(mn - day * 1440) !== -1; }
+// project.workHoursByDay = { "5": { start, end, breaks } } — the hours of a weekday (0 = Sunday … 6) that differ from project.workHours
+// (a short Friday). hoursInfo() = { base, days[7], uniform }: `uniform` (no weekday differs) keeps every O(1) day-bulk shortcut below.
+function hoursInfo() {
+  const wh = workHours(), by = (project && project.workHoursByDay) || null;
+  if (whInfo && wh === whRef && by === whDayRef) return whInfo;
+  whRef = wh; whDayRef = by;
+  const base = windowsOfHours(wh), days = [];
+  for (let d = 0; d < 7; d++) days.push(by && by[d] ? windowsOfHours(by[d]) : base);
+  whInfo = { base, days, uniform: !by || !Object.keys(by).length };
+  return whInfo;
+}
+function winOfDay(day) { return hoursInfo().days[weekdayOf(day)].win; }
+function perOfDay(day) { return hoursInfo().days[weekdayOf(day)].per; }
+function wStart(iso) { return hhmmOf((iso ? winOfDay(dayNumber(iso)) : workWindows())[0][0]); }   // the day's own open / close as HH:MM — what an absent time of a task on that date means (no date: the plan's standard day)
+function wEnd(iso) { const w = iso ? winOfDay(dayNumber(iso)) : workWindows(); return hhmmOf(w[w.length - 1][1]); }
+function workWindows(day) { return day === undefined ? hoursInfo().base.win : winOfDay(day); }   // (no argument: the plan's standard day)
+function workMinutesPerDay() { return hoursInfo().base.per; }   // the standard working day — what "1d" means in a duration or a lag
+function weekMinutes() { const set = workDaySet(); let w = 0; for (const d of set) w += hoursInfo().days[d].per; return w || 1; }
+// A minute-of-day's position within its day's working-minute sequence (0-based), or -1 when it falls in a break/off-hours.
+function localPos(mod, day) { let pos = 0; for (const [a, b] of winOfDay(day)) { if (mod >= a && mod < b) return pos + (mod - a); pos += (b - a); } return -1; }
+function localMod(pos, day) { const win = winOfDay(day); for (const [a, b] of win) { const len = b - a; if (pos < len) return a + pos; pos -= len; } return win[0][0]; }
+function isWorkMinuteNum(mn) { const day = Math.floor(mn / 1440); return isWorkNum(day) && localPos(mn - day * 1440, day) !== -1; }
 function nextWorkMinuteNum(mn) {   // on or after
   let day = Math.floor(mn / 1440), mod = mn - day * 1440;
   if (!isWorkNum(day)) { day = nextWorkNum(day + 1); mod = -1; }
-  const win = workWindows();
-  for (const [a, b] of win) if (mod < b) return day * 1440 + Math.max(mod, a);
-  return nextWorkNum(day + 1) * 1440 + win[0][0];
+  for (const [a, b] of winOfDay(day)) if (mod < b) return day * 1440 + Math.max(mod, a);
+  day = nextWorkNum(day + 1);
+  return day * 1440 + winOfDay(day)[0][0];
 }
 function prevWorkMinuteNum(mn) {   // on or before
   let day = Math.floor(mn / 1440), mod = mn - day * 1440;
   if (!isWorkNum(day)) { day = prevWorkNum(day - 1); mod = 1440; }
-  const win = workWindows();
+  const win = winOfDay(day);
   for (let i = win.length - 1; i >= 0; i--) { const [a, b] = win[i]; if (mod >= a) return day * 1440 + Math.min(mod, b - 1); }
-  const pd = prevWorkNum(day - 1), last = win[win.length - 1];
-  return pd * 1440 + last[1] - 1;
+  const pd = prevWorkNum(day - 1), pw = winOfDay(pd);
+  return pd * 1440 + pw[pw.length - 1][1] - 1;
 }
 const MAX_DURATION_MINUTES = MAX_DURATION_DAYS * 1440, MAX_LAG_MINUTES = MAX_LAG_DAYS * 1440;
-// Move k working minutes from mn (a working minute; k may be negative, a lead). O(1): the day component shifts in bulk via
-// the existing addWorkNum() (which already has its own week-shortcut/holiday walk and a 40,000-working-day cap), and only
-// the sub-day remainder is resolved against workWindows() — never a per-minute loop.
+const MAX_WALK_DAYS = 80000;   // (a walk over days of different lengths — see below — can never run for ever)
+// Move k working minutes from mn (a working minute; k may be negative, a lead). When every day has the same hours it is O(1): the day
+// component shifts in bulk via the existing addWorkNum() (which already has its own week-shortcut/holiday walk and a 40,000-working-day
+// cap), and only the sub-day remainder is resolved against the day's windows — never a per-minute loop. When some weekday differs (a
+// short Friday) whole weeks of working time still shift in bulk (no holidays) and the rest is walked a working day at a time.
 function addWorkMinuteNum(mn, k) {
   if (!k) return mn;
   k = Math.max(-MAX_LAG_MINUTES, Math.min(MAX_LAG_MINUTES, k));
-  const per = workMinutesPerDay(), day0 = Math.floor(mn / 1440);
-  let pos = localPos(mn - day0 * 1440); if (pos === -1) pos = 0;
-  const total = pos + k, dayShift = Math.floor(total / per), newPos = total - dayShift * per;
-  return addWorkNum(day0, dayShift) * 1440 + localMod(newPos);
+  const day0 = Math.floor(mn / 1440), info = hoursInfo();
+  let pos = localPos(mn - day0 * 1440, day0); if (pos === -1) pos = 0;
+  if (info.uniform) {
+    const per = info.base.per, total = pos + k, dayShift = Math.floor(total / per), newPos = total - dayShift * per;
+    return addWorkNum(day0, dayShift) * 1440 + localMod(newPos, day0);
+  }
+  let total = pos + k, day = day0, guard = 0;
+  const W = weekMinutes(), noHol = !holSet.size;
+  if (total >= 0) {
+    if (noHol && total >= 2 * W) { const wk = Math.floor(total / W) - 1; total -= wk * W; day += 7 * wk; }
+    while (total >= perOfDay(day) && guard++ < MAX_WALK_DAYS) { total -= perOfDay(day); day = nextWorkNum(day + 1); }
+  } else {
+    if (noHol && -total >= 2 * W) { const wk = Math.floor(-total / W) - 1; total += wk * W; day -= 7 * wk; }
+    while (total < 0 && guard++ < MAX_WALK_DAYS) { day = prevWorkNum(day - 1); total += perOfDay(day); }
+  }
+  return day * 1440 + localMod(total, day);
+}
+// The working minutes of the WHOLE days x..y (each day its own weekday's length; days off and holidays count nothing), no walking.
+function fullDayMinutes(x, y) {
+  if (y < x) return 0;
+  const info = hoursInfo(); let total = 0;
+  for (const wd of workDaySet()) { const first = x + (((wd - weekdayOf(x)) % 7) + 7) % 7; if (first <= y) total += (Math.floor((y - first) / 7) + 1) * info.days[wd].per; }
+  for (const h of holSorted) { if (h > y) break; if (h >= x) total -= perOfDay(h); }   // (the holidays that took a working weekday away, sorted)
+  return total;
 }
 // Working minutes in [a, b) — half-open (unlike the day layer's inclusive countWorkNum: a duration in minutes is more
 // naturally "how many minutes of work between these two moments" than "+1 for both ends").
 function countWorkMinuteNum(a, b) {
   if (b <= a) return 0;
-  const dayA = Math.floor(a / 1440), dayB = Math.floor(b / 1440), per = workMinutesPerDay(), win = workWindows();
-  if (dayA === dayB) { let c = 0; const modA = a - dayA * 1440, modB = b - dayA * 1440; for (const [s, e] of win) { const lo = Math.max(s, modA), hi = Math.min(e, modB); if (hi > lo) c += hi - lo; } return isWorkNum(dayA) ? c : 0; }
-  let c = 0;
-  if (isWorkNum(dayA)) { const modA = a - dayA * 1440; for (const [s, e] of win) { const lo = Math.max(s, modA); if (e > lo) c += e - lo; } }
-  c += countWorkNum(dayA + 1, dayB - 1) * per;
-  if (isWorkNum(dayB)) { const modB = b - dayB * 1440; for (const [s, e] of win) { const hi = Math.min(e, modB); if (hi > s) c += hi - s; } }
-  return c;
+  const dayA = Math.floor(a / 1440), dayB = Math.floor(b / 1440), info = hoursInfo();
+  const overlap = (day, lo0, hi0) => { let c = 0; if (isWorkNum(day)) for (const [s, e] of winOfDay(day)) { const lo = Math.max(s, lo0), hi = Math.min(e, hi0); if (hi > lo) c += hi - lo; } return c; };
+  if (dayA === dayB) return overlap(dayA, a - dayA * 1440, b - dayA * 1440);
+  let c = overlap(dayA, a - dayA * 1440, 1440);
+  c += info.uniform ? countWorkNum(dayA + 1, dayB - 1) * info.base.per : fullDayMinutes(dayA + 1, dayB - 1);
+  return c + overlap(dayB, 0, b - dayB * 1440);
 }
 function shiftWorkMinute(mn, k) { return addWorkMinuteNum(nextWorkMinuteNum(mn), k); }
 // A FINISH may sit exactly where a working window closes (17:00, or 12:00 as the lunch break starts) although that instant is not itself a working
 // minute — isWorkMinuteNum() is half-open. The latest valid finish on or before mn: mn itself when valid, else the close of the window before it.
 function prevFinishMinuteNum(mn) {
   const day = Math.floor(mn / 1440);
-  if (isWorkNum(day) && posInDay(mn - day * 1440) !== null) return mn;
+  if (isWorkNum(day) && posInDay(mn - day * 1440, day) !== null) return mn;
   return prevWorkMinuteNum(mn) + 1;
 }
 // A task's duration in minutes = the working minutes from start to finish (never less than 1).
@@ -1892,24 +1939,36 @@ function durationMinutes(startMn, endMn) { return Math.max(1, countWorkMinuteNum
 // the plain (exclusive) localMod() here would silently roll a finish that lands exactly on a boundary into the NEXT
 // window, turning e.g. a 1-hour ALAP task that should end right at 12:00 into one that runs until 13:00 instead — caught
 // by verify_minute_schedule.py's ALAP-across-a-break case.
-function posInDay(mod) { let pos = 0; for (const [a, b] of workWindows()) { if (mod >= a && mod <= b) return pos + (mod - a); pos += (b - a); } return null; }
-function modOfPos(pos) { for (const [a, b] of workWindows()) { const len = b - a; if (pos <= len) return a + pos; pos -= len; } const w = workWindows(); return w[w.length - 1][1]; }
+function posInDay(mod, day) { let pos = 0; for (const [a, b] of winOfDay(day)) { if (mod >= a && mod <= b) return pos + (mod - a); pos += (b - a); } return null; }
+function modOfPos(pos, day) { const win = winOfDay(day); for (const [a, b] of win) { const len = b - a; if (pos <= len) return a + pos; pos -= len; } return win[win.length - 1][1]; }
 // finishMomentFor()/startMomentFor() are each other's inverses, the moment-space mirror of finishFor()/the local startFor()
-// ALAP uses — same O(1) day-bulk-shift shape as addWorkMinuteNum(), using posInDay()/modOfPos() instead of
-// localPos()/localMod() for the boundary-inclusive reason above. The "-1" in finishMomentFor()'s day-shift division keeps
-// a result that lands exactly on a multiple of the day's working-minute total inside THAT day (at its own close) rather
-// than rolled to the next working day's open — a full 8-hour task starting at 08:00 finishes at 17:00, not 08:00 tomorrow.
+// ALAP uses — same O(1) day-bulk-shift shape as addWorkMinuteNum() when every day is alike (else weeks in bulk, then a walk), using
+// posInDay()/modOfPos() instead of localPos()/localMod() for the boundary-inclusive reason above. The "-1" in finishMomentFor()'s
+// day-shift division keeps a result that lands exactly on a multiple of the day's working-minute total inside THAT day (at its own
+// close) rather than rolled to the next working day's open — a full 8-hour task starting at 08:00 finishes at 17:00, not 08:00 tomorrow.
 function finishMomentFor(startMn, durMin) {
-  const start = nextWorkMinuteNum(startMn), day0 = Math.floor(start / 1440);
-  const total = posInDay(start - day0 * 1440) + Math.max(1, durMin);
-  const per = workMinutesPerDay(), wholeDays = Math.floor((total - 1) / per);
-  return addWorkNum(day0, wholeDays) * 1440 + modOfPos(total - wholeDays * per);
+  const start = nextWorkMinuteNum(startMn), day0 = Math.floor(start / 1440), info = hoursInfo();
+  let total = posInDay(start - day0 * 1440, day0) + Math.max(1, durMin);
+  if (info.uniform) {
+    const per = info.base.per, wholeDays = Math.floor((total - 1) / per);
+    return addWorkNum(day0, wholeDays) * 1440 + modOfPos(total - wholeDays * per, day0);
+  }
+  let day = day0, guard = 0; const W = weekMinutes();
+  if (!holSet.size && total > 2 * W) { const wk = Math.floor(total / W) - 1; total -= wk * W; day += 7 * wk; }
+  while (total > perOfDay(day) && guard++ < MAX_WALK_DAYS) { total -= perOfDay(day); day = nextWorkNum(day + 1); }
+  return day * 1440 + modOfPos(total, day);
 }
 function startMomentFor(finishMn, durMin) {
-  const finish = nextWorkMinuteNum(finishMn), day0 = Math.floor(finish / 1440);
-  const total = posInDay(finish - day0 * 1440) - Math.max(1, durMin);
-  const per = workMinutesPerDay(), wholeDays = Math.floor(total / per);
-  return addWorkNum(day0, wholeDays) * 1440 + modOfPos(total - wholeDays * per);
+  const finish = nextWorkMinuteNum(finishMn), day0 = Math.floor(finish / 1440), info = hoursInfo();
+  let total = posInDay(finish - day0 * 1440, day0) - Math.max(1, durMin);
+  if (info.uniform) {
+    const per = info.base.per, wholeDays = Math.floor(total / per);
+    return addWorkNum(day0, wholeDays) * 1440 + modOfPos(total - wholeDays * per, day0);
+  }
+  let day = day0, guard = 0; const W = weekMinutes();
+  if (!holSet.size && -total > 2 * W) { const wk = Math.floor(-total / W) - 1; total += wk * W; day -= 7 * wk; }
+  while (total < 0 && guard++ < MAX_WALK_DAYS) { day = prevWorkNum(day - 1); total += perOfDay(day); }
+  return day * 1440 + modOfPos(total, day);
 }
 const WEEKDAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], WEEKDAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
 function currentWorkDays() { return [...workDaySet()].sort((a, b) => a - b); }
@@ -1928,7 +1987,7 @@ function fmtDate(iso) { if (!iso) return ''; const d = parseLocalDate(iso); retu
 function fmtDateY(iso) { if (!iso) return ''; return parseLocalDate(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }); }
 // The grid's date(+time) display: in a minute-mode plan an absent time field shows the working day's own open/close (the
 // same default taskMoment() uses), so the cell reflects exactly what the scheduler treats the task as, not a blank.
-function gridDateTimeText(iso, time, showTime, dflt) { if (!iso) return ''; return showTime ? `${fmtDate(iso)} ${time || dflt || workHours().start}` : fmtDate(iso); }
+function gridDateTimeText(iso, time, showTime, isEnd) { if (!iso) return ''; return showTime ? `${fmtDate(iso)} ${time || (isEnd ? wEnd(iso) : wStart(iso))}` : fmtDate(iso); }   // (an absent time is that day's own open — or close for a finish)
 
 function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
 function isSafeId(id) { return typeof id === 'string' && /^[a-z0-9]+$/i.test(id) && id.length <= 40; }
@@ -2228,12 +2287,18 @@ function cleanCustomValues(src) {
     if (v === undefined || v === null || v === '' || v === false) continue;
     if (f.kind === 'text') { const t = String(v).trim().slice(0, 255); if (t) out[id] = t; }
     else if (f.kind === 'number') { const n = typeof v === 'number' ? v : Number(String(v).replace(',', '.')); if (Number.isFinite(n)) out[id] = n; }
-    else if (f.kind === 'date') { const d = parseUserDate(typeof v === 'string' ? v : ''); if (d) out[id] = d; }
+    else if (f.kind === 'date') {
+      const d = parseUserDate(typeof v === 'string' ? v : ''); if (d) out[id] = d;
+      // A minute-mode plan's date field may also carry a time of day, stored beside it as `<id>Time` ("date1Time"); dropped in a day-mode plan like every task time.
+      if (d && minuteModeActive() && hhmmOk(src[id + 'Time'])) out[id + 'Time'] = src[id + 'Time'];
+    }
     else if (v === true || v === 'true' || v === 1) out[id] = true;   // flag: stored only when set
   }
   return Object.keys(out).length ? out : null;
 }
 function customValue(t, id) { return t.custom ? t.custom[id] : undefined; }
+function customTime(t, id) { return minuteModeActive() && t.custom && hhmmOk(t.custom[id + 'Time']) ? t.custom[id + 'Time'] : ''; }   // a date field's time of day ('' = none)
+function customDateText(t, id) { const v = customValue(t, id); return v === undefined ? '' : fmtDate(v) + (customTime(t, id) ? ' ' + customTime(t, id) : ''); }
 function setCustomValue(t, id, value) {           // null/''/false clears
   const c = Object.assign({}, t.custom);
   if (value === null || value === undefined || value === '' || value === false) delete c[id]; else c[id] = value;
@@ -2258,6 +2323,32 @@ function cleanHolidays(src) {
   }
   out.sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : (a.to || '') < (b.to || '') ? -1 : (a.to || '') > (b.to || '') ? 1 : 0);
   return out.length ? out : null;
+}
+function cleanHoursByDay(by, baseHours) {   // { 0-6: hours } -> the ones that differ from baseHours, each cleaned; null when none
+  if (!by || typeof by !== 'object' || Array.isArray(by)) return null;
+  const baseStr = stableStringify(cleanHoursObject(baseHours)), out = {};
+  for (const k of Object.keys(by)) {
+    const d = Number(k), h = by[k];
+    if (!Number.isInteger(d) || d < 0 || d > 6 || !h || typeof h !== 'object') continue;
+    const c = cleanHoursObject(h);
+    if (stableStringify(c) !== baseStr) out[d] = c;
+  }
+  return Object.keys(out).length ? out : null;
+}
+// One set of working hours cleaned: valid HH:MM start/end (at least a minute apart), breaks inside the day, sorted, not overlapping.
+function cleanHoursObject(wh) {
+  let start = hhmmOk(wh.start) ? wh.start : DEFAULT_WORK_HOURS.start, end = hhmmOk(wh.end) ? wh.end : DEFAULT_WORK_HOURS.end;
+  if (minuteOfDay(end) - minuteOfDay(start) < 1) { start = DEFAULT_WORK_HOURS.start; end = DEFAULT_WORK_HOURS.end; }
+  const breaks = [];
+  if (Array.isArray(wh.breaks)) for (const b of wh.breaks) {
+    if (!b || !hhmmOk(b.start) || !hhmmOk(b.end)) continue;
+    const bs = minuteOfDay(b.start), be = minuteOfDay(b.end);
+    if (be <= bs || bs < minuteOfDay(start) || be > minuteOfDay(end)) continue;
+    breaks.push({ start: b.start, end: b.end });
+  }
+  breaks.sort((a, b) => minuteOfDay(a.start) - minuteOfDay(b.start));
+  const clean = []; for (const b of breaks) { const prev = clean[clean.length - 1]; if (prev && minuteOfDay(b.start) < minuteOfDay(prev.end)) continue; clean.push(b); }
+  return { start, end, breaks: clean };
 }
 function normalizeData() {
   const ids = new Set(tasks.map(t => t.id));
@@ -2349,7 +2440,8 @@ function normalizeData() {
     for (const p of t.predecessors) {
       if (!DEP_TYPES.includes(p.type)) p.type = 'FS';
       if (typeof p.lag !== 'number' || !isFinite(p.lag)) p.lag = 0;
-      p.lag = Math.max(-MAX_LAG_DAYS, Math.min(MAX_LAG_DAYS, Math.round(p.lag)));
+      const cap = project && project.timeUnit === 'minute' && project.lagUnit === 'minute' ? MAX_LAG_MINUTES : MAX_LAG_DAYS;   // (a minute-mode plan's lags are working MINUTES)
+      p.lag = Math.max(-cap, Math.min(cap, Math.round(p.lag)));
     }
   }
 
@@ -2400,23 +2492,21 @@ function normalizeData() {
       // break); rebuilding it here from an empty {} would default start/end individually but silently drop the break
       // (nothing in an absent object to carry it), a real bug caught by verify_minute_schedule.py.
       if (project.workHours && typeof project.workHours === 'object') {
-        const wh = project.workHours;
-        let start = hhmmOk(wh.start) ? wh.start : DEFAULT_WORK_HOURS.start, end = hhmmOk(wh.end) ? wh.end : DEFAULT_WORK_HOURS.end;
-        if (minuteOfDay(end) - minuteOfDay(start) < 1) { start = DEFAULT_WORK_HOURS.start; end = DEFAULT_WORK_HOURS.end; }
-        const breaks = [];
-        if (Array.isArray(wh.breaks)) for (const b of wh.breaks) {
-          if (!b || !hhmmOk(b.start) || !hhmmOk(b.end)) continue;
-          const bs = minuteOfDay(b.start), be = minuteOfDay(b.end);
-          if (be <= bs || bs < minuteOfDay(start) || be > minuteOfDay(end)) continue;
-          breaks.push({ start: b.start, end: b.end });
-        }
-        breaks.sort((a, b) => minuteOfDay(a.start) - minuteOfDay(b.start));
-        const clean = []; for (const b of breaks) { const prev = clean[clean.length - 1]; if (prev && minuteOfDay(b.start) < minuteOfDay(prev.end)) continue; clean.push(b); }
-        const wh2 = { start, end, breaks: clean };
+        const wh2 = cleanHoursObject(project.workHours);
         project.workHours = stableStringify(wh2) === stableStringify(DEFAULT_WORK_HOURS) ? undefined : wh2;
         if (!project.workHours) delete project.workHours;
       }
-    } else { delete project.timeUnit; delete project.workHours; }
+      // Per-weekday hours: only the weekdays (0-6) whose cleaned hours differ from the plan's own.
+      { const out = cleanHoursByDay(project.workHoursByDay, workHours()); if (!out) delete project.workHoursByDay; else if (stableStringify(out) !== stableStringify(project.workHoursByDay)) project.workHoursByDay = out; }
+      // Lags are working minutes in a minute-mode plan (project.lagUnit === 'minute') and working days otherwise. A minute-mode
+      // plan without the marker holds lags in DAYS — one just switched in from day mode, or saved before lags were minutes (the
+      // list, dialog and import all took days and stored them as such, while the engine read them as minutes): converted once.
+      if (project.lagUnit !== 'minute') {
+        const per = workMinutesPerDay();
+        for (const t of tasks) for (const p of t.predecessors) if (p.lag) p.lag = Math.max(-MAX_LAG_MINUTES, Math.min(MAX_LAG_MINUTES, p.lag * per));
+        project.lagUnit = 'minute';
+      }
+    } else { delete project.timeUnit; delete project.workHours; delete project.workHoursByDay; delete project.lagUnit; }
   }
   {   // custom field names: only known fields, trimmed, and only those that differ from the default
     const names = {};
@@ -2717,8 +2807,8 @@ function scheduleVariance(id, n = compareBaseline()) {
   const b = baselineDates(id, n), e = effectiveDates(id);
   if (!b.start || !b.end || !e.start || !e.end) return blank;
   if (varianceIsMinutes(id)) {
-    const bStart = dayNumber(b.start) * 1440 + minuteOfDay(b.startTime || workHours().start);
-    const bEnd = dayNumber(b.end) * 1440 + minuteOfDay(b.endTime || workHours().end);
+    const bStart = dtMoment(b.start, b.startTime, false);
+    const bEnd = dtMoment(b.end, b.endTime, true);
     const eStart = taskMoment(t, 'start'), eEnd = taskMoment(t, 'end');
     const baseDuration = durationMinutes(bStart, bEnd);
     return { start: momentDiff(bStart, eStart), finish: momentDiff(bEnd, eEnd), duration: durationMinutes(eStart, eEnd) - baseDuration, baseDuration };
@@ -2732,7 +2822,7 @@ function fmtVarianceFor(id, n) { return varianceIsMinutes(id) ? fmtVarianceMinut
 function fmtBaselineDurationFor(id, n) { return n == null ? '' : (varianceIsMinutes(id) ? fmtDurationMinutes(n) : fmtDuration(n)); }
 // The grid's baseline Start/Finish text — an absent baseline time (an older baseline, or the day was never touched at
 // capture time) shows the working day's own open/close, the same default convention taskMoment() uses everywhere else.
-function baselineDateText(id, iso, time, isEnd) { return gridDateTimeText(iso, time, varianceIsMinutes(id), isEnd ? workHours().end : workHours().start); }
+function baselineDateText(id, iso, time, isEnd) { return gridDateTimeText(iso, time, varianceIsMinutes(id), isEnd); }
 /* ============================ Moments (day- or minute-mode scheduling, one shape) ==============================
    Everything below this point that used to read dayNumber(task.startDate)/shiftWork(...)/durationDays(...) directly now
    reads taskMoment(task,'start')/shiftMoment(...)/durationMoment(...) instead — one comparable/addable integer that IS
@@ -2751,11 +2841,10 @@ function taskMoment(t, side) {
   const [dateKey, timeKey] = TASK_MOMENT_KEYS[side], iso = t[dateKey];
   if (!iso) return null;
   if (!minuteModeActive()) return dayNumber(iso);
-  const dflt = (side === 'end' || side === 'actualFinish') ? workHours().end : workHours().start;
-  return dayNumber(iso) * 1440 + minuteOfDay(hhmmOk(t[timeKey]) ? t[timeKey] : dflt);
+  return dtMoment(iso, t[timeKey], side === 'end' || side === 'actualFinish');
 }
 // An instant from a date and an optional time of day (an absent time is the working day's own open, or close for a finish).
-function dtMoment(iso, time, isEnd) { return dayNumber(iso) * 1440 + minuteOfDay(hhmmOk(time) ? time : (isEnd ? workHours().end : workHours().start)); }
+function dtMoment(iso, time, isEnd) { return dayNumber(iso) * 1440 + minuteOfDay(hhmmOk(time) ? time : (isEnd ? wEnd(iso) : wStart(iso))); }
 // Writes a moment back into a task's Start or Finish field pair — the only two sides the scheduler itself ever sets.
 function setTaskMoment(t, side, mn) {
   const [dateKey, timeKey] = TASK_MOMENT_KEYS[side], day = minuteModeActive() ? Math.floor(mn / 1440) : mn;
@@ -3087,7 +3176,7 @@ function rescheduleFromStatusDate(statusIso, statusTime) {
   const preds = {}; for (const t of leaves) preds[t.id] = t.predecessors.map(p => p.id).filter(pid => inNet.has(pid));
   const order = topoOrder(ids, preds);
   const statusDay = dayNumber(statusIso);
-  const statusMoment = minuteModeActive() ? statusDay * 1440 + minuteOfDay(hhmmOk(statusTime) ? statusTime : workHours().start) : statusDay;
+  const statusMoment = minuteModeActive() ? statusDay * 1440 + minuteOfDay(hhmmOk(statusTime) ? statusTime : wStart(statusIso)) : statusDay;
   const touched = [];
   for (const id of order) {
     const t = byId(id);
@@ -3628,11 +3717,25 @@ function applyFilterDraft() {
 }
 
 // "3FS+2, 5SS" — exactly what the Predecessors column shows (and what the column filter tests).
+// A lag as the Predecessors cell writes it: "+2" (working days) in a day-mode plan, "+2h" / "-30m" / "+1d" in a minute-mode plan
+// (whole working days, else whole hours, else minutes — always with a unit, so it reads back the same).
+function fmtLagMinutes(min) { const a = Math.abs(min), per = workMinutesPerDay(); return (min < 0 ? '-' : '+') + (a % per === 0 ? `${a / per}d` : a % 60 === 0 ? `${a / 60}h` : `${a}m`); }
+function fmtLag(lag) { return !lag ? '' : minuteModeActive() ? fmtLagMinutes(lag) : (lag > 0 ? `+${lag}` : `${lag}`); }
+// One typed lag ("2h", "-30m", "+1d", "1w"; blank = none) in working minutes — a bare number is hours, like the Duration. null = not a lag.
+function parseLagInput(str) {
+  const v = String(str == null ? '' : str).trim().toLowerCase();
+  if (v === '') return 0;
+  const m = /^([+-])?\s*(\d+(?:[.,]\d+)?)\s*([a-zäöü]*)$/.exec(v);
+  if (!m || (m[3] && !predLagUnitOk(m[3]))) return null;
+  const per = workMinutesPerDay(), u = m[3], n = parseFloat(m[2].replace(',', '.'));
+  const lag = n * (LAG_MIN_UNIT.test(u) ? 1 : /^(h|hr|hrs|hour|hours|std|stunde|stunden|)$/.test(u) ? 60 : /^(w|wk|wks|week|weeks|wo|woche|wochen)$/.test(u) ? 5 * per : per);
+  return lag <= MAX_LAG_MINUTES ? Math.round(lag) * (m[1] === '-' ? -1 : 1) : null;
+}
 function predecessorLabel(t) {
   return t.predecessors.map(p => {
     const pt = byId(p.id);
     if (!pt) return '';
-    const lag = p.lag ? (p.lag > 0 ? `+${p.lag}` : `${p.lag}`) : '';
+    const lag = fmtLag(p.lag);
     return `${taskDisplayId(p.id)}${p.type}${lag}`;
   }).filter(Boolean).join(', ');
 }
@@ -3697,7 +3800,7 @@ else window.addEventListener('resize', updateColumnLines);
 // "column width should be adapted when switched" the user explicitly asked for. Baselines and custom Date fields stay
 // day-only for now (Phase 4/5), so their width is unaffected.
 const MINUTE_WIDE_COLS = new Set(['start', 'end', 'actualStart', 'actualFinish', 'baselineStart', 'baselineFinish']);
-function colWidth(id) { return minuteModeActive() && MINUTE_WIDE_COLS.has(id) ? '150px' : TASK_COLS[id].width; }
+function colWidth(id) { return minuteModeActive() && (MINUTE_WIDE_COLS.has(id) || (isCustomField(id) && CUSTOM_FIELDS[id].kind === 'date')) ? '150px' : TASK_COLS[id].width; }   // (a custom Date column too: it can carry a time)
 function renderGrid() {
   const full = true;   // the same full list in both views (before, the Gantt view had a compact four-column one)
   // The user's visible columns in the user's order (ID first, row actions last) — in both views.
@@ -3749,8 +3852,8 @@ function renderGrid() {
     const blurAttr = (field) => `onblur="inlineBlur(event,'${t.id}','${field}')"`;
     // `time` (a task's own Start/Finish/Actual field in a minute-mode plan, '' when the field is empty) turns the editor into the typed
     // "dd.mm.yyyy hh:mm" box with the calendar button — the same box a Manually Scheduled task always had — since a native date input has no time.
-    const dateEditor = (field, iso, text, ph, time) => time !== undefined
-      ? inlineTextDateHtml(t.id, field, text != null ? text : (iso ? `${fmtDate(iso)} ${time || (field === 'finish' || field === 'actualFinish' ? workHours().end : workHours().start)}` : ''), 'dd.mm.yyyy hh:mm')
+    const dateEditor = (field, iso, text, ph, time, noDefault) => time !== undefined
+      ? inlineTextDateHtml(t.id, field, text != null ? text : (iso ? `${fmtDate(iso)}${time || !noDefault ? ' ' + (time || (field === 'finish' || field === 'actualFinish' ? wEnd(iso) : wStart(iso))) : ''}` : ''), 'dd.mm.yyyy hh:mm')
       : manual
       ? inlineTextDateHtml(t.id, field, text != null ? text : fmtDate(iso), ph)
       : `<input type="date" class="inline-edit" value="${iso || ''}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" ${blurAttr(field)}>`;
@@ -3767,7 +3870,7 @@ function renderGrid() {
       : `<div class="grid-cell-dim${summaryCls}${canEditDates ? ' editable' : ''}"${canEditDates ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','start')"` : ''}>${t.startText != null ? escapeHtml(t.startText) : gridDateTimeText(startIso, t.startTime, showTime)}</div>`;
     const finishCell = editing('finish')
       ? dateEditor('finish', endIso, t.endText, undefined, showTime ? (t.endTime || '') : undefined)
-      : `<div class="grid-cell-dim${summaryCls}${canEditFinishCell ? ' editable' : ''}"${canEditFinishCell ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','finish')"` : ''}>${t.endText != null ? escapeHtml(t.endText) : t.milestone && t.startText != null ? escapeHtml(t.startText) : gridDateTimeText(endIso, t.endTime, showTime, workHours().end)}</div>`;
+      : `<div class="grid-cell-dim${summaryCls}${canEditFinishCell ? ' editable' : ''}"${canEditFinishCell ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','finish')"` : ''}>${t.endText != null ? escapeHtml(t.endText) : t.milestone && t.startText != null ? escapeHtml(t.startText) : gridDateTimeText(endIso, t.endTime, showTime, true)}</div>`;
     const durKnown = !isUnscheduled(t) && startIso && endIso;
     const durMin = minuteModeActive() && ownDates && durKnown ? (t.milestone ? 0 : durationMinutes(taskMoment(t, 'start'), taskMoment(t, 'end'))) : null;   // a minute-mode task's own duration is in working minutes (a group's rollup stays in days)
     const durNum = durKnown ? durationDays(startIso, endIso) : null;
@@ -3789,7 +3892,7 @@ function renderGrid() {
     const act = actualDates(t.id), canEditActual = full && !summary;   // a group's actual dates are rolled up, so not editable (a milestone's Actual Finish follows its Actual Start)
     const actualCell = (field, iso) => editing(field)
       ? dateEditor(field, iso, null, 'dd.mm.yyyy', minuteModeActive() && !summary ? ((field === 'actualStart' ? t.actualStartTime : t.actualFinishTime) || '') : undefined)   // exactly the Start/Finish editor: a manual task gets the typed box + calendar, an auto task the native picker (a minute-mode plan: the typed date-and-time box)
-      : `<div class="grid-cell-dim${summaryCls}${canEditActual && !(t.milestone && field === 'actualFinish') ? ' editable' : ''}"${canEditActual && !(t.milestone && field === 'actualFinish') ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','${field}')"` : ''}>${gridDateTimeText(iso, field === 'actualStart' ? t.actualStartTime : t.actualFinishTime, minuteModeActive() && !summary, field === 'actualFinish' ? workHours().end : workHours().start)}</div>`;
+      : `<div class="grid-cell-dim${summaryCls}${canEditActual && !(t.milestone && field === 'actualFinish') ? ' editable' : ''}"${canEditActual && !(t.milestone && field === 'actualFinish') ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','${field}')"` : ''}>${gridDateTimeText(iso, field === 'actualStart' ? t.actualStartTime : t.actualFinishTime, minuteModeActive() && !summary, field === 'actualFinish')}</div>`;
     const resourceCell = editing('resource')
       ? `<input type="text" class="inline-edit" maxlength="200" value="${escapeHtml(t.resource)}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" ${blurAttr('resource')}>`
       : `<div class="grid-cell-dim${summaryCls}${full ? ' editable' : ''}" title="${escapeHtml(t.resource)}"${full ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','resource')"` : ''}>${escapeHtml(t.resource)}</div>`;
@@ -3816,7 +3919,7 @@ function renderGrid() {
       baselineStart: blCell(bl.start, bl.startTime, false), baselineFinish: blCell(bl.end, bl.endTime, true), baselineDuration: `<div class="grid-cell-dim${summaryCls}" title="${bn}">${fmtBaselineDurationFor(t.id, sv.baseDuration)}</div>`,
       startVariance: varCell(sv.start), finishVariance: varCell(sv.finish), durationVariance: varCell(sv.duration),
       preds: predCell, resource: resourceCell,
-      ...Object.fromEntries(cols.filter(isCustomField).map(id => [id, customCellHtml(t, id, summaryCls, editing(id), blurAttr(id), (f, iso) => dateEditor(f, iso, null, 'dd.mm.yyyy'))]))
+      ...Object.fromEntries(cols.filter(isCustomField).map(id => [id, customCellHtml(t, id, summaryCls, editing(id), blurAttr(id), (f, iso, time) => dateEditor(f, iso, null, 'dd.mm.yyyy', minuteModeActive() ? time : undefined, true))]))
     };
     if (t.spacer) {   // an empty line: the ID and a blank cell in every column (nothing to edit)
       for (const c of cols) cells[c] = '<div class="grid-cell-dim"></div>';
@@ -3990,10 +4093,10 @@ function customCellHtml(t, id, summaryCls, editingNow, blur, dateEd) {
   if (kind === 'flag') return `<div class="grid-cell-dim custom-flag editable${summaryCls}" title="${escapeHtml(name)}: ${v ? 'Yes' : 'No'} — click to change" onclick="event.stopPropagation();toggleCustomFlag('${t.id}','${id}')">${v ? '<i class="fa-solid fa-check"></i>' : ''}</div>`;
   if (editingNow) {
     const val = v === undefined ? '' : v, stop = 'onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)"';
-    return kind === 'date' ? dateEd(id, v || null)
+    return kind === 'date' ? dateEd(id, v || null, customTime(t, id))
       : `<input type="text"${kind === 'number' ? ' inputmode="decimal" placeholder="number"' : ' maxlength="255"'} class="inline-edit" value="${escapeHtml(String(val))}" ${stop} ${blur}>`;   // a number is typed like in a spreadsheet (12,5 or 12.5) and checked on commit — a native number box would refuse to let you type the invalid part at all
   }
-  const shown = v === undefined ? '' : kind === 'date' ? fmtDate(v) : String(v);
+  const shown = v === undefined ? '' : kind === 'date' ? customDateText(t, id) : String(v);
   return `<div class="grid-cell-dim editable${summaryCls}" title="${escapeHtml(shown)}" onclick="event.stopPropagation();startInlineEdit('${t.id}','${id}')">${escapeHtml(shown)}</div>`;
 }
 function toggleCustomFlag(id, field) {
@@ -4252,8 +4355,12 @@ function commitInlineEdit(id, field, rawValue) {
       const n = Number(val.replace(',', '.'));
       if (val === '') setCustomValue(t, field, null); else if (Number.isFinite(n)) setCustomValue(t, field, n); else showToast(`"${val}" isn't a number`, true);
     } else if (kind === 'date') {
-      const iso = val ? parseUserDate(val) : null;
-      if (!val) setCustomValue(t, field, null); else if (iso) setCustomValue(t, field, iso); else showToast(`"${val}" isn't a date`, true);
+      // A minute-mode plan types "date time" (a date alone clears the time — what you type is what is kept; a time alone keeps the date).
+      const pdt = minuteModeActive() && val ? parseUserDateTime(val) : null;
+      const iso = pdt ? (pdt.iso || customValue(t, field) || null) : (val ? parseUserDate(val) : null);
+      if (!val) { setCustomValue(t, field, null); setCustomValue(t, field + 'Time', null); }
+      else if (iso) { setCustomValue(t, field, iso); setCustomValue(t, field + 'Time', pdt && pdt.time ? pdt.time : null); }
+      else showToast(`"${val}" isn't a date`, true);
     }
   } else if (field === 'resource') {
     t.resource = val.slice(0, 200);
@@ -4299,19 +4406,21 @@ function commitInlineEdit(id, field, rawValue) {
 // silently dropping just that token, so a typo can't wipe out the rest of
 // an already-valid predecessor list.
 const PRED_LAG_UNIT_OK = /^(|d|day|days|t|tag|tage|tagen|w|wk|wks|week|weeks|wo|woche|wochen|h|hr|hrs|hour|hours|std|stunde|stunden)$/;
+const LAG_MIN_UNIT = /^(m|min|mins|minute|minutes)$/;
+function predLagUnitOk(u) { return PRED_LAG_UNIT_OK.test(u) || (minuteModeActive() && LAG_MIN_UNIT.test(u)); }   // (minutes are a lag unit only where lags are minutes)
 function predBadMessage(tok) {   // why a token of the Predecessors cell was refused
   const m = /[+-]\s*[\d.,]+\s*([a-zäöü%]*)$/i.exec(tok);
   if (m) {
     const u = m[1].toLowerCase();
     if (u === '%') return `Percentage lags ("${tok}") aren't supported — use days (d), weeks (w) or hours (h)`;
     if (u.startsWith('e')) return `Elapsed lags ("${tok}") aren't supported — lags count working days`;
-    if (!PRED_LAG_UNIT_OK.test(u)) return `Can't read the lag in "${tok}" — use days (d), weeks (w) or hours (h)`;
+    if (!predLagUnitOk(u)) return `Can't read the lag in "${tok}" — use days (d), weeks (w), hours (h)${minuteModeActive() ? ' or minutes (m)' : ''}`;
     return `A lag can be at most ${MAX_LAG_DAYS.toLocaleString('en')} days ("${tok}")`;
   }
   return `Can't parse "${tok}"`;
 }
 function parsePredecessorString(str, taskId) {
-  const { links, bad } = parsePredText(str, true);   // the same reader as paste and import: 3, 3FS, 3SS+2d, 4FF-1w, 5;6 — and the German EA / AA / EE / AE
+  const { links, bad } = parsePredText(str, true, minuteModeActive());   // the same reader as paste and import: 3, 3FS, 3SS+2d, 4FF-1w, 5;6 — and the German EA / AA / EE / AE
   if (bad.length) { showToast(`${predBadMessage(bad[0])} — predecessors unchanged`, true); return null; }
   const result = [], seen = new Set();
   for (const l of links) {
@@ -4339,8 +4448,7 @@ function isoWeekOf(dn) {
 // (minute-mode plans only) places it at its real start and finish instants on a 24-hour day.
 function ganttXAt(iso, time, isEnd, px) {
   if (!hourZoomOn()) return (dayNumber(iso) - dateRange.start) * px;
-  const wh = workHours();
-  return (dayNumber(iso) - dateRange.start + minuteOfDay(hhmmOk(time) ? time : (isEnd ? wh.end : wh.start)) / 1440) * px;
+  return (dayNumber(iso) - dateRange.start + minuteOfDay(hhmmOk(time) ? time : (isEnd ? wEnd(iso) : wStart(iso))) / 1440) * px;
 }
 function ganttSpan(sIso, sTime, eIso, eTime, px, minW = 6) {   // { left, width } of a bar
   if (hourZoomOn()) { const l = ganttXAt(sIso, sTime, false, px), r = ganttXAt(eIso, eTime, true, px); return { left: l, width: Math.max(minW, r - l) }; }
@@ -4400,8 +4508,7 @@ function renderGanttHeaderTicks(range, px) {
 // hollow diamond. A group shows the rollup of its tasks' baselines. Which baseline: project.compareBaseline; hidden with the ruler button.
 function barTimeNote(eff) {   // a minute-mode bar's tooltip also says when it starts and finishes
   if (!minuteModeActive() || !eff.start) return '';
-  const wh = workHours();
-  return ` — ${fmtDate(eff.start)} ${eff.startTime || wh.start}${eff.end === eff.start && !eff.endTime ? '' : ` – ${eff.end === eff.start ? '' : fmtDate(eff.end) + ' '}${eff.endTime || wh.end}`}`;
+  return ` — ${fmtDate(eff.start)} ${eff.startTime || wStart(eff.start)}${eff.end === eff.start && !eff.endTime ? '' : ` – ${eff.end === eff.start ? '' : fmtDate(eff.end) + ' '}${eff.endTime || wEnd(eff.end)}`}`;
 }
 function baselineNote(t) {   // appended to the bar's tooltip
   const b = baselineDates(t.id); if (!showBaseline || !b.start || !b.end) return '';
@@ -4456,10 +4563,10 @@ function renderGantt() {
     html += `<div class="gantt-row-bg${isSelected(t.id) ? ' selected' : ''}${t.spacer ? ' spacer' : ''}${t.color ? ' colored' : ''}" style="top:${top}px;width:${totalW}px${t.color ? `;--row-accent:var(--task-${t.color})` : ''}" data-row-id="${t.id}"></div>`;
   });
   if (hourZoomOn()) {   // the hours off: every day's time outside the working windows, and every day off whole
-    const win = workWindows(), shade = (n, a, b) => { html += `<div class="gantt-nonwork" style="left:${(n - dateRange.start + a / 1440) * px}px;width:${(b - a) / 1440 * px}px;height:${totalH}px"></div>`; };
+    const shade = (n, a, b) => { html += `<div class="gantt-nonwork" style="left:${(n - dateRange.start + a / 1440) * px}px;width:${(b - a) / 1440 * px}px;height:${totalH}px"></div>`; };
     for (let n = dateRange.start; n < dateRange.end;) {
       if (isWorkNum(n)) {
-        let cur = 0; for (const [a, b] of win) { if (a > cur) shade(n, cur, a); cur = b; }
+        let cur = 0; for (const [a, b] of winOfDay(n)) { if (a > cur) shade(n, cur, a); cur = b; }   // (each day its own hours)
         if (cur < 1440) shade(n, cur, 1440);
         n++; continue;
       }
@@ -4928,8 +5035,8 @@ function openTaskModal(id, isNew) {
   document.getElementById('taskDurationLabel').textContent = minuteMode ? 'Duration' : 'Duration (days)';
   document.getElementById('taskDurationLabel').title = minuteMode ? "Working time, counted on the plan's working hours — e.g. \"4h\", \"90m\", \"2d\" (a bare number is hours)" : "Working days, counted on the plan's working calendar";
   if (minuteMode) {
-    document.getElementById('taskStartTimeInput').value = t.startTime || workHours().start;
-    document.getElementById('taskEndTimeInput').value = t.endTime || workHours().end;
+    document.getElementById('taskStartTimeInput').value = t.startTime || wStart(t.startDate);
+    document.getElementById('taskEndTimeInput').value = t.endTime || wEnd(t.endDate);
     document.getElementById('taskDurationInput').value = fmtDurationMinutes(durationMoment(taskMoment(t, 'start'), taskMoment(t, 'end')));
   } else {
     document.getElementById('taskDurationInput').value = durationDays(t.startDate, t.endDate);
@@ -4939,8 +5046,8 @@ function openTaskModal(id, isNew) {
   const group = hasChildren(id), act = actualDates(id);   // a group's actual dates are rolled up from its tasks, so read-only
   document.getElementById('taskActualStartInput').value = act.start || '';
   document.getElementById('taskActualFinishInput').value = act.end || '';
-  document.getElementById('taskActualStartTimeInput').value = t.actualStartTime || workHours().start;
-  document.getElementById('taskActualFinishTimeInput').value = t.actualFinishTime || workHours().end;
+  document.getElementById('taskActualStartTimeInput').value = t.actualStartTime || wStart(act.start || t.startDate);
+  document.getElementById('taskActualFinishTimeInput').value = t.actualFinishTime || wEnd(act.end || t.endDate);
   document.getElementById('taskActualStartInput').disabled = group; document.getElementById('taskActualFinishInput').disabled = group;
   document.getElementById('taskActualStartTimeInput').disabled = group; document.getElementById('taskActualFinishTimeInput').disabled = group;
   const actNote = document.getElementById('taskActualsNote');
@@ -4950,7 +5057,7 @@ function openTaskModal(id, isNew) {
   const typeSel = document.getElementById('taskConstraintTypeInput');
   typeSel.innerHTML = CONSTRAINT_TYPES.map(c => `<option value="${c.id}"${c.id === t.constraintType ? ' selected' : ''}>${c.label}</option>`).join('');
   document.getElementById('taskConstraintDateInput').value = t.constraintDate || t.startDate;
-  document.getElementById('taskConstraintTimeInput').value = t.constraintTime || workHours().start;
+  document.getElementById('taskConstraintTimeInput').value = t.constraintTime || wStart(t.constraintDate || t.startDate);
   onConstraintTypeChange();
   editingPredecessors = t.predecessors.map(p => ({ ...p }));
   renderPredecessorRows();
@@ -5017,8 +5124,8 @@ function updateModalComputed() {
       let startV, finV;
       if (sv) { startV = sv.start; finV = sv.finish; }
       else if (minute) {
-        const stTime = v('taskStartTimeInput') || workHours().start, enTime = ms ? stTime : (v('taskEndTimeInput') || workHours().end);
-        const bStart = dayNumber(b.start) * 1440 + minuteOfDay(b.startTime || workHours().start), bEnd = dayNumber(b.end) * 1440 + minuteOfDay(b.endTime || workHours().end);
+        const stTime = v('taskStartTimeInput') || wStart(st), enTime = ms ? stTime : (v('taskEndTimeInput') || wEnd(en));
+        const bStart = dtMoment(b.start, b.startTime, false), bEnd = dtMoment(b.end, b.endTime, true);
         startV = st ? momentDiff(bStart, dayNumber(st) * 1440 + minuteOfDay(stTime)) : null;
         finV = en ? momentDiff(bEnd, dayNumber(en) * 1440 + minuteOfDay(enTime)) : null;
       } else { startV = st ? workDiff(b.start, st) : null; finV = en ? workDiff(b.end, en) : null; }
@@ -5365,6 +5472,7 @@ function openPrecisionModal() {
   document.getElementById('whEnd').value = calWorkHours.end;
   for (const id of ['whBreakFrom', 'whBreakTo']) document.getElementById(id).value = '';
   renderWorkBreaks();
+  renderHoursByDay();
   for (const r of document.querySelectorAll('#precisionRow input')) r.onchange = onPrecisionChange;
   onPrecisionChange();
   precisionSnapshot = precisionDraftState();
@@ -5374,7 +5482,48 @@ function openPrecisionModal() {
 function closePrecisionModal() { document.getElementById('precisionModalBg').classList.remove('open'); }
 function precisionDraftState() {
   const minute = document.getElementById('precisionMinute').checked;
-  return JSON.stringify([minute, minute ? [document.getElementById('whStart').value, document.getElementById('whEnd').value, calWorkHours.breaks] : null]);
+  return JSON.stringify([minute, minute ? [document.getElementById('whStart').value, document.getElementById('whEnd').value, calWorkHours.breaks, hoursByDayRaw()] : null]);
+}
+// ---- the per-weekday rows: one for each working weekday of the plan; a ticked row carries that day's own hours (breaks typed as "12:00-13:00, 15:00-15:15")
+function breaksText(breaks) { return (breaks || []).map(b => `${b.start}-${b.end}`).join(', '); }
+function parseBreaksText(str) {   // -> [{start,end}] or null when something in it isn't a break
+  const out = [];
+  for (const part of String(str || '').split(/[;,]/).map(x => x.trim()).filter(Boolean)) {
+    const m = /^(\d{1,2}):(\d{2})\s*[-–—]\s*(\d{1,2}):(\d{2})$/.exec(part);
+    if (!m) return null;
+    const a = `${pad2(+m[1])}:${m[2]}`, b = `${pad2(+m[3])}:${m[4]}`;
+    if (!hhmmOk(a) || !hhmmOk(b) || b <= a) return null;
+    out.push({ start: a, end: b });
+  }
+  return out;
+}
+function renderHoursByDay() {
+  const by = project.workHoursByDay || {}, base = calWorkHours;
+  document.getElementById('whDayRows').innerHTML = WEEKDAY_ORDER.filter(d => workDaySet().has(d)).map(d => {
+    const h = by[d], on = !!h, v = h || base;
+    return `<div class="whd-row${on ? '' : ' off'}" data-wd="${d}"><label class="whd-name"><input type="checkbox" class="whd-on" aria-label="${WEEKDAY_NAMES[d]} has its own hours"${on ? ' checked' : ''} onchange="onHoursDayToggle(this)">${WEEKDAY_NAMES[d]}</label>` +
+      `<input type="time" class="whd-start" aria-label="${WEEKDAY_NAMES[d]} starts" value="${v.start}"${on ? '' : ' disabled'}><span class="hol-to">to</span><input type="time" class="whd-end" aria-label="${WEEKDAY_NAMES[d]} ends" value="${v.end}"${on ? '' : ' disabled'}>` +
+      `<input type="text" class="whd-breaks" aria-label="${WEEKDAY_NAMES[d]} breaks" placeholder="breaks, e.g. 12:00-13:00" value="${breaksText(v.breaks)}"${on ? '' : ' disabled'}></div>`;
+  }).join('');
+}
+function onHoursDayToggle(cb) {
+  const row = cb.closest('.whd-row'), on = cb.checked;
+  row.classList.toggle('off', !on);
+  for (const el of row.querySelectorAll('.whd-start, .whd-end, .whd-breaks')) el.disabled = !on;
+  if (on) { row.querySelector('.whd-start').value = document.getElementById('whStart').value; row.querySelector('.whd-end').value = document.getElementById('whEnd').value; row.querySelector('.whd-breaks').value = breaksText(calWorkHours.breaks); }   // (starts as a copy of the standard day)
+}
+function hoursByDayRaw() { return [...document.querySelectorAll('#whDayRows .whd-row')].map(r => [r.dataset.wd, r.querySelector('.whd-on').checked, r.querySelector('.whd-start').value, r.querySelector('.whd-end').value, r.querySelector('.whd-breaks').value]); }
+// The ticked rows as { weekday: { start, end, breaks } }, or null with a message when one of them can't be read.
+function readHoursByDay() {
+  const by = {};
+  for (const [wd, on, start, end, br] of hoursByDayRaw()) {
+    if (!on) continue;
+    const breaks = parseBreaksText(br);
+    if (!start || !end || end <= start) { showToast(`${WEEKDAY_NAMES[wd]}: the day must end after it starts`, true); return null; }
+    if (breaks === null) { showToast(`${WEEKDAY_NAMES[wd]}: breaks are written like 12:00-13:00, 15:00-15:15`, true); return null; }
+    by[wd] = { start, end, breaks };
+  }
+  return by;
 }
 function precisionDirty() { return precisionSnapshot !== null && document.getElementById('precisionModalBg').classList.contains('open') && precisionDraftState() !== precisionSnapshot; }
 function requestClosePrecisionModal() {
@@ -5401,15 +5550,23 @@ function addWorkBreak() {
   document.getElementById('whBreakFrom').focus();
 }
 function removeWorkBreak(i) { calWorkHours.breaks.splice(i, 1); renderWorkBreaks(); }
-function precisionSummary() { return project && project.timeUnit === 'minute' ? `Hours & minutes · ${workHours().start}–${workHours().end}` : 'Days'; }
+function precisionSummary() {
+  if (!(project && project.timeUnit === 'minute')) return 'Days';
+  const n = project.workHoursByDay ? Object.keys(project.workHoursByDay).length : 0;
+  return `Hours & minutes · ${workHours().start}–${workHours().end}${n ? ` · ${n} day${n === 1 ? '' : 's'} differ${n === 1 ? 's' : ''}` : ''}`;
+}
 function savePrecision() {
   const minute = document.getElementById('precisionMinute').checked;
   const wh = minute ? { start: document.getElementById('whStart').value || DEFAULT_WORK_HOURS.start, end: document.getElementById('whEnd').value || DEFAULT_WORK_HOURS.end, breaks: calWorkHours.breaks } : null;
+  const rawBy = minute ? readHoursByDay() : null;
+  if (minute && rawBy === null) return;
+  const by = minute ? cleanHoursByDay(rawBy, wh) : null;   // (a ticked day whose hours equal the standard day is just the standard day)
   const curMinute = project.timeUnit === 'minute';
-  if (minute === curMinute && stableStringify(wh) === (curMinute ? stableStringify(project.workHours || DEFAULT_WORK_HOURS) : null)) { closePrecisionModal(); return; }
-  if (minute) { project.timeUnit = 'minute'; project.workHours = wh; } else { delete project.timeUnit; delete project.workHours; }
+  if (minute === curMinute && stableStringify(wh) === (curMinute ? stableStringify(project.workHours || DEFAULT_WORK_HOURS) : null) && stableStringify(by) === (curMinute ? stableStringify(project.workHoursByDay || null) : stableStringify(null))) { closePrecisionModal(); return; }
+  if (curMinute && !minute) { const per = workMinutesPerDay(); for (const t of tasks) for (const p of t.predecessors) if (p.lag) p.lag = Math.round(p.lag / per); }   // lags go back from working minutes to working days (rounded — like the times, lossy on the way out)
+  if (minute) { project.timeUnit = 'minute'; project.workHours = wh; if (by) project.workHoursByDay = by; else delete project.workHoursByDay; } else { delete project.timeUnit; delete project.workHours; delete project.workHoursByDay; delete project.lagUnit; }
   project.updatedAt = Date.now();
-  normalizeData();   // nulls every task's time fields when leaving minute mode
+  normalizeData();   // nulls every task's time fields when leaving minute mode; converts a day-mode plan's lags to minutes when entering it
   save(); render(); closePrecisionModal();
   showToast(`Scheduling precision: ${precisionSummary()}`);
 }
@@ -5530,7 +5687,9 @@ function setTaskModalTab(tab) {
 function renderCustomFieldsTab(values) {
   const field = id => {
     const f = CUSTOM_FIELDS[id], v = values[id], name = escapeHtml(customFieldName(id));
-    const input = f.kind === 'date' ? `<input type="date" id="cf_${id}" value="${escapeHtml(v || '')}">`
+    const input = f.kind === 'date' ? (minuteModeActive()
+        ? `<div class="field-dt"><input type="date" id="cf_${id}" value="${escapeHtml(v || '')}"><input type="time" id="cf_${id}_time" class="task-time-input" aria-label="${name} time" value="${escapeHtml(values[id + 'Time'] || '')}"></div>`
+        : `<input type="date" id="cf_${id}" value="${escapeHtml(v || '')}">`)
       : f.kind === 'number' ? `<input type="number" step="any" id="cf_${id}" value="${v === undefined || v === '' ? '' : escapeHtml(String(v))}">`
       : `<input type="text" id="cf_${id}" maxlength="255" value="${escapeHtml(v || '')}">`;
     return `<div class="field"><label class="cf-label" for="cf_${id}"><span>${name}</span></label>${input}</div>`;
@@ -5544,11 +5703,14 @@ function renderCustomFieldsTab(values) {
 }
 function readCustomInputs() {
   const out = {};
-  for (const id of Object.keys(CUSTOM_FIELDS)) { const el = document.getElementById('cf_' + id); if (el) out[id] = el.type === 'checkbox' ? el.checked : el.value; }
+  for (const id of Object.keys(CUSTOM_FIELDS)) {
+    const el = document.getElementById('cf_' + id); if (el) out[id] = el.type === 'checkbox' ? el.checked : el.value;
+    const tm = document.getElementById('cf_' + id + '_time'); if (tm && tm.value) out[id + 'Time'] = tm.value;   // (a minute-mode date field's time of day)
+  }
   return out;
 }
 function updateCustomBadge() {
-  const n = Object.values(readCustomInputs()).filter(v => v === true || (typeof v === 'string' && v.trim() !== '')).length, b = document.getElementById('taskCustomBadge');
+  const n = Object.entries(readCustomInputs()).filter(([k, v]) => !/Time$/.test(k) && (v === true || (typeof v === 'string' && v.trim() !== ''))).length, b = document.getElementById('taskCustomBadge');
   b.textContent = n; b.classList.toggle('hidden', !n);
 }
 // Same effect as recordActualFinish(), shown while you type: an Actual Finish completes the task and fills an empty Actual Start.
@@ -5560,11 +5722,11 @@ function onActualFinishChange() {
   const as = document.getElementById('taskActualStartInput');
   if (!as.value) {
     const st = document.getElementById('taskStartInput').value; as.value = st && dayNumber(st) <= dayNumber(f) ? st : f;
-    if (minute) document.getElementById('taskActualStartTimeInput').value = st === as.value ? (document.getElementById('taskStartTimeInput').value || workHours().start) : (document.getElementById('taskActualFinishTimeInput').value || workHours().start);
+    if (minute) document.getElementById('taskActualStartTimeInput').value = st === as.value ? (document.getElementById('taskStartTimeInput').value || wStart(as.value)) : (document.getElementById('taskActualFinishTimeInput').value || wStart(as.value));
   }
   document.getElementById('taskStartInput').value = as.value;    // the actual dates ARE the schedule (MS Project): Start = Actual Start, Finish = Actual Finish
   document.getElementById('taskEndInput').value = f;
-  if (minute) { document.getElementById('taskStartTimeInput').value = document.getElementById('taskActualStartTimeInput').value; document.getElementById('taskEndTimeInput').value = document.getElementById('taskActualFinishTimeInput').value || workHours().end; }
+  if (minute) { document.getElementById('taskStartTimeInput').value = document.getElementById('taskActualStartTimeInput').value; document.getElementById('taskEndTimeInput').value = document.getElementById('taskActualFinishTimeInput').value || wEnd(f); }
   updateDurationDisplay(); updateModalComputed();
 }
 // The actual start becomes the Start (a task still running keeps its duration, so its Finish moves along); a milestone has one date:
@@ -5574,7 +5736,7 @@ function onActualStartChange() {
   if (!a) return;
   const startEl = document.getElementById('taskStartInput'), endEl = document.getElementById('taskEndInput'), minute = minuteModeActive();
   startEl.value = a;
-  if (minute) document.getElementById('taskStartTimeInput').value = document.getElementById('taskActualStartTimeInput').value || workHours().start;
+  if (minute) document.getElementById('taskStartTimeInput').value = document.getElementById('taskActualStartTimeInput').value || wStart(a);
   if (document.getElementById('taskMilestoneInput').checked) {
     endEl.value = a; document.getElementById('taskProgressInput').value = 100;
     if (minute) document.getElementById('taskEndTimeInput').value = document.getElementById('taskStartTimeInput').value;
@@ -5624,7 +5786,7 @@ function onTaskDurationChange() {
   if (dialogIsAuto() && !isWorkDay(s)) { s = nextWorkDay(s); document.getElementById('taskStartInput').value = s; }
   if (minuteModeActive()) {
     const d = Math.min(MAX_DURATION_MINUTES, parseDurationMinutes(document.getElementById('taskDurationInput').value) || 60);
-    const startMn = dayNumber(s) * 1440 + minuteOfDay(document.getElementById('taskStartTimeInput').value || workHours().start);
+    const startMn = dtMoment(s, document.getElementById('taskStartTimeInput').value, false);
     const finMn = finishMomentFor(startMn, d), finDay = Math.floor(finMn / 1440);
     document.getElementById('taskEndInput').value = dayNumberToIso(finDay);
     document.getElementById('taskEndTimeInput').value = hhmmOf(finMn - finDay * 1440);
@@ -5639,8 +5801,8 @@ function updateDurationDisplay() {
   const s = document.getElementById('taskStartInput').value, e = document.getElementById('taskEndInput').value;
   if (!s || !e) return;
   if (minuteModeActive()) {
-    const sm = dayNumber(s) * 1440 + minuteOfDay(document.getElementById('taskStartTimeInput').value || workHours().start);
-    const em = dayNumber(e) * 1440 + minuteOfDay(document.getElementById('taskEndTimeInput').value || workHours().end);
+    const sm = dtMoment(s, document.getElementById('taskStartTimeInput').value, false);
+    const em = dtMoment(e, document.getElementById('taskEndTimeInput').value, true);
     document.getElementById('taskDurationInput').value = fmtDurationMinutes(durationMinutes(sm, em));
   } else {
     document.getElementById('taskDurationInput').value = durationDays(s, e);
@@ -5671,10 +5833,17 @@ function renderPredecessorRows() {
       <select onchange="editingPredecessors[${i}].type=this.value">
         ${DEP_TYPES.map(dt => `<option value="${dt}"${dt === p.type ? ' selected' : ''}>${dt}</option>`).join('')}
       </select>
-      <input type="number" value="${p.lag || 0}" placeholder="Lead/Lag" title="Lead/Lag (days) — positive delays the start (lag), negative overlaps it (lead)" onchange="editingPredecessors[${i}].lag=parseInt(this.value)||0">
+      ${minuteModeActive()
+        ? `<input type="text" class="pred-lag-input" value="${p.lag ? fmtLagMinutes(p.lag) : '0'}" placeholder="Lead/Lag" title="Lead/Lag in working time — 2h, -30m, 1d, 1w; a bare number is hours. Positive delays the start (lag), negative overlaps it (lead)" onchange="onPredLagChange(${i}, this)">`
+        : `<input type="number" value="${p.lag || 0}" placeholder="Lead/Lag" title="Lead/Lag (days) — positive delays the start (lag), negative overlaps it (lead)" onchange="editingPredecessors[${i}].lag=parseInt(this.value)||0">`}
       <button class="pred-remove" onclick="removePredecessorRow(${i})"><i class="fa-solid fa-xmark"></i></button>
     </div>`;
   }).join('');
+}
+function onPredLagChange(i, el) {   // a minute-mode plan's lag box: "2h", "-30m", "1d"
+  const v = parseLagInput(el.value);
+  if (v === null) { showToast(`Can't read "${el.value}" as a lag — try 2h, -30m, 1d or 1w`, true); el.value = editingPredecessors[i].lag ? fmtLagMinutes(editingPredecessors[i].lag) : '0'; return; }
+  editingPredecessors[i].lag = v; el.value = v ? fmtLagMinutes(v) : '0';
 }
 function onPredecessorIdChange(i, value) {
   value = value.trim();
@@ -5935,12 +6104,12 @@ function replanAfterMerge(touched) {
    A conflict = both sides changed the same field of the same task (or plan setting) since they last agreed. The merge has already
    picked the newer edit; this only makes that visible — and reversible: Review lists them and lets you take the other version. */
 let syncConflictLog = [];   // session only (a heads-up for whoever is at the keyboard, not history)
-const CONFLICT_LABELS = { name: 'Name', startDate: 'Start', endDate: 'Finish', progress: '% Complete', resource: 'Resource', predecessors: 'Predecessors', taskMode: 'Task mode', actualStart: 'Actual Start', actualFinish: 'Actual Finish', parentId: 'Parent', order: 'Position', color: 'Colour', milestone: 'Milestone', constraintType: 'Constraint', constraintDate: 'Constraint date', startTime: 'Start time', endTime: 'Finish time', actualStartTime: 'Actual Start time', actualFinishTime: 'Actual Finish time', constraintTime: 'Constraint time', timeUnit: 'Scheduling precision', workHours: 'Working hours', startText: 'Start (text)', endText: 'Finish (text)', durText: 'Duration (text)', custom: 'Custom fields', baselines: 'Baselines', workDays: 'Working days', compareBaseline: 'Compared baseline', fieldNames: 'Custom field names', newTaskMode: 'New task mode' };
+const CONFLICT_LABELS = { name: 'Name', startDate: 'Start', endDate: 'Finish', progress: '% Complete', resource: 'Resource', predecessors: 'Predecessors', taskMode: 'Task mode', actualStart: 'Actual Start', actualFinish: 'Actual Finish', parentId: 'Parent', order: 'Position', color: 'Colour', milestone: 'Milestone', constraintType: 'Constraint', constraintDate: 'Constraint date', startTime: 'Start time', endTime: 'Finish time', actualStartTime: 'Actual Start time', actualFinishTime: 'Actual Finish time', constraintTime: 'Constraint time', timeUnit: 'Scheduling precision', workHours: 'Working hours', workHoursByDay: 'Working hours by day', lagUnit: 'Lag unit', startText: 'Start (text)', endText: 'Finish (text)', durText: 'Duration (text)', custom: 'Custom fields', baselines: 'Baselines', workDays: 'Working days', compareBaseline: 'Compared baseline', fieldNames: 'Custom field names', newTaskMode: 'New task mode' };
 function conflictLabel(key) { return CONFLICT_LABELS[key] || key; }
 function fmtConflictValue(key, v) {
   if (v === undefined || v === null || v === '') return '—';
   if (/Date$/.test(key) || key === 'actualStart' || key === 'actualFinish') return typeof v === 'string' ? fmtDate(v) : String(v);
-  if (key === 'predecessors') return Array.isArray(v) && v.length ? v.map(p => `${taskDisplayId(p.id) || '?'}${p.type}${p.lag ? (p.lag > 0 ? '+' : '') + p.lag : ''}`).join(', ') : 'none';
+  if (key === 'predecessors') return Array.isArray(v) && v.length ? v.map(p => `${taskDisplayId(p.id) || '?'}${p.type}${fmtLag(p.lag)}`).join(', ') : 'none';
   if (key === 'workDays' && Array.isArray(v)) return calendarLabel(v);
   if (key === 'holidays' && Array.isArray(v)) return v.length ? `${v.length} holiday${v.length === 1 ? '' : 's'}` : 'none';
   if (typeof v === 'boolean') return v ? 'Yes' : 'No';
@@ -6076,6 +6245,33 @@ function fmtDurationMinutes(min) {
   if (min % 30 === 0) return `${(min / 60).toFixed(1)} hrs`;
   return `${min} min`;
 }
+// A time of day at the end of a date cell ("07.09.2026 14:30", "2026-09-07T14:30:00Z", "07.09.2026 2:30 PM"), as HH:MM, or null.
+function parseTableTime(str) {
+  const m = /[T ](\d{1,2}):(\d{2})(?::\d{2})?(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?(?: ?([AaPp])[Mm])?$/.exec(String(str == null ? '' : str).trim().replace(/\s+/g, ' '));
+  if (!m) return null;
+  let h = +m[1]; const ap = (m[3] || '').toLowerCase();
+  if (ap === 'p' && h < 12) h += 12; else if (ap === 'a' && h === 12) h = 0;
+  const t = `${pad2(h)}:${m[2]}`;
+  return hhmmOk(t) ? t : null;
+}
+// parseTableDuration()'s twin for a minute-mode plan: working MINUTES, exact ("2.5 hrs", "90 min", "1 day", "3d?"). A bare number is days here,
+// as in every table an Excel column of durations comes from (the export writes a unit on each value).
+function parseTableDurationMinutes(str) {
+  const s = String(str == null ? '' : str).trim().toLowerCase().replace(/\?$/, '').trim();
+  const m = /^(\d+(?:[.,]\d+)?)\s*([a-zäöü]*)$/.exec(s);
+  if (!m) return null;
+  const n = parseFloat(m[1].replace(',', '.')), u = m[2], per = workMinutesPerDay();
+  let min;
+  if (['', 'd', 'day', 'days', 'ed', 'edays', 't', 'tag', 'tage', 'tagen'].includes(u)) min = n * per;
+  else if (['w', 'wk', 'wks', 'week', 'weeks', 'wo', 'woche', 'wochen'].includes(u)) min = n * 5 * per;
+  else if (['h', 'hr', 'hrs', 'hour', 'hours', 'std', 'stunde', 'stunden'].includes(u)) min = n * 60;
+  else if (['min', 'mins', 'minute', 'minutes', 'm'].includes(u)) min = n;
+  else if (['mo', 'mon', 'month', 'months', 'monat', 'monate'].includes(u)) min = n * 20 * per;
+  else return null;
+  if (!(min <= MAX_DURATION_MINUTES)) return null;
+  const r = Math.round(min);
+  return r === 0 && min > 0 ? 1 : r;
+}
 function parseTableDuration(str) {
   const s = String(str == null ? '' : str).trim().toLowerCase().replace(/\?$/, '').trim();
   const m = /^(\d+(?:[.,]\d+)?)\s*([a-zäöü]*)$/.exec(s);
@@ -6094,7 +6290,7 @@ function parseTableDuration(str) {
 }
 // MS Project's predecessor text: "3", "3FS", "3SS+2d", "4;5FF-1 day", German "3EA+2 Tage" → [{ ref, type, lag }] (ref is the number as written)
 const PRED_TYPES = { FS: 'FS', SS: 'SS', FF: 'FF', SF: 'SF', EA: 'FS', AA: 'SS', EE: 'FF', AE: 'SF' };
-function parsePredText(str, strict) {   // strict (the list's Predecessors cell): a lag unit must be one we know — d / w / h — so "+2ed" (elapsed) is refused instead of read as working days
+function parsePredText(str, strict, minutes) {   // minutes (a minute-mode plan): each lag comes back in working MINUTES — a bare number is hours, d/w use the plan's own working day   // strict (the list's Predecessors cell): a lag unit must be one we know — d / w / h — so "+2ed" (elapsed) is refused instead of read as working days
   const out = [], bad = [];
   for (const tok of String(str || '').split(/[;,]/).map(x => x.trim()).filter(Boolean)) {
     const m = /^(\d+)\s*(FS|SS|FF|SF|EA|AA|EE|AE)?\s*(?:([+-])\s*(\d+(?:[.,]\d+)?)\s*([a-zäöü%]*))?$/i.exec(tok);
@@ -6102,8 +6298,15 @@ function parsePredText(str, strict) {   // strict (the list's Predecessors cell)
     let lag = 0;
     if (m[3]) {
       const n = parseFloat(m[4].replace(',', '.')), u = (m[5] || '').toLowerCase();
-      if (u === '%' || (strict && !PRED_LAG_UNIT_OK.test(u))) { bad.push(tok); continue; }
-      lag = /^(w|wk|wks|week|weeks|wo|woche|wochen)$/.test(u) ? n * 5 : /^(h|hr|hrs|hour|hours|std|stunde|stunden)$/.test(u) ? n / 8 : n;
+      if (u === '%' || (strict && !predLagUnitOk(u))) { bad.push(tok); continue; }
+      if (minutes) {
+        const per = workMinutesPerDay();
+        lag = n * (LAG_MIN_UNIT.test(u) ? 1 : /^(h|hr|hrs|hour|hours|std|stunde|stunden|)$/.test(u) ? 60 : /^(w|wk|wks|week|weeks|wo|woche|wochen)$/.test(u) ? 5 * per : per);
+        if (!(lag <= MAX_LAG_MINUTES)) { bad.push(tok); continue; }
+        out.push({ ref: m[1], type: PRED_TYPES[(m[2] || 'FS').toUpperCase()], lag: Math.round(lag) * (m[3] === '-' ? -1 : 1) });
+        continue;
+      }
+      lag = /^(w|wk|wks|week|weeks|wo|woche|wochen)$/.test(u) ? n * 5 : /^(h|hr|hrs|hour|hours|std|stunde|stunden)$/.test(u) ? n / 8 : LAG_MIN_UNIT.test(u) ? n / 480 : n;
       if (!(lag <= MAX_LAG_DAYS)) { bad.push(tok); continue; }
       lag = Math.round(lag) * (m[3] === '-' ? -1 : 1);
     }
@@ -6141,7 +6344,7 @@ function newImportedTask(name, parentId, order) {
 }
 // Turns rows of cells into tasks. opts: { dateFormat, defaultCols (field names for a table without a header) }.
 function tasksFromTable(rows, opts = {}) {
-  const warnings = [], fmt = opts.dateFormat || 'auto';
+  const warnings = [], fmt = opts.dateFormat || 'auto', mo = minuteModeActive();   // (into a minute-mode plan: times of day, minute durations and minute lags)
   if (!rows.length) return { tasks: [], warnings, info: { header: false, links: 0, levels: 0 } };
   let fields = rows[0].map(importHeaderField), header = fields.filter(Boolean).length >= 2 || (fields.includes('name') && !rows[0].some(c => parseTableDate(c, fmt) || /^\d+$/.test(String(c).trim())));
   let data = rows;
@@ -6180,15 +6383,30 @@ function tasksFromTable(rows, opts = {}) {
     // dates and duration
     const sTxt = cell(x.r, 'start').trim(), eTxt = cell(x.r, 'end').trim();
     let s = parseTableDate(sTxt, fmt), e = parseTableDate(eTxt, fmt), d = parseTableDuration(cell(x.r, 'duration'));
+    let sT = null, eT = null;   // a minute-mode plan also reads the time of day of a date cell, and the duration in working minutes
+    if (mo) {
+      sT = s ? parseTableTime(sTxt) : null; eT = e ? parseTableTime(eTxt) : null;
+      const dm = parseTableDurationMinutes(cell(x.r, 'duration'));
+      d = dm === null ? null : dm === 0 ? 0 : dm;
+      if (d === 0) ms = true;
+      var partialM = false;
+      if (ms) { const one = s || e, oneT = s ? sT : eT; if (one) { s = e = one; sT = eT = oneT; } }
+      else if (s && e) { if (dtMoment(e, eT, true) < dtMoment(s, sT, false)) { e = s; eT = sT; } }
+      else if (s && d != null) { const fm = finishMomentFor(nextWorkMinuteNum(dtMoment(s, sT, false)), Math.max(1, d)), fd = Math.floor(fm / 1440); e = dayNumberToIso(fd); eT = hhmmOf(fm - fd * 1440); }
+      else if (e && d != null) { const sm = startMomentFor(dtMoment(e, eT, true), Math.max(1, d)), sd = Math.floor(sm / 1440); s = dayNumberToIso(sd); sT = hhmmOf(sm - sd * 1440); }
+      else if (s || e) { partialM = true; if (s) { e = s; eT = sT; } else { s = e; sT = eT; } }
+      var partial = partialM;
+    } else {
     if (d === 0) ms = true;
-    let partial = false;
+    var partial = false;
     if (ms) { const one = s || e; if (one) { s = e = one; } }
     else if (s && e) { if (dayNumber(e) < dayNumber(s)) e = s; }
     else if (s && d != null) e = finishFor(s, Math.max(1, d));
     else if (e && d != null) s = shiftWork(e, -(Math.max(1, d) - 1));
     else if (s || e) { partial = true; if (s) e = s; else s = e; }   // one date and no duration: the other end is still open
+    }
     t.milestone = ms && !!(s && e);
-    if (s && e) { t.startDate = s; t.endDate = e; }
+    if (s && e) { t.startDate = s; t.endDate = e; if (mo) { t.startTime = sT; t.endTime = t.milestone ? sT : eT; } }
     else { t.taskMode = 'manual'; t.startText = (sTxt && !s ? sTxt : 'TBD').slice(0, 60); t.endText = (eTxt && !e ? eTxt : 'TBD').slice(0, 60); }
     if (partial) { t.taskMode = 'manual'; if (parseTableDate(sTxt, fmt)) t.endText = (eTxt || 'TBD').slice(0, 60); else t.startText = (sTxt || 'TBD').slice(0, 60); }
     const pr = cell(x.r, 'progress').trim();
@@ -6196,8 +6414,12 @@ function tasksFromTable(rows, opts = {}) {
     t.resource = cell(x.r, 'resource').trim().slice(0, 200);
     const as = parseTableDate(cell(x.r, 'actualStart'), fmt), af = parseTableDate(cell(x.r, 'actualFinish'), fmt);
     if (as) t.actualStart = as; if (af) t.actualFinish = af;
+    if (mo) {   // (an actual date without a time takes the planned one: the actual dates ARE the schedule)
+      if (as) t.actualStartTime = parseTableTime(cell(x.r, 'actualStart')) || t.startTime;
+      if (af) t.actualFinishTime = parseTableTime(cell(x.r, 'actualFinish')) || t.endTime;
+    }
     const ct = cell(x.r, 'constraintType').trim().toLowerCase();
-    if (ct) { const c = CONSTRAINT_TYPES.find(k => k.id.toLowerCase() === ct || k.label.toLowerCase() === ct); if (c && c.id !== 'ASAP') { t.constraintType = c.id; if (c.hasDate) t.constraintDate = parseTableDate(cell(x.r, 'constraintDate'), fmt) || t.startDate; } }
+    if (ct) { const c = CONSTRAINT_TYPES.find(k => k.id.toLowerCase() === ct || k.label.toLowerCase() === ct); if (c && c.id !== 'ASAP') { t.constraintType = c.id; if (c.hasDate) { t.constraintDate = parseTableDate(cell(x.r, 'constraintDate'), fmt) || t.startDate; if (mo) t.constraintTime = parseTableTime(cell(x.r, 'constraintDate')); } } }
     stack.push(t); made.push({ t, x });
     byRef.set(String(col('id') >= 0 ? cell(x.r, 'id').trim() : x.row), t);
     if (col('id') >= 0) byRef.set(String(x.row), byRef.get(String(x.row)) || t);
@@ -6205,7 +6427,7 @@ function tasksFromTable(rows, opts = {}) {
   // links (after every task exists): "3FS+2d" refers to the ID column, or to the row number
   for (const { t, x } of made) {
     const txt = cell(x.r, 'preds').trim(); if (!txt) continue;
-    const { links: ls, bad } = parsePredText(txt);
+    const { links: ls, bad } = parsePredText(txt, false, minuteModeActive());
     for (const b of bad) warnings.push(`"${t.name}": could not read the predecessor "${b}"`);
     for (const l of ls) {
       const p = byRef.get(l.ref);
@@ -6238,11 +6460,14 @@ function parseMspdi(xmlText) {
   const perDay = parseInt(txt(root, 'MinutesPerDay'), 10) || 480;
   const calStart = (txt(root, 'DefaultStartTime') || '08:00:00').slice(0, 5), calFinish = (txt(root, 'DefaultFinishTime') || '17:00:00').slice(0, 5);
   let minutePrecision = perDay !== 480;
-  const noteTime = v => { if (v && v !== calStart && v !== calFinish) minutePrecision = true; return v; };
+  const calDayHours = {};   // weekday (0 = Sunday) -> that working day's own { start, end, breaks } from the calendar, read below
+  // (a time on the day's own open or close — its weekday's, when the calendar gives a short Friday — is just a task sitting on its calendar)
+  const noteTime = (v, iso) => { if (v) { const dh = iso && calDayHours[weekdayOf(dayNumber(iso))]; if (v !== calStart && v !== calFinish && !(dh && (v === dh.start || v === dh.end))) minutePrecision = true; } return v; };
   const project = { name: txt(root, 'Title') || txt(root, 'Name') || '' };
   // calendar: the project's own (CalendarUID), else the first base calendar
   const cals = list(root, 'Calendars'), calUid = txt(root, 'CalendarUID');
   const cal = cals.find(c => txt(c, 'UID') === calUid) || cals.find(c => txt(c, 'IsBaseCalendar') === '1') || cals[0];
+  let calByDay = null;   // weekdays whose hours differ from calWorkHours
   let calWorkHours = null;   // the first working weekday's own <WorkingTimes> segments, read as { start, end, breaks } — more faithful than DefaultStartTime/DefaultFinishTime alone, since it also recovers any lunch-style break
   if (cal) {
     const wd = new Set(), seen = new Set();
@@ -6252,10 +6477,16 @@ function parseMspdi(xmlText) {
       seen.add(dt - 1);
       if (txt(w, 'DayWorking') !== '1') continue;
       wd.add(dt - 1);
-      if (!calWorkHours) {
-        const segs = list(w, 'WorkingTimes').filter(k => k.localName === 'WorkingTime').map(wt => [txt(wt, 'FromTime').slice(0, 5), txt(wt, 'ToTime').slice(0, 5)]).filter(([a, b]) => hhmmOk(a) && hhmmOk(b)).sort((a, b) => a[0] < b[0] ? -1 : 1);
-        if (segs.length) { const breaks = []; for (let i = 0; i < segs.length - 1; i++) breaks.push({ start: segs[i][1], end: segs[i + 1][0] }); calWorkHours = { start: segs[0][0], end: segs[segs.length - 1][1], breaks }; }
-      }
+      const segs = list(w, 'WorkingTimes').filter(k => k.localName === 'WorkingTime').map(wt => [txt(wt, 'FromTime').slice(0, 5), txt(wt, 'ToTime').slice(0, 5)]).filter(([a, b]) => hhmmOk(a) && hhmmOk(b)).sort((a, b) => a[0] < b[0] ? -1 : 1);
+      if (segs.length) { const breaks = []; for (let i = 0; i < segs.length - 1; i++) if (segs[i + 1][0] > segs[i][1]) breaks.push({ start: segs[i][1], end: segs[i + 1][0] }); calDayHours[dt - 1] = { start: segs[0][0], end: segs[segs.length - 1][1], breaks }; }
+    }
+    // Each working weekday's own hours: the most common set becomes the plan's working hours, the weekdays that differ (a short Friday) its per-weekday hours.
+    const sig = h => JSON.stringify(h), tally = new Map();
+    for (const d of Object.keys(calDayHours)) { const k = sig(calDayHours[d]); tally.set(k, (tally.get(k) || 0) + 1); }
+    if (tally.size) {
+      const best = [...tally.entries()].sort((a, b) => b[1] - a[1])[0][0];
+      calWorkHours = JSON.parse(best);
+      for (const d of Object.keys(calDayHours)) if (sig(calDayHours[d]) !== best) (calByDay = calByDay || {})[d] = calDayHours[d];
     }
     if (seen.size && wd.size) project.workDays = [...wd].sort((a, b) => a - b);
     const hol = []; let recurring = 0;
@@ -6304,37 +6535,39 @@ function parseMspdi(xmlText) {
     if (s && e) {
       const swapped = dayNumber(e) < dayNumber(s);
       t.startDate = s; t.endDate = swapped ? s : e;
-      t.startTime = noteTime(sTime); t.endTime = noteTime(swapped ? sTime : eTime);
-    } else if (s || e) { t.startDate = t.endDate = s || e; t.startTime = t.endTime = noteTime(sTime || eTime); }
+      t.startTime = noteTime(sTime, t.startDate); t.endTime = noteTime(swapped ? sTime : eTime, t.endDate);
+    } else if (s || e) { t.startDate = t.endDate = s || e; t.startTime = t.endTime = noteTime(sTime || eTime, t.startDate); }
     else { t.taskMode = 'manual'; t.startText = t.endText = 'TBD'; }
     t.milestone = ms && !!(s || e);
     if (manual) t.taskMode = 'manual';
     const pc = parseInt(txt(el, 'PercentComplete'), 10); if (pc >= 0) t.progress = Math.min(100, pc);
     const asRaw = txt(el, 'ActualStart'), afRaw = txt(el, 'ActualFinish');
     t.actualStart = dateOf(asRaw); t.actualFinish = dateOf(afRaw);
-    t.actualStartTime = noteTime(timeOf(asRaw)); t.actualFinishTime = noteTime(timeOf(afRaw));
+    t.actualStartTime = noteTime(timeOf(asRaw), dateOf(asRaw)); t.actualFinishTime = noteTime(timeOf(afRaw), dateOf(afRaw));
     const ctp = CT[parseInt(txt(el, 'ConstraintType'), 10)];
-    if (ctp && ctp !== 'ASAP') { t.constraintType = ctp; const info = constraintTypeInfo(ctp); if (info.hasDate) { const cdRaw = txt(el, 'ConstraintDate'); t.constraintDate = dateOf(cdRaw) || t.startDate; t.constraintTime = noteTime(timeOf(cdRaw)); } }
+    if (ctp && ctp !== 'ASAP') { t.constraintType = ctp; const info = constraintTypeInfo(ctp); if (info.hasDate) { const cdRaw = txt(el, 'ConstraintDate'); t.constraintDate = dateOf(cdRaw) || t.startDate; t.constraintTime = noteTime(timeOf(cdRaw), dateOf(cdRaw)); } }
     const rs = assigned.get(uid); if (rs) t.resource = rs.join(', ').slice(0, 200);
     t._base = {};
     for (const b of kids(el).filter(k => k.localName === 'Baseline')) {
       const n = parseInt(txt(b, 'Number'), 10), bStartRaw = txt(b, 'Start'), bFinishRaw = txt(b, 'Finish');
       const bs = dateOf(bStartRaw), bf = dateOf(bFinishRaw);
       if (n >= 0 && n <= 10 && bs && bf) {
-        const swapped = dayNumber(bf) < dayNumber(bs), bStartTime = noteTime(timeOf(bStartRaw)), bEndTime = noteTime(swapped ? timeOf(bStartRaw) : timeOf(bFinishRaw));
+        const swapped = dayNumber(bf) < dayNumber(bs), bStartTime = noteTime(timeOf(bStartRaw), bs), bEndTime = noteTime(swapped ? timeOf(bStartRaw) : timeOf(bFinishRaw), swapped ? bs : bf);
         t._base[n] = [bs, swapped ? bs : bf, bStartTime, bEndTime];
         baselineSlots.add(n);
       }
     }
-    t._links = kids(el).filter(k => k.localName === 'PredecessorLink').map(l => ({ uid: txt(l, 'PredecessorUID'), type: TYPE[parseInt(txt(l, 'Type'), 10)] || 'FS', lag: Math.round((parseInt(txt(l, 'LinkLag'), 10) || 0) / 10 / perDay), fmt: parseInt(txt(l, 'LagFormat'), 10) }));
+    t._links = kids(el).filter(k => k.localName === 'PredecessorLink').map(l => ({ uid: txt(l, 'PredecessorUID'), type: TYPE[parseInt(txt(l, 'Type'), 10)] || 'FS', lag: Math.round((parseInt(txt(l, 'LinkLag'), 10) || 0) / 10 / perDay), lagMin: Math.round((parseInt(txt(l, 'LinkLag'), 10) || 0) / 10), fmt: parseInt(txt(l, 'LagFormat'), 10) }));
     stack.push(t); made.push(t); byUid.set(uid, t);
   }
+  const lagMinutes = new Map();
   for (const t of made) {
     for (const l of t._links) {
       const p = byUid.get(l.uid);
       if (!p || p === t) { if (!p) warnings.push(`"${t.name}": its predecessor (UID ${l.uid}) is not in the file`); continue; }
       if (t.predecessors.some(q => q.id === p.id)) continue;
       t.predecessors.push({ id: p.id, type: l.type, lag: l.lag }); links++;
+      lagMinutes.set(t.id + '|' + p.id, l.lagMin);   // (exact, for a plan that counts lags in minutes — see finalizeImportedLags)
       if ([4, 6, 8, 10, 12, 20].includes(l.fmt)) elapsed++;
     }
     delete t._links;
@@ -6357,9 +6590,10 @@ function parseMspdi(xmlText) {
     project.timeUnit = 'minute';
     const wh = calWorkHours || { start: calStart, end: calFinish, breaks: [] };
     if (wh.start !== '08:00' || wh.end !== '17:00' || wh.breaks.length !== 1 || wh.breaks[0].start !== '12:00' || wh.breaks[0].end !== '13:00') project.workHours = wh;
+    if (calByDay) project.workHoursByDay = calByDay;
     warnings.push('Times of day were found in this file — the plan was switched to Hours & minutes scheduling');
   }
-  return { tasks: made, project, warnings, info: { header: true, links, levels: maxLevel, baselines: baselineSlots.size } };
+  return { tasks: made, project, warnings, lagMinutes, info: { header: true, links, levels: maxLevel, baselines: baselineSlots.size } };
 }
 
 /* ============================ Find a task / jump ============================
@@ -6485,6 +6719,9 @@ function jumpToTask(id) {
 const PAPER_MM = { A4: [210, 297], A3: [297, 420], Letter: [215.9, 279.4], Legal: [215.9, 355.6], Tabloid: [279.4, 431.8] };
 const PRINT_MARGIN_MM = 8;
 const PRINT_COLS = { id: ['ID', 24, 'c'], wbs: ['WBS', 66, 'l'], name: ['Task Name', 220, 'l'], start: ['Start', 58, 'c'], end: ['Finish', 58, 'c'], duration: ['Days', 34, 'c'], progress: ['%', 32, 'c'], resource: ['Resource', 92, 'l'], preds: ['Predecessors', 74, 'l'] };
+// A minute-mode plan prints the time of day (Start/Finish) and the duration in working time, so those columns are wider.
+function printColW(c) { return minuteModeActive() ? ({ start: 88, end: 88, duration: 54 }[c] || PRINT_COLS[c][1]) : PRINT_COLS[c][1]; }
+function printColLabel(c) { return c === 'duration' && minuteModeActive() ? 'Duration' : PRINT_COLS[c][0]; }
 const PRINT_FONT = '-apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
 let printPageNo = 0, printBuilt = null, printTimer = null;
 function printDefaults() { return { paper: 'A4', orient: 'landscape', cols: ['id', 'name', 'start', 'end', 'duration'], range: 'all', from: '', to: '', scale: 'auto', baseline: showBaseline, critical: showCriticalPath, deps: true, today: true, shade: true, expandAll: false, title: project.name }; }
@@ -6501,7 +6738,18 @@ function printRows(o) {
   if (o.expandAll) return exportTaskRows('filtered');
   return visibleTaskList().map(v => ({ task: v.task, depth: v.depth }));
 }
-function printScaleSegments(unit, d0, d1) {   // the two tiers of the timescale as [{ s, e, label }] over day numbers d0…d1
+// The two tiers of the timescale as [{ s, e, label }] over day numbers d0…d1 (s and e inclusive, so a segment is (e - s + 1) days wide).
+// The Hours scale (a minute-mode plan): the top tier is the day, the bottom its hours — every `step`-th, so that a label is at least ~13 units
+// wide — with s a fraction of a day and e chosen so that (e - s + 1) is the segment's length in days.
+function printScaleSegments(unit, d0, d1, pxd) {
+  if (unit === 'hour') {
+    const top = [], bottom = [], hourW = pxd / 24, step = [1, 2, 3, 4, 6, 12].find(k => k * hourW >= 13) || 24;
+    for (let d = d0; d <= d1; d++) {
+      top.push({ s: d, e: d, label: `${WEEKDAY_NAMES[weekdayOf(d)]} ${fmtDate(dayNumberToIso(d))}` });
+      for (let h = 0; h < 24; h += step) bottom.push({ s: d + h / 24, e: d + h / 24 + step / 24 - 1, label: pad2(h) });
+    }
+    return { top, bottom };
+  }
   const mondayOf = d => d - (((d + 3) % 7) + 7) % 7, ymd = d => dayNumberToIso(d), top = [], bottom = [];
   const push = (arr, s, e, label) => arr.push({ s: Math.max(s, d0), e: Math.min(e, d1), label });
   const monthName = (y, m) => new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString(undefined, { month: 'short', timeZone: 'UTC' });
@@ -6529,12 +6777,14 @@ function buildPrintPages(o) {
     const e = effectiveDates(t.id); if (e.start && !(isUnscheduled(t) && !hasChildren(t.id))) { d0 = Math.min(d0, dayNumber(e.start)); d1 = Math.max(d1, dayNumber(e.end)); }
     if (o.baseline) { const b = baselineDates(t.id); if (b.start) { d0 = Math.min(d0, dayNumber(b.start)); d1 = Math.max(d1, dayNumber(b.end)); } }
   }
-  if (!Number.isFinite(d0)) { d0 = dayNumber(todayStr()) - 7; d1 = d0 + 30; } else { const pad = Math.max(2, Math.round((d1 - d0) * 0.02)); d0 -= pad; d1 += pad; }
+  // A minute-mode plan can print on an Hours scale (chosen, or automatic when the tasks span three days or fewer): whole days, no padding.
+  const hourU = minuteModeActive() && (o.scale === 'hour' || ((!o.scale || o.scale === 'auto') && Number.isFinite(d0) && d1 - d0 + 1 <= 3));
+  if (!Number.isFinite(d0)) { d0 = dayNumber(todayStr()) - (hourU ? 0 : 7); d1 = d0 + (hourU ? 2 : 30); } else if (!hourU) { const pad = Math.max(2, Math.round((d1 - d0) * 0.02)); d0 -= pad; d1 += pad; }
   if (o.range === 'custom') { const a = o.from && /^\d{4}-\d{2}-\d{2}$/.test(o.from) ? dayNumber(o.from) : null, b = o.to && /^\d{4}-\d{2}-\d{2}$/.test(o.to) ? dayNumber(o.to) : null; if (a != null) d0 = a; if (b != null) d1 = b; if (d1 <= d0) d1 = d0 + 7; }
-  const days = d1 - d0 + 1, unit = o.scale && o.scale !== 'auto' ? o.scale : days <= 150 ? 'week' : days <= 900 ? 'month' : 'quarter';
+  const days = d1 - d0 + 1, unit = hourU ? 'hour' : o.scale && o.scale !== 'auto' && o.scale !== 'hour' ? o.scale : days <= 150 ? 'week' : days <= 900 ? 'month' : 'quarter';
   // ---- columns and the vertical layout
   const cols = (o.cols || []).filter(c => PRINT_COLS[c]);
-  const widths = cols.map(c => PRINT_COLS[c][1]);
+  const widths = cols.map(c => printColW(c));
   let listW = widths.reduce((a, b) => a + b, 0);
   const nameAt = cols.indexOf('name');
   if (nameAt >= 0 && W - listW < 380) { const cut = Math.min(widths[nameAt] - 110, 380 - (W - listW)); widths[nameAt] -= cut; listW -= cut; }   // a wide list leaves the chart less than 380 units: the name column gives way
@@ -6543,7 +6793,8 @@ function buildPrintPages(o) {
   let rowH = 15;
   const perPage = Math.max(5, Math.floor((H - top0 - footH) / rowH)), nPages = Math.max(1, Math.ceil(rows.length / perPage));
   if (rows.length && rows.length <= perPage) rowH = Math.min(22, Math.floor((H - top0 - footH) / rows.length));   // a short plan uses the page: taller rows
-  const seg = printScaleSegments(unit, d0, d1), xOf = d => cx0 + (d - d0) * pxd;
+  const seg = printScaleSegments(unit, d0, d1, pxd), xOf = d => cx0 + (d - d0) * pxd;
+  const mX = mn => xOf(mn / 1440);   // (the Hours scale places an instant, in minutes since 1970, on the chart)
   const crit = o.critical ? computeCriticalPath() : new Set(), today = dayNumber(todayStr());
   const BLUE = '#00205B', GRID = '#D8DEE4', DIM = '#57606A', INK = '#1F2328';
   const tint = (hex, k) => { const n = parseInt(hex.slice(1), 16), ch = s => Math.round(((n >> s) & 255) * k + 255 * (1 - k)); return `#${[16, 8, 0].map(s => ch(s).toString(16).padStart(2, '0')).join('')}`; };
@@ -6558,7 +6809,7 @@ function buildPrintPages(o) {
     out.push(`<text x="${W}" y="13" text-anchor="end" font-size="8.5" fill="${DIM}">${esc(`${fmtDate(dayNumberToIso(d0))} – ${fmtDate(dayNumberToIso(d1))} · printed ${fmtDate(todayStr())}`)}</text>`);
     // heading: the list header (both tiers tall) and the two-tier timescale
     let x = 0;
-    cols.forEach((c, i) => { const w = widths[i], al = PRINT_COLS[c][2]; out.push(`<rect x="${x}" y="${headerH}" width="${w}" height="${headH}" fill="${BLUE}" stroke="#fff" stroke-width="0.4"/><text x="${al === 'c' ? x + w / 2 : x + 4}" y="${headerH + headH / 2 + 3}" text-anchor="${al === 'c' ? 'middle' : 'start'}" font-size="8.5" font-weight="700" fill="#fff">${esc(printFit(PRINT_COLS[c][0], w - 6, 8.5, true))}</text>`); x += w; });
+    cols.forEach((c, i) => { const w = widths[i], al = PRINT_COLS[c][2]; out.push(`<rect x="${x}" y="${headerH}" width="${w}" height="${headH}" fill="${BLUE}" stroke="#fff" stroke-width="0.4"/><text x="${al === 'c' ? x + w / 2 : x + 4}" y="${headerH + headH / 2 + 3}" text-anchor="${al === 'c' ? 'middle' : 'start'}" font-size="8.5" font-weight="700" fill="#fff">${esc(printFit(printColLabel(c), w - 6, 8.5, true))}</text>`); x += w; });
     for (const s of seg.top) out.push(`<rect x="${xOf(s.s)}" y="${headerH}" width="${(s.e - s.s + 1) * pxd}" height="${tierH}" fill="${BLUE}" stroke="#fff" stroke-width="0.4"/><text x="${xOf(s.s) + 3}" y="${headerH + 10.5}" font-size="8.5" font-weight="700" fill="#fff">${esc(printFit(s.label, (s.e - s.s + 1) * pxd - 5, 8.5, true))}</text>`);
     for (const s of seg.bottom) {
       const w = (s.e - s.s + 1) * pxd, lab = typeof s.label === 'object' ? (w >= 30 ? `${CAL_WEEK_LABEL} ${s.label.week}` : w >= 13 ? String(s.label.week) : '') : s.label;
@@ -6571,7 +6822,14 @@ function buildPrintPages(o) {
       if (ch) out.push(`<rect x="0" y="${y}" width="${W}" height="${rowH}" fill="${tint(ch, 0.14)}"/><rect x="0" y="${y}" width="2.6" height="${rowH}" fill="${ch}"/>`);   // a task's colour: a light tint over the whole row and a stripe at its left edge
       else if (group || i % 2) out.push(`<rect x="0" y="${y}" width="${W}" height="${rowH}" fill="${group ? '#EEF1F5' : '#F8F9FB'}"/>`);
     });
-    if (o.shade && pxd >= 2.4 && (workDaySet().size < 7 || holSet.size)) {
+    if (o.shade && unit === 'hour') {   // the hours off: each day's time outside its working windows, and days off whole
+      const band = (a, b) => out.push(`<rect x="${xOf(a)}" y="${bodyTop}" width="${xOf(b) - xOf(a)}" height="${bodyH}" fill="#E6E9ED" opacity="0.55"/>`);
+      for (let d = d0; d <= d1; d++) {
+        if (!isWorkNum(d)) { band(d, d + 1); continue; }
+        let cur = 0; for (const [a, b] of winOfDay(d)) { if (a > cur) band(d + cur / 1440, d + a / 1440); cur = b; }
+        if (cur < 1440) band(d + cur / 1440, d + 1);
+      }
+    } else if (o.shade && pxd >= 2.4 && (workDaySet().size < 7 || holSet.size)) {
       for (let d = d0; d <= d1;) { if (isWorkNum(d)) { d++; continue; } let e = d; while (e + 1 <= d1 && !isWorkNum(e + 1)) e++; out.push(`<rect x="${xOf(d)}" y="${bodyTop}" width="${(e - d + 1) * pxd}" height="${bodyH}" fill="#E6E9ED" opacity="0.55"/>`); d = e + 1; }
     }
     for (const s of seg.bottom) out.push(`<line x1="${xOf(s.s)}" y1="${bodyTop}" x2="${xOf(s.s)}" y2="${bodyTop + bodyH}" stroke="${GRID}" stroke-width="0.4"/>`);
@@ -6585,18 +6843,20 @@ function buildPrintPages(o) {
         if (t.spacer) { if (c === 'id') txt = String(taskDisplayId(t.id)); }
         else if (c === 'id') txt = String(taskDisplayId(t.id)); else if (c === 'wbs') txt = wbsCode(t.id);
         else if (c === 'name') txt = (t.milestone ? '◆ ' : '') + t.name;
-        else if (c === 'start') txt = !group && t.startText != null ? t.startText : eff.start ? fmtDate(eff.start) : '';
-        else if (c === 'end') txt = !group && t.endText != null ? t.endText : eff.end ? fmtDate(eff.end) : '';
-        else if (c === 'duration') txt = !group && t.durText != null ? t.durText : eff.start && eff.end && !isUnscheduled(t) ? String(durationDays(eff.start, eff.end)) : '';
+        else if (c === 'start') txt = !group && t.startText != null ? t.startText : eff.start ? gridDateTimeText(eff.start, eff.startTime, minuteModeActive() && (!group || t.taskMode === 'manual')) : '';
+        else if (c === 'end') txt = !group && t.endText != null ? t.endText : eff.end ? gridDateTimeText(eff.end, eff.endTime, minuteModeActive() && (!group || t.taskMode === 'manual'), true) : '';
+        else if (c === 'duration') txt = !group && t.durText != null ? t.durText : eff.start && eff.end && !isUnscheduled(t) ? (minuteModeActive() ? (group && t.taskMode !== 'manual' ? fmtDuration(durationDays(eff.start, eff.end)) : fmtDurationMinutes(t.milestone ? 0 : durationMinutes(taskMoment(t, 'start'), taskMoment(t, 'end')))) : String(durationDays(eff.start, eff.end))) : '';
         else if (c === 'progress') txt = `${Math.round(eff.progress)}%`; else if (c === 'resource') txt = t.resource || ''; else if (c === 'preds') txt = predecessorLabel(t) || '';
         const indent = c === 'name' ? depth * 8 : 0;
         out.push(`<text x="${al === 'c' ? cx + w / 2 : cx + 4 + indent}" y="${ty}" text-anchor="${al === 'c' ? 'middle' : 'start'}" font-size="9" ${group ? 'font-weight="700" ' : ''}fill="${c === 'id' || c === 'wbs' ? DIM : INK}">${esc(printFit(txt, w - 8 - indent, 9, group))}</text>`);
         cx += w;
       });
       if (!eff.start || (isUnscheduled(t) && !group)) return;
-      const s = dayNumber(eff.start), e = dayNumber(eff.end), L = xOf(s), R = xOf(e + 1), mid = y + rowH / 2, hh = Math.round(rowH * 0.54), by = y + (rowH - hh) / 2 - 1;
+      const s = dayNumber(eff.start), e = dayNumber(eff.end), mid = y + rowH / 2, hh = Math.round(rowH * 0.54), by = y + (rowH - hh) / 2 - 1;
+      const sM0 = unit === 'hour' ? dtMoment(eff.start, eff.startTime, false) : 0, eM0 = unit === 'hour' ? dtMoment(eff.end, eff.endTime, true) : 0;
+      const L = unit === 'hour' ? mX(sM0) : xOf(s), R = unit === 'hour' ? mX(eM0) : xOf(e + 1);   // (the day scales cover whole days, the Hours scale the real start and finish)
       const color = '#' + statusColorHex(t), critical = crit.has(t.id);
-      if (t.milestone) { const cxm = xOf(s) + pxd / 2, r = Math.round(hh * 0.62); out.push(`<polygon points="${cxm},${mid - r - 1} ${cxm + r},${mid - 1} ${cxm},${mid + r - 1} ${cxm - r},${mid - 1}" fill="${manual ? '#fff' : color}" stroke="${critical ? '#CF222E' : color}" stroke-width="${critical ? 1.4 : 0.8}"/>`); geom[t.id] = { left: cxm - r, right: cxm + r, y: mid - 1, row: i }; }
+      if (t.milestone) { const cxm = unit === 'hour' ? mX(sM0) : xOf(s) + pxd / 2, r = Math.round(hh * 0.62); out.push(`<polygon points="${cxm},${mid - r - 1} ${cxm + r},${mid - 1} ${cxm},${mid + r - 1} ${cxm - r},${mid - 1}" fill="${manual ? '#fff' : color}" stroke="${critical ? '#CF222E' : color}" stroke-width="${critical ? 1.4 : 0.8}"/>`); geom[t.id] = { left: cxm - r, right: cxm + r, y: mid - 1, row: i }; }
       else if (group) { const w = Math.max(3, R - L); out.push(`<rect x="${L}" y="${mid - 4}" width="${w}" height="4" fill="#24292F"/><polygon points="${L},${mid} ${L + 4},${mid} ${L},${mid + 4}" fill="#24292F"/><polygon points="${L + w},${mid} ${L + w - 4},${mid} ${L + w},${mid + 4}" fill="#24292F"/>`); geom[t.id] = { left: L, right: L + w, y: mid - 2, row: i }; }
       else {
         const w = Math.max(2, R - L), done = w * Math.max(0, Math.min(100, t.progress)) / 100, dash = manual ? ' stroke-dasharray="2 1.5"' : '';
@@ -6604,7 +6864,13 @@ function buildPrintPages(o) {
         if (done > 0) out.push(`<rect x="${L}" y="${by}" width="${done}" height="${hh}" rx="1.5" fill="${color}"/>`);
         geom[t.id] = { left: L, right: L + w, y: mid - 1, row: i };
       }
-      if (o.baseline && !t.milestone) { const b = baselineDates(t.id); if (b.start) out.push(`<rect x="${xOf(dayNumber(b.start))}" y="${y + rowH - 4}" width="${Math.max(2, (dayNumber(b.end) - dayNumber(b.start) + 1) * pxd)}" height="2.2" fill="#8C959F"/>`); }
+      if (o.baseline && !t.milestone) {
+        const b = baselineDates(t.id);
+        if (b.start) {
+          const bl = unit === 'hour' ? mX(dtMoment(b.start, b.startTime, false)) : xOf(dayNumber(b.start)), bw = unit === 'hour' ? mX(dtMoment(b.end, b.endTime, true)) - bl : (dayNumber(b.end) - dayNumber(b.start) + 1) * pxd;
+          out.push(`<rect x="${bl}" y="${y + rowH - 4}" width="${Math.max(2, bw)}" height="2.2" fill="#8C959F"/>`);
+        }
+      }
     });
     // arrows between the tasks on this page
     if (o.deps) for (const { task: t } of slice) for (const p of t.predecessors) {
@@ -6613,7 +6879,8 @@ function buildPrintPages(o) {
       const d = x2 >= x1 + 5 ? `M${x1},${y1} H${mx} V${y2} H${x2}` : `M${x1},${y1} H${x1 + 5} V${y1 + dir * rowH / 2} H${x2 - 5} V${y2} H${x2}`;
       out.push(`<path d="${d}" fill="none" stroke="${isCrit ? '#CF222E' : '#8C959F'}" stroke-width="0.6" marker-end="url(#${isCrit ? 'pc' : 'pa'}${pg})"/>`);
     }
-    if (o.today && today >= d0 && today <= d1) out.push(`<line x1="${xOf(today) + pxd / 2}" y1="${headerH + tierH}" x2="${xOf(today) + pxd / 2}" y2="${bodyTop + bodyH}" stroke="#CF222E" stroke-width="0.8" stroke-dasharray="3 2"/>`);
+    const nowFrac = unit === 'hour' ? (new Date().getHours() * 60 + new Date().getMinutes()) / 1440 : null, todayX = unit === 'hour' ? xOf(today + nowFrac) : xOf(today) + pxd / 2;
+    if (o.today && today >= d0 && today <= d1) out.push(`<line x1="${todayX}" y1="${headerH + tierH}" x2="${todayX}" y2="${bodyTop + bodyH}" stroke="#CF222E" stroke-width="0.8" stroke-dasharray="3 2"/>`);
     out.push(`<rect x="0" y="${bodyTop + bodyH}" width="${W}" height="0.6" fill="${GRID}"/>`);
     // footer: a small legend and the page number
     const fy = H - 4;
@@ -6621,7 +6888,7 @@ function buildPrintPages(o) {
     out.push('</svg>');
     pages.push(out.join(''));
   }
-  return { pages, W, H, pageMm: [pageW, pageH], paper: o.paper, orient: land ? 'landscape' : 'portrait', rows: rows.length, rowsPerPage: perPage, range: [d0, d1], unit };
+  return { pages, W, H, pageMm: [pageW, pageH], paper: o.paper, orient: land ? 'landscape' : 'portrait', rows: rows.length, rowsPerPage: perPage, range: [d0, d1], unit, chart: { cx0, pxd, d0, d1 } };
 }
 // ---- the dialog
 function readPrintOptions() {
@@ -6633,6 +6900,8 @@ function openPrintModal() {
   closeDataMenu && closeDataMenu();
   const d = printDefaults(), g = id => document.getElementById(id);
   g('printPaper').value = d.paper; g('printOrient').value = d.orient; g('printScale').value = d.scale; g('printTitle').value = d.title;
+  g('printScale').querySelector('option[value=hour]').hidden = !minuteModeActive();   // (the Hours scale belongs to a minute-mode plan)
+  { const lab = g('printCol-duration').parentElement; lab.lastChild.textContent = minuteModeActive() ? ' Duration' : ' Days'; }   // (a minute-mode plan's duration is in working time, not days)
   for (const c of Object.keys(PRINT_COLS)) g('printCol-' + c).checked = d.cols.includes(c);
   g('printRangeAll').checked = true; g('printFrom').value = ''; g('printTo').value = '';
   g('printBaseline').checked = d.baseline; g('printCritical').checked = d.critical; g('printDeps').checked = d.deps; g('printToday').checked = d.today; g('printShade').checked = d.shade; g('printExpand').checked = d.expandAll;
@@ -6653,7 +6922,7 @@ function drawPrintPreview() {
   box.innerHTML = `<div class="print-sheet" style="aspect-ratio:${b.W}/${b.H}">${b.pages[printPageNo]}</div>`;
   document.getElementById('printPageInfo').textContent = `Page ${printPageNo + 1} of ${b.pages.length}`;
   document.getElementById('printPrev').disabled = printPageNo === 0; document.getElementById('printNext').disabled = printPageNo >= b.pages.length - 1;
-  document.getElementById('printSummary').textContent = `${b.rows} task${b.rows === 1 ? '' : 's'} on ${b.pages.length} page${b.pages.length === 1 ? '' : 's'} · ${b.paper} ${b.orient} · ${fmtDate(dayNumberToIso(b.range[0]))} – ${fmtDate(dayNumberToIso(b.range[1]))} in ${b.unit === 'week' ? 'weeks' : b.unit === 'month' ? 'months' : 'quarters'}`;
+  document.getElementById('printSummary').textContent = `${b.rows} task${b.rows === 1 ? '' : 's'} on ${b.pages.length} page${b.pages.length === 1 ? '' : 's'} · ${b.paper} ${b.orient} · ${fmtDate(dayNumberToIso(b.range[0]))} – ${fmtDate(dayNumberToIso(b.range[1]))} in ${b.unit === 'hour' ? 'hours' : b.unit === 'week' ? 'weeks' : b.unit === 'month' ? 'months' : 'quarters'}`;
 }
 // Puts the pages into #printRoot (hidden on screen, the only thing that shows when printing) and sets the paper size.
 function mountPrintRoot(built) {
@@ -6739,6 +7008,7 @@ function openBulkModal() {
   document.getElementById('bulkHint').textContent = `Tick the fields you want to change — everything else stays as it is.${groups ? ' Groups keep the progress and dates worked out from their tasks.' : ''}`;
   for (const f of ['progress', 'resource', 'mode', 'color', 'shift', 'pred']) document.getElementById('bulkOn-' + f).checked = false;
   for (const id of ['bulkVal-progress', 'bulkVal-resource', 'bulkVal-shift', 'bulkVal-predId', 'bulkVal-predLag']) document.getElementById(id).value = '';
+  { const bl = document.getElementById('bulkVal-predLag'), mm = minuteModeActive(); bl.type = mm ? 'text' : 'number'; bl.placeholder = mm ? 'lag, e.g. 2h' : 'lag'; bl.setAttribute('aria-label', mm ? 'Lag in working time, such as 2h or 30m' : 'Lag in working days'); }   // (a minute-mode plan's lags are typed with a unit)
   document.getElementById('bulkVal-mode').value = 'auto'; document.getElementById('bulkVal-predType').value = 'FS';
   document.getElementById('bulkVal-color').innerHTML = BULK_COLORS.map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
   const custom = bulkCustomCols();
@@ -6771,11 +7041,13 @@ function applyBulkEdit() {
   if (on('progress')) { pct = Number(val('progress')); if (val('progress').trim() === '' || !Number.isFinite(pct) || pct < 0 || pct > 100) { showToast('% complete must be between 0 and 100', true); return; } pct = Math.round(pct); }
   if (on('shift')) { shift = Number(val('shift')); if (val('shift').trim() === '' || !Number.isInteger(shift) || Math.abs(shift) > 5000) { showToast('Give the number of working days to move by, such as 5 or -2', true); return; } }
   if (on('pred')) {
-    const n = parseInt(val('predId'), 10); predTarget = Number.isFinite(n) ? taskIdByDisplayId(n) : null; lag = val('predLag').trim() === '' ? 0 : Number(val('predLag'));
+    const n = parseInt(val('predId'), 10); predTarget = Number.isFinite(n) ? taskIdByDisplayId(n) : null;
+    if (minuteModeActive()) { lag = parseLagInput(val('predLag')); if (lag === null) { showToast(`Can't read "${val('predLag')}" as a lag — try 2h, -30m, 1d or 1w`, true); return; } }
+    else lag = val('predLag').trim() === '' ? 0 : Number(val('predLag'));
     if (!predTarget) { showToast(`No task #${val('predId')}`, true); return; }
     if (hasChildren(predTarget)) { showToast("Can't depend on a summary task — pick one of its own leaf tasks", true); return; }
     if (byId(predTarget).spacer) { showToast("Can't depend on an empty line", true); return; }
-    if (!Number.isInteger(lag) || Math.abs(lag) > MAX_LAG_DAYS) { showToast(`The lag must be a whole number of days, at most ${MAX_LAG_DAYS.toLocaleString('en')}`, true); return; }
+    if (!minuteModeActive() && (!Number.isInteger(lag) || Math.abs(lag) > MAX_LAG_DAYS)) { showToast(`The lag must be a whole number of days, at most ${MAX_LAG_DAYS.toLocaleString('en')}`, true); return; }
   }
   const customVals = {};
   for (const c of customOn) {
@@ -6797,7 +7069,7 @@ function applyBulkEdit() {
       if (hasChildren(id) || id === predTarget || t.predecessors.some(p => p.id === predTarget) || wouldCreateCycle(id, predTarget)) skipped.pred++;
       else { t.predecessors.push({ id: predTarget, type: predType, lag }); touched.push(id); did = true; }
     }
-    for (const c of customOn) { setCustomValue(t, c, customVals[c]); did = true; }
+    for (const c of customOn) { setCustomValue(t, c, customVals[c]); if (CUSTOM_FIELDS[c].kind === 'date') setCustomValue(t, c + 'Time', null); did = true; }
     if (did) { t.updatedAt = now; changed++; }
   }
   normalizeData();
@@ -6822,21 +7094,23 @@ function clipCell(t, c, depth) {
     case 'mode': return t.taskMode === 'manual' ? 'Manual' : 'Auto';
     case 'wbs': return wbsCode(t.id);
     case 'name': return '  '.repeat(depth) + (t.milestone ? '◆ ' : '') + t.name;
-    case 'start': return own && t.startText != null ? t.startText : eff.start ? fmtDate(eff.start) : '';
-    case 'end': return own && t.endText != null ? t.endText : eff.end ? fmtDate(eff.end) : '';
-    case 'actualStart': return act.start ? fmtDate(act.start) : '';
-    case 'actualFinish': return act.end ? fmtDate(act.end) : '';
-    case 'duration': return t.durText != null ? t.durText : eff.start && eff.end && !isUnscheduled(t) ? String(durationDays(eff.start, eff.end)) : '';
+    // (a minute-mode plan copies the time of day too — a leaf's own dates and its duration in working minutes, as the grid shows them —
+    // so a paste into Excel, or back here as rows, keeps them; a group's rolled-up dates stay date-only, like the grid)
+    case 'start': return own && t.startText != null ? t.startText : eff.start ? gridDateTimeText(eff.start, t.startTime, minuteModeActive() && own) : '';
+    case 'end': return own && t.endText != null ? t.endText : eff.end ? gridDateTimeText(eff.end, t.endTime, minuteModeActive() && own, true) : '';
+    case 'actualStart': return act.start ? gridDateTimeText(act.start, t.actualStartTime, minuteModeActive() && !hasChildren(t.id)) : '';
+    case 'actualFinish': return act.end ? gridDateTimeText(act.end, t.actualFinishTime, minuteModeActive() && !hasChildren(t.id), true) : '';
+    case 'duration': return t.durText != null ? t.durText : eff.start && eff.end && !isUnscheduled(t) ? (minuteModeActive() && own ? fmtDurationMinutes(t.milestone ? 0 : durationMinutes(taskMoment(t, 'start'), taskMoment(t, 'end'))) : String(durationDays(eff.start, eff.end))) : '';
     case 'progress': return `${Math.round(eff.progress)}%`;
     case 'remaining': { const r = remainingDays(t.id); return r == null ? '' : String(r); }
     case 'status': return taskStatus(t.id) || '';
     case 'preds': return predecessorLabel(t) || '';
     case 'resource': return (t.resource || '').trim();
-    case 'baselineStart': return baselineDates(t.id).start ? fmtDate(baselineDates(t.id).start) : '';
-    case 'baselineFinish': return baselineDates(t.id).end ? fmtDate(baselineDates(t.id).end) : '';
-    case 'baselineDuration': { const v = scheduleVariance(t.id).baseDuration; return v == null ? '' : String(v); }
-    case 'startVariance': case 'finishVariance': case 'durationVariance': { const sv = scheduleVariance(t.id), n = { startVariance: sv.start, finishVariance: sv.finish, durationVariance: sv.duration }[c]; return n == null ? '' : String(n); }
-    default: if (isCustomField(c)) { const v = customValue(t, c), kind = CUSTOM_FIELDS[c].kind; return v === undefined ? '' : kind === 'flag' ? (v ? 'Yes' : 'No') : kind === 'date' ? fmtDate(v) : String(v); }
+    case 'baselineStart': { const b = baselineDates(t.id); return b.start ? baselineDateText(t.id, b.start, b.startTime, false) : ''; }
+    case 'baselineFinish': { const b = baselineDates(t.id); return b.end ? baselineDateText(t.id, b.end, b.endTime, true) : ''; }
+    case 'baselineDuration': { const v = scheduleVariance(t.id).baseDuration; return v == null ? '' : varianceIsMinutes(t.id) ? fmtDurationMinutes(v) : String(v); }
+    case 'startVariance': case 'finishVariance': case 'durationVariance': { const sv = scheduleVariance(t.id), n = { startVariance: sv.start, finishVariance: sv.finish, durationVariance: sv.duration }[c]; return n == null ? '' : varianceIsMinutes(t.id) ? fmtVarianceMinutes(n) : String(n); }
+    default: if (isCustomField(c)) { const v = customValue(t, c), kind = CUSTOM_FIELDS[c].kind; return v === undefined ? '' : kind === 'flag' ? (v ? 'Yes' : 'No') : kind === 'date' ? customDateText(t, c) : String(v); }
   }
   return '';
 }
@@ -6846,7 +7120,7 @@ function buildClip() {
   const base = Math.min(...roots.map(id => depth(byId(id)))), cols = ['id', ...visibleTaskCols(currentView)];
   const clean = v => String(v).replace(/[\t\r\n]+/g, ' ');
   const tsv = [cols.map(c => c === 'id' ? 'ID' : clean(TASK_COLS[c].label).replace(/\s+/g, ' ')).join('\t')].concat(list.map(t => cols.map(c => clean(clipCell(t, c, depth(t) - base))).join('\t'))).join('\n');
-  return { tsv, count: list.length, roots: roots.length, json: { app: 'milestone', v: 1, planId: currentPlanId, roots, tasks: list.map(t => JSON.parse(JSON.stringify(t))) } };
+  return { tsv, count: list.length, roots: roots.length, json: { app: 'milestone', v: 1, planId: currentPlanId, timeUnit: minuteModeActive() ? 'minute' : 'day', perDay: workMinutesPerDay(), roots, tasks: list.map(t => JSON.parse(JSON.stringify(t))) } };
 }
 function rememberClip(clip) { try { const txt = JSON.stringify({ tsv: clip.tsv, json: clip.json }); if (txt.length < 3e6) localStorage.setItem(CLIP_KEY, txt); } catch (e) { /* the clipboard itself still works */ } }
 function recallClip() { try { return JSON.parse(localStorage.getItem(CLIP_KEY) || 'null'); } catch (e) { return null; } }
@@ -6887,6 +7161,9 @@ function pasteTaskPayload(pl) {
     c.id = idMap.get(t.id); c.parentId = rootSet.has(t.id) ? null : (idMap.get(t.parentId) || null);
     c.predecessors = (c.predecessors || []).filter(pr => idMap.has(pr.id) || byId(pr.id)).map(pr => idMap.has(pr.id) ? Object.assign({}, pr, { id: idMap.get(pr.id) }) : pr);   // links between the copied tasks follow the copies; links to other tasks stay when that task exists here
     c.updatedAt = now;
+    if ((pl.timeUnit === 'minute') !== minuteModeActive()) {   // copied from a plan that counts lags in the other unit
+      for (const pr of c.predecessors) if (pr.lag) pr.lag = minuteModeActive() ? pr.lag * workMinutesPerDay() : Math.round(pr.lag / (pl.perDay || 480));
+    }
     if (rootSet.has(t.id)) c.order = pl.roots.indexOf(t.id);
     return c;
   });
@@ -7016,6 +7293,14 @@ function placeImportedTasks(list) {
 }
 // Puts imported tasks into the plan: appended after the existing top level, or replacing everything (the old tasks are tombstoned, so a
 // synced file learns they are gone). Auto tasks are put on working days; actual dates overwrite Start/Finish as usual. Nothing is re-planned.
+// A file's link lags come out of the parsers in working DAYS. Once the plan they land in is settled (an imported calendar can switch it to
+// minute mode), a minute-mode plan takes them in working minutes instead — exact when the file said so (MS Project's LinkLag is in tenths of
+// a minute), else the days times the plan's working day. (A table's lags are already read in the plan's own unit: tasksFromTable.)
+function finalizeImportedLags(list, lagMinutes) {
+  if (!minuteModeActive() || !lagMinutes) return;
+  const per = workMinutesPerDay();
+  for (const t of list) for (const p of t.predecessors) { const m = lagMinutes.get(t.id + '|' + p.id); p.lag = m !== undefined ? m : Math.round(p.lag * per); }
+}
 function applyImportedTasks(res, mode, opts = {}) {
   const imported = res.tasks, project0 = res.project || {};
   if (mode === 'replace') {
@@ -7033,10 +7318,11 @@ function applyImportedTasks(res, mode, opts = {}) {
     if (project0.baselines) { project.baselines = Object.assign({}, project.baselines, project0.baselines); if (!project.compareBaseline) { const first = Math.min(...Object.keys(project0.baselines).map(Number)); if (first > 0) project.compareBaseline = first; } }
     // Scheduling precision travels with the working calendar, not with the tasks — a source file with real times of day
     // is exactly the kind of thing "import the calendar too" means to carry over (see parseMspdi()'s own detection of it).
-    if (project0.timeUnit === 'minute') { project.timeUnit = 'minute'; if (project0.workHours) project.workHours = project0.workHours; }
+    if (project0.timeUnit === 'minute') { project.timeUnit = 'minute'; if (project0.workHours) project.workHours = project0.workHours; if (project0.workHoursByDay) project.workHoursByDay = project0.workHoursByDay; }
     project.updatedAt = Date.now();
     normalizeData();
   } else { for (const t of imported) { delete t.baselines; t.startTime = t.endTime = t.actualStartTime = t.actualFinishTime = t.constraintTime = null; } }
+  finalizeImportedLags(imported, res.lagMinutes);
   for (const t of imported) { applyActualDates(t); clampTaskDates(t); if (!isStarted(t)) snapToWorkDays(t); }
   tasks.push(...imported);
   const roots = imported.filter(t => !t.parentId);
@@ -7243,12 +7529,12 @@ function buildXlsx(opts) {
         case 'mode': sheet.cell(r, c, manual ? 'Manual' : 'Auto', S({ h: 'center', color: manual ? '9A6700' : DIM, bold: false })); break;
         case 'wbs': sheet.cell(r, c, wbsCode(t.id), S({ h: 'left' })); break;
         case 'name': sheet.cell(r, c, (t.milestone ? '◆ ' : '') + t.name, S({ h: 'left', indent: depth })); break;
-        case 'start': dateCell(c, t.startText, startIso, minuteModeActive() && ownDates ? (t.startTime || workHours().start) : null); break;
-        case 'end': dateCell(c, t.endText, endIso, minuteModeActive() && ownDates ? (t.endTime || workHours().end) : null); break;
-        case 'actualStart': dateCell(c, null, act.start, minuteModeActive() && !summary ? (t.actualStartTime || workHours().start) : null); break;
-        case 'actualFinish': dateCell(c, null, act.end, minuteModeActive() && !summary ? (t.actualFinishTime || workHours().end) : null); break;
-        case 'baselineStart': { const bl = baselineDates(t.id); dateCell(c, null, bl.start, varianceIsMinutes(t.id) ? (bl.startTime || workHours().start) : null); break; }
-        case 'baselineFinish': { const bl = baselineDates(t.id); dateCell(c, null, bl.end, varianceIsMinutes(t.id) ? (bl.endTime || workHours().end) : null); break; }
+        case 'start': dateCell(c, t.startText, startIso, minuteModeActive() && ownDates ? (t.startTime || wStart(startIso)) : null); break;
+        case 'end': dateCell(c, t.endText, endIso, minuteModeActive() && ownDates ? (t.endTime || wEnd(endIso)) : null); break;
+        case 'actualStart': dateCell(c, null, act.start, minuteModeActive() && !summary ? (t.actualStartTime || wStart(act.start)) : null); break;
+        case 'actualFinish': dateCell(c, null, act.end, minuteModeActive() && !summary ? (t.actualFinishTime || wEnd(act.end)) : null); break;
+        case 'baselineStart': { const bl = baselineDates(t.id); dateCell(c, null, bl.start, varianceIsMinutes(t.id) ? (bl.startTime || wStart(bl.start)) : null); break; }
+        case 'baselineFinish': { const bl = baselineDates(t.id); dateCell(c, null, bl.end, varianceIsMinutes(t.id) ? (bl.endTime || wEnd(bl.end)) : null); break; }
         // A minute-mode duration/variance is written as pre-formatted text ("4 hrs", "+30 min") rather than a real number
         // with a custom format code — Excel's format codes have no clean way to render a raw minute count as hours/minutes
         // the way `durFmt`'s "day"/"days" trick does for whole days, so the cell trades spreadsheet-math-ability for a
@@ -7284,7 +7570,7 @@ function buildXlsx(opts) {
         default:
           if (isCustomField(k)) {
             const kind = CUSTOM_FIELDS[k].kind, v = customValue(t, k);
-            if (kind === 'date') dateCell(c, null, v || null);
+            if (kind === 'date') dateCell(c, null, v || null, customTime(t, k) || null);
             else if (kind === 'number') sheet.cell(r, c, v === undefined ? null : v, S({ h: 'center' }));
             else if (kind === 'flag') sheet.cell(r, c, v ? 'Yes' : 'No', S({ h: 'center' }));
             else sheet.cell(r, c, v || null, S({ h: 'left' }));
@@ -7312,11 +7598,12 @@ function buildXlsx(opts) {
     // more than 400 columns, when it falls back to the calendar weeks/months below.
     let hourly = false;
     if (minuteModeActive()) {
-      const win = workWindows(), h0 = Math.floor(win[0][0] / 60), h1 = Math.ceil(win[win.length - 1][1] / 60), busy = new Set();
+      const allWin = hoursInfo().days.map(d => d.win), h0 = Math.floor(Math.min(...allWin.map(w => w[0][0])) / 60), h1 = Math.ceil(Math.max(...allWin.map(w => w[w.length - 1][1])) / 60), busy = new Set();
       for (const { task: t } of scheduled) { const e = effectiveDates(t.id); busy.add(dayNumber(e.start)); busy.add(dayNumber(e.end)); }
       for (let d = minD; d <= maxD && periods.length <= 400; d++) {
         if (!isWorkNum(d) && !busy.has(d)) continue;
         const iso = dayNumberToIso(d), top = `${WEEKDAY_NAMES[(((d + 4) % 7) + 7) % 7]} ${fmtDate(iso)}`;
+        const win = winOfDay(d);   // (a day with shorter hours simply has fewer columns)
         for (let h = h0; h < h1; h++) if (win.some(([a, b]) => a < h * 60 + 60 && b > h * 60)) periods.push({ ms: d * 1440 + h * 60, me: d * 1440 + h * 60 + 60, group: iso, top, bottom: pad2(h) });
       }
       hourly = periods.length > 0 && periods.length <= 400;
@@ -7423,7 +7710,7 @@ function buildMspdi() {
   // The project's real working hours when it has any (a minute-mode plan's project.workHours), else the same 08:00–12:00/
   // 13:00–17:00 default this export always used — so a day-mode plan's XML is byte-identical to before this existed.
   const wh = workHours(), hhmmss = hm => hm + ':00';
-  const dt = (iso, time = hhmmss(wh.start)) => `${iso}T${time}`, hours = d => `PT${Math.round(d * 8)}H0M0S`, hoursMin = min => `PT${Math.floor(min / 60)}H${min % 60}M0S`;
+  const dt = (iso, time = hhmmss(wStart(iso))) => `${iso}T${time}`, hours = d => `PT${Math.round(d * 8)}H0M0S`, hoursMin = min => `PT${Math.floor(min / 60)}H${min % 60}M0S`;
   // A leaf task's own real time-of-day when the plan is minute-mode and it has one, else the working day's own open/close
   // (`side` is one of the five *Time field names; a group has no real time of its own, so it always falls back to `dflt`).
   const taskTime = (t, side, dflt) => (minuteModeActive() && !hasChildren(t.id) && t[side]) ? t[side] : dflt;
@@ -7437,9 +7724,10 @@ function buildMspdi() {
   for (const t of rows) if (!hasChildren(t.id)) for (const n of resOf(t)) if (!resNames.includes(n)) resNames.push(n);
   // ---- calendar
   const wd = new Set(currentWorkDays()), yrs = [Number(startIso.slice(0, 4)) - 1, Number(endIso.slice(0, 4)) + 1];
-  const workingTimes = workWindows().map(([a, b]) => `<WorkingTime>${T('FromTime', hhmmss(hhmmOf(a)))}${T('ToTime', hhmmss(hhmmOf(b)))}</WorkingTime>`).join('');
+  // (each working weekday carries ITS OWN hours: a plan with a short Friday writes a different WorkingTimes for it)
+  const workingTimes = wdIdx => hoursInfo().days[wdIdx].win.map(([a, b]) => `<WorkingTime>${T('FromTime', hhmmss(hhmmOf(a)))}${T('ToTime', hhmmss(hhmmOf(b)))}</WorkingTime>`).join('');
   const weekDays = [1, 2, 3, 4, 5, 6, 7].map(dtp => wd.has(dtp - 1)
-    ? `<WeekDay>${T('DayType', dtp)}${T('DayWorking', 1)}<WorkingTimes>${workingTimes}</WorkingTimes></WeekDay>`
+    ? `<WeekDay>${T('DayType', dtp)}${T('DayWorking', 1)}<WorkingTimes>${workingTimes(dtp - 1)}</WorkingTimes></WeekDay>`
     : `<WeekDay>${T('DayType', dtp)}${T('DayWorking', 0)}</WeekDay>`).join('');
   const exc = [];
   for (const h of (project.holidays || [])) {
@@ -7456,29 +7744,29 @@ function buildMspdi() {
     const durMinutes = has && minuteLeaf ? durationMinutes(taskMoment(t, 'start'), taskMoment(t, 'end')) : null;
     const dur = has && durMinutes == null ? (t.milestone && !group ? 0 : durationDays(e.start, e.end)) : null;
     const durXml = durMinutes != null ? hoursMin(t.milestone && !group ? 0 : durMinutes) : hours(dur || 0);
-    const startTime = hhmmss(taskTime(t, 'startTime', wh.start)), endTime = hhmmss(taskTime(t, 'endTime', t.milestone && !group ? wh.start : wh.end));
+    const startTime = hhmmss(taskTime(t, 'startTime', wStart(e.start))), endTime = hhmmss(taskTime(t, 'endTime', t.milestone && !group ? wStart(e.end) : wEnd(e.end)));
     const notes = [];
     if (unsched) { const bits = [t.startText != null && `Start: ${t.startText || '(blank)'}`, t.endText != null && `Finish: ${t.endText || '(blank)'}`, t.durText != null && `Duration: ${t.durText}`].filter(Boolean); if (bits.length) notes.push(bits.join(' · ')); }
     if (group && t.resource) notes.push(`Resource: ${t.resource}`);
-    for (const id of Object.keys(CUSTOM_FIELDS)) { const v = customValue(t, id); if (v !== undefined) notes.push(`${customFieldName(id)}: ${CUSTOM_FIELDS[id].kind === 'flag' ? (v ? 'Yes' : 'No') : CUSTOM_FIELDS[id].kind === 'date' ? fmtDate(v) : v}`); }
+    for (const id of Object.keys(CUSTOM_FIELDS)) { const v = customValue(t, id); if (v !== undefined) notes.push(`${customFieldName(id)}: ${CUSTOM_FIELDS[id].kind === 'flag' ? (v ? 'Yes' : 'No') : CUSTOM_FIELDS[id].kind === 'date' ? customDateText(t, id) : v}`); }
     let x = `<Task>${T('UID', u)}${T('ID', u)}${T('Name', t.name)}${T('Active', 1)}${T('Manual', manual ? 1 : 0)}${T('Type', 0)}${T('IsNull', 0)}${T('WBS', wbsCode(t.id))}${T('OutlineNumber', wbsCode(t.id))}${T('OutlineLevel', depth)}${T('Priority', 500)}`;
     if (has) {
       x += T('Start', dt(e.start, startTime)) + T('Finish', dt(e.end, endTime)) + T('Duration', durXml);
       if (manual) x += T('ManualStart', dt(e.start, startTime)) + T('ManualFinish', dt(e.end, endTime)) + T('ManualDuration', durXml);
     }
     x += T('DurationFormat', 7) + T('Milestone', t.milestone && !group ? 1 : 0) + T('Summary', group ? 1 : 0) + T('PercentComplete', Math.round(e.progress)) + T('PercentWorkComplete', Math.round(e.progress));
-    if (act.start && !group) x += T('ActualStart', dt(act.start, hhmmss(taskTime(t, 'actualStartTime', wh.start))));
-    if (act.end && !group) x += T('ActualFinish', dt(act.end, hhmmss(taskTime(t, 'actualFinishTime', t.milestone ? wh.start : wh.end))));
+    if (act.start && !group) x += T('ActualStart', dt(act.start, hhmmss(taskTime(t, 'actualStartTime', wStart(act.start)))));
+    if (act.end && !group) x += T('ActualFinish', dt(act.end, hhmmss(taskTime(t, 'actualFinishTime', t.milestone ? wStart(act.end) : wEnd(act.end)))));
     const ct = CT[t.constraintType] || 0;
-    if (!group && ct) { const info = constraintTypeInfo(t.constraintType); x += T('ConstraintType', ct) + (info.hasDate && t.constraintDate ? T('ConstraintDate', dt(t.constraintDate, hhmmss(taskTime(t, 'constraintTime', info.basis === 'finish' ? wh.end : wh.start)))) : ''); }
+    if (!group && ct) { const info = constraintTypeInfo(t.constraintType); x += T('ConstraintType', ct) + (info.hasDate && t.constraintDate ? T('ConstraintDate', dt(t.constraintDate, hhmmss(taskTime(t, 'constraintTime', info.basis === 'finish' ? wEnd(t.constraintDate) : wStart(t.constraintDate))))) : ''); }
     else x += T('ConstraintType', 0);
     if (notes.length) x += T('Notes', notes.join('\n'));
-    if (!group) for (const p of t.predecessors) if (uid.has(p.id)) x += `<PredecessorLink>${T('PredecessorUID', uid.get(p.id))}${T('Type', LT[p.type] == null ? 1 : LT[p.type])}${T('CrossProject', 0)}${T('LinkLag', Math.round((p.lag || 0) * 4800))}${T('LagFormat', 7)}</PredecessorLink>`;
+    if (!group) for (const p of t.predecessors) if (uid.has(p.id)) x += `<PredecessorLink>${T('PredecessorUID', uid.get(p.id))}${T('Type', LT[p.type] == null ? 1 : LT[p.type])}${T('CrossProject', 0)}${minuteModeActive() ? `${T('LinkLag', Math.round((p.lag || 0) * 10))}${T('LagFormat', 3)}` : `${T('LinkLag', Math.round((p.lag || 0) * 4800))}${T('LagFormat', 7)}`}</PredecessorLink>`;
     for (let n = 0; n < BASELINE_SLOTS; n++) {
       const b = baselineDates(t.id, n); if (!b || !b.start || !b.end) continue;
       const bMinute = varianceIsMinutes(t.id);
-      const bStartTime = hhmmss(bMinute && b.startTime ? b.startTime : wh.start), bEndTime = hhmmss(bMinute && b.endTime ? b.endTime : (t.milestone && !group ? wh.start : wh.end));
-      const bDur = bMinute ? hoursMin(t.milestone && !group ? 0 : durationMinutes(dayNumber(b.start) * 1440 + minuteOfDay(b.startTime || wh.start), dayNumber(b.end) * 1440 + minuteOfDay(b.endTime || wh.end))) : hours(t.milestone && !group ? 0 : durationDays(b.start, b.end));
+      const bStartTime = hhmmss(bMinute && b.startTime ? b.startTime : wStart(b.start)), bEndTime = hhmmss(bMinute && b.endTime ? b.endTime : (t.milestone && !group ? wStart(b.end) : wEnd(b.end)));
+      const bDur = bMinute ? hoursMin(t.milestone && !group ? 0 : durationMinutes(dtMoment(b.start, b.startTime, false), dtMoment(b.end, b.endTime, true))) : hours(t.milestone && !group ? 0 : durationDays(b.start, b.end));
       x += `<Baseline>${T('Number', n)}${T('Start', dt(b.start, bStartTime))}${T('Finish', dt(b.end, bEndTime))}${T('Duration', bDur)}${T('DurationFormat', 7)}</Baseline>`;
     }
     parts.push(x + '</Task>');
@@ -7486,8 +7774,8 @@ function buildMspdi() {
   const assignments = []; let au = 0;
   rows.forEach((t, i) => { if (!hasChildren(t.id)) for (const n of resOf(t)) assignments.push(`<Assignment>${T('UID', ++au)}${T('TaskUID', i + 1)}${T('ResourceUID', resNames.indexOf(n) + 1)}${T('Units', 1)}</Assignment>`); });
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Project xmlns="http://schemas.microsoft.com/project">` +
-    `${T('SaveVersion', 14)}${T('Name', fileBase(title) + '.xml')}${T('Title', title)}${T('CreationDate', now)}${T('LastSaved', now)}${T('ScheduleFromStart', 1)}${T('StartDate', dt(startIso))}${T('FinishDate', dt(endIso, hhmmss(wh.end)))}` +
-    `${T('CalendarUID', 1)}${T('DefaultStartTime', hhmmss(wh.start))}${T('DefaultFinishTime', hhmmss(wh.end))}${T('MinutesPerDay', workMinutesPerDay())}${T('MinutesPerWeek', workMinutesPerDay() * Math.max(1, wd.size))}${T('DaysPerMonth', 20)}${T('DefaultTaskType', 0)}${T('DurationFormat', 7)}${T('WorkFormat', 2)}${T('WeekStartDay', 1)}` +
+    `${T('SaveVersion', 14)}${T('Name', fileBase(title) + '.xml')}${T('Title', title)}${T('CreationDate', now)}${T('LastSaved', now)}${T('ScheduleFromStart', 1)}${T('StartDate', dt(startIso))}${T('FinishDate', dt(endIso, hhmmss(wEnd(endIso))))}` +
+    `${T('CalendarUID', 1)}${T('DefaultStartTime', hhmmss(wh.start))}${T('DefaultFinishTime', hhmmss(wh.end))}${T('MinutesPerDay', workMinutesPerDay())}${T('MinutesPerWeek', weekMinutes())}${T('DaysPerMonth', 20)}${T('DefaultTaskType', 0)}${T('DurationFormat', 7)}${T('WorkFormat', 2)}${T('WeekStartDay', 1)}` +
     `<Calendars><Calendar>${T('UID', 1)}${T('Name', 'Standard')}${T('IsBaseCalendar', 1)}${T('IsBaselineCalendar', 0)}<WeekDays>${weekDays}</WeekDays>${exc.length ? `<Exceptions>${exc.join('')}</Exceptions>` : ''}</Calendar></Calendars>` +
     `<Tasks>${parts.join('')}</Tasks>` +
     `<Resources>${resNames.map((n, i) => `<Resource>${T('UID', i + 1)}${T('ID', i + 1)}${T('Name', n)}${T('Type', 1)}${T('IsNull', 0)}${T('MaxUnits', 1)}</Resource>`).join('')}</Resources>` +
