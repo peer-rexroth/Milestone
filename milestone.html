@@ -543,6 +543,12 @@ input.inline-edit[type=date]::-webkit-calendar-picker-indicator { margin: 0 0 0 
 .gantt-tick.zoom-week, .gantt-tick.zoom-year { padding: 3px 0 0 5px; line-height: 12px; font-size: 10px; }
 .gantt-tick b { display: block; font-size: 11.5px; font-weight: 600; color: var(--text-dim); }
 .gantt-tick.year-start { border-left-color: var(--text-faint); }
+/* The Hours scale (minute-mode plans): two rows — the day over its 24 hourly cells. */
+.gantt-tick.zoom-hour-day { bottom: 50%; padding: 2px 0 0 5px; line-height: 15px; font-size: 11px; }
+.gantt-tick.zoom-hour-day b { display: inline; font-size: 11px; }
+.gantt-tick.zoom-hour-day.dayoff b { color: var(--text-faint); font-weight: 500; }
+.gantt-tick.zoom-hour-h { top: 50%; padding: 2px 0 0 3px; line-height: 15px; font-size: 9.5px; border-top: 1px solid var(--border); }
+.gantt-drag-tip { position: fixed; z-index: 400; pointer-events: none; padding: 3px 8px; border-radius: 5px; font-size: 11.5px; background: var(--text); color: var(--panel); white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,.25); }
 .gantt-rows { position: relative; }
 .gantt-row-bg.spacer { background: color-mix(in srgb, var(--panel-2) 50%, transparent); }
 .gantt-row-bg { position: absolute; left: 0; right: 0; height: var(--row-h); border-bottom: 1px solid var(--border); }
@@ -1356,6 +1362,8 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
           <div class="help-section-title">Working calendar</div>
           <div class="help-row"><i class="fa-solid fa-calendar-week"></i><span>Each plan has its own working days — Monday to Friday unless you change it (Schedule menu → <strong>Working calendar…</strong>). Durations, lags and dependencies count working days only: a 5-day task that starts on a Monday finishes on that Friday, and its successor starts the next Monday.</span></div>
           <div class="help-row"><i class="fa-solid fa-clock"></i><span><strong>Scheduling precision</strong> (Schedule menu → <strong>Scheduling precision…</strong>, its own dialog): the standard is whole days, but a plan can switch to <strong>Hours &amp; minutes</strong> — like MS Project — so tasks can start and finish at a time of day. Set the working day's start/end and its breaks there too; date fields, Duration (type "4h" or "90m") and the columns adapt once it's on. Switching in keeps a task spanning its whole day; switching back just drops every time.</span></div>
+          <div class="help-row"><i class="fa-solid fa-chart-gantt"></i><span><strong>In an Hours &amp; minutes plan</strong> the chart gets an <strong>Hours</strong> scale (20&nbsp;px an hour, the day over its 24 hours; nights, the lunch break and days off are shaded). Drag a bar, or its edges, in 15-minute steps: an Auto task lands on working time (a move into the lunch break comes out after it), a Manual task goes exactly where you drop it, and linked tasks follow.</span></div>
+          <div class="help-row"><i class="fa-solid fa-pen"></i><span>In the list, click a Start, Finish or Actual cell and type <strong>date and time</strong> (<strong>07.09.2026 14:30</strong>) — a date alone keeps the time, a time alone (<strong>14:30</strong>) keeps the date. The Duration cell takes <strong>4h</strong>, <strong>90m</strong>, <strong>2d</strong> or <strong>1w</strong>. The Excel Gantt sheet gets one column per working hour.</span></div>
           <div class="help-row"><i class="fa-solid fa-umbrella-beach"></i><span>Add <strong>holidays and other days off</strong> in the same dialog: a single day, a longer break (from … to …), or a day that comes back every year, each with an optional name. They count as days off exactly like weekends, and are shaded in the Gantt chart.</span></div>
           <div class="help-row"><i class="fa-solid fa-flag"></i><span><strong>Public holidays:</strong> pick a country or region (Germany with each of its states, Austria, Switzerland, the UK, Ireland, the US, Canada, France, the Netherlands, Belgium, Spain, Italy) and the years, then <strong>Add public holidays</strong>. Movable ones (Easter, Ascension, Thanksgiving …) are worked out for each year; days that fall on a day off anyway are left out.</span></div>
           <div class="help-row"><i class="fa-solid fa-circle-exclamation"></i><span>Treat the presets as a starting point: check them against your own calendar — regional and company days differ — and edit or remove any entry.</span></div>
@@ -1483,7 +1491,8 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
 
 <script>
 /* ============================== Constants ============================== */
-const APP_VERSION = 2;   // bumped for minute/hour-level scheduling precision — the save format genuinely differs now (project.timeUnit/workHours, five new per-task time fields), though nothing currently reads this number for migration gating
+const APP_VERSION = 3;   // every save carries it (syncPayload). 2 = minute/hour-level scheduling (project.timeUnit/workHours, five per-task time fields); 3 = the version-skew guard (checkVersionSkew) — no format change
+const MINUTE_MODE_VERSION = 2;   // the first build that knows minute mode: a minute-mode plan last written by an OLDER build (a stale cached copy of the app, a device not yet updated) may have had its dates moved by a day-only scheduler
 const APP_BUILD_DATE = '2026-09-13';
 const STORAGE_KEY = 'milestone-v1';
 const BACKUPS_KEY = 'milestone-backups';
@@ -1543,6 +1552,7 @@ function refreshWindowIfNeeded(force) {
 }
 
 const ZOOMS = [
+  { id: 'hour',  label: 'Hours', pxPerDay: 480, minuteOnly: true },   // 20px an hour, only offered (and only drawn) in a minute-mode plan
   { id: 'week',  label: 'Week',  pxPerDay: 14 },
   { id: 'month', label: 'Month', pxPerDay: 5  },
   { id: 'year',  label: 'Year',  pxPerDay: 1.5 }   // ~46px a month, ~137px a quarter
@@ -1866,6 +1876,13 @@ function countWorkMinuteNum(a, b) {
   return c;
 }
 function shiftWorkMinute(mn, k) { return addWorkMinuteNum(nextWorkMinuteNum(mn), k); }
+// A FINISH may sit exactly where a working window closes (17:00, or 12:00 as the lunch break starts) although that instant is not itself a working
+// minute — isWorkMinuteNum() is half-open. The latest valid finish on or before mn: mn itself when valid, else the close of the window before it.
+function prevFinishMinuteNum(mn) {
+  const day = Math.floor(mn / 1440);
+  if (isWorkNum(day) && posInDay(mn - day * 1440) !== null) return mn;
+  return prevWorkMinuteNum(mn) + 1;
+}
 // A task's duration in minutes = the working minutes from start to finish (never less than 1).
 function durationMinutes(startMn, endMn) { return Math.max(1, countWorkMinuteNum(startMn, endMn)); }
 // posInDay()/modOfPos() are boundary-INCLUSIVE (unlike localPos()/localMod(), which exclude a window's own end to match
@@ -2044,10 +2061,12 @@ function loadPlanData(id) {
   const rec = idx && planRecord(idx, id);
   project = { name: (rec && rec.name) || 'My Project', updatedAt: 0 };
   tasks = []; deletedTaskIds = [];
+  let loaded = null;
   try {
     const raw = localStorage.getItem(planDataKey(id));
     if (raw) {
       const data = JSON.parse(raw);
+      loaded = data;
       project = data.project || project;
       tasks = Array.isArray(data.tasks) ? data.tasks : [];
       deletedTaskIds = Array.isArray(data.deletedTaskIds) ? data.deletedTaskIds : [];
@@ -2055,6 +2074,40 @@ function loadPlanData(id) {
   } catch (e) { console.warn('Milestone: failed to load plan', e); }
   normalizeData();
   indexedPlanName = rec ? rec.name : null;
+  if (loaded) { if (checkVersionSkew(loaded, 'browser').repaired) persistLocal(); }
+}
+/* ---- Version skew: two builds of the app on one plan (a stale cached copy on one device, a linked file synced between an updated and a not-yet-updated one). ----
+   Every save stamps `version`. A plan that a NEWER build wrote may hold things this build does not know (they would be dropped on the next save), so it says so.
+   A minute-mode plan last written by a build OLDER than MINUTE_MODE_VERSION was scheduled by a day-only engine, which moves startDate/endDate without knowing the
+   time-of-day siblings: the tasks it may have left inconsistent (finish before start, an Auto task off its links) are put right, and the plan says so. */
+const skewToasted = new Set();
+function dataVersionOf(data) { return data && Number.isFinite(data.version) ? data.version : 0; }
+function repairMinuteSkew() {
+  if (!minuteModeActive()) return 0;
+  const key = t => [t.startDate, t.startTime, t.endDate, t.endTime].join('|'), before = new Map(tasks.map(t => [t.id, key(t)])), cyc = taskCycleSet();
+  for (const t of tasks) {
+    if (t.spacer || hasChildren(t.id) || isUnscheduled(t)) continue;
+    clampTaskDates(t);
+    if (t.taskMode !== 'manual' && !isStarted(t)) { snapToWorkDays(t); if (offItsLinks(t, cyc)) applyConstraints(t.id); }
+  }
+  return tasks.filter(t => before.has(t.id) && before.get(t.id) !== key(t)).length;
+}
+// `data` is what came from storage or from a file (its `version`); call it once the plan in memory is settled. Returns { newer, repaired }.
+function checkVersionSkew(data, source) {
+  const v = dataVersionOf(data), out = { newer: false, repaired: 0 };
+  if (v > APP_VERSION) {
+    out.newer = true;
+    const k = currentPlanId + ':' + v;
+    if (!skewToasted.has(k)) {
+      skewToasted.add(k);
+      setTimeout(() => showToast(`This plan was saved by a newer Milestone (version ${v}; this is ${APP_VERSION}) — reload the app to update it. Until then, editing may lose what the newer version added.`, true), 300);
+      try { navigator.serviceWorker && navigator.serviceWorker.getRegistration().then(r => r && r.update()); } catch (e) { /* best effort */ }
+    }
+  } else if (v < MINUTE_MODE_VERSION && minuteModeActive()) {
+    out.repaired = repairMinuteSkew();
+    if (out.repaired) setTimeout(() => showToast(`This plan was last saved by an older Milestone that doesn't know hours & minutes — ${out.repaired} task${out.repaired === 1 ? '' : 's'} realigned to their links and working hours`), 300);
+  }
+  return out;
 }
 function load() {
   initPlans();
@@ -2516,18 +2569,21 @@ function effectiveDates(id) {
   if (_effCache.has(id)) return _effCache.get(id);
   const t = byId(id);
   const kids = childrenOf(id);
+  const mo = minuteModeActive();   // (in a minute-mode plan every result also carries the time of day of its start/finish — startTime/endTime, null = the working day's own open/close)
+  const effM = dtMoment;
   let result;
   if (!t) { result = { start: null, end: null, progress: 0 }; }
   else if (kids.length === 0) {
     result = isUnscheduled(t) ? { start: null, end: null, progress: t.progress } : { start: t.startDate, end: t.endDate, progress: t.progress };
+    if (mo && result.start) { result.startTime = t.startTime || null; result.endTime = t.endTime || null; }
   }
   else {
-    let start = null, end = null, totalDur = 0, doneDur = 0;
+    let start = null, end = null, startTime = null, endTime = null, totalDur = 0, doneDur = 0;
     for (const k of kids) {
       const e = effectiveDates(k.id);
       if (!e.start) continue;
-      if (start === null || dayNumber(e.start) < dayNumber(start)) start = e.start;
-      if (end === null || dayNumber(e.end) > dayNumber(end)) end = e.end;
+      if (start === null || (mo ? effM(e.start, e.startTime, false) < effM(start, startTime, false) : dayNumber(e.start) < dayNumber(start))) { start = e.start; startTime = e.startTime || null; }
+      if (end === null || (mo ? effM(e.end, e.endTime, true) > effM(end, endTime, true) : dayNumber(e.end) > dayNumber(end))) { end = e.end; endTime = e.endTime || null; }
       const dur = dayNumber(e.end) - dayNumber(e.start) + 1;
       totalDur += dur; doneDur += dur * (e.progress / 100);
     }
@@ -2538,8 +2594,10 @@ function effectiveDates(id) {
       // so the Gantt can draw it as a thin rollup bar underneath.
       result = isUnscheduled(t) ? { start: null, end: null, progress, rollStart: start, rollEnd: end }
                                 : { start: t.startDate, end: t.endDate, progress, rollStart: start, rollEnd: end };
+      if (mo) { if (result.start) { result.startTime = t.startTime || null; result.endTime = t.endTime || null; } result.rollStartTime = startTime; result.rollEndTime = endTime; }
     } else {
       result = { start: start || t.startDate, end: end || t.endDate, progress };
+      if (mo) { result.startTime = start ? startTime : (t.startTime || null); result.endTime = end ? endTime : (t.endTime || null); }
     }
   }
   _effCache.set(id, result);
@@ -2696,6 +2754,8 @@ function taskMoment(t, side) {
   const dflt = (side === 'end' || side === 'actualFinish') ? workHours().end : workHours().start;
   return dayNumber(iso) * 1440 + minuteOfDay(hhmmOk(t[timeKey]) ? t[timeKey] : dflt);
 }
+// An instant from a date and an optional time of day (an absent time is the working day's own open, or close for a finish).
+function dtMoment(iso, time, isEnd) { return dayNumber(iso) * 1440 + minuteOfDay(hhmmOk(time) ? time : (isEnd ? workHours().end : workHours().start)); }
 // Writes a moment back into a task's Start or Finish field pair — the only two sides the scheduler itself ever sets.
 function setTaskMoment(t, side, mn) {
   const [dateKey, timeKey] = TASK_MOMENT_KEYS[side], day = minuteModeActive() ? Math.floor(mn / 1440) : mn;
@@ -2805,7 +2865,8 @@ function snapToWorkDays(t) {
   if (t.milestone) copyTaskField(t, 'start', 'end');
   else {
     const endMn = taskMoment(t, 'end');
-    if (!isWorkMoment(endMn)) setTaskMoment(t, 'end', prevWorkMoment(endMn));
+    if (minuteModeActive()) { const fin = prevFinishMinuteNum(endMn); if (fin !== endMn) setTaskMoment(t, 'end', fin); }   // (a finish at a window's close — 17:00, or 12:00 before lunch — is valid)
+    else if (!isWorkMoment(endMn)) setTaskMoment(t, 'end', prevWorkMoment(endMn));
     if (taskMoment(t, 'end') < taskMoment(t, 'start')) copyTaskField(t, 'start', 'end');
   }
   return t.startDate !== s0 || t.endDate !== e0 || t.startTime !== st0 || t.endTime !== et0;
@@ -3083,11 +3144,19 @@ function computeDateRange() {
     const bd = baselineDates(t.id);
     for (const iso of [bd.start, bd.end]) if (iso) { start = Math.min(start, dayNumber(iso)); end = Math.max(end, dayNumber(iso)); }
   }
+  if (hourZoomOn()) {   // a day is 480px wide here: a day of padding either side, not the few days the coarser scales use
+    if (start === Infinity) { const t0 = dayNumber(todayStr()); return { start: t0 - 1, end: t0 + 7 }; }
+    return { start: start - 1, end: end + 2 };
+  }
   if (start === Infinity) { const t0 = dayNumber(todayStr()); return { start: t0 - 7, end: t0 + 30 }; }
   const pad = Math.max(3, Math.round((end - start) * 0.06));
   return { start: start - pad, end: end + pad };
 }
-function currentZoom() { return ZOOMS.find(z => z.id === zoom) || ZOOMS.find(z => z.id === DEFAULT_ZOOM); }
+function currentZoom() {
+  const z = ZOOMS.find(z => z.id === zoom);
+  return z && (!z.minuteOnly || minuteModeActive()) ? z : ZOOMS.find(z => z.id === DEFAULT_ZOOM);   // (the saved scale is a global preference: a day-mode plan just draws the standard one)
+}
+function hourZoomOn() { return currentZoom().id === 'hour'; }
 
 function render() {
   pruneSelection();
@@ -3139,7 +3208,8 @@ function renameProject(name) {
 }
 function renderZoomTabs() {
   const el = document.getElementById('zoomTabs');
-  el.innerHTML = ZOOMS.map(z => `<button class="view-tab${z.id === zoom ? ' active' : ''}" onclick="setZoom('${z.id}')">${z.label}</button>`).join('');
+  const cur = currentZoom().id;
+  el.innerHTML = ZOOMS.filter(z => !z.minuteOnly || minuteModeActive()).map(z => `<button class="view-tab${z.id === cur ? ' active' : ''}" onclick="setZoom('${z.id}')">${z.label}</button>`).join('');
 }
 function setZoom(id) { zoom = id; save(); render(); }
 function updateCriticalPathUI() {
@@ -3677,7 +3747,11 @@ function renderGrid() {
     const endIso = ownDates ? t.endDate : eff.end;
     const editing = (field) => full && editingCell && editingCell.id === t.id && editingCell.field === field;
     const blurAttr = (field) => `onblur="inlineBlur(event,'${t.id}','${field}')"`;
-    const dateEditor = (field, iso, text, ph) => manual
+    // `time` (a task's own Start/Finish/Actual field in a minute-mode plan, '' when the field is empty) turns the editor into the typed
+    // "dd.mm.yyyy hh:mm" box with the calendar button — the same box a Manually Scheduled task always had — since a native date input has no time.
+    const dateEditor = (field, iso, text, ph, time) => time !== undefined
+      ? inlineTextDateHtml(t.id, field, text != null ? text : (iso ? `${fmtDate(iso)} ${time || (field === 'finish' || field === 'actualFinish' ? workHours().end : workHours().start)}` : ''), 'dd.mm.yyyy hh:mm')
+      : manual
       ? inlineTextDateHtml(t.id, field, text != null ? text : fmtDate(iso), ph)
       : `<input type="date" class="inline-edit" value="${iso || ''}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" ${blurAttr(field)}>`;
     const nameCell = editing('name')
@@ -3689,18 +3763,21 @@ function renderGrid() {
     // and free text stay date-only; the precise time is edited in the task dialog, not this inline editor.
     const showTime = minuteModeActive() && ownDates;
     const startCell = editing('start')
-      ? dateEditor('start', startIso, t.startText)
+      ? dateEditor('start', startIso, t.startText, undefined, showTime ? (t.startTime || '') : undefined)
       : `<div class="grid-cell-dim${summaryCls}${canEditDates ? ' editable' : ''}"${canEditDates ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','start')"` : ''}>${t.startText != null ? escapeHtml(t.startText) : gridDateTimeText(startIso, t.startTime, showTime)}</div>`;
     const finishCell = editing('finish')
-      ? dateEditor('finish', endIso, t.endText)
+      ? dateEditor('finish', endIso, t.endText, undefined, showTime ? (t.endTime || '') : undefined)
       : `<div class="grid-cell-dim${summaryCls}${canEditFinishCell ? ' editable' : ''}"${canEditFinishCell ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','finish')"` : ''}>${t.endText != null ? escapeHtml(t.endText) : t.milestone && t.startText != null ? escapeHtml(t.startText) : gridDateTimeText(endIso, t.endTime, showTime, workHours().end)}</div>`;
     const durKnown = !isUnscheduled(t) && startIso && endIso;
+    const durMin = minuteModeActive() && ownDates && durKnown ? (t.milestone ? 0 : durationMinutes(taskMoment(t, 'start'), taskMoment(t, 'end'))) : null;   // a minute-mode task's own duration is in working minutes (a group's rollup stays in days)
     const durNum = durKnown ? durationDays(startIso, endIso) : null;
     const durationCell = editing('duration')
       ? (manual
-          ? `<input type="text" class="inline-edit" value="${escapeHtml(t.durText != null ? t.durText : (durNum != null ? String(durNum) : ''))}" placeholder="e.g. 5 or text" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" ${blurAttr('duration')}>`
-          : `<input type="number" min="1" step="1" class="inline-edit" value="${durNum != null ? durNum : ''}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" ${blurAttr('duration')}>`)
-      : `<div class="grid-cell-dim${summaryCls}${canEditFinish ? ' editable' : ''}"${canEditFinish ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','duration')"` : ''}>${t.durText != null ? escapeHtml(t.durText) : (durNum != null ? fmtDuration(durNum) : '')}</div>`;
+          ? `<input type="text" class="inline-edit" value="${escapeHtml(t.durText != null ? t.durText : (durMin != null ? fmtDurationMinutes(durMin) : durNum != null ? String(durNum) : ''))}" placeholder="${durMin != null ? 'e.g. 4h, 90m or text' : 'e.g. 5 or text'}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" ${blurAttr('duration')}>`
+          : durMin != null
+            ? `<input type="text" class="inline-edit" value="${fmtDurationMinutes(durMin)}" title="Like 4h, 90m, 2d, 1w — a bare number is hours" placeholder="e.g. 4h or 90m" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" ${blurAttr('duration')}>`
+            : `<input type="number" min="1" step="1" class="inline-edit" value="${durNum != null ? durNum : ''}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" ${blurAttr('duration')}>`)
+      : `<div class="grid-cell-dim${summaryCls}${canEditFinish ? ' editable' : ''}"${canEditFinish ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','duration')"` : ''}>${t.durText != null ? escapeHtml(t.durText) : (durMin != null ? fmtDurationMinutes(durMin) : durNum != null ? fmtDuration(durNum) : '')}</div>`;
     const predCell = editing('predecessors')
       ? `<input type="text" class="inline-edit" title="Like MS Project: 3, 3FS, 3SS+2d, 5FF-1w (a lead), 4h — several separated by , or ;. Positive = lag (delay), negative = lead (overlap); days (d), weeks (w) or hours (h), counted in working days" value="${escapeHtml(predLabel)}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" ${blurAttr('predecessors')}>`
       : `<div class="grid-cell-dim${summaryCls}${!summary ? ' editable' : ''}" title="${escapeHtml(predLabel)}"${!summary ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','predecessors')"` : ''}>${escapeHtml(predLabel)}</div>`;
@@ -3711,7 +3788,7 @@ function renderGrid() {
     const mismatchDate = scheduleMismatch(t);
     const act = actualDates(t.id), canEditActual = full && !summary;   // a group's actual dates are rolled up, so not editable (a milestone's Actual Finish follows its Actual Start)
     const actualCell = (field, iso) => editing(field)
-      ? dateEditor(field, iso, null, 'dd.mm.yyyy')   // exactly the Start/Finish editor: a manual task gets the typed box + calendar, an auto task the native picker
+      ? dateEditor(field, iso, null, 'dd.mm.yyyy', minuteModeActive() && !summary ? ((field === 'actualStart' ? t.actualStartTime : t.actualFinishTime) || '') : undefined)   // exactly the Start/Finish editor: a manual task gets the typed box + calendar, an auto task the native picker (a minute-mode plan: the typed date-and-time box)
       : `<div class="grid-cell-dim${summaryCls}${canEditActual && !(t.milestone && field === 'actualFinish') ? ' editable' : ''}"${canEditActual && !(t.milestone && field === 'actualFinish') ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','${field}')"` : ''}>${gridDateTimeText(iso, field === 'actualStart' ? t.actualStartTime : t.actualFinishTime, minuteModeActive() && !summary, field === 'actualFinish' ? workHours().end : workHours().start)}</div>`;
     const resourceCell = editing('resource')
       ? `<input type="text" class="inline-edit" maxlength="200" value="${escapeHtml(t.resource)}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" ${blurAttr('resource')}>`
@@ -4067,11 +4144,28 @@ function parseUserDate(str) {
   return `${y}-${pad2(m)}-${pad2(d)}`;
 }
 
+// The minute-mode list cell's typed value: a date, a time, or both — "07.09.2026 14:30", "2026-09-07T14:30", "07.09.2026" (the time
+// is kept), "14:30" (the date is kept). Returns { iso, time } (either may be null) or null when it isn't one of these.
+function parseUserDateTime(str) {
+  str = (str || '').trim();
+  let m = /^(.*?)[\sT]+(\d{1,2})[:.](\d{2})$/.exec(str), datePart = str, time = null;
+  if (m && parseUserDate(m[1])) { datePart = m[1]; time = `${pad2(+m[2])}:${m[3]}`; }
+  else if ((m = /^(\d{1,2})[:.](\d{2})$/.exec(str))) { datePart = ''; time = `${pad2(+m[1])}:${m[2]}`; }
+  if (time !== null && !hhmmOk(time)) return null;
+  const iso = datePart ? parseUserDate(datePart) : null;
+  if (datePart && !iso) return null;
+  return iso || time ? { iso, time } : null;
+}
+// The calendar button of that box: the picked date replaces the date part and the typed time stays.
+function commitInlineDatePick(el, id, field) {
+  const typed = el.closest('.inline-wrap').querySelector('input[type=text]').value.trim(), m = /\s(\d{1,2}[:.]\d{2})$/.exec(typed);
+  commitInlineEdit(id, field, el.value + (minuteModeActive() && m ? ' ' + m[1] : ''));
+}
 // A manually scheduled task's Start/Finish is a free-text box (a date, or
 // anything like "TBD"), with a calendar button that borrows a hidden native
 // date input for its picker.
 function inlineTextDateHtml(id, field, value, placeholder = 'dd.mm.yyyy or text') {
-  return `<div class="inline-wrap"><input type="text" class="inline-edit" value="${escapeHtml(value)}" placeholder="${escapeHtml(placeholder)}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" onblur="inlineBlur(event,'${id}','${field}')"><button type="button" class="inline-cal" tabindex="-1" title="Pick a date" onmousedown="event.preventDefault()" onclick="event.stopPropagation();openInlineDatePicker(this)"><i class="fa-regular fa-calendar"></i></button><input type="date" class="inline-date-hidden" tabindex="-1" onkeydown="onInlineEditKeydown(event)" onchange="commitInlineEdit('${id}','${field}',this.value)" onblur="inlineBlur(event,'${id}','${field}')"></div>`;
+  return `<div class="inline-wrap"><input type="text" class="inline-edit" value="${escapeHtml(value)}" placeholder="${escapeHtml(placeholder)}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" onblur="inlineBlur(event,'${id}','${field}')"><button type="button" class="inline-cal" tabindex="-1" title="Pick a date" onmousedown="event.preventDefault()" onclick="event.stopPropagation();openInlineDatePicker(this)"><i class="fa-regular fa-calendar"></i></button><input type="date" class="inline-date-hidden" tabindex="-1" onkeydown="onInlineEditKeydown(event)" onchange="commitInlineDatePick(this,'${id}','${field}')" onblur="inlineBlur(event,'${id}','${field}')"></div>`;
 }
 function openInlineDatePicker(btn) {
   const wrap = btn.closest('.inline-wrap');
@@ -4107,11 +4201,19 @@ function commitInlineEdit(id, field, rawValue) {
     if (val) t.name = val;
   } else if (field === 'start' || field === 'finish') {
     const isStart = field === 'start';
-    const iso = manual ? parseUserDate(val) : (/^\d{4}-\d{2}-\d{2}$/.test(val) ? val : null);
+    // A minute-mode plan types "date time" (see parseUserDateTime): a date alone keeps the task's time, a time alone its date.
+    const pdt = minuteModeActive() && !hasChildren(id) || minuteModeActive() && manual ? parseUserDateTime(val) : null;
+    const keepIso = isStart ? (t.startText == null ? t.startDate : null) : (t.endText == null ? t.endDate : null);
+    const iso = pdt ? (pdt.iso || keepIso) : manual ? parseUserDate(val) : (/^\d{4}-\d{2}-\d{2}$/.test(val) ? val : null);
     if (iso) {
       if (isStart) { t.startDate = iso; t.startText = null; if (t.milestone) { t.endDate = iso; t.endText = null; } if (t.actualStart) { t.actualStart = iso; if (t.milestone) t.actualFinish = iso; } }   // (a started task's Start IS its Actual Start)
       else if (!t.milestone) { t.endDate = iso; t.endText = null; if (t.actualFinish) t.actualFinish = iso; }
       else { t.startDate = t.endDate = iso; t.startText = t.endText = null; if (t.actualStart) t.actualStart = t.actualFinish = iso; }   // a milestone has one date: its Finish IS its Start
+      if (pdt) {   // the time of day, and — a started task's dates being its actual ones — the matching actual time
+        if (pdt.time) { if (isStart || t.milestone) { t.startTime = pdt.time; if (t.milestone) t.endTime = pdt.time; } else t.endTime = pdt.time; }
+        if ((isStart || t.milestone) && t.actualStart) { t.actualStartTime = t.startTime; if (t.milestone) t.actualFinishTime = t.startTime; }
+        if ((!isStart || t.milestone) && !t.milestone && t.actualFinish) t.actualFinishTime = t.endTime;
+      }
       if (!isUnscheduled(t)) t.durText = null;
     } else if (manual) {
       // Anything that isn't a date — including blank — is kept as free text.
@@ -4122,7 +4224,17 @@ function commitInlineEdit(id, field, rawValue) {
     if (iso) pinToDate(t, isStart ? 'start' : 'finish');
     applyConstraints(id);
   } else if (field === 'duration') {
-    if (manual) {
+    if (minuteModeActive() && !hasChildren(id)) {   // working minutes: "4h", "90m", "2d", "1w"; a bare number is hours
+      const mins = parseDurationMinutes(val);
+      if (mins !== null && !isUnscheduled(t) && !t.milestone) {
+        if (!manual) snapToWorkDays(t);
+        setTaskMoment(t, 'end', finishMomentFor(taskMoment(t, 'start'), mins));
+        if (manual) t.durText = null;
+        if (t.actualFinish) copyTaskField(t, 'end', 'actualFinish');
+        clampTaskDates(t);
+      } else if (manual) t.durText = val.slice(0, 60);
+      else if (val && mins === null) showToast(`Can't read "${val}" as a duration — try 4h, 90m, 2d or 1w`, true);
+    } else if (manual) {
       const n = /^\d+$/.test(val) ? parseInt(val, 10) : NaN;
       if (Number.isFinite(n) && n > MAX_DURATION_DAYS) showToast(`A duration can be at most ${MAX_DURATION_DAYS.toLocaleString('en')} days`, true);
       else if (Number.isFinite(n) && n >= 1 && !isUnscheduled(t) && !t.milestone) { t.endDate = finishFor(t.startDate, n); t.durText = null; if (t.actualFinish) t.actualFinish = t.endDate; }
@@ -4151,13 +4263,19 @@ function commitInlineEdit(id, field, rawValue) {
     else if (!Number.isFinite(n) || n < 0 || n > 100) showToast('% complete must be a number between 0 and 100', true);
     else t.progress = Math.round(n);
   } else if (field === 'actualStart' || field === 'actualFinish') {
-    const iso = val ? parseUserDate(val) : null;                 // a native date input emits ISO; blank clears the date
+    const mo = minuteModeActive(), pdt = mo && val ? parseUserDateTime(val) : null;
+    const iso = pdt ? (pdt.iso || t[field]) : (val ? parseUserDate(val) : null);   // a native date input emits ISO; blank clears the date (a minute-mode plan types "date time": a time alone keeps the date)
+    // The time of day of the new actual date: the one typed, else the one it had, else the planned one (the actual dates ARE the schedule).
+    const aTime = f => !mo ? null : (f === field ? ((pdt && pdt.time) || t[f + 'Time'] || (f === 'actualStart' ? t.startTime : t.endTime) || null) : (t[f + 'Time'] || null));
     const aS = field === 'actualStart' ? iso : t.actualStart, aF = t.milestone ? aS : (field === 'actualFinish' ? iso : t.actualFinish);
+    const M = dtMoment;
+    const finishBefore = aS && aF && (mo ? M(aF, t.milestone ? aTime('actualStart') : aTime('actualFinish'), true) < M(aS, aTime('actualStart'), false) : dayNumber(aF) < dayNumber(aS));
     if (val && !iso) showToast(`"${val}" isn't a date`, true);
-    else if (aS && aF && dayNumber(aF) < dayNumber(aS)) showToast("Actual Finish can't be before Actual Start", true);
+    else if (finishBefore) showToast("Actual Finish can't be before Actual Start", true);
     else {
       const previousFinish = t.actualFinish;
-      t[field] = iso; if (t.milestone) t.actualFinish = t.actualStart;
+      t[field] = iso; if (mo) t[field + 'Time'] = iso ? aTime(field) : null;
+      if (t.milestone) { t.actualFinish = t.actualStart; if (mo) t.actualFinishTime = t.actualStartTime; }
       if (recordActualFinish(t, previousFinish)) showToast('Actual Finish recorded — marked 100% complete');
       applyActualDates(t);   // the actual dates overwrite Start / Finish (MS Project)
       clampTaskDates(t);
@@ -4217,10 +4335,28 @@ function isoWeekOf(dn) {
   const year = new Date(thursday * DAY_MS).getUTCFullYear();
   return { week: Math.floor((thursday - dayNumber(`${year}-01-01`)) / 7) + 1, year, monday };
 }
+// Chart geometry. The day scales place a bar on whole days (first to last day, inclusive) and ignore any time of day; the Hours scale
+// (minute-mode plans only) places it at its real start and finish instants on a 24-hour day.
+function ganttXAt(iso, time, isEnd, px) {
+  if (!hourZoomOn()) return (dayNumber(iso) - dateRange.start) * px;
+  const wh = workHours();
+  return (dayNumber(iso) - dateRange.start + minuteOfDay(hhmmOk(time) ? time : (isEnd ? wh.end : wh.start)) / 1440) * px;
+}
+function ganttSpan(sIso, sTime, eIso, eTime, px, minW = 6) {   // { left, width } of a bar
+  if (hourZoomOn()) { const l = ganttXAt(sIso, sTime, false, px), r = ganttXAt(eIso, eTime, true, px); return { left: l, width: Math.max(minW, r - l) }; }
+  return { left: (dayNumber(sIso) - dateRange.start) * px, width: Math.max(minW, (dayNumber(eIso) - dayNumber(sIso) + 1) * px - 2) };
+}
 function renderGanttHeaderTicks(range, px) {
   const z = currentZoom();
   const ticks = [];
-  if (z.id === 'week') {
+  if (z.id === 'hour') {
+    // Two rows: the day (weekday and date) over its 24 hourly cells. Days off are dimmed in the label, the hours themselves are shaded in the rows.
+    for (let d = range.start; d < range.end; d++) {
+      const iso = dayNumberToIso(d), x0 = (d - range.start) * px;
+      ticks.push({ left: x0, width: px, cls: 'zoom-hour-day' + (isWorkNum(d) ? '' : ' dayoff'), html: `<b>${WEEKDAY_NAMES[(((d + 4) % 7) + 7) % 7]} ${fmtDate(iso)}</b>`, title: `${WEEKDAY_NAMES[(((d + 4) % 7) + 7) % 7]} ${fmtDate(iso)}` });
+      for (let h = 0; h < 24; h++) ticks.push({ left: x0 + h * px / 24, width: px / 24, cls: 'zoom-hour-h', label: pad2(h), title: `${pad2(h)}:00` });
+    }
+  } else if (z.id === 'week') {
     // One tick per calendar week, from the Monday on/before the range start. Shown: "CW 37" over the Monday's date
     // (with the year on the first tick and wherever the year changes); the tooltip gives the whole week.
     let prevYear = null;
@@ -4262,6 +4398,11 @@ function renderGanttHeaderTicks(range, px) {
 // The baseline under a task's bar (Gantt, MS Project's Tracking Gantt): a thin grey line from the baseline start to the baseline
 // finish — the current bar (which already IS the actual position once a task has started) is compared with it. A milestone gets a
 // hollow diamond. A group shows the rollup of its tasks' baselines. Which baseline: project.compareBaseline; hidden with the ruler button.
+function barTimeNote(eff) {   // a minute-mode bar's tooltip also says when it starts and finishes
+  if (!minuteModeActive() || !eff.start) return '';
+  const wh = workHours();
+  return ` — ${fmtDate(eff.start)} ${eff.startTime || wh.start}${eff.end === eff.start && !eff.endTime ? '' : ` – ${eff.end === eff.start ? '' : fmtDate(eff.end) + ' '}${eff.endTime || wh.end}`}`;
+}
 function baselineNote(t) {   // appended to the bar's tooltip
   const b = baselineDates(t.id); if (!showBaseline || !b.start || !b.end) return '';
   const v = scheduleVariance(t.id);
@@ -4271,9 +4412,10 @@ function baselineNote(t) {   // appended to the bar's tooltip
 function baselineBarHtml(t, idx, px) {
   if (!showBaseline) return '';
   const b = baselineDates(t.id); if (!b.start || !b.end) return '';
-  const rowTop = idx * ROW_H, rs = dateRange.start;
-  if (t.milestone) return `<div class="gantt-base-ms" style="left:${(dayNumber(b.start) - rs) * px - 3.5}px;top:${rowTop + ROW_H - 10}px"></div>`;
-  return `<div class="gantt-base" data-base-for="${t.id}" style="left:${(dayNumber(b.start) - rs) * px}px;width:${Math.max(3, (dayNumber(b.end) - dayNumber(b.start) + 1) * px - 2)}px;top:${rowTop + ROW_H - 5}px"></div>`;
+  const rowTop = idx * ROW_H;
+  if (t.milestone) return `<div class="gantt-base-ms" style="left:${ganttXAt(b.start, b.startTime, false, px) - 3.5}px;top:${rowTop + ROW_H - 10}px"></div>`;
+  const sp = ganttSpan(b.start, b.startTime, b.end, b.endTime, px, 3);
+  return `<div class="gantt-base" data-base-for="${t.id}" style="left:${sp.left}px;width:${sp.width}px;top:${rowTop + ROW_H - 5}px"></div>`;
 }
 function renderGantt() {
   const z = currentZoom();
@@ -4293,7 +4435,7 @@ function renderGantt() {
   document.getElementById('ganttHeader').innerHTML = ticks.map(t => {
     const left = Math.max(0, t.left), width = t.width - (left - t.left);
     if (width <= 0) return '';
-    return `<div class="gantt-tick zoom-${z.id}${t.yearStart ? ' year-start' : ''}" style="left:${left}px;width:${width}px"${t.title ? ` title="${escapeHtml(t.title)}"` : ''}>${t.html || escapeHtml(t.label)}</div>`;
+    return `<div class="gantt-tick zoom-${z.id}${t.cls ? ' ' + t.cls : ''}${t.yearStart ? ' year-start' : ''}" style="left:${left}px;width:${width}px"${t.title ? ` title="${escapeHtml(t.title)}"` : ''}>${t.html || escapeHtml(t.label)}</div>`;
   }).join('');
 
   if (list.length === 0) {
@@ -4305,7 +4447,7 @@ function renderGantt() {
   }
 
   const critical = showCriticalPath ? computeCriticalPath() : new Set();
-  const todayLeft = (dayNumber(todayStr()) - dateRange.start) * px;
+  const nowD = new Date(), todayLeft = hourZoomOn() ? (dayNumber(todayStr()) - dateRange.start + (nowD.getHours() * 60 + nowD.getMinutes()) / 1440) * px : (dayNumber(todayStr()) - dateRange.start) * px;
   barGeom = {};
   const win = rowWindow(list.length);
   let html = '';
@@ -4313,7 +4455,19 @@ function renderGantt() {
     const idx = win.from + k, top = idx * ROW_H;
     html += `<div class="gantt-row-bg${isSelected(t.id) ? ' selected' : ''}${t.spacer ? ' spacer' : ''}${t.color ? ' colored' : ''}" style="top:${top}px;width:${totalW}px${t.color ? `;--row-accent:var(--task-${t.color})` : ''}" data-row-id="${t.id}"></div>`;
   });
-  if (px >= 4 && (workDaySet().size < 7 || holSet.size)) {   // shade the days off (not at Year zoom: 1.5px a day would just be noise)
+  if (hourZoomOn()) {   // the hours off: every day's time outside the working windows, and every day off whole
+    const win = workWindows(), shade = (n, a, b) => { html += `<div class="gantt-nonwork" style="left:${(n - dateRange.start + a / 1440) * px}px;width:${(b - a) / 1440 * px}px;height:${totalH}px"></div>`; };
+    for (let n = dateRange.start; n < dateRange.end;) {
+      if (isWorkNum(n)) {
+        let cur = 0; for (const [a, b] of win) { if (a > cur) shade(n, cur, a); cur = b; }
+        if (cur < 1440) shade(n, cur, 1440);
+        n++; continue;
+      }
+      let m = n; while (m + 1 < dateRange.end && !isWorkNum(m + 1)) m++;
+      shade(n, 0, (m - n + 1) * 1440);
+      n = m + 1;
+    }
+  } else if (px >= 4 && (workDaySet().size < 7 || holSet.size)) {   // shade the days off (not at Year zoom: 1.5px a day would just be noise)
     for (let n = dateRange.start; n < dateRange.end;) {
       if (isWorkNum(n)) { n++; continue; }
       let m = n; while (m + 1 < dateRange.end && !isWorkNum(m + 1)) m++;
@@ -4328,9 +4482,9 @@ function renderGantt() {
     const eff = effectiveDates(t.id);
     if (idx < win.from || idx >= win.to) {   // outside the rows that are built: only the geometry (the arrows and Find need it)
       if (eff.start) {
-        const left0 = (dayNumber(eff.start) - dateRange.start) * px;
+        const sp0 = ganttSpan(eff.start, eff.startTime, eff.end, eff.endTime, px), left0 = sp0.left;
         if (t.milestone) { const cy = idx * ROW_H + ROW_H / 2; barGeom[t.id] = { left: left0 - 8, width: 16, top: cy - 8, right: left0 + 8, midY: cy, milestone: true }; }
-        else { const width0 = Math.max(6, (dayNumber(eff.end) - dayNumber(eff.start) + 1) * px - 2); barGeom[t.id] = { left: left0, width: width0, top, right: left0 + width0, midY: top + 10 }; }
+        else { const width0 = sp0.width; barGeom[t.id] = { left: left0, width: width0, top, right: left0 + width0, midY: top + 10 }; }
       }
       return;
     }
@@ -4339,31 +4493,30 @@ function renderGantt() {
       // MS Project; one with neither (or a rollup-less summary) has no mark.
       if (isUnscheduled(t) && (t.startText == null) !== (t.endText == null)) {
         const isStart = t.startText == null;
-        const bx = (dayNumber(isStart ? t.startDate : t.endDate) - dateRange.start) * px + (isStart ? 0 : px - 10);
+        const bx = hourZoomOn() ? ganttXAt(isStart ? t.startDate : t.endDate, isStart ? t.startTime : t.endTime, !isStart, px) - (isStart ? 0 : 10) : (dayNumber(isStart ? t.startDate : t.endDate) - dateRange.start) * px + (isStart ? 0 : px - 10);
         html += `<div class="gantt-bracket ${isStart ? 'br-start' : 'br-end'}" style="left:${bx}px;top:${top}px" title="${escapeHtml(t.name)} — ${isStart ? 'finish' : 'start'} not set" onclick="openTaskModal('${t.id}')"></div>`;
       }
       return;
     }
-    const left = (dayNumber(eff.start) - dateRange.start) * px;
+    const span = ganttSpan(eff.start, eff.startTime, eff.end, eff.endTime, px), left = span.left;
     const isCritical = critical.has(t.id);
     const color = statusColorVar(t);
     const manual = t.taskMode === 'manual';
     const cls = `${isCritical ? ' critical' : ''}${manual ? ' manual' : ''}${scheduleMismatch(t) ? ' mismatch' : ''}`;
     const modeNote = manual ? ' — Manually Scheduled' : '';
     if (manual && eff.rollStart && eff.rollEnd) {
-      const rl = (dayNumber(eff.rollStart) - dateRange.start) * px;
-      const rw = Math.max(6, (dayNumber(eff.rollEnd) - dayNumber(eff.rollStart) + 1) * px - 2);
+      const rsp = ganttSpan(eff.rollStart, eff.rollStartTime, eff.rollEnd, eff.rollEndTime, px), rl = rsp.left, rw = rsp.width;
       html += `<div class="gantt-rollup" style="left:${rl}px;width:${rw}px;top:${idx * ROW_H + ROW_H - 6}px;--bar-color:${color}" title="Rollup of sub-tasks"></div>`;
     }
     if (t.milestone) {
       const cx = left; const cy = idx * ROW_H + ROW_H / 2;
       barGeom[t.id] = { left: cx - 8, width: 16, top: cy - 8, right: cx + 8, midY: cy, milestone: true };
-      html += `<div class="gantt-milestone${cls}" style="left:${cx - 8}px;top:${cy - 8}px;--bar-color:${color}" title="${escapeHtml(t.name)}${modeNote}${escapeHtml(baselineNote(t))}" onmousedown="onBarMouseDown(event,'${t.id}','move')"></div>`;
+      html += `<div class="gantt-milestone${cls}" style="left:${cx - 8}px;top:${cy - 8}px;--bar-color:${color}" title="${escapeHtml(t.name)}${escapeHtml(barTimeNote(eff))}${modeNote}${escapeHtml(baselineNote(t))}" onmousedown="onBarMouseDown(event,'${t.id}','move')"></div>`;
     } else {
-      const width = Math.max(6, (dayNumber(eff.end) - dayNumber(eff.start) + 1) * px - 2);
+      const width = span.width;
       const midY = top + 10;
       barGeom[t.id] = { left, width, top, right: left + width, midY };
-      html += `<div class="gantt-bar${cls}" data-id="${t.id}" style="left:${left}px;width:${width}px;top:${top}px;--bar-color:${color}" title="${escapeHtml(t.name)} (${Math.round(eff.progress)}%)${modeNote}${escapeHtml(baselineNote(t))}" onmousedown="onBarMouseDown(event,'${t.id}','move')">
+      html += `<div class="gantt-bar${cls}" data-id="${t.id}" style="left:${left}px;width:${width}px;top:${top}px;--bar-color:${color}" title="${escapeHtml(t.name)} (${Math.round(eff.progress)}%)${escapeHtml(barTimeNote(eff))}${modeNote}${escapeHtml(baselineNote(t))}" onmousedown="onBarMouseDown(event,'${t.id}','move')">
         <div class="fill" style="width:${Math.min(100, Math.max(0, eff.progress))}%"></div>
         <div class="bar-label">${escapeHtml(t.name)}</div>
         <div class="resize-handle left" onmousedown="event.stopPropagation();onBarMouseDown(event,'${t.id}','resize-left')"></div>
@@ -4406,14 +4559,48 @@ function onBarMouseDown(event, taskId, mode) {
     mode, taskId, startClientX: event.clientX, moved: false,
     origStart: t.startDate, origEnd: t.endDate
   };
+  if (hourZoomOn()) { dragState.hour = true; dragState.origSM = taskMoment(t, 'start'); dragState.origEM = t.milestone ? dragState.origSM : taskMoment(t, 'end'); }
   window.addEventListener('mousemove', onDragMouseMove);
   window.addEventListener('mouseup', onDragMouseUp);
+}
+// The Hours scale: a drag moves in GANTT_SNAP_MIN-minute steps and works in moments (day*1440 + minute-of-day) — an Auto task lands on
+// working time (its start on a working minute, its finish at the finish its working duration gives), a Manual task goes exactly where it is dropped.
+const GANTT_SNAP_MIN = 15;
+function hourDragMoments(t, mode, deltaPx, px, origSM, origEM) {
+  const dMin = Math.round(deltaPx / px * 1440 / GANTT_SNAP_MIN) * GANTT_SNAP_MIN, auto = t.taskMode !== 'manual';
+  let sM = origSM, eM = origEM;
+  if (mode === 'move') { sM += dMin; eM += dMin; }
+  else if (mode === 'resize-right') eM = Math.max(sM + GANTT_SNAP_MIN, eM + dMin);
+  else sM = Math.min(eM - GANTT_SNAP_MIN, sM + dMin);
+  if (t.milestone) { if (auto) sM = nextWorkMinuteNum(sM); return { sM, eM: sM }; }
+  if (!auto) return { sM, eM };
+  if (mode === 'move') { sM = nextWorkMinuteNum(sM); eM = finishMomentFor(sM, durationMinutes(origSM, origEM)); }
+  else if (mode === 'resize-right') eM = finishMomentFor(sM, durationMinutes(sM, eM));
+  else { sM = nextWorkMinuteNum(sM); if (sM >= eM) sM = startMomentFor(eM, 1); }
+  return { sM, eM };
+}
+function momentLabel(mn) { const d = Math.floor(mn / 1440); return `${fmtDate(dayNumberToIso(d))} ${hhmmOf(mn - d * 1440)}`; }
+function showDragTip(event, text) {
+  let tip = document.getElementById('ganttDragTip');
+  if (!tip) { tip = document.createElement('div'); tip.id = 'ganttDragTip'; tip.className = 'gantt-drag-tip'; document.body.appendChild(tip); }
+  tip.textContent = text; tip.style.left = (event.clientX + 14) + 'px'; tip.style.top = (event.clientY + 16) + 'px';
 }
 function onDragMouseMove(event) {
   if (!dragState) return;
   const px = currentZoom().pxPerDay;
   const deltaPx = event.clientX - dragState.startClientX;
   if (Math.abs(deltaPx) > 3) dragState.moved = true;
+  if (dragState.hour) {
+    const t = byId(dragState.taskId), geom = barGeom[t.id];
+    if (!geom || !dragState.moved) return;
+    const { sM, eM } = hourDragMoments(t, dragState.mode, deltaPx, px, dragState.origSM, dragState.origEM);
+    const xs = (sM / 1440 - dateRange.start) * px, xe = (eM / 1440 - dateRange.start) * px;
+    if (t.milestone) { const el = document.querySelector(`.gantt-milestone[onmousedown*="${t.id}"]`); if (el) el.style.left = (xs - 8) + 'px'; }
+    else { const el = document.querySelector(`.gantt-bar[data-id="${t.id}"]`); if (el) { el.style.left = xs + 'px'; el.style.width = Math.max(6, xe - xs) + 'px'; } }
+    dragState.previewSM = sM; dragState.previewEM = eM;
+    showDragTip(event, t.milestone ? momentLabel(sM) : `${momentLabel(sM)} – ${momentLabel(eM)}`);
+    return;
+  }
   const deltaDays = Math.round(deltaPx / px);
   const t = byId(dragState.taskId);
   let newStart = dragState.origStart, newEnd = dragState.origEnd;
@@ -4449,10 +4636,21 @@ function onDragMouseUp() {
   window.removeEventListener('mousemove', onDragMouseMove);
   window.removeEventListener('mouseup', onDragMouseUp);
   if (!dragState) return;
-  const { taskId, moved, previewStart, previewEnd } = dragState, dragMode = dragState.mode;
+  const { taskId, moved, previewStart, previewEnd, previewSM, previewEM, hour } = dragState, dragMode = dragState.mode;
   dragState = null;
+  const tip = document.getElementById('ganttDragTip'); if (tip) tip.remove();
   if (!moved) { openTaskModal(taskId); return; }
   const t = byId(taskId);
+  if (hour) {
+    if (previewSM == null) { render(); return; }   // (moved past the click threshold but back onto its own place)
+    setTaskMoment(t, 'start', previewSM); setTaskMoment(t, 'end', t.milestone ? previewSM : previewEM);
+    t.durText = null;
+    t.updatedAt = Date.now();
+    pinToDate(t, dragMode === 'resize-right' ? 'finish' : 'start');
+    applyConstraints(t.id);
+    save(); render();
+    return;
+  }
   t.startDate = previewStart; t.endDate = t.milestone ? previewStart : previewEnd;
   t.durText = null;
   t.updatedAt = Date.now();
@@ -5737,7 +5935,7 @@ function replanAfterMerge(touched) {
    A conflict = both sides changed the same field of the same task (or plan setting) since they last agreed. The merge has already
    picked the newer edit; this only makes that visible — and reversible: Review lists them and lets you take the other version. */
 let syncConflictLog = [];   // session only (a heads-up for whoever is at the keyboard, not history)
-const CONFLICT_LABELS = { name: 'Name', startDate: 'Start', endDate: 'Finish', progress: '% Complete', resource: 'Resource', predecessors: 'Predecessors', taskMode: 'Task mode', actualStart: 'Actual Start', actualFinish: 'Actual Finish', parentId: 'Parent', order: 'Position', color: 'Colour', milestone: 'Milestone', constraintType: 'Constraint', constraintDate: 'Constraint date', startText: 'Start (text)', endText: 'Finish (text)', durText: 'Duration (text)', custom: 'Custom fields', baselines: 'Baselines', workDays: 'Working days', compareBaseline: 'Compared baseline', fieldNames: 'Custom field names', newTaskMode: 'New task mode' };
+const CONFLICT_LABELS = { name: 'Name', startDate: 'Start', endDate: 'Finish', progress: '% Complete', resource: 'Resource', predecessors: 'Predecessors', taskMode: 'Task mode', actualStart: 'Actual Start', actualFinish: 'Actual Finish', parentId: 'Parent', order: 'Position', color: 'Colour', milestone: 'Milestone', constraintType: 'Constraint', constraintDate: 'Constraint date', startTime: 'Start time', endTime: 'Finish time', actualStartTime: 'Actual Start time', actualFinishTime: 'Actual Finish time', constraintTime: 'Constraint time', timeUnit: 'Scheduling precision', workHours: 'Working hours', startText: 'Start (text)', endText: 'Finish (text)', durText: 'Duration (text)', custom: 'Custom fields', baselines: 'Baselines', workDays: 'Working days', compareBaseline: 'Compared baseline', fieldNames: 'Custom field names', newTaskMode: 'New task mode' };
 function conflictLabel(key) { return CONFLICT_LABELS[key] || key; }
 function fmtConflictValue(key, v) {
   if (v === undefined || v === null || v === '') return '—';
@@ -7070,7 +7268,7 @@ function buildXlsx(opts) {
           break;
         }
         case 'duration': {
-          const minuteDur = minuteModeActive() && ownDates && !isUnscheduled(t) && startIso && endIso ? durationMinutes(taskMoment(t, 'start'), taskMoment(t, 'end')) : null;
+          const minuteDur = minuteModeActive() && ownDates && !isUnscheduled(t) && startIso && endIso ? (t.milestone ? 0 : durationMinutes(taskMoment(t, 'start'), taskMoment(t, 'end'))) : null;
           const durNum = minuteDur == null && !isUnscheduled(t) && startIso && endIso ? durationDays(startIso, endIso) : null;
           if (t.durText != null) sheet.cell(r, c, t.durText, S({ h: 'center', italic: true, color: DIM, bold: false }));
           else if (minuteDur != null) sheet.cell(r, c, fmtDurationMinutes(minuteDur), S({ h: 'center', italic: true, color: DIM, bold: false }));
@@ -7110,8 +7308,23 @@ function buildXlsx(opts) {
     let minD = Infinity, maxD = -Infinity;
     for (const { task: t } of scheduled) { const e = effectiveDates(t.id); minD = Math.min(minD, dayNumber(e.start)); maxD = Math.max(maxD, dayNumber(e.end)); }
     const monday = d => d - (((d + 3) % 7) + 7) % 7, periods = [];
-    const weekly = (monday(maxD) + 6 - monday(minD) + 1) / 7 <= 170;   // very long projects get one column per month instead
-    if (weekly) for (let d = monday(minD); d <= monday(maxD); d += 7) {
+    // A minute-mode plan gets one column per WORKING hour (an hour wholly inside a break, and every day off, is left out) — unless that would be
+    // more than 400 columns, when it falls back to the calendar weeks/months below.
+    let hourly = false;
+    if (minuteModeActive()) {
+      const win = workWindows(), h0 = Math.floor(win[0][0] / 60), h1 = Math.ceil(win[win.length - 1][1] / 60), busy = new Set();
+      for (const { task: t } of scheduled) { const e = effectiveDates(t.id); busy.add(dayNumber(e.start)); busy.add(dayNumber(e.end)); }
+      for (let d = minD; d <= maxD && periods.length <= 400; d++) {
+        if (!isWorkNum(d) && !busy.has(d)) continue;
+        const iso = dayNumberToIso(d), top = `${WEEKDAY_NAMES[(((d + 4) % 7) + 7) % 7]} ${fmtDate(iso)}`;
+        for (let h = h0; h < h1; h++) if (win.some(([a, b]) => a < h * 60 + 60 && b > h * 60)) periods.push({ ms: d * 1440 + h * 60, me: d * 1440 + h * 60 + 60, group: iso, top, bottom: pad2(h) });
+      }
+      hourly = periods.length > 0 && periods.length <= 400;
+      if (!hourly) periods.length = 0;
+    }
+    const weekly = !hourly && (monday(maxD) + 6 - monday(minD) + 1) / 7 <= 170;   // very long projects get one column per month instead
+    if (hourly) { /* the periods above */ }
+    else if (weekly) for (let d = monday(minD); d <= monday(maxD); d += 7) {
       const iso = dayNumberToIso(d);
       periods.push({ s: d, e: d + 6, group: iso.slice(0, 7), top: new Date(Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, 1)).toLocaleDateString(undefined, { month: 'long', year: 'numeric', timeZone: 'UTC' }), bottom: `${CAL_WEEK_LABEL} ${isoWeekOf(d).week}` });
     } else {
@@ -7124,11 +7337,11 @@ function buildXlsx(opts) {
     }
     const FIRST = gn + 1, todayD = dayNumber(todayStr());
     gkeys.forEach((k, i) => g.width(i + 1, i + 1, XCOLS[k][1]));
-    g.width(FIRST, FIRST + periods.length - 1, weekly ? 3.6 : 5.5);
+    g.width(FIRST, FIRST + periods.length - 1, weekly || hourly ? 3.6 : 5.5);
     g.cell(1, 1, project.name, titleStyle); g.merge(1, 1, 1, gn); g.height(1, 28);
-    g.cell(2, 1, (weekly ? `Calendar weeks (${CAL_WEEK_LABEL}), Monday to Sunday` : 'Months') + ' · solid = done, light = still to do, dark = group, ◆ = milestone', subStyle); g.merge(2, 1, 2, gn); g.height(2, 16);
+    g.cell(2, 1, (hourly ? 'Working hours, one column per hour' : weekly ? `Calendar weeks (${CAL_WEEK_LABEL}), Monday to Sunday` : 'Months') + ' · solid = done, light = still to do, dark = group, ◆ = milestone', subStyle); g.merge(2, 1, 2, gn); g.height(2, 16);
     gkeys.forEach((k, i) => { g.cell(3, i + 1, XCOLS[k][0], headStyle); g.cell(4, i + 1, null, headStyle); g.merge(3, i + 1, 4, i + 1); });
-    g.height(3, 18); g.height(4, weekly ? 40 : 22);
+    g.height(3, 18); g.height(4, weekly && !hourly ? 40 : 22);
     // header: the month (or year) merged over its columns, then CW n (or the month name); this week's column is highlighted
     const isStart = i => i === 0 || periods[i].group !== periods[i - 1].group;
     const groupStyle = book.style({ bold: true, color: 'FFFFFF', fill: HEAD_FILL, h: 'center', border: box });
@@ -7138,8 +7351,9 @@ function buildXlsx(opts) {
       if (j > i) g.merge(3, FIRST + i, 3, FIRST + j);
       i = j + 1;
     }
+    const nowMn = dayNumber(todayStr()) * 1440 + new Date().getHours() * 60 + new Date().getMinutes();
     periods.forEach((p, i) => {
-      const today = todayD >= p.s && todayD <= p.e;
+      const today = hourly ? nowMn >= p.ms && nowMn < p.me : todayD >= p.s && todayD <= p.e;
       g.cell(4, FIRST + i, p.bottom, book.style({ bold: true, size: 8, color: today ? '1F2328' : 'FFFFFF', fill: today ? 'FFD33D' : HEAD_FILL, h: 'center', rotate: weekly ? 90 : 0, border: box }));
     });
     scheduled.forEach(({ task: t, depth }, idx) => {
@@ -7147,9 +7361,17 @@ function buildXlsx(opts) {
       writeTaskRow(g, r, gkeys, gcolOf, t, depth);
       const s0 = dayNumber(eff.start), e0 = dayNumber(eff.end), doneEnd = s0 + Math.round((e0 - s0 + 1) * eff.progress / 100) - 1;
       const color = summary ? HEAD : statusColorHex(t), light = summary ? 'AEB6BF' : xlsxTint(color, 0.28);
+      const sm = hourly ? dtMoment(eff.start, eff.startTime, false) : 0, em = hourly ? dtMoment(eff.end, eff.endTime, true) : 0, doneM = sm + Math.round((em - sm) * eff.progress / 100);
+      let msIdx = -1;
+      if (hourly && t.milestone) { msIdx = periods.findIndex(p => sm >= p.ms && sm < p.me); if (msIdx < 0) msIdx = periods.findIndex(p => sm === p.me); }
       periods.forEach((p, i) => {
         const line = 'E6EAEE', cellBorder = { left: ['thin', isStart(i) ? 'AEB6BF' : line], right: ['thin', line], top: ['thin', line], bottom: ['thin', line] };
-        if (t.milestone) g.cell(r, FIRST + i, s0 >= p.s && s0 <= p.e ? '◆' : null, book.style({ border: cellBorder, h: 'center', bold: true, color, size: 11 }));
+        if (hourly) {
+          if (t.milestone) g.cell(r, FIRST + i, i === msIdx ? '◆' : null, book.style({ border: cellBorder, h: 'center', bold: true, color, size: 11 }));
+          else if (sm < p.me && em > p.ms) g.cell(r, FIRST + i, null, book.style({ border: cellBorder, fill: Math.max(p.ms, sm) < doneM ? color : light }));
+          else g.cell(r, FIRST + i, null, book.style({ border: cellBorder }));
+        }
+        else if (t.milestone) g.cell(r, FIRST + i, s0 >= p.s && s0 <= p.e ? '◆' : null, book.style({ border: cellBorder, h: 'center', bold: true, color, size: 11 }));
         else if (p.s <= e0 && p.e >= s0) g.cell(r, FIRST + i, null, book.style({ border: cellBorder, fill: Math.max(p.s, s0) <= doneEnd ? color : light }));
         else g.cell(r, FIRST + i, null, book.style({ border: cellBorder }));
       });
@@ -7533,6 +7755,7 @@ async function finishLinking(dir, handle, isNew) {
         if (Array.isArray(data.tasks)) {
           if (isFreshLocalState()) { project = data.project || project; tasks = data.tasks; deletedTaskIds = data.deletedTaskIds || []; }
           else mergeData(data, { respectTombstones: true });
+          checkVersionSkew(data, 'file');
           setSyncBase(planId, text);   // (what the file said when we joined it)
         }
       }
@@ -7561,8 +7784,9 @@ function mergeFromFile(data, how) {
   let base = null;
   try { base = lastSyncedSnapshot ? JSON.parse(lastSyncedSnapshot) : null; } catch (e) { base = null; }
   const conflicts = [], changedIds = new Map();
-  const changed = mergeData(data, { respectTombstones: true, base, conflicts, changedIds });
+  let changed = mergeData(data, { respectTombstones: true, base, conflicts, changedIds });
   let moved = 0;
+  if (checkVersionSkew(data, 'file').repaired) changed = true;
   if (changed) { moved = replanAfterMerge(changedIds); normalizeData(); persistLocal(); resetHistory(); render(); }   // (undo must never revert what somebody else did: the history starts over)
   const nConflicts = reportSyncConflicts(conflicts);
   if (changed && !nConflicts) showToast((how === 'write' ? 'Merged changes from another device before saving' : 'Synced changes from another device') + (moved ? ` — ${moved} task${moved === 1 ? '' : 's'} re-planned` : ''));
