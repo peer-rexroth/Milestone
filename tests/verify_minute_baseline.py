@@ -97,6 +97,11 @@ with sync_playwright() as p:
     }""")
     check("a group's variance is never computed in minutes, even in a minute-mode plan (its baseline is always a day rollup)", ev("() => varianceIsMinutes(tasks.find(t => t.name === 'Parent').id)") is False)
 
+    # ---------------------------------------------------------------- long minute counts read as days, hours and minutes
+    fm = ev("() => [32690, 1000, 500, 1090, 45, 90, 510, 960, 120, 480, 0].map(fmtDurationMinutes)")
+    check("a day or more that isn't a round figure reads as days + hours + minutes ('68 days 50 min', '2 days 40 min', '1 day 20 min', '2 days 2 hrs 10 min'); shorter and round values are unchanged", fm == ["68 days 50 min", "2 days 40 min", "1 day 20 min", "2 days 2 hrs 10 min", "45 min", "1.5 hrs", "8.5 hrs", "2 days", "2 hrs", "1 day", "0 min"], fm)
+    check("...and a variance uses it ('+68 days 50 min', '-1 day 20 min')", ev("() => [fmtVarianceMinutes(32690), fmtVarianceMinutes(-500)]") == ["+68 days 50 min", "-1 day 20 min"])
+
     check("no console errors or page errors across the whole run", not errors, errors[:5])
     n_ok, n_all = sum(results), len(results)
     print(f"\n{n_ok}/{n_all} checks passed")

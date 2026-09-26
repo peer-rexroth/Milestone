@@ -389,7 +389,7 @@ input.inline-edit { width: 100%; min-width: 0; padding: 3px 6px; border: 1px sol
 .bulk-ctl input[type=text], .bulk-ctl input[type=number], .bulk-ctl input[type=date], .bulk-ctl select { padding: 8px 10px; border: 1px solid var(--border); border-radius: 7px; background-color: var(--panel); color: var(--text); font-size: 13px; }
 .bulk-ctl input::placeholder { color: var(--text-faint); }
 .bulk-on input { width: 15px; height: 15px; margin: 0; }
-#bulkVal-predId, #bulkVal-predLag { flex: 0 0 76px; max-width: none; }   /* the link type between them gets the rest */
+#bulkVal-predId, #bulkVal-predLag { flex: 0 0 84px; max-width: none; }   /* the link type between them gets the rest */
 #bulkVal-shift { flex: 0 0 150px; max-width: none; }
 #bulkCustom { display: flex; flex-direction: column; gap: 12px; }
 .bulk-ctl input[type=number] { max-width: 120px; }
@@ -605,7 +605,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 .modal.narrow { width: 380px; }
 .modal.roomy { width: 540px; max-height: 94vh; }
 /* dialog sizes: narrow 380 (questions), 480 (default), mid 520 (Baselines), wide 620 (Edit Task, Working calendar, imports — many fields side by side) */
-.modal.mid { width: 520px; max-height: 94vh; }
+.modal.mid { width: 560px; max-height: 94vh; }
 .modal.wide { max-height: 94vh; }   /* (its width, 620px, is set further down) */
 .mh-title { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .cal-summary { font-size: 12px; font-weight: 600; color: var(--text-dim); padding: 2px 10px; border: 1px solid var(--border); border-radius: 12px; background: var(--panel-2); white-space: nowrap; }
@@ -622,7 +622,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 .cal-sec .hol-preset input[type=number] { width: 78px; }
 .cal-sec .hol-add input[type=date] { width: 150px; }
 .cal-sec .hol-add input[type=text] { flex: 1 1 200px; min-width: 110px; }
-.cal-sec .wh-break-add input[type=time] { width: 110px; }
+.cal-sec .wh-break-add input[type=time] { width: 128px; }
 .precision-row { display: flex; flex-direction: column; gap: 8px; }
 .precision-opt { display: flex; align-items: flex-start; gap: 8px; cursor: pointer; font-size: 13px; }
 .precision-opt input { margin-top: 3px; flex-shrink: 0; }
@@ -632,10 +632,14 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 .whd-list { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
 .whd-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .whd-row .whd-name { width: 70px; display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; }
-.whd-row input[type=time] { width: 110px; }
+.whd-row input[type=time] { width: 128px; }
 .whd-row .whd-breaks { flex: 1 1 170px; min-width: 140px; }
 .whd-row.off input:not(.whd-on) { opacity: .45; }
-.wh-day-row input[type=time] { width: 110px; }
+.wh-day-row input[type=time] { width: 128px; }   /* (128px: a 12-hour "08:00 AM" and its clock icon fit) */
+.whd-details { border-top: 1px solid var(--border); padding-top: 8px; }
+.whd-details > summary { cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text-dim); list-style-position: inside; }
+.whd-details[open] > summary { margin-bottom: 4px; }
+.whd-count { font-weight: 500; font-size: 12px; color: var(--accent); margin-left: 4px; }
 .hol-break { flex-basis: 100%; height: 0; }
 .cal-how summary { cursor: pointer; font-size: 12.5px; font-weight: 600; color: var(--text-dim); }
 .cal-how .cal-hint { margin-top: 8px; }
@@ -654,7 +658,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 .field-grid-4 input[type=date], .field-grid-4 input[type=number], .field-grid-4 input[type=text], .field-grid-4 select { padding: 8px 8px; }
 .ms-field { align-self: end; padding-bottom: 9px; }   /* the task dialog: a lot of fields, so more room before it scrolls */
 .modal.wide { width: 620px; }
-.modal.wide.minute-mode { width: 960px; }   /* a paired date + time input needs real room for both — see .field-dt */
+.minute-mode .dt-grid > .field { grid-column: span 2; }   /* a date + a time need ~280px: in an Hours & minutes plan each of these fields takes two of the four columns, so the dialog keeps its width (no jump between modes) and no date is squeezed */
 .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; border-bottom: 1px solid var(--border); }
 .modal-header h2 { margin: 0; font-size: 16px; }
 .modal-header button { border: none; background: none; font-size: 18px; color: var(--text-dim); width: 28px; height: 28px; border-radius: 6px; }
@@ -669,7 +673,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 .field textarea { resize: vertical; font-family: inherit; }
 .field-dt { display: flex; flex-wrap: wrap; gap: 6px; }
 .field-dt input[type=date] { flex: 1 1 104px; min-width: 104px; }   /* 104px: the native editor's own ~95px plus a little slack, same figure the grid's date columns use; grows to fill any extra room */
-.field-dt input[type=time] { flex: 0 1 92px; min-width: 92px; }   /* stays at its own natural width instead of also growing, so the date gets the extra space */
+.field-dt input[type=time] { flex: 0 1 118px; min-width: 118px; }   /* 118px: a 12-hour "08:00 AM" and its clock icon fit (92px cut the AM/PM off) */   /* stays at its own natural width instead of also growing, so the date gets the extra space */
 .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 /* read-only, calculated values in the task dialog (WBS, Remaining Duration, Status) */
 .calc-row .ro-value { min-height: 34px; display: flex; align-items: center; padding: 6px 10px; border: 1px dashed var(--border); border-radius: 7px; background: var(--panel-2); color: var(--text-dim); font-size: 13px; }
@@ -681,13 +685,18 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 .swatch.selected { border-color: var(--text); }
 .swatch.auto { background: var(--panel-2); border: 1px dashed var(--text-faint); display: flex; align-items: center; justify-content: center; font-size: 9px; color: var(--text-faint); }
 
-.pred-row { display: grid; grid-template-columns: 1fr 68px 60px 26px; gap: 6px; align-items: center; margin-bottom: 6px; }
+.pred-row, .pred-head { display: grid; grid-template-columns: 72px 1fr 68px 88px 26px; gap: 6px; align-items: center; margin-bottom: 6px; }
+.pred-head { margin-bottom: 2px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--text-faint); }
+.pred-name { min-height: 34px; display: flex; align-items: center; padding: 6px 10px; border: 1px dashed var(--border); border-radius: 7px; background: var(--panel-2); color: var(--text-dim); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-sizing: border-box; }   /* the same read-only look as Remaining and Status */
+.backup-info { color: var(--text-dim); font-size: 12px; }
+.pred-name.none { color: var(--text-faint); }
 .pred-row select, .pred-row input { padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel); font-size: 12.5px; }
 .pred-row input.pred-id-input::-webkit-outer-spin-button, .pred-row input.pred-id-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .pred-row input.pred-id-input { -moz-appearance: textfield; }
 .pred-remove { border: none; background: none; color: var(--text-faint); width: 24px; height: 24px; border-radius: 5px; }
 .pred-remove:hover { background: var(--panel-2); color: var(--danger); }
 .pred-empty { font-size: 12px; color: var(--text-faint); padding: 4px 0; }
+.fs-points { margin: 8px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
 .id-badge { font-size: 12px; font-weight: 600; color: var(--text-faint); margin-left: 8px; vertical-align: middle; }
 
 .about-body { display: flex; flex-direction: column; gap: 14px; font-size: 13px; line-height: 1.5; }
@@ -869,14 +878,14 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <div class="field"><label for="taskResourceInput">Resource</label><input type="text" id="taskResourceInput" maxlength="200"></div>
         <div class="checkbox-row ms-field"><input type="checkbox" id="taskMilestoneInput" onchange="onMilestoneToggle()"><label for="taskMilestoneInput">Milestone</label></div>
       </div>
-      <div class="field-grid-4">
+      <div class="field-grid-4 dt-grid">
         <div class="field"><label for="taskStartInput">Start</label><div class="field-dt"><input type="date" id="taskStartInput" onchange="onTaskStartChange()"><input type="time" id="taskStartTimeInput" class="task-time-input hidden" aria-label="Start time" onchange="onTaskStartChange()"></div></div>
         <div class="field" id="taskEndField"><label for="taskEndInput">Finish</label><div class="field-dt"><input type="date" id="taskEndInput" onchange="onTaskEndChange()"><input type="time" id="taskEndTimeInput" class="task-time-input hidden" aria-label="Finish time" onchange="onTaskEndChange()"></div></div>
         <div class="field" id="taskDurationField"><label for="taskDurationInput" id="taskDurationLabel" title="Working days, counted on the plan's working calendar">Duration (days)</label><input type="text" id="taskDurationInput" onchange="onTaskDurationChange()"></div>
         <div class="field"><label for="taskProgressInput">% Complete</label><input type="number" min="0" max="100" id="taskProgressInput"></div>
       </div>
       <div class="pred-empty hidden" id="taskTextDatesNote"></div>
-      <div class="field-grid-4 calc-row">
+      <div class="field-grid-4 calc-row dt-grid">
         <div class="field"><label for="taskActualStartInput">Actual Start</label><div class="field-dt"><input type="date" id="taskActualStartInput" onchange="onActualStartChange()"><input type="time" id="taskActualStartTimeInput" class="task-time-input hidden" aria-label="Actual start time" onchange="onActualStartChange()"></div></div>
         <div class="field" id="taskActualFinishField" title="Recording an Actual Finish marks the task 100% complete"><label for="taskActualFinishInput">Actual Finish</label><div class="field-dt"><input type="date" id="taskActualFinishInput" onchange="onActualFinishChange()"><input type="time" id="taskActualFinishTimeInput" class="task-time-input hidden" aria-label="Actual finish time" onchange="onActualFinishChange()"></div></div>
         <div class="field" title="Worked out by Milestone — not entered"><label>Remaining</label><div class="ro-value" id="taskRemainingInfo"></div></div>
@@ -968,8 +977,9 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
 <!-- Import modal -->
 <div class="modal-bg" id="importModalBg" onclick="if(event.target===this) closeImportModal()">
   <div class="modal narrow">
-    <div class="modal-header"><h2>Import Data</h2><button onclick="closeImportModal()">&times;</button></div>
+    <div class="modal-header"><h2>Import Data</h2><button onclick="closeImportModal()" aria-label="Close">&times;</button></div>
     <div class="modal-body">
+      <div class="cal-hint" id="importInfo" style="margin:0 0 4px"></div>
       <div class="import-mode-row"><div><strong>Merge</strong><div style="font-size:12px;color:var(--text-dim)">Keep existing tasks, add/update from the file</div></div><button class="btn btn-primary" onclick="applyImport('merge')">Merge</button></div>
       <div class="import-mode-row"><div><strong>Replace</strong><div style="font-size:12px;color:var(--text-dim)">Downloads a safety backup, then overwrites everything</div></div><button class="btn btn-primary btn-danger" onclick="applyImport('replace')">Replace</button></div>
     </div>
@@ -996,7 +1006,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
           <label class="radio-row"><input type="radio" name="fiMode" value="append" checked> <span>Add the tasks to this plan, after the existing ones</span></label>
           <label class="radio-row"><input type="radio" name="fiMode" value="replace"> <span>Replace this plan's tasks — a backup file is downloaded first</span></label>
         </div></div>
-      <label class="radio-row hidden" id="foreignImportCalRow"><input type="checkbox" id="foreignImportCal"> <span>Also take the working days, holidays and baselines from the file</span></label>
+      <label class="radio-row hidden" id="foreignImportCalRow"><input type="checkbox" id="foreignImportCal"> <span>Also take the working days, holidays, baselines and working hours from the file</span></label>
     </div>
     <div class="modal-footer"><button class="btn" onclick="closeForeignImport()">Cancel</button><button class="btn btn-primary" id="foreignImportGo" onclick="applyForeignImport()">Import</button></div>
   </div>
@@ -1011,8 +1021,8 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
       <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-resource"> Resource</label><div class="bulk-ctl"><input type="text" id="bulkVal-resource" maxlength="200" placeholder="Empty clears the resource" aria-label="Resource"></div></div>
       <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-mode"> Task Mode</label><div class="bulk-ctl"><select id="bulkVal-mode" aria-label="Task Mode"><option value="auto">Auto Scheduled</option><option value="manual">Manually Scheduled</option></select></div></div>
       <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-color"> Row colour</label><div class="bulk-ctl"><select id="bulkVal-color" aria-label="Row colour"></select></div></div>
-      <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-shift"> Move dates by</label><div class="bulk-ctl"><input type="number" id="bulkVal-shift" step="1" placeholder="− earlier, + later" aria-label="Working days to move by"><span class="bulk-hint">working days</span></div></div>
-      <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-pred"> Add predecessor</label><div class="bulk-ctl"><input type="number" id="bulkVal-predId" min="1" step="1" placeholder="task #" aria-label="Predecessor task number"><select id="bulkVal-predType" aria-label="Link type: Finish-to-Start, Start-to-Start, Finish-to-Finish or Start-to-Finish" title="Link type: FS Finish-to-Start, SS Start-to-Start, FF Finish-to-Finish, SF Start-to-Finish"><option value="FS" title="Finish-to-Start">FS</option><option value="SS" title="Start-to-Start">SS</option><option value="FF" title="Finish-to-Finish">FF</option><option value="SF" title="Start-to-Finish">SF</option></select><input type="number" id="bulkVal-predLag" step="1" placeholder="lag" aria-label="Lag in working days"></div></div>
+      <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-shift"> Move dates by</label><div class="bulk-ctl"><input type="number" id="bulkVal-shift" step="1" placeholder="− earlier, + later" aria-label="Working days to move by"><span class="bulk-hint" id="bulkShiftHint">working days</span></div></div>
+      <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-pred"> Add predecessor</label><div class="bulk-ctl"><input type="number" id="bulkVal-predId" min="1" step="1" placeholder="task #" aria-label="Predecessor task number"><select id="bulkVal-predType" aria-label="Link type: Finish-to-Start, Start-to-Start, Finish-to-Finish or Start-to-Finish" title="Link type: FS Finish-to-Start, SS Start-to-Start, FF Finish-to-Finish, SF Start-to-Finish"><option value="FS" title="Finish-to-Start">FS</option><option value="SS" title="Start-to-Start">SS</option><option value="FF" title="Finish-to-Finish">FF</option><option value="SF" title="Start-to-Finish">SF</option></select><input type="number" id="bulkVal-predLag" step="1" placeholder="lag" aria-label="Lag in working days" title="Lag — positive delays the start, negative overlaps it"></div></div>
       <div id="bulkCustom"></div>
     </div>
     <div class="modal-footer"><button class="btn" onclick="closeBulkModal()">Cancel</button><button class="btn btn-primary" onclick="applyBulkEdit()">Apply</button></div>
@@ -1064,7 +1074,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
 <div class="modal-bg" id="backupsModalBg" onclick="if(event.target===this) closeBackupsModal()">
   <div class="modal narrow">
     <div class="modal-header"><h2>Local Backups</h2><button onclick="closeBackupsModal()">&times;</button></div>
-    <div class="modal-body"><div id="backupsList"></div></div>
+    <div class="modal-body"><p class="cal-hint" style="margin:0">A snapshot of this plan is kept in this browser once a day you use Milestone. Restoring one downloads your current data first, as a safety copy.</p><div id="backupsList"></div></div>
     <div class="modal-footer"><button class="btn" onclick="closeBackupsModal()">Close</button></div>
   </div>
 </div>
@@ -1076,7 +1086,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
   <div class="modal narrow">
     <div class="modal-header"><h2 id="fileSyncModalTitle">Choose a folder to continue</h2></div>
     <div class="modal-body">
-      <p id="fileSyncModalText" style="font-size:13px;color:var(--text-dim);margin:0;line-height:1.5"></p>
+      <div id="fileSyncModalText" style="font-size:13px;color:var(--text-dim);margin:0;line-height:1.5"></div>
       <button class="btn btn-primary" id="linkFolderBtn" onclick="chooseFolderForPlan('link')"><i class="fa-solid fa-folder-open"></i>Choose folder…</button>
       <button class="btn hidden" id="linkSameFolderBtn" onclick="chooseFolderForPlan('link', true)"><i class="fa-solid fa-file-circle-question"></i>Pick a file in the same folder</button>
       <details class="file-sync-help">
@@ -1169,14 +1179,13 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
 </div>
 
 <div class="modal-bg" id="precisionModalBg" onclick="if(event.target===this) requestClosePrecisionModal()">
-  <div class="modal mid">
+  <div class="modal wide">
     <div class="modal-header"><h2>Scheduling precision</h2><button onclick="requestClosePrecisionModal()" aria-label="Close">&times;</button></div>
     <div class="modal-body">
-      <p class="cal-hint" style="margin:0">The standard is whole days. A plan can switch to <strong>Hours &amp; minutes</strong> — like MS Project's minute-level scheduling — so tasks can start and finish at a specific time of day, several to a day.</p>
       <section class="cal-sec">
         <div class="precision-row" id="precisionRow">
           <label class="precision-opt"><input type="radio" name="timeUnit" value="day" id="precisionDay"><span>Days <span class="cal-sec-note">the standard — Start and Finish are whole days</span></span></label>
-          <label class="precision-opt"><input type="radio" name="timeUnit" value="minute" id="precisionMinute"><span>Hours &amp; minutes <span class="cal-sec-note">tasks can start and finish at a specific time of day, several to a day</span></span></label>
+          <label class="precision-opt"><input type="radio" name="timeUnit" value="minute" id="precisionMinute"><span>Hours &amp; minutes <span class="cal-sec-note">like MS Project's minute-level scheduling — Start and Finish have a time of day, several tasks to a day</span></span></label>
         </div>
         <div class="workhours-editor hidden" id="workHoursEditor">
           <div class="wh-day-row">
@@ -1195,10 +1204,11 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
               <button class="btn" type="button" onclick="addWorkBreak()"><i class="fa-solid fa-plus"></i>Add break</button>
             </div>
           </div>
-          <div>
-            <div class="cal-sec-note">Different hours on some days — a short Friday, say. Tick a day and give it its own start, end and breaks.</div>
+          <details class="whd-details" id="whDayDetails">
+            <summary>Different hours on some days <span class="whd-count" id="whDayCount"></span></summary>
+            <div class="cal-sec-note">A short Friday, say. Tick a day and give it its own start, end and breaks (like 12:00-13:00, 15:00-15:15).</div>
             <div class="whd-list" id="whDayRows"></div>
-          </div>
+          </details>
         </div>
       </section>
     </div>
@@ -1216,9 +1226,9 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
     <div class="modal-body">
       <p class="cal-hint" style="margin:0">A baseline is a frozen copy of every task's Start and Finish, taken only when you set it — so you can see later how far the plan has moved. Up to eleven are kept.</p>
       <section class="cal-sec">
-        <div class="cal-sec-title">Take or replace a baseline</div>
+        <div class="cal-sec-title">Save a baseline <span class="cal-sec-note">applies when you click Set baseline</span></div>
         <div class="bl-grid">
-          <div class="field"><label for="baselineSlotSelect">Baseline</label><select id="baselineSlotSelect" onchange="renderBaselineModal()"></select></div>
+          <div class="field"><label for="baselineSlotSelect">Which baseline</label><select id="baselineSlotSelect" onchange="renderBaselineModal()"></select></div>
           <div class="field"><label>Apply to</label>
             <div class="radio-col">
               <label class="radio-row"><input type="radio" name="baselineScope" id="baselineScopeAll" value="all" checked> <span>The entire plan</span></label>
@@ -1228,7 +1238,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <div class="bl-status"><span id="baselineSlotInfo"></span><button class="btn-link danger" id="baselineClearBtn" onclick="clearBaselineFromDialog()">Clear this baseline</button></div>
       </section>
       <section class="cal-sec">
-        <div class="cal-sec-title">Compare the chart and columns with</div>
+        <div class="cal-sec-title">Compare the chart and columns with <span class="cal-sec-note">applies right away</span></div>
         <select id="baselineCompareSelect" class="bl-compare" aria-label="Baseline to compare with" onchange="setCompareBaseline(this.value)"></select>
         <p class="cal-hint" id="baselineCompareHint" style="margin:0"></p>
       </section>
@@ -1239,6 +1249,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
       </section>
     </div>
     <div class="modal-footer">
+      <span class="foot-note" id="baselineFootNote"></span>
       <button class="btn" onclick="closeBaselineModal()">Close</button>
       <button class="btn btn-primary" id="baselineSetBtn" onclick="setBaselineFromDialog()">Set baseline</button>
     </div>
@@ -1252,7 +1263,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
       <p class="cal-hint" style="margin:0">Catches the plan up with reality as of a date you choose: a task that should already have started moves there, and an in-progress task whose remaining work won't fit keeps going from that date. Finished tasks, and tasks ahead of schedule, are left alone.</p>
       <section class="cal-sec">
         <div class="cal-sec-title">Status date</div>
-        <input type="date" id="rescheduleDateInput" onchange="renderRescheduleModal()">
+        <div class="field-dt" id="rescheduleWhen"><input type="date" id="rescheduleDateInput" aria-label="Status date" onchange="onRescheduleDateChange()"><input type="time" id="rescheduleTimeInput" class="hidden" aria-label="Status time" onchange="rescheduleTimeTouched = true; renderRescheduleModal()"></div>
         <p class="cal-hint" id="rescheduleHint" style="margin:0"></p>
       </section>
     </div>
@@ -1397,7 +1408,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
           <div class="help-row"><i class="fa-solid fa-ruler-horizontal"></i><span>The bar is the <strong>current schedule</strong>. To keep the original plan, set a <strong>baseline</strong> (Schedule menu → <strong>Baseline…</strong>): a frozen copy of every task's Start and Finish, only ever taken when you ask. Keep up to eleven — Baseline and Baseline 1–10 — and choose which one to compare with.</span></div>
           <div class="help-row"><i class="fa-solid fa-minus"></i><span>The baseline shows as a thin grey line under each bar in the Gantt chart (the ruler button hides it).</span></div>
           <div class="help-row"><i class="fa-solid fa-plus-minus"></i><span>The <strong>Start Variance</strong>, <strong>Finish Variance</strong>, <strong>Baseline Start/Finish/Duration</strong> and <strong>Duration Variance</strong> columns show how far each task has moved, in working days (working minutes for a leaf task in an Hours &amp; minutes plan) — positive means later than the baseline.</span></div>
-          <div class="help-row"><i class="fa-solid fa-calendar-check"></i><span><strong>Reschedule remaining work…</strong> (Schedule menu) catches the plan up with a status date you choose: an overdue task moves there, an in-progress task keeps its remaining work from that date if it would otherwise finish later. Finished tasks and tasks ahead of schedule are left alone.</span></div>
+          <div class="help-row"><i class="fa-solid fa-calendar-check"></i><span><strong>Reschedule remaining work…</strong> (Schedule menu) catches the plan up with a status date you choose: an overdue task moves there, an in-progress task keeps its remaining work from that date if it would otherwise finish later. Finished tasks and tasks ahead of schedule are left alone. The dialog says how many tasks would move before you click, and in an Hours &amp; minutes plan the status date has a time; Undo brings everything back.</span></div>
         </div>
       </div>
       <div class="help-pane" id="helpPane-list" role="tabpanel" aria-labelledby="helpTab-list" hidden>
@@ -1500,7 +1511,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
   </div>
 </div>
 
-<div id="toast"><span id="toastMsg"></span><button id="toastUndoBtn" class="hidden"></button></div>
+<div id="toast" role="status" aria-live="polite"><span id="toastMsg"></span><button id="toastUndoBtn" class="hidden"></button></div>
 
 <script>
 /* ============================== Constants ============================== */
@@ -2605,12 +2616,15 @@ function wbsCode(id) {
 // Remaining Duration: what is left of the duration — duration × (1 − % complete), in days, one decimal ("2.5 days"); a
 // milestone has none and a task whose duration is free text ("TBD") has no number to work from. Computed, not stored.
 function remainingOf(duration, progress) { return Math.round(duration * (100 - Math.min(100, Math.max(0, progress))) / 100 * 10) / 10; }
+// Remaining duration in the plan's own unit: working days (0.1 accuracy) in a day-mode plan, whole working MINUTES in a minute-mode one
+// (a group's too — from its rolled-up moments); fmtRemaining() writes it in that unit.
 function remainingDays(id) {
   const t = byId(id), e = effectiveDates(id);
   if (!t || t.milestone || !e.start || !e.end || t.durText != null) return null;
+  if (minuteModeActive()) return Math.round(remainingOf(durationMinutes(dtMoment(e.start, e.startTime, false), dtMoment(e.end, e.endTime, true)), e.progress));
   return remainingOf(durationDays(e.start, e.end), e.progress);
 }
-function fmtRemaining(v) { return v === 1 ? '1 day' : `${v} days`; }
+function fmtRemaining(v) { return minuteModeActive() ? fmtDurationMinutes(v) : v === 1 ? '1 day' : `${v} days`; }
 // Status, judged against today (as MS Project does against its status date):
 //   Complete     100% done, or an actual finish recorded
 //   Late         not complete and past its finish, or it should have started by now and hasn't
@@ -5046,13 +5060,13 @@ function openTaskModal(id, isNew) {
   const group = hasChildren(id), act = actualDates(id);   // a group's actual dates are rolled up from its tasks, so read-only
   document.getElementById('taskActualStartInput').value = act.start || '';
   document.getElementById('taskActualFinishInput').value = act.end || '';
-  document.getElementById('taskActualStartTimeInput').value = t.actualStartTime || wStart(act.start || t.startDate);
-  document.getElementById('taskActualFinishTimeInput').value = t.actualFinishTime || wEnd(act.end || t.endDate);
+  document.getElementById('taskActualStartTimeInput').value = act.start ? (t.actualStartTime || wStart(act.start)) : '';   // (a time only goes with a date: blank until one is recorded)
+  document.getElementById('taskActualFinishTimeInput').value = act.end ? (t.actualFinishTime || wEnd(act.end)) : '';
   document.getElementById('taskActualStartInput').disabled = group; document.getElementById('taskActualFinishInput').disabled = group;
-  document.getElementById('taskActualStartTimeInput').disabled = group; document.getElementById('taskActualFinishTimeInput').disabled = group;
+  syncActualTimeInputs();
   const actNote = document.getElementById('taskActualsNote');
-  actNote.textContent = group ? 'A group shows the actual dates of the tasks in it: the earliest actual start, and an actual finish once every task has finished.' : '';
-  actNote.classList.toggle('hidden', !group);
+  actNote.textContent = group ? 'A group shows the actual dates of the tasks in it: the earliest actual start, and an actual finish once every task has finished.' : "Recording an Actual Start or Finish sets the task's Start or Finish to it — the actual dates are the schedule.";
+  actNote.classList.remove('hidden');
   renderColorSwatches(t.color);
   const typeSel = document.getElementById('taskConstraintTypeInput');
   typeSel.innerHTML = CONSTRAINT_TYPES.map(c => `<option value="${c.id}"${c.id === t.constraintType ? ' selected' : ''}>${c.label}</option>`).join('');
@@ -5111,7 +5125,9 @@ function updateModalComputed() {
     const milestone = $('taskMilestoneInput').checked, start = v('taskStartInput') || null, end = milestone ? start : (v('taskEndInput') || start);
     const progress = Math.max(0, Math.min(100, parseInt(v('taskProgressInput')) || 0));
     const untouched = start === modalOrigDates.start && end === modalOrigDates.end, scheduled = !!start && !(isUnscheduled(t) && untouched);
-    remaining = milestone || !scheduled || (t.durText != null && untouched) ? null : remainingOf(durationDays(start, end), progress);
+    remaining = milestone || !scheduled || (t.durText != null && untouched) ? null
+      : minuteModeActive() ? Math.round(remainingOf(durationMinutes(dtMoment(start, v('taskStartTimeInput'), false), dtMoment(end, v('taskEndTimeInput'), true)), progress))
+      : remainingOf(durationDays(start, end), progress);
     const aS = v('taskActualStartInput') || null;
     status = statusOf({ start: scheduled ? start : null, end: scheduled ? end : null, progress, actualStart: aS, actualEnd: milestone ? aS : (v('taskActualFinishInput') || null) });
   }
@@ -5181,6 +5197,7 @@ function renderBaselineModal() {   // labels and buttons follow the chosen slot 
   document.getElementById('baselineSlotInfo').textContent = count ? `${baselineName(slot)} was set${meta ? ' on ' + fmtDate(meta.setAt) : ''} for ${count} task${count === 1 ? '' : 's'}. Setting it again replaces it (for the tasks you apply it to).` : `${baselineName(slot)} is not set. Setting it saves the current Start and Finish of the tasks you choose.`;
   document.getElementById('baselineSetBtn').textContent = count ? `Set ${baselineName(slot)} again` : `Set ${baselineName(slot)}`;
   document.getElementById('baselineClearBtn').disabled = !count;
+  document.getElementById('baselineFootNote').textContent = minuteModeActive() ? 'A baseline keeps each task\'s time of day too.' : '';
   const stale = actualsNotApplied();
   document.getElementById('baselineActualsInfo').textContent = stale.length ? `${stale.length} task${stale.length === 1 ? ' has' : 's have'} an actual date that is not in the schedule yet (plans from before this version kept them beside it). Applying them moves Start / Finish to the actual dates (a running task keeps its duration) and re-plans what follows. Set a baseline first if you want to keep the plan.` : 'Every actual date is already in the schedule.';
   document.getElementById('baselineApplyBtn').disabled = !stale.length;
@@ -5239,27 +5256,54 @@ function applyActualsToSchedule() {
     normalizeData(); save(); render(); renderBaselineModal();
   });
 }
+let rescheduleTimeTouched = false;
+// The status moment: a minute-mode plan also has a time (today: the time now, else that day's own open — until you set one).
+function defaultRescheduleTime(iso) { const n = new Date(); return iso === todayStr() ? `${pad2(n.getHours())}:${pad2(n.getMinutes())}` : wStart(iso); }
+function onRescheduleDateChange() {
+  const iso = document.getElementById('rescheduleDateInput').value;
+  if (minuteModeActive() && iso && !rescheduleTimeTouched) document.getElementById('rescheduleTimeInput').value = defaultRescheduleTime(iso);
+  renderRescheduleModal();
+}
 function openRescheduleModal() {
   closeScheduleMenu();
+  const mm = minuteModeActive();
   document.getElementById('rescheduleDateInput').value = todayStr();
+  rescheduleTimeTouched = false;
+  document.getElementById('rescheduleTimeInput').classList.toggle('hidden', !mm);
+  if (mm) document.getElementById('rescheduleTimeInput').value = defaultRescheduleTime(todayStr());
   renderRescheduleModal();
   document.getElementById('rescheduleModalBg').classList.add('open');
 }
 function closeRescheduleModal() { document.getElementById('rescheduleModalBg').classList.remove('open'); }
+function rescheduleStatus() {
+  const iso = document.getElementById('rescheduleDateInput').value || todayStr(), tm = document.getElementById('rescheduleTimeInput').value;
+  return { iso, time: minuteModeActive() && hhmmOk(tm) ? tm : undefined };
+}
+// What Reschedule would do right now, without doing it: run it, count, and put every task back exactly as it was.
+function rescheduleDryRun(iso, time) {
+  const snap = tasks.map(t => [t, JSON.stringify(t)]);
+  let n = 0;
+  try { n = rescheduleFromStatusDate(iso, time).length; }
+  finally { for (const [t, txt] of snap) { for (const k of Object.keys(t)) delete t[k]; Object.assign(t, JSON.parse(txt)); } resetEffectiveCache(); }
+  return n;
+}
 function renderRescheduleModal() {
-  const n = rescheduleCandidates().length;
-  document.getElementById('rescheduleHint').textContent = n ? `${n} task${n === 1 ? ' is' : 's are'} not finished yet — Reschedule moves whichever of them are overdue or behind.` : 'Every task is already finished — nothing to reschedule.';
+  const cand = rescheduleCandidates().length, { iso, time } = rescheduleStatus(), n = cand ? rescheduleDryRun(iso, time) : 0;
+  document.getElementById('rescheduleHint').textContent = !cand ? 'Every task is already finished — nothing to reschedule.'
+    : n === cand ? `${n === 1 ? 'The 1 unfinished task would' : `All ${n} unfinished tasks would`} move — they are overdue or behind.`
+    : n ? `${n} of the ${cand} unfinished tasks would move — the overdue or behind ones; the rest stay.`
+    : `${cand} task${cand === 1 ? ' is' : 's are'} not finished yet, but none is behind as of this ${minuteModeActive() ? 'moment' : 'date'} — nothing would move.`;
   document.getElementById('rescheduleBtn').disabled = !n;
 }
 function runReschedule() {
-  const iso = document.getElementById('rescheduleDateInput').value || todayStr();
-  const before = tasks.map(t => ({ t, s: t.startDate, e: t.endDate, u: t.updatedAt }));
-  const touched = rescheduleFromStatusDate(iso);
+  const { iso, time } = rescheduleStatus();
+  const before = tasks.map(t => ({ t, s: t.startDate, e: t.endDate, st: t.startTime, et: t.endTime, u: t.updatedAt }));
+  const touched = rescheduleFromStatusDate(iso, time);
   closeRescheduleModal();
   if (!touched.length) { showToast('Nothing needed to move'); return; }
   normalizeData(); save(); render();
-  showToast(`Rescheduled ${touched.length} task${touched.length === 1 ? '' : 's'} from ${fmtDate(iso)}`, false, () => {
-    for (const x of before) { x.t.startDate = x.s; x.t.endDate = x.e; x.t.updatedAt = x.u; }
+  showToast(`Rescheduled ${touched.length} task${touched.length === 1 ? '' : 's'} from ${fmtDate(iso)}${time ? ' ' + time : ''}`, false, () => {
+    for (const x of before) { x.t.startDate = x.s; x.t.endDate = x.e; x.t.startTime = x.st; x.t.endTime = x.et; x.t.updatedAt = x.u; }
     normalizeData(); save(); render();
   });
 }
@@ -5499,6 +5543,8 @@ function parseBreaksText(str) {   // -> [{start,end}] or null when something in 
 }
 function renderHoursByDay() {
   const by = project.workHoursByDay || {}, base = calWorkHours;
+  document.getElementById('whDayDetails').open = Object.keys(by).length > 0;
+  updateHoursDayCount();
   document.getElementById('whDayRows').innerHTML = WEEKDAY_ORDER.filter(d => workDaySet().has(d)).map(d => {
     const h = by[d], on = !!h, v = h || base;
     return `<div class="whd-row${on ? '' : ' off'}" data-wd="${d}"><label class="whd-name"><input type="checkbox" class="whd-on" aria-label="${WEEKDAY_NAMES[d]} has its own hours"${on ? ' checked' : ''} onchange="onHoursDayToggle(this)">${WEEKDAY_NAMES[d]}</label>` +
@@ -5506,8 +5552,10 @@ function renderHoursByDay() {
       `<input type="text" class="whd-breaks" aria-label="${WEEKDAY_NAMES[d]} breaks" placeholder="breaks, e.g. 12:00-13:00" value="${breaksText(v.breaks)}"${on ? '' : ' disabled'}></div>`;
   }).join('');
 }
+function updateHoursDayCount() { const n = document.querySelectorAll('#whDayRows .whd-on:checked').length; document.getElementById('whDayCount').textContent = n ? `· ${n} day${n === 1 ? '' : 's'} differ${n === 1 ? 's' : ''}` : ''; }
 function onHoursDayToggle(cb) {
   const row = cb.closest('.whd-row'), on = cb.checked;
+  updateHoursDayCount();
   row.classList.toggle('off', !on);
   for (const el of row.querySelectorAll('.whd-start, .whd-end, .whd-breaks')) el.disabled = !on;
   if (on) { row.querySelector('.whd-start').value = document.getElementById('whStart').value; row.querySelector('.whd-end').value = document.getElementById('whEnd').value; row.querySelector('.whd-breaks').value = breaksText(calWorkHours.breaks); }   // (starts as a copy of the standard day)
@@ -5537,7 +5585,7 @@ function onPrecisionChange() {
 function fmtHhmm(hm) { return hm || ''; }
 function renderWorkBreaks() {
   document.getElementById('whBreakList').innerHTML = calWorkHours.breaks.map((b, i) =>
-    `<div class="hol-row"><span class="hol-when">${fmtHhmm(b.start)} – ${fmtHhmm(b.end)}</span><span class="hol-name"></span><button type="button" aria-label="Remove break ${fmtHhmm(b.start)}–${fmtHhmm(b.end)}" title="Remove" onclick="removeWorkBreak(${i})"><i class="fa-solid fa-xmark"></i></button></div>`
+    `<div class="hol-row"><span class="hol-when">${fmtHhmm(b.start)}-${fmtHhmm(b.end)}</span><span class="hol-name"></span><button type="button" aria-label="Remove break ${fmtHhmm(b.start)}–${fmtHhmm(b.end)}" title="Remove" onclick="removeWorkBreak(${i})"><i class="fa-solid fa-xmark"></i></button></div>`
   ).join('');
 }
 function addWorkBreak() {
@@ -5713,9 +5761,20 @@ function updateCustomBadge() {
   const n = Object.entries(readCustomInputs()).filter(([k, v]) => !/Time$/.test(k) && (v === true || (typeof v === 'string' && v.trim() !== ''))).length, b = document.getElementById('taskCustomBadge');
   b.textContent = n; b.classList.toggle('hidden', !n);
 }
+// The Actual Start / Finish time boxes go with their dates: disabled and empty while there is no date (and for a group, whose actual dates are
+// rolled up), enabled with the task's planned time of that side once a date is there.
+function syncActualTimeInputs() {
+  const $ = id => document.getElementById(id), group = editingTaskId && hasChildren(editingTaskId);
+  for (const [dId, tId, isEnd, plannedId] of [['taskActualStartInput', 'taskActualStartTimeInput', false, 'taskStartTimeInput'], ['taskActualFinishInput', 'taskActualFinishTimeInput', true, 'taskEndTimeInput']]) {
+    const d = $(dId).value, tm = $(tId);
+    if (!d) tm.value = ''; else if (!tm.value) tm.value = $(plannedId).value || (isEnd ? wEnd(d) : wStart(d));
+    tm.disabled = !!group || !d;
+  }
+}
 // Same effect as recordActualFinish(), shown while you type: an Actual Finish completes the task and fills an empty Actual Start.
 function onActualFinishChange() {
   const f = document.getElementById('taskActualFinishInput').value;
+  syncActualTimeInputs();
   if (!f) return;
   const minute = minuteModeActive();
   document.getElementById('taskProgressInput').value = 100;
@@ -5726,6 +5785,7 @@ function onActualFinishChange() {
   }
   document.getElementById('taskStartInput').value = as.value;    // the actual dates ARE the schedule (MS Project): Start = Actual Start, Finish = Actual Finish
   document.getElementById('taskEndInput').value = f;
+  syncActualTimeInputs();
   if (minute) { document.getElementById('taskStartTimeInput').value = document.getElementById('taskActualStartTimeInput').value; document.getElementById('taskEndTimeInput').value = document.getElementById('taskActualFinishTimeInput').value || wEnd(f); }
   updateDurationDisplay(); updateModalComputed();
 }
@@ -5733,6 +5793,7 @@ function onActualFinishChange() {
 // its actual date is its actual finish, so recording it completes the milestone.
 function onActualStartChange() {
   const a = document.getElementById('taskActualStartInput').value;
+  syncActualTimeInputs();
   if (!a) return;
   const startEl = document.getElementById('taskStartInput'), endEl = document.getElementById('taskEndInput'), minute = minuteModeActive();
   startEl.value = a;
@@ -5825,18 +5886,19 @@ function pickTaskColor(id) { renderColorSwatches(id); document.getElementById('t
 function renderPredecessorRows() {
   const el = document.getElementById('predecessorRows');
   if (editingPredecessors.length === 0) { el.innerHTML = '<div class="pred-empty">No predecessors — this task is scheduled independently.</div>'; return; }
-  el.innerHTML = editingPredecessors.map((p, i) => {
-    const shown = p.id ? taskDisplayId(p.id) : '';
+  el.innerHTML = `<div class="pred-head" aria-hidden="true"><span>Task #</span><span>Task name</span><span>Type</span><span>Lead / lag</span><span></span></div>` + editingPredecessors.map((p, i) => {
+    const shown = p.id ? taskDisplayId(p.id) : '', pt = p.id ? byId(p.id) : null;
     return `
     <div class="pred-row">
-      <input type="number" class="pred-id-input" min="1" step="1" placeholder="Task ID" value="${shown === '?' ? '' : shown}" title="${p.id ? escapeHtml(byId(p.id) ? byId(p.id).name : '') : 'Enter a task ID'}" onchange="onPredecessorIdChange(${i}, this.value)">
-      <select onchange="editingPredecessors[${i}].type=this.value">
+      <input type="number" class="pred-id-input" min="1" step="1" placeholder="Task #" aria-label="Predecessor task number" value="${shown === '?' ? '' : shown}" onchange="onPredecessorIdChange(${i}, this.value)">
+      <span class="pred-name${pt ? '' : ' none'}" title="${pt ? escapeHtml(pt.name) : ''}">${pt ? escapeHtml(pt.name) : 'type the number of the task it depends on'}</span>
+      <select aria-label="Link type" title="FS finish-to-start, SS start-to-start, FF finish-to-finish, SF start-to-finish" onchange="editingPredecessors[${i}].type=this.value">
         ${DEP_TYPES.map(dt => `<option value="${dt}"${dt === p.type ? ' selected' : ''}>${dt}</option>`).join('')}
       </select>
       ${minuteModeActive()
-        ? `<input type="text" class="pred-lag-input" value="${p.lag ? fmtLagMinutes(p.lag) : '0'}" placeholder="Lead/Lag" title="Lead/Lag in working time — 2h, -30m, 1d, 1w; a bare number is hours. Positive delays the start (lag), negative overlaps it (lead)" onchange="onPredLagChange(${i}, this)">`
-        : `<input type="number" value="${p.lag || 0}" placeholder="Lead/Lag" title="Lead/Lag (days) — positive delays the start (lag), negative overlaps it (lead)" onchange="editingPredecessors[${i}].lag=parseInt(this.value)||0">`}
-      <button class="pred-remove" onclick="removePredecessorRow(${i})"><i class="fa-solid fa-xmark"></i></button>
+        ? `<input type="text" class="pred-lag-input" value="${p.lag ? fmtLagMinutes(p.lag) : '0'}" placeholder="Lead/Lag" aria-label="Lead or lag" title="Lead/Lag in working time — 2h, -30m, 1d, 1w; a bare number is hours. Positive delays the start (lag), negative overlaps it (lead)" onchange="onPredLagChange(${i}, this)">`
+        : `<input type="number" value="${p.lag || 0}" placeholder="Lead/Lag" aria-label="Lead or lag in days" title="Lead/Lag (days) — positive delays the start (lag), negative overlaps it (lead)" onchange="editingPredecessors[${i}].lag=parseInt(this.value)||0">`}
+      <button class="pred-remove" onclick="removePredecessorRow(${i})" aria-label="Remove this predecessor" title="Remove"><i class="fa-solid fa-xmark"></i></button>
     </div>`;
   }).join('');
 }
@@ -5892,8 +5954,8 @@ function saveTaskFromModal() {
   const previousFinish = t.actualFinish;
   if (!isGroup) {
     t.actualStart = aStart; t.actualFinish = aEnd;
-    t.actualStartTime = document.getElementById('taskActualStartTimeInput').value || null;
-    t.actualFinishTime = ms ? t.actualStartTime : (document.getElementById('taskActualFinishTimeInput').value || null);
+    t.actualStartTime = aStart ? (document.getElementById('taskActualStartTimeInput').value || null) : null;
+    t.actualFinishTime = ms ? t.actualStartTime : (aEnd ? (document.getElementById('taskActualFinishTimeInput').value || null) : null);
     recordActualFinish(t, previousFinish); applyActualDates(t); clampTaskDates(t); if (!isStarted(t)) snapToWorkDays(t);
   }
   { const cv = cleanCustomValues(readCustomInputs()); if (cv) t.custom = cv; else delete t.custom; }
@@ -6243,6 +6305,10 @@ function fmtDurationMinutes(min) {
   if (per && min % per === 0) { const d = min / per; return `${d} day${d === 1 ? '' : 's'}`; }
   if (min % 60 === 0) { const h = min / 60; return `${h} hr${h === 1 ? '' : 's'}`; }
   if (min % 30 === 0) return `${(min / 60).toFixed(1)} hrs`;
+  if (per && min >= per) {   // a day or more that is none of the round forms above: days, hours and minutes ("68 days 50 min"), not a raw minute count nobody can read
+    const d = Math.floor(min / per), rest = min - d * per, h = Math.floor(rest / 60), m = rest % 60;
+    return [`${d} day${d === 1 ? '' : 's'}`, h && `${h} hr${h === 1 ? '' : 's'}`, m && `${m} min`].filter(Boolean).join(' ');
+  }
   return `${min} min`;
 }
 // A time of day at the end of a date cell ("07.09.2026 14:30", "2026-09-07T14:30:00Z", "07.09.2026 2:30 PM"), as HH:MM, or null.
@@ -7008,7 +7074,8 @@ function openBulkModal() {
   document.getElementById('bulkHint').textContent = `Tick the fields you want to change — everything else stays as it is.${groups ? ' Groups keep the progress and dates worked out from their tasks.' : ''}`;
   for (const f of ['progress', 'resource', 'mode', 'color', 'shift', 'pred']) document.getElementById('bulkOn-' + f).checked = false;
   for (const id of ['bulkVal-progress', 'bulkVal-resource', 'bulkVal-shift', 'bulkVal-predId', 'bulkVal-predLag']) document.getElementById(id).value = '';
-  { const bl = document.getElementById('bulkVal-predLag'), mm = minuteModeActive(); bl.type = mm ? 'text' : 'number'; bl.placeholder = mm ? 'lag, e.g. 2h' : 'lag'; bl.setAttribute('aria-label', mm ? 'Lag in working time, such as 2h or 30m' : 'Lag in working days'); }   // (a minute-mode plan's lags are typed with a unit)
+  { const sh = document.getElementById('bulkVal-shift'), mm = minuteModeActive(); sh.type = mm ? 'text' : 'number'; sh.placeholder = mm ? '− earlier, + later' : '− earlier, + later'; sh.setAttribute('aria-label', mm ? 'Working time to move by, such as 2h, -30m or 1d' : 'Working days to move by'); document.getElementById('bulkShiftHint').textContent = mm ? 'e.g. 2h, -30m, 1d' : 'working days'; }
+  { const bl = document.getElementById('bulkVal-predLag'), mm = minuteModeActive(); bl.type = mm ? 'text' : 'number'; bl.placeholder = 'lag'; bl.title = mm ? 'Lag in working time, like 2h, -30m or 1d — negative overlaps the start' : 'Lag in working days — negative overlaps the start'; bl.setAttribute('aria-label', mm ? 'Lag in working time, such as 2h or 30m' : 'Lag in working days'); }   // (a minute-mode plan's lags are typed with a unit)
   document.getElementById('bulkVal-mode').value = 'auto'; document.getElementById('bulkVal-predType').value = 'FS';
   document.getElementById('bulkVal-color').innerHTML = BULK_COLORS.map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
   const custom = bulkCustomCols();
@@ -7032,6 +7099,12 @@ function shiftTaskBy(t, n) {
   t.startDate = ns; t.endDate = t.milestone ? ns : finishFor(ns, dur);
   if (t.taskMode !== 'manual') pinToDate(t, 'start');   // moved later than its links allow = a deliberate delay, kept
 }
+function shiftTaskByMinutes(t, k) {   // a minute-mode plan: k working minutes later (or earlier), the length kept
+  const sm = taskMoment(t, 'start'), dur = t.milestone ? 1 : durationMoment(sm, taskMoment(t, 'end')), ns = shiftMoment(sm, k);
+  setTaskMoment(t, 'start', ns);
+  if (t.milestone) copyTaskField(t, 'start', 'end'); else setTaskMoment(t, 'end', finishMoment(ns, dur));
+  if (t.taskMode !== 'manual') pinToDate(t, 'start');
+}
 function applyBulkEdit() {
   const ids = selectedIds().filter(id => !byId(id).spacer); if (!ids.length) { closeBulkModal(); return; }
   const on = f => { const c = document.getElementById('bulkOn-' + f); return !!(c && c.checked); }, val = f => document.getElementById('bulkVal-' + f).value;
@@ -7039,7 +7112,8 @@ function applyBulkEdit() {
   if (!['progress', 'resource', 'mode', 'color', 'shift', 'pred'].some(on) && !customOn.length) { showToast('Tick at least one field to change', true); return; }
   let pct = null, shift = 0, predTarget = null, lag = 0, predType = val('predType');
   if (on('progress')) { pct = Number(val('progress')); if (val('progress').trim() === '' || !Number.isFinite(pct) || pct < 0 || pct > 100) { showToast('% complete must be between 0 and 100', true); return; } pct = Math.round(pct); }
-  if (on('shift')) { shift = Number(val('shift')); if (val('shift').trim() === '' || !Number.isInteger(shift) || Math.abs(shift) > 5000) { showToast('Give the number of working days to move by, such as 5 or -2', true); return; } }
+  if (on('shift') && minuteModeActive()) { shift = val('shift').trim() === '' ? null : parseLagInput(val('shift')); if (shift === null) { showToast('Give the working time to move by, such as 2h, -30m or 1d', true); return; } }
+  else if (on('shift')) { shift = Number(val('shift')); if (val('shift').trim() === '' || !Number.isInteger(shift) || Math.abs(shift) > 5000) { showToast('Give the number of working days to move by, such as 5 or -2', true); return; } }
   if (on('pred')) {
     const n = parseInt(val('predId'), 10); predTarget = Number.isFinite(n) ? taskIdByDisplayId(n) : null;
     if (minuteModeActive()) { lag = parseLagInput(val('predLag')); if (lag === null) { showToast(`Can't read "${val('predLag')}" as a lag — try 2h, -30m, 1d or 1w`, true); return; } }
@@ -7064,7 +7138,7 @@ function applyBulkEdit() {
     if (on('resource')) { t.resource = val('resource').trim().slice(0, 200); did = true; }
     if (on('mode') && t.taskMode !== val('mode')) { t.taskMode = val('mode'); if (t.taskMode === 'auto') rescheduleAsAuto(t); did = true; }
     if (on('color')) { t.color = val('color') || null; did = true; }
-    if (on('shift') && shift !== 0) { if (hasChildren(id) || isStarted(t) || isUnscheduled(t)) skipped.shift++; else { shiftTaskBy(t, shift); touched.push(id); did = true; } }
+    if (on('shift') && shift !== 0) { if (hasChildren(id) || isStarted(t) || isUnscheduled(t)) skipped.shift++; else { if (minuteModeActive()) shiftTaskByMinutes(t, shift); else shiftTaskBy(t, shift); touched.push(id); did = true; } }
     if (on('pred')) {
       if (hasChildren(id) || id === predTarget || t.predecessors.some(p => p.id === predTarget) || wouldCreateCycle(id, predTarget)) skipped.pred++;
       else { t.predecessors.push({ id: predTarget, type: predType, lag }); touched.push(id); did = true; }
@@ -7102,7 +7176,7 @@ function clipCell(t, c, depth) {
     case 'actualFinish': return act.end ? gridDateTimeText(act.end, t.actualFinishTime, minuteModeActive() && !hasChildren(t.id), true) : '';
     case 'duration': return t.durText != null ? t.durText : eff.start && eff.end && !isUnscheduled(t) ? (minuteModeActive() && own ? fmtDurationMinutes(t.milestone ? 0 : durationMinutes(taskMoment(t, 'start'), taskMoment(t, 'end'))) : String(durationDays(eff.start, eff.end))) : '';
     case 'progress': return `${Math.round(eff.progress)}%`;
-    case 'remaining': { const r = remainingDays(t.id); return r == null ? '' : String(r); }
+    case 'remaining': { const r = remainingDays(t.id); return r == null ? '' : minuteModeActive() ? fmtDurationMinutes(r) : String(r); }
     case 'status': return taskStatus(t.id) || '';
     case 'preds': return predecessorLabel(t) || '';
     case 'resource': return (t.resource || '').trim();
@@ -7222,7 +7296,7 @@ function handleFileImport(event) {
     try {
       const data = JSON.parse(reader.result);
       if (!Array.isArray(data.tasks)) throw new Error('missing tasks');
-      pendingImportData = data;
+      pendingImportData = data; pendingImportName = file.name;
       openImportModal();
     } catch (e) { showToast("That file doesn't look like a Milestone export", true); }
   };
@@ -7265,9 +7339,11 @@ function renderForeignImport() {
   if (project.workDays) bits.push(`working week ${calendarLabel(project.workDays)}`);
   if (project.holidays) bits.push(`${project.holidays.length} holiday${project.holidays.length === 1 ? '' : 's'}`);
   if (r.info.baselines) bits.push(`${r.info.baselines} baseline${r.info.baselines === 1 ? '' : 's'}`);
+  if (project.timeUnit === 'minute') bits.push('times of day (Hours & minutes)');
   const unscheduled = r.tasks.filter(t => t.startText != null).length; if (unscheduled) bits.push(`${unscheduled} without dates (kept as “TBD”)`);
   const depth = t => { let d = 0, p = t.parentId; while (p) { d++; p = (r.tasks.find(x => x.id === p) || {}).parentId; } return d; };
-  const preview = r.tasks.slice(0, 8).map(t => `<div class="fi-row" style="padding-left:${depth(t) * 14}px"><span class="fi-name">${t.milestone ? '◆ ' : ''}${escapeHtml(t.name)}</span><span class="fi-dates">${t.startText != null ? escapeHtml(t.startText) : t.milestone ? fmtDate(t.startDate) : `${fmtDate(t.startDate)} – ${fmtDate(t.endDate)}`}</span></div>`).join('');
+  const dtText = (iso, time) => fmtDate(iso) + (time ? ' ' + time : '');   // (a task read with a time of day shows it)
+  const preview = r.tasks.slice(0, 8).map(t => `<div class="fi-row" style="padding-left:${depth(t) * 14}px"><span class="fi-name">${t.milestone ? '◆ ' : ''}${escapeHtml(t.name)}</span><span class="fi-dates">${t.startText != null ? escapeHtml(t.startText) : t.milestone ? dtText(t.startDate, t.startTime) : `${dtText(t.startDate, t.startTime)} – ${dtText(t.endDate, t.endTime)}`}</span></div>`).join('');
   document.getElementById('foreignImportSummary').innerHTML = `<div>${bits.join(' · ')}</div><div class="fi-preview">${preview}${r.tasks.length > 8 ? `<div class="fi-more">… and ${r.tasks.length - 8} more</div>` : ''}</div>`;
   const w = document.getElementById('foreignImportWarn');
   w.classList.toggle('hidden', !r.warnings.length);
@@ -7275,8 +7351,8 @@ function renderForeignImport() {
   document.getElementById('foreignImportFmtField').classList.toggle('hidden', xml);
   document.getElementById('foreignImportFmt').value = fi.fmt;
   const cal = document.getElementById('foreignImportCalRow');
-  cal.classList.toggle('hidden', !(project.workDays || project.holidays || r.info.baselines));
-  document.getElementById('foreignImportCal').checked = !!(project.workDays || project.holidays || r.info.baselines);
+  cal.classList.toggle('hidden', !(project.workDays || project.holidays || r.info.baselines || project.timeUnit));
+  document.getElementById('foreignImportCal').checked = !!(project.workDays || project.holidays || r.info.baselines || project.timeUnit);
 }
 // Imported or pasted Auto tasks that have both dates and links: a start LATER than the links allow is a deliberate delay (kept, as a Start No
 // Earlier Than — the same rule as typing a date); anything else is placed by its links. In dependency order; manual, started and dated-as-text tasks stay as given.
@@ -7337,7 +7413,12 @@ function applyForeignImport() {
   applyImportedTasks(fi.result, mode, { calendar: cal });
   showToast(`Imported ${n} task${n === 1 ? '' : 's'} from ${fi.fileName}${mode === 'replace' ? ' (your previous tasks are in the backup file that was downloaded)' : ''} — Ctrl+Z takes it back`);
 }
-function openImportModal() { document.getElementById('importModalBg').classList.add('open'); }
+let pendingImportName = '';
+function openImportModal() {
+  const d = pendingImportData || {}, n = Array.isArray(d.tasks) ? d.tasks.filter(t => !t.spacer).length : 0, pn = d.project && d.project.name;
+  document.getElementById('importInfo').innerHTML = `<i class="fa-solid fa-file-code"></i> <strong>${escapeHtml(pendingImportName || 'Milestone file')}</strong> — ${n} task${n === 1 ? '' : 's'}${pn ? ` · plan “${escapeHtml(pn)}”` : ''}${d.project && d.project.timeUnit === 'minute' ? ' · Hours &amp; minutes' : ''}`;
+  document.getElementById('importModalBg').classList.add('open');
+}
 function closeImportModal() { document.getElementById('importModalBg').classList.remove('open'); pendingImportData = null; }
 function applyImport(mode) {
   if (!pendingImportData) return;
@@ -7563,7 +7644,12 @@ function buildXlsx(opts) {
           break;
         }
         case 'progress': sheet.cell(r, c, Math.round(eff.progress) / 100, S({ h: 'center', num: '0%' })); break;
-        case 'remaining': { const rem = remainingDays(t.id); sheet.cell(r, c, rem, S({ h: 'center', num: Number.isInteger(rem) ? durFmt : '0.0" days"' })); break; }
+        case 'remaining': {
+          const rem = remainingDays(t.id);
+          if (rem != null && minuteModeActive()) sheet.cell(r, c, fmtDurationMinutes(rem), S({ h: 'center', italic: true, color: DIM, bold: false }));   // (minute-unit text, like the Duration cell)
+          else sheet.cell(r, c, rem, S({ h: 'center', num: Number.isInteger(rem) ? durFmt : '0.0" days"' }));
+          break;
+        }
         case 'status': { const st = taskStatus(t.id); sheet.cell(r, c, st, S({ h: 'center', bold: true, color: { 'Complete': '1A7F37', 'On Schedule': '0969DA', 'Late': 'CF222E', 'Future Task': DIM }[st] || DIM })); break; }
         case 'preds': sheet.cell(r, c, predecessorLabel(t) || null, S({ h: 'left' })); break;
         case 'resource': sheet.cell(r, c, (t.resource || '').trim() || null, S({ h: 'left' })); break;
@@ -7832,7 +7918,7 @@ function openBackupsModal() {
   const keys = Object.keys(backups).sort().reverse();
   const el = document.getElementById('backupsList');
   el.innerHTML = keys.length === 0 ? '<div class="pred-empty">No backups yet — one is taken automatically each day you use Milestone.</div>' :
-    keys.map(k => `<div class="backup-row"><span>${escapeHtml(k)}</span><button class="btn" onclick="restoreBackup('${k}')">Restore</button></div>`).join('');
+    keys.map(k => { const b = backups[k] || {}, n = Array.isArray(b.tasks) ? b.tasks.filter(t => !t.spacer).length : 0; return `<div class="backup-row"><span>${escapeHtml(fmtDateY ? fmtDateY(k) : k)}<span class="backup-info"> · ${n} task${n === 1 ? '' : 's'}${b.project && b.project.name ? ' · ' + escapeHtml(b.project.name) : ''}</span></span><button class="btn" onclick="restoreBackup('${k}')" aria-label="Restore the backup of ${escapeHtml(k)}">Restore</button></div>`; }).join('');
   document.getElementById('backupsModalBg').classList.add('open');
   closeDataMenu();
 }
@@ -7902,9 +7988,9 @@ function fileLinkRequired() { return fileSyncSupported() && (fileSyncStatus === 
 function openFileSyncModal() {
   const missing = fileSyncStatus === 'missing', rec = (readPlansIndex() && planRecord(readPlansIndex(), currentPlanId)) || {}, fname = rec.fileName || (syncFileHandle && syncFileHandle.name) || 'The file';
   document.getElementById('fileSyncModalTitle').textContent = missing ? 'Linked file not found' : 'Choose a folder to continue';
-  document.getElementById('fileSyncModalText').textContent = missing
-    ? `“${fname}” was moved, renamed or deleted. Pick the file where it went, or choose a folder and create a new file for “${project.name}” (its current tasks are saved into it).`
-    : `Every plan is kept as a JSON file in a folder on your disk. Choose the folder for “${project.name}” — in a folder synced by iCloud Drive, OneDrive or Dropbox it also keeps your own devices in step, and Milestone merges the conflicted copies a sync service makes. You then create a new file there or pick a plan file that is already in it.`;
+  document.getElementById('fileSyncModalText').innerHTML = missing
+    ? `<p style="margin:0">“${escapeHtml(fname)}” was moved, renamed or deleted. Pick the file where it went, or choose a folder and create a new file for “${escapeHtml(project.name)}” (its current tasks are saved into it).</p>`
+    : `<p style="margin:0">Milestone keeps “${escapeHtml(project.name)}” as a file in a folder on your disk.</p><ul class="fs-points"><li>Choose the folder, then create a new file there or pick a plan file that is already in it.</li><li>In a folder synced by iCloud Drive, OneDrive or Dropbox, your devices stay in step.</li><li>The conflicted copies a sync service makes are merged for you.</li></ul>`;
   document.getElementById('linkSameFolderBtn').classList.toggle('hidden', !(missing && syncDirHandle));
   document.getElementById('fileSyncModalBg').classList.add('open');
 }
@@ -8784,7 +8870,41 @@ function wireGlobalEvents() {
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') pollFileSync(); });
 }
 
+/* ---- Dialogs for assistive technology and the keyboard: each is a modal dialog with a name (its title); Tab stays inside the top one; and
+   when it closes, focus goes back to what was focused before it opened (a dropdown item that has since closed falls back to the page). ---- */
+let lastOutsideFocus = null;
+const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]):not([type=hidden]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+function topOpenModal() { const open = document.querySelectorAll('.modal-bg.open'); return open.length ? open[open.length - 1] : null; }   // (a dialog that opens above another comes later in the page)
+function modalFocusables(bg) { return [...bg.querySelectorAll(FOCUSABLE)].filter(el => el.getClientRects().length && getComputedStyle(el).visibility !== 'hidden'); }
+function initDialogAccessibility() {
+  for (const bg of document.querySelectorAll('.modal-bg')) {
+    const m = bg.querySelector('.modal'); if (!m) continue;
+    if (!m.getAttribute('role')) m.setAttribute('role', bg.id === 'confirmModalBg' ? 'alertdialog' : 'dialog');
+    for (const x of bg.querySelectorAll('.modal-header > button')) if (!x.getAttribute('aria-label')) x.setAttribute('aria-label', 'Close');
+    m.setAttribute('aria-modal', 'true');
+    if (!m.getAttribute('aria-labelledby') && !m.getAttribute('aria-label')) { const h = m.querySelector('h2'); if (h) { if (!h.id) h.id = bg.id + 'Title'; m.setAttribute('aria-labelledby', h.id); } }
+    let wasOpen = bg.classList.contains('open');
+    new MutationObserver(() => {
+      const now = bg.classList.contains('open');
+      if (now && !wasOpen) bg._opener = lastOutsideFocus;
+      else if (!now && wasOpen) { const o = bg._opener; bg._opener = null; if (o && document.contains(o) && !topOpenModal() && (document.activeElement === document.body || bg.contains(document.activeElement))) try { o.focus({ preventScroll: true }); } catch (e) { /* gone */ } }
+      wasOpen = now;
+    }).observe(bg, { attributes: true, attributeFilter: ['class'] });
+  }
+  document.addEventListener('focusin', e => { if (!e.target.closest || !e.target.closest('.modal-bg')) lastOutsideFocus = e.target; });
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Tab' || e.altKey || e.ctrlKey || e.metaKey) return;
+    const bg = topOpenModal(); if (!bg) return;
+    const a = document.activeElement;
+    if (a && a.closest && a.closest('.dropdown-menu.open')) return;   // (a menu that belongs to the dialog, such as Add field, keeps its own keys)
+    const f = modalFocusables(bg); if (!f.length) { e.preventDefault(); return; }
+    const first = f[0], last = f[f.length - 1], inside = a && bg.contains(a);
+    if (e.shiftKey && (!inside || a === first)) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && (!inside || a === last)) { e.preventDefault(); first.focus(); }
+  });
+}
 document.addEventListener('DOMContentLoaded', () => {
+  initDialogAccessibility();
   load();
   resetHistory();
   applyTheme(); applyGridPaneWidth();

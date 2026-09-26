@@ -81,7 +81,7 @@ with sync_playwright() as p:
     check("the schedule menu has 'Reschedule remaining work…'", pg.locator("#planRescheduleItem").count() == 1)
     pg.click("#planRescheduleItem"); pg.wait_for_selector("#rescheduleModalBg.open")
     check("the date field defaults to today", pg.input_value("#rescheduleDateInput") == ev("() => todayStr()"))
-    check("the hint counts the incomplete tasks (1 of 2 — Done doesn't count)", "1 task" in pg.inner_text("#rescheduleHint"), pg.inner_text("#rescheduleHint"))
+    check("the hint counts the incomplete tasks (1 of 2 — Done doesn't count) and says how many would move", "1 unfinished task" in pg.inner_text("#rescheduleHint"), pg.inner_text("#rescheduleHint"))
     pg.fill("#rescheduleDateInput", "2026-09-21")
     before_x = dates("X")
     pg.click("#rescheduleBtn")
