@@ -41,5 +41,5 @@ with sync_playwright() as p:
     check("closed cells are unaffected: every date column (Start, Finish, Actual Start/Finish, custom Date) is the same 104px wide", pg.evaluate("() => { const h = [...document.querySelectorAll('#gridHeader .col-filter-btn')].filter(b => ['start', 'end', 'actualStart', 'actualFinish', 'date1'].includes(b.dataset.col)).map(b => b.closest('.col-head').getBoundingClientRect().width); return h.length === 5 && h.every(w => w === 104); }"))
     # the dialog also uses real date inputs
     pg.evaluate("n => openTaskModal(tasks.find(t => t.name === n).id)", "Auto"); pg.wait_for_selector("#taskModalBg.open")
-    check("task dialog: Actual Start and Actual Finish are date inputs (with the browser's picker)", pg.get_attribute("#taskActualStartInput", "type") == "date" and pg.get_attribute("#taskActualFinishInput", "type") == "date")
+    check("task dialog: Actual Start and Actual Finish are typed dd.mm.yyyy boxes with a calendar button (the same as Start and Finish)", all(pg.get_attribute(f"#{i}", "placeholder") == "dd.mm.yyyy" and pg.locator(f"#{i} >> xpath=.. >> .dt-cal").count() == 1 for i in ("taskActualStartInput", "taskActualFinishInput")))
     print("console errors/warnings:", errors); print(f"{sum(results)}/{len(results)} passed"); b.close()

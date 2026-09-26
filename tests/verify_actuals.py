@@ -177,7 +177,7 @@ with sync_playwright() as p:
     make([A])
     pg.evaluate("n => openTaskModal(tasks.find(t => t.name === n).id)", "A"); pg.wait_for_selector("#taskModalBg.open"); pg.wait_for_timeout(80)
     pg.fill("#taskActualFinishInput", "2026-09-10"); pg.dispatch_event("#taskActualFinishInput", "change")
-    check("dialog: typing an Actual Finish shows 100% and the filled Actual Start (07.09) right away", pg.input_value("#taskProgressInput") == "100" and pg.input_value("#taskActualStartInput") == "2026-09-07", (pg.input_value("#taskProgressInput"), pg.input_value("#taskActualStartInput")))
+    check("dialog: typing an Actual Finish shows 100% and the filled Actual Start (07.09) right away", pg.input_value("#taskProgressInput") == "100" and pg.evaluate("() => document.getElementById('taskActualStartInput').value") == "2026-09-07", (pg.input_value("#taskProgressInput"), pg.evaluate("() => document.getElementById('taskActualStartInput').value")))
     pg.click("#taskModalBg .btn-primary"); pg.wait_for_timeout(150)
     check("...and saving stores both", prog("A") == 100 and astart("A") == "2026-09-07")
     pg.evaluate("n => openTaskModal(tasks.find(t => t.name === n).id)", "A"); pg.wait_for_selector("#taskModalBg.open"); pg.wait_for_timeout(80)

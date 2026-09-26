@@ -137,7 +137,7 @@ with sync_playwright() as p:
 
     # the task dialog
     pg.evaluate("n => openTaskModal(tasks.find(t => t.name === n).id)", "Other"); pg.wait_for_selector("#taskModalBg.open")
-    check("dialog: Resource, Actual Start and Actual Finish fields exist (empty for a new task)", pg.input_value("#taskResourceInput") == "" and pg.input_value("#taskActualStartInput") == "" and pg.input_value("#taskActualFinishInput") == "")
+    check("dialog: Resource, Actual Start and Actual Finish fields exist (empty for a new task)", pg.input_value("#taskResourceInput") == "" and pg.evaluate("() => document.getElementById('taskActualStartInput').value") == "" and pg.evaluate("() => document.getElementById('taskActualFinishInput').value") == "")
     check("dialog: the title badge shows the ID and the WBS code", "#4" in pg.inner_text("#taskModalIdBadge") and "WBS 2" in pg.inner_text("#taskModalIdBadge"), pg.inner_text("#taskModalIdBadge"))
     check("dialog: no Successors section any more", "Successors" not in pg.inner_text("#taskModalBg") and pg.locator("#successorsList").count() == 0 and pg.evaluate("() => typeof renderSuccessorsList") == "undefined")
     pg.fill("#taskResourceInput", "  Carla  "); pg.fill("#taskActualStartInput", d(10)); pg.fill("#taskActualFinishInput", d(9))
@@ -146,7 +146,7 @@ with sync_playwright() as p:
     pg.fill("#taskActualFinishInput", d(11)); pg.click("#taskModalBg .btn-primary"); pg.wait_for_timeout(150)
     check("dialog: valid values save (Resource is trimmed)", T("Other")["resource"] == "Carla" and T("Other")["aS"] == d(10) and T("Other")["aF"] == d(11) and pg.locator("#taskModalBg.open").count() == 0, T("Other"))
     pg.evaluate("n => openTaskModal(tasks.find(t => t.name === n).id)", "Grp"); pg.wait_for_selector("#taskModalBg.open")
-    check("dialog: a group's actual dates are shown but read-only, with an explanation", pg.is_disabled("#taskActualStartInput") and pg.is_disabled("#taskActualFinishInput") and pg.input_value("#taskActualStartInput") == d(-2) and "rolled up" in pg.inner_text("#taskActualsNote") or "earliest actual start" in pg.inner_text("#taskActualsNote"), pg.inner_text("#taskActualsNote"))
+    check("dialog: a group's actual dates are shown but read-only, with an explanation", pg.is_disabled("#taskActualStartInput") and pg.is_disabled("#taskActualFinishInput") and pg.evaluate("() => document.getElementById('taskActualStartInput').value") == d(-2) and "rolled up" in pg.inner_text("#taskActualsNote") or "earliest actual start" in pg.inner_text("#taskActualsNote"), pg.inner_text("#taskActualsNote"))
     pg.click("#taskModalBg .btn-primary"); pg.wait_for_timeout(120)
     check("dialog: saving a group doesn't write its rolled-up dates into the group itself", pg.evaluate("() => { const g = tasks.find(t => t.name === 'Grp'); return [g.actualStart, g.actualFinish]; }") == [None, None])
     # data hygiene

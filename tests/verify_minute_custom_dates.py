@@ -78,7 +78,7 @@ with sync_playwright() as p:
     # ---------------------------------------------------------------- the task dialog
     pg.click(f".grid-row[data-id='{tid('A')}'] .icon-btn[title=Edit]"); pg.wait_for_selector("#taskModalBg.open")
     pg.click("#taskTabBtnCustom")
-    check("the Custom tab shows a time input beside the date field in a minute-mode plan", pg.locator("#cf_date1_time").count() == 1 and pg.input_value("#cf_date1_time") == "14:30" and pg.input_value("#cf_date1") == "2026-09-11")
+    check("the Custom tab shows a time input beside the date field in a minute-mode plan", pg.locator("#cf_date1_time").count() == 1 and ev("() => document.getElementById('cf_date1_time').value") == "14:30" and ev("() => document.getElementById('cf_date1').value") == "2026-09-11")
     check("...and the badge counts the field once, not its time as well", pg.inner_text("#taskCustomBadge") == "1", pg.inner_text("#taskCustomBadge"))
     pg.fill("#cf_date1_time", "17:45"); pg.dispatch_event("#cf_date1_time", "change")
     pg.click("#taskModalBg .modal-footer button.btn-primary"); pg.wait_for_timeout(200)

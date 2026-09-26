@@ -26,7 +26,7 @@ with sync_playwright() as p:
         bad = pg.evaluate("w => [...document.querySelectorAll('input[type=date]')].filter(i => getComputedStyle(i).colorScheme !== w).map(i => i.id || i.className)", want)
         check(f"{theme} theme: every date field (dialog, constraint, actuals) uses it", not bad, bad)
         for fid in ("taskStartInput", "taskEndInput", "taskActualStartInput", "taskActualFinishInput"):
-            d, c = icon_contrast(pg.locator(f"#{fid}").screenshot())
+            d, c = icon_contrast(pg.locator(f"#{fid} >> xpath=..").screenshot())   # (the calendar button sits in the date box's wrapper)
             ok = (d == "darker") if theme == "light" else (d == "lighter" and c > 120)
             check(f"{theme} theme: the calendar icon in {fid} is {'dark on the light field' if theme == 'light' else 'light on the dark field (not black)'}", ok, (d, round(c)))
         pg.evaluate("() => closeTaskModal()")

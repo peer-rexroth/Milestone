@@ -386,6 +386,7 @@ input.inline-edit { width: 100%; min-width: 0; padding: 3px 6px; border: 1px sol
 .bulk-ctl { display: flex; gap: 6px; align-items: center; min-width: 0; }
 .bulk-ctl input, .bulk-ctl select { min-width: 0; flex: 1; }
 /* the same look as every other dialog's fields: rounded, padded, bordered (they used to be the browser's plain boxes) */
+.bulk-ctl .dt-wrap { flex: 1; }
 .bulk-ctl input[type=text], .bulk-ctl input[type=number], .bulk-ctl input[type=date], .bulk-ctl select { padding: 8px 10px; border: 1px solid var(--border); border-radius: 7px; background-color: var(--panel); color: var(--text); font-size: 13px; }
 .bulk-ctl input::placeholder { color: var(--text-faint); }
 .bulk-on input { width: 15px; height: 15px; margin: 0; }
@@ -402,7 +403,7 @@ input.inline-edit { width: 100%; min-width: 0; padding: 3px 6px; border: 1px sol
 .print-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; }
 .print-chk { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--text); cursor: pointer; margin-top: 3px; flex-wrap: wrap; }
 .print-range { display: flex; align-items: center; gap: 6px; margin: 4px 0 0 24px; font-size: 12.5px; color: var(--text-dim); }
-.print-range input[type=date] { flex: 1; min-width: 0; }
+.print-range .dt-wrap { flex: 1; min-width: 0; }
 .print-side { flex: 1; min-width: 0; display: flex; flex-direction: column; background: var(--panel-2); }
 .print-preview { flex: 1; min-height: 0; overflow: auto; padding: 18px; display: flex; align-items: flex-start; justify-content: center; }
 .print-sheet { background: #fff; box-shadow: 0 1px 8px rgba(0, 0, 0, .3); width: 100%; max-width: 100%; }
@@ -620,9 +621,9 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 .cal-sec .hol-preset, .cal-sec .hol-add, .cal-sec .wh-break-add { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .cal-sec .hol-preset select { flex: 1 1 200px; }
 .cal-sec .hol-preset input[type=number] { width: 78px; }
-.cal-sec .hol-add input[type=date] { width: 150px; }
+.cal-sec .hol-add .dt-wrap { flex: 0 0 150px; width: 150px; }
 .cal-sec .hol-add input[type=text] { flex: 1 1 200px; min-width: 110px; }
-.cal-sec .wh-break-add input[type=time] { width: 128px; }
+.cal-sec .wh-break-add input.dt-time { width: 84px; }
 .precision-row { display: flex; flex-direction: column; gap: 8px; }
 .precision-opt { display: flex; align-items: flex-start; gap: 8px; cursor: pointer; font-size: 13px; }
 .precision-opt input { margin-top: 3px; flex-shrink: 0; }
@@ -632,10 +633,10 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 .whd-list { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
 .whd-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .whd-row .whd-name { width: 70px; display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; }
-.whd-row input[type=time] { width: 128px; }
+.whd-row input.dt-time { width: 84px; }
 .whd-row .whd-breaks { flex: 1 1 170px; min-width: 140px; }
 .whd-row.off input:not(.whd-on) { opacity: .45; }
-.wh-day-row input[type=time] { width: 128px; }   /* (128px: a 12-hour "08:00 AM" and its clock icon fit) */
+.wh-day-row input.dt-time { width: 84px; }
 .whd-details { border-top: 1px solid var(--border); padding-top: 8px; }
 .whd-details > summary { cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text-dim); list-style-position: inside; }
 .whd-details[open] > summary { margin-bottom: 4px; }
@@ -658,7 +659,13 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 .field-grid-4 input[type=date], .field-grid-4 input[type=number], .field-grid-4 input[type=text], .field-grid-4 select { padding: 8px 8px; }
 .ms-field { align-self: end; padding-bottom: 9px; }   /* the task dialog: a lot of fields, so more room before it scrolls */
 .modal.wide { width: 620px; }
-.minute-mode .dt-grid > .field { grid-column: span 2; }   /* a date + a time need ~280px: in an Hours & minutes plan each of these fields takes two of the four columns, so the dialog keeps its width (no jump between modes) and no date is squeezed */
+.minute-mode #taskDatesBlock { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.minute-mode #taskDatesBlock > .field-grid-4 { display: contents; }   /* (the two rows of fields become one grid, so they can be ordered together) */
+.minute-mode #taskDatesBlock #taskTextDatesNote { grid-column: 1 / -1; order: 9; }
+/* A date + a time need ~230px: in an Hours & minutes plan the four date fields take two of the four columns each; the numbers (Duration, %, Remaining, Status) share one row between the planned and the actual dates. */
+.minute-mode #taskStartField { grid-column: span 2; order: 1; } .minute-mode #taskEndField { grid-column: span 2; order: 2; }
+.minute-mode #taskDurationField { order: 3; } .minute-mode #taskProgressField { order: 4; } .minute-mode #taskRemainingField { order: 5; } .minute-mode #taskStatusField { order: 6; }
+.minute-mode #taskActualStartField { grid-column: span 2; order: 7; } .minute-mode #taskActualFinishField { grid-column: span 2; order: 8; }
 .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; border-bottom: 1px solid var(--border); }
 .modal-header h2 { margin: 0; font-size: 16px; }
 .modal-header button { border: none; background: none; font-size: 18px; color: var(--text-dim); width: 28px; height: 28px; border-radius: 6px; }
@@ -672,8 +679,15 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 }
 .field textarea { resize: vertical; font-family: inherit; }
 .field-dt { display: flex; flex-wrap: wrap; gap: 6px; }
-.field-dt input[type=date] { flex: 1 1 104px; min-width: 104px; }   /* 104px: the native editor's own ~95px plus a little slack, same figure the grid's date columns use; grows to fill any extra room */
-.field-dt input[type=time] { flex: 0 1 118px; min-width: 118px; }   /* 118px: a 12-hour "08:00 AM" and its clock icon fit (92px cut the AM/PM off) */   /* stays at its own natural width instead of also growing, so the date gets the extra space */
+.dt-wrap { position: relative; display: block; min-width: 0; }
+.dt-wrap > input.dt-date { width: 100%; padding-right: 32px; }
+.dt-cal { position: absolute; right: 2px; top: 50%; transform: translateY(-50%); width: 28px; height: 28px; border: 0; background: none; color: var(--text); border-radius: 6px; cursor: pointer; font-size: 13px; }
+.dt-cal:hover:not(:disabled) { background: var(--panel-2); }
+.dt-cal:disabled { opacity: .4; cursor: default; }
+.dt-native { position: absolute; right: 0; bottom: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+input.dt-time { width: 84px; flex: 0 0 84px; text-align: center; }
+.field-dt .dt-wrap { flex: 1 1 130px; min-width: 130px; }   /* the date: room for dd.mm.yyyy and the calendar button; grows to fill any extra room */   /* 104px: the native editor's own ~95px plus a little slack, same figure the grid's date columns use; grows to fill any extra room */
+.field-dt input.dt-time { flex: 0 0 84px; min-width: 84px; }   /* 24-hour "14:30" needs ~50px: no AM/PM to cut off */
 .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 /* read-only, calculated values in the task dialog (WBS, Remaining Duration, Status) */
 .calc-row .ro-value { min-height: 34px; display: flex; align-items: center; padding: 6px 10px; border: 1px dashed var(--border); border-radius: 7px; background: var(--panel-2); color: var(--text-dim); font-size: 13px; }
@@ -713,6 +727,11 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 .help-panes { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .help-pane { flex: 1; min-height: 0; overflow-y: auto; padding: 20px 26px 24px; display: flex; flex-direction: column; gap: 18px; }
 .help-pane[hidden] { display: none; }
+.help-search-bar { flex: none; padding: 12px 26px 0; }
+.help-search-bar input { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); color: var(--text); font: inherit; font-size: 13px; }
+.help-row mark { background: color-mix(in srgb, var(--accent) 28%, transparent); color: inherit; border-radius: 3px; padding: 0 1px; }
+.help-jump { border: 0; background: none; padding: 0; font: inherit; text-transform: inherit; letter-spacing: inherit; color: var(--accent); cursor: pointer; }
+.help-jump i { font-size: 9px; margin-left: 3px; }
 .help-section { display: flex; flex-direction: column; gap: 8px; }
 .help-section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-dim); }
 .help-row { display: flex; gap: 12px; align-items: flex-start; font-size: 13px; line-height: 1.6; color: var(--text-dim); }
@@ -727,6 +746,24 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 .help-divider { height: 1px; background: var(--border); flex-shrink: 0; }
 .help-tip { background: var(--panel-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px; font-size: 12px; line-height: 1.6; color: var(--text-dim); }
 .help-tip strong { color: var(--text); font-weight: 600; }
+@media (max-width: 560px) {   /* a phone: dialogs stack instead of squeezing */
+  .modal-body { padding: 14px 14px; }
+  .field-grid-nm { grid-template-columns: minmax(0, 1fr); }
+  .field-grid-4, .minute-mode #taskDatesBlock { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .field-grid-4 > .span2, .field-grid-4 > .span3 { grid-column: 1 / -1; }
+  .bulk-row { grid-template-columns: 1fr; gap: 5px; }
+  .bulk-ctl { flex-wrap: wrap; }
+  #bulkVal-shift, #bulkVal-predId, #bulkVal-predLag { flex: 1 1 90px; }
+  .bulk-ctl select { flex: 1 1 90px; }
+  .modal.print-modal { width: 96vw; height: 92vh; }
+  .print-layout { flex-direction: column; overflow-y: auto; }
+  .print-opts { width: auto; border-right: 0; border-bottom: 1px solid var(--border); overflow: visible; }
+  .print-side { min-height: 320px; flex: none; }
+  .print-tip { display: none; }
+  .wh-day-row { flex-wrap: wrap; }
+  .whd-row .whd-breaks { flex: 1 1 100%; }
+  .pred-row, .pred-head { grid-template-columns: 56px 1fr 62px 76px 24px; }
+}
 @media (max-width: 660px) {
   .help-layout { flex-direction: column; }
   .help-nav { width: auto; flex-direction: row; border-right: 0; border-bottom: 1px solid var(--border); padding: 8px; overflow-x: auto; overflow-y: hidden; }
@@ -878,19 +915,21 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <div class="field"><label for="taskResourceInput">Resource</label><input type="text" id="taskResourceInput" maxlength="200"></div>
         <div class="checkbox-row ms-field"><input type="checkbox" id="taskMilestoneInput" onchange="onMilestoneToggle()"><label for="taskMilestoneInput">Milestone</label></div>
       </div>
+      <div id="taskDatesBlock">
       <div class="field-grid-4 dt-grid">
-        <div class="field"><label for="taskStartInput">Start</label><div class="field-dt"><input type="date" id="taskStartInput" onchange="onTaskStartChange()"><input type="time" id="taskStartTimeInput" class="task-time-input hidden" aria-label="Start time" onchange="onTaskStartChange()"></div></div>
-        <div class="field" id="taskEndField"><label for="taskEndInput">Finish</label><div class="field-dt"><input type="date" id="taskEndInput" onchange="onTaskEndChange()"><input type="time" id="taskEndTimeInput" class="task-time-input hidden" aria-label="Finish time" onchange="onTaskEndChange()"></div></div>
+        <div class="field" id="taskStartField"><label for="taskStartInput">Start</label><div class="field-dt"><input type="text" class="dt-date" id="taskStartInput" onchange="onTaskStartChange()"><input type="text" id="taskStartTimeInput" class="task-time-input hidden dt-time" aria-label="Start time" onchange="onTaskStartChange()"></div></div>
+        <div class="field" id="taskEndField"><label for="taskEndInput">Finish</label><div class="field-dt"><input type="text" class="dt-date" id="taskEndInput" onchange="onTaskEndChange()"><input type="text" id="taskEndTimeInput" class="task-time-input hidden dt-time" aria-label="Finish time" onchange="onTaskEndChange()"></div></div>
         <div class="field" id="taskDurationField"><label for="taskDurationInput" id="taskDurationLabel" title="Working days, counted on the plan's working calendar">Duration (days)</label><input type="text" id="taskDurationInput" onchange="onTaskDurationChange()"></div>
-        <div class="field"><label for="taskProgressInput">% Complete</label><input type="number" min="0" max="100" id="taskProgressInput"></div>
+        <div class="field" id="taskProgressField"><label for="taskProgressInput">% Complete</label><input type="number" min="0" max="100" id="taskProgressInput"></div>
       </div>
       <div class="pred-empty hidden" id="taskTextDatesNote"></div>
       <div class="field-grid-4 calc-row dt-grid">
-        <div class="field"><label for="taskActualStartInput">Actual Start</label><div class="field-dt"><input type="date" id="taskActualStartInput" onchange="onActualStartChange()"><input type="time" id="taskActualStartTimeInput" class="task-time-input hidden" aria-label="Actual start time" onchange="onActualStartChange()"></div></div>
-        <div class="field" id="taskActualFinishField" title="Recording an Actual Finish marks the task 100% complete"><label for="taskActualFinishInput">Actual Finish</label><div class="field-dt"><input type="date" id="taskActualFinishInput" onchange="onActualFinishChange()"><input type="time" id="taskActualFinishTimeInput" class="task-time-input hidden" aria-label="Actual finish time" onchange="onActualFinishChange()"></div></div>
-        <div class="field" title="Worked out by Milestone — not entered"><label>Remaining</label><div class="ro-value" id="taskRemainingInfo"></div></div>
-        <div class="field" title="Worked out by Milestone — not entered"><label>Status</label><div class="ro-value" id="taskStatusInfo"></div></div>
+        <div class="field" id="taskActualStartField"><label for="taskActualStartInput">Actual Start</label><div class="field-dt"><input type="text" class="dt-date" id="taskActualStartInput" onchange="onActualStartChange()"><input type="text" id="taskActualStartTimeInput" class="task-time-input hidden dt-time" aria-label="Actual start time" onchange="onActualStartChange()"></div></div>
+        <div class="field" id="taskActualFinishField" title="Recording an Actual Finish marks the task 100% complete"><label for="taskActualFinishInput">Actual Finish</label><div class="field-dt"><input type="text" class="dt-date" id="taskActualFinishInput" onchange="onActualFinishChange()"><input type="text" id="taskActualFinishTimeInput" class="task-time-input hidden dt-time" aria-label="Actual finish time" onchange="onActualFinishChange()"></div></div>
+        <div class="field" id="taskRemainingField" title="Worked out by Milestone — not entered"><label>Remaining</label><div class="ro-value" id="taskRemainingInfo"></div></div>
+        <div class="field" id="taskStatusField" title="Worked out by Milestone — not entered"><label>Status</label><div class="ro-value" id="taskStatusInfo"></div></div>
         <span id="taskWbsInfo" class="hidden"></span>
+      </div>
       </div>
       <div class="pred-empty hidden" id="taskActualsNote"></div>
       <div class="baseline-info hidden" id="taskBaselineInfo" title="From the plan's baseline (Schedule menu → Baseline…)"></div>
@@ -901,7 +940,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         </div>
         <div class="field span2" id="taskConstraintDateField">
           <label id="taskConstraintDateLabel" for="taskConstraintDateInput">Constraint date</label>
-          <div class="field-dt"><input type="date" id="taskConstraintDateInput"><input type="time" id="taskConstraintTimeInput" class="task-time-input hidden" aria-label="Constraint time"></div>
+          <div class="field-dt"><input type="text" class="dt-date" id="taskConstraintDateInput"><input type="text" id="taskConstraintTimeInput" class="task-time-input hidden dt-time" aria-label="Constraint time"></div>
         </div>
       </div>
       <div class="field">
@@ -977,7 +1016,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
 <!-- Import modal -->
 <div class="modal-bg" id="importModalBg" onclick="if(event.target===this) closeImportModal()">
   <div class="modal narrow">
-    <div class="modal-header"><h2>Import Data</h2><button onclick="closeImportModal()" aria-label="Close">&times;</button></div>
+    <div class="modal-header"><h2>Import data</h2><button onclick="closeImportModal()" aria-label="Close">&times;</button></div>
     <div class="modal-body">
       <div class="cal-hint" id="importInfo" style="margin:0 0 4px"></div>
       <div class="import-mode-row"><div><strong>Merge</strong><div style="font-size:12px;color:var(--text-dim)">Keep existing tasks, add/update from the file</div></div><button class="btn btn-primary" onclick="applyImport('merge')">Merge</button></div>
@@ -1051,7 +1090,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <div class="field"><label>Time range</label>
           <label class="print-chk"><input type="radio" name="printRange" id="printRangeAll" checked> The whole plan</label>
           <label class="print-chk"><input type="radio" name="printRange" id="printRangeCustom"> A custom range</label>
-          <div class="print-range"><input type="date" id="printFrom" aria-label="From" onfocus="document.getElementById('printRangeCustom').checked = true"><span>to</span><input type="date" id="printTo" aria-label="To" onfocus="document.getElementById('printRangeCustom').checked = true"></div></div>
+          <div class="print-range"><input type="text" class="dt-date" id="printFrom" aria-label="From" onfocus="document.getElementById('printRangeCustom').checked = true"><span>to</span><input type="text" class="dt-date" id="printTo" aria-label="To" onfocus="document.getElementById('printRangeCustom').checked = true"></div></div>
         <div class="field"><label for="printScale">Timescale</label><select id="printScale"><option value="auto">Automatic for the length of the plan</option><option value="hour">Hours</option><option value="week">Weeks</option><option value="month">Months</option><option value="quarter">Quarters</option></select></div>
         <div class="field"><label>Show</label>
           <label class="print-chk"><input type="checkbox" id="printBaseline"> Baseline under the bars</label>
@@ -1073,7 +1112,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
 <!-- Backups modal -->
 <div class="modal-bg" id="backupsModalBg" onclick="if(event.target===this) closeBackupsModal()">
   <div class="modal narrow">
-    <div class="modal-header"><h2>Local Backups</h2><button onclick="closeBackupsModal()">&times;</button></div>
+    <div class="modal-header"><h2>Local backups</h2><button onclick="closeBackupsModal()">&times;</button></div>
     <div class="modal-body"><p class="cal-hint" style="margin:0">A snapshot of this plan is kept in this browser once a day you use Milestone. Restoring one downloads your current data first, as a safety copy.</p><div id="backupsList"></div></div>
     <div class="modal-footer"><button class="btn" onclick="closeBackupsModal()">Close</button></div>
   </div>
@@ -1154,9 +1193,9 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
       <section class="cal-sec">
         <div class="cal-sec-title">Another day off <span class="cal-sec-note">a single day, a break, or a day that comes back every year</span></div>
         <div class="hol-add">
-          <input type="date" id="holFrom" aria-label="The day off, or the first day of a longer break" title="The day off, or the first day of a longer break" onkeydown="if(event.key==='Enter'){event.preventDefault();addHoliday();}">
+          <input type="text" class="dt-date" id="holFrom" aria-label="The day off, or the first day of a longer break" title="The day off, or the first day of a longer break" onkeydown="if(event.key==='Enter'){event.preventDefault();addHoliday();}">
           <span class="hol-to">to</span>
-          <input type="date" id="holTo" aria-label="Last day of a longer break" title="Last day of a longer break (leave empty for a single day)" onchange="holToChanged()" onkeydown="if(event.key==='Enter'){event.preventDefault();addHoliday();}">
+          <input type="text" class="dt-date" id="holTo" aria-label="Last day of a longer break" title="Last day of a longer break (leave empty for a single day)" onchange="holToChanged()" onkeydown="if(event.key==='Enter'){event.preventDefault();addHoliday();}">
           <label class="hol-yearly" title="A single day that comes back every year, such as 25 December"><input type="checkbox" id="holYearly"> Every year</label>
           <span class="hol-break"></span>
           <input type="text" id="holName" maxlength="60" placeholder="Name (optional)" aria-label="Name of the day off" onkeydown="if(event.key==='Enter'){event.preventDefault();addHoliday();}">
@@ -1190,17 +1229,17 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <div class="workhours-editor hidden" id="workHoursEditor">
           <div class="wh-day-row">
             <span class="cal-sec-note">Working day</span>
-            <input type="time" id="whStart" aria-label="Working day starts">
+            <input type="text" id="whStart" class="dt-time" aria-label="Working day starts">
             <span class="hol-to">to</span>
-            <input type="time" id="whEnd" aria-label="Working day ends">
+            <input type="text" id="whEnd" class="dt-time" aria-label="Working day ends">
           </div>
           <div>
             <div class="cal-sec-note">Breaks (lunch, etc.) — not counted as working time</div>
             <div class="hol-list" id="whBreakList"></div>
             <div class="wh-break-add">
-              <input type="time" id="whBreakFrom" aria-label="Break starts" onkeydown="if(event.key==='Enter'){event.preventDefault();addWorkBreak();}">
+              <input type="text" id="whBreakFrom" class="dt-time" aria-label="Break starts" onkeydown="if(event.key==='Enter'){event.preventDefault();addWorkBreak();}">
               <span class="hol-to">to</span>
-              <input type="time" id="whBreakTo" aria-label="Break ends" onkeydown="if(event.key==='Enter'){event.preventDefault();addWorkBreak();}">
+              <input type="text" id="whBreakTo" class="dt-time" aria-label="Break ends" onkeydown="if(event.key==='Enter'){event.preventDefault();addWorkBreak();}">
               <button class="btn" type="button" onclick="addWorkBreak()"><i class="fa-solid fa-plus"></i>Add break</button>
             </div>
           </div>
@@ -1263,7 +1302,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
       <p class="cal-hint" style="margin:0">Catches the plan up with reality as of a date you choose: a task that should already have started moves there, and an in-progress task whose remaining work won't fit keeps going from that date. Finished tasks, and tasks ahead of schedule, are left alone.</p>
       <section class="cal-sec">
         <div class="cal-sec-title">Status date</div>
-        <div class="field-dt" id="rescheduleWhen"><input type="date" id="rescheduleDateInput" aria-label="Status date" onchange="onRescheduleDateChange()"><input type="time" id="rescheduleTimeInput" class="hidden" aria-label="Status time" onchange="rescheduleTimeTouched = true; renderRescheduleModal()"></div>
+        <div class="field-dt" id="rescheduleWhen"><input type="text" class="dt-date" id="rescheduleDateInput" aria-label="Status date" onchange="onRescheduleDateChange()"><input type="text" id="rescheduleTimeInput" class="hidden dt-time" aria-label="Status time" onchange="rescheduleTimeTouched = true; renderRescheduleModal()"></div>
         <p class="cal-hint" id="rescheduleHint" style="margin:0"></p>
       </section>
     </div>
@@ -1298,15 +1337,19 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <button type="button" role="tab" id="helpTab-start" class="active" aria-selected="true" aria-controls="helpPane-start" tabindex="0" onclick="setHelpTab('start')"><i class="fa-solid fa-compass"></i><span>Getting started</span></button>
         <button type="button" role="tab" id="helpTab-scheduling" class="" aria-selected="false" aria-controls="helpPane-scheduling" tabindex="-1" onclick="setHelpTab('scheduling')"><i class="fa-solid fa-diagram-project"></i><span>Scheduling</span></button>
         <button type="button" role="tab" id="helpTab-progress" class="" aria-selected="false" aria-controls="helpPane-progress" tabindex="-1" onclick="setHelpTab('progress')"><i class="fa-solid fa-calendar-days"></i><span>Calendar &amp; progress</span></button>
+        <button type="button" role="tab" id="helpTab-hours" class="" aria-selected="false" aria-controls="helpPane-hours" tabindex="-1" onclick="setHelpTab('hours')"><i class="fa-solid fa-clock"></i><span>Hours &amp; minutes</span></button>
         <button type="button" role="tab" id="helpTab-list" class="" aria-selected="false" aria-controls="helpPane-list" tabindex="-1" onclick="setHelpTab('list')"><i class="fa-solid fa-table-list"></i><span>Task list</span></button>
         <button type="button" role="tab" id="helpTab-gantt" class="" aria-selected="false" aria-controls="helpPane-gantt" tabindex="-1" onclick="setHelpTab('gantt')"><i class="fa-solid fa-chart-gantt"></i><span>Gantt chart</span></button>
         <button type="button" role="tab" id="helpTab-data" class="" aria-selected="false" aria-controls="helpPane-data" tabindex="-1" onclick="setHelpTab('data')"><i class="fa-solid fa-hard-drive"></i><span>Plans &amp; data</span></button>
       </div>
       <div class="help-panes">
+      <div class="help-search-bar"><input type="search" id="helpSearch" placeholder="Search help…" aria-label="Search help" autocomplete="off" oninput="helpSearch(this.value)" onkeydown="helpSearchKey(event)"></div>
+      <div class="help-pane" id="helpPane-search" role="region" aria-label="Search results" aria-live="polite" hidden></div>
       <div class="help-pane" id="helpPane-start" role="tabpanel" aria-labelledby="helpTab-start">
         <div class="help-section">
           <div class="help-section-title">Building a plan</div>
           <div class="help-row"><i class="fa-solid fa-plus"></i><span><strong>Add Task</strong> inserts a task below the selected one, or at the bottom when nothing is selected. Each task has a start and end date and a % complete, and can be a <strong>milestone</strong> (a one-day diamond).</span></div>
+          <div class="help-row"><i class="fa-solid fa-keyboard"></i><span><strong>Dates and times in dialogs</strong> are typed, in the same format as the list: <strong>24.12.2026</strong> (or 24.12.26, 24.12.), <strong>14:30</strong> (or 1430, 2:30pm) — or pick a date with the calendar button. Something unreadable is refused and the old value comes back.</span></div>
           <div class="help-row"><i class="fa-solid fa-computer-mouse"></i><span><strong>Right-click</strong> a task (in the list, or its row in the chart) for a menu with Edit, Add task, Add empty line, Duplicate, Copy, Cut, Paste, Indent, Outdent and Delete. Right-clicking on the empty part of the list offers Add task, Add empty line and Paste. The buttons for the selected tasks (<strong>Edit, Duplicate, Copy, Delete</strong>) appear in the toolbar while something is selected; with one task <strong>Edit</strong> opens the same dialog as a double-click.</span></div>
           <div class="help-row"><i class="fa-solid fa-palette"></i><span><strong>Row colour</strong> (in the task dialog, or under Edit for several tasks) marks a task in the list with a stripe at its left edge and a light tint of the same colour — also behind its bar in the Gantt chart, and in the printout and the Excel export. The bars themselves keep their <strong>status</strong> colours: green complete, red late, blue in progress, grey not started.</span></div>
           <div class="help-row"><i class="fa-solid fa-grip-lines"></i><span><strong>Add empty line</strong> (in the menu next to Add Task, or on the right-click menu) inserts a blank row below the selected task (below its whole block when it is a group) to separate blocks of tasks. It has an ID but no name, dates or WBS, is never scheduled, charted or linked, and can be moved, indented, copied and deleted like any row.</span></div>
@@ -1382,12 +1425,6 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <div class="help-section">
           <div class="help-section-title">Working calendar</div>
           <div class="help-row"><i class="fa-solid fa-calendar-week"></i><span>Each plan has its own working days — Monday to Friday unless you change it (Schedule menu → <strong>Working calendar…</strong>). Durations, lags and dependencies count working days only: a 5-day task that starts on a Monday finishes on that Friday, and its successor starts the next Monday.</span></div>
-          <div class="help-row"><i class="fa-solid fa-clock"></i><span><strong>Scheduling precision</strong> (Schedule menu → <strong>Scheduling precision…</strong>, its own dialog): the standard is whole days, but a plan can switch to <strong>Hours &amp; minutes</strong> — like MS Project — so tasks can start and finish at a time of day. Set the working day's start/end and its breaks there too; date fields, Duration (type "4h" or "90m") and the columns adapt once it's on. Switching in keeps a task spanning its whole day; switching back just drops every time.</span></div>
-          <div class="help-row"><i class="fa-solid fa-chart-gantt"></i><span><strong>In an Hours &amp; minutes plan</strong> the chart gets an <strong>Hours</strong> scale (20&nbsp;px an hour, the day over its 24 hours; nights, the lunch break and days off are shaded). Drag a bar, or its edges, in 15-minute steps: an Auto task lands on working time (a move into the lunch break comes out after it), a Manual task goes exactly where you drop it, and linked tasks follow.</span></div>
-          <div class="help-row"><i class="fa-solid fa-pen"></i><span>In the list, click a Start, Finish or Actual cell and type <strong>date and time</strong> (<strong>07.09.2026 14:30</strong>) — a date alone keeps the time, a time alone (<strong>14:30</strong>) keeps the date. The Duration cell takes <strong>4h</strong>, <strong>90m</strong>, <strong>2d</strong> or <strong>1w</strong>. The Excel Gantt sheet gets one column per working hour.</span></div>
-          <div class="help-row"><i class="fa-solid fa-business-time"></i><span><strong>Different hours on some days</strong> (Schedule → Scheduling precision…): tick a weekday — a short Friday, say — and give it its own start, end and breaks. A task with no time of its own then starts and finishes at its day's own open and close, and the chart, print-out, Excel and MS Project export follow each day's hours.</span></div>
-          <div class="help-row"><i class="fa-solid fa-link"></i><span><strong>Lags are working time</strong> in an Hours &amp; minutes plan: type <strong>3FS+2h</strong>, <strong>5SS-30m</strong> or <strong>1FS+1d</strong> in the Predecessors cell (d is a working day, w five of them; a bare number is hours), or the same in the task dialog and Edit tasks. Switching a plan to Hours &amp; minutes converts its lags (2 days become 16 hours).</span></div>
-          <div class="help-row"><i class="fa-solid fa-table"></i><span><strong>Paste and CSV import</strong> read a time after a date (<strong>07.09.2026 14:30</strong>, also 2:30 PM), durations like <strong>2.5 hrs</strong> or <strong>90 min</strong>, and minute lags — and copying rows keeps them. A custom <strong>Date</strong> column takes a time too, and <strong>Print / PDF</strong> shows the times and can use an Hours scale.</span></div>
           <div class="help-row"><i class="fa-solid fa-umbrella-beach"></i><span>Add <strong>holidays and other days off</strong> in the same dialog: a single day, a longer break (from … to …), or a day that comes back every year, each with an optional name. They count as days off exactly like weekends, and are shaded in the Gantt chart.</span></div>
           <div class="help-row"><i class="fa-solid fa-flag"></i><span><strong>Public holidays:</strong> pick a country or region (Germany with each of its states, Austria, Switzerland, the UK, Ireland, the US, Canada, France, the Netherlands, Belgium, Spain, Italy) and the years, then <strong>Add public holidays</strong>. Movable ones (Easter, Ascension, Thanksgiving …) are worked out for each year; days that fall on a day off anyway are left out.</span></div>
           <div class="help-row"><i class="fa-solid fa-circle-exclamation"></i><span>Treat the presets as a starting point: check them against your own calendar — regional and company days differ — and edit or remove any entry.</span></div>
@@ -1409,6 +1446,18 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
           <div class="help-row"><i class="fa-solid fa-minus"></i><span>The baseline shows as a thin grey line under each bar in the Gantt chart (the ruler button hides it).</span></div>
           <div class="help-row"><i class="fa-solid fa-plus-minus"></i><span>The <strong>Start Variance</strong>, <strong>Finish Variance</strong>, <strong>Baseline Start/Finish/Duration</strong> and <strong>Duration Variance</strong> columns show how far each task has moved, in working days (working minutes for a leaf task in an Hours &amp; minutes plan) — positive means later than the baseline.</span></div>
           <div class="help-row"><i class="fa-solid fa-calendar-check"></i><span><strong>Reschedule remaining work…</strong> (Schedule menu) catches the plan up with a status date you choose: an overdue task moves there, an in-progress task keeps its remaining work from that date if it would otherwise finish later. Finished tasks and tasks ahead of schedule are left alone. The dialog says how many tasks would move before you click, and in an Hours &amp; minutes plan the status date has a time; Undo brings everything back.</span></div>
+        </div>
+      </div>
+      <div class="help-pane" id="helpPane-hours" role="tabpanel" aria-labelledby="helpTab-hours" hidden>
+        <div class="help-section">
+          <div class="help-section-title">Hours &amp; minutes planning</div>
+          <div class="help-row"><i class="fa-solid fa-hourglass-half"></i><span>A plan counts <strong>whole days</strong> by default. Switch it to <strong>Hours &amp; minutes</strong> when tasks last hours rather than days — a setting of that plan alone, so your other plans stay in days. Times of day then appear everywhere: the list, the dialogs, the chart, Remaining and baselines, Excel, MS Project XML and print.</span></div>
+          <div class="help-row"><i class="fa-solid fa-clock"></i><span><strong>Scheduling precision</strong> (Schedule menu → <strong>Scheduling precision…</strong>, its own dialog): the standard is whole days, but a plan can switch to <strong>Hours &amp; minutes</strong> — like MS Project — so tasks can start and finish at a time of day. Set the working day's start/end and its breaks there too; date fields, Duration (type "4h" or "90m") and the columns adapt once it's on. Switching in keeps a task spanning its whole day; switching back just drops every time.</span></div>
+          <div class="help-row"><i class="fa-solid fa-business-time"></i><span><strong>Different hours on some days</strong> (Schedule → Scheduling precision…): tick a weekday — a short Friday, say — and give it its own start, end and breaks. A task with no time of its own then starts and finishes at its day's own open and close, and the chart, print-out, Excel and MS Project export follow each day's hours.</span></div>
+          <div class="help-row"><i class="fa-solid fa-link"></i><span><strong>Lags are working time</strong> in an Hours &amp; minutes plan: type <strong>3FS+2h</strong>, <strong>5SS-30m</strong> or <strong>1FS+1d</strong> in the Predecessors cell (d is a working day, w five of them; a bare number is hours), or the same in the task dialog and Edit tasks. Switching a plan to Hours &amp; minutes converts its lags (2 days become 16 hours).</span></div>
+          <div class="help-row"><i class="fa-solid fa-chart-gantt"></i><span><strong>In an Hours &amp; minutes plan</strong> the chart gets an <strong>Hours</strong> scale (20&nbsp;px an hour, the day over its 24 hours; nights, the lunch break and days off are shaded). Drag a bar, or its edges, in 15-minute steps: an Auto task lands on working time (a move into the lunch break comes out after it), a Manual task goes exactly where you drop it, and linked tasks follow.</span></div>
+          <div class="help-row"><i class="fa-solid fa-pen"></i><span>In the list, click a Start, Finish or Actual cell and type <strong>date and time</strong> (<strong>07.09.2026 14:30</strong>) — a date alone keeps the time, a time alone (<strong>14:30</strong>) keeps the date. The Duration cell takes <strong>4h</strong>, <strong>90m</strong>, <strong>2d</strong> or <strong>1w</strong>. The Excel Gantt sheet gets one column per working hour.</span></div>
+          <div class="help-row"><i class="fa-solid fa-table"></i><span><strong>Paste and CSV import</strong> read a time after a date (<strong>07.09.2026 14:30</strong>, also 2:30 PM), durations like <strong>2.5 hrs</strong> or <strong>90 min</strong>, and minute lags — and copying rows keeps them. A custom <strong>Date</strong> column takes a time too, and <strong>Print / PDF</strong> shows the times and can use an Hours scale.</span></div>
         </div>
       </div>
       <div class="help-pane" id="helpPane-list" role="tabpanel" aria-labelledby="helpTab-list" hidden>
@@ -5031,7 +5080,7 @@ function openTaskModal(id, isNew) {
   editingCell = null;
   editingTaskId = id;
   const t = byId(id);
-  document.getElementById('taskModalTitle').firstChild.textContent = isNew ? 'New Task' : 'Edit Task';
+  document.getElementById('taskModalTitle').firstChild.textContent = isNew ? 'New task' : 'Edit task';
   document.getElementById('taskModalIdBadge').textContent = `#${taskDisplayId(id)} · WBS ${wbsCode(id)}`;
   document.getElementById('taskNameInput').value = t.name === 'Untitled Task' && isNew ? '' : t.name;
   document.getElementById('taskModeInput').value = t.taskMode;
@@ -5196,7 +5245,7 @@ function renderBaselineModal() {   // labels and buttons follow the chosen slot 
   cmp.disabled = !setSlots.length; if (setSlots.length) cmp.value = String(setSlots.includes(compareBaseline()) ? compareBaseline() : setSlots[0]);
   document.getElementById('baselineSlotInfo').textContent = count ? `${baselineName(slot)} was set${meta ? ' on ' + fmtDate(meta.setAt) : ''} for ${count} task${count === 1 ? '' : 's'}. Setting it again replaces it (for the tasks you apply it to).` : `${baselineName(slot)} is not set. Setting it saves the current Start and Finish of the tasks you choose.`;
   document.getElementById('baselineSetBtn').textContent = count ? `Set ${baselineName(slot)} again` : `Set ${baselineName(slot)}`;
-  document.getElementById('baselineClearBtn').disabled = !count;
+  document.getElementById('baselineClearBtn').disabled = !count; document.getElementById('baselineClearBtn').classList.toggle('hidden', !count);   // (nothing to clear: no faint dead link)
   document.getElementById('baselineFootNote').textContent = minuteModeActive() ? 'A baseline keeps each task\'s time of day too.' : '';
   const stale = actualsNotApplied();
   document.getElementById('baselineActualsInfo').textContent = stale.length ? `${stale.length} task${stale.length === 1 ? ' has' : 's have'} an actual date that is not in the schedule yet (plans from before this version kept them beside it). Applying them moves Start / Finish to the actual dates (a running task keeps its duration) and re-plans what follows. Set a baseline first if you want to keep the plan.` : 'Every actual date is already in the schedule.';
@@ -5548,9 +5597,10 @@ function renderHoursByDay() {
   document.getElementById('whDayRows').innerHTML = WEEKDAY_ORDER.filter(d => workDaySet().has(d)).map(d => {
     const h = by[d], on = !!h, v = h || base;
     return `<div class="whd-row${on ? '' : ' off'}" data-wd="${d}"><label class="whd-name"><input type="checkbox" class="whd-on" aria-label="${WEEKDAY_NAMES[d]} has its own hours"${on ? ' checked' : ''} onchange="onHoursDayToggle(this)">${WEEKDAY_NAMES[d]}</label>` +
-      `<input type="time" class="whd-start" aria-label="${WEEKDAY_NAMES[d]} starts" value="${v.start}"${on ? '' : ' disabled'}><span class="hol-to">to</span><input type="time" class="whd-end" aria-label="${WEEKDAY_NAMES[d]} ends" value="${v.end}"${on ? '' : ' disabled'}>` +
+      `<input type="text" class="dt-time whd-start" aria-label="${WEEKDAY_NAMES[d]} starts" value="${v.start}"${on ? '' : ' disabled'}><span class="hol-to">to</span><input type="text" class="dt-time whd-end" aria-label="${WEEKDAY_NAMES[d]} ends" value="${v.end}"${on ? '' : ' disabled'}>` +
       `<input type="text" class="whd-breaks" aria-label="${WEEKDAY_NAMES[d]} breaks" placeholder="breaks, e.g. 12:00-13:00" value="${breaksText(v.breaks)}"${on ? '' : ' disabled'}></div>`;
   }).join('');
+  enhanceBoxes(document.getElementById('whDayRows'));
 }
 function updateHoursDayCount() { const n = document.querySelectorAll('#whDayRows .whd-on:checked').length; document.getElementById('whDayCount').textContent = n ? `· ${n} day${n === 1 ? '' : 's'} differ${n === 1 ? 's' : ''}` : ''; }
 function onHoursDayToggle(cb) {
@@ -5736,8 +5786,8 @@ function renderCustomFieldsTab(values) {
   const field = id => {
     const f = CUSTOM_FIELDS[id], v = values[id], name = escapeHtml(customFieldName(id));
     const input = f.kind === 'date' ? (minuteModeActive()
-        ? `<div class="field-dt"><input type="date" id="cf_${id}" value="${escapeHtml(v || '')}"><input type="time" id="cf_${id}_time" class="task-time-input" aria-label="${name} time" value="${escapeHtml(values[id + 'Time'] || '')}"></div>`
-        : `<input type="date" id="cf_${id}" value="${escapeHtml(v || '')}">`)
+        ? `<div class="field-dt"><input type="text" class="dt-date" id="cf_${id}" value="${escapeHtml(v || '')}"><input type="text" id="cf_${id}_time" class="task-time-input dt-time" aria-label="${name} time" value="${escapeHtml(values[id + 'Time'] || '')}"></div>`
+        : `<input type="text" class="dt-date" id="cf_${id}" value="${escapeHtml(v || '')}">`)
       : f.kind === 'number' ? `<input type="number" step="any" id="cf_${id}" value="${v === undefined || v === '' ? '' : escapeHtml(String(v))}">`
       : `<input type="text" id="cf_${id}" maxlength="255" value="${escapeHtml(v || '')}">`;
     return `<div class="field"><label class="cf-label" for="cf_${id}"><span>${name}</span></label>${input}</div>`;
@@ -5747,6 +5797,7 @@ function renderCustomFieldsTab(values) {
   document.getElementById('taskCustomFields').innerHTML = act.length
     ? (plain.length ? `<div class="cf-grid">${plain.map(field).join('')}</div>` : '') + (flags.length ? `<div class="cf-flags">${flags.map(flag).join('')}</div>` : '')
     : '<div class="cf-empty">No custom fields yet.<br>Use <strong>Add field</strong> for text, a number, a date or a yes/no tick that you want on every task.</div>';
+  enhanceBoxes(document.getElementById('taskCustomFields'));
   updateCustomBadge();
 }
 function readCustomInputs() {
@@ -7080,9 +7131,10 @@ function openBulkModal() {
   document.getElementById('bulkVal-color').innerHTML = BULK_COLORS.map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
   const custom = bulkCustomCols();
   document.getElementById('bulkCustom').innerHTML = custom.length ? '<div class="bulk-sep"></div>' + custom.map(cid => {
-    const kind = CUSTOM_FIELDS[cid].kind, an = escapeHtml(customFieldName(cid)), ctl = kind === 'flag' ? `<select id="bulkVal-${cid}" aria-label="${an}"><option value="1">Yes</option><option value="">No</option></select>` : kind === 'date' ? `<input type="date" id="bulkVal-${cid}" aria-label="${an}">` : `<input type="text" id="bulkVal-${cid}" aria-label="${an}" ${kind === 'number' ? 'inputmode="decimal" placeholder="number"' : 'maxlength="255"'}>`;
+    const kind = CUSTOM_FIELDS[cid].kind, an = escapeHtml(customFieldName(cid)), ctl = kind === 'flag' ? `<select id="bulkVal-${cid}" aria-label="${an}"><option value="1">Yes</option><option value="">No</option></select>` : kind === 'date' ? `<input type="text" class="dt-date" id="bulkVal-${cid}" aria-label="${an}">` : `<input type="text" id="bulkVal-${cid}" aria-label="${an}" ${kind === 'number' ? 'inputmode="decimal" placeholder="number"' : 'maxlength="255"'}>`;
     return `<div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-${cid}"> ${escapeHtml(customFieldName(cid))}</label><div class="bulk-ctl">${ctl}</div></div>`;
   }).join('') : '';
+  enhanceBoxes(document.getElementById('bulkCustom'));
   // editing a value ticks its box
   document.querySelectorAll('#bulkModalBg .bulk-ctl input, #bulkModalBg .bulk-ctl select').forEach(el => { const f = el.id.replace('bulkVal-', ''), box = document.getElementById('bulkOn-' + (f.startsWith('pred') ? 'pred' : f)); el.oninput = el.onchange = () => { if (box) box.checked = true; }; });
   document.getElementById('bulkModalBg').classList.add('open');
@@ -7927,7 +7979,7 @@ function restoreBackup(dateKey) {
   const backups = listBackups(); const snap = backups[dateKey]; if (!snap) return;
   closeBackupsModal();   // the confirm dialog is earlier in the page than this one and would open *behind* it, out of reach
   openConfirmModal({
-    title: 'Restore Backup',
+    title: 'Restore backup',
     body: `Restore the snapshot from ${escapeHtml(dateKey)}? Your current data will be downloaded as a safety copy first.`,
     confirmLabel: 'Restore',
     confirmClass: 'btn btn-primary',   // replaces the data (after a safety download) but isn't a delete, so not red
@@ -8728,10 +8780,33 @@ async function undoDeletePlan(saved) {
 }
 
 /* =============================== Help / About ============================== */
-const HELP_TABS = ['start', 'scheduling', 'progress', 'list', 'gantt', 'data'];
+const HELP_TABS = ['start', 'scheduling', 'progress', 'hours', 'list', 'gantt', 'data'];
+const HELP_TAB_LABELS = { start: 'Getting started', scheduling: 'Scheduling', progress: 'Calendar & progress', hours: 'Hours & minutes', list: 'Task list', gantt: 'Gantt chart', data: 'Plans & data' };
 let helpTab = 'start';   // the topic last read (this session): the dialog reopens where you left it
-function openHelpModal(tab) { setHelpTab(tab || helpTab); document.getElementById('helpModalBg').classList.add('open'); }
+function openHelpModal(tab) { clearHelpSearch(); setHelpTab(tab || helpTab); document.getElementById('helpModalBg').classList.add('open'); }
+// Search: every Help row that contains all the words, grouped by topic, with the words marked; a topic name jumps to that topic.
+let helpSearching = false;
+function helpSearch(q) {
+  const words = q.trim().toLowerCase().split(/\s+/).filter(Boolean), res = document.getElementById('helpPane-search');
+  if (!words.length) { helpSearching = false; res.hidden = true; res.innerHTML = ''; setHelpTab(helpTab); return; }
+  helpSearching = true;
+  const esc = w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), re = new RegExp(`(<[^>]*>)|(${words.map(esc).join('|')})`, 'gi');
+  let html = '', n = 0;
+  for (const t of HELP_TABS) {
+    const rows = [...document.querySelectorAll(`#helpPane-${t} .help-row`)].filter(r => words.every(w => r.textContent.toLowerCase().includes(w)));
+    if (!rows.length) continue;
+    n += rows.length;
+    html += `<div class="help-section"><div class="help-section-title"><button type="button" class="help-jump" onclick="clearHelpSearch();setHelpTab('${t}')" title="Open this topic">${HELP_TAB_LABELS[t]} <i class="fa-solid fa-arrow-right"></i></button></div>${rows.map(r => `<div class="help-row">${r.innerHTML.replace(re, (m, tag, hit) => tag ? tag : `<mark>${hit}</mark>`)}</div>`).join('')}</div>`;
+  }
+  res.innerHTML = n ? html : `<div class="help-tip">Nothing in Help matches “${escapeHtml(q.trim())}”. Try fewer or different words.</div>`;
+  res.hidden = false;
+  for (const t of HELP_TABS) { document.getElementById('helpPane-' + t).hidden = true; const b = document.getElementById('helpTab-' + t); b.classList.remove('active'); b.setAttribute('aria-selected', 'false'); }
+  res.scrollTop = 0;
+}
+function clearHelpSearch() { const i = document.getElementById('helpSearch'); i.value = ''; helpSearching = false; document.getElementById('helpPane-search').hidden = true; }
+function helpSearchKey(e) { if (e.key === 'Escape' && e.target.value) { e.preventDefault(); e.stopPropagation(); clearHelpSearch(); setHelpTab(helpTab); } }   // (Escape clears the search first; a second one closes the dialog)
 function setHelpTab(id) {
+  if (helpSearching) clearHelpSearch();
   if (!HELP_TABS.includes(id)) id = HELP_TABS[0];
   helpTab = id;
   for (const t of HELP_TABS) {
@@ -8870,6 +8945,82 @@ function wireGlobalEvents() {
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') pollFileSync(); });
 }
 
+/* ---- Typed date and 24-hour time boxes (dialogs). The browser's own date/time inputs follow ITS locale (mm/dd/yyyy, "09:00 AM"), which
+   clashed with the dd.mm.yyyy / 24-hour text everywhere else in the app and cut the AM/PM off. These are ordinary text boxes that look
+   and read like the list's own cells, with the same `.value` contract the dialogs always had — an ISO date ('2026-09-07') or 'HH:MM', ''
+   when empty — so no dialog code changed: the getter parses what is typed, the setter formats it. A date box also gets a calendar button.
+   Typing is forgiving (9, 930, 9.30, 9:30pm; 24.12., 24.12.26, 2026-12-24); something unreadable is refused with a message and the
+   previous value comes back (the change event is stopped, so no dialog acts on garbage). ---- */
+function parseBoxTime(str) {
+  let s = String(str == null ? '' : str).trim().toLowerCase().replace(/\s+/g, '');
+  if (!s) return '';
+  let ap = null; const am = /(am|pm|a|p)$/.exec(s);
+  if (am) { ap = am[1][0]; s = s.slice(0, -am[1].length); }
+  s = s.replace(/h$/, '');
+  let h, mi, m;
+  if ((m = /^(\d{1,2})[:.,h](\d{2})$/.exec(s))) { h = +m[1]; mi = +m[2]; }
+  else if ((m = /^(\d{3,4})$/.exec(s))) { const v = m[1].padStart(4, '0'); h = +v.slice(0, 2); mi = +v.slice(2); }
+  else if ((m = /^(\d{1,2})$/.exec(s))) { h = +m[1]; mi = 0; }
+  else return null;
+  if (ap) { if (h < 1 || h > 12) return null; if (ap === 'p' && h < 12) h += 12; else if (ap === 'a' && h === 12) h = 0; }
+  return h > 23 || mi > 59 ? null : `${pad2(h)}:${pad2(mi)}`;
+}
+function parseBoxDate(str) {
+  const s = String(str == null ? '' : str).trim();
+  if (!s) return '';
+  let m = /^(\d{1,2})[.\-/](\d{1,2})[.\-/](\d{2})$/.exec(s);   // 24.12.26
+  if (m) return parseUserDate(`${m[1]}.${m[2]}.20${m[3]}`);
+  m = /^(\d{1,2})[.\-/](\d{1,2})\.?$/.exec(s);   // 24.12. — this year
+  if (m) return parseUserDate(`${m[1]}.${m[2]}.${todayStr().slice(0, 4)}`);
+  return parseUserDate(s);
+}
+function attachBox(el, isDate) {
+  if (el.dataset.dt) return;
+  el.dataset.dt = '1'; el.type = 'text'; el.autocomplete = 'off'; el.spellcheck = false;
+  el.setAttribute('inputmode', isDate ? 'numeric' : 'numeric');
+  if (!el.placeholder) el.placeholder = isDate ? 'dd.mm.yyyy' : 'hh:mm';
+  el.maxLength = isDate ? 10 : 8;
+  const d = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value'), dis = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'disabled');
+  const show = v => isDate ? (v ? fmtDate(v) : '') : (v || '');
+  el._setRaw = t => d.set.call(el, t);
+  el._getRaw = () => d.get.call(el);
+  Object.defineProperty(el, 'value', { configurable: true,
+    get() { const r = d.get.call(this); return (isDate ? parseBoxDate(r) : parseBoxTime(r)) || ''; },
+    set(v) { const t = show(isDate ? (parseBoxDate(v) || '') : (parseBoxTime(v) || '')); d.set.call(this, t); this._last = t; } });
+  const init = d.get.call(el); if (init) { const t = show(isDate ? parseBoxDate(init) : parseBoxTime(init)); d.set.call(el, t || ''); }
+  el._last = d.get.call(el);
+  if (isDate) {
+    const wrap = document.createElement('span'); wrap.className = 'dt-wrap';
+    el.parentNode.insertBefore(wrap, el); wrap.appendChild(el);
+    const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'dt-cal'; btn.tabIndex = -1; btn.title = 'Pick a date'; btn.setAttribute('aria-label', 'Pick a date');
+    btn.innerHTML = '<i class="fa-regular fa-calendar"></i>';
+    const nat = document.createElement('input'); nat.type = 'date'; nat.className = 'dt-native'; nat.tabIndex = -1; nat.setAttribute('aria-hidden', 'true'); nat.setAttribute('aria-label', 'Calendar');
+    btn.addEventListener('mousedown', e => e.preventDefault());
+    btn.addEventListener('click', () => { if (el.disabled) return; nat.value = el.value || ''; try { nat.showPicker(); } catch (err) { nat.focus(); nat.click(); } });
+    nat.addEventListener('change', () => { if (!nat.value) return; el.value = nat.value; el.dispatchEvent(new Event('change', { bubbles: true })); });
+    wrap.append(btn, nat);
+    Object.defineProperty(el, 'disabled', { configurable: true, get() { return dis.get.call(this); }, set(v) { dis.set.call(this, v); btn.disabled = !!v; wrap.classList.toggle('is-disabled', !!v); } });
+  }
+}
+function enhanceBoxes(root) {
+  for (const el of (root || document).querySelectorAll('input.dt-date:not([data-dt])')) attachBox(el, true);
+  for (const el of (root || document).querySelectorAll('input.dt-time:not([data-dt])')) attachBox(el, false);
+}
+document.addEventListener('change', e => {
+  const el = e.target;
+  if (!el || !el.dataset || !el.dataset.dt) return;
+  const isDate = el.classList.contains('dt-date'), raw = el._getRaw();
+  if (raw.trim() === '') { el._last = ''; return; }
+  const v = isDate ? parseBoxDate(raw) : parseBoxTime(raw);
+  if (!v) {   // unreadable: stop it here, put the last good text back
+    e.stopImmediatePropagation();
+    el._setRaw(el._last || '');
+    showToast(isDate ? `“${raw.trim()}” isn't a date — write it like 24.12.2026` : `“${raw.trim()}” isn't a time — write it like 14:30`, true);
+    return;
+  }
+  const t = isDate ? fmtDate(v) : v; el._setRaw(t); el._last = t;
+}, true);
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target && e.target.dataset && e.target.dataset.dt) e.target.dispatchEvent(new Event('change', { bubbles: true })); });   // (Enter settles what is typed, like leaving the box)
 /* ---- Dialogs for assistive technology and the keyboard: each is a modal dialog with a name (its title); Tab stays inside the top one; and
    when it closes, focus goes back to what was focused before it opened (a dropdown item that has since closed falls back to the page). ---- */
 let lastOutsideFocus = null;
@@ -8904,6 +9055,11 @@ function initDialogAccessibility() {
   });
 }
 document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('bulkModalBg').addEventListener('keydown', e => {   // Enter in a box of the Edit-tasks dialog applies it (as it saves in the task dialog's name box)
+    if (e.key === 'Enter' && e.target && e.target.matches && e.target.matches('input[type=text], input[type=number]') && !e.target.classList.contains('dt-date') && !e.target.classList.contains('dt-time')) { e.preventDefault(); applyBulkEdit(); }
+    else if (e.key === 'Enter' && e.target && e.target.classList && (e.target.classList.contains('dt-date') || e.target.classList.contains('dt-time'))) setTimeout(applyBulkEdit, 0);
+  });
+  enhanceBoxes();
   initDialogAccessibility();
   load();
   resetHistory();

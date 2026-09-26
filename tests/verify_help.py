@@ -4,7 +4,7 @@ URL = os.environ.get("MILESTONE_URL", "http://127.0.0.1:8937/milestone.html")
 errors, results = [], []
 def check(name, cond, detail=""):
     results.append(bool(cond)); print(("PASS  " if cond else "FAIL  ") + name + (f"   [{str(detail)[:400]}]" if not cond and detail else ""))
-TABS = ["start", "scheduling", "progress", "list", "gantt", "data"]
+TABS = ["start", "scheduling", "progress", "hours", "list", "gantt", "data"]
 
 with sync_playwright() as p:
     b = p.chromium.launch(headless=True)
@@ -17,7 +17,7 @@ with sync_playwright() as p:
     open_help()
 
     check("the Help button opens the dialog on the first topic, Getting started", visible() == ["start"] and ev("() => document.getElementById('helpTab-start').classList.contains('active')"))
-    check("it has six topics in a tab list, each tab controlling its own pane", ev("() => [...document.querySelectorAll('#helpModalBg [role=tab]')].map(t => t.id.replace('helpTab-', ''))") == TABS and ev("() => [...document.querySelectorAll('#helpModalBg [role=tab]')].every(t => document.getElementById(t.getAttribute('aria-controls')))"))
+    check("it has seven topics in a tab list, each tab controlling its own pane", ev("() => [...document.querySelectorAll('#helpModalBg [role=tab]')].map(t => t.id.replace('helpTab-', ''))") == TABS and ev("() => [...document.querySelectorAll('#helpModalBg [role=tab]')].every(t => document.getElementById(t.getAttribute('aria-controls')))"))
     check("...and the dialog is well-formed: header, the tabbed layout, the footer (nothing spills out of it)", ev("() => [...document.querySelector('#helpModalBg .modal').children].map(c => c.className.split(' ')[0])") == ["modal-header", "help-layout", "modal-footer"] and ev("() => document.querySelector('#helpModalBg').children.length") == 1)
 
     # ---------------------------------------------------------------- switching
@@ -56,11 +56,11 @@ with sync_playwright() as p:
     # ---------------------------------------------------------------- content
     txt = {t: ev(f"() => document.getElementById('helpPane-{t}').textContent") for t in TABS}
     need = {"start": ["Add Task", "Clone", "Undo and redo", "Ctrl/Cmd", "milestone", "Selecting several tasks", "Copy and paste", "Find a task", "Edit tasks"], "scheduling": ["Auto Scheduled", "Manually Scheduled", "Start No Earlier Than", "circular dependency", "3FS+2"],
-            "progress": ["holidays", "Working calendar", "Actual Finish", "baseline", "Variance", "Remaining Duration", "Public holidays"], "list": ["Columns", "Custom fields", "funnel", "(Blanks)"],
+            "progress": ["holidays", "Working calendar", "Actual Finish", "baseline", "Variance", "Remaining Duration", "Public holidays"], "hours": ["Hours & minutes", "Scheduling precision", "Different hours", "Lags are working time", "Paste and CSV import", "Hours scale"], "list": ["Columns", "Custom fields", "funnel", "(Blanks)"],
             "gantt": ["critical path", "Week / Month / Year", "dependency", "Printing", "Save as PDF"], "data": ["JSON file", "conflicts", "Export to Excel", "Local Backups", "Nothing here ever leaves your machine", "Import MS Project XML", "CSV"]}
     missing = {t: [w for w in ws if w not in txt[t]] for t, ws in need.items()}
     check("every topic covers what belongs to it (features, terms, the security note)", all(not m for m in missing.values()), {t: m for t, m in missing.items() if m})
-    counts = ev("() => Object.fromEntries([...document.querySelectorAll('#helpModalBg .help-pane')].map(p => [p.id.replace('helpPane-', ''), [p.querySelectorAll('.help-section').length, p.querySelectorAll('.help-row').length]]))")
+    counts = ev("() => Object.fromEntries([...document.querySelectorAll('#helpModalBg .help-pane:not(#helpPane-search)')].map(p => [p.id.replace('helpPane-', ''), [p.querySelectorAll('.help-section').length, p.querySelectorAll('.help-row').length]]))")
     check("each topic is a few titled sections of short icon rows (>= 1 section with rows; 45+ rows overall)", all(c[0] >= 1 and c[1] >= 2 for c in counts.values()) and sum(c[1] for c in counts.values()) >= 45, counts)
     check("every icon is a Font Awesome class (no empty icon slots)", ev("() => [...document.querySelectorAll('#helpModalBg .help-row > i')].every(i => /fa-[a-z-]+/.test(i.className.replace('fa-solid', '')))"))
     check("no paragraph is a wall of text: every row is under 480 characters", ev("() => [...document.querySelectorAll('#helpModalBg .help-row')].every(r => r.textContent.length < 480)"))

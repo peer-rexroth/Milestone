@@ -28,7 +28,7 @@ with sync_playwright() as p:
     check("the working-hours editor starts hidden", "hidden" in (pg.get_attribute("#workHoursEditor", "class") or ""))
     pg.check("#precisionMinute")
     check("checking Hours & minutes reveals the working-hours editor", "hidden" not in (pg.get_attribute("#workHoursEditor", "class") or ""))
-    check("it defaults to 08:00-17:00 with the usual lunch break", pg.input_value("#whStart") == "08:00" and pg.input_value("#whEnd") == "17:00" and "12:00" in pg.inner_text("#whBreakList") and "13:00" in pg.inner_text("#whBreakList"))
+    check("it defaults to 08:00-17:00 with the usual lunch break", ev("() => document.getElementById('whStart').value") == "08:00" and ev("() => document.getElementById('whEnd').value") == "17:00" and "12:00" in pg.inner_text("#whBreakList") and "13:00" in pg.inner_text("#whBreakList"))
     pg.click("#precisionDay")
     check("switching back to Days hides the editor again", "hidden" in (pg.get_attribute("#workHoursEditor", "class") or ""))
     pg.keyboard.press("Escape")   # no dirty change yet (still on the default), closes without asking
@@ -48,7 +48,7 @@ with sync_playwright() as p:
 
     # ---------------------------------------------------------------- reopening shows the saved state; discard-confirmation catches a precision change
     pg.click("#scheduleMenuBtn"); pg.click("#planPrecisionItem"); pg.wait_for_selector("#precisionModalBg.open")
-    check("reopening shows Hours & minutes checked with the saved values", pg.is_checked("#precisionMinute") and pg.input_value("#whStart") == "09:00" and pg.input_value("#whEnd") == "18:00")
+    check("reopening shows Hours & minutes checked with the saved values", pg.is_checked("#precisionMinute") and ev("() => document.getElementById('whStart').value") == "09:00" and ev("() => document.getElementById('whEnd').value") == "18:00")
     pg.click("#precisionDay")
     pg.click("#precisionModalBg .modal-header button")   # the × close button
     check("switching precision without saving triggers the discard-changes confirmation", pg.locator("#confirmModalBg.open").count() == 1)
@@ -73,9 +73,9 @@ with sync_playwright() as p:
     check("...so the Start date shows its whole text (>= 140px, not squeezed to the icon), on the same row as its time", date_box["width"] >= 140 and abs(date_box["y"] - time_box["y"]) < 2, (date_box, time_box))
     pg.fill("#taskStartTimeInput", "09:00"); pg.dispatch_event("#taskStartTimeInput", "change")
     pg.fill("#taskDurationInput", "90m"); pg.dispatch_event("#taskDurationInput", "change")
-    check("'90m' duration from 09:00 computes Finish 10:30", pg.input_value("#taskEndTimeInput") == "10:30", pg.input_value("#taskEndTimeInput"))
+    check("'90m' duration from 09:00 computes Finish 10:30", ev("() => document.getElementById('taskEndTimeInput').value") == "10:30", ev("() => document.getElementById('taskEndTimeInput').value"))
     pg.fill("#taskDurationInput", "4h"); pg.dispatch_event("#taskDurationInput", "change")
-    check("'4h' duration from 09:00 (crossing the lunch break) computes Finish 14:00", pg.input_value("#taskEndTimeInput") == "14:00", pg.input_value("#taskEndTimeInput"))
+    check("'4h' duration from 09:00 (crossing the lunch break) computes Finish 14:00", ev("() => document.getElementById('taskEndTimeInput').value") == "14:00", ev("() => document.getElementById('taskEndTimeInput').value"))
     pg.click("#taskModalBg .modal-footer button.btn-primary"); pg.wait_for_timeout(150)
     a = ev("() => { const t = tasks.find(x => x.name === 'A'); return [t.startDate, t.startTime, t.endDate, t.endTime]; }")
     check("saved with the exact start/finish time computed in the dialog", a == ["2026-09-07", "09:00", "2026-09-07", "14:00"], a)
@@ -84,7 +84,7 @@ with sync_playwright() as p:
     pg.click(f".grid-row[data-id='{tid('A')}'] .icon-btn[title=Edit]"); pg.wait_for_selector("#taskModalBg.open")
     pg.fill("#taskActualStartInput", "2026-09-07"); pg.dispatch_event("#taskActualStartInput", "change")
     pg.fill("#taskActualStartTimeInput", "09:30"); pg.dispatch_event("#taskActualStartTimeInput", "change")
-    check("recording an Actual Start time updates the Start time to match (the actual dates ARE the schedule)", pg.input_value("#taskStartTimeInput") == "09:30", pg.input_value("#taskStartTimeInput"))
+    check("recording an Actual Start time updates the Start time to match (the actual dates ARE the schedule)", ev("() => document.getElementById('taskStartTimeInput').value") == "09:30", ev("() => document.getElementById('taskStartTimeInput').value"))
     pg.click("#taskModalBg .modal-footer button.btn-primary"); pg.wait_for_timeout(150)
     a2 = ev("() => { const t = tasks.find(x => x.name === 'A'); return [t.actualStart, t.actualStartTime, t.startTime]; }")
     check("the actual start time is saved and reflected in Start", a2 == ["2026-09-07", "09:30", "09:30"], a2)

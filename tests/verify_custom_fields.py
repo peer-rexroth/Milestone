@@ -112,7 +112,7 @@ with sync_playwright() as p:
     labels = ev("() => [...document.querySelectorAll('#taskCustomFields .cf-label > span, #taskCustomFields .cf-flag label span')].map(e => e.innerText.trim())")
     check("the tab shows ONLY the four fields in use (by value here: Text2, Number3, Date4, Flag5), not twenty", labels == ["Text2", "Number3", "Date4", "Flag5"], labels)
     check("...text / number / date fields in a two-column grid, the flag as a tick below; no rename pencils", pg.locator("#taskCustomFields .cf-grid .field").count() == 3 and pg.locator("#taskCustomFields .cf-flags input[type=checkbox]").count() == 1 and pg.locator(".cf-rename").count() == 0)
-    check("...the task's values are filled in", pg.input_value("#cf_text2") == "hello" and pg.input_value("#cf_number3") == "7.25" and pg.input_value("#cf_date4") == "2026-10-01" and pg.is_checked("#cf_flag5"))
+    check("...the task's values are filled in", pg.input_value("#cf_text2") == "hello" and pg.input_value("#cf_number3") == "7.25" and pg.evaluate("() => document.getElementById('cf_date4').value") == "2026-10-01" and pg.is_checked("#cf_flag5"))
     check("...it fits the dialog without scrolling", ev("() => { const b = document.querySelector('#taskModalBg .modal-body'); return b.scrollHeight <= b.clientHeight + 1; }"))
     pg.fill("#cf_text2", "changed"); pg.fill("#cf_number3", "9"); pg.uncheck("#cf_flag5")
     check("the badge follows what is typed (4 -> 3)", pg.inner_text("#taskCustomBadge").strip() == "3", pg.inner_text("#taskCustomBadge"))
