@@ -139,6 +139,14 @@ An explicit user request ("plan based on minutes, like MS Project — switchable
 **Deliberately not done, not a gap discovered later**:
 - The Week/Month/Year scales stay whole-day in a minute-mode plan: a bar covers its first to last day and ignores the time, so two tasks of one day share a cell there. Only the **Hours** scale (below) draws real instants — a 09:00–17:00 task starting a third of the way into a Week-scale day cell would just look gappy at 14px a day.
 
+### Dialog UX round 5 (a fourth review, after round 4 shipped) — two small fixes
+
+**Sync conflicts: "Dismiss" was styled two different ways.** `renderSyncConflictsModal()` has two card templates — a file conflict (a conflicted-copy `.json`) and a task/plan-field conflict (a table of "yours" vs. "the other version"). The file card's Dismiss was a bordered `.btn`; the field card's was a plain `.btn-link` text link sitting next to "Use mine"/"Use theirs" — same action, same dialog, different weight, evidently because the two templates were written in different sessions and never reconciled. Now both use `.btn`.
+
+**Reschedule's "Which tasks" list wasn't in a useful order.** `rescheduleDryRun()` returns rows in `rescheduleFromStatusDate()`'s own internal cascade order — not a user-meaningful one, so a list with an independent milestone or a task reached late in the cascade could show up out of ID order, making the list hard to check off against the grid a user already knows. `renderRescheduleModal()` now sorts the rows by `taskDisplayId()` before rendering, matching the grid's own top-to-bottom order.
+
+**Tests**: `verify_reschedule.py` (+1 check: the list comes back sorted by display ID even when the cascade reaches tasks out of that order). `verify_sync.py` (+1 check: a task conflict's Dismiss renders with the same `.btn` class a file conflict's does).
+
 ### Dialog UX round 4 (a third review, after round 3 shipped) — three small fixes
 
 **Pronoun agreement**: the leave-Hours-&-minutes warning said "1 task will lose THEIR time of day" for exactly one task — wrong (`its`), matching the house style already used for count messages elsewhere (`"1 task has" / "2 tasks have"`, `baselineActualsInfo`). The same review turned up a second, pre-existing instance in `applyBulkEdit()`'s skip note ("1 group kept THEIR worked-out progress"). Both are now `${n} task${n === 1 ? ' will lose its' : 's will lose their'} time of day` / `${n} group${n === 1 ? ' kept its' : 's kept their'} worked-out progress` — singular gets `its`, plural gets `their`.

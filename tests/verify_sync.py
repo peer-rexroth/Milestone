@@ -173,7 +173,9 @@ with sync_playwright() as p:
     check("'Dismiss' removes one entry without changing anything (badge '1 conflict')", "1 conflict" in B8.pg.inner_text("#syncConflictBtn"))
     B8.pg.click("#syncConflictsModalBg button:has-text('Dismiss all')"); B8.pg.wait_for_timeout(150)
     check("'Dismiss all' clears the log, hides the badge and closes the modal", B8.conflicts() == [] and B8.pg.locator("#syncConflictBtn.hidden").count() == 1 and B8.pg.locator("#syncConflictsModalBg.open").count() == 0)
-    B8.pg.evaluate("() => { syncConflictLog.push({kind: 'task', id: 'ta', name: 'Alpha', at: Date.now(), fields: [{key: 'resource', mine: 'x', theirs: 'y', kept: 'mine'}]}); updateSyncConflictsUI(); openSyncConflictsModal(); }"); B8.pg.keyboard.press("Escape"); B8.pg.wait_for_timeout(150)
+    B8.pg.evaluate("() => { syncConflictLog.push({kind: 'task', id: 'ta', name: 'Alpha', at: Date.now(), fields: [{key: 'resource', mine: 'x', theirs: 'y', kept: 'mine'}]}); updateSyncConflictsUI(); openSyncConflictsModal(); }"); B8.pg.wait_for_timeout(150)
+    check("a task conflict's Dismiss is a full button, same as a file conflict's (not the plain text link it used to be)", B8.pg.eval_on_selector("#syncConflictsBody .conflict-actions button:has-text('Dismiss')", "e => e.className") == "btn")
+    B8.pg.keyboard.press("Escape"); B8.pg.wait_for_timeout(150)
     check("Escape closes the conflicts dialog", B8.pg.locator("#syncConflictsModalBg.open").count() == 0)
     # first link: no base -> no conflict reporting
     sh9 = Shared(); A9 = make(b, sh9); A9.boot(); A9.link_new(); A9.run(SEEDJS, TASKS); C9 = make(b, sh9); C9.boot(); C9.link_existing()

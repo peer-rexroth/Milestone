@@ -91,6 +91,24 @@ with sync_playwright() as p:
     pg.click("#toastUndoBtn"); pg.wait_for_timeout(150)
     check("Undo restores the exact original dates", dates("X") == before_x, dates("X"))
 
+    # ---------------------------------------------------------------- "Which tasks" lists in display-ID order, not the algorithm's internal processing order
+    seed(f"""() => {{
+      const mk = {MK};
+      tasks.push(mk('Research', 0, '2026-09-07', '2026-09-09'));
+      tasks.push(mk('Wireframes', 1, '2026-09-09', '2026-09-11'));
+      const kickoff = mk('Kickoff', 2, '2026-09-07', '2026-09-07', {{milestone: true}});   // no predecessors — the cascade reaches it out of ID order
+      tasks.push(kickoff);
+      tasks.push(mk('Build API', 3, '2026-09-11', '2026-09-18'));
+    }}""")
+    pg.click("#scheduleMenuBtn"); pg.wait_for_selector("#scheduleMenu.open"); pg.click("#planRescheduleItem"); pg.wait_for_selector("#rescheduleModalBg.open")
+    pg.fill("#rescheduleDateInput", "2026-09-21")
+    pg.click("#rescheduleModalBg summary")
+    pg.wait_for_timeout(120)
+    names = pg.eval_on_selector_all("#rescheduleList .rs-name", "els => els.map(e => e.textContent)")
+    ids = ev("names => names.map(n => taskDisplayId(tasks.find(t => t.name === n).id))", names)
+    check("'Which tasks' lists in the same top-to-bottom order as the grid (by ID), not the scheduler's internal order", ids == sorted(ids), (names, ids))
+    pg.keyboard.press("Escape")
+
     # ---------------------------------------------------------------- nothing to do
     seed(f"() => {{ const mk = {MK}; tasks.push(mk('Done', 0, '2026-09-07', '2026-09-08', {{progress: 100}})); }}")
     pg.click("#scheduleMenuBtn"); pg.wait_for_selector("#scheduleMenu.open"); pg.click("#planRescheduleItem"); pg.wait_for_selector("#rescheduleModalBg.open")

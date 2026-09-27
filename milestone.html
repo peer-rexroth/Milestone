@@ -5372,6 +5372,7 @@ function fmtRsChange(r) {
 }
 function renderRescheduleModal() {
   const cand = rescheduleCandidates().length, { iso, time } = rescheduleStatus(), rows = cand ? rescheduleDryRun(iso, time) : [], n = rows.length;
+  rows.sort((a, b) => taskDisplayId(a.id) - taskDisplayId(b.id));   // the algorithm's own processing order, not a user-meaningful one — list it the way the grid does, so it's easy to check off against what's on screen
   document.getElementById('rescheduleHint').textContent = !cand ? 'Every task is already finished — nothing to reschedule.'
     : n === cand ? `${n === 1 ? 'The 1 unfinished task would' : `All ${n} unfinished tasks would`} move — they are overdue or behind.`
     : n ? `${n} of the ${cand} unfinished tasks would move — the overdue or behind ones; the rest stay.`
@@ -6332,7 +6333,7 @@ function renderSyncConflictsModal() {
       <table class="conflict-table"><tr><th></th><th>Yours</th><th>The other version</th></tr>${c.fields.map(f => `<tr><td>${escapeHtml(conflictLabel(f.key))}</td>
         <td class="${f.kept === 'mine' ? 'kept' : ''}">${escapeHtml(fmtConflictValue(f.key, f.mine))}${f.kept === 'mine' ? ' <span class="kept-tag">kept</span>' : ''}</td>
         <td class="${f.kept === 'theirs' ? 'kept' : ''}">${escapeHtml(fmtConflictValue(f.key, f.theirs))}${f.kept === 'theirs' ? ' <span class="kept-tag">kept</span>' : ''}</td></tr>`).join('')}</table>
-      <div class="conflict-actions"><button class="btn" ${c.fields.every(f => f.kept === 'mine') ? 'disabled' : ''} onclick="resolveSyncConflict(${i}, 'mine')">Use mine</button><button class="btn" ${c.fields.every(f => f.kept === 'theirs') ? 'disabled' : ''} onclick="resolveSyncConflict(${i}, 'theirs')">Use theirs</button><button class="btn-link" onclick="dismissSyncConflict(${i})">Dismiss</button></div></div>`).join('')
+      <div class="conflict-actions"><button class="btn" ${c.fields.every(f => f.kept === 'mine') ? 'disabled' : ''} onclick="resolveSyncConflict(${i}, 'mine')">Use mine</button><button class="btn" ${c.fields.every(f => f.kept === 'theirs') ? 'disabled' : ''} onclick="resolveSyncConflict(${i}, 'theirs')">Use theirs</button><button class="btn" onclick="dismissSyncConflict(${i})">Dismiss</button></div></div>`).join('')
     : '<p class="cal-hint">Nothing to review.</p>';
 }
 function dismissSyncConflict(i) { syncConflictLog.splice(i, 1); updateSyncConflictsUI(); renderSyncConflictsModal(); if (!syncConflictLog.length) closeSyncConflictsModal(); }
