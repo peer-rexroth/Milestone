@@ -632,15 +632,24 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 .wh-day-row { display: flex; align-items: center; gap: 8px; }
 .whd-list { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
 .whd-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-.whd-row .whd-name { width: 70px; display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; }
+.whd-row .whd-name { width: 40px; flex-shrink: 0; font-size: 13px; font-weight: 600; color: var(--text); }
 .whd-row input.dt-time { width: 84px; }
 .whd-row .whd-breaks { flex: 1 1 170px; min-width: 140px; }
-.whd-row.off input:not(.whd-on) { opacity: .45; }
+.whd-remove { border: none; background: none; color: var(--text-faint); width: 24px; height: 24px; border-radius: 5px; flex-shrink: 0; }
+.whd-remove:hover { background: var(--panel-2); color: var(--danger); }
 .wh-day-row input.dt-time { width: 84px; }
 .whd-details { border-top: 1px solid var(--border); padding-top: 8px; }
 .whd-details > summary { cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text-dim); list-style-position: inside; }
 .whd-details[open] > summary { margin-bottom: 4px; }
+.rs-details { margin-top: 2px; }
+.rs-details > summary { cursor: pointer; font-size: 12.5px; font-weight: 600; color: var(--accent); list-style-position: inside; }
+.rs-list { max-height: 160px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; margin-top: 6px; font-size: 12.5px; }
+.rs-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 2px 0; }
+.rs-row .rs-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
+.rs-row .rs-dates { flex-shrink: 0; color: var(--text-dim); }
 .whd-count { font-weight: 500; font-size: 12px; color: var(--accent); margin-left: 4px; }
+.whd-add { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+.whd-add select { padding: 7px 9px; border: 1px solid var(--border); border-radius: 7px; background: var(--panel); color: var(--text); }
 .hol-break { flex-basis: 100%; height: 0; }
 .cal-how summary { cursor: pointer; font-size: 12.5px; font-weight: 600; color: var(--text-dim); }
 .cal-how .cal-hint { margin-top: 8px; }
@@ -685,6 +694,9 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 .dt-cal:hover:not(:disabled) { background: var(--panel-2); }
 .dt-cal:disabled { opacity: .4; cursor: default; }
 .dt-native { position: absolute; right: 0; bottom: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+input.dt-date.dt-err, input.dt-time.dt-err { border-color: var(--danger); }
+.dt-err-bubble { position: fixed; z-index: 500; background: var(--danger); color: #fff; font-size: 11.5px; padding: 4px 8px; border-radius: 6px; box-shadow: var(--shadow); opacity: 0; pointer-events: none; transform: translateY(-3px); transition: opacity .12s ease, transform .12s ease; max-width: 220px; }
+.dt-err-bubble.show { opacity: 1; transform: translateY(0); }
 input.dt-time { width: 84px; flex: 0 0 84px; text-align: center; }
 .field-dt .dt-wrap { flex: 1 1 130px; min-width: 130px; }   /* the date: room for dd.mm.yyyy and the calendar button; grows to fill any extra room */   /* 104px: the native editor's own ~95px plus a little slack, same figure the grid's date columns use; grows to fill any extra room */
 .field-dt input.dt-time { flex: 0 0 84px; min-width: 84px; }   /* 24-hour "14:30" needs ~50px: no AM/PM to cut off */
@@ -724,7 +736,7 @@ input.dt-time { width: 84px; flex: 0 0 84px; text-align: center; }
 .help-nav button.active { background: var(--panel); color: var(--text); font-weight: 600; box-shadow: 0 0 0 1px var(--border), inset 3px 0 0 var(--accent); }   /* (the accent as a bar and on the icon: accent-coloured text is under 4.5:1 on the dark panel) */
 .help-nav button.active i { color: var(--accent); }
 .help-nav button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
-.help-panes { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.help-panes { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
 .help-pane { flex: 1; min-height: 0; overflow-y: auto; padding: 20px 26px 24px; display: flex; flex-direction: column; gap: 18px; }
 .help-pane[hidden] { display: none; }
 .help-search-bar { flex: none; padding: 12px 26px 0; }
@@ -763,6 +775,8 @@ input.dt-time { width: 84px; flex: 0 0 84px; text-align: center; }
   .wh-day-row { flex-wrap: wrap; }
   .whd-row .whd-breaks { flex: 1 1 100%; }
   .pred-row, .pred-head { grid-template-columns: 56px 1fr 62px 76px 24px; }
+  .bl-grid { grid-template-columns: 1fr; }
+  .cal-sec-title { flex-wrap: wrap; }
 }
 @media (max-width: 660px) {
   .help-layout { flex-direction: column; }
@@ -1051,9 +1065,9 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
   </div>
 </div>
 
-<div class="modal-bg" id="bulkModalBg" onclick="if(event.target===this) closeBulkModal()">
+<div class="modal-bg" id="bulkModalBg" onclick="if(event.target===this) requestCloseBulkModal()">
   <div class="modal mid">
-    <div class="modal-header"><h2 id="bulkTitle">Edit tasks</h2><button onclick="closeBulkModal()" aria-label="Close">&times;</button></div>
+    <div class="modal-header"><h2 id="bulkTitle">Edit tasks</h2><button onclick="requestCloseBulkModal()" aria-label="Close">&times;</button></div>
     <div class="modal-body">
       <p class="bulk-hint" id="bulkHint"></p>
       <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-progress"> % complete</label><div class="bulk-ctl"><input type="number" id="bulkVal-progress" min="0" max="100" step="1" placeholder="0 – 100" aria-label="% complete"></div></div>
@@ -1064,7 +1078,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
       <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-pred"> Add predecessor</label><div class="bulk-ctl"><input type="number" id="bulkVal-predId" min="1" step="1" placeholder="task #" aria-label="Predecessor task number"><select id="bulkVal-predType" aria-label="Link type: Finish-to-Start, Start-to-Start, Finish-to-Finish or Start-to-Finish" title="Link type: FS Finish-to-Start, SS Start-to-Start, FF Finish-to-Finish, SF Start-to-Finish"><option value="FS" title="Finish-to-Start">FS</option><option value="SS" title="Start-to-Start">SS</option><option value="FF" title="Finish-to-Finish">FF</option><option value="SF" title="Start-to-Finish">SF</option></select><input type="number" id="bulkVal-predLag" step="1" placeholder="lag" aria-label="Lag in working days" title="Lag — positive delays the start, negative overlaps it"></div></div>
       <div id="bulkCustom"></div>
     </div>
-    <div class="modal-footer"><button class="btn" onclick="closeBulkModal()">Cancel</button><button class="btn btn-primary" onclick="applyBulkEdit()">Apply</button></div>
+    <div class="modal-footer"><button class="btn" onclick="closeBulkModal()">Cancel</button><button class="btn btn-primary" id="bulkApplyBtn" onclick="applyBulkEdit()">Apply</button></div>
   </div>
 </div>
 
@@ -1245,8 +1259,9 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
           </div>
           <details class="whd-details" id="whDayDetails">
             <summary>Different hours on some days <span class="whd-count" id="whDayCount"></span></summary>
-            <div class="cal-sec-note">A short Friday, say. Tick a day and give it its own start, end and breaks (like 12:00-13:00, 15:00-15:15).</div>
+            <div class="cal-sec-note">A short Friday, say — its own start, end and breaks (like 12:00-13:00, 15:00-15:15).</div>
             <div class="whd-list" id="whDayRows"></div>
+            <div class="whd-add" id="whDayAddRow"><select id="whDayAddSelect" aria-label="Weekday to add"></select><button class="btn" type="button" onclick="addHoursDay()"><i class="fa-solid fa-plus"></i>Add a different day</button></div>
           </details>
         </div>
       </section>
@@ -1304,6 +1319,10 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <div class="cal-sec-title">Status date</div>
         <div class="field-dt" id="rescheduleWhen"><input type="text" class="dt-date" id="rescheduleDateInput" aria-label="Status date" onchange="onRescheduleDateChange()"><input type="text" id="rescheduleTimeInput" class="hidden dt-time" aria-label="Status time" onchange="rescheduleTimeTouched = true; renderRescheduleModal()"></div>
         <p class="cal-hint" id="rescheduleHint" style="margin:0"></p>
+        <details class="rs-details hidden" id="rescheduleDetails">
+          <summary>Which tasks <span id="rescheduleDetailsCount"></span></summary>
+          <div class="rs-list" id="rescheduleList"></div>
+        </details>
       </section>
     </div>
     <div class="modal-footer">
@@ -1349,7 +1368,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <div class="help-section">
           <div class="help-section-title">Building a plan</div>
           <div class="help-row"><i class="fa-solid fa-plus"></i><span><strong>Add Task</strong> inserts a task below the selected one, or at the bottom when nothing is selected. Each task has a start and end date and a % complete, and can be a <strong>milestone</strong> (a one-day diamond).</span></div>
-          <div class="help-row"><i class="fa-solid fa-keyboard"></i><span><strong>Dates and times in dialogs</strong> are typed, in the same format as the list: <strong>24.12.2026</strong> (or 24.12.26, 24.12.), <strong>14:30</strong> (or 1430, 2:30pm) — or pick a date with the calendar button. Something unreadable is refused and the old value comes back.</span></div>
+          <div class="help-row"><i class="fa-solid fa-keyboard"></i><span><strong>Dates and times in dialogs</strong> are typed, in the same format as the list: <strong>24.12.2026</strong> (or 24.12.26, 24.12.), <strong>14:30</strong> (or 1430, 2:30pm) — or pick a date with the calendar button. Something unreadable is refused, marks the box red and puts the old value back; <strong>Enter</strong> settles a box, and in a single-purpose dialog like Reschedule or Baselines it applies the dialog.</span></div>
           <div class="help-row"><i class="fa-solid fa-computer-mouse"></i><span><strong>Right-click</strong> a task (in the list, or its row in the chart) for a menu with Edit, Add task, Add empty line, Duplicate, Copy, Cut, Paste, Indent, Outdent and Delete. Right-clicking on the empty part of the list offers Add task, Add empty line and Paste. The buttons for the selected tasks (<strong>Edit, Duplicate, Copy, Delete</strong>) appear in the toolbar while something is selected; with one task <strong>Edit</strong> opens the same dialog as a double-click.</span></div>
           <div class="help-row"><i class="fa-solid fa-palette"></i><span><strong>Row colour</strong> (in the task dialog, or under Edit for several tasks) marks a task in the list with a stripe at its left edge and a light tint of the same colour — also behind its bar in the Gantt chart, and in the printout and the Excel export. The bars themselves keep their <strong>status</strong> colours: green complete, red late, blue in progress, grey not started.</span></div>
           <div class="help-row"><i class="fa-solid fa-grip-lines"></i><span><strong>Add empty line</strong> (in the menu next to Add Task, or on the right-click menu) inserts a blank row below the selected task (below its whole block when it is a group) to separate blocks of tasks. It has an ID but no name, dates or WBS, is never scheduled, charted or linked, and can be moved, indented, copied and deleted like any row.</span></div>
@@ -1362,7 +1381,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <div class="help-section">
           <div class="help-section-title">Selecting several tasks</div>
           <div class="help-row"><i class="fa-solid fa-object-group"></i><span><strong>Ctrl/Cmd+click</strong> adds a task to the selection or takes it out; <strong>Shift+click</strong> selects every visible row from the last one you clicked; <strong>Ctrl/Cmd+A</strong> selects all visible tasks; <strong>Esc</strong> (or the “N selected” chip in the toolbar) clears it.</span></div>
-          <div class="help-row"><i class="fa-solid fa-layer-group"></i><span>Indent, Outdent, Clone, Copy and Delete then act on all of them (a group brings its sub-tasks). The <strong>Edit button</strong> in the toolbar opens the full task dialog for one selected task (the same as a double-click) and, with several selected, <strong>Edit tasks</strong>: tick the fields to change — % complete, Resource, Task Mode, Row colour, <em>Move dates by</em> a number of working days, <em>Add predecessor</em>, and any custom field you show — and Apply. It is one Undo step.</span></div>
+          <div class="help-row"><i class="fa-solid fa-layer-group"></i><span>Indent, Outdent, Clone, Copy and Delete then act on all of them (a group brings its sub-tasks). The <strong>Edit button</strong> in the toolbar opens the full task dialog for one selected task (the same as a double-click) and, with several selected, <strong>Edit tasks</strong>: tick the fields to change — % complete, Resource, Task Mode, Row colour, <em>Move dates by</em> a number of working days, <em>Add predecessor</em>, and any custom field you show — and Apply (or Enter). It is one Undo step.</span></div>
         </div>
         <div class="help-divider"></div>
         <div class="help-section">
@@ -1445,15 +1464,15 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
           <div class="help-row"><i class="fa-solid fa-ruler-horizontal"></i><span>The bar is the <strong>current schedule</strong>. To keep the original plan, set a <strong>baseline</strong> (Schedule menu → <strong>Baseline…</strong>): a frozen copy of every task's Start and Finish, only ever taken when you ask. Keep up to eleven — Baseline and Baseline 1–10 — and choose which one to compare with.</span></div>
           <div class="help-row"><i class="fa-solid fa-minus"></i><span>The baseline shows as a thin grey line under each bar in the Gantt chart (the ruler button hides it).</span></div>
           <div class="help-row"><i class="fa-solid fa-plus-minus"></i><span>The <strong>Start Variance</strong>, <strong>Finish Variance</strong>, <strong>Baseline Start/Finish/Duration</strong> and <strong>Duration Variance</strong> columns show how far each task has moved, in working days (working minutes for a leaf task in an Hours &amp; minutes plan) — positive means later than the baseline.</span></div>
-          <div class="help-row"><i class="fa-solid fa-calendar-check"></i><span><strong>Reschedule remaining work…</strong> (Schedule menu) catches the plan up with a status date you choose: an overdue task moves there, an in-progress task keeps its remaining work from that date if it would otherwise finish later. Finished tasks and tasks ahead of schedule are left alone. The dialog says how many tasks would move before you click, and in an Hours &amp; minutes plan the status date has a time; Undo brings everything back.</span></div>
+          <div class="help-row"><i class="fa-solid fa-calendar-check"></i><span><strong>Reschedule remaining work…</strong> (Schedule menu) catches the plan up with a status date you choose: an overdue task moves there, an in-progress task keeps its remaining work from that date if it would otherwise finish later. Finished tasks and tasks ahead of schedule are left alone. The dialog says how many would move, with a <strong>Which tasks</strong> list; in an Hours &amp; minutes plan the status date has a time. Undo brings everything back.</span></div>
         </div>
       </div>
       <div class="help-pane" id="helpPane-hours" role="tabpanel" aria-labelledby="helpTab-hours" hidden>
         <div class="help-section">
           <div class="help-section-title">Hours &amp; minutes planning</div>
           <div class="help-row"><i class="fa-solid fa-hourglass-half"></i><span>A plan counts <strong>whole days</strong> by default. Switch it to <strong>Hours &amp; minutes</strong> when tasks last hours rather than days — a setting of that plan alone, so your other plans stay in days. Times of day then appear everywhere: the list, the dialogs, the chart, Remaining and baselines, Excel, MS Project XML and print.</span></div>
-          <div class="help-row"><i class="fa-solid fa-clock"></i><span><strong>Scheduling precision</strong> (Schedule menu → <strong>Scheduling precision…</strong>, its own dialog): the standard is whole days, but a plan can switch to <strong>Hours &amp; minutes</strong> — like MS Project — so tasks can start and finish at a time of day. Set the working day's start/end and its breaks there too; date fields, Duration (type "4h" or "90m") and the columns adapt once it's on. Switching in keeps a task spanning its whole day; switching back just drops every time.</span></div>
-          <div class="help-row"><i class="fa-solid fa-business-time"></i><span><strong>Different hours on some days</strong> (Schedule → Scheduling precision…): tick a weekday — a short Friday, say — and give it its own start, end and breaks. A task with no time of its own then starts and finishes at its day's own open and close, and the chart, print-out, Excel and MS Project export follow each day's hours.</span></div>
+          <div class="help-row"><i class="fa-solid fa-clock"></i><span><strong>Scheduling precision</strong> (Schedule menu → <strong>Scheduling precision…</strong>, its own dialog): the standard is whole days, but a plan can switch to <strong>Hours &amp; minutes</strong> — like MS Project — so tasks can start and finish at a time of day. Set the working day's start/end and its breaks there too; date fields, Duration and the columns adapt once it's on. Switching in keeps a task's whole day; switching back drops every time and warns first if that would lose something.</span></div>
+          <div class="help-row"><i class="fa-solid fa-business-time"></i><span><strong>Different hours on some days</strong> (Schedule → Scheduling precision…): add a weekday — a short Friday, say — and give it its own start, end and breaks. A task with no time of its own then starts and finishes at its day's own open and close, and the chart, print-out, Excel and MS Project export follow each day's hours.</span></div>
           <div class="help-row"><i class="fa-solid fa-link"></i><span><strong>Lags are working time</strong> in an Hours &amp; minutes plan: type <strong>3FS+2h</strong>, <strong>5SS-30m</strong> or <strong>1FS+1d</strong> in the Predecessors cell (d is a working day, w five of them; a bare number is hours), or the same in the task dialog and Edit tasks. Switching a plan to Hours &amp; minutes converts its lags (2 days become 16 hours).</span></div>
           <div class="help-row"><i class="fa-solid fa-chart-gantt"></i><span><strong>In an Hours &amp; minutes plan</strong> the chart gets an <strong>Hours</strong> scale (20&nbsp;px an hour, the day over its 24 hours; nights, the lunch break and days off are shaded). Drag a bar, or its edges, in 15-minute steps: an Auto task lands on working time (a move into the lunch break comes out after it), a Manual task goes exactly where you drop it, and linked tasks follow.</span></div>
           <div class="help-row"><i class="fa-solid fa-pen"></i><span>In the list, click a Start, Finish or Actual cell and type <strong>date and time</strong> (<strong>07.09.2026 14:30</strong>) — a date alone keeps the time, a time alone (<strong>14:30</strong>) keeps the date. The Duration cell takes <strong>4h</strong>, <strong>90m</strong>, <strong>2d</strong> or <strong>1w</strong>. The Excel Gantt sheet gets one column per working hour.</span></div>
@@ -5130,7 +5149,7 @@ function openTaskModal(id, isNew) {
   updateModalComputed();
   taskModalSnapshot = taskModalState();
   document.getElementById('taskModalBg').classList.add('open');
-  setTimeout(() => document.getElementById('taskNameInput').focus(), 30);
+  setTimeout(() => { const el = document.getElementById('taskNameInput'); el.focus(); el.setSelectionRange(0, 0); }, 30);
 }
 // Closing with × / Escape / a click outside asks first when something was changed (Cancel is an explicit "throw it away" and does not).
 let taskModalSnapshot = null;
@@ -5227,7 +5246,7 @@ function openBaselineModal() {
   sel.value = String(firstFree == null ? 0 : firstFree);
   const hasSel = !!(selectedTaskId && byId(selectedTaskId));
   document.getElementById('baselineScopeSel').disabled = !hasSel;
-  document.getElementById('baselineScopeSelLabel').textContent = hasSel ? `The selected task “${byId(selectedTaskId).name}”${hasChildren(selectedTaskId) ? ' and the tasks in it' : ''}` : 'The selected task (none selected)';
+  document.getElementById('baselineScopeSelLabel').textContent = hasSel ? `The selected task “${byId(selectedTaskId).name.trim()}”${hasChildren(selectedTaskId) ? ' and the tasks in it' : ''}` : 'The selected task (none selected)';
   document.getElementById('baselineScopeSel').closest('label').title = hasSel ? '' : 'Select a task in the list first to baseline only that task';
   document.getElementById('baselineScopeAll').checked = true;
   renderBaselineModal();
@@ -5328,21 +5347,37 @@ function rescheduleStatus() {
   const iso = document.getElementById('rescheduleDateInput').value || todayStr(), tm = document.getElementById('rescheduleTimeInput').value;
   return { iso, time: minuteModeActive() && hhmmOk(tm) ? tm : undefined };
 }
-// What Reschedule would do right now, without doing it: run it, count, and put every task back exactly as it was.
+// What Reschedule would do right now, without doing it: run it, note each moved task's own before/after, and put every
+// task back exactly as it was. Returns [{ id, name, before: [startDate,startTime,endDate,endTime], after: [...] }].
 function rescheduleDryRun(iso, time) {
   const snap = tasks.map(t => [t, JSON.stringify(t)]);
-  let n = 0;
-  try { n = rescheduleFromStatusDate(iso, time).length; }
-  finally { for (const [t, txt] of snap) { for (const k of Object.keys(t)) delete t[k]; Object.assign(t, JSON.parse(txt)); } resetEffectiveCache(); }
-  return n;
+  const before = new Map(tasks.map(t => [t.id, [t.startDate, t.startTime, t.endDate, t.endTime]]));
+  let ids = [];
+  try { ids = rescheduleFromStatusDate(iso, time); } catch (e) { ids = []; }
+  const rows = ids.map(id => { const t = byId(id); return t && { id, name: t.name, before: before.get(id), after: [t.startDate, t.startTime, t.endDate, t.endTime] }; }).filter(Boolean);
+  for (const [t, txt] of snap) { for (const k of Object.keys(t)) delete t[k]; Object.assign(t, JSON.parse(txt)); }
+  resetEffectiveCache();
+  return rows;
+}
+// One row's change, in the plan's own date format: whichever side actually moved (a not-yet-started task's Start, or a
+// running task's Finish — never both, per rescheduleFromStatusDate's own rule).
+function fmtRsOne(iso, time) { return minuteModeActive() ? gridDateTimeText(iso, time, true) : fmtDate(iso); }
+function fmtRsChange(r) {
+  const [bs, bst, be, bet] = r.before, [as_, ast, ae, aet] = r.after;
+  return bs !== as_ || bst !== ast ? `Start ${fmtRsOne(bs, bst)} → ${fmtRsOne(as_, ast)}` : `Finish ${fmtRsOne(be, bet)} → ${fmtRsOne(ae, aet)}`;
 }
 function renderRescheduleModal() {
-  const cand = rescheduleCandidates().length, { iso, time } = rescheduleStatus(), n = cand ? rescheduleDryRun(iso, time) : 0;
+  const cand = rescheduleCandidates().length, { iso, time } = rescheduleStatus(), rows = cand ? rescheduleDryRun(iso, time) : [], n = rows.length;
   document.getElementById('rescheduleHint').textContent = !cand ? 'Every task is already finished — nothing to reschedule.'
     : n === cand ? `${n === 1 ? 'The 1 unfinished task would' : `All ${n} unfinished tasks would`} move — they are overdue or behind.`
     : n ? `${n} of the ${cand} unfinished tasks would move — the overdue or behind ones; the rest stay.`
     : `${cand} task${cand === 1 ? ' is' : 's are'} not finished yet, but none is behind as of this ${minuteModeActive() ? 'moment' : 'date'} — nothing would move.`;
   document.getElementById('rescheduleBtn').disabled = !n;
+  document.getElementById('rescheduleDetails').classList.toggle('hidden', !n);
+  if (n) {
+    document.getElementById('rescheduleDetailsCount').textContent = `(${n})`;
+    document.getElementById('rescheduleList').innerHTML = rows.map(r => `<div class="rs-row"><span class="rs-name" title="${escapeHtml(r.name)}">${escapeHtml(r.name)}</span><span class="rs-dates">${escapeHtml(fmtRsChange(r))}</span></div>`).join('');
+  }
 }
 function runReschedule() {
   const { iso, time } = rescheduleStatus();
@@ -5555,7 +5590,7 @@ function saveCalendar() {
 // Scheduling precision (Day / Hours & minutes) and, only while the latter is picked, the working-day start/end and its
 // breaks — an explicit user request ("like in MS Project... switch to hour/minutes planning"). Its own dialog off the
 // Schedule menu, next to Working calendar rather than folded into it.
-let calWorkHours = null, precisionSnapshot = null;
+let calWorkHours = null, precisionSnapshot = null, whDayList = [];
 function openPrecisionModal() {
   closeScheduleMenu();
   document.getElementById(project.timeUnit === 'minute' ? 'precisionMinute' : 'precisionDay').checked = true;
@@ -5565,6 +5600,8 @@ function openPrecisionModal() {
   document.getElementById('whEnd').value = calWorkHours.end;
   for (const id of ['whBreakFrom', 'whBreakTo']) document.getElementById(id).value = '';
   renderWorkBreaks();
+  whDayList = Object.keys(project.workHoursByDay || {}).map(Number).filter(d => workDaySet().has(d)).sort((a, b) => WEEKDAY_ORDER.indexOf(a) - WEEKDAY_ORDER.indexOf(b));   // (a weekday that isn't a working day any more keeps no row — it has nothing to show a time for)
+  document.getElementById('whDayDetails').open = whDayList.length > 0;
   renderHoursByDay();
   for (const r of document.querySelectorAll('#precisionRow input')) r.onchange = onPrecisionChange;
   onPrecisionChange();
@@ -5577,7 +5614,9 @@ function precisionDraftState() {
   const minute = document.getElementById('precisionMinute').checked;
   return JSON.stringify([minute, minute ? [document.getElementById('whStart').value, document.getElementById('whEnd').value, calWorkHours.breaks, hoursByDayRaw()] : null]);
 }
-// ---- the per-weekday rows: one for each working weekday of the plan; a ticked row carries that day's own hours (breaks typed as "12:00-13:00, 15:00-15:15")
+// ---- the per-weekday rows: only the weekdays with their own hours are shown, added one at a time from the working weekdays that
+// don't have a row yet (whDayList, the dialog's own order — not tied to a checkbox per weekday, which listed every working day every
+// time whether or not it differed). Breaks are typed as "12:00-13:00, 15:00-15:15".
 function breaksText(breaks) { return (breaks || []).map(b => `${b.start}-${b.end}`).join(', '); }
 function parseBreaksText(str) {   // -> [{start,end}] or null when something in it isn't a break
   const out = [];
@@ -5592,30 +5631,37 @@ function parseBreaksText(str) {   // -> [{start,end}] or null when something in 
 }
 function renderHoursByDay() {
   const by = project.workHoursByDay || {}, base = calWorkHours;
-  document.getElementById('whDayDetails').open = Object.keys(by).length > 0;
-  updateHoursDayCount();
-  document.getElementById('whDayRows').innerHTML = WEEKDAY_ORDER.filter(d => workDaySet().has(d)).map(d => {
-    const h = by[d], on = !!h, v = h || base;
-    return `<div class="whd-row${on ? '' : ' off'}" data-wd="${d}"><label class="whd-name"><input type="checkbox" class="whd-on" aria-label="${WEEKDAY_NAMES[d]} has its own hours"${on ? ' checked' : ''} onchange="onHoursDayToggle(this)">${WEEKDAY_NAMES[d]}</label>` +
-      `<input type="text" class="dt-time whd-start" aria-label="${WEEKDAY_NAMES[d]} starts" value="${v.start}"${on ? '' : ' disabled'}><span class="hol-to">to</span><input type="text" class="dt-time whd-end" aria-label="${WEEKDAY_NAMES[d]} ends" value="${v.end}"${on ? '' : ' disabled'}>` +
-      `<input type="text" class="whd-breaks" aria-label="${WEEKDAY_NAMES[d]} breaks" placeholder="breaks, e.g. 12:00-13:00" value="${breaksText(v.breaks)}"${on ? '' : ' disabled'}></div>`;
+  document.getElementById('whDayRows').innerHTML = whDayList.map(d => {
+    const v = by[d] || base;
+    return `<div class="whd-row" data-wd="${d}"><span class="whd-name">${WEEKDAY_NAMES[d]}</span>` +
+      `<input type="text" class="dt-time whd-start" aria-label="${WEEKDAY_NAMES[d]} starts" value="${v.start}"><span class="hol-to">to</span><input type="text" class="dt-time whd-end" aria-label="${WEEKDAY_NAMES[d]} ends" value="${v.end}">` +
+      `<input type="text" class="whd-breaks" aria-label="${WEEKDAY_NAMES[d]} breaks" placeholder="breaks, e.g. 12:00-13:00" value="${breaksText(v.breaks)}">` +
+      `<button type="button" class="whd-remove" aria-label="Remove ${WEEKDAY_NAMES[d]}'s own hours" title="Remove"><i class="fa-solid fa-xmark"></i></button></div>`;
   }).join('');
+  for (const btn of document.querySelectorAll('#whDayRows .whd-remove')) btn.onclick = () => removeHoursDay(Number(btn.closest('.whd-row').dataset.wd));
   enhanceBoxes(document.getElementById('whDayRows'));
-}
-function updateHoursDayCount() { const n = document.querySelectorAll('#whDayRows .whd-on:checked').length; document.getElementById('whDayCount').textContent = n ? `· ${n} day${n === 1 ? '' : 's'} differ${n === 1 ? 's' : ''}` : ''; }
-function onHoursDayToggle(cb) {
-  const row = cb.closest('.whd-row'), on = cb.checked;
+  updateWhDayAddRow();
   updateHoursDayCount();
-  row.classList.toggle('off', !on);
-  for (const el of row.querySelectorAll('.whd-start, .whd-end, .whd-breaks')) el.disabled = !on;
-  if (on) { row.querySelector('.whd-start').value = document.getElementById('whStart').value; row.querySelector('.whd-end').value = document.getElementById('whEnd').value; row.querySelector('.whd-breaks').value = breaksText(calWorkHours.breaks); }   // (starts as a copy of the standard day)
 }
-function hoursByDayRaw() { return [...document.querySelectorAll('#whDayRows .whd-row')].map(r => [r.dataset.wd, r.querySelector('.whd-on').checked, r.querySelector('.whd-start').value, r.querySelector('.whd-end').value, r.querySelector('.whd-breaks').value]); }
-// The ticked rows as { weekday: { start, end, breaks } }, or null with a message when one of them can't be read.
+function updateWhDayAddRow() {
+  const avail = WEEKDAY_ORDER.filter(d => workDaySet().has(d) && !whDayList.includes(d)), row = document.getElementById('whDayAddRow');
+  row.classList.toggle('hidden', !avail.length);
+  document.getElementById('whDayAddSelect').innerHTML = avail.map(d => `<option value="${d}">${WEEKDAY_NAMES[d]}</option>`).join('');
+}
+function addHoursDay() {
+  const d = Number(document.getElementById('whDayAddSelect').value);
+  if (!Number.isInteger(d) || whDayList.includes(d)) return;
+  whDayList.push(d); whDayList.sort((a, b) => WEEKDAY_ORDER.indexOf(a) - WEEKDAY_ORDER.indexOf(b));
+  renderHoursByDay();
+  const row = document.querySelector(`#whDayRows .whd-row[data-wd="${d}"] .whd-start`); if (row) row.focus();
+}
+function removeHoursDay(d) { whDayList = whDayList.filter(x => x !== d); renderHoursByDay(); }
+function updateHoursDayCount() { const n = whDayList.length; document.getElementById('whDayCount').textContent = n ? `· ${n} day${n === 1 ? '' : 's'} differ${n === 1 ? 's' : ''}` : ''; }
+function hoursByDayRaw() { return [...document.querySelectorAll('#whDayRows .whd-row')].map(r => [r.dataset.wd, r.querySelector('.whd-start').value, r.querySelector('.whd-end').value, r.querySelector('.whd-breaks').value]); }
+// The rows as { weekday: { start, end, breaks } }, or null with a message when one of them can't be read.
 function readHoursByDay() {
   const by = {};
-  for (const [wd, on, start, end, br] of hoursByDayRaw()) {
-    if (!on) continue;
+  for (const [wd, start, end, br] of hoursByDayRaw()) {
     const breaks = parseBreaksText(br);
     if (!start || !end || end <= start) { showToast(`${WEEKDAY_NAMES[wd]}: the day must end after it starts`, true); return null; }
     if (breaks === null) { showToast(`${WEEKDAY_NAMES[wd]}: breaks are written like 12:00-13:00, 15:00-15:15`, true); return null; }
@@ -5653,6 +5699,28 @@ function precisionSummary() {
   const n = project.workHoursByDay ? Object.keys(project.workHoursByDay).length : 0;
   return `Hours & minutes · ${workHours().start}–${workHours().end}${n ? ` · ${n} day${n === 1 ? '' : 's'} differ${n === 1 ? 's' : ''}` : ''}`;
 }
+// How much switching back to Days would throw away: every task with a time of day (its own, or a custom Date field's), and
+// every predecessor lag that isn't a whole number of days (it would round). An estimate for the confirmation below —
+// normalizeData()'s own cleanup is still the one source of truth for what actually gets dropped.
+function precisionLeaveImpact() {
+  const per = workMinutesPerDay();
+  let times = 0, lags = 0;
+  for (const t of tasks) {
+    if (t.startTime || t.endTime || t.actualStartTime || t.actualFinishTime || t.constraintTime) times++;
+    else if (t.custom && Object.keys(t.custom).some(k => k.endsWith('Time') && t.custom[k])) times++;
+    for (const p of t.predecessors) if (p.lag && p.lag % per !== 0) lags++;
+  }
+  return { times, lags };
+}
+function applyPrecisionChange(minute, wh, by) {
+  const curMinute = project.timeUnit === 'minute';
+  if (curMinute && !minute) { const per = workMinutesPerDay(); for (const t of tasks) for (const p of t.predecessors) if (p.lag) p.lag = Math.round(p.lag / per); }   // lags go back from working minutes to working days (rounded — like the times, lossy on the way out)
+  if (minute) { project.timeUnit = 'minute'; project.workHours = wh; if (by) project.workHoursByDay = by; else delete project.workHoursByDay; } else { delete project.timeUnit; delete project.workHours; delete project.workHoursByDay; delete project.lagUnit; }
+  project.updatedAt = Date.now();
+  normalizeData();   // nulls every task's time fields when leaving minute mode; converts a day-mode plan's lags to minutes when entering it
+  save(); render(); closePrecisionModal();
+  showToast(`Scheduling precision: ${precisionSummary()}`);
+}
 function savePrecision() {
   const minute = document.getElementById('precisionMinute').checked;
   const wh = minute ? { start: document.getElementById('whStart').value || DEFAULT_WORK_HOURS.start, end: document.getElementById('whEnd').value || DEFAULT_WORK_HOURS.end, breaks: calWorkHours.breaks } : null;
@@ -5661,12 +5729,17 @@ function savePrecision() {
   const by = minute ? cleanHoursByDay(rawBy, wh) : null;   // (a ticked day whose hours equal the standard day is just the standard day)
   const curMinute = project.timeUnit === 'minute';
   if (minute === curMinute && stableStringify(wh) === (curMinute ? stableStringify(project.workHours || DEFAULT_WORK_HOURS) : null) && stableStringify(by) === (curMinute ? stableStringify(project.workHoursByDay || null) : stableStringify(null))) { closePrecisionModal(); return; }
-  if (curMinute && !minute) { const per = workMinutesPerDay(); for (const t of tasks) for (const p of t.predecessors) if (p.lag) p.lag = Math.round(p.lag / per); }   // lags go back from working minutes to working days (rounded — like the times, lossy on the way out)
-  if (minute) { project.timeUnit = 'minute'; project.workHours = wh; if (by) project.workHoursByDay = by; else delete project.workHoursByDay; } else { delete project.timeUnit; delete project.workHours; delete project.workHoursByDay; delete project.lagUnit; }
-  project.updatedAt = Date.now();
-  normalizeData();   // nulls every task's time fields when leaving minute mode; converts a day-mode plan's lags to minutes when entering it
-  save(); render(); closePrecisionModal();
-  showToast(`Scheduling precision: ${precisionSummary()}`);
+  if (curMinute && !minute) {
+    const impact = precisionLeaveImpact();
+    if (impact.times || impact.lags) {
+      const bits = [];
+      if (impact.times) bits.push(`${impact.times} task${impact.times === 1 ? '' : 's'} will lose their time of day`);
+      if (impact.lags) bits.push(`${impact.lags} lag${impact.lags === 1 ? '' : 's'} will round to whole working days`);
+      openConfirmModal({ title: 'Switch to Days?', body: `${bits.join(' and ')} — switching back to Hours &amp; minutes won't bring them back.`, confirmLabel: 'Switch to Days', confirmClass: 'btn btn-primary', action() { applyPrecisionChange(minute, wh, by); } });
+      return;
+    }
+  }
+  applyPrecisionChange(minute, wh, by);
 }
 /* ---- Custom fields: the Add-field menu and the Manage dialog (names, adding, removing). A field is in use when it has a name or a value (see activeCustomSet). ---- */
 const FIELD_KIND_INFO = { text: { icon: 'fa-font', label: 'Text', hint: 'free text' }, number: { icon: 'fa-hashtag', label: 'Number', hint: 'a number' }, date: { icon: 'fa-calendar-day', label: 'Date', hint: 'a date' }, flag: { icon: 'fa-flag', label: 'Yes / No', hint: 'a tick' } };
@@ -7141,6 +7214,13 @@ function openBulkModal() {
   setTimeout(() => document.getElementById('bulkVal-progress').focus(), 40);
 }
 function closeBulkModal() { document.getElementById('bulkModalBg').classList.remove('open'); }
+// Dirty = at least one field is ticked to change — the same signal the dialog already uses to know what to apply, so
+// there is nothing extra to track. Ticking a box happens either by hand or, per the wiring above, as soon as its value is edited.
+function bulkDirty() { return document.getElementById('bulkModalBg').classList.contains('open') && [...document.querySelectorAll('#bulkModalBg .bulk-on input[type=checkbox]')].some(cb => cb.checked); }
+function requestCloseBulkModal() {
+  if (!bulkDirty()) { closeBulkModal(); return; }
+  openConfirmModal({ title: 'Discard your changes?', body: 'You ticked fields to change but did not apply them.', confirmLabel: 'Discard changes', cancelLabel: 'Keep editing', action() { closeBulkModal(); } });
+}
 function wouldCreateCycle(taskId, predId) {   // does predId (through its own predecessors) already depend on taskId?
   const seen = new Set(), stack = [predId];
   while (stack.length) { const cur = stack.pop(); if (cur === taskId) return true; if (seen.has(cur)) continue; seen.add(cur); const t = byId(cur); if (t) for (const p of t.predecessors) stack.push(p.id); }
@@ -8909,10 +8989,11 @@ function wireGlobalEvents() {
     if (e.key !== 'Escape') return;
     if (document.getElementById('cfAddMenu').classList.contains('open')) { closeCfAddMenu(); return; }
     if (document.getElementById('fieldsModalBg').classList.contains('open')) { if (document.getElementById('confirmModalBg').classList.contains('open')) closeConfirmModal(); else requestCloseFieldsModal(); return; }   // only the topmost dialog: the task dialog underneath keeps its unsaved edits
-    if (document.getElementById('confirmModalBg').classList.contains('open') && (taskModalDirty() || calendarDirty() || precisionDirty())) { closeConfirmModal(); return; }   // the "discard your changes?" question: Escape = keep editing
+    if (document.getElementById('confirmModalBg').classList.contains('open') && (taskModalDirty() || calendarDirty() || precisionDirty() || bulkDirty())) { closeConfirmModal(); return; }   // the "discard your changes?" question: Escape = keep editing
     if (taskModalDirty()) { requestCloseTaskModal(); return; }
     if (calendarDirty()) { requestCloseCalendarModal(); return; }
     if (precisionDirty()) { requestClosePrecisionModal(); return; }
+    if (bulkDirty()) { requestCloseBulkModal(); return; }
     // Escape closes whatever overlay is open first; only when there is none — and
     // the user isn't typing in a field, where Escape already means "cancel this
     // edit" — does it clear the task selection.
@@ -9006,20 +9087,44 @@ function enhanceBoxes(root) {
   for (const el of (root || document).querySelectorAll('input.dt-date:not([data-dt])')) attachBox(el, true);
   for (const el of (root || document).querySelectorAll('input.dt-time:not([data-dt])')) attachBox(el, false);
 }
+// A field-level echo of the same refusal the toast already gives: a red border and a small bubble right under the box, so
+// the mistake is obvious without having to notice the toast — useful on a form with several date/time fields at once. The
+// bubble is one shared element (like the toast), positioned next to whichever box is wrong; it clears as soon as you retype.
+let dtErrBubble = null;
+function showDtError(el, msg) {
+  el.classList.add('dt-err');
+  if (!dtErrBubble) { dtErrBubble = document.createElement('div'); dtErrBubble.className = 'dt-err-bubble'; document.body.appendChild(dtErrBubble); }
+  const r = el.getBoundingClientRect();
+  dtErrBubble.textContent = msg;
+  dtErrBubble.style.left = Math.round(r.left) + 'px';
+  dtErrBubble.style.top = Math.round(r.bottom + 4) + 'px';
+  dtErrBubble.classList.add('show');
+  dtErrBubble._for = el;
+}
+function clearDtError(el) {
+  el.classList.remove('dt-err');
+  if (dtErrBubble && dtErrBubble._for === el) { dtErrBubble.classList.remove('show'); dtErrBubble._for = null; }
+}
+document.addEventListener('input', e => { if (e.target && e.target.dataset && e.target.dataset.dt) clearDtError(e.target); });
 document.addEventListener('change', e => {
   const el = e.target;
   if (!el || !el.dataset || !el.dataset.dt) return;
   const isDate = el.classList.contains('dt-date'), raw = el._getRaw();
-  if (raw.trim() === '') { el._last = ''; return; }
+  if (raw.trim() === '') { el._last = ''; clearDtError(el); return; }
   const v = isDate ? parseBoxDate(raw) : parseBoxTime(raw);
   if (!v) {   // unreadable: stop it here, put the last good text back
     e.stopImmediatePropagation();
     el._setRaw(el._last || '');
-    showToast(isDate ? `“${raw.trim()}” isn't a date — write it like 24.12.2026` : `“${raw.trim()}” isn't a time — write it like 14:30`, true);
+    const msg = isDate ? `“${raw.trim()}” isn't a date — write it like 24.12.2026` : `“${raw.trim()}” isn't a time — write it like 14:30`;
+    showToast(msg, true);
+    showDtError(el, isDate ? 'Write it like 24.12.2026' : 'Write it like 14:30');
+    el.focus();
     return;
   }
+  clearDtError(el);
   const t = isDate ? fmtDate(v) : v; el._setRaw(t); el._last = t;
 }, true);
+window.addEventListener('scroll', () => { if (dtErrBubble && dtErrBubble._for) showDtError(dtErrBubble._for, dtErrBubble.textContent); }, true);   // (a scrolled dialog body: keep the bubble under its box)
 document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target && e.target.dataset && e.target.dataset.dt) e.target.dispatchEvent(new Event('change', { bubbles: true })); });   // (Enter settles what is typed, like leaving the box)
 /* ---- Dialogs for assistive technology and the keyboard: each is a modal dialog with a name (its title); Tab stays inside the top one; and
    when it closes, focus goes back to what was focused before it opened (a dropdown item that has since closed falls back to the page). ---- */
@@ -9038,7 +9143,11 @@ function initDialogAccessibility() {
     new MutationObserver(() => {
       const now = bg.classList.contains('open');
       if (now && !wasOpen) bg._opener = lastOutsideFocus;
-      else if (!now && wasOpen) { const o = bg._opener; bg._opener = null; if (o && document.contains(o) && !topOpenModal() && (document.activeElement === document.body || bg.contains(document.activeElement))) try { o.focus({ preventScroll: true }); } catch (e) { /* gone */ } }
+      else if (!now && wasOpen) {
+        const o = bg._opener; bg._opener = null;
+        if (o && document.contains(o) && !topOpenModal() && (document.activeElement === document.body || bg.contains(document.activeElement))) try { o.focus({ preventScroll: true }); } catch (e) { /* gone */ }
+        if (dtErrBubble && dtErrBubble._for && bg.contains(dtErrBubble._for)) clearDtError(dtErrBubble._for);   // the field its error belonged to just left with the dialog
+      }
       wasOpen = now;
     }).observe(bg, { attributes: true, attributeFilter: ['class'] });
   }
@@ -9054,11 +9163,24 @@ function initDialogAccessibility() {
     else if (!e.shiftKey && (!inside || a === last)) { e.preventDefault(); first.focus(); }
   });
 }
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('bulkModalBg').addEventListener('keydown', e => {   // Enter in a box of the Edit-tasks dialog applies it (as it saves in the task dialog's name box)
-    if (e.key === 'Enter' && e.target && e.target.matches && e.target.matches('input[type=text], input[type=number]') && !e.target.classList.contains('dt-date') && !e.target.classList.contains('dt-time')) { e.preventDefault(); applyBulkEdit(); }
-    else if (e.key === 'Enter' && e.target && e.target.classList && (e.target.classList.contains('dt-date') || e.target.classList.contains('dt-time'))) setTimeout(applyBulkEdit, 0);
+// Enter anywhere in a single-purpose dialog (not a button, textarea or open dropdown menu) clicks its one primary action —
+// the same thing the task dialog's own Name box has always done for Save. A typed date/time box settles what you wrote
+// first (its own Enter handler, above), so its click is deferred a tick until that has actually happened.
+function wireEnterApplies(bgId, btnId) {
+  document.getElementById(bgId).addEventListener('keydown', e => {
+    if (e.key !== 'Enter' || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+    const t = e.target;
+    if (t.tagName === 'BUTTON' || t.tagName === 'TEXTAREA' || (t.closest && t.closest('.dropdown-menu'))) return;
+    const btn = document.getElementById(btnId);
+    if (!btn || btn.disabled) return;
+    if (t.classList && (t.classList.contains('dt-date') || t.classList.contains('dt-time'))) { setTimeout(() => btn.click(), 0); return; }
+    e.preventDefault(); btn.click();
   });
+}
+document.addEventListener('DOMContentLoaded', () => {
+  wireEnterApplies('bulkModalBg', 'bulkApplyBtn');
+  wireEnterApplies('rescheduleModalBg', 'rescheduleBtn');
+  wireEnterApplies('baselineModalBg', 'baselineSetBtn');
   enhanceBoxes();
   initDialogAccessibility();
   load();

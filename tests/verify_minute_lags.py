@@ -46,6 +46,8 @@ with sync_playwright() as p:
     check("a minute-mode plan saved before lags were minutes (no marker, lag 3) is read as 3 days = 1440 min", lag("B") == 1440, lag("B"))
     ev("() => { project.lagUnit = 'minute'; tasks.find(t => t.name === 'B').predecessors[0].lag = 90; normalizeData(); }")
     pg.click("#scheduleMenuBtn"); pg.click("#planPrecisionItem"); pg.wait_for_selector("#precisionModalBg.open"); pg.click("#precisionDay"); pg.click("#precisionModalBg .modal-footer button.btn-primary"); pg.wait_for_timeout(200)
+    check("a lag that won't round evenly (90 min) warns before switching to days", pg.locator("#confirmModalBg.open").count() == 1 and "round to whole working days" in pg.inner_text("#confirmModalBody"), pg.inner_text("#confirmModalBody") if pg.locator("#confirmModalBg.open").count() else None)
+    pg.click("#confirmModalActionBtn"); pg.wait_for_timeout(200)
     check("switching back to days converts minutes to days, rounded (90 min of an 8h day = 0), and drops the marker", lag("B") == 0 and ev("() => project.lagUnit") is None, (lag("B"), ev("() => project.lagUnit")))
     ev("() => { tasks.find(t => t.name === 'B').predecessors[0].lag = 2; save(); }")
     pg.click("#scheduleMenuBtn"); pg.click("#planPrecisionItem"); pg.wait_for_selector("#precisionModalBg.open"); pg.click("#precisionMinute"); pg.click("#precisionModalBg .modal-footer button.btn-primary"); pg.wait_for_timeout(200)

@@ -112,6 +112,8 @@ with sync_playwright() as p:
     # ---------------------------------------------------------------- back to days
     ev("() => { tasks.find(t => t.name === 'A').custom = { date1: '2026-09-11', date1Time: '17:45' }; normalizeData(); }")
     pg.click("#scheduleMenuBtn"); pg.click("#planPrecisionItem"); pg.wait_for_selector("#precisionModalBg.open"); pg.click("#precisionDay"); pg.click("#precisionModalBg .modal-footer button.btn-primary"); pg.wait_for_timeout(200)
+    check("switching to days with a time still set warns first", pg.locator("#confirmModalBg.open").count() == 1 and "lose their time of day" in pg.inner_text("#confirmModalBody"), pg.inner_text("#confirmModalBody") if pg.locator("#confirmModalBg.open").count() else None)
+    pg.click("#confirmModalActionBtn"); pg.wait_for_timeout(200)
     check("switching the plan back to days drops the time and keeps the date", cust("A") == ["2026-09-11", None], cust("A"))
     check("a day-mode plan's cell shows the date only, in a 104px column", cell("A").inner_text() == "11.09.2026" and "150px" not in ev("() => getComputedStyle(document.getElementById('main')).getPropertyValue('--task-cols')"))
     cell("A").click(); pg.wait_for_selector(".inline-edit")
