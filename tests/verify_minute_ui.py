@@ -66,6 +66,7 @@ with sync_playwright() as p:
     ev("() => { delete project.workHours; normalizeData(); save(); }")   # back to the 08:00-17:00/12:00-13:00 default (an earlier section customized it)
     seed([{"name": "A", "s": "2026-09-07", "e": "2026-09-07"}])
     pg.click(f".grid-row[data-id='{tid('A')}'] .icon-btn[title=Edit]"); pg.wait_for_selector("#taskModalBg.open")
+    pg.wait_for_timeout(60)   # openTaskModal() focuses Task Name 30ms after opening; a fill racing that timer can be interrupted (was intermittently flaky here)
     check("in a minute-mode plan the task dialog shows Start/Finish time inputs", pg.is_visible("#taskStartTimeInput") and pg.is_visible("#taskEndTimeInput"))
     check("the Duration label drops '(days)' and its tooltip explains hour/minute entry", pg.inner_text("#taskDurationLabel") == "Duration" and "bare number is hours" in (pg.get_attribute("#taskDurationLabel", "title") or ""))
     check("the dialog keeps its width (620px, no jump between modes): each date+time field takes two of the four columns", pg.eval_on_selector("#taskModalInner", "e => e.classList.contains('minute-mode')") and round(pg.locator("#taskModalInner").bounding_box()["width"]) == 620)
@@ -82,6 +83,7 @@ with sync_playwright() as p:
 
     # ---------------------------------------------------------------- actual start/finish time round-trip
     pg.click(f".grid-row[data-id='{tid('A')}'] .icon-btn[title=Edit]"); pg.wait_for_selector("#taskModalBg.open")
+    pg.wait_for_timeout(60)   # same: past the dialog's post-open autofocus (this used to fail intermittently — the fill below raced the focus() and got interrupted)
     pg.fill("#taskActualStartInput", "2026-09-07"); pg.dispatch_event("#taskActualStartInput", "change")
     pg.fill("#taskActualStartTimeInput", "09:30"); pg.dispatch_event("#taskActualStartTimeInput", "change")
     check("recording an Actual Start time updates the Start time to match (the actual dates ARE the schedule)", ev("() => document.getElementById('taskStartTimeInput').value") == "09:30", ev("() => document.getElementById('taskStartTimeInput').value"))
