@@ -53,11 +53,27 @@ with sync_playwright() as p:
     check("over-constrained ALAP (predecessor needs it later than the successor has room for) keeps the predecessor's date", dates("B") == ["2026-09-21", "2026-09-22"], dates("B"))
     check("...and its ASAP successor is still pushed out to make room, exactly as for any ordinary predecessor", dates("C")[0] > "2026-09-21", dates("C"))
 
-    # ---------------------------------------------------------------- no successors: falls back to the earliest bound (behaves like ASAP)
+    # ---------------------------------------------------------------- no successors: defers to the project's overall finish, not a plain ASAP fallback
+    # This 2-task case can't by itself distinguish the two behaviors: with only A -> B, "the project's other tasks' finish" and
+    # "B's own predecessor push" are the same date (there's nothing else in the plan) — kept as a floor regression check.
     seed([{"name": "A", "s": "2026-09-07", "e": "2026-09-09"},
           {"name": "B", "s": "2026-09-25", "e": "2026-09-25", "ct": "ALAP", "preds": [["A", "FS", 0]]}])
     edit("A", "duration", "3")   # trigger a cascade re-check on B
-    check("an ALAP task with no successors sits at the earliest its own links allow (nothing local to be late against)", dates("B") == ["2026-09-10", "2026-09-10"], dates("B"))
+    check("an ALAP task with no successors and nothing else in the project sits at its own predecessor's earliest bound", dates("B") == ["2026-09-10", "2026-09-10"], dates("B"))
+
+    # A THIRD, unrelated task C (no link to A or B) that finishes much later actually exercises the fix: B should defer to
+    # the project's real finish (C's), not fall back to its own earliest predecessor-driven bound.
+    seed([{"name": "A", "s": "2026-09-07", "e": "2026-09-09"},
+          {"name": "B", "s": "2026-09-25", "e": "2026-09-25", "ct": "ALAP", "preds": [["A", "FS", 0]]},
+          {"name": "C", "s": "2026-09-07", "e": "2026-09-30"}])
+    edit("A", "duration", "3")
+    check("an ALAP task with no successors defers to the project's overall finish (real MS Project behavior, was a documented scope limit)", dates("B") == ["2026-09-30", "2026-09-30"], dates("B"))
+    check("...still never earlier than its own predecessor floor (over-constrained safety unchanged)", pg.evaluate("() => dayNumber(tasks.find(t=>t.name==='B').startDate) > dayNumber(tasks.find(t=>t.name==='A').endDate)"))
+
+    # a single-task plan (nothing else to defer to at all) keeps the old ASAP floor, no crash
+    seed([{"name": "D", "s": "2026-09-07", "e": "2026-09-08", "ct": "ALAP"}])
+    pg.evaluate("() => { applyConstraints(tasks.find(t => t.name === 'D').id); save(); }")
+    check("an ALAP task alone in the plan (no successors, nothing else to defer to) keeps its own dates, no error", dates("D") == ["2026-09-07", "2026-09-08"], dates("D"))
 
     # ---------------------------------------------------------------- SNLT / FNLT now actually cap a forward push
     seed([{"name": "A", "s": "2026-09-07", "e": "2026-09-09"},

@@ -75,9 +75,18 @@ with sync_playwright() as p:
     pg.evaluate("() => { const a = tasks.find(t => t.name === 'A'), b = tasks.find(t => t.name === 'B'); a.predecessors = [{ id: b.id, type: 'FS', lag: 0 }]; }")
     check("a dependency cycle takes part in nothing and does not hang", crit() == [], crit())
     seed([T("A", "2026-09-07", "2026-09-11", None, {"actualStart": "2026-09-07", "actualFinish": "2026-09-11", "progress": 100}), T("B", "2026-09-14", "2026-09-16", [["A", "FS", 0]])])
-    check("a finished task is part of the analysis (its actual dates drive the chain)", crit() == ["A", "B"], crit())
+    check("a finished task drives the chain (its actual dates still place B) but is no longer itself marked critical — there's nothing left to manage there", crit() == ["B"] and flt("A") == 0, (crit(), flt("A")))
     seed([T("A", "2026-09-07", "2026-09-07"), T("MS", "2026-09-08", "2026-09-08", [["A", "FS", 0]], {"milestone": True})])
     check("milestones are one-day tasks in the chain", crit() == ["A", "MS"], crit())
+
+    # ---------------------------------------------------- a task's own upper-bound/exact constraint caps its own late finish too, not just links (honorConstraintDates gates it)
+    pg.evaluate("() => { delete project.honorConstraintDates; }")
+    seed([T("D", "2026-09-07", "2026-09-07", None, {"constraintType": "MSO", "constraintDate": "2026-09-10"}), T("Z", "2026-09-07", "2026-09-30")])
+    pg.evaluate("() => applyConstraints(tasks.find(t => t.name === 'D').id)")
+    check("honored: a task with no successors and its own MSO is critical at its own date, not float-rich just because the project runs to Z's much later finish", crit() == ["D"] or ("D" in crit() and flt("D") == 0), (crit(), flt("D")))
+    pg.evaluate("() => { project.honorConstraintDates = false; }")
+    check("not honored: the same task's float now runs all the way to the project's real end — its own constraint no longer caps it", flt("D") > 0, flt("D"))
+    pg.evaluate("() => { delete project.honorConstraintDates; }")
 
     # ---------------------------------------------------- a bigger network
     seed([T("A", "2026-09-07", "2026-09-11"), T("B", "2026-09-14", "2026-09-18", [["A", "FS", 0]]), T("C", "2026-09-14", "2026-09-16", [["A", "FS", 0]]),

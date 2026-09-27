@@ -65,9 +65,10 @@ with sync_playwright() as p:
     check("a bare '+2' is hours, like Duration (120)", pred("1FS+2") == 120)
     check("a lead: '-1h' is -60", pred("1SS-1h") == -60 and ev("() => tasks.find(t => t.name === 'B').predecessors[0].type") == "SS")
     edit("B", "preds", "1FS+2ed")
-    check("an elapsed lag is still refused", lag("B") == -60 and "Elapsed" in toast(), toast())
+    check("an elapsed lag ('2ed') is 2 real calendar days = 2880 minutes, not 2 working days' worth", lag("B") == 2880 and ev("() => tasks.find(t => t.name === 'B').predecessors[0].elapsed") == True, lag("B"))
+    pred("1FS+2h")   # back to a plain working lag before the cap check below
     edit("B", "preds", "1FS+99999d")
-    check("...and so is one over the cap", lag("B") == -60)
+    check("...and one over the cap is refused, unchanged", lag("B") == 120)
     pred("1FS+90m")
     lbl = lambda: ev("() => predecessorLabel(tasks.find(t => t.name === 'B'))")
     check("the cell writes a lag back with its unit: 90 min = '1FS+90m'", lbl() == "1FS+90m", lbl())

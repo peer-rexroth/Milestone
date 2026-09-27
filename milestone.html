@@ -1199,6 +1199,11 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <div class="cal-days" id="calendarDays"></div>
       </section>
       <section class="cal-sec">
+        <div class="cal-sec-title">Constraints</div>
+        <label class="hol-yearly" title="On: a Must Start On/Finish On/No Earlier Than/No Later Than date always wins, even over what a task's links would otherwise compute — today's standard. Off: a link wins when the two disagree; the constraint is still shown as unmet, just not forced."><input type="checkbox" id="honorConstraintDatesInput"> Tasks always honor their constraint dates</label>
+        <p class="cal-hint" style="margin:0">On (the standard): a task's own constraint date always overrides what its links would otherwise schedule. Off: its links win when they disagree with the constraint — the constraint still shows as unmet (see the warning icon), it just no longer forces the date.</p>
+      </section>
+      <section class="cal-sec">
         <div class="cal-sec-title">Public holidays</div>
         <div class="hol-preset">
           <select id="holRegion" aria-label="Country or region for public holidays"></select>
@@ -1433,7 +1438,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <div class="help-section">
           <div class="help-section-title">Dependencies</div>
           <div class="help-row"><i class="fa-solid fa-link"></i><span>Open a task and add a <strong>predecessor</strong> to link it to another task: Finish-to-Start, Start-to-Start, Finish-to-Finish or Start-to-Finish. In the list you can type them directly, the way MS Project writes them: <code>3</code>, <code>3FS</code>, <code>3SS+2d</code>, <code>4FF-1w</code>, several separated by <code>,</code> or <code>;</code>.</span></div>
-          <div class="help-row"><i class="fa-solid fa-arrows-left-right"></i><span><strong>Lag and lead:</strong> a positive number delays the dependent task, a negative number lets it overlap and start early. <code>3FS+2</code> waits 2 extra days after task 3 finishes; <code>3FS-2</code> starts 2 days before task 3 finishes. Units are days (<code>d</code>), weeks (<code>w</code>) or hours (<code>h</code>), all counted in working days; elapsed (<code>ed</code>) and percentage lags are not supported.</span></div>
+          <div class="help-row"><i class="fa-solid fa-arrows-left-right"></i><span><strong>Lag and lead:</strong> a positive number delays the dependent task, a negative number lets it overlap and start early. <code>3FS+2</code> waits 2 extra days after task 3 finishes; <code>3FS-2</code> starts 2 days before task 3 finishes. Units are days (<code>d</code>), weeks (<code>w</code>) or hours (<code>h</code>), counted in <strong>working</strong> time by default; an <code>e</code> prefix (<code>3FS+2ed</code>, <code>2ew</code>, <code>2eh</code>) makes it <strong>elapsed</strong> — real calendar time, crossing weekends and holidays without skipping them, as in MS Project. Percentage lags are not supported.</span></div>
           <div class="help-row"><i class="fa-solid fa-triangle-exclamation"></i><span>A <strong>circular dependency</strong> is flagged with a warning icon and stops auto-scheduling for the tasks involved.</span></div>
         </div>
         <div class="help-divider"></div>
@@ -1442,6 +1447,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
           <div class="help-row"><i class="fa-solid fa-wand-magic-sparkles"></i><span>An Auto task always sits at the <strong>earliest date its links allow</strong>. Move a predecessor later and the dependent tasks are pushed later; make it shorter, finish it early (record an Actual Finish) or delete it, and they are pulled earlier.</span></div>
           <div class="help-row"><i class="fa-solid fa-calendar-day"></i><span><strong>A date you choose is kept.</strong> Type a Start later than its links allow (or drag the bar later, or change it in the task's dialog) — a deliberate delay — and the task stays there with a <em>Start No Earlier Than</em> constraint at that date; a later Finish gets <em>Finish No Earlier Than</em>. Links can still push the task later, but never pull it before that date.</span></div>
           <div class="help-row"><i class="fa-solid fa-circle-info"></i><span>A date that is not a delay adds no constraint: a milestone or a task with no links stays a plain as-soon-as-possible task. Change or remove a constraint in the task's dialog. Manual tasks and tasks that have already started are never moved.</span></div>
+          <div class="help-row"><i class="fa-solid fa-toggle-on"></i><span><strong>Tasks always honor their constraint dates</strong> (Schedule menu → Working calendar) is on by default: a constraint always wins over what a task's links would otherwise compute. Turn it off and a link wins instead when the two disagree — the constraint still shows as unmet (the warning icon), it just no longer forces the date.</span></div>
         </div>
       </div>
       <div class="help-pane" id="helpPane-progress" role="tabpanel" aria-labelledby="helpTab-progress" hidden>
@@ -2525,6 +2531,7 @@ function normalizeData() {
       if (typeof p.lag !== 'number' || !isFinite(p.lag)) p.lag = 0;
       const cap = project && project.timeUnit === 'minute' && project.lagUnit === 'minute' ? MAX_LAG_MINUTES : MAX_LAG_DAYS;   // (a minute-mode plan's lags are working MINUTES)
       p.lag = Math.max(-cap, Math.min(cap, Math.round(p.lag)));
+      if (p.elapsed) p.elapsed = true; else delete p.elapsed;   // absent = false, working time — the usual convention
     }
   }
 
@@ -2568,6 +2575,9 @@ function normalizeData() {
     if (wd.length && wd.join() !== DEFAULT_WORK_DAYS.join()) { if (!Array.isArray(project.workDays) || project.workDays.join() !== wd.join()) project.workDays = wd; }
     else delete project.workDays;
     { const hl = cleanHolidays(project.holidays); if (!hl) delete project.holidays; else if (stableStringify(hl) !== stableStringify(project.holidays)) project.holidays = hl; }
+    // whether a task's own constraint always overrides its links (MS Project's "Tasks will always honor their constraint
+    // dates") — absent = true, the standard, unchanged since before this existed; only an explicit false is ever stored.
+    if (project.honorConstraintDates === false) { /* keep it */ } else delete project.honorConstraintDates;
   }
   {   // scheduling precision: 'minute' opts a plan into time-of-day scheduling; absent/anything else = the standard, whole-day 'day' mode
     if (project.timeUnit === 'minute') {
@@ -2784,7 +2794,7 @@ function resetEffectiveCache() { _effCache.clear(); _actCache.clear(); _baseCach
 /* ======================== Scheduling & critical path ===================== */
 function successorsMap() {
   const map = {};
-  for (const t of tasks) for (const p of t.predecessors) (map[p.id] = map[p.id] || []).push({ id: t.id, type: p.type, lag: p.lag });
+  for (const t of tasks) for (const p of t.predecessors) (map[p.id] = map[p.id] || []).push({ id: t.id, type: p.type, lag: p.lag, elapsed: p.elapsed });
   return map;
 }
 // The tasks that are MEMBERS of a dependency cycle: the strongly connected components (Tarjan) with more than one task, plus a task that
@@ -2950,6 +2960,12 @@ function nextWorkMoment(mn) { return minuteModeActive() ? nextWorkMinuteNum(mn) 
 function prevWorkMoment(mn) { return minuteModeActive() ? prevWorkMinuteNum(mn) : prevWorkNum(mn); }
 function isWorkMoment(mn) { return minuteModeActive() ? isWorkMinuteNum(mn) : isWorkNum(mn); }
 function shiftMoment(mn, k) { return minuteModeActive() ? addWorkMinuteNum(nextWorkMinuteNum(mn), k) : addWorkNum(nextWorkNum(mn), k); }
+// A predecessor/successor lag or lead: working time (shiftMoment, the usual case) or, when the link is marked elapsed,
+// real calendar time — the moment space is already a linear, gapless count (a plain UTC day number, or day*1440+minute in
+// a minute-mode plan), so an elapsed shift is nothing more than plain addition, no calendar-awareness needed. An elapsed-
+// lag-placed task can land on a non-working day and stay there (matches real MS Project) — nothing here or downstream
+// silently snaps it back; snapToWorkDays() only ever runs from a UI edit site, never from the scheduling engine itself.
+function lagShiftMoment(mn, lag, elapsed) { return elapsed ? mn + lag : shiftMoment(mn, lag); }
 function durationMoment(startMn, endMn) { return minuteModeActive() ? durationMinutes(startMn, endMn) : Math.max(1, countWorkNum(startMn, endMn)); }
 function finishMoment(startMn, dur) { return minuteModeActive() ? finishMomentFor(startMn, dur) : addWorkNum(nextWorkNum(startMn), Math.max(1, dur) - 1); }
 function startMoment(finishMn, dur) { return minuteModeActive() ? startMomentFor(finishMn, dur) : addWorkNum(nextWorkNum(finishMn), -(Math.max(1, dur) - 1)); }
@@ -2972,6 +2988,7 @@ function linkEndMoment(pred) {
 // keep full minute precision internally. constraintStart() below is the public, ISO-string-returning wrapper every
 // existing caller (and test) already expects — unchanged in day mode, date-only (time dropped) in minute mode.
 function constraintStartMoment(task, includeConstraint = true) {
+  const honor = !project || project.honorConstraintDates !== false;   // MS Project's "Tasks will always honor their constraint dates" — off, a constraint no longer overrides a predecessor push, only fills in when there is none
   let cs = null;
   const dur = durationMoment(taskMoment(task, 'start'), taskMoment(task, 'end'));
   for (const p of task.predecessors) {
@@ -2979,11 +2996,12 @@ function constraintStartMoment(task, includeConstraint = true) {
     if (!pred || isUnscheduled(pred)) continue;
     const lag = p.lag || 0;
     let c;
-    // Lags and leads are WORKING days/minutes (a lead is negative); every result is a working moment.
-    if (p.type === 'SS') c = shiftMoment(linkStartMoment(pred), lag);
-    else if (p.type === 'FF') c = startMoment(shiftMoment(linkEndMoment(pred), lag), dur);
-    else if (p.type === 'SF') c = startMoment(shiftMoment(linkStartMoment(pred), lag), dur);
-    else c = shiftMoment(linkEndMoment(pred) + (minuteModeActive() ? 0 : 1), lag); // FS, default: right after the predecessor's finish, plus the lag
+    // Lags and leads are WORKING days/minutes (a lead is negative) unless the link is marked elapsed (real calendar time,
+    // crosses weekends/holidays without skipping them); every result is a working (or, elapsed, plain calendar) moment.
+    if (p.type === 'SS') c = lagShiftMoment(linkStartMoment(pred), lag, p.elapsed);
+    else if (p.type === 'FF') c = startMoment(lagShiftMoment(linkEndMoment(pred), lag, p.elapsed), dur);
+    else if (p.type === 'SF') c = startMoment(lagShiftMoment(linkStartMoment(pred), lag, p.elapsed), dur);
+    else c = lagShiftMoment(linkEndMoment(pred) + (minuteModeActive() ? 0 : 1), lag, p.elapsed); // FS, default: right after the predecessor's finish, plus the lag
     if (cs === null || c > cs) cs = c;
   }
   // A task's own MSO/SNET/MFO/FNET constraint is a lower bound exactly like
@@ -2993,14 +3011,16 @@ function constraintStartMoment(task, includeConstraint = true) {
   if (includeConstraint && task.constraintDate && (cinfo.bound === 'lower' || cinfo.bound === 'exact')) {
     const cm = taskMoment(task, 'constraint');
     const c = cinfo.basis === 'finish' ? startMoment(cm, dur) : shiftMoment(cm, 0);
-    if (cs === null || c > cs) cs = c;
+    if (cs === null || (honor && c > cs)) cs = c;
   }
-  // SNLT/FNLT (upper bounds): once a predecessor push exists (cs !== null), the constraint CAPS it — "constraints always win
-  // here" (an explicit user request to actually enforce these rather than only flag them, see constraintViolated() below).
-  // Only caps an existing push: with nothing pushing the task in the first place (no predecessor, no lower-bound constraint),
-  // cs stays null and the task keeps its own dates undisturbed, same as ever — setting an upper bound alone never yanks a task
-  // backward out of nowhere, matching real MS Project (which flags a conflict rather than moving the task on its own too).
-  if (includeConstraint && cs !== null && task.constraintDate && cinfo.bound === 'upper') {
+  // SNLT/FNLT (upper bounds): once a predecessor push exists (cs !== null), the constraint CAPS it, when honored — "constraints
+  // always win here" by default (an explicit user request to actually enforce these rather than only flag them, see
+  // constraintViolated() below); with honorConstraintDates off, the network position stands uncapped and constraintViolated()
+  // alone carries the warning instead. Only caps an existing push: with nothing pushing the task in the first place (no
+  // predecessor, no lower-bound constraint), cs stays null and the task keeps its own dates undisturbed, same as ever — setting
+  // an upper bound alone never yanks a task backward out of nowhere, matching real MS Project (which flags a conflict rather
+  // than moving the task on its own too).
+  if (includeConstraint && honor && cs !== null && task.constraintDate && cinfo.bound === 'upper') {
     const cm = taskMoment(task, 'constraint');
     const cap = cinfo.basis === 'finish' ? startMoment(cm, dur) : cm;
     if (cap < cs) cs = cap;
@@ -3050,6 +3070,9 @@ function snapToWorkDays(t) {
 // dates, and scheduling never moves its planned dates any more (see cascadeSchedule / applyConstraints / rescheduleAsAuto) — only
 // its not-yet-started successors follow it, off those actual dates. The user can still edit its planned dates by hand.
 function isStarted(t) { return !!(t.actualStart || t.actualFinish); }
+// Done: 100% complete or an Actual Finish recorded — a fact, never moved by rescheduleFromStatusDate() (or anything else) and
+// never marked critical by criticalPathAnalysis(), though it still drives its successors' dates like any other task.
+function isTaskComplete(t) { return t.progress >= 100 || !!t.actualFinish; }
 // MS Project's schedule warning: a task that is NOT going to be moved by the scheduler — a manually scheduled one, or one that has
 // already started — sits earlier than its links allow. Returns the date its predecessors say it could start at the earliest (what
 // Auto Scheduling would use), or null when nothing's inconsistent. A started task is judged on the day it REALLY started.
@@ -3077,28 +3100,44 @@ function constraintLateEndMoment(task) {
     if (!succ || isUnscheduled(succ)) continue;
     const lag = s.lag || 0;
     let c;
-    if (s.type === 'SS') c = finishMoment(shiftMoment(linkStartMoment(succ), -lag), dur);
-    else if (s.type === 'FF') c = shiftMoment(linkEndMoment(succ), -lag);
-    else if (s.type === 'SF') c = finishMoment(shiftMoment(linkEndMoment(succ), -lag), dur);
-    else c = shiftMoment(linkStartMoment(succ), -(lag + (minuteModeActive() ? 0 : 1))); // FS, default: right before the successor may start, minus the lag
+    if (s.type === 'SS') c = finishMoment(lagShiftMoment(linkStartMoment(succ), -lag, s.elapsed), dur);
+    else if (s.type === 'FF') c = lagShiftMoment(linkEndMoment(succ), -lag, s.elapsed);
+    else if (s.type === 'SF') c = finishMoment(lagShiftMoment(linkEndMoment(succ), -lag, s.elapsed), dur);
+    else c = lagShiftMoment(linkStartMoment(succ), -(lag + (minuteModeActive() ? 0 : 1)), s.elapsed); // FS, default: right before the successor may start, minus the lag
     if (le === null || c < le) le = c;
   }
   return le;
 }
 function constraintLateEnd(task) { return momentToDate(constraintLateEndMoment(task)); }
+// The latest moment anything in the project currently finishes, excluding `excludeId` itself (which must be the task about
+// to be placed — including it would let its own not-yet-decided end feed circularly into its own new target). Same
+// eligibility as criticalPathAnalysis()'s own network (no groups, cyclic or manual tasks), but only the single max is
+// needed here, not per-task late dates, so a plain O(n) scan does it — no topological sort.
+function projectEndMoment(excludeId) {
+  const cyclic = taskCycleSet();
+  let pe = null;
+  for (const t of tasks) {
+    if (t.id === excludeId || hasChildren(t.id) || cyclic.has(t.id) || t.taskMode === 'manual') continue;
+    const raw = linkEndMoment(t);
+    if (pe === null || raw > pe) pe = raw;
+  }
+  return pe;
+}
 // The start moment an ALAP task belongs at: as late as its successors currently allow (constraintLateEndMoment(), converted
 // to a start via startMoment(), finishMoment()'s inverse), but never earlier than what its OWN predecessors/lower-bound
 // constraint require (constraintStartMoment(), the same floor an ASAP task uses) — an over-constrained ALAP task
 // (predecessors need it later than successors allow) keeps the predecessors' date, the same "a real dependency is never
-// silently broken" rule SNLT/FNLT enforcement follows above. With no successors there is nothing local to be late against,
-// so it falls back to constraintStartMoment() — behaves like ASAP — a documented scope limit (real MS Project would push
-// it out to the whole project's finish; see "Task constraints").
+// silently broken" rule SNLT/FNLT enforcement follows above. With no successors there is nothing LOCAL to be late against,
+// so it defers to the project's own overall finish instead (projectEndMoment()) — matching real MS Project rather than the
+// ASAP fallback this used to have (a documented scope limit, now closed; see "Task constraints"). Only a single-task plan
+// (nothing else in the project either) still has no anchor at all, and keeps the ASAP floor.
 function alapTargetStartMoment(task) {
   const dur = durationMoment(taskMoment(task, 'start'), taskMoment(task, 'end'));
   const le = constraintLateEndMoment(task);
   const earliest = constraintStartMoment(task);
-  if (le === null) return earliest;
-  const want = startMoment(le, dur);
+  const fallback = le === null ? projectEndMoment(task.id) : null;
+  if (le === null && fallback === null) return earliest;
+  const want = startMoment(le === null ? fallback : le, dur);
   return earliest !== null && earliest > want ? earliest : want;
 }
 function alapTargetStart(task) { return momentToDate(alapTargetStartMoment(task)); }
@@ -3213,14 +3252,15 @@ function topoOrder(ids, preds) {
 // (MS Project does not compute criticality for them either).
 // Returns { critical: Set of ids, float: Map id -> total float in working days }.
 function criticalPathAnalysis() {
+  const honor = !project || project.honorConstraintDates !== false;
   const cyclic = taskCycleSet();
   const leaves = tasks.filter(t => !hasChildren(t.id) && !cyclic.has(t.id) && t.taskMode !== 'manual');
-  const ids = leaves.map(t => t.id), inNet = new Set(ids);
+  const ids = leaves.map(t => t.id), inNet = new Set(ids), taskOf = new Map(leaves.map(t => [t.id, t]));
   const es = {}, ef = {}, dur = {};
   for (const t of leaves) { es[t.id] = linkStartMoment(t); const raw = linkEndMoment(t); ef[t.id] = raw < es[t.id] ? es[t.id] : raw; dur[t.id] = durationMoment(es[t.id], ef[t.id]); }
   const preds = {}, succLinks = {};
   for (const id of ids) succLinks[id] = [];
-  for (const t of leaves) { preds[t.id] = t.predecessors.map(p => p.id).filter(pid => inNet.has(pid)); for (const p of t.predecessors) if (inNet.has(p.id)) succLinks[p.id].push({ sid: t.id, type: p.type, lag: p.lag || 0 }); }
+  for (const t of leaves) { preds[t.id] = t.predecessors.map(p => p.id).filter(pid => inNet.has(pid)); for (const p of t.predecessors) if (inNet.has(p.id)) succLinks[p.id].push({ sid: t.id, type: p.type, lag: p.lag || 0, elapsed: p.elapsed }); }
   const order = topoOrder(ids, preds);
   let projectEnd = null;
   for (const id of order) if (projectEnd === null || ef[id] > projectEnd) projectEnd = ef[id];
@@ -3228,19 +3268,31 @@ function criticalPathAnalysis() {
   for (let i = order.length - 1; i >= 0; i--) {
     const id = order[i];
     let lf = projectEnd;
-    for (const { sid, type, lag } of succLinks[id]) {
+    for (const { sid, type, lag, elapsed } of succLinks[id]) {
       if (LS[sid] === undefined) continue;
       let c;
-      if (type === 'SS') c = finishMoment(shiftMoment(LS[sid], -lag), dur[id]);         // its start no later than the successor's late start − lag
-      else if (type === 'FF') c = shiftMoment(LF[sid], -lag);                           // its finish no later than the successor's late finish − lag
-      else if (type === 'SF') c = finishMoment(shiftMoment(LF[sid], -lag), dur[id]);    // its start no later than the successor's late finish − lag
-      else c = shiftMoment(LS[sid], -(lag + (minuteModeActive() ? 0 : 1)));             // FS: right before the successor may start, less the lag
+      if (type === 'SS') c = finishMoment(lagShiftMoment(LS[sid], -lag, elapsed), dur[id]);         // its start no later than the successor's late start − lag
+      else if (type === 'FF') c = lagShiftMoment(LF[sid], -lag, elapsed);                           // its finish no later than the successor's late finish − lag
+      else if (type === 'SF') c = finishMoment(lagShiftMoment(LF[sid], -lag, elapsed), dur[id]);    // its start no later than the successor's late finish − lag
+      else c = lagShiftMoment(LS[sid], -(lag + (minuteModeActive() ? 0 : 1)), elapsed);             // FS: right before the successor may start, less the lag
       if (c < lf) lf = c;
+    }
+    // A task's own upper-bound (SNLT/FNLT) or exact (MSO/MFO) constraint caps its own late finish too, mirroring the same
+    // conversion constraintStartMoment() already does for the forward/floor side — a lower bound (SNET/FNET) is deliberately
+    // left out, it only affects the early side, already reflected in es/ef above. Gated the same way placement is: off with
+    // honorConstraintDates false, so a constraint that can't move a task can't understate its float either.
+    if (honor) {
+      const task = taskOf.get(id), cinfo = constraintTypeInfo(task.constraintType);
+      if (task.constraintDate && (cinfo.bound === 'upper' || cinfo.bound === 'exact')) {
+        const cm = taskMoment(task, 'constraint');
+        const c = cinfo.basis === 'finish' ? cm : finishMoment(cm, dur[id]);
+        if (c < lf) lf = c;
+      }
     }
     LF[id] = lf; LS[id] = startMoment(lf, dur[id]);
     const slack = momentDiff(ef[id], lf);   // negative when the task already finishes later than its late finish allows
     float.set(id, slack);
-    if (slack <= 0) critical.add(id);
+    if (slack <= 0 && !isTaskComplete(taskOf.get(id))) critical.add(id);   // complete is a fact, not something that still needs attention
   }
   return { critical, float };
 }
@@ -3266,7 +3318,7 @@ function rescheduleFromStatusDate(statusIso, statusTime) {
   const touched = [];
   for (const id of order) {
     const t = byId(id);
-    if (t.progress >= 100 || t.actualFinish) continue;   // complete: a fact, never moved by this (or anything else)
+    if (isTaskComplete(t)) continue;   // complete: a fact, never moved by this (or anything else)
     if (!isStarted(t)) {
       // Not started: a floor at the status moment, but only when it is actually overdue (its planned start already at or
       // before the status moment) — a genuinely future task is left alone. Folded together with the ordinary
@@ -3805,14 +3857,19 @@ function applyFilterDraft() {
 // "3FS+2, 5SS" — exactly what the Predecessors column shows (and what the column filter tests).
 // A lag as the Predecessors cell writes it: "+2" (working days) in a day-mode plan, "+2h" / "-30m" / "+1d" in a minute-mode plan
 // (whole working days, else whole hours, else minutes — always with a unit, so it reads back the same).
-function fmtLagMinutes(min) { const a = Math.abs(min), per = workMinutesPerDay(); return (min < 0 ? '-' : '+') + (a % per === 0 ? `${a / per}d` : a % 60 === 0 ? `${a / 60}h` : `${a}m`); }
-function fmtLag(lag) { return !lag ? '' : minuteModeActive() ? fmtLagMinutes(lag) : (lag > 0 ? `+${lag}` : `${lag}`); }
+// elapsed: real calendar time (an 'ed'/'eh'/'em' suffix) rather than working time — its own day is always 1440 minutes,
+// never the plan's working minutes/day, so the unit it picks can differ from an equal-looking working lag.
+function fmtLagMinutes(min, elapsed) { const a = Math.abs(min), per = elapsed ? 1440 : workMinutesPerDay(); return (min < 0 ? '-' : '+') + (a % per === 0 ? `${a / per}${elapsed ? 'ed' : 'd'}` : a % 60 === 0 ? `${a / 60}${elapsed ? 'eh' : 'h'}` : `${a}${elapsed ? 'em' : 'm'}`); }
+function fmtLag(lag, elapsed) { return !lag ? '' : minuteModeActive() ? fmtLagMinutes(lag, elapsed) : `${lag > 0 ? '+' : ''}${lag}${elapsed ? 'ed' : ''}`; }
 // One typed lag ("2h", "-30m", "+1d", "1w"; blank = none) in working minutes — a bare number is hours, like the Duration. null = not a lag.
 function parseLagInput(str) {
   const v = String(str == null ? '' : str).trim().toLowerCase();
   if (v === '') return 0;
   const m = /^([+-])?\s*(\d+(?:[.,]\d+)?)\s*([a-zäöü]*)$/.exec(v);
-  if (!m || (m[3] && !predLagUnitOk(m[3]))) return null;
+  // Deliberately working-time only, no elapsed ('ed'/'ew'/'eh') — this box has no elapsed conversion below, and
+  // predLagUnitOk() now also accepts those units (for the Predecessors cell); check the plain working-only regex
+  // directly instead, so an elapsed unit here is refused rather than silently read as working time.
+  if (!m || (m[3] && !(PRED_LAG_UNIT_OK.test(m[3]) || (minuteModeActive() && LAG_MIN_UNIT.test(m[3]))))) return null;
   const per = workMinutesPerDay(), u = m[3], n = parseFloat(m[2].replace(',', '.'));
   const lag = n * (LAG_MIN_UNIT.test(u) ? 1 : /^(h|hr|hrs|hour|hours|std|stunde|stunden|)$/.test(u) ? 60 : /^(w|wk|wks|week|weeks|wo|woche|wochen)$/.test(u) ? 5 * per : per);
   return lag <= MAX_LAG_MINUTES ? Math.round(lag) * (m[1] === '-' ? -1 : 1) : null;
@@ -3821,7 +3878,7 @@ function predecessorLabel(t) {
   return t.predecessors.map(p => {
     const pt = byId(p.id);
     if (!pt) return '';
-    const lag = fmtLag(p.lag);
+    const lag = fmtLag(p.lag, p.elapsed);
     return `${taskDisplayId(p.id)}${p.type}${lag}`;
   }).filter(Boolean).join(', ');
 }
@@ -4493,14 +4550,20 @@ function commitInlineEdit(id, field, rawValue) {
 // an already-valid predecessor list.
 const PRED_LAG_UNIT_OK = /^(|d|day|days|t|tag|tage|tagen|w|wk|wks|week|weeks|wo|woche|wochen|h|hr|hrs|hour|hours|std|stunde|stunden)$/;
 const LAG_MIN_UNIT = /^(m|min|mins|minute|minutes)$/;
-function predLagUnitOk(u) { return PRED_LAG_UNIT_OK.test(u) || (minuteModeActive() && LAG_MIN_UNIT.test(u)); }   // (minutes are a lag unit only where lags are minutes)
+// "Elapsed" (an 'e' prefix, MS Project's own convention): real calendar time, crossing weekends/holidays without skipping
+// them — as opposed to the plain units above, which always count working time only.
+const PRED_LAG_ELAPSED_UNIT_OK = /^e(d|day|days|w|wk|wks|week|weeks|h|hr|hrs|hour|hours)$/;
+const LAG_ELAPSED_MIN_UNIT = /^e(m|min|mins|minute|minutes)$/;
+function predLagUnitOk(u) { return PRED_LAG_UNIT_OK.test(u) || PRED_LAG_ELAPSED_UNIT_OK.test(u) || (minuteModeActive() && (LAG_MIN_UNIT.test(u) || LAG_ELAPSED_MIN_UNIT.test(u))); }   // (minutes, elapsed or not, are a lag unit only where lags are minutes)
 function predBadMessage(tok) {   // why a token of the Predecessors cell was refused
   const m = /[+-]\s*[\d.,]+\s*([a-zäöü%]*)$/i.exec(tok);
   if (m) {
     const u = m[1].toLowerCase();
     if (u === '%') return `Percentage lags ("${tok}") aren't supported — use days (d), weeks (w) or hours (h)`;
-    if (u.startsWith('e')) return `Elapsed lags ("${tok}") aren't supported — lags count working days`;
-    if (!predLagUnitOk(u)) return `Can't read the lag in "${tok}" — use days (d), weeks (w), hours (h)${minuteModeActive() ? ' or minutes (m)' : ''}`;
+    if (!predLagUnitOk(u)) {
+      if (u.startsWith('e')) return `Can't read the elapsed lag in "${tok}" — use ed, ew or eh${minuteModeActive() ? ', em' : ''} (e.g. "3ed")`;
+      return `Can't read the lag in "${tok}" — use days (d), weeks (w), hours (h)${minuteModeActive() ? ' or minutes (m)' : ''}`;
+    }
     return `A lag can be at most ${MAX_LAG_DAYS.toLocaleString('en')} days ("${tok}")`;
   }
   return `Can't parse "${tok}"`;
@@ -4517,7 +4580,7 @@ function parsePredecessorString(str, taskId) {
     if (byId(targetId).spacer) { showToast("Can't depend on an empty line — predecessors unchanged", true); return null; }
     if (seen.has(targetId)) continue;
     seen.add(targetId);
-    result.push({ id: targetId, type: l.type, lag: l.lag });
+    result.push({ id: targetId, type: l.type, lag: l.lag, elapsed: l.elapsed });
   }
   return result;
 }
@@ -5522,6 +5585,7 @@ function openCalendarModal() {
   document.getElementById('calendarDays').innerHTML = WEEKDAY_ORDER.map(d =>
     `<label class="cal-day"><input type="checkbox" value="${d}"${on.has(d) ? ' checked' : ''}><span>${WEEKDAY_NAMES[d]}</span></label>`).join('');
   calHolidays = (project.holidays || []).map(h => Object.assign({}, h));
+  document.getElementById('honorConstraintDatesInput').checked = project.honorConstraintDates !== false;
   fillHolidayPresets();
   for (const id of ['holFrom', 'holTo', 'holName']) document.getElementById(id).value = '';
   document.getElementById('holYearly').checked = false; document.getElementById('holYearly').disabled = false;
@@ -5535,7 +5599,7 @@ function openCalendarModal() {
 function closeCalendarModal() { document.getElementById('calendarModalBg').classList.remove('open'); }
 // What the dialog holds right now (chips + the list): × / Escape / a click outside ask before throwing edits away.
 let calSnapshot = null;
-function calendarDraftState() { return JSON.stringify([[...document.querySelectorAll('#calendarDays input:checked')].map(i => i.value), calHolidays]); }
+function calendarDraftState() { return JSON.stringify([[...document.querySelectorAll('#calendarDays input:checked')].map(i => i.value), calHolidays, document.getElementById('honorConstraintDatesInput').checked]); }
 function calendarDirty() { return calSnapshot !== null && document.getElementById('calendarModalBg').classList.contains('open') && calendarDraftState() !== calSnapshot; }
 function requestCloseCalendarModal() {
   if (!calendarDirty()) { closeCalendarModal(); return; }
@@ -5583,10 +5647,11 @@ function removeHoliday(i) { calHolidays.splice(i, 1); renderHolidayList(); }
 function saveCalendar() {
   const days = [...document.querySelectorAll('#calendarDays input:checked')].map(i => Number(i.value)).sort((a, b) => a - b);
   if (!days.length) { showToast('Pick at least one working day', true); return; }
-  const hol = cleanHolidays(calHolidays);
-  if (days.join() === currentWorkDays().join() && stableStringify(hol) === stableStringify(project.holidays || null)) { closeCalendarModal(); return; }
+  const hol = cleanHolidays(calHolidays), honor = document.getElementById('honorConstraintDatesInput').checked;
+  if (days.join() === currentWorkDays().join() && stableStringify(hol) === stableStringify(project.holidays || null) && honor === (project.honorConstraintDates !== false)) { closeCalendarModal(); return; }
   project.workDays = days;
   if (hol) project.holidays = hol; else delete project.holidays;
+  if (honor) delete project.honorConstraintDates; else project.honorConstraintDates = false;
   project.updatedAt = Date.now();
   normalizeData();   // drops workDays again if it is the default
   save(); render(); closeCalendarModal();
@@ -6295,12 +6360,12 @@ function replanAfterMerge(touched) {
    A conflict = both sides changed the same field of the same task (or plan setting) since they last agreed. The merge has already
    picked the newer edit; this only makes that visible — and reversible: Review lists them and lets you take the other version. */
 let syncConflictLog = [];   // session only (a heads-up for whoever is at the keyboard, not history)
-const CONFLICT_LABELS = { name: 'Name', startDate: 'Start', endDate: 'Finish', progress: '% Complete', resource: 'Resource', predecessors: 'Predecessors', taskMode: 'Task mode', actualStart: 'Actual Start', actualFinish: 'Actual Finish', parentId: 'Parent', order: 'Position', color: 'Colour', milestone: 'Milestone', constraintType: 'Constraint', constraintDate: 'Constraint date', startTime: 'Start time', endTime: 'Finish time', actualStartTime: 'Actual Start time', actualFinishTime: 'Actual Finish time', constraintTime: 'Constraint time', timeUnit: 'Scheduling precision', workHours: 'Working hours', workHoursByDay: 'Working hours by day', lagUnit: 'Lag unit', startText: 'Start (text)', endText: 'Finish (text)', durText: 'Duration (text)', custom: 'Custom fields', baselines: 'Baselines', workDays: 'Working days', compareBaseline: 'Compared baseline', fieldNames: 'Custom field names', newTaskMode: 'New task mode' };
+const CONFLICT_LABELS = { name: 'Name', startDate: 'Start', endDate: 'Finish', progress: '% Complete', resource: 'Resource', predecessors: 'Predecessors', taskMode: 'Task mode', actualStart: 'Actual Start', actualFinish: 'Actual Finish', parentId: 'Parent', order: 'Position', color: 'Colour', milestone: 'Milestone', constraintType: 'Constraint', constraintDate: 'Constraint date', startTime: 'Start time', endTime: 'Finish time', actualStartTime: 'Actual Start time', actualFinishTime: 'Actual Finish time', constraintTime: 'Constraint time', timeUnit: 'Scheduling precision', workHours: 'Working hours', workHoursByDay: 'Working hours by day', lagUnit: 'Lag unit', startText: 'Start (text)', endText: 'Finish (text)', durText: 'Duration (text)', custom: 'Custom fields', baselines: 'Baselines', workDays: 'Working days', compareBaseline: 'Compared baseline', fieldNames: 'Custom field names', newTaskMode: 'New task mode', honorConstraintDates: 'Honor constraint dates' };
 function conflictLabel(key) { return CONFLICT_LABELS[key] || key; }
 function fmtConflictValue(key, v) {
   if (v === undefined || v === null || v === '') return '—';
   if (/Date$/.test(key) || key === 'actualStart' || key === 'actualFinish') return typeof v === 'string' ? fmtDate(v) : String(v);
-  if (key === 'predecessors') return Array.isArray(v) && v.length ? v.map(p => `${taskDisplayId(p.id) || '?'}${p.type}${fmtLag(p.lag)}`).join(', ') : 'none';
+  if (key === 'predecessors') return Array.isArray(v) && v.length ? v.map(p => `${taskDisplayId(p.id) || '?'}${p.type}${fmtLag(p.lag, p.elapsed)}`).join(', ') : 'none';
   if (key === 'workDays' && Array.isArray(v)) return calendarLabel(v);
   if (key === 'holidays' && Array.isArray(v)) return v.length ? `${v.length} holiday${v.length === 1 ? '' : 's'}` : 'none';
   if (typeof v === 'boolean') return v ? 'Yes' : 'No';
@@ -6485,27 +6550,32 @@ function parseTableDuration(str) {
 }
 // MS Project's predecessor text: "3", "3FS", "3SS+2d", "4;5FF-1 day", German "3EA+2 Tage" → [{ ref, type, lag }] (ref is the number as written)
 const PRED_TYPES = { FS: 'FS', SS: 'SS', FF: 'FF', SF: 'SF', EA: 'FS', AA: 'SS', EE: 'FF', AE: 'SF' };
-function parsePredText(str, strict, minutes) {   // minutes (a minute-mode plan): each lag comes back in working MINUTES — a bare number is hours, d/w use the plan's own working day   // strict (the list's Predecessors cell): a lag unit must be one we know — d / w / h — so "+2ed" (elapsed) is refused instead of read as working days
+function parsePredText(str, strict, minutes) {   // minutes (a minute-mode plan): each lag comes back in working MINUTES — a bare number is hours, d/w use the plan's own working day; an 'e' prefix (ed/ew/eh/em) is ELAPSED — real calendar time, its own fixed constants (1440 min/day), never the working-time ones   // strict (the list's Predecessors cell): a lag unit must be one we know — d / w / h / ed / ew / eh — so "+2ex" (an unrecognised elapsed unit) is refused
   const out = [], bad = [];
   for (const tok of String(str || '').split(/[;,]/).map(x => x.trim()).filter(Boolean)) {
     const m = /^(\d+)\s*(FS|SS|FF|SF|EA|AA|EE|AE)?\s*(?:([+-])\s*(\d+(?:[.,]\d+)?)\s*([a-zäöü%]*))?$/i.exec(tok);
     if (!m) { bad.push(tok); continue; }
-    let lag = 0;
+    let lag = 0, elapsed = false;
     if (m[3]) {
       const n = parseFloat(m[4].replace(',', '.')), u = (m[5] || '').toLowerCase();
       if (u === '%' || (strict && !predLagUnitOk(u))) { bad.push(tok); continue; }
+      elapsed = PRED_LAG_ELAPSED_UNIT_OK.test(u) || LAG_ELAPSED_MIN_UNIT.test(u);
       if (minutes) {
         const per = workMinutesPerDay();
-        lag = n * (LAG_MIN_UNIT.test(u) ? 1 : /^(h|hr|hrs|hour|hours|std|stunde|stunden|)$/.test(u) ? 60 : /^(w|wk|wks|week|weeks|wo|woche|wochen)$/.test(u) ? 5 * per : per);
+        lag = elapsed
+          ? n * (LAG_ELAPSED_MIN_UNIT.test(u) ? 1 : /^e(h|hr|hrs|hour|hours)$/.test(u) ? 60 : /^e(w|wk|wks|week|weeks)$/.test(u) ? 10080 : 1440)   // real calendar minutes: 1440/day, 10080/week
+          : n * (LAG_MIN_UNIT.test(u) ? 1 : /^(h|hr|hrs|hour|hours|std|stunde|stunden|)$/.test(u) ? 60 : /^(w|wk|wks|week|weeks|wo|woche|wochen)$/.test(u) ? 5 * per : per);
         if (!(lag <= MAX_LAG_MINUTES)) { bad.push(tok); continue; }
-        out.push({ ref: m[1], type: PRED_TYPES[(m[2] || 'FS').toUpperCase()], lag: Math.round(lag) * (m[3] === '-' ? -1 : 1) });
+        out.push({ ref: m[1], type: PRED_TYPES[(m[2] || 'FS').toUpperCase()], lag: Math.round(lag) * (m[3] === '-' ? -1 : 1), elapsed: elapsed || undefined });
         continue;
       }
-      lag = /^(w|wk|wks|week|weeks|wo|woche|wochen)$/.test(u) ? n * 5 : /^(h|hr|hrs|hour|hours|std|stunde|stunden)$/.test(u) ? n / 8 : LAG_MIN_UNIT.test(u) ? n / 480 : n;
+      lag = elapsed
+        ? n * (/^e(w|wk|wks|week|weeks)$/.test(u) ? 7 : /^e(h|hr|hrs|hour|hours)$/.test(u) ? 1 / 24 : 1)   // real calendar days: 7/week, 1/24 per hour
+        : /^(w|wk|wks|week|weeks|wo|woche|wochen)$/.test(u) ? n * 5 : /^(h|hr|hrs|hour|hours|std|stunde|stunden)$/.test(u) ? n / 8 : LAG_MIN_UNIT.test(u) ? n / 480 : n;
       if (!(lag <= MAX_LAG_DAYS)) { bad.push(tok); continue; }
       lag = Math.round(lag) * (m[3] === '-' ? -1 : 1);
     }
-    out.push({ ref: m[1], type: PRED_TYPES[(m[2] || 'FS').toUpperCase()], lag });
+    out.push({ ref: m[1], type: PRED_TYPES[(m[2] || 'FS').toUpperCase()], lag, elapsed: elapsed || undefined });
   }
   return { links: out, bad };
 }
@@ -6629,11 +6699,15 @@ function tasksFromTable(rows, opts = {}) {
       if (!p) { warnings.push(`"${t.name}": there is no task ${l.ref} to depend on`); continue; }
       if (p === t) continue;
       if (t.predecessors.some(q => q.id === p.id)) continue;
-      t.predecessors.push({ id: p.id, type: l.type, lag: l.lag }); links++;
+      t.predecessors.push({ id: p.id, type: l.type, lag: l.lag, elapsed: l.elapsed }); links++;
     }
   }
   return { tasks: made.map(m => m.t), warnings, info: { header, links, levels: maxLevel } };
 }
+// MS Project's own LagFormat enum values for an ELAPSED (real calendar time) lag, as opposed to the plain working-time ones
+// this app already wrote before elapsed lags existed here (3 = minute-mode's Hours, 7 = day-mode's Days) — the working/
+// elapsed pair for a unit is adjacent (elapsed = working + 1), the pattern real MS Project files use.
+const ELAPSED_LAG_FORMATS = [4, 6, 8, 10, 12, 20];
 // MS Project XML (MSPDI, File → Save As → XML): tasks with their outline, dates, %, actual dates, links and lags, manual mode, constraints,
 // resource names (from the assignments), baselines 0-10, the working week, and the non-working exceptions as holidays.
 function parseMspdi(xmlText) {
@@ -6703,7 +6777,7 @@ function parseMspdi(xmlText) {
   for (const a of list(root, 'Assignments')) { const tu = txt(a, 'TaskUID'), rn = resName.get(txt(a, 'ResourceUID')); if (tu && rn) { if (!assigned.has(tu)) assigned.set(tu, []); if (!assigned.get(tu).includes(rn)) assigned.get(tu).push(rn); } }
   // tasks
   const stack = [], byUid = new Map(), made = [], kidCount = new Map(), tops = { n: 0 };
-  let maxLevel = 1, links = 0, elapsed = 0, baselineSlots = new Set();
+  let maxLevel = 1, links = 0, baselineSlots = new Set();
   const TYPE = { 0: 'FF', 1: 'FS', 2: 'SF', 3: 'SS' };
   const CT = { 0: 'ASAP', 1: 'ALAP', 2: 'MSO', 3: 'MFO', 4: 'SNET', 5: 'SNLT', 6: 'FNET', 7: 'FNLT' };
   for (const el of list(root, 'Tasks')) {
@@ -6752,7 +6826,11 @@ function parseMspdi(xmlText) {
         baselineSlots.add(n);
       }
     }
-    t._links = kids(el).filter(k => k.localName === 'PredecessorLink').map(l => ({ uid: txt(l, 'PredecessorUID'), type: TYPE[parseInt(txt(l, 'Type'), 10)] || 'FS', lag: Math.round((parseInt(txt(l, 'LinkLag'), 10) || 0) / 10 / perDay), lagMin: Math.round((parseInt(txt(l, 'LinkLag'), 10) || 0) / 10), fmt: parseInt(txt(l, 'LagFormat'), 10) }));
+    t._links = kids(el).filter(k => k.localName === 'PredecessorLink').map(l => {
+      const raw = parseInt(txt(l, 'LinkLag'), 10) || 0, fmt = parseInt(txt(l, 'LagFormat'), 10), lagMin = Math.round(raw / 10);
+      const elapsed = ELAPSED_LAG_FORMATS.includes(fmt);   // LinkLag is always tenths of a minute regardless of format — but an ELAPSED lag is real calendar time (÷1440, a full day), never the calendar's own working minutes/day (÷perDay)
+      return { uid: txt(l, 'PredecessorUID'), type: TYPE[parseInt(txt(l, 'Type'), 10)] || 'FS', lag: elapsed ? Math.round(lagMin / 1440) : Math.round(lagMin / perDay), lagMin, fmt, elapsed };
+    });
     stack.push(t); made.push(t); byUid.set(uid, t);
   }
   const lagMinutes = new Map();
@@ -6761,9 +6839,8 @@ function parseMspdi(xmlText) {
       const p = byUid.get(l.uid);
       if (!p || p === t) { if (!p) warnings.push(`"${t.name}": its predecessor (UID ${l.uid}) is not in the file`); continue; }
       if (t.predecessors.some(q => q.id === p.id)) continue;
-      t.predecessors.push({ id: p.id, type: l.type, lag: l.lag }); links++;
-      lagMinutes.set(t.id + '|' + p.id, l.lagMin);   // (exact, for a plan that counts lags in minutes — see finalizeImportedLags)
-      if ([4, 6, 8, 10, 12, 20].includes(l.fmt)) elapsed++;
+      t.predecessors.push({ id: p.id, type: l.type, lag: l.lag, elapsed: l.elapsed || undefined }); links++;
+      lagMinutes.set(t.id + '|' + p.id, l.lagMin);   // (exact, for a plan that counts lags in minutes — see finalizeImportedLags; already real calendar minutes for an elapsed link, l.lag's own unit-aware conversion above)
     }
     delete t._links;
     // minutePrecision is fully settled by now (the whole Tasks scan above is done) — an ordinary (day-only) file's
@@ -6777,7 +6854,6 @@ function parseMspdi(xmlText) {
     }
     delete t._base;
   }
-  if (elapsed) warnings.push(`${elapsed} link lag${elapsed === 1 ? '' : 's'} in elapsed time were read as working days`);
   if (baselineSlots.size) { project.baselines = {}; for (const n of baselineSlots) project.baselines[n] = { setAt: dateOf(txt(root, 'CreationDate')) || todayStr() }; }
   // Only switch the imported plan to minute mode when the file actually needs it (see noteTime() above and the cleanup
   // just above, which already stripped every speculatively-parsed time field/baseline pair when it doesn't).
@@ -7984,7 +8060,9 @@ function buildMspdi() {
     if (!group && ct) { const info = constraintTypeInfo(t.constraintType); x += T('ConstraintType', ct) + (info.hasDate && t.constraintDate ? T('ConstraintDate', dt(t.constraintDate, hhmmss(taskTime(t, 'constraintTime', info.basis === 'finish' ? wEnd(t.constraintDate) : wStart(t.constraintDate))))) : ''); }
     else x += T('ConstraintType', 0);
     if (notes.length) x += T('Notes', notes.join('\n'));
-    if (!group) for (const p of t.predecessors) if (uid.has(p.id)) x += `<PredecessorLink>${T('PredecessorUID', uid.get(p.id))}${T('Type', LT[p.type] == null ? 1 : LT[p.type])}${T('CrossProject', 0)}${minuteModeActive() ? `${T('LinkLag', Math.round((p.lag || 0) * 10))}${T('LagFormat', 3)}` : `${T('LinkLag', Math.round((p.lag || 0) * 4800))}${T('LagFormat', 7)}`}</PredecessorLink>`;
+    if (!group) for (const p of t.predecessors) if (uid.has(p.id)) x += `<PredecessorLink>${T('PredecessorUID', uid.get(p.id))}${T('Type', LT[p.type] == null ? 1 : LT[p.type])}${T('CrossProject', 0)}${minuteModeActive()
+      ? `${T('LinkLag', Math.round((p.lag || 0) * 10))}${T('LagFormat', p.elapsed ? 4 : 3)}`   // p.lag is already real calendar minutes when elapsed — LinkLag (always tenths of a minute) needs the same ×10 either way, only the format code differs
+      : `${T('LinkLag', Math.round((p.lag || 0) * (p.elapsed ? 14400 : 4800)))}${T('LagFormat', p.elapsed ? 8 : 7)}`}</PredecessorLink>`;   // elapsed: a full calendar day is always 1440 min (×10 = 14400), never the calendar's own working minutes/day
     for (let n = 0; n < BASELINE_SLOTS; n++) {
       const b = baselineDates(t.id, n); if (!b || !b.start || !b.end) continue;
       const bMinute = varianceIsMinutes(t.id);

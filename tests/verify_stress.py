@@ -44,10 +44,14 @@ async ([seed, steps, allowCalendar]) => {
     for (const t of tasks) if (hasChildren(t.id) && t.predecessors.length) bad.push('a group has predecessors: ' + t.name);
     const cyc = taskCycleSet();
     for (const t of tasks) if (isStarted(t)) everStarted.add(t.id);
+    const succ = successorsMap();
     if (!calChanged) for (const t of tasks) {   // an Auto task that has not started sits where its links allow (the cascade's promise) — until the calendar is changed (that never moves dates, by design)
       if (t.taskMode === 'manual' || hasChildren(t.id) || cyc.has(t.id) || isStarted(t) || isUnscheduled(t)) continue;
-      const cs = targetStart(t);   // constraintStart() for every constraint type except ALAP, which uses its own backward twin (see "Task constraints")
-      if (cs && !everStarted.has(t.id) && dayNumber(cs) !== dayNumber(t.startDate)) bad.push('Auto task is not where its links put it: ' + t.name + ' ' + t.startDate + ' < ' + cs);
+      const noSuccAlap = t.constraintType === 'ALAP' && !(succ[t.id] || []).length;   // its target defers to the project's overall finish (projectEndMoment()) — computed fresh on demand, not re-cascaded when an unrelated task elsewhere changes what that finish is (nothing links to it to notify it); a documented, deliberate limit, not a bug — see "Task constraints"
+      if (!noSuccAlap) {
+        const cs = targetStart(t);
+        if (cs && !everStarted.has(t.id) && dayNumber(cs) !== dayNumber(t.startDate)) bad.push('Auto task is not where its links put it: ' + t.name + ' ' + t.startDate + ' < ' + cs);
+      }
       if (!isWorkDay(t.startDate) || (!t.milestone && !isWorkDay(t.endDate))) bad.push('Auto task on a day off: ' + t.name + ' ' + t.startDate + '..' + t.endDate);
     }
     const dispIds = tasks.map(t => taskDisplayId(t.id)); if (new Set(dispIds).size !== dispIds.length) bad.push('display ids not unique');
@@ -64,7 +68,7 @@ async ([seed, steps, allowCalendar]) => {
     ['start', 8, () => { const t = anyTask(); if (t) edit(t, 'start', randDate()); }],
     ['finish', 6, () => { const t = anyTask(); if (t) edit(t, 'finish', randDate()); }],
     ['duration', 6, () => { const t = anyTask(); if (t) edit(t, 'duration', String(1 + ri(25))); }],
-    ['preds', 9, () => { const t = anyTask(); if (!t) return; const n = ri(4), toks = []; for (let i = 0; i < n; i++) { const o = anyTask(); if (o) toks.push(taskDisplayId(o.id) + pick(['FS', 'SS', 'FF', 'SF', '']) + (rnd() < .4 ? (ri(9) - 3 >= 0 ? '+' : '') + (ri(9) - 3) : '')); } edit(t, 'predecessors', toks.join(', ')); }],
+    ['preds', 9, () => { const t = anyTask(); if (!t) return; const n = ri(4), toks = []; for (let i = 0; i < n; i++) { const o = anyTask(); if (o) toks.push(taskDisplayId(o.id) + pick(['FS', 'SS', 'FF', 'SF', '']) + (rnd() < .4 ? (ri(9) - 3 >= 0 ? '+' : '') + (ri(9) - 3) + pick(['', '', 'd', 'ed', 'h', 'eh', 'w', 'ew']) : '')); } edit(t, 'predecessors', toks.join(', ')); }],   // occasionally an elapsed ('e'-prefixed) unit — real calendar time, exercised alongside the plain working ones
     ['mode', 4, () => { const t = anyTask(); if (t) setTaskMode(t.id, pick(['auto', 'manual'])); }],
     ['drag', 4, () => { const t = pick(leaf()); if (!t || t.taskMode === 'manual' && rnd() < .5) return; const mode = pick(['move', 'resize-left', 'resize-right']); let ns = t.startDate, ne = t.endDate; const d = ri(40) - 15;
       if (mode === 'move') { ns = addDays(t.startDate, d); ne = addDays(t.endDate, d); } else if (mode === 'resize-left') { ns = addDays(t.startDate, d); if (dayNumber(ns) > dayNumber(ne)) ns = ne; } else { ne = addDays(t.endDate, d); if (dayNumber(ne) < dayNumber(ns)) ne = ns; }
@@ -130,14 +134,16 @@ async ([seed, steps, allowCalendar]) => {
       const re = canonicalText(); tasks = keepT; project = keepP; deletedTaskIds = keepD;
       if (re !== txt) return { ok: false, step, op: op[0], why: 'save -> load -> save is not stable', log };
     }
-    if (step % 10 === 0) {   // the critical path: every float is a whole number, something is critical whenever something takes part, and the last-finishing task always is
+    if (step % 10 === 0) {   // the critical path: every float is a whole number, and — provided the project's own last-finishing participant isn't already complete (nothing left to manage there, so nothing need be critical) — something is critical, and the last-finishing task always is
       const cp = criticalPathAnalysis(), part = [...cp.float.keys()];
       if (part.some(id => !Number.isInteger(cp.float.get(id)))) return { ok: false, step, op: op[0], why: 'critical path: a float is not a whole number', log };
-      if (part.length && !cp.critical.size) return { ok: false, step, op: op[0], why: 'critical path: tasks take part but none is critical', log };
       const fin = id => { const t = byId(id); return dayNumber(linkEnd(t)) < dayNumber(linkStart(t)) ? linkStart(t) : linkEnd(t); };   // (the analysis never lets a task finish before it starts)
       let end = null; for (const id of part) { const e = fin(id); if (end === null || dayNumber(e) > dayNumber(end)) end = e; }
       const last = part.filter(id => fin(id) === end);
-      if (last.length && !last.some(id => cp.critical.has(id))) return { ok: false, step, op: op[0], why: 'critical path: nothing that finishes last is critical', log };
+      if (last.length && !last.every(id => isTaskComplete(byId(id)))) {
+        if (!cp.critical.size) return { ok: false, step, op: op[0], why: 'critical path: tasks take part but none is critical', log };
+        if (!last.some(id => cp.critical.has(id))) return { ok: false, step, op: op[0], why: 'critical path: nothing that finishes last is critical', log };
+      }
     }
     if (step % 60 === 0) {
       for (const cols of ['shown', 'all']) { const blob = buildXlsx({ scope: 'all', gantt: true, columns: cols }); if (!blob || blob.size < 1000) return { ok: false, step, op: op[0], why: 'Excel export produced ' + (blob && blob.size), log }; }

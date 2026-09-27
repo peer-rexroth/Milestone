@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """The list's Predecessors cell reads links the way MS Project writes them (and the way paste/import read them): 3, 3FS, 3SS+2d, 4FF-1w, 4h, several
-separated by , or ; and the German EA/AA/EE/AE. Elapsed and percentage lags are refused with a message. The label it writes back is unchanged (3FS+2)."""
+separated by , or ; and the German EA/AA/EE/AE. An 'e' prefix (2ed/2ew/2eh) is an elapsed (real calendar time) lag; percentage lags are refused with
+a message. The label it writes back is unchanged (3FS+2, or 3FS+2ed for an elapsed one)."""
 from playwright.sync_api import sync_playwright
 import os
 URL = os.environ.get("MILESTONE_URL", "http://127.0.0.1:8937/milestone.html")
@@ -20,6 +21,7 @@ with sync_playwright() as p:
     ev(SEED); pg.wait_for_timeout(150)
     # ids: A=1 B=2 C=3 D=4 Group=5 Kid=6 E=7.  Parse for task D (#4).
     def parse(text): return ev("(t) => { const r = parsePredecessorString(t, 'd'); return r === null ? null : r.map(l => byId(l.id).name + ' ' + l.type + ' ' + l.lag); }", text)
+    def parse_full(text): return ev("(t) => { const r = parsePredecessorString(t, 'd'); return r === null ? null : r.map(l => byId(l.id).name + ' ' + l.type + ' ' + l.lag + ' ' + (l.elapsed ? 'elapsed' : 'working')); }", text)
     toast = lambda: pg.inner_text("#toastMsg")
     for text, want in [
         ("1", ["A FS 0"]), ("1FS", ["A FS 0"]), ("1fs", ["A FS 0"]), ("2SS+2", ["B SS 2"]), ("2SS+2d", ["B SS 2"]), ("2ss +2 days", ["B SS 2"]), ("2FF-1w", ["B FF -5"]), ("3SF-1 week", ["C SF -5"]),
@@ -30,10 +32,16 @@ with sync_playwright() as p:
         got = parse(text)
         check(f"'{text}' → {want}" if want is not None else f"'{text}' (a decimal comma splits the list) is refused, not misread", got == want if want is not None else got is None, (got, toast()))
     ev(SEED); pg.wait_for_timeout(100)
-    for text, needle in [("1FS+2ed", "Elapsed lags"), ("1FS+2ew", "Elapsed lags"), ("1FS+50%", "Percentage lags"), ("1FS+2xyz", "Can't read the lag"), ("1FS+99999d", "at most 9,999"), ("abc", "Can't parse"), ("1 2", "Can't parse"), ("1FS+", "Can't parse"),
-                         ("99", "No task #99"), ("4", "can't depend on itself"), ("5", "summary task"), ("1, 2FS+2ed", "Elapsed lags")]:
+    for text, needle in [("1FS+50%", "Percentage lags"), ("1FS+2xyz", "Can't read the lag"), ("1FS+2exyz", "Can't read the elapsed lag"), ("1FS+99999d", "at most 9,999"), ("abc", "Can't parse"), ("1 2", "Can't parse"), ("1FS+", "Can't parse"),
+                         ("99", "No task #99"), ("4", "can't depend on itself"), ("5", "summary task")]:
         got = parse(text)
         check(f"'{text}' is refused with '{needle}…' — and says 'predecessors unchanged'", got is None and needle in toast() and "predecessors unchanged" in toast(), (got, toast()))
+
+    ev(SEED); pg.wait_for_timeout(100)
+    for text, want in [("1FS+2ed", ["A FS 2 elapsed"]), ("1FS+2ew", ["A FS 14 elapsed"]), ("2FS+2eh", ["B FS 0 elapsed"]),   # 2eh rounds to 0 whole days, same rounding an equally-short working lag would get
+                        ("1, 2FS+2ed", ["A FS 0 working", "B FS 2 elapsed"])]:
+        got = parse_full(text)
+        check(f"'{text}' (elapsed — real calendar time) → {want}", got == want, (got, toast()))
     # end to end through the cell
     def type_cell(name_id, text):
         pg.locator(f".grid-row[data-id='{name_id}'] [onclick*=\"'predecessors'\"]").click(); pg.wait_for_timeout(200)
@@ -42,7 +50,8 @@ with sync_playwright() as p:
     check("typed in the cell: '1FS+1w; 2ss-2d' → two links, in working days", ev("() => byId('d').predecessors.map(p => byId(p.id).name + ' ' + p.type + ' ' + p.lag).join()") == "A FS 5,B SS -2", ev("() => JSON.stringify(byId('d').predecessors)"))
     check("...the cell then shows the label as before ('1FS+5, 2SS-2') — the display did not change", "1FS+5, 2SS-2" in pg.inner_text(".grid-row[data-id='d']"), pg.inner_text(".grid-row[data-id='d']"))
     type_cell("d", "1FS+3ed")
-    check("a refused edit changes nothing and the message shows", ev("() => byId('d').predecessors.length") == 2 and "Elapsed" in toast())
+    check("an elapsed lag typed in the cell is accepted — replaces the whole list (the field is the whole list), one link, marked elapsed", ev("() => byId('d').predecessors.map(p => [p.type, p.lag, !!p.elapsed])") == [["FS", 3, True]], ev("() => JSON.stringify(byId('d').predecessors)"))
+    check("...the cell shows it back with its 'ed' marker ('1FS+3ed')", "1FS+3ed" in pg.inner_text(".grid-row[data-id='d']"), pg.inner_text(".grid-row[data-id='d']"))
     type_cell("d", "")
     check("an empty cell clears the links", ev("() => byId('d').predecessors.length") == 0)
     type_cell("e", "3EA+2")
