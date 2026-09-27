@@ -671,10 +671,13 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 .minute-mode #taskDatesBlock { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
 .minute-mode #taskDatesBlock > .field-grid-4 { display: contents; }   /* (the two rows of fields become one grid, so they can be ordered together) */
 .minute-mode #taskDatesBlock #taskTextDatesNote { grid-column: 1 / -1; order: 9; }
-/* A date + a time need ~230px: in an Hours & minutes plan the four date fields take two of the four columns each; the numbers (Duration, %, Remaining, Status) share one row between the planned and the actual dates. */
+/* A date + a time need ~230px: in an Hours & minutes plan the four date fields take two of the four columns each; the numbers (Duration, %, Remaining, Status) share one row between the planned and the actual dates.
+   The two Actual fields pin an explicit column-start (not just `span 2`, which is relative to wherever the auto-placement cursor happens to be): a
+   milestone hides Finish/Duration/Actual Finish, and without the pin the cursor's gap-filling shifted Actual Start out from under Start by a column
+   ("dates are not aligned under each other" — a real layout bug, not a rounding/pixel one). Start/Finish need no pin — nothing is ever hidden before them. */
 .minute-mode #taskStartField { grid-column: span 2; order: 1; } .minute-mode #taskEndField { grid-column: span 2; order: 2; }
 .minute-mode #taskDurationField { order: 3; } .minute-mode #taskProgressField { order: 4; } .minute-mode #taskRemainingField { order: 5; } .minute-mode #taskStatusField { order: 6; }
-.minute-mode #taskActualStartField { grid-column: span 2; order: 7; } .minute-mode #taskActualFinishField { grid-column: span 2; order: 8; }
+.minute-mode #taskActualStartField { grid-column: 1 / span 2; order: 7; } .minute-mode #taskActualFinishField { grid-column: 3 / span 2; order: 8; }
 .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; border-bottom: 1px solid var(--border); }
 .modal-header h2 { margin: 0; font-size: 16px; }
 .modal-header button { border: none; background: none; font-size: 18px; color: var(--text-dim); width: 28px; height: 28px; border-radius: 6px; }
@@ -763,6 +766,7 @@ input.dt-time { width: 84px; flex: 0 0 84px; text-align: center; }
   .field-grid-nm { grid-template-columns: minmax(0, 1fr); }
   .field-grid-4, .minute-mode #taskDatesBlock { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .field-grid-4 > .span2, .field-grid-4 > .span3 { grid-column: 1 / -1; }
+  .minute-mode #taskActualStartField, .minute-mode #taskActualFinishField { grid-column: span 2; }   /* only 2 columns here — the desktop pin to column 1/3 would push a 3rd, empty column in */
   .bulk-row { grid-template-columns: 1fr; gap: 5px; }
   .bulk-ctl { flex-wrap: wrap; }
   #bulkVal-shift, #bulkVal-predId, #bulkVal-predLag { flex: 1 1 90px; }

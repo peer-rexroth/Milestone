@@ -91,6 +91,19 @@ with sync_playwright() as p:
     a2 = ev("() => { const t = tasks.find(x => x.name === 'A'); return [t.actualStart, t.actualStartTime, t.startTime]; }")
     check("the actual start time is saved and reflected in Start", a2 == ["2026-09-07", "09:30", "09:30"], a2)
 
+    # ---------------------------------------------------------------- a milestone hides Finish/Duration/Actual Finish: Actual Start must stay under Start, not drift with the gap
+    # (seed() would wipe task A, still needed below — push the new task directly instead)
+    ev("""() => { tasks.push(Object.assign({id: genId(), name: 'M', parentId: null, order: tasks.length, startDate: '2026-09-07', endDate: '2026-09-07',
+      progress: 0, milestone: true, color: null, predecessors: [], collapsed: false, updatedAt: 1, constraintType: 'ASAP', constraintDate: null,
+      taskMode: 'auto', resource: '', actualStart: null, actualFinish: null})); save(); render(); }""")
+    pg.click(f".grid-row[data-id='{tid('M')}'] .icon-btn[title=Edit]"); pg.wait_for_selector("#taskModalBg.open")
+    pg.wait_for_timeout(60)
+    start_x = pg.locator("#taskStartInput").bounding_box()["x"]; actual_x = pg.locator("#taskActualStartInput").bounding_box()["x"]
+    start_time_x = pg.locator("#taskStartTimeInput").bounding_box()["x"]; actual_time_x = pg.locator("#taskActualStartTimeInput").bounding_box()["x"]
+    check("a milestone's Actual Start date box lines up under Start's date box", abs(start_x - actual_x) < 1, (start_x, actual_x))
+    check("...and its time box lines up under Start's time box", abs(start_time_x - actual_time_x) < 1, (start_time_x, actual_time_x))
+    pg.keyboard.press("Escape")
+
     # ---------------------------------------------------------------- grid: date+time display and adapted column widths
     idx = ev("() => [...document.querySelectorAll('#gridHeader .col-filter-btn')].map(b => b.dataset.col).indexOf('start')")
     cell = pg.locator(f".grid-row[data-id='{tid('A')}']").locator(":scope > div").nth(idx + 1).inner_text()
