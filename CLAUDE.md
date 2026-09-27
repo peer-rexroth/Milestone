@@ -139,6 +139,16 @@ An explicit user request ("plan based on minutes, like MS Project — switchable
 **Deliberately not done, not a gap discovered later**:
 - The Week/Month/Year scales stay whole-day in a minute-mode plan: a bar covers its first to last day and ignores the time, so two tasks of one day share a cell there. Only the **Hours** scale (below) draws real instants — a 09:00–17:00 task starting a third of the way into a Week-scale day cell would just look gappy at 14px a day.
 
+### Dialog UX round 4 (a third review, after round 3 shipped) — three small fixes
+
+**Pronoun agreement**: the leave-Hours-&-minutes warning said "1 task will lose THEIR time of day" for exactly one task — wrong (`its`), matching the house style already used for count messages elsewhere (`"1 task has" / "2 tasks have"`, `baselineActualsInfo`). The same review turned up a second, pre-existing instance in `applyBulkEdit()`'s skip note ("1 group kept THEIR worked-out progress"). Both are now `${n} task${n === 1 ? ' will lose its' : 's will lose their'} time of day` / `${n} group${n === 1 ? ' kept its' : 's kept their'} worked-out progress` — singular gets `its`, plural gets `their`.
+
+**`aria-invalid` on a refused typed box**: `showDtError()`/`clearDtError()` now set/clear `aria-invalid="true"` on the field alongside the `.dt-err` class — the toast announces the refusal once, but a screen-reader user who reaches the field directly afterward (the toast has since faded) had no way to know it was still wrong.
+
+**The error bubble now also repositions on a window resize**, not just on scroll (`for (const evName of ['scroll', 'resize']) window.addEventListener(...)`) — it used to stay put at its original screen position if the window was resized while it was showing.
+
+**Tests**: `verify_dialog_ux3.py` (9 checks).
+
 ### Dialog UX round 3 (a second review of the same 19 dialogs, after round 2 shipped)
 
 **Help on a phone**: `.help-panes` (the column holding the search bar + the topic panes, itself `display: flex; flex-direction: column`) was missing `min-height: 0`. Inside `.help-layout`'s own column direction at `max-width: 660px`, a flex item's height defaults to its content size unless `min-height: 0` says otherwise — so the ~3,500px-tall "Getting started" pane pushed straight through the dialog's fixed height instead of scrolling inside `.help-pane`'s own `overflow-y: auto`. One rule fixes it; `.help-pane`'s own scrolling was always correct.

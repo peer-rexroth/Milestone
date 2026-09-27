@@ -5733,7 +5733,7 @@ function savePrecision() {
     const impact = precisionLeaveImpact();
     if (impact.times || impact.lags) {
       const bits = [];
-      if (impact.times) bits.push(`${impact.times} task${impact.times === 1 ? '' : 's'} will lose their time of day`);
+      if (impact.times) bits.push(`${impact.times} task${impact.times === 1 ? ' will lose its' : 's will lose their'} time of day`);
       if (impact.lags) bits.push(`${impact.lags} lag${impact.lags === 1 ? '' : 's'} will round to whole working days`);
       openConfirmModal({ title: 'Switch to Days?', body: `${bits.join(' and ')} — switching back to Hours &amp; minutes won't bring them back.`, confirmLabel: 'Switch to Days', confirmClass: 'btn btn-primary', action() { applyPrecisionChange(minute, wh, by); } });
       return;
@@ -7281,7 +7281,7 @@ function applyBulkEdit() {
   normalizeData();
   for (const id of touched) if (byId(id)) applyConstraints(id);
   save(); render(); closeBulkModal();
-  const notes = [skipped.progress && `${skipped.progress} group${skipped.progress === 1 ? '' : 's'} kept their worked-out progress`, skipped.shift && `${skipped.shift} not moved (group, started or dates as text)`, skipped.pred && `${skipped.pred} not linked (group, already linked, or it would make a cycle)`].filter(Boolean);
+  const notes = [skipped.progress && `${skipped.progress} group${skipped.progress === 1 ? ' kept its' : 's kept their'} worked-out progress`, skipped.shift && `${skipped.shift} not moved (group, started or dates as text)`, skipped.pred && `${skipped.pred} not linked (group, already linked, or it would make a cycle)`].filter(Boolean);
   showToast(`Updated ${changed} task${changed === 1 ? '' : 's'}${notes.length ? ' — ' + notes.join('; ') : ''}`);
 }
 
@@ -9092,7 +9092,7 @@ function enhanceBoxes(root) {
 // bubble is one shared element (like the toast), positioned next to whichever box is wrong; it clears as soon as you retype.
 let dtErrBubble = null;
 function showDtError(el, msg) {
-  el.classList.add('dt-err');
+  el.classList.add('dt-err'); el.setAttribute('aria-invalid', 'true');
   if (!dtErrBubble) { dtErrBubble = document.createElement('div'); dtErrBubble.className = 'dt-err-bubble'; document.body.appendChild(dtErrBubble); }
   const r = el.getBoundingClientRect();
   dtErrBubble.textContent = msg;
@@ -9102,7 +9102,7 @@ function showDtError(el, msg) {
   dtErrBubble._for = el;
 }
 function clearDtError(el) {
-  el.classList.remove('dt-err');
+  el.classList.remove('dt-err'); el.removeAttribute('aria-invalid');
   if (dtErrBubble && dtErrBubble._for === el) { dtErrBubble.classList.remove('show'); dtErrBubble._for = null; }
 }
 document.addEventListener('input', e => { if (e.target && e.target.dataset && e.target.dataset.dt) clearDtError(e.target); });
@@ -9124,7 +9124,7 @@ document.addEventListener('change', e => {
   clearDtError(el);
   const t = isDate ? fmtDate(v) : v; el._setRaw(t); el._last = t;
 }, true);
-window.addEventListener('scroll', () => { if (dtErrBubble && dtErrBubble._for) showDtError(dtErrBubble._for, dtErrBubble.textContent); }, true);   // (a scrolled dialog body: keep the bubble under its box)
+for (const evName of ['scroll', 'resize']) window.addEventListener(evName, () => { if (dtErrBubble && dtErrBubble._for) showDtError(dtErrBubble._for, dtErrBubble.textContent); }, true);   // keep the bubble under its box across a scroll or a window resize
 document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target && e.target.dataset && e.target.dataset.dt) e.target.dispatchEvent(new Event('change', { bubbles: true })); });   // (Enter settles what is typed, like leaving the box)
 /* ---- Dialogs for assistive technology and the keyboard: each is a modal dialog with a name (its title); Tab stays inside the top one; and
    when it closes, focus goes back to what was focused before it opened (a dropdown item that has since closed falls back to the page). ---- */
