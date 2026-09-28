@@ -27,11 +27,12 @@ with sync_playwright() as p:
 
     pg.click("#scheduleMenuBtn"); pg.wait_for_selector("#scheduleMenu.open")
     sched_items = pg.locator("#scheduleMenu .dropdown-item").all_inner_texts()
-    check("the Schedule menu has exactly Baseline, Reschedule remaining work, Working calendar, Scheduling precision, in that order",
-          len(sched_items) == 4 and "Baseline" in sched_items[0] and "Reschedule remaining work" in sched_items[1] and "Working calendar" in sched_items[2] and "Scheduling precision" in sched_items[3], sched_items)
+    check("the Schedule menu has exactly Baseline, Resource pool, Reschedule remaining work, Level resources, Working calendar, Scheduling precision, in that order",
+          len(sched_items) == 6 and "Baseline" in sched_items[0] and "Resource pool" in sched_items[1] and "Reschedule remaining work" in sched_items[2] and "Level resources" in sched_items[3] and "Working calendar" in sched_items[4] and "Scheduling precision" in sched_items[5], sched_items)
     check("Baseline's hint is there (not set at first)", "not set" in sched_items[0], sched_items[0])
-    check("Working calendar's hint is there (Mon–Fri by default)", "Mon–Fri" in sched_items[2], sched_items[2])
-    check("Scheduling precision's hint is there (Days by default)", "Days" in sched_items[3], sched_items[3])
+    check("Resource pool's hint is there (none yet at first)", "none yet" in sched_items[1], sched_items[1])
+    check("Working calendar's hint is there (Mon–Fri by default)", "Mon–Fri" in sched_items[4], sched_items[4])
+    check("Scheduling precision's hint is there (Days by default)", "Days" in sched_items[5], sched_items[5])
 
     # ---------------------------------------------------------------- opening a dialog from it closes the menu, not the dialog
     pg.click("#planBaselineItem"); pg.wait_for_selector("#baselineModalBg.open")

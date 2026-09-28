@@ -171,6 +171,22 @@ button:focus:not(:focus-visible) { outline: none; }
 .fld-remove:hover { background: var(--panel-2); color: var(--danger); }
 .fld-row.removed .fld-remove:hover { color: var(--accent); }
 .fld-empty { padding: 14px; border: 1px dashed var(--border); border-radius: 8px; color: var(--text-faint); font-size: 12.5px; text-align: center; }
+.res-rows { display: flex; flex-direction: column; gap: 8px; }
+.res-item { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
+.res-row { display: grid; grid-template-columns: 1fr 90px 64px 28px; gap: 8px; align-items: center; }
+.res-name { padding: 7px 9px; border: 1px solid var(--border); border-radius: 7px; background: var(--panel); color: var(--text); min-width: 0; }
+.res-name:disabled { opacity: .5; text-decoration: line-through; }
+.res-name.bad { border-color: var(--danger); }
+.res-units { padding: 7px 9px; border: 1px solid var(--border); border-radius: 7px; background: var(--panel); color: var(--text); width: 100%; }
+.res-uses { font-size: 11.5px; color: var(--text-faint); text-align: right; white-space: nowrap; }
+.res-remove { width: 26px; height: 26px; border: none; border-radius: 6px; background: transparent; color: var(--text-faint); }
+.res-remove:hover { background: var(--panel-2); color: var(--danger); }
+.res-item.removed .res-remove:hover { color: var(--accent); }
+.res-empty { padding: 14px; border: 1px dashed var(--border); border-radius: 8px; color: var(--text-faint); font-size: 12.5px; text-align: center; }
+.res-days summary { font-size: 11.5px; color: var(--text-dim); cursor: pointer; }
+.res-days-add { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 6px; }
+.res-days-add .dt-wrap { flex: 0 0 130px; width: 130px; }
+.res-days-add input[type=text] { flex: 1 1 140px; min-width: 100px; }
 .cols-foot { padding: 8px 12px 4px; border-top: 1px solid var(--border); margin-top: 4px; }
 .cf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .cf-flags { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; margin-top: 12px; }
@@ -591,6 +607,25 @@ input.inline-edit[type=date]::-webkit-calendar-picker-indicator { margin: 0 0 0 
 .gantt-link-preview { position: absolute; z-index: 6; pointer-events: none; }
 svg.gantt-deps { position: absolute; top: var(--head-h); left: 0;   /* its y-axis starts at the first row, i.e. below the header (it used to sit at 0, drawing every arrow a row too high) */ overflow: visible; pointer-events: none; z-index: 2; }
 svg.gantt-deps path { fill: none; stroke: var(--text-faint); stroke-width: 1.5; }
+/* Resources view: one scroll container (no separate synced pane the way the task list/Gantt chart need — a flat list, no
+   hierarchy), a sticky header row and a sticky-left name column standing in for the frozen-column/synced-scroll machinery
+   the Gantt view needs for its own, taller job. Reuses ganttXAt()/ganttSpan()/renderGanttHeaderTicks()/ZOOMS/rowWindow()
+   exactly as the Gantt chart does — same timescale, same tick markup, same non-working shading. */
+.resource-pane-outer { flex: 1; min-width: 0; position: relative; background: var(--bg); }
+.resource-scroll { position: absolute; inset: 0; overflow: auto; }
+.resource-header-row { position: sticky; top: 0; z-index: 5; display: flex; height: var(--head-h); background: var(--panel-2); border-bottom: 1px solid var(--border); }
+.resource-name-cell { position: sticky; left: 0; z-index: 6; flex: 0 0 var(--res-name-w, 180px); width: var(--res-name-w, 180px); padding: 0 10px; display: flex; align-items: center; font-size: 12px; font-weight: 600; color: var(--text-dim); background: var(--panel-2); border-right: 1px solid var(--border); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.resource-name-cell.head { text-transform: uppercase; letter-spacing: .03em; font-size: 11px; color: var(--text-faint); }
+.resource-timeline-head { position: relative; flex-shrink: 0; }
+.resource-body { position: relative; }
+.resource-row { display: flex; position: absolute; left: 0; height: var(--row-h); border-bottom: 1px solid var(--border); }   /* width set inline (name column + timeline) — an absolutely-positioned child can't size its parent's scrollWidth, so resourceBody's own width is set alongside it in JS, the same way ganttRows' is */
+.resource-row .resource-name-cell { background: var(--panel); font-weight: 500; color: var(--text); }
+.resource-row.over .resource-name-cell { color: var(--danger); }
+.resource-timeline { position: relative; flex-shrink: 0; height: 100%; }
+.res-load-seg { position: absolute; top: 5px; height: 22px; border-radius: 3px; background: color-mix(in srgb, var(--accent) 55%, var(--panel)); }
+.res-load-seg.over { background: color-mix(in srgb, var(--danger) 65%, var(--panel)); }
+.main.view-resources .grid-pane, .main.view-resources .gantt-pane-outer { display: none; }
+.main:not(.view-resources) .resource-pane-outer { display: none; }
 svg.gantt-deps path.critical { stroke: var(--danger); }
 
 /* ── Modals ─────────────────────────────────────────────────────────── */
@@ -915,6 +950,15 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
       <svg class="gantt-deps" id="ganttDeps"></svg>
     </div>
   </div>
+  <div class="resource-pane-outer" id="resourcePaneOuter">
+    <div class="resource-scroll" id="resourceScroll">
+      <div class="resource-header-row" id="resourceHeaderRow">
+        <div class="resource-name-cell head">Resource</div>
+        <div class="resource-timeline-head" id="resourceTimelineHead"></div>
+      </div>
+      <div class="resource-body" id="resourceBody"></div>
+    </div>
+  </div>
 </div>
 
 <!-- Task modal -->
@@ -1190,6 +1234,22 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
 </div>
 <div class="dropdown-menu" id="cfAddMenu" role="menu"></div>
 
+<div class="modal-bg" id="resourcePoolModalBg" onclick="if(event.target===this) requestCloseResourcePoolModal()">
+  <div class="modal mid">
+    <div class="modal-header"><h2>Resource pool</h2><button onclick="requestCloseResourcePoolModal()" aria-label="Close">&times;</button></div>
+    <div class="modal-body">
+      <p class="cal-hint" style="margin:0">Who works on “<span id="resourcePoolPlanName"></span>” — typing a name in a task's Resource field adds it here automatically, the same way MS Project does. Max units is how much of them there is (200% = two people covering the role); days off are on top of the plan's own working week.</p>
+      <div class="res-rows" id="resourceRows"></div>
+      <div><button class="btn" type="button" onclick="addResourceRow()"><i class="fa-solid fa-plus"></i>Add resource</button></div>
+    </div>
+    <div class="modal-footer">
+      <span class="foot-note" id="resourcePoolNote"></span>
+      <button class="btn" onclick="closeResourcePoolModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveResourcePoolModal()">Save</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-bg" id="calendarModalBg" onclick="if(event.target===this) requestCloseCalendarModal()">
   <div class="modal wide">
     <div class="modal-header"><div class="mh-title"><h2>Working calendar</h2><span class="cal-summary" id="calendarSummaryLive"></span></div><button onclick="requestCloseCalendarModal()" aria-label="Close">&times;</button></div>
@@ -1341,6 +1401,31 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
   </div>
 </div>
 
+<div class="modal-bg" id="levelModalBg" onclick="if(event.target===this) closeLevelModal()">
+  <div class="modal mid">
+    <div class="modal-header"><h2>Level resources</h2><button onclick="closeLevelModal()" aria-label="Close">&times;</button></div>
+    <div class="modal-body">
+      <p class="cal-hint" style="margin:0">Delays a task that asks for more of a resource than it has, to the next span where every resource it's assigned to has room — never earlier than its own dependencies already allow.</p>
+      <section class="cal-sec">
+        <label class="checkbox-row"><input type="checkbox" id="levelWithinSlack" checked onchange="renderLevelModal()"><label for="levelWithinSlack">Keep within existing slack</label></label>
+        <p class="cal-hint" id="levelSlackHint" style="margin:0">Never pushes the project's own finish out — a conflict that can't be resolved this way is left in place and listed below.</p>
+        <div class="cal-sec-title">Scope</div>
+        <label class="checkbox-row"><input type="checkbox" id="levelFromOn" onchange="renderLevelModal()"><label for="levelFromOn">Only from a date on</label></label>
+        <div class="field-dt" id="levelFromWhen"><input type="text" class="dt-date hidden" id="levelFromInput" aria-label="From date" onchange="renderLevelModal()"></div>
+        <p class="cal-hint" id="levelHint" style="margin:0"></p>
+        <details class="rs-details hidden" id="levelDetails">
+          <summary>Which tasks <span id="levelDetailsCount"></span></summary>
+          <div class="rs-list" id="levelList"></div>
+        </details>
+        <p class="cal-hint hidden" id="levelUnresolvedNote" style="margin:0"></p>
+      </section>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeLevelModal()">Cancel</button>
+      <button class="btn btn-primary" id="levelBtn" onclick="runLevel()">Level resources</button>
+    </div>
+  </div>
+</div>
 
 <div class="modal-bg" id="syncConflictsModalBg" onclick="if(event.target===this) closeSyncConflictsModal()">
   <div class="modal">
@@ -1494,6 +1579,10 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
           <div class="help-section-title">Columns</div>
           <div class="help-row"><i class="fa-solid fa-table-columns"></i><span>Click <strong>Columns</strong> in the toolbar to tick the columns you want and reorder them. The <strong>Tasks view and the Gantt view each remember their own set</strong> on this device; Task Name always stays.</span></div>
           <div class="help-row"><i class="fa-solid fa-eye-slash"></i><span>Remaining Duration, Resource, the baseline and variance columns and the custom fields start hidden. Click a <strong>Resource</strong> or actual-date cell to edit it, or use the task dialog.</span></div>
+          <div class="help-row"><i class="fa-solid fa-users"></i><span><strong>Resource</strong> takes names separated by commas or semicolons ("Anna, Ben") — typing a new name adds it to the plan's resource pool automatically, the same way MS Project does. Give one less than a full share with <code>Name:NN%</code> ("Anna:50%, Ben") — a bare name is 100%.</span></div>
+          <div class="help-row"><i class="fa-solid fa-people-group"></i><span><strong>Schedule → Resource pool…</strong> lists everyone: how much of them there is (200% = two people covering the role) and their own days off on top of the plan's working week. Renaming or removing someone there updates every task that names them.</span></div>
+          <div class="help-row"><i class="fa-solid fa-chart-simple"></i><span>The <strong>Resources</strong> tab shows each person's day-by-day load, colored red on a day they're over their own capacity; the Schedule menu's <strong>Level resources…</strong> item shows the same count.</span></div>
+          <div class="help-row"><i class="fa-solid fa-scale-balanced"></i><span><strong>Schedule → Level resources…</strong> delays an over-allocated task to the next span with room, never earlier than its own dependencies allow and, by default, never past its own slack (so the plan's finish doesn't move) — turn that off, or scope it to a date on, then Apply. Undo brings it back.</span></div>
         </div>
         <div class="help-divider"></div>
         <div class="help-section">
@@ -1632,7 +1721,7 @@ const ROW_H = 32, HEAD_H = 42;   // (HEAD_H = --head-h)
    rows when the view nears the edge of what is built. A smaller plan is built whole, as before. */
 const VIRTUAL_THRESHOLD = 150, VIRTUAL_BUFFER = 30;
 let renderedWin = { from: 0, to: 0, n: 0, virtual: false };
-function viewScroller() { return document.getElementById(currentView === 'gantt' ? 'ganttPaneOuter' : 'gridRows'); }
+function viewScroller() { return document.getElementById(currentView === 'gantt' ? 'ganttPaneOuter' : currentView === 'resources' ? 'resourceScroll' : 'gridRows'); }
 function rowWindow(n) {
   if (n <= VIRTUAL_THRESHOLD) return { from: 0, to: n, virtual: false };
   const sc = viewScroller(), st = sc ? sc.scrollTop : 0, h = (sc && sc.clientHeight) || 800;
@@ -2145,7 +2234,7 @@ function loadPrefs() {
   // A saved scale only counts if it was chosen under the current default: every install had the old default (Week)
   // saved by the very first save(), so without the revision check nobody would ever see a changed default.
   zoom = (d.zoomRev === ZOOM_DEFAULT_REV && ZOOMS.some(z => z.id === d.zoom)) ? d.zoom : DEFAULT_ZOOM;
-  currentView = d.view === 'gantt' ? 'gantt' : 'tasks';
+  currentView = (d.view === 'gantt' || d.view === 'resources') ? d.view : 'tasks';
   showBaseline = d.showBaseline !== false;
   gridPaneWidth = d.gridPaneRev === GRID_PANE_REV && Number.isFinite(d.gridPaneWidth) ? Math.max(GRID_PANE_MIN_WIDTH, Math.min(GRID_PANE_MAX_WIDTH, d.gridPaneWidth)) : GRID_PANE_DEFAULT;
   // Task list columns. A column the saved prefs don't know yet (added by a later version) is appended and follows its default.
@@ -2569,6 +2658,31 @@ function normalizeData() {
     const cb = Number(project.compareBaseline);
     if (Number.isInteger(cb) && cb > 0 && cb < BASELINE_SLOTS && tasks.some(t => t.baselines && t.baselines[cb])) project.compareBaseline = cb; else delete project.compareBaseline;
     delete project.baselineRev; delete project.baselineSetAt;
+  }
+  {   // resource pool: every distinct name (case-insensitive) used in any task's Resource text gets a pool entry automatically
+      // (MS Project's own "type a new name, it's added to the project's resource list") — an existing entry's own name/
+      // maxUnits/daysOff are left exactly as they are here; renaming or removing one is a deliberate action in its own
+      // dialog, which rewrites the affected tasks' text, not this pass.
+    const pool = Array.isArray(project.resources) ? project.resources.filter(r => r && typeof r === 'object' && isSafeId(r.id)) : [];
+    const known = new Set(pool.map(r => String(r.name || '').trim().toLowerCase()));
+    for (const t of tasks) {
+      if (t.spacer || parentIds.has(t.id)) continue;   // a group's resource text is free-form notes, not an assignment (see MSPDI export's own precedent: a group's resource goes to Notes, not Assignments)
+      for (const { name } of parseResourceAssignments(t.resource)) {
+        const key = name.toLowerCase();
+        if (!known.has(key)) { known.add(key); pool.push({ id: genId(), name, maxUnits: 100 }); }
+      }
+    }
+    const cleanPool = [], seenName = new Set();
+    for (const r of pool) {
+      const name = typeof r.name === 'string' ? r.name.trim().slice(0, 60) : ''; if (!name) continue;
+      const key = name.toLowerCase(); if (seenName.has(key)) continue; seenName.add(key);   // a case-insensitive collision (a corrupted file, a manual edit) — first one wins, defensive only; the dialog itself validates uniqueness on save
+      const mu = Math.round(Number(r.maxUnits)), maxUnits = Number.isFinite(mu) ? Math.max(1, Math.min(800, mu)) : 100;
+      const entry = { id: r.id, name, maxUnits };
+      const daysOff = cleanHolidays(r.daysOff); if (daysOff) entry.daysOff = daysOff;
+      cleanPool.push(entry);
+    }
+    cleanPool.sort((a, b) => a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1);   // a canonical order (not creation order) so a merge and a plain local edit converge on the same array instead of flip-flopping
+    if (cleanPool.length) project.resources = cleanPool; else delete project.resources;
   }
   {   // the working calendar: distinct weekdays 0-6; nothing stored when it is the default Mon-Fri (or unusable)
     const wd = Array.isArray(project.workDays) ? [...new Set(project.workDays.map(Number).filter(n => Number.isInteger(n) && n >= 0 && n <= 6))].sort((a, b) => a - b) : [];
@@ -3402,6 +3516,7 @@ function renderPass() {
   updateColumnLines();
   updateFrozenColumns();
   if (currentView === 'gantt') renderGantt();   // (the chart is hidden in the Tasks view: it is built when you switch to it)
+  else if (currentView === 'resources') renderResourceUsage();
   renderFilterBar();
   updateCollapseButtons();
   updateFileSyncUI();
@@ -3410,16 +3525,17 @@ function renderPass() {
   updateSelectionUI();
 }
 
-const MAIN_VIEWS = [{ id: 'tasks', label: 'Tasks' }, { id: 'gantt', label: 'Gantt' }];
+const MAIN_VIEWS = [{ id: 'tasks', label: 'Tasks' }, { id: 'gantt', label: 'Gantt' }, { id: 'resources', label: 'Resources' }];
 function renderMainViewTabs() {
   document.getElementById('mainViewTabs').innerHTML = MAIN_VIEWS.map(v =>
     `<button class="view-tab${v.id === currentView ? ' active' : ''}" onclick="setView('${v.id}')">${v.label}</button>`).join('');
   document.getElementById('main').classList.toggle('view-tasks', currentView === 'tasks');
   document.getElementById('main').classList.toggle('view-gantt', currentView === 'gantt');
-  document.getElementById('zoomTabs').classList.toggle('hidden', currentView !== 'gantt');
+  document.getElementById('main').classList.toggle('view-resources', currentView === 'resources');
+  document.getElementById('zoomTabs').classList.toggle('hidden', currentView !== 'gantt' && currentView !== 'resources');   // the Resources timeline shares the same timescale
   document.getElementById('criticalPathBtn').classList.toggle('hidden', currentView !== 'gantt');
   document.getElementById('baselineBtn').classList.toggle('hidden', currentView !== 'gantt');
-  document.getElementById('ganttControlsDivider').classList.toggle('hidden', currentView !== 'gantt');
+  document.getElementById('ganttControlsDivider').classList.toggle('hidden', currentView !== 'gantt' && currentView !== 'resources');
 }
 function setView(id) { currentView = id; editingCell = null; closeColumnsMenu(); save(); render(); }
 
@@ -3882,6 +3998,172 @@ function predecessorLabel(t) {
     return `${taskDisplayId(p.id)}${p.type}${lag}`;
   }).filter(Boolean).join(', ');
 }
+/* ============================ Resource pool (levelling) ============================
+   task.resource stays exactly the free-text field it always was — every existing reader (search, filters, CSV, Excel,
+   MS Project XML, clipboard, bulk edit, merge) keeps working untouched. Its syntax grows one optional piece, the same way
+   an elapsed lag added an 'e' suffix to Predecessors: a name may carry ":NN%" (a bare name is 100%). project.resources is
+   populated automatically from whatever names appear in that text (normalizeData(), like MS Project auto-adding a typed
+   name to its resource list) — a task's assignment is resolved by NAME match against the pool, not a stored id, so
+   renaming/removing a pool entry is a deliberate cascade in its own dialog that rewrites the affected tasks' text. */
+// "Anna:50%, Ben" -> [{name:'Anna', units:50}, {name:'Ben', units:100}] — a bare name defaults to 100%; a bad or out-of-
+// range percentage (outside roughly 1-800) is dropped back to 100 rather than refused — this field has never had the
+// Predecessors cell's strict-mode refusal, and typing "Anna:" while still typing a percentage shouldn't lose the name.
+function parseResourceAssignments(str) {
+  const out = [], seen = new Set();
+  for (const tok of String(str || '').split(/[,;]/).map(x => x.trim()).filter(Boolean)) {
+    const m = /^(.+?)(?:\s*:\s*(\d+(?:[.,]\d+)?)\s*%?)?$/.exec(tok);
+    if (!m) continue;
+    const name = m[1].trim().slice(0, 60); if (!name) continue;
+    const key = name.toLowerCase(); if (seen.has(key)) continue; seen.add(key);
+    let units = 100;
+    if (m[2]) { const n = Math.round(parseFloat(m[2].replace(',', '.'))); if (Number.isFinite(n) && n >= 1 && n <= 800) units = n; }
+    out.push({ name, units });
+  }
+  return out;
+}
+// The inverse of parseResourceAssignments — [{name, units}] back to "Anna:50%, Ben" — used by the pool dialog's
+// rename/delete cascades to rewrite a task's Resource text, the same structured-to-text role predecessorLabel() has.
+function formatResourceString(assignments) {
+  return assignments.map(a => a.units === 100 ? a.name : `${a.name}:${a.units}%`).join(', ');
+}
+function resourceByName(name) {
+  const key = String(name || '').trim().toLowerCase();
+  return (project.resources || []).find(r => r.name.toLowerCase() === key) || null;
+}
+// A task's Resource text, resolved against the pool: [{resource, units}] (the pool entry object, not just its id) —
+// dropping anything that doesn't resolve (shouldn't happen once normalizeData() has run, defensive only).
+function taskAssignments(t) {
+  if (!t || hasChildren(t.id)) return [];   // a group's Resource text is free-form notes, not an assignment (matches MSPDI export's own existing rule: a group's resource goes to Notes)
+  return parseResourceAssignments(t.resource).map(a => ({ resource: resourceByName(a.name), units: a.units })).filter(a => a.resource);
+}
+// A resource's OWN day off (vacation etc, on top of the plan's shared working week) — the exact shape project.holidays
+// already uses, expanded the same way (a range, or a single day that comes back every year), but a resource's own list is
+// small enough that it needs none of workDaySet()'s caching (which is keyed to the plan's own calendar, not a resource's).
+function resourceDayOff(resource, dayNum) {
+  for (const h of (resource.daysOff || [])) {
+    if (h.yearly) {
+      const [, m, d] = h.date.split('-').map(Number), dt = new Date(dayNum * DAY_MS);
+      if (dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d) return true;
+    } else if (dayNum >= dayNumber(h.date) && dayNum <= dayNumber(h.to || h.date)) return true;
+  }
+  return false;
+}
+// A resource's day-by-day committed load (percent), from every non-group task with a resolved assignment to it — every
+// task mode and every progress counts (this is "what the plan currently commits", not "what levelling may still move" —
+// that eligibility is levelResources()'s own, narrower filter). Uniform across a task's own working-day span: Milestone
+// has no per-day Work-distribution profile the way MS Project does, a deliberate simplification (see "Resource
+// levelling" in CLAUDE.md) — an assigned percentage applies the same on every working day the task touches.
+// excludeTaskId (levelResources()'s own use): leave one task's own current placement out of the sum — used while
+// searching for where THAT task itself could move to, since its old spot must not count against itself.
+function resourceLoadByDay(resourceId, excludeTaskId) {
+  const load = new Map();
+  for (const t of tasks) {
+    if (t.spacer || hasChildren(t.id) || t.id === excludeTaskId) continue;
+    for (const a of taskAssignments(t)) {
+      if (a.resource.id !== resourceId) continue;
+      for (let d = dayNumber(t.startDate), e = dayNumber(t.endDate); d <= e; d++) { if (isWorkNum(d)) load.set(d, (load.get(d) || 0) + a.units); }
+    }
+  }
+  return load;
+}
+// Every resource currently over its own capacity, and on which working days — a day the resource has taken off counts as
+// zero capacity that day (any load at all is "over"), not just as excluded from the count.
+function overallocatedResources() {
+  const out = [];
+  for (const r of (project.resources || [])) {
+    const load = resourceLoadByDay(r.id);
+    const days = [...load.entries()].filter(([d, pct]) => pct > (resourceDayOff(r, d) ? 0 : r.maxUnits)).map(([d]) => d).sort((a, b) => a - b);
+    if (days.length) out.push({ resourceId: r.id, name: r.name, days });
+  }
+  return out;
+}
+
+/* ---- Resource levelling: the algorithm. Delays a task past a resource conflict to the next span where every resource
+   it's assigned to has capacity — never earlier than its own dependencies/constraints already allow, and, when
+   withinSlackOnly (the default), never past its own existing slack either, so the project's own finish never moves in
+   that mode. Needs no new propagation mechanism: it walks the SAME eligible network criticalPathAnalysis()/
+   rescheduleFromStatusDate() already build (leaves, non-cyclic, non-manual, non-started, non-complete — a started task's
+   Start is a fact, exactly like everywhere else in this engine) in topological order, and reuses cascadeSchedule() to
+   ripple each move to its own dependency successors — the same reasoning rescheduleFromStatusDate()'s own doc comment
+   gives for not inventing a second traversal. Task splitting is out of scope (this app's task model is always one
+   contiguous span, see "Resource levelling" in CLAUDE.md) — an assignment that genuinely can't fit within its cap is
+   left exactly where it is and reported, never silently dropped. */
+// Whether every day of [startDay, endDay] keeps every one of asg's resources within capacity, given what's already
+// committed elsewhere (loadByRes — resourceLoadByDay() per resource, with the task itself excluded from the sum).
+function levelFits(asg, startDay, endDay, loadByRes) {
+  for (const { resource, units } of asg) {
+    const load = loadByRes.get(resource.id);
+    for (let d = startDay; d <= endDay; d++) {
+      if (!isWorkNum(d)) continue;
+      const cap = resourceDayOff(resource, d) ? 0 : resource.maxUnits;
+      if ((load.get(d) || 0) + units > cap) return false;
+    }
+  }
+  return true;
+}
+const LEVEL_MAX_TRY = 3000;   // working days to search before giving up on one task — ~12 years, generous for a real plan; mirrors this codebase's other bounded-search guards (addWorkNum's own 40,000-day cap)
+// opts: { withinSlackOnly = true, fromIso? } — fromIso scopes it to tasks currently floored on/after that date, mirroring
+// Reschedule's own status-date field; omitted, every eligible task in the plan is considered. Mutates `tasks`.
+// Returns { touched: [id...], unresolved: [id...] } — ids actually moved, and ids levelling could not resolve within
+// its cap (left exactly where they were).
+function levelResources(opts = {}) {
+  const withinSlackOnly = opts.withinSlackOnly !== false;
+  const cyclic = taskCycleSet();
+  const leaves = tasks.filter(t => !hasChildren(t.id) && !cyclic.has(t.id) && t.taskMode !== 'manual' && !isStarted(t) && !isTaskComplete(t));
+  const ids = leaves.map(t => t.id), inNet = new Set(ids);
+  const preds = {}; for (const t of leaves) preds[t.id] = t.predecessors.map(p => p.id).filter(pid => inNet.has(pid));
+  const order = topoOrder(ids, preds);
+  const { float } = criticalPathAnalysis();   // one upfront pass — the slack figure levelling needs, reused directly rather than recomputed per move
+  const fromDay = opts.fromIso ? dayNumber(opts.fromIso) : null;   // scope: the whole plan, or only tasks currently floored on/after a chosen date (mirrors Reschedule's own status-date field)
+  const touched = [], unresolved = [];
+  for (const id of order) {
+    const t = byId(id);
+    if (!t || t.milestone) continue;   // a milestone has zero duration by definition — nothing here to level (it still moves via ordinary cascade if something upstream shifts)
+    const asg = taskAssignments(t);
+    if (!asg.length) continue;   // nothing assigned — not levelling's concern
+    const floorDay = dayNumber(t.startDate);
+    if (fromDay !== null && floorDay < fromDay) continue;   // out of scope — left alone, not even reported as unresolved
+    // The cap is this task's own current floor shifted forward by its ORIGINAL slack (float, from the one upfront
+    // analysis) — clamped to never sit before the floor itself: an earlier task's cascade can push this task's floor
+    // past where the stale float would have put the cap, and the floor is always a real dependency requirement, so it
+    // must always remain a valid candidate regardless of how stale the cached float now is.
+    const capDay = withinSlackOnly ? Math.max(floorDay, dayNumber(momentToDate(shiftMoment(taskMoment(t, 'start'), Math.max(0, float.get(id) || 0))))) : null;
+    const durDays = durationDays(t.startDate, t.endDate);
+    const loadByRes = new Map();
+    for (const { resource } of asg) if (!loadByRes.has(resource.id)) loadByRes.set(resource.id, resourceLoadByDay(resource.id, id));
+    let candidate = nextWorkNum(floorDay), found = null, guard = 0;
+    while (guard++ < LEVEL_MAX_TRY) {
+      if (capDay !== null && candidate > capDay) break;
+      const endDay = dayNumber(finishFor(dayNumberToIso(candidate), durDays));
+      if (levelFits(asg, candidate, endDay, loadByRes)) { found = candidate; break; }
+      candidate = nextWorkNum(candidate + 1);
+    }
+    if (found === null) { unresolved.push(id); continue; }
+    if (found !== floorDay) {
+      const newStartIso = dayNumberToIso(found);
+      t.startDate = newStartIso;
+      t.endDate = finishFor(newStartIso, durDays);
+      t.updatedAt = Date.now();
+      touched.push(id);
+      cascadeSchedule(id);
+    }
+  }
+  return { touched, unresolved };
+}
+// The exact snapshot-run-restore idiom rescheduleDryRun() already uses (JSON per task, object identity preserved by
+// Object.assign back onto the same objects) — what Level Resources would do right now, without doing it.
+// Returns { rows: [{id, name, before:[startDate,endDate], after:[...]}], unresolved: [{id, name}] }.
+function levelDryRun(opts) {
+  const snap = tasks.map(t => [t, JSON.stringify(t)]);
+  const before = new Map(tasks.map(t => [t.id, [t.startDate, t.endDate]]));
+  let res = { touched: [], unresolved: [] };
+  try { res = levelResources(opts); } catch (e) { /* leave res empty */ }
+  const rows = res.touched.map(id => { const t = byId(id); return t && { id, name: t.name, before: before.get(id), after: [t.startDate, t.endDate] }; }).filter(Boolean);
+  const unresolved = res.unresolved.map(id => { const t = byId(id); return t && { id, name: t.name }; }).filter(Boolean);
+  for (const [t, txt] of snap) { for (const k of Object.keys(t)) delete t[k]; Object.assign(t, JSON.parse(txt)); }
+  resetEffectiveCache();
+  return { rows, unresolved };
+}
 
 // Positions of the column lines (Tasks view): the middle of every gap between two tracks, read from the resolved grid tracks of the
 // header and of the first row (they can differ by a scrollbar): on every boundary between two tracks (the last pixel of the left cell), the one before the row-actions column included.
@@ -3934,6 +4216,7 @@ function syncHeaderScroll() {
   document.getElementById('gridPane').classList.toggle('h-scrolled', rows.scrollLeft > 0);
 }
 document.getElementById('gridRows').addEventListener('scroll', () => { syncHeaderScroll(); onRowsScroll(); }, { passive: true });
+document.getElementById('resourceScroll').addEventListener('scroll', onResourceScroll, { passive: true });
 document.getElementById('gridHeaderClip').addEventListener('wheel', (e) => { if (e.deltaX) { document.getElementById('gridRows').scrollLeft += e.deltaX; e.preventDefault(); } }, { passive: false });
 if (typeof ResizeObserver !== 'undefined') new ResizeObserver(() => { updateColumnLines(); syncHeaderScroll(); }).observe(document.getElementById('gridPane'));
 else window.addEventListener('resize', updateColumnLines);
@@ -4803,6 +5086,88 @@ function renderGantt() {
   }
   svg.innerHTML = `<defs><marker id="arrowhead" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--text-faint)"></path></marker></defs>${paths}`;
 }
+// The Resources view: one row per pool resource, a day-by-day load bar at whatever zoom the Gantt chart is on (the same
+// shared dateRange/ZOOMS/px — reuses ganttXAt()/ganttSpan()/renderGanttHeaderTicks() verbatim, no Resources-specific
+// timeline math). No hierarchy, so none of visibleTaskList()'s collapse-aware machinery is needed — just the pool, sorted
+// the way normalizeData() already keeps it (by name). A single scroll container with a sticky header/name column stands
+// in for the Gantt view's separate synced-scroll grid pane (see the CSS above) — simpler, since nothing here needs two
+// independently-scrollable panes.
+const RESOURCE_NAME_W = 180;
+let resourceRenderedWin = { from: 0, to: 0, n: 0, virtual: false };
+function renderResourceUsage() {
+  const z = currentZoom();
+  dateRange = computeDateRange();
+  const px = z.pxPerDay;
+  const totalW = (dateRange.end - dateRange.start) * px;
+  const resources = project.resources || [];
+  const totalH = Math.max(resources.length * ROW_H, ROW_H);
+
+  document.getElementById('resourceTimelineHead').style.width = totalW + 'px';
+  document.getElementById('resourceBody').style.width = (RESOURCE_NAME_W + totalW) + 'px';
+  document.getElementById('resourceBody').style.height = totalH + 'px';
+
+  const ticks = renderGanttHeaderTicks(dateRange, px);
+  document.getElementById('resourceTimelineHead').innerHTML = ticks.map(t => {
+    const left = Math.max(0, t.left), width = t.width - (left - t.left);
+    if (width <= 0) return '';
+    return `<div class="gantt-tick zoom-${z.id}${t.cls ? ' ' + t.cls : ''}${t.yearStart ? ' year-start' : ''}" style="left:${left}px;width:${width}px"${t.title ? ` title="${escapeHtml(t.title)}"` : ''}>${t.html || escapeHtml(t.label)}</div>`;
+  }).join('');
+
+  if (!resources.length) {
+    document.getElementById('resourceBody').innerHTML = `<div class="empty-state" style="position:static;width:${RESOURCE_NAME_W + totalW}px"><i class="fa-solid fa-users"></i>No resources yet — type a name in a task's Resource field, or add one from <strong>Schedule → Resource pool…</strong></div>`;
+    resourceRenderedWin = { from: 0, to: 0, n: 0, virtual: false };
+    return;
+  }
+
+  const win = rowWindow(resources.length);
+  resourceRenderedWin = { from: win.from, to: win.to, n: resources.length, virtual: win.virtual };
+  const over = overallocatedResources(), overMap = new Map(over.map(o => [o.resourceId, new Set(o.days)]));
+  let html = '';
+  if (hourZoomOn()) {   // non-working time, exactly Gantt's own shading block (mirrored — see renderGantt), offset past the name column
+    const shade = (n, a, b) => { html += `<div class="gantt-nonwork" style="left:${RESOURCE_NAME_W + (n - dateRange.start + a / 1440) * px}px;width:${(b - a) / 1440 * px}px;height:${totalH}px"></div>`; };
+    for (let n = dateRange.start; n < dateRange.end;) {
+      if (isWorkNum(n)) {
+        let cur = 0; for (const [a, b] of winOfDay(n)) { if (a > cur) shade(n, cur, a); cur = b; }
+        if (cur < 1440) shade(n, cur, 1440);
+        n++; continue;
+      }
+      let m = n; while (m + 1 < dateRange.end && !isWorkNum(m + 1)) m++;
+      shade(n, 0, (m - n + 1) * 1440);
+      n = m + 1;
+    }
+  } else if (px >= 4 && (workDaySet().size < 7 || holSet.size)) {
+    for (let n = dateRange.start; n < dateRange.end;) {
+      if (isWorkNum(n)) { n++; continue; }
+      let m = n; while (m + 1 < dateRange.end && !isWorkNum(m + 1)) m++;
+      html += `<div class="gantt-nonwork" style="left:${RESOURCE_NAME_W + (n - dateRange.start) * px}px;width:${(m - n + 1) * px}px;height:${totalH}px"></div>`;
+      n = m + 1;
+    }
+  }
+  resources.slice(win.from, win.to).forEach((r, k) => {
+    const idx = win.from + k, top = idx * ROW_H, overDays = overMap.get(r.id);
+    const load = resourceLoadByDay(r.id);
+    let segs = '';
+    for (const [d, pct] of load) {
+      const isOver = overDays && overDays.has(d);
+      const left = (d - dateRange.start) * px;
+      segs += `<div class="res-load-seg${isOver ? ' over' : ''}" style="left:${left}px;width:${Math.max(2, px - 1)}px" title="${escapeHtml(r.name)} — ${fmtDate(dayNumberToIso(d))}: ${pct}%${isOver ? ' (over capacity)' : ''}"></div>`;
+    }
+    html += `<div class="resource-row${overDays ? ' over' : ''}" style="top:${top}px;width:${RESOURCE_NAME_W + totalW}px" data-row-id="${r.id}"><div class="resource-name-cell" title="${escapeHtml(r.name)}${overDays ? ' — over capacity' : ''}">${escapeHtml(r.name)}</div><div class="resource-timeline" style="width:${totalW}px">${segs}</div></div>`;
+  });
+  document.getElementById('resourceBody').innerHTML = html;
+}
+function refreshResourceWindowIfNeeded(force) {
+  if (!resourceRenderedWin.virtual) return;
+  const sc = document.getElementById('resourceScroll'), st = sc.scrollTop, vFrom = Math.floor(st / ROW_H), vTo = Math.ceil((st + sc.clientHeight) / ROW_H), margin = Math.floor(VIRTUAL_BUFFER / 3);
+  if (!force && !(vFrom < resourceRenderedWin.from + margin && resourceRenderedWin.from > 0) && !(vTo > resourceRenderedWin.to - margin && resourceRenderedWin.to < resourceRenderedWin.n)) return;
+  renderResourceUsage();
+  sc.scrollTop = st;
+}
+let resWinRaf = 0;
+function onResourceScroll() {
+  if (!resourceRenderedWin.virtual || resWinRaf) return;
+  resWinRaf = requestAnimationFrame(() => { resWinRaf = 0; refreshResourceWindowIfNeeded(false); });
+}
 
 /* ============================ Gantt interactions ========================= */
 let dragState = null;
@@ -5459,6 +5824,56 @@ function runReschedule() {
     normalizeData(); save(); render();
   });
 }
+// The "Level resources" dialog — wraps levelResources()/levelDryRun() the way the Reschedule dialog wraps its own
+// engine function: a live dry-run preview, a "Which tasks" list sorted by display id (not the algorithm's own
+// processing order — the lesson from this session's own Dialog UX round 5), Apply + a toast Undo.
+function openLevelModal() {
+  closeScheduleMenu();
+  document.getElementById('levelWithinSlack').checked = true;
+  document.getElementById('levelFromOn').checked = false;
+  document.getElementById('levelFromInput').value = '';
+  document.getElementById('levelFromInput').classList.add('hidden');
+  renderLevelModal();
+  document.getElementById('levelModalBg').classList.add('open');
+}
+function closeLevelModal() { document.getElementById('levelModalBg').classList.remove('open'); }
+function levelOpts() {
+  const withinSlackOnly = document.getElementById('levelWithinSlack').checked;
+  const fromOn = document.getElementById('levelFromOn').checked, fromIso = document.getElementById('levelFromInput').value;
+  return { withinSlackOnly, fromIso: (fromOn && fromIso) ? fromIso : undefined };
+}
+function renderLevelModal() {
+  document.getElementById('levelFromInput').classList.toggle('hidden', !document.getElementById('levelFromOn').checked);
+  const hasPool = project.resources && project.resources.length;
+  const dry = hasPool ? levelDryRun(levelOpts()) : { rows: [], unresolved: [] };
+  const rows = dry.rows.slice().sort((a, b) => taskDisplayId(a.id) - taskDisplayId(b.id));
+  const n = rows.length, u = dry.unresolved.length;
+  document.getElementById('levelHint').textContent = !hasPool ? 'No resources yet — type a name in a task’s Resource field, or add one from Resource pool…, then come back here.'
+    : (!n && !u) ? 'Nothing to level — no resource is over-allocated within this scope.'
+    : `${n} task${n === 1 ? '' : 's'} would move to resolve ${n === 1 ? 'a' : 'the'} conflict${u ? `; ${u} more resource-day conflict${u === 1 ? '' : 's'} could not be resolved within slack` : ''}.`;
+  document.getElementById('levelBtn').disabled = !n;
+  document.getElementById('levelDetails').classList.toggle('hidden', !n);
+  if (n) {
+    document.getElementById('levelDetailsCount').textContent = `(${n})`;
+    document.getElementById('levelList').innerHTML = rows.map(r => `<div class="rs-row"><span class="rs-name" title="${escapeHtml(r.name)}">${escapeHtml(r.name)}</span><span class="rs-dates">Start ${fmtDate(r.before[0])} → ${fmtDate(r.after[0])}</span></div>`).join('');
+  }
+  const note = document.getElementById('levelUnresolvedNote');
+  note.classList.toggle('hidden', !u);
+  if (u) note.textContent = `Could not be resolved within slack: ${dry.unresolved.map(x => x.name).join(', ')}. Try turning off "Keep within existing slack".`;
+}
+function runLevel() {
+  const opts = levelOpts();
+  const before = tasks.map(t => ({ t, s: t.startDate, e: t.endDate, u: t.updatedAt }));
+  const res = levelResources(opts);
+  closeLevelModal();
+  if (!res.touched.length) { showToast('Nothing needed to move'); return; }
+  normalizeData(); save(); render();
+  const u = res.unresolved.length;
+  showToast(`Levelled ${res.touched.length} task${res.touched.length === 1 ? '' : 's'}${u ? ` — ${u} conflict${u === 1 ? '' : 's'} could not be resolved within slack` : ''}`, false, () => {
+    for (const x of before) { x.t.startDate = x.s; x.t.endDate = x.e; x.t.updatedAt = x.u; }
+    normalizeData(); save(); render();
+  });
+}
 /* ============================ Public-holiday presets ============================
    Rules, not lists: a fixed date, a day relative to Easter, the n-th (or last) weekday of a month, the weekday before a date, or a small
    function — so any year can be generated. `from` / `to` limit a rule to the years it applies to; `sub` says what happens when the day falls
@@ -5915,6 +6330,147 @@ function applyFieldsDraft() {
   if (inMenu) renderColumnsMenu();
   if (inDialog) renderCustomFieldsTab(typed);
 }
+/* ============================ Resource pool dialog (Schedule menu → Resource pool…) ============================
+   Modelled on the Custom Fields dialog just above (the same draft-array CRUD: JSON-snapshot dirty-check, a toggle-remove
+   that discards a brand-new row but strikes through an existing one, validate-then-confirm-then-apply on Save) — but with
+   free-form ids (genId(), like a task's) instead of CUSTOM_FIELDS' fixed slots, since a resource pool has no natural
+   bound. A rename or removal here is the one place that actively rewrites the affected tasks' Resource TEXT (matched by
+   each row's ORIGINAL name, before the pool itself changes) — the cascade the whole "resolve by name" design depends on,
+   the same capture-then-cascade shape deleteTasksNow() already uses for a deleted predecessor link. */
+let resourceDraft = null, resourceOrig = null;
+function resourcePoolMenuHint() { const n = (project.resources || []).length; return n ? `${n} ${n === 1 ? 'person' : 'people'}` : 'none yet'; }
+function openResourcePoolModal() {
+  closeScheduleMenu();
+  resourceDraft = (project.resources || []).map(r => ({
+    id: r.id, name: r.name, orig: r.name, maxUnits: r.maxUnits, daysOff: (r.daysOff || []).map(h => Object.assign({}, h)), isNew: false, removed: false,
+    uses: tasks.filter(t => taskAssignments(t).some(a => a.resource.id === r.id)).length
+  }));
+  resourceOrig = JSON.stringify(resourceDraft);
+  document.getElementById('resourcePoolPlanName').textContent = project.name;
+  renderResourceRows();
+  document.getElementById('resourcePoolModalBg').classList.add('open');
+  setTimeout(() => { const i = document.querySelector('#resourceRows .res-name'); if (i) i.focus(); }, 40);
+}
+function closeResourcePoolModal() { document.getElementById('resourcePoolModalBg').classList.remove('open'); resourceDraft = null; resourceOrig = null; }
+function resourcePoolDirty() { return resourceDraft !== null && document.getElementById('resourcePoolModalBg').classList.contains('open') && JSON.stringify(resourceDraft) !== resourceOrig; }
+function requestCloseResourcePoolModal() {
+  if (!resourcePoolDirty()) { closeResourcePoolModal(); return; }
+  openConfirmModal({ title: 'Discard your changes?', body: 'You changed the resource pool but did not save it.', confirmLabel: 'Discard changes', cancelLabel: 'Keep editing', action() { closeResourcePoolModal(); } });
+}
+function renderResourceRows() {
+  const box = document.getElementById('resourceRows');
+  box.innerHTML = resourceDraft.length ? resourceDraft.map((r, i) => {
+    const n = r.daysOff.length;
+    return `<div class="res-item${r.removed ? ' removed' : ''}" data-i="${i}">
+      <div class="res-row">
+        <input type="text" class="res-name" maxlength="60" value="${escapeHtml(r.name)}" ${r.removed ? 'disabled ' : ''}aria-label="Resource name" oninput="resourceNameInput(${i}, this)" onkeydown="if(event.key==='Enter'){event.preventDefault();saveResourcePoolModal();}">
+        <input type="number" class="res-units" min="1" max="800" value="${r.maxUnits}" ${r.removed ? 'disabled ' : ''}aria-label="Max units, percent" title="Max units — 100% is one full-time person, 200% is two people covering the same role" onchange="resourceUnitsInput(${i}, this)">
+        <span class="res-uses">${r.isNew ? '' : r.uses ? `${r.uses} task${r.uses === 1 ? '' : 's'}` : '—'}</span>
+        <button type="button" class="res-remove" onclick="resourceToggleRemove(${i})" title="${r.removed ? 'Keep this resource' : r.isNew ? 'Discard this new resource' : 'Remove this resource' + (r.uses ? ' from its tasks' : '')}" aria-label="${r.removed ? 'Keep' : 'Remove'} ${escapeHtml(r.name || 'this resource')}"><i class="fa-solid ${r.removed ? 'fa-rotate-left' : 'fa-xmark'}"></i></button>
+      </div>
+      ${r.removed ? '' : `<details class="res-days"${n ? ' open' : ''}><summary>${n ? `${n} day${n === 1 ? '' : 's'} off` : 'Days off'}</summary>
+        <div class="res-days-add">
+          <input type="text" class="dt-date" id="resDayFrom-${i}" aria-label="Day off, or the first day of a longer break" title="The day off, or the first day of a longer break">
+          <span class="hol-to">to</span>
+          <input type="text" class="dt-date" id="resDayTo-${i}" aria-label="Last day of a longer break" title="Last day of a longer break (leave empty for a single day)">
+          <input type="text" id="resDayName-${i}" maxlength="60" placeholder="Name (optional)" aria-label="Name of the day off">
+          <button class="btn" type="button" onclick="addResourceDayOff(${i})"><i class="fa-solid fa-plus"></i>Add</button>
+        </div>
+        <div class="hol-list">${r.daysOff.map((h, j) => `<div class="hol-row"><span class="hol-when">${h.to ? `${fmtDate(h.date)} – ${fmtDate(h.to)}` : fmtDate(h.date)}</span><span class="hol-name" title="${escapeHtml(h.name || '')}">${escapeHtml(h.name || '')}</span><button type="button" aria-label="Remove ${escapeHtml(fmtDate(h.date))}" title="Remove" onclick="removeResourceDayOff(${i}, ${j})"><i class="fa-solid fa-xmark"></i></button></div>`).join('')}</div>
+      </details>`}
+    </div>`;
+  }).join('') : '<div class="res-empty">No resources yet — type a name in a task’s Resource field, or “Add resource” here.</div>';
+  enhanceBoxes(box);
+  const removing = resourceDraft.filter(r => r.removed && !r.isNew).length;
+  document.getElementById('resourcePoolNote').textContent = removing ? `${removing} resource${removing === 1 ? '' : 's'} will be removed when you save.` : '';
+}
+function resourceNameInput(i, el) { resourceDraft[i].name = el.value; el.classList.remove('bad'); }
+function resourceUnitsInput(i, el) { const n = Math.round(Number(el.value)); resourceDraft[i].maxUnits = Number.isFinite(n) ? Math.max(1, Math.min(800, n)) : 100; el.value = resourceDraft[i].maxUnits; }
+function addResourceRow() {
+  resourceDraft.push({ id: genId(), name: '', orig: '', maxUnits: 100, daysOff: [], isNew: true, removed: false, uses: 0 });
+  renderResourceRows();
+  setTimeout(() => { const els = document.querySelectorAll('#resourceRows .res-name'); if (els.length) els[els.length - 1].focus(); }, 30);
+}
+function resourceToggleRemove(i) {
+  const r = resourceDraft[i];
+  if (r.isNew) resourceDraft.splice(i, 1); else r.removed = !r.removed;
+  renderResourceRows();
+}
+function addResourceDayOff(i) {
+  const fromEl = document.getElementById(`resDayFrom-${i}`), toEl = document.getElementById(`resDayTo-${i}`);
+  const from = fromEl.value, to = toEl.value;
+  if (!from) { showToast('Pick the day off first', true); fromEl.focus(); return; }
+  if (to && dayNumber(to) <= dayNumber(from)) { showToast('The last day must be after the first day', true); return; }
+  const h = { date: from }; if (to) h.to = to;
+  const name = document.getElementById(`resDayName-${i}`).value.trim(); if (name) h.name = name;
+  resourceDraft[i].daysOff.push(h);
+  renderResourceRows();
+  const el = document.querySelectorAll('#resourceRows .res-days')[i]; if (el) el.open = true;
+}
+function removeResourceDayOff(i, j) {
+  resourceDraft[i].daysOff.splice(j, 1);
+  renderResourceRows();
+  const el = document.querySelectorAll('#resourceRows .res-days')[i]; if (el) el.open = true;
+}
+// A name has to be 1-60 characters and unique among the resources (case-insensitive — matching is case-insensitive everywhere else too).
+function resourceNameProblem(r, rows) {
+  const name = r.name.trim();
+  if (!name) return r.isNew ? 'Give the new resource a name' : null;
+  if (name.length > 60) return 'A resource name can be at most 60 characters';
+  const taken = rows.filter(o => o !== r && !o.removed).map(o => o.name.trim());
+  if (taken.some(n => n && n.toLowerCase() === name.toLowerCase())) return `“${name}” is already the name of another resource`;
+  return null;
+}
+function saveResourcePoolModal() {
+  const rows = resourceDraft; if (!rows) return;
+  for (let i = 0; i < rows.length; i++) {
+    if (rows[i].removed) continue;
+    const msg = resourceNameProblem(rows[i], rows);
+    if (msg) { showToast(msg, true); const el = document.querySelectorAll('#resourceRows .res-name')[i]; if (el) { el.classList.add('bad'); el.focus(); } return; }
+  }
+  const gone = rows.filter(r => r.removed && !r.isNew), withUses = gone.filter(r => r.uses);
+  if (withUses.length) {
+    const nTasks = new Set(tasks.filter(t => withUses.some(r => taskAssignments(t).some(a => a.resource.id === r.id))).map(t => t.id)).size;
+    openConfirmModal({ title: 'Remove resources?', body: `Remove ${withUses.map(r => `“${escapeHtml(r.orig)}”`).join(', ')}? ${nTasks} task${nTasks === 1 ? '' : 's'} will no longer list ${withUses.length === 1 ? 'it' : 'them'} — Undo (Ctrl+Z) brings it back.`, confirmLabel: 'Remove', action() { applyResourcePoolDraft(); } });
+    return;
+  }
+  applyResourcePoolDraft();
+}
+function applyResourcePoolDraft() {
+  const rows = resourceDraft; if (!rows) return;
+  const now = Date.now();
+  // Rewrite every affected task's Resource text first, matched by each row's ORIGINAL name — resolution is by name, so
+  // the pool has to still hold the old name (below, unchanged so far) while this runs.
+  for (const r of rows) {
+    if (r.isNew) continue;
+    if (r.removed) {
+      for (const t of tasks) {
+        const cur = taskAssignments(t);
+        if (cur.some(a => a.resource.id === r.id)) { t.resource = formatResourceString(cur.filter(a => a.resource.id !== r.id).map(a => ({ name: a.resource.name, units: a.units }))); t.updatedAt = now; }
+      }
+    } else {
+      const nm = r.name.trim();
+      if (nm && nm !== r.orig) {
+        for (const t of tasks) {
+          const cur = taskAssignments(t);
+          if (cur.some(a => a.resource.id === r.id)) { t.resource = formatResourceString(cur.map(a => ({ name: a.resource.id === r.id ? nm : a.resource.name, units: a.units }))); t.updatedAt = now; }
+        }
+      }
+    }
+  }
+  const pool = [];
+  for (const r of rows) {
+    if (r.removed) continue;
+    const nm = r.name.trim(); if (!nm) continue;
+    const entry = { id: r.id, name: nm, maxUnits: r.maxUnits };
+    if (r.daysOff.length) entry.daysOff = r.daysOff;
+    pool.push(entry);
+  }
+  if (pool.length) project.resources = pool; else delete project.resources;
+  project.updatedAt = now;
+  closeResourcePoolModal();
+  normalizeData(); save(); render();
+}
 function setTaskModalTab(tab) {
   const custom = tab === 'custom';
   document.getElementById('taskTabGeneral').classList.toggle('hidden', custom);
@@ -6247,7 +6803,9 @@ function closeScheduleMenu() { document.getElementById('scheduleMenu').classList
 function renderScheduleMenu() {
   document.getElementById('scheduleMenu').innerHTML =
     `<button class="dropdown-item" id="planBaselineItem" onclick="openBaselineModal()"><i class="fa-solid fa-ruler-horizontal"></i>Baseline…<span class="item-hint">${escapeHtml(baselineMenuHint())}</span></button>` +
+    `<button class="dropdown-item" id="planResourcesItem" onclick="openResourcePoolModal()"><i class="fa-solid fa-users"></i>Resource pool…<span class="item-hint">${escapeHtml(resourcePoolMenuHint())}</span></button>` +
     `<button class="dropdown-item" id="planRescheduleItem" onclick="openRescheduleModal()"><i class="fa-solid fa-calendar-check"></i>Reschedule remaining work…</button>` +
+    `<button class="dropdown-item" id="planLevelItem" onclick="openLevelModal()"><i class="fa-solid fa-scale-balanced"></i>Level resources…${overallocatedResources().length ? `<span class="item-hint">${overallocatedResources().length} over-allocated</span>` : ''}</button>` +
     `<button class="dropdown-item" id="planCalendarItem" onclick="openCalendarModal()"><i class="fa-regular fa-calendar-days"></i>Working calendar…<span class="item-hint">${escapeHtml(calendarSummary())}</span></button>` +
     `<button class="dropdown-item" id="planPrecisionItem" onclick="openPrecisionModal()"><i class="fa-regular fa-clock"></i>Scheduling precision…<span class="item-hint">${escapeHtml(precisionSummary())}</span></button>`;
 }
@@ -6302,6 +6860,18 @@ function mergeData(data, opts = {}) {
   }
   if (data.project) {
     if (base && base.project) {
+      // The resource pool is an auto-growing registry (like deletedTaskIds above), not a single coherent setting the way
+      // workDays/holidays are — two devices independently typing different names each auto-add a different entry, and
+      // neither should be lost or reported as a conflict just because the two arrays differ. Union by name (case-
+      // insensitive) before the generic per-key diff below, so it sees the two sides already agree; a genuine same-name
+      // settings edit (max units, days off) on both sides is resolved in mine's favor, the same silent-resolution policy
+      // deletedTaskIds' own union-merge already uses — not surfaced as a conflict either.
+      if (Array.isArray(project.resources) || Array.isArray(data.project.resources)) {
+        const byName = new Map((project.resources || []).map(r => [String(r.name || '').toLowerCase(), r]));
+        for (const r of (data.project.resources || [])) { const k = String(r && r.name || '').toLowerCase(); if (k && !byName.has(k)) byName.set(k, r); }
+        const merged = [...byName.values()].sort((a, b) => String(a.name).toLowerCase() < String(b.name).toLowerCase() ? -1 : 1);   // a canonical order regardless of which side inserted what first, or repeated merges never converge (order alone keeps looking "changed")
+        if (merged.length) { project.resources = merged; data.project.resources = merged; } else { delete project.resources; delete data.project.resources; }
+      }
       const r = threeWayMerge(project, data.project, base.project);
       if (r.took.length) changed = true;
       if (r.fields.length) conflicts.push({ kind: 'plan', id: null, name: 'Plan settings', fields: r.fields.filter(f => f.key !== 'collapsed') });
@@ -6360,7 +6930,7 @@ function replanAfterMerge(touched) {
    A conflict = both sides changed the same field of the same task (or plan setting) since they last agreed. The merge has already
    picked the newer edit; this only makes that visible — and reversible: Review lists them and lets you take the other version. */
 let syncConflictLog = [];   // session only (a heads-up for whoever is at the keyboard, not history)
-const CONFLICT_LABELS = { name: 'Name', startDate: 'Start', endDate: 'Finish', progress: '% Complete', resource: 'Resource', predecessors: 'Predecessors', taskMode: 'Task mode', actualStart: 'Actual Start', actualFinish: 'Actual Finish', parentId: 'Parent', order: 'Position', color: 'Colour', milestone: 'Milestone', constraintType: 'Constraint', constraintDate: 'Constraint date', startTime: 'Start time', endTime: 'Finish time', actualStartTime: 'Actual Start time', actualFinishTime: 'Actual Finish time', constraintTime: 'Constraint time', timeUnit: 'Scheduling precision', workHours: 'Working hours', workHoursByDay: 'Working hours by day', lagUnit: 'Lag unit', startText: 'Start (text)', endText: 'Finish (text)', durText: 'Duration (text)', custom: 'Custom fields', baselines: 'Baselines', workDays: 'Working days', compareBaseline: 'Compared baseline', fieldNames: 'Custom field names', newTaskMode: 'New task mode', honorConstraintDates: 'Honor constraint dates' };
+const CONFLICT_LABELS = { name: 'Name', startDate: 'Start', endDate: 'Finish', progress: '% Complete', resource: 'Resource', predecessors: 'Predecessors', taskMode: 'Task mode', actualStart: 'Actual Start', actualFinish: 'Actual Finish', parentId: 'Parent', order: 'Position', color: 'Colour', milestone: 'Milestone', constraintType: 'Constraint', constraintDate: 'Constraint date', startTime: 'Start time', endTime: 'Finish time', actualStartTime: 'Actual Start time', actualFinishTime: 'Actual Finish time', constraintTime: 'Constraint time', timeUnit: 'Scheduling precision', workHours: 'Working hours', workHoursByDay: 'Working hours by day', lagUnit: 'Lag unit', startText: 'Start (text)', endText: 'Finish (text)', durText: 'Duration (text)', custom: 'Custom fields', baselines: 'Baselines', workDays: 'Working days', compareBaseline: 'Compared baseline', fieldNames: 'Custom field names', newTaskMode: 'New task mode', honorConstraintDates: 'Honor constraint dates', resources: 'Resource pool' };
 function conflictLabel(key) { return CONFLICT_LABELS[key] || key; }
 function fmtConflictValue(key, v) {
   if (v === undefined || v === null || v === '') return '—';
@@ -6771,10 +7341,23 @@ function parseMspdi(xmlText) {
     if (hol.length) project.holidays = hol;
     if (recurring) warnings.push(`${recurring} recurring calendar exception${recurring === 1 ? '' : 's'} came in as single days only`);
   }
-  // resources per task
+  // resources per task — each <Assignment>'s own Units (a fraction, 1 = 100%) becomes the Name:NN% syntax (bare name at
+  // 100%, matching the display convention exactly); each <Resource>'s own MaxUnits is kept on the side (resourceMaxUnits,
+  // by lowercase name) for applyImportedTasks() to recover into the pool once resources are actually brought in.
   const resName = new Map(list(root, 'Resources').map(r => [txt(r, 'UID'), txt(r, 'Name')]));
+  const resourceMaxUnits = new Map();
+  for (const r of list(root, 'Resources')) {
+    const nm = txt(r, 'Name'); if (!nm) continue;
+    const mu = parseFloat(txt(r, 'MaxUnits'));
+    if (Number.isFinite(mu) && mu > 0) resourceMaxUnits.set(nm.trim().toLowerCase(), Math.round(mu * 100));
+  }
   const assigned = new Map();
-  for (const a of list(root, 'Assignments')) { const tu = txt(a, 'TaskUID'), rn = resName.get(txt(a, 'ResourceUID')); if (tu && rn) { if (!assigned.has(tu)) assigned.set(tu, []); if (!assigned.get(tu).includes(rn)) assigned.get(tu).push(rn); } }
+  for (const a of list(root, 'Assignments')) {
+    const tu = txt(a, 'TaskUID'), rn = resName.get(txt(a, 'ResourceUID')); if (!tu || !rn) continue;
+    const u = parseFloat(txt(a, 'Units')), units = Number.isFinite(u) && u > 0 ? Math.round(u * 100) : 100;
+    if (!assigned.has(tu)) assigned.set(tu, []);
+    if (!assigned.get(tu).some(x => x.name === rn)) assigned.get(tu).push({ name: rn, units });
+  }
   // tasks
   const stack = [], byUid = new Map(), made = [], kidCount = new Map(), tops = { n: 0 };
   let maxLevel = 1, links = 0, baselineSlots = new Set();
@@ -6815,7 +7398,7 @@ function parseMspdi(xmlText) {
     t.actualStartTime = noteTime(timeOf(asRaw), dateOf(asRaw)); t.actualFinishTime = noteTime(timeOf(afRaw), dateOf(afRaw));
     const ctp = CT[parseInt(txt(el, 'ConstraintType'), 10)];
     if (ctp && ctp !== 'ASAP') { t.constraintType = ctp; const info = constraintTypeInfo(ctp); if (info.hasDate) { const cdRaw = txt(el, 'ConstraintDate'); t.constraintDate = dateOf(cdRaw) || t.startDate; t.constraintTime = noteTime(timeOf(cdRaw), dateOf(cdRaw)); } }
-    const rs = assigned.get(uid); if (rs) t.resource = rs.join(', ').slice(0, 200);
+    const rs = assigned.get(uid); if (rs) t.resource = formatResourceString(rs).slice(0, 200);
     t._base = {};
     for (const b of kids(el).filter(k => k.localName === 'Baseline')) {
       const n = parseInt(txt(b, 'Number'), 10), bStartRaw = txt(b, 'Start'), bFinishRaw = txt(b, 'Finish');
@@ -6864,7 +7447,7 @@ function parseMspdi(xmlText) {
     if (calByDay) project.workHoursByDay = calByDay;
     warnings.push('Times of day were found in this file — the plan was switched to Hours & minutes scheduling');
   }
-  return { tasks: made, project, warnings, lagMinutes, info: { header: true, links, levels: maxLevel, baselines: baselineSlots.size } };
+  return { tasks: made, project, warnings, lagMinutes, resourceMaxUnits, info: { header: true, links, levels: maxLevel, baselines: baselineSlots.size } };
 }
 
 /* ============================ Find a task / jump ============================
@@ -7615,7 +8198,15 @@ function applyImportedTasks(res, mode, opts = {}) {
   for (const t of imported) { applyActualDates(t); clampTaskDates(t); if (!isStarted(t)) snapToWorkDays(t); }
   tasks.push(...imported);
   const roots = imported.filter(t => !t.parentId);
-  normalizeData(); placeImportedTasks(imported); setSelection(roots.map(t => t.id)); save(); render();
+  normalizeData(); placeImportedTasks(imported);
+  // Recover each <Resource>'s own MaxUnits (today unread) once normalizeData() has auto-populated the pool from the
+  // newly-arrived tasks' Resource text — same "settings, not a per-task field" bucket workHours/baselines are already
+  // gated in, so it only applies when the calendar/settings checkbox is checked.
+  if (opts.calendar && res.resourceMaxUnits && res.resourceMaxUnits.size) {
+    for (const r of (project.resources || [])) { const mu = res.resourceMaxUnits.get(r.name.toLowerCase()); if (mu) r.maxUnits = mu; }
+    normalizeData();
+  }
+  setSelection(roots.map(t => t.id)); save(); render();
   return roots;
 }
 function applyForeignImport() {
@@ -8018,9 +8609,11 @@ function buildMspdi() {
   for (const t of rows) { const e = effectiveDates(t.id); if (e.start && e.end) { d0 = Math.min(d0, dayNumber(e.start)); d1 = Math.max(d1, dayNumber(e.end)); } }
   if (!Number.isFinite(d0)) d0 = d1 = dayNumber(todayStr());
   const startIso = dayNumberToIso(d0), endIso = dayNumberToIso(d1), now = new Date().toISOString().slice(0, 19), title = project.name || 'Project';
-  // ---- resources
-  const resNames = []; const resOf = t => String(t.resource || '').split(/[,;]/).map(x => x.trim()).filter(Boolean);
-  for (const t of rows) if (!hasChildren(t.id)) for (const n of resOf(t)) if (!resNames.includes(n)) resNames.push(n);
+  // ---- resources: taskAssignments(t) resolves against the pool, so a name's real Units (the assigned %) and its own
+  // pool MaxUnits both round-trip now — this used to just split the raw Resource text on its own, which (since the
+  // Name:NN% syntax was added) would have written the literal "Anna:50%" text as a resource NAME, not a real 50% Units.
+  const resNames = []; const resPool = new Map();   // name -> the pool resource object, first one seen
+  for (const t of rows) if (!hasChildren(t.id)) for (const a of taskAssignments(t)) if (!resNames.includes(a.resource.name)) { resNames.push(a.resource.name); resPool.set(a.resource.name, a.resource); }
   // ---- calendar
   const wd = new Set(currentWorkDays()), yrs = [Number(startIso.slice(0, 4)) - 1, Number(endIso.slice(0, 4)) + 1];
   // (each working weekday carries ITS OWN hours: a plan with a short Friday writes a different WorkingTimes for it)
@@ -8073,13 +8666,13 @@ function buildMspdi() {
     parts.push(x + '</Task>');
   });
   const assignments = []; let au = 0;
-  rows.forEach((t, i) => { if (!hasChildren(t.id)) for (const n of resOf(t)) assignments.push(`<Assignment>${T('UID', ++au)}${T('TaskUID', i + 1)}${T('ResourceUID', resNames.indexOf(n) + 1)}${T('Units', 1)}</Assignment>`); });
+  rows.forEach((t, i) => { if (!hasChildren(t.id)) for (const a of taskAssignments(t)) assignments.push(`<Assignment>${T('UID', ++au)}${T('TaskUID', i + 1)}${T('ResourceUID', resNames.indexOf(a.resource.name) + 1)}${T('Units', a.units / 100)}</Assignment>`); });
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Project xmlns="http://schemas.microsoft.com/project">` +
     `${T('SaveVersion', 14)}${T('Name', fileBase(title) + '.xml')}${T('Title', title)}${T('CreationDate', now)}${T('LastSaved', now)}${T('ScheduleFromStart', 1)}${T('StartDate', dt(startIso))}${T('FinishDate', dt(endIso, hhmmss(wEnd(endIso))))}` +
     `${T('CalendarUID', 1)}${T('DefaultStartTime', hhmmss(wh.start))}${T('DefaultFinishTime', hhmmss(wh.end))}${T('MinutesPerDay', workMinutesPerDay())}${T('MinutesPerWeek', weekMinutes())}${T('DaysPerMonth', 20)}${T('DefaultTaskType', 0)}${T('DurationFormat', 7)}${T('WorkFormat', 2)}${T('WeekStartDay', 1)}` +
     `<Calendars><Calendar>${T('UID', 1)}${T('Name', 'Standard')}${T('IsBaseCalendar', 1)}${T('IsBaselineCalendar', 0)}<WeekDays>${weekDays}</WeekDays>${exc.length ? `<Exceptions>${exc.join('')}</Exceptions>` : ''}</Calendar></Calendars>` +
     `<Tasks>${parts.join('')}</Tasks>` +
-    `<Resources>${resNames.map((n, i) => `<Resource>${T('UID', i + 1)}${T('ID', i + 1)}${T('Name', n)}${T('Type', 1)}${T('IsNull', 0)}${T('MaxUnits', 1)}</Resource>`).join('')}</Resources>` +
+    `<Resources>${resNames.map((n, i) => `<Resource>${T('UID', i + 1)}${T('ID', i + 1)}${T('Name', n)}${T('Type', 1)}${T('IsNull', 0)}${T('MaxUnits', resPool.get(n).maxUnits / 100)}</Resource>`).join('')}</Resources>` +
     `<Assignments>${assignments.join('')}</Assignments></Project>`;
 }
 function exportMspdi() {
@@ -9072,6 +9665,7 @@ function wireGlobalEvents() {
     if (e.key !== 'Escape') return;
     if (document.getElementById('cfAddMenu').classList.contains('open')) { closeCfAddMenu(); return; }
     if (document.getElementById('fieldsModalBg').classList.contains('open')) { if (document.getElementById('confirmModalBg').classList.contains('open')) closeConfirmModal(); else requestCloseFieldsModal(); return; }   // only the topmost dialog: the task dialog underneath keeps its unsaved edits
+    if (document.getElementById('resourcePoolModalBg').classList.contains('open')) { if (document.getElementById('confirmModalBg').classList.contains('open')) closeConfirmModal(); else requestCloseResourcePoolModal(); return; }
     if (document.getElementById('confirmModalBg').classList.contains('open') && (taskModalDirty() || calendarDirty() || precisionDirty() || bulkDirty())) { closeConfirmModal(); return; }   // the "discard your changes?" question: Escape = keep editing
     if (taskModalDirty()) { requestCloseTaskModal(); return; }
     if (calendarDirty()) { requestCloseCalendarModal(); return; }
@@ -9080,7 +9674,7 @@ function wireGlobalEvents() {
     // Escape closes whatever overlay is open first; only when there is none — and
     // the user isn't typing in a field, where Escape already means "cancel this
     // edit" — does it clear the task selection.
-    const modalIds = ['taskModalBg', 'folderFilesModalBg', 'confirmModalBg', 'calendarModalBg', 'precisionModalBg', 'baselineModalBg', 'rescheduleModalBg', 'syncConflictsModalBg', 'planModalBg', 'excelModalBg', 'importModalBg', 'foreignImportModalBg', 'bulkModalBg', 'searchModalBg', 'printModalBg', 'backupsModalBg', 'helpModalBg', 'aboutModalBg'];
+    const modalIds = ['taskModalBg', 'folderFilesModalBg', 'confirmModalBg', 'calendarModalBg', 'precisionModalBg', 'baselineModalBg', 'rescheduleModalBg', 'levelModalBg', 'syncConflictsModalBg', 'planModalBg', 'excelModalBg', 'importModalBg', 'foreignImportModalBg', 'bulkModalBg', 'searchModalBg', 'printModalBg', 'backupsModalBg', 'helpModalBg', 'aboutModalBg'];
     const overlayOpen = modalIds.some(id => document.getElementById(id).classList.contains('open'))
       || document.getElementById('fileSyncModalBg').classList.contains('open')   // mandatory: Escape can't close it
       || document.getElementById('dataMenu').classList.contains('open')
@@ -9263,6 +9857,7 @@ function wireEnterApplies(bgId, btnId) {
 document.addEventListener('DOMContentLoaded', () => {
   wireEnterApplies('bulkModalBg', 'bulkApplyBtn');
   wireEnterApplies('rescheduleModalBg', 'rescheduleBtn');
+  wireEnterApplies('levelModalBg', 'levelBtn');
   wireEnterApplies('baselineModalBg', 'baselineSetBtn');
   enhanceBoxes();
   initDialogAccessibility();

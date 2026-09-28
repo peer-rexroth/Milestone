@@ -156,6 +156,20 @@ with sync_playwright() as p:
     B6.pg.evaluate("() => { project.name = 'Renamed on B'; project.updatedAt = Date.now(); persistLocal(); }")
     B6.run("() => { save(); }")
     check("plan settings merge field by field: A's working calendar AND B's new plan name both survive, no conflict", B6.pg.evaluate("() => project.name") == "Renamed on B" and B6.pg.evaluate("() => calendarLabel()") == "Mon–Sat" and B6.conflicts() == [], (B6.pg.evaluate("() => project.name"), B6.pg.evaluate("() => calendarLabel()")))
+
+    # ---- the resource pool is a union, not a whole-value field: two devices auto-adding DIFFERENT names never conflicts or drops either
+    A6b, B6b, sh6b = two_devices(b)
+    A6b.edit("Alpha", resource="Ann"); time.sleep(0.05)
+    B6b.pg.evaluate("() => { const t = tasks.find(x => x.name === 'Gamma'); t.resource = 'Zed'; t.updatedAt = Date.now(); persistLocal(); }")
+    B6b.run("() => { save(); }")
+    pool = B6b.pg.evaluate("() => project.resources.map(r => r.name).sort()")
+    check("both devices' independently-auto-added resources survive the merge — a union, not a conflict", pool == ["Ann", "Zed"] and B6b.conflicts() == [], pool)
+    A6b.poll()
+    check("...both devices end up with the exact same pool", A6b.pg.evaluate("() => JSON.stringify(project.resources)") == B6b.pg.evaluate("() => JSON.stringify(project.resources)"))
+    w0b = (A6b.writes(), B6b.writes())
+    for _ in range(3): A6b.poll(); B6b.poll()
+    check("...and it stays converged: the merged pool is canonically ordered (by name), so repeated polling causes no further writes, not an order flip-flop", (A6b.writes(), B6b.writes()) == w0b, (w0b, (A6b.writes(), B6b.writes())))
+
     A7, B7, sh7 = two_devices(b)
     A7.run("() => { project.workDays = [1,2,3,4,5,6]; project.updatedAt = Date.now(); save(); }"); time.sleep(0.06)
     B7.pg.evaluate("() => { project.workDays = [0,1,2,3,4,5,6]; project.updatedAt = Date.now(); persistLocal(); }")

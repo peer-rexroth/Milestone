@@ -30,13 +30,13 @@ def in_order(el, names):
 
 SEED = """() => { tasks.length = 0; deletedTaskIds.length = 0; setSelection([]); project.name = 'Cost plan'; project.workDays = [1, 2, 3, 4, 6]; project.holidays = [{ date: '2026-12-24', to: '2026-12-28', name: 'Christmas' }, { date: '2026-05-01', name: 'Labour Day', yearly: true }]; project.fieldNames = { text1: 'Cost centre' }; project.baselines = {}; historyCoalesceMs = 0;
   const mk = (id, n, o, e) => Object.assign({ id, name: n, parentId: null, order: o, startDate: '2026-09-07', endDate: '2026-09-11', progress: 0, milestone: false, color: null, predecessors: [], collapsed: false, updatedAt: 1, constraintType: 'ASAP', constraintDate: null, taskMode: 'auto', resource: '', actualStart: null, actualFinish: null }, e || {});
-  tasks.push(mk('g', 'Website & <relaunch>', 0), mk('a', 'Design', 0, { parentId: 'g', resource: 'Anna, Ben', progress: 100, actualStart: '2026-09-07', actualFinish: '2026-09-11', baselines: { 0: ['2026-09-07', '2026-09-10'] } }),
+  tasks.push(mk('g', 'Website & <relaunch>', 0), mk('a', 'Design', 0, { parentId: 'g', resource: 'Anna:50%, Ben', progress: 100, actualStart: '2026-09-07', actualFinish: '2026-09-11', baselines: { 0: ['2026-09-07', '2026-09-10'] } }),
     mk('b', 'Build', 1, { parentId: 'g', startDate: '2026-09-14', endDate: '2026-09-25', progress: 40, resource: 'Ben', predecessors: [{ id: 'a', type: 'FS', lag: 1 }], constraintType: 'SNET', constraintDate: '2026-09-14', custom: { text1: 'CC-104' }, baselines: { 0: ['2026-09-14', '2026-09-24'] } }),
     mk('sp', '', 2, { spacer: true, parentId: 'g', taskMode: 'manual' }),
     mk('c', 'Decide vendor', 3, { parentId: 'g', taskMode: 'manual', startText: 'TBD', endText: 'TBD' }),
     mk('m', 'Go live', 1, { milestone: true, startDate: '2026-10-05', endDate: '2026-10-05', predecessors: [{ id: 'b', type: 'FF', lag: -2 }] }),
     mk('d', 'Pinned manual', 2, { taskMode: 'manual', startDate: '2026-10-12', endDate: '2026-10-16', predecessors: [{ id: 'm', type: 'SS', lag: 3 }] }));
-  project.baselines = { 0: { setAt: '2026-09-01' } }; normalizeData(); save(); render(); }"""
+  project.baselines = { 0: { setAt: '2026-09-01' } }; normalizeData(); project.resources.find(r => r.name === 'Anna').maxUnits = 150; save(); render(); }"""
 with sync_playwright() as p:
     b = p.chromium.launch(headless=True)
     ctx = b.new_context(viewport={"width": 1400, "height": 800}, accept_downloads=True); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
@@ -75,14 +75,20 @@ with sync_playwright() as p:
     res = [(r.find(NS + "UID").text, r.find(NS + "Name").text) for r in root.iter(NS + "Resource")]
     asg = [(a.find(NS + "TaskUID").text, a.find(NS + "ResourceUID").text) for a in root.iter(NS + "Assignment")]
     check("resources: Anna and Ben once each, and an assignment per task and person (Design: Anna + Ben, Build: Ben)", res == [("1", "Anna"), ("2", "Ben")] and asg == [("2", "1"), ("2", "2"), ("3", "2")] and all(in_order(r, ORDER["Resource"]) for r in root.iter(NS + "Resource")) and all(in_order(a, ORDER["Assignment"]) for a in root.iter(NS + "Assignment")), (res, asg))
+    munits = [r.find(NS + "MaxUnits").text for r in root.iter(NS + "Resource")]
+    aunits = [a.find(NS + "Units").text for a in root.iter(NS + "Assignment")]
+    check("real per-assignment Units (Anna 50% = 0.5, the other two 100% = 1) and real resource MaxUnits (Anna's own 150% = 1.5) — not the old always-1", munits == ["1.5", "1"] and aunits == ["0.5", "1", "1"], (munits, aunits))
 
     # ---------------------------------------------------------------- reads back through the app's own MSPDI importer
     back = ev("""(x) => { const r = parseMspdi(x); const byName = n => r.tasks.find(t => t.name === n); const nm = id => (r.tasks.find(t => t.id === id) || {}).name;
-      return { project: r.project, warnings: r.warnings, tasks: r.tasks.map(t => ({ n: t.name, p: nm(t.parentId), s: t.startDate, e: t.endDate, ms: t.milestone, mode: t.taskMode, prog: t.progress, res: t.resource, aS: t.actualStart, aF: t.actualFinish, ct: t.constraintType, cd: t.constraintDate, sT: t.startText, preds: t.predecessors.map(l => [nm(l.id), l.type, l.lag]), base: t.baselines || null })) }; }""", xml)
+      return { project: r.project, warnings: r.warnings, resourceMaxUnits: Object.fromEntries(r.resourceMaxUnits), tasks: r.tasks.map(t => ({ n: t.name, p: nm(t.parentId), s: t.startDate, e: t.endDate, ms: t.milestone, mode: t.taskMode, prog: t.progress, res: t.resource, aS: t.actualStart, aF: t.actualFinish, ct: t.constraintType, cd: t.constraintDate, sT: t.startText, preds: t.predecessors.map(l => [nm(l.id), l.type, l.lag]), base: t.baselines || null })) }; }""", xml)
     T = {t["n"]: t for t in back["tasks"]}
     check("read back: the same tasks in the same outline (Design, Build and Decide vendor inside the group)", [t["n"] for t in back["tasks"]] == names and T["Design"]["p"] == "Website & <relaunch>" and T["Go live"]["p"] is None)
     check("...dates, milestone, progress, actual dates, manual mode and the TBD task survive", (T["Build"]["s"], T["Build"]["e"]) == ("2026-09-14", "2026-09-25") and T["Go live"]["ms"] and T["Build"]["prog"] == 40 and T["Design"]["aS"] == "2026-09-07" and T["Design"]["aF"] == "2026-09-11" and T["Pinned manual"]["mode"] == "manual" and T["Decide vendor"]["sT"] == "TBD")
-    check("...links keep their type and lag (FS+1, FF−2, SS+3), the constraint and its date, the resources", T["Build"]["preds"] == [["Design", "FS", 1]] and T["Go live"]["preds"] == [["Build", "FF", -2]] and T["Pinned manual"]["preds"] == [["Go live", "SS", 3]] and (T["Build"]["ct"], T["Build"]["cd"]) == ("SNET", "2026-09-14") and T["Design"]["res"] == "Anna, Ben" and T["Build"]["res"] == "Ben")
+    check("...links keep their type and lag (FS+1, FF−2, SS+3), the constraint and its date, the resources with their real Units back as Name:NN%", T["Build"]["preds"] == [["Design", "FS", 1]] and T["Go live"]["preds"] == [["Build", "FF", -2]] and T["Pinned manual"]["preds"] == [["Go live", "SS", 3]] and (T["Build"]["ct"], T["Build"]["cd"]) == ("SNET", "2026-09-14") and T["Design"]["res"] == "Anna:50%, Ben" and T["Build"]["res"] == "Ben", T["Design"]["res"])
+    check("...and the resource's own MaxUnits (Anna's 150%) is on the side, ready for applyImportedTasks() to recover into the pool", back["resourceMaxUnits"].get("anna") == 150 and back["resourceMaxUnits"].get("ben") == 100, back.get("resourceMaxUnits"))
+    applied = ev("""(x) => { tasks.length = 0; deletedTaskIds.length = 0; delete project.resources; const r = parseMspdi(x); applyImportedTasks(r, 'replace', { calendar: true }); return project.resources.map(x => [x.name, x.maxUnits]); }""", xml)
+    check("...and applyImportedTasks() with the calendar/settings checkbox on actually recovers it into the live pool", ["Anna", 150] in applied and ["Ben", 100] in applied, applied)
     check("...baselines (Build 14.–24.09.) and the plan's working week and holidays", T["Build"]["base"] == {"0": ["2026-09-14", "2026-09-24"]} and back["project"]["workDays"] == [1, 2, 3, 4, 6] and any(h["date"] == "2026-12-24" and h.get("to") == "2026-12-28" for h in back["project"]["holidays"]), (back["project"], back["warnings"]))
     check("...no import warnings", back["warnings"] == [], back["warnings"])
 
