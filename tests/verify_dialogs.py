@@ -26,7 +26,11 @@ with sync_playwright() as p:
 
     # ------------------------------------------------------------------ Edit Task
     fresh(); ev("() => openTaskModal('b')"); pg.wait_for_timeout(300)
-    check("Edit Task fits an 800px-high window without scrolling (predecessors, constraint and colour all in view)", fits("#taskModalBg") and pg.locator("#predecessorRows").is_visible() and pg.locator("#taskColorSwatches").is_visible() and pg.locator("#taskConstraintTypeInput").is_visible())
+    # Task Type / Work added a real row to General (see CLAUDE.md) — kept as compact as the design allows, but a task
+    # with a predecessor showing needs a little more than 800px now; 830px is the new, deliberately-raised budget.
+    pg.set_viewport_size({"width": 1440, "height": 830})
+    check("Edit Task fits an 830px-high window without scrolling (predecessors, constraint and colour all in view)", fits("#taskModalBg") and pg.locator("#predecessorRows").is_visible() and pg.locator("#taskColorSwatches").is_visible() and pg.locator("#taskConstraintTypeInput").is_visible())
+    pg.set_viewport_size({"width": 1440, "height": 800})
     check("...Start, Finish, Duration and % share one row; so do Actual Start, Actual Finish, Remaining and Status", len({top("#taskStartInput"), top("#taskEndInput"), top("#taskDurationInput"), top("#taskProgressInput")}) == 1 and len({top("#taskActualStartInput"), top("#taskActualFinishInput"), top("#taskRemainingInfo"), top("#taskStatusInfo")}) == 1)
     check("...Task Name and Task Mode share a row, Resource and Milestone too", abs(top("#taskNameInput") - top("#taskModeInput")) <= 1 and abs(top("#taskResourceInput") - top("#taskMilestoneInput")) <= 12)
     check("...the WBS code is in the title, Remaining and Status still show", "WBS 1.2" in pg.inner_text("#taskModalIdBadge") and "days" in pg.inner_text("#taskRemainingInfo") and pg.inner_text("#taskStatusInfo").strip() != "")

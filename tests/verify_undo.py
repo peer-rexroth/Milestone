@@ -34,7 +34,7 @@ with sync_playwright() as p:
     check("...the edit moved A, B and C (cascade)", dates("A")[1] == "2026-09-09" and dates("B")[0] == "2026-09-10")
     pg.evaluate("() => historyUndo()")
     check("Undo restores A AND everything the cascade moved (B and C) exactly", dates("A") == ["2026-09-07", "2026-09-11"] and dates("B") == ["2026-09-14", "2026-09-16"] and dates("C") == ["2026-09-17", "2026-09-18"], [dates("A"), dates("B"), dates("C")])
-    check("...the toast names the task you edited (not one a cascade moved) and offers Redo", toast().startswith('Undid: Finish of "A" and 2 other tasks') and pg.inner_text("#toastUndoBtn") == "Redo", toast())
+    check("...the toast names the task you edited (not one a cascade moved) and offers Redo", toast().startswith('Undid: Finish and Work of "A" and 2 other tasks') and pg.inner_text("#toastUndoBtn") == "Redo", toast())   # Task Type / Work: a Duration edit now also recalculates Work (Fixed Units default), a second real field change
     check("...one step moved to redo; Redo is enabled", steps() == [0, 1] and not pg.evaluate("() => document.getElementById('redoBtn').disabled"))
     pg.evaluate("() => historyRedo()")
     check("Redo puts it all back (A 3 days, B and C pulled earlier)", dates("A")[1] == "2026-09-09" and dates("B") == ["2026-09-10", "2026-09-14"] and steps() == [1, 0], [dates("A"), dates("B"), steps()])

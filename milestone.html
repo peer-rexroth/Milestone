@@ -699,6 +699,15 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 .field-grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
 .field-grid-nm { display: grid; grid-template-columns: minmax(0, 1fr) 190px; gap: 12px 10px; }   /* Task Name / Resource take what is left; Task Mode (and the Milestone box under it) is wide enough for "Manually Scheduled" */
 .field-grid-nm input[type=text], .field-grid-nm select { padding: 8px 8px; }
+/* Task Type / Effort-driven / Work: one compact inline row (label beside its control, not above — unlike every other
+   field in this dialog) inside field-grid-nm's own 3rd row, specifically so it costs far less vertical budget than a
+   3rd .field row would; the Edit Task dialog is documented to fit 800px with predecessors already showing, and a
+   label-above row here would have broken that. A group or milestone hides the whole row. */
+.field-grid-tt { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px 14px; flex-wrap: wrap; margin-top: -8px; }
+.field-grid-tt label { font-size: 12px; font-weight: 600; color: var(--text-dim); white-space: nowrap; }
+.field-grid-tt select { width: 150px; }
+.field-grid-tt input[type=text] { width: 90px; }
+.field-grid-tt .tt-check { display: flex; align-items: center; gap: 6px; font-weight: 500; color: var(--text); }
 .field-grid-4 > .span2 { grid-column: span 2; } .field-grid-4 > .span3 { grid-column: span 3; }
 .field-grid-4 input[type=date], .field-grid-4 input[type=number], .field-grid-4 input[type=text], .field-grid-4 select { padding: 8px 8px; }
 .ms-field { align-self: end; padding-bottom: 9px; }   /* the task dialog: a lot of fields, so more room before it scrolls */
@@ -934,6 +943,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
 </div>
 <div class="dropdown-menu" id="rowMenu" role="menu"></div>
 <div class="dropdown-menu" id="taskModeMenu"></div>
+<div class="dropdown-menu" id="taskTypeMenu"></div>
 <div class="dropdown-menu filter-menu" id="filterMenu"></div>
 <div class="dropdown-menu cols-menu" id="columnsMenu"></div>
 
@@ -976,6 +986,11 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <div class="field"><label for="taskModeInput">Task Mode</label><select id="taskModeInput"><option value="manual">Manually Scheduled</option><option value="auto">Auto Scheduled</option></select></div>
         <div class="field"><label for="taskResourceInput">Resource</label><input type="text" id="taskResourceInput" maxlength="200"></div>
         <div class="checkbox-row ms-field"><input type="checkbox" id="taskMilestoneInput" onchange="onMilestoneToggle()"><label for="taskMilestoneInput">Milestone</label></div>
+        <div class="field-grid-tt" id="taskTypeRow">
+          <label for="taskTypeInput">Task Type</label><select id="taskTypeInput"><option value="fixedUnits">Fixed Units</option><option value="fixedDuration">Fixed Duration</option><option value="fixedWork">Fixed Work</option></select>
+          <label class="tt-check" id="taskEffortDrivenField" title="On: adding or removing a resource keeps Work the same and moves the schedule (Fixed Units/Fixed Work) or the resource split (Fixed Duration). Off: it just adds or removes that capacity."><input type="checkbox" id="effortDrivenInput">Effort-driven</label>
+          <label for="taskWorkInput" title="Total effort, e.g. 4h, 2d, 1w — kept in step with Duration and the resource split by the Task Type above">Work</label><input type="text" id="taskWorkInput">
+        </div>
       </div>
       <div id="taskDatesBlock">
       <div class="field-grid-4 dt-grid">
@@ -1121,6 +1136,8 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
       <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-progress"> % complete</label><div class="bulk-ctl"><input type="number" id="bulkVal-progress" min="0" max="100" step="1" placeholder="0 – 100" aria-label="% complete"></div></div>
       <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-resource"> Resource</label><div class="bulk-ctl"><input type="text" id="bulkVal-resource" maxlength="200" placeholder="Empty clears the resource" aria-label="Resource"></div></div>
       <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-mode"> Task Mode</label><div class="bulk-ctl"><select id="bulkVal-mode" aria-label="Task Mode"><option value="auto">Auto Scheduled</option><option value="manual">Manually Scheduled</option></select></div></div>
+      <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-worktype"> Task Type</label><div class="bulk-ctl"><select id="bulkVal-worktype" aria-label="Task Type"><option value="fixedUnits">Fixed Units</option><option value="fixedDuration">Fixed Duration</option><option value="fixedWork">Fixed Work</option></select></div></div>
+      <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-work"> Work</label><div class="bulk-ctl"><input type="text" id="bulkVal-work" placeholder="e.g. 4h, 2d, 1w" aria-label="Work"></div></div>
       <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-color"> Row colour</label><div class="bulk-ctl"><select id="bulkVal-color" aria-label="Row colour"></select></div></div>
       <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-shift"> Move dates by</label><div class="bulk-ctl"><input type="number" id="bulkVal-shift" step="1" placeholder="− earlier, + later" aria-label="Working days to move by"><span class="bulk-hint" id="bulkShiftHint">working days</span></div></div>
       <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-pred"> Add predecessor</label><div class="bulk-ctl"><input type="number" id="bulkVal-predId" min="1" step="1" placeholder="task #" aria-label="Predecessor task number"><select id="bulkVal-predType" aria-label="Link type: Finish-to-Start, Start-to-Start, Finish-to-Finish or Start-to-Finish" title="Link type: FS Finish-to-Start, SS Start-to-Start, FF Finish-to-Finish, SF Start-to-Finish"><option value="FS" title="Finish-to-Start">FS</option><option value="SS" title="Start-to-Start">SS</option><option value="FF" title="Finish-to-Finish">FF</option><option value="SF" title="Start-to-Finish">SF</option></select><input type="number" id="bulkVal-predLag" step="1" placeholder="lag" aria-label="Lag in working days" title="Lag — positive delays the start, negative overlaps it"></div></div>
@@ -1521,6 +1538,12 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         </div>
         <div class="help-divider"></div>
         <div class="help-section">
+          <div class="help-section-title">Task Type and Work</div>
+          <div class="help-row"><i class="fa-solid fa-scale-balanced"></i><span>Each task has a <strong>Task Type</strong> — <strong>Fixed Units</strong> (default), <strong>Fixed Duration</strong> or <strong>Fixed Work</strong> — and a <strong>Work</strong> figure (e.g. <code>4h</code>, <code>2d</code>), both set in the task's dialog or as grid columns. Editing Duration, Work or a resource recalculates whichever of the other two the type says is not fixed, keeping Work = Duration × the assigned resources' total percentage.</span></div>
+          <div class="help-row"><i class="fa-solid fa-users"></i><span>Fixed Units and Fixed Work: adding a second resource shortens the Duration — two people finish faster. Fixed Duration: it grows the Work instead and the schedule stays put. <strong>Effort-driven</strong> (a checkbox beside Task Type) turns this off, so a resource just adds capacity without moving anything.</span></div>
+        </div>
+        <div class="help-divider"></div>
+        <div class="help-section">
           <div class="help-section-title">Dependencies</div>
           <div class="help-row"><i class="fa-solid fa-link"></i><span>Open a task and add a <strong>predecessor</strong> to link it to another task: Finish-to-Start, Start-to-Start, Finish-to-Finish or Start-to-Finish. In the list you can type them directly, the way MS Project writes them: <code>3</code>, <code>3FS</code>, <code>3SS+2d</code>, <code>4FF-1w</code>, several separated by <code>,</code> or <code>;</code>.</span></div>
           <div class="help-row"><i class="fa-solid fa-arrows-left-right"></i><span><strong>Lag and lead:</strong> a positive number delays the dependent task, a negative number lets it overlap and start early. <code>3FS+2</code> waits 2 extra days after task 3 finishes; <code>3FS-2</code> starts 2 days before task 3 finishes. Units are days (<code>d</code>), weeks (<code>w</code>) or hours (<code>h</code>), counted in <strong>working</strong> time by default; an <code>e</code> prefix (<code>3FS+2ed</code>, <code>2ew</code>, <code>2eh</code>) makes it <strong>elapsed</strong> — real calendar time, crossing weekends and holidays without skipping them, as in MS Project. Percentage lags are not supported.</span></div>
@@ -1767,6 +1790,8 @@ const TASK_COLS = {
   remaining:    { label: 'Remaining Duration', width: '110px',        dflt: false },
   status:       { label: 'Status',        width: '108px',             dflt: true },
   resource:     { label: 'Resource',      width: '140px',             dflt: false },   // fixed like every column but Task Name; longer text is cut with an ellipsis (the cell's tooltip and the editor show all of it)
+  worktype:     { label: 'Task Type',     width: '110px',             dflt: false },   // an icon-with-popup cell, same pattern as Task Mode's own; blank for a milestone/group
+  work:         { label: 'Work',          width: '104px',             dflt: false },   // working time, typed the same way Duration is; blank for a milestone/group
   // Baseline columns (all hidden by default): the baseline chosen in the Baseline dialog (project.compareBaseline, "Baseline" unless changed)
   baselineStart:    { label: 'Baseline Start',    width: '104px', dflt: false },   // header: Baseline / Start
   baselineFinish:   { label: 'Baseline Finish',   width: '104px', dflt: false },
@@ -1848,6 +1873,13 @@ const TASK_MODES = [
   { id: 'auto', label: 'Auto Scheduled', icon: 'fa-chart-gantt' }
 ];
 function taskModeInfo(id) { return TASK_MODES.find(m => m.id === id) || TASK_MODES[1]; }
+// MS Project's Task Type triangle (see "Task Type / Work" in CLAUDE.md) — mirrors TASK_MODES' own shape/pattern exactly.
+const TASK_TYPES = [
+  { id: 'fixedUnits', label: 'Fixed Units', icon: 'fa-percent' },
+  { id: 'fixedDuration', label: 'Fixed Duration', icon: 'fa-calendar-day' },
+  { id: 'fixedWork', label: 'Fixed Work', icon: 'fa-briefcase' },
+];
+function taskTypeInfo(id) { return TASK_TYPES.find(m => m.id === id) || TASK_TYPES[0]; }
 // A manual task whose Start or Finish is blank/free text has no reliable
 // position on the timeline: no bar, ignored as a predecessor, left out of
 // summary rollups and the date range.
@@ -2274,7 +2306,7 @@ function resetColumns() {   // resets the view you are in; the other view keeps 
 function toggleColumnsMenu() {
   const menu = document.getElementById('columnsMenu');
   if (menu.classList.contains('open')) { closeColumnsMenu(); return; }
-  closeDataMenu(); closePlanMenu(); closeFilterMenu(); closeTaskModeMenu(); closeToolbarMenus();
+  closeDataMenu(); closePlanMenu(); closeFilterMenu(); closeTaskModeMenu(); closeTaskTypeMenu(); closeToolbarMenus();
   renderColumnsMenu(); positionDropdown('columnsBtn', 'columnsMenu');
   menu.style.maxHeight = Math.max(260, window.innerHeight - document.getElementById('columnsBtn').getBoundingClientRect().bottom - 16) + 'px';
   menu.classList.add('open');
@@ -2392,7 +2424,7 @@ function recordHistory() {
   updateUndoUI();
 }
 function taskSig(t) { const c = Object.assign({}, t); delete c.updatedAt; return stableStringify(c); }
-const CHANGE_FIELDS = { name: 'Name', startDate: 'Start', endDate: 'Finish', startText: 'Start', endText: 'Finish', durText: 'Duration', progress: '% complete', predecessors: 'Predecessors', taskMode: 'Task Mode', milestone: 'Milestone', resource: 'Resource', actualStart: 'Actual Start', actualFinish: 'Actual Finish', color: 'Colour', constraintType: 'Constraint', constraintDate: 'Constraint', custom: 'Custom field', baselines: 'Baseline', parentId: 'Position', order: 'Position' };
+const CHANGE_FIELDS = { name: 'Name', startDate: 'Start', endDate: 'Finish', startText: 'Start', endText: 'Finish', durText: 'Duration', progress: '% complete', predecessors: 'Predecessors', taskMode: 'Task Mode', milestone: 'Milestone', resource: 'Resource', actualStart: 'Actual Start', actualFinish: 'Actual Finish', color: 'Colour', constraintType: 'Constraint', constraintDate: 'Constraint', custom: 'Custom field', baselines: 'Baseline', parentId: 'Position', order: 'Position', work: 'Work', taskType: 'Task Type', effortDriven: 'Task Type' };
 // A short description of what changed between two plan texts, e.g. `Start of "Design"` — used in the Undo / Redo toast.
 function describeChange(beforeText, afterText) {
   const B = JSON.parse(beforeText), A = JSON.parse(afterText);
@@ -2552,6 +2584,10 @@ function normalizeData() {
     if (typeof t.collapsed !== 'boolean') t.collapsed = false;
     if (t.color && !TASK_COLORS.some(c => c.id === t.color)) t.color = null;
     t.resource = typeof t.resource === 'string' ? t.resource.slice(0, 200) : '';
+    // Task Type (MS Project's Fixed Units/Fixed Duration/Fixed Work triangle — see "Task Type / Work" in CLAUDE.md):
+    // absent = the default for each, the usual convention — only an explicit non-default value is ever stored.
+    if (t.taskType !== 'fixedDuration' && t.taskType !== 'fixedWork') delete t.taskType;
+    if (t.effortDriven === false) { /* keep it */ } else delete t.effortDriven;
     { const cv = cleanCustomValues(t.custom); if (cv) t.custom = cv; else delete t.custom; }
     for (const f of ['actualStart', 'actualFinish']) t[f] = parseUserDate(typeof t[f] === 'string' ? t[f] : '');   // a real date or null
     if (t.actualStart && t.actualFinish && dayNumber(t.actualFinish) < dayNumber(t.actualStart)) t.actualFinish = t.actualStart;   // (a Start/Finish edit of a started task edits its actual dates: they can't cross)
@@ -2714,6 +2750,21 @@ function normalizeData() {
         project.lagUnit = 'minute';
       }
     } else { delete project.timeUnit; delete project.workHours; delete project.workHoursByDay; delete project.lagUnit; }
+  }
+  {   // task.work (working minutes): bootstrapped once from the task's own current Duration x Units the first time this
+      // sees it without one, so every existing plan gets a sensible Work figure with zero user action — the same
+      // auto-populate-on-first-touch move the resource pool itself makes above. Not applicable to a milestone (zero
+      // duration), a group (rollup, not stored, like Duration itself) or an empty line. Runs AFTER the working-calendar
+      // and scheduling-precision blocks above (not before, where it first lived) — taskDurationMinutes() reads
+      // workDaySet()/workMinutesPerDay(), both keyed to project.workDays/holidays/timeUnit/workHours, and those are
+      // only in their final, canonical form once those blocks have already cleaned them; bootstrapping off a
+      // not-yet-cleaned calendar reference was a real, found bug (verify_normalize.py's order-independence check —
+      // two devices with the same plan in a different task-array order derived different Work for the same task).
+    for (const t of tasks) {
+      if (t.spacer || parentIds.has(t.id) || t.milestone) { delete t.work; continue; }
+      if (!Number.isFinite(t.work) || t.work <= 0) t.work = Math.round(taskDurationMinutes(t) * taskUnitsPercent(t) / 100);
+      else t.work = Math.max(1, Math.min(MAX_DURATION_MINUTES, Math.round(t.work)));
+    }
   }
   {   // custom field names: only known fields, trimmed, and only those that differ from the default
     const names = {};
@@ -3614,7 +3665,9 @@ const FILTER_COLS = {
   finishVariance:   { label: 'Finish Variance',   kind: 'number' },
   durationVariance: { label: 'Duration Variance', kind: 'number' },
   preds:        { label: 'Predecessors',  kind: 'text' },
-  resource:     { label: 'Resource',      kind: 'text' }
+  resource:     { label: 'Resource',      kind: 'text' },
+  worktype:     { label: 'Task Type',     kind: 'list' },
+  work:         { label: 'Work',          kind: 'number' }
 };
 for (const f of Object.values(CUSTOM_FIELDS)) FILTER_COLS[f.id] = { get label() { return customFieldName(f.id); }, kind: CUSTOM_KINDS.find(x => x.kind === f.kind).filter };
 function newColFilters() { return Object.fromEntries(Object.keys(FILTER_COLS).map(c => [c, null])); }
@@ -3668,6 +3721,8 @@ function filterColValue(t, col) {
     case 'actualStart': return actualDates(t.id).start;
     case 'actualFinish': return actualDates(t.id).end;
     case 'resource': return (t.resource || '').trim() || null;
+    case 'work': return (t.milestone || hasChildren(t.id) || !Number.isFinite(t.work)) ? null : t.work;
+    case 'worktype': return (t.milestone || hasChildren(t.id)) ? null : ((t.taskType === 'fixedDuration' || t.taskType === 'fixedWork') ? t.taskType : 'fixedUnits');
     default:
       if (isCustomField(col)) {
         const v = customValue(t, col);
@@ -3685,11 +3740,14 @@ function filterValueLabel(col, v) {
     case 'duration': return fmtDuration(v);
     case 'progress': return v + '%';
     case 'remaining': return fmtRemaining(v);
+    case 'work': return fmtDurationMinutes(v);
+    case 'worktype': return taskTypeInfo(v).label;
   }
   return String(v);
 }
 function filterCompare(kind, col) {
   if (col === 'status') return (a, b) => STATUS_ORDER.indexOf(a) - STATUS_ORDER.indexOf(b);
+  if (col === 'worktype') return (a, b) => TASK_TYPES.findIndex(m => m.id === a) - TASK_TYPES.findIndex(m => m.id === b);
   if (col && isCustomField(col) && CUSTOM_FIELDS[col].kind === 'flag') return (a, b) => (a === b ? 0 : a === 'Yes' ? -1 : 1);   // Yes, No   // Late, On Schedule, Future Task, Complete
   return kind === 'number' ? (a, b) => a - b : kind === 'date' ? (a, b) => (a < b ? -1 : a > b ? 1 : 0) : (a, b) => String(a).localeCompare(String(b), undefined, { sensitivity: 'base', numeric: true });
 }
@@ -3816,7 +3874,7 @@ function openColumnFilter(event, col) {
   event.stopPropagation();
   const menu = document.getElementById('filterMenu');
   if (menu.classList.contains('open') && filterDraft && filterDraft.col === col) { closeFilterMenu(); return; }
-  closeDataMenu(); closePlanMenu(); closeColumnsMenu(); closeTaskModeMenu(); closeToolbarMenus();
+  closeDataMenu(); closePlanMenu(); closeColumnsMenu(); closeTaskModeMenu(); closeTaskTypeMenu(); closeToolbarMenus();
   const kind = FILTER_COLS[col].kind;
   // The list offers the values that exist in this column among the tasks every *other* column's filter lets through.
   const others = Object.keys(FILTER_COLS).filter(c => c !== col), found = new Set();
@@ -4036,6 +4094,67 @@ function taskAssignments(t) {
   if (!t || hasChildren(t.id)) return [];   // a group's Resource text is free-form notes, not an assignment (matches MSPDI export's own existing rule: a group's resource goes to Notes)
   return parseResourceAssignments(t.resource).map(a => ({ resource: resourceByName(a.name), units: a.units })).filter(a => a.resource);
 }
+
+/* ---- Task Type / Work: MS Project's Fixed Units / Fixed Duration / Fixed Work triangle (Work = Duration x Units/100).
+   Units is the AGGREGATE of every assigned resource's own percentage (parseResourceAssignments, not the pool-resolved
+   taskAssignments() — the triangle needs no resolved pool object, just the percentages already in the text, so it has
+   no ordering dependency on the resource pool being built first); unassigned = the implicit 100% ("one generic person,
+   full time"), the same convention the pool's own "200% = two people" already uses. Work is stored in working MINUTES
+   always, regardless of day/minute mode — parseDurationMinutes()/fmtDurationMinutes() (below) are already unit-agnostic
+   (workMinutesPerDay()-based) and reused verbatim for entry/display, no new parsing code needed. See "Task Type / Work"
+   in CLAUDE.md. */
+function taskUnitsPercent(t) {
+  const sum = parseResourceAssignments(t.resource).reduce((s, a) => s + a.units, 0);
+  return sum > 0 ? sum : 100;
+}
+function taskDurationMinutes(t) {
+  return minuteModeActive() ? durationMoment(taskMoment(t, 'start'), taskMoment(t, 'end')) : durationDays(t.startDate, t.endDate) * workMinutesPerDay();
+}
+// Which field a Task Type says is NOT fixed, for each of the three things an edit can change: 'duration'|'work'|'units'.
+const TASK_TYPE_TABLE = {
+  fixedUnits:    { duration: 'work',  work: 'duration', units: 'duration' },
+  fixedDuration: { duration: 'work',  work: 'units',     units: 'work' },
+  fixedWork:     { duration: 'units', work: 'duration',  units: 'duration' },
+};
+// Recalculates whichever field the task's own Task Type says is not fixed, given that `changed` ('duration'|'work'|
+// 'units') was just edited — keeping Work = Duration x Units/100 true. Never called for a milestone or a group (no
+// Duration/Work of their own). Returns null, or — only when it rescaled the resource text — a "before → after" string
+// for the caller's own toast (the one place this touches what the user typed; see "Task Type / Work" in CLAUDE.md).
+function recalcTaskType(t, changed) {
+  if (!t || t.milestone || hasChildren(t.id)) return null;
+  const type = (t.taskType === 'fixedDuration' || t.taskType === 'fixedWork') ? t.taskType : 'fixedUnits';
+  let target = TASK_TYPE_TABLE[type][changed];
+  const asg = parseResourceAssignments(t.resource);
+  // effortDriven (default true) gates only "a resource was added/removed -> recalc Duration" for Fixed Units/Fixed
+  // Work: off, the resource's capacity is simply added/removed without moving the schedule (Work recalculates instead).
+  if (changed === 'units' && target === 'duration' && t.effortDriven === false) target = 'work';
+  // Units-recalculation with nothing assigned has no text to write back to: behaves like Fixed Units instead (Work and
+  // Duration move together at the implicit 100%) — a real, small, defensible edge case, not silently wrong.
+  if (target === 'units' && !asg.length) target = changed === 'duration' ? 'work' : 'duration';
+  const durMin = taskDurationMinutes(t), units = taskUnitsPercent(t);
+  const work = Number.isFinite(t.work) && t.work > 0 ? t.work : Math.round(durMin * units / 100);
+  if (target === 'work') { t.work = Math.max(1, Math.min(MAX_DURATION_MINUTES, Math.round(durMin * units / 100))); return null; }
+  if (target === 'duration') {
+    const newDurMin = Math.max(1, Math.min(MAX_DURATION_MINUTES, Math.round(work / (units / 100))));
+    // finishMoment() takes a duration in the CURRENT mode's own moment unit (working days in day mode, working minutes
+    // in minute mode) — task.work is always minutes, so a day-mode plan converts back to whole working days here.
+    const newDurMoment = minuteModeActive() ? newDurMin : Math.max(1, Math.round(newDurMin / workMinutesPerDay()));
+    setTaskMoment(t, 'end', finishMoment(taskMoment(t, 'start'), newDurMoment));
+    if (t.actualFinish) copyTaskField(t, 'end', 'actualFinish');
+    return null;
+  }
+  // target === 'units': rescale every assignment's own percentage by the same ratio, so Work stays true at the
+  // CURRENT Duration (formatResourceString/parseResourceAssignments — the same structured<->text round trip the
+  // Resource Pool dialog's own rename cascade already uses to rewrite task.resource deliberately).
+  const newUnits = durMin > 0 ? (work / durMin) * 100 : units;
+  if (!(newUnits > 0) || Math.abs(newUnits - units) < 0.5) return null;   // no real change
+  const ratio = newUnits / units, before = formatResourceString(asg);
+  const rescaled = asg.map(a => ({ name: a.name, units: Math.max(1, Math.min(800, Math.round(a.units * ratio))) }));
+  const after = formatResourceString(rescaled);
+  if (after === before) return null;
+  t.resource = after.slice(0, 200);
+  return `${before} → ${after}`;
+}
 // A resource's OWN day off (vacation etc, on top of the plan's shared working week) — the exact shape project.holidays
 // already uses, expanded the same way (a range, or a single day that comes back every year), but a resource's own list is
 // small enough that it needs none of workDaySet()'s caching (which is keyed to the plan's own calendar, not a resource's).
@@ -4238,6 +4357,7 @@ function renderGrid() {
     baselineStart: colHeadHtml('Baseline\nStart', 'baselineStart'), baselineFinish: colHeadHtml('Baseline\nFinish', 'baselineFinish'), baselineDuration: colHeadHtml('Baseline\nDuration', 'baselineDuration'),
     startVariance: colHeadHtml('Start\nVariance', 'startVariance'), finishVariance: colHeadHtml('Finish\nVariance', 'finishVariance'), durationVariance: colHeadHtml('Duration\nVariance', 'durationVariance'),
     preds: colHeadHtml('Predecessors', 'preds'), resource: colHeadHtml('Resource', 'resource'),
+    worktype: colHeadHtml('Task\nType', 'worktype'), work: colHeadHtml('Work', 'work'),
     ...Object.fromEntries(Object.keys(CUSTOM_FIELDS).map(id => [id, colHeadHtml(customFieldName(id), id)]))
   };
   document.getElementById('main').style.setProperty('--task-cols', ['34px', ...cols.map(colWidth), '88px'].join(' '));
@@ -4314,6 +4434,14 @@ function renderGrid() {
     // named modes (see openTaskModeMenu()).
     const mi = taskModeInfo(t.taskMode);
     const modeCell = `<div class="grid-cell-dim task-mode-cell" style="text-align:center" title="${mi.label} — click to change" onclick="openTaskModeMenu(event,'${t.id}')"><i class="fa-solid ${mi.icon} mode-${t.taskMode}"></i></div>`;
+    // Task Type / Work: blank for a milestone or a group (no Duration/Work of their own — see "Task Type / Work" in CLAUDE.md).
+    const ti = taskTypeInfo((t.taskType === 'fixedDuration' || t.taskType === 'fixedWork') ? t.taskType : 'fixedUnits');
+    const worktypeCell = (t.milestone || summary) ? `<div class="grid-cell-dim${summaryCls}"></div>`
+      : `<div class="grid-cell-dim task-mode-cell" title="${ti.label} — click to change" onclick="openTaskTypeMenu(event,'${t.id}')"><i class="fa-solid ${ti.icon}"></i> ${ti.label}</div>`;
+    const workCell = (t.milestone || summary) ? `<div class="grid-cell-dim${summaryCls}"></div>`
+      : editing('work')
+        ? `<input type="text" class="inline-edit" value="${Number.isFinite(t.work) ? fmtDurationMinutes(t.work) : ''}" title="Like 4h, 90m, 2d, 1w — a bare number is hours" placeholder="e.g. 4h or 2d" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" ${blurAttr('work')}>`
+        : `<div class="grid-cell-dim editable" onclick="event.stopPropagation();startInlineEdit('${t.id}','work')">${Number.isFinite(t.work) ? fmtDurationMinutes(t.work) : ''}</div>`;
     const mismatchDate = scheduleMismatch(t);
     const act = actualDates(t.id), canEditActual = full && !summary;   // a group's actual dates are rolled up, so not editable (a milestone's Actual Finish follows its Actual Start)
     const actualCell = (field, iso) => editing(field)
@@ -4344,7 +4472,7 @@ function renderGrid() {
       status: `<div class="grid-cell-dim${summaryCls}">${statusPillHtml(taskStatus(t.id))}</div>`,
       baselineStart: blCell(bl.start, bl.startTime, false), baselineFinish: blCell(bl.end, bl.endTime, true), baselineDuration: `<div class="grid-cell-dim${summaryCls}" title="${bn}">${fmtBaselineDurationFor(t.id, sv.baseDuration)}</div>`,
       startVariance: varCell(sv.start), finishVariance: varCell(sv.finish), durationVariance: varCell(sv.duration),
-      preds: predCell, resource: resourceCell,
+      preds: predCell, resource: resourceCell, worktype: worktypeCell, work: workCell,
       ...Object.fromEntries(cols.filter(isCustomField).map(id => [id, customCellHtml(t, id, summaryCls, editing(id), blurAttr(id), (f, iso, time) => dateEditor(f, iso, null, 'dd.mm.yyyy', minuteModeActive() ? time : undefined, true))]))
     };
     if (t.spacer) {   // an empty line: the ID and a blank cell in every column (nothing to edit)
@@ -4602,7 +4730,7 @@ let modeMenuTarget = null;
 function openTaskModeMenu(event, target) {
   event.stopPropagation();
   const menu = document.getElementById('taskModeMenu');
-  if (menu.classList.contains('open') && modeMenuTarget === target) { closeTaskModeMenu(); return; }
+  if (menu.classList.contains('open') && modeMenuTarget === target) { closeTaskModeMenu(); closeTaskTypeMenu(); return; }
   modeMenuTarget = target;
   const current = (byId(target) || {}).taskMode;
   menu.innerHTML = TASK_MODES.map(m => `<button class="dropdown-item${m.id === current ? ' active' : ''}" onclick="pickTaskMode('${m.id}')"><i class="fa-solid ${m.icon}"></i>${m.label}${m.id === current ? '<i class="fa-solid fa-check mode-check"></i>' : ''}</button>`).join('');
@@ -4616,8 +4744,38 @@ function openTaskModeMenu(event, target) {
 function closeTaskModeMenu() { document.getElementById('taskModeMenu').classList.remove('open'); modeMenuTarget = null; }
 function pickTaskMode(mode) {
   const target = modeMenuTarget;
-  closeTaskModeMenu();
+  closeTaskModeMenu(); closeTaskTypeMenu();
   if (target) setTaskMode(target, mode);
+}
+// The Task Type grid cell — same shared-popup pattern as Task Mode's own cell (openTaskModeMenu), one level down: sets
+// taskType directly (no recalculation of its own — picking a Task Type is dormant until a Duration/Work/Units edit
+// happens, per the table in "Task Type / Work"). Never called for a milestone/group (the cell isn't rendered for them).
+function setTaskTypeOf(id, type) {
+  const t = byId(id);
+  if (!t || t.spacer || t.milestone || hasChildren(id) || !TASK_TYPES.some(m => m.id === type) || t.taskType === type || (type === 'fixedUnits' && !t.taskType)) return;
+  t.taskType = type; t.updatedAt = Date.now();
+  normalizeData(); save(); render();
+}
+let typeMenuTarget = null;
+function openTaskTypeMenu(event, target) {
+  event.stopPropagation();
+  const menu = document.getElementById('taskTypeMenu');
+  if (menu.classList.contains('open') && typeMenuTarget === target) { closeTaskTypeMenu(); return; }
+  typeMenuTarget = target;
+  const t = byId(target), current = (t && (t.taskType === 'fixedDuration' || t.taskType === 'fixedWork')) ? t.taskType : 'fixedUnits';
+  menu.innerHTML = TASK_TYPES.map(m => `<button class="dropdown-item${m.id === current ? ' active' : ''}" onclick="pickTaskType('${m.id}')"><i class="fa-solid ${m.icon}"></i>${m.label}${m.id === current ? '<i class="fa-solid fa-check mode-check"></i>' : ''}</button>`).join('');
+  const rect = event.currentTarget.getBoundingClientRect();
+  menu.classList.add('open');
+  const w = menu.offsetWidth, h = menu.offsetHeight;
+  menu.style.right = 'auto';
+  menu.style.left = Math.max(8, Math.min(rect.left, window.innerWidth - w - 8)) + 'px';
+  menu.style.top = (rect.bottom + h + 12 > window.innerHeight ? Math.max(8, rect.top - h - 12) : rect.bottom) + 'px';
+}
+function closeTaskTypeMenu() { document.getElementById('taskTypeMenu').classList.remove('open'); typeMenuTarget = null; }
+function pickTaskType(type) {
+  const target = typeMenuTarget;
+  closeTaskTypeMenu();
+  if (target) setTaskTypeOf(target, type);
 }
 function updateNewTaskModeUI() {   // what Add Task creates: shown in the Add menu (two radio items) and in the button's tooltip
   for (const m of TASK_MODES) {
@@ -4753,6 +4911,7 @@ function commitInlineEdit(id, field, rawValue) {
     if (iso) pinToDate(t, isStart ? 'start' : 'finish');
     applyConstraints(id);
   } else if (field === 'duration') {
+    let durationChanged = false;
     if (minuteModeActive() && !hasChildren(id)) {   // working minutes: "4h", "90m", "2d", "1w"; a bare number is hours
       const mins = parseDurationMinutes(val);
       if (mins !== null && !isUnscheduled(t) && !t.milestone) {
@@ -4761,19 +4920,28 @@ function commitInlineEdit(id, field, rawValue) {
         if (manual) t.durText = null;
         if (t.actualFinish) copyTaskField(t, 'end', 'actualFinish');
         clampTaskDates(t);
+        durationChanged = true;
       } else if (manual) t.durText = val.slice(0, 60);
       else if (val && mins === null) showToast(`Can't read "${val}" as a duration — try 4h, 90m, 2d or 1w`, true);
     } else if (manual) {
       const n = /^\d+$/.test(val) ? parseInt(val, 10) : NaN;
       if (Number.isFinite(n) && n > MAX_DURATION_DAYS) showToast(`A duration can be at most ${MAX_DURATION_DAYS.toLocaleString('en')} days`, true);
-      else if (Number.isFinite(n) && n >= 1 && !isUnscheduled(t) && !t.milestone) { t.endDate = finishFor(t.startDate, n); t.durText = null; if (t.actualFinish) t.actualFinish = t.endDate; }
+      else if (Number.isFinite(n) && n >= 1 && !isUnscheduled(t) && !t.milestone) { t.endDate = finishFor(t.startDate, n); t.durText = null; if (t.actualFinish) t.actualFinish = t.endDate; durationChanged = true; }
       else t.durText = val.slice(0, 60);
     } else {
       const d = parseInt(val, 10);
       if (Number.isFinite(d) && d > MAX_DURATION_DAYS) showToast(`A duration can be at most ${MAX_DURATION_DAYS.toLocaleString('en')} days`, true);
-      else if (Number.isFinite(d) && d >= 1 && !t.milestone) { snapToWorkDays(t); t.endDate = finishFor(t.startDate, d); if (t.actualFinish) t.actualFinish = t.endDate; clampTaskDates(t); }
+      else if (Number.isFinite(d) && d >= 1 && !t.milestone) { snapToWorkDays(t); t.endDate = finishFor(t.startDate, d); if (t.actualFinish) t.actualFinish = t.endDate; clampTaskDates(t); durationChanged = true; }
     }
+    if (durationChanged) recalcTaskType(t, 'duration');   // Task Type triangle: Fixed Units/Fixed Work recalculate Work; Fixed Duration recalculates the resource text's own Units instead
     applyConstraints(id);
+  } else if (field === 'work') {   // working minutes, same typed-text convention as Duration; the Task Type triangle recalculates whichever of Duration/Units is not fixed
+    if (t.milestone || hasChildren(id)) { /* no Work of its own */ }
+    else {
+      const mins = parseDurationMinutes(val);
+      if (mins !== null) { t.work = mins; recalcTaskType(t, 'work'); applyConstraints(id); }
+      else if (val) showToast(`Can't read "${val}" as work — try 4h, 90m, 2d or 1w`, true);
+    }
   } else if (isCustomField(field)) {
     const kind = CUSTOM_FIELDS[field].kind;
     if (kind === 'text') setCustomValue(t, field, val.slice(0, 255));
@@ -4790,6 +4958,9 @@ function commitInlineEdit(id, field, rawValue) {
     }
   } else if (field === 'resource') {
     t.resource = val.slice(0, 200);
+    const msg = recalcTaskType(t, 'units');   // Task Type triangle: Fixed Units/Fixed Work recalculate Duration ("two people finish faster"); Fixed Duration recalculates Work instead
+    if (msg) showToast(`Resource split adjusted to keep Work the same: ${msg}`);
+    applyConstraints(id);
   } else if (field === 'progress') {   // % complete of a task that has no sub-tasks (a group's is worked out from them); "50", "50%" and "12,5" are accepted, rounded to a whole number
     const n = Number(val.replace('%', '').replace(',', '.').trim());
     if (val === '') { /* left as it was */ }
@@ -5535,7 +5706,7 @@ function openTaskModal(id, isNew) {
   document.getElementById('taskModalIdBadge').textContent = `#${taskDisplayId(id)} · WBS ${wbsCode(id)}`;
   document.getElementById('taskNameInput').value = t.name === 'Untitled Task' && isNew ? '' : t.name;
   document.getElementById('taskModeInput').value = t.taskMode;
-  modalOrigDates = { start: t.startDate, end: t.endDate };
+  modalOrigDates = { start: t.startDate, end: t.endDate, resource: t.resource, durMin: taskDurationMinutes(t), work: t.work };
   const textBits = [t.startText != null && `Start: "${t.startText}"`, t.endText != null && `Finish: "${t.endText}"`, t.durText != null && `Duration: "${t.durText}"`].filter(Boolean);
   const note = document.getElementById('taskTextDatesNote');
   note.textContent = textBits.length ? `Free text on this task — ${textBits.join(', ')}. Changing a date field below replaces that text; leave it alone to keep it.` : '';
@@ -5557,6 +5728,10 @@ function openTaskModal(id, isNew) {
   }
   document.getElementById('taskProgressInput').value = t.progress;
   document.getElementById('taskResourceInput').value = t.resource || '';
+  document.getElementById('taskTypeRow').classList.toggle('hidden', t.milestone || hasChildren(id));   // Task Type / Work: meaningless for a milestone (zero duration) or a group (rollup, not stored)
+  document.getElementById('taskTypeInput').value = (t.taskType === 'fixedDuration' || t.taskType === 'fixedWork') ? t.taskType : 'fixedUnits';
+  document.getElementById('effortDrivenInput').checked = t.effortDriven !== false;
+  document.getElementById('taskWorkInput').value = Number.isFinite(t.work) ? fmtDurationMinutes(t.work) : '';
   const group = hasChildren(id), act = actualDates(id);   // a group's actual dates are rolled up from its tasks, so read-only
   document.getElementById('taskActualStartInput').value = act.start || '';
   document.getElementById('taskActualFinishInput').value = act.end || '';
@@ -6568,6 +6743,7 @@ function onMilestoneToggle() {
   document.getElementById('taskEndField').classList.toggle('hidden', on);
   document.getElementById('taskDurationField').classList.toggle('hidden', on);
   document.getElementById('taskActualFinishField').classList.toggle('hidden', on);   // a milestone has one date, planned and actual
+  document.getElementById('taskTypeRow').classList.toggle('hidden', on || hasChildren(editingTaskId));
   if (on) {
     document.getElementById('taskEndInput').value = document.getElementById('taskStartInput').value;
     if (minuteModeActive()) document.getElementById('taskEndTimeInput').value = document.getElementById('taskStartTimeInput').value;
@@ -6729,12 +6905,28 @@ function saveTaskFromModal() {
     if (cinfo.basis === 'finish') { setTaskMoment(t, 'end', shiftMoment(cm, 0)); setTaskMoment(t, 'start', startMoment(taskMoment(t, 'end'), dur)); }
     else { setTaskMoment(t, 'start', shiftMoment(cm, 0)); if (t.milestone) copyTaskField(t, 'start', 'end'); else setTaskMoment(t, 'end', finishMoment(taskMoment(t, 'start'), dur)); }
   }
+  // Task Type triangle: Task Type/Effort-driven are just saved (normalizeData() below cleans them to the usual
+  // absence-convention); Work is read the same typed-text way Duration already is. A net Work change (a directly typed
+  // number) outranks a net Duration change, which outranks a Resource-text change alone — each more explicit than the
+  // last; recalcTaskType() itself no-ops for a milestone/group, and the row is hidden for both so nothing is read then.
+  let worktypeMsg = null;
+  if (!isGroup && !t.milestone) {
+    t.taskType = document.getElementById('taskTypeInput').value;
+    t.effortDriven = document.getElementById('effortDrivenInput').checked;
+    const workVal = document.getElementById('taskWorkInput').value.trim(), parsedWork = workVal ? parseDurationMinutes(workVal) : null;
+    if (workVal && parsedWork === null) showToast(`Can't read "${workVal}" as work — try 4h, 90m, 2d or 1w; Work was left as it was`, true);
+    const workChanged = parsedWork !== null && parsedWork !== modalOrigDates.work;
+    if (workChanged) t.work = parsedWork;
+    const resourceChanged = t.resource !== modalOrigDates.resource, durChanged = taskDurationMinutes(t) !== modalOrigDates.durMin;
+    worktypeMsg = workChanged ? recalcTaskType(t, 'work') : durChanged ? recalcTaskType(t, 'duration') : resourceChanged ? recalcTaskType(t, 'units') : null;
+  }
   t.updatedAt = Date.now();
   normalizeData();
   if (switchingToAuto) rescheduleAsAuto(t); else applyConstraints(t.id);
   releaseFromCycles(cyc0);
   save(); render();
   closeTaskModal();
+  if (worktypeMsg) showToast(`Resource split adjusted to keep Work the same: ${worktypeMsg}`);
 }
 
 /* ======================== Toast / confirm / tombstones ==================== */
@@ -7392,6 +7584,14 @@ function parseMspdi(xmlText) {
     else { t.taskMode = 'manual'; t.startText = t.endText = 'TBD'; }
     t.milestone = ms && !!(s || e);
     if (manual) t.taskMode = 'manual';
+    // Task Type / Work: real MSPDI's Type enum (0 = Fixed Units, 1 = Fixed Duration, 2 = Fixed Work) and EffortDriven
+    // (0/1) round-trip directly; Work is minute-precise like Duration (normalizeData() drops it again for a milestone/
+    // group and bootstraps it for an ordinary task that arrives without one, so nothing here needs to special-case those).
+    const ttMap = { 0: 'fixedUnits', 1: 'fixedDuration', 2: 'fixedWork' }, tType = ttMap[parseInt(txt(el, 'Type'), 10)];
+    if (tType && tType !== 'fixedUnits') t.taskType = tType;
+    if (txt(el, 'EffortDriven') === '0') t.effortDriven = false;
+    const workRaw = txt(el, 'Work');
+    if (workRaw) { const wm = /^PT?(?:(\d+)H)?(?:(\d+)M)?/.exec(workRaw); if (wm) { const wMin = parseInt(wm[1] || 0, 10) * 60 + parseInt(wm[2] || 0, 10); if (wMin > 0) t.work = wMin; } }
     const pc = parseInt(txt(el, 'PercentComplete'), 10); if (pc >= 0) t.progress = Math.min(100, pc);
     const asRaw = txt(el, 'ActualStart'), afRaw = txt(el, 'ActualFinish');
     t.actualStart = dateOf(asRaw); t.actualFinish = dateOf(afRaw);
@@ -7820,7 +8020,7 @@ function toggleAddMenu(event) {
   event.stopPropagation();
   const menu = document.getElementById('addMenu');
   if (menu.classList.contains('open')) { closeAddMenu(); return; }
-  closeDataMenu(); closePlanMenu(); closeColumnsMenu(); closeFilterMenu(); closeTaskModeMenu(); closeRowMenu();
+  closeDataMenu(); closePlanMenu(); closeColumnsMenu(); closeFilterMenu(); closeTaskModeMenu(); closeTaskTypeMenu(); closeRowMenu();
   for (const el of menu.querySelectorAll('[data-kbd]')) el.textContent = MOD_KEY + el.dataset.kbd;
   const r = document.querySelector('.split-btn').getBoundingClientRect();
   placeMenu(menu, r.left, r.bottom + 4);
@@ -7836,7 +8036,7 @@ function showRowMenu(x, y, onRow) {
   parts.push(n ? '' : sep, item('fa-regular fa-paste', 'Paste', 'pasteButton()', { kbd: MOD_KEY + 'V' }));
   if (n) parts.push(sep, item('fa-solid fa-indent', 'Indent', 'indentSelected()'), item('fa-solid fa-outdent', 'Outdent', 'outdentSelected()', { off: !ids.some(id => byId(id).parentId) }), sep, item('fa-solid fa-trash', n > 1 ? `Delete ${n} tasks` : 'Delete', 'deleteSelected()', { danger: true, kbd: 'Del' }));
   menu.innerHTML = parts.join('');
-  closeDataMenu(); closePlanMenu(); closeColumnsMenu(); closeFilterMenu(); closeTaskModeMenu(); closeAddMenu();
+  closeDataMenu(); closePlanMenu(); closeColumnsMenu(); closeFilterMenu(); closeTaskModeMenu(); closeTaskTypeMenu(); closeAddMenu();
   placeMenu(menu, x, y);
 }
 function onListContextMenu(e) {
@@ -7860,8 +8060,8 @@ function openBulkModal() {
   const groups = ids.filter(id => hasChildren(id)).length;
   document.getElementById('bulkTitle').textContent = ids.length === 1 ? 'Edit task' : `Edit ${ids.length} tasks`;
   document.getElementById('bulkHint').textContent = `Tick the fields you want to change — everything else stays as it is.${groups ? ' Groups keep the progress and dates worked out from their tasks.' : ''}`;
-  for (const f of ['progress', 'resource', 'mode', 'color', 'shift', 'pred']) document.getElementById('bulkOn-' + f).checked = false;
-  for (const id of ['bulkVal-progress', 'bulkVal-resource', 'bulkVal-shift', 'bulkVal-predId', 'bulkVal-predLag']) document.getElementById(id).value = '';
+  for (const f of ['progress', 'resource', 'mode', 'worktype', 'work', 'color', 'shift', 'pred']) document.getElementById('bulkOn-' + f).checked = false;
+  for (const id of ['bulkVal-progress', 'bulkVal-resource', 'bulkVal-work', 'bulkVal-shift', 'bulkVal-predId', 'bulkVal-predLag']) document.getElementById(id).value = '';
   { const sh = document.getElementById('bulkVal-shift'), mm = minuteModeActive(); sh.type = mm ? 'text' : 'number'; sh.placeholder = mm ? '− earlier, + later' : '− earlier, + later'; sh.setAttribute('aria-label', mm ? 'Working time to move by, such as 2h, -30m or 1d' : 'Working days to move by'); document.getElementById('bulkShiftHint').textContent = mm ? 'e.g. 2h, -30m, 1d' : 'working days'; }
   { const bl = document.getElementById('bulkVal-predLag'), mm = minuteModeActive(); bl.type = mm ? 'text' : 'number'; bl.placeholder = 'lag'; bl.title = mm ? 'Lag in working time, like 2h, -30m or 1d — negative overlaps the start' : 'Lag in working days — negative overlaps the start'; bl.setAttribute('aria-label', mm ? 'Lag in working time, such as 2h or 30m' : 'Lag in working days'); }   // (a minute-mode plan's lags are typed with a unit)
   document.getElementById('bulkVal-mode').value = 'auto'; document.getElementById('bulkVal-predType').value = 'FS';
@@ -7905,9 +8105,10 @@ function applyBulkEdit() {
   const ids = selectedIds().filter(id => !byId(id).spacer); if (!ids.length) { closeBulkModal(); return; }
   const on = f => { const c = document.getElementById('bulkOn-' + f); return !!(c && c.checked); }, val = f => document.getElementById('bulkVal-' + f).value;
   const customOn = bulkCustomCols().filter(c => on(c));
-  if (!['progress', 'resource', 'mode', 'color', 'shift', 'pred'].some(on) && !customOn.length) { showToast('Tick at least one field to change', true); return; }
-  let pct = null, shift = 0, predTarget = null, lag = 0, predType = val('predType');
+  if (!['progress', 'resource', 'mode', 'worktype', 'work', 'color', 'shift', 'pred'].some(on) && !customOn.length) { showToast('Tick at least one field to change', true); return; }
+  let pct = null, shift = 0, predTarget = null, lag = 0, predType = val('predType'), workMin = null;
   if (on('progress')) { pct = Number(val('progress')); if (val('progress').trim() === '' || !Number.isFinite(pct) || pct < 0 || pct > 100) { showToast('% complete must be between 0 and 100', true); return; } pct = Math.round(pct); }
+  if (on('work')) { workMin = parseDurationMinutes(val('work')); if (workMin === null) { showToast(`Can't read "${val('work')}" as work — try 4h, 90m, 2d or 1w`, true); return; } }
   if (on('shift') && minuteModeActive()) { shift = val('shift').trim() === '' ? null : parseLagInput(val('shift')); if (shift === null) { showToast('Give the working time to move by, such as 2h, -30m or 1d', true); return; } }
   else if (on('shift')) { shift = Number(val('shift')); if (val('shift').trim() === '' || !Number.isInteger(shift) || Math.abs(shift) > 5000) { showToast('Give the number of working days to move by, such as 5 or -2', true); return; } }
   if (on('pred')) {
@@ -7926,13 +8127,19 @@ function applyBulkEdit() {
     else if (kind === 'flag') customVals[c] = raw ? true : null;
     else customVals[c] = raw.trim() === '' ? null : raw.trim();
   }
-  const skipped = { progress: 0, shift: 0, pred: 0 }, touched = [], now = Date.now();
-  let changed = 0;
+  const skipped = { progress: 0, shift: 0, pred: 0, worktype: 0, work: 0 }, touched = [], now = Date.now();
+  let changed = 0, worktypeAdjusted = 0;
   for (const id of ids) {
     const t = byId(id); let did = false;
     if (on('progress')) { if (hasChildren(id)) skipped.progress++; else { t.progress = pct; did = true; } }
-    if (on('resource')) { t.resource = val('resource').trim().slice(0, 200); did = true; }
+    if (on('resource')) {
+      t.resource = val('resource').trim().slice(0, 200);
+      if (recalcTaskType(t, 'units')) worktypeAdjusted++;   // Task Type triangle: Fixed Units/Fixed Work recalculate Duration per task, Fixed Duration recalculates Work
+      touched.push(id); did = true;
+    }
     if (on('mode') && t.taskMode !== val('mode')) { t.taskMode = val('mode'); if (t.taskMode === 'auto') rescheduleAsAuto(t); did = true; }
+    if (on('worktype')) { if (hasChildren(id) || t.milestone) skipped.worktype++; else { t.taskType = val('worktype'); touched.push(id); did = true; } }
+    if (on('work')) { if (hasChildren(id) || t.milestone) skipped.work++; else { t.work = workMin; if (recalcTaskType(t, 'work')) worktypeAdjusted++; touched.push(id); did = true; } }
     if (on('color')) { t.color = val('color') || null; did = true; }
     if (on('shift') && shift !== 0) { if (hasChildren(id) || isStarted(t) || isUnscheduled(t)) skipped.shift++; else { if (minuteModeActive()) shiftTaskByMinutes(t, shift); else shiftTaskBy(t, shift); touched.push(id); did = true; } }
     if (on('pred')) {
@@ -7945,7 +8152,7 @@ function applyBulkEdit() {
   normalizeData();
   for (const id of touched) if (byId(id)) applyConstraints(id);
   save(); render(); closeBulkModal();
-  const notes = [skipped.progress && `${skipped.progress} group${skipped.progress === 1 ? ' kept its' : 's kept their'} worked-out progress`, skipped.shift && `${skipped.shift} not moved (group, started or dates as text)`, skipped.pred && `${skipped.pred} not linked (group, already linked, or it would make a cycle)`].filter(Boolean);
+  const notes = [skipped.progress && `${skipped.progress} group${skipped.progress === 1 ? ' kept its' : 's kept their'} worked-out progress`, skipped.shift && `${skipped.shift} not moved (group, started or dates as text)`, skipped.pred && `${skipped.pred} not linked (group, already linked, or it would make a cycle)`, skipped.worktype && `${skipped.worktype} Task Type not set (milestone or group)`, skipped.work && `${skipped.work} Work not set (milestone or group)`, worktypeAdjusted && `${worktypeAdjusted} resource split${worktypeAdjusted === 1 ? '' : 's'} adjusted to keep Work the same`].filter(Boolean);
   showToast(`Updated ${changed} task${changed === 1 ? '' : 's'}${notes.length ? ' — ' + notes.join('; ') : ''}`);
 }
 
@@ -8383,7 +8590,7 @@ function buildXlsx(opts) {
   // ---------------- Tasks sheet: ID, then the task list's own visible columns in the user's order (or all of them)
   const XCOLS = {
     id: ['ID', 6], mode: ['Mode', 10], wbs: ['WBS', 15], name: ['Task Name', 46], start: ['Start', 13], end: ['Finish', 13], actualStart: ['Actual Start', 13],
-    actualFinish: ['Actual Finish', 13], baselineStart: ['Baseline Start', 13], baselineFinish: ['Baseline Finish', 13], baselineDuration: ['Baseline Duration', 13], startVariance: ['Start Variance', 13], finishVariance: ['Finish Variance', 13], durationVariance: ['Duration Variance', 13], duration: ['Duration', 12], progress: ['% Complete', 13], remaining: ['Remaining Duration', 13], status: ['Status', 13], preds: ['Predecessors', 18], resource: ['Resource', 22]
+    actualFinish: ['Actual Finish', 13], baselineStart: ['Baseline Start', 13], baselineFinish: ['Baseline Finish', 13], baselineDuration: ['Baseline Duration', 13], startVariance: ['Start Variance', 13], finishVariance: ['Finish Variance', 13], durationVariance: ['Duration Variance', 13], duration: ['Duration', 12], progress: ['% Complete', 13], remaining: ['Remaining Duration', 13], status: ['Status', 13], preds: ['Predecessors', 18], resource: ['Resource', 22], worktype: ['Task Type', 14], work: ['Work', 12]
   };
   for (const id of Object.keys(CUSTOM_FIELDS)) XCOLS[id] = [customFieldName(id), { text: 22, number: 13, date: 13, flag: 9 }[CUSTOM_FIELDS[id].kind]];
   // "All columns" adds the custom fields that are in use (renamed, or holding a value somewhere) — not twenty empty columns.
@@ -8457,6 +8664,11 @@ function buildXlsx(opts) {
         case 'status': { const st = taskStatus(t.id); sheet.cell(r, c, st, S({ h: 'center', bold: true, color: { 'Complete': '1A7F37', 'On Schedule': '0969DA', 'Late': 'CF222E', 'Future Task': DIM }[st] || DIM })); break; }
         case 'preds': sheet.cell(r, c, predecessorLabel(t) || null, S({ h: 'left' })); break;
         case 'resource': sheet.cell(r, c, (t.resource || '').trim() || null, S({ h: 'left' })); break;
+        // Blank for a milestone/group (no Duration/Work of their own — see "Task Type / Work" in CLAUDE.md). Work is
+        // pre-formatted text like the minute-mode Duration/Remaining cells above (no clean Excel format code for a raw
+        // minute count), since it's always in working minutes regardless of day/minute mode.
+        case 'worktype': sheet.cell(r, c, (t.milestone || summary) ? null : taskTypeInfo((t.taskType === 'fixedDuration' || t.taskType === 'fixedWork') ? t.taskType : 'fixedUnits').label, S({ h: 'left' })); break;
+        case 'work': sheet.cell(r, c, (t.milestone || summary || !Number.isFinite(t.work)) ? null : fmtDurationMinutes(t.work), S({ h: 'center', italic: true, color: DIM, bold: false })); break;
         default:
           if (isCustomField(k)) {
             const kind = CUSTOM_FIELDS[k].kind, v = customValue(t, k);
@@ -8641,12 +8853,19 @@ function buildMspdi() {
     if (unsched) { const bits = [t.startText != null && `Start: ${t.startText || '(blank)'}`, t.endText != null && `Finish: ${t.endText || '(blank)'}`, t.durText != null && `Duration: ${t.durText}`].filter(Boolean); if (bits.length) notes.push(bits.join(' · ')); }
     if (group && t.resource) notes.push(`Resource: ${t.resource}`);
     for (const id of Object.keys(CUSTOM_FIELDS)) { const v = customValue(t, id); if (v !== undefined) notes.push(`${customFieldName(id)}: ${CUSTOM_FIELDS[id].kind === 'flag' ? (v ? 'Yes' : 'No') : CUSTOM_FIELDS[id].kind === 'date' ? customDateText(t, id) : v}`); }
-    let x = `<Task>${T('UID', u)}${T('ID', u)}${T('Name', t.name)}${T('Active', 1)}${T('Manual', manual ? 1 : 0)}${T('Type', 0)}${T('IsNull', 0)}${T('WBS', wbsCode(t.id))}${T('OutlineNumber', wbsCode(t.id))}${T('OutlineLevel', depth)}${T('Priority', 500)}`;
+    const typeXml = { fixedUnits: 0, fixedDuration: 1, fixedWork: 2 }[t.taskType] || 0;
+    let x = `<Task>${T('UID', u)}${T('ID', u)}${T('Name', t.name)}${T('Active', 1)}${T('Manual', manual ? 1 : 0)}${T('Type', typeXml)}${T('IsNull', 0)}${T('WBS', wbsCode(t.id))}${T('OutlineNumber', wbsCode(t.id))}${T('OutlineLevel', depth)}${T('Priority', 500)}`;
     if (has) {
       x += T('Start', dt(e.start, startTime)) + T('Finish', dt(e.end, endTime)) + T('Duration', durXml);
       if (manual) x += T('ManualStart', dt(e.start, startTime)) + T('ManualFinish', dt(e.end, endTime)) + T('ManualDuration', durXml);
     }
-    x += T('DurationFormat', 7) + T('Milestone', t.milestone && !group ? 1 : 0) + T('Summary', group ? 1 : 0) + T('PercentComplete', Math.round(e.progress)) + T('PercentWorkComplete', Math.round(e.progress));
+    x += T('DurationFormat', 7);
+    // Work is minute-precise (like Duration in minute mode) and only meaningful for an ordinary leaf task — a milestone/
+    // group has no stored t.work (normalizeData() deletes it for both). EffortDriven is written unconditionally, like
+    // real MS Project does for every task, even one the triangle doesn't apply to.
+    if (!group && !t.milestone && Number.isFinite(t.work)) x += T('Work', hoursMin(t.work));
+    x += T('EffortDriven', t.effortDriven === false ? 0 : 1);
+    x += T('Milestone', t.milestone && !group ? 1 : 0) + T('Summary', group ? 1 : 0) + T('PercentComplete', Math.round(e.progress)) + T('PercentWorkComplete', Math.round(e.progress));
     if (act.start && !group) x += T('ActualStart', dt(act.start, hhmmss(taskTime(t, 'actualStartTime', wStart(act.start)))));
     if (act.end && !group) x += T('ActualFinish', dt(act.end, hhmmss(taskTime(t, 'actualFinishTime', t.milestone ? wStart(act.end) : wEnd(act.end)))));
     const ct = CT[t.constraintType] || 0;
@@ -9354,7 +9573,7 @@ function createPlanRecord(name, data) {
 function resetTransientUI() {
   setSelection([]); editingCell = null; editingPredecessors = [];
   colFilters = newColFilters(); filterPinned.clear(); closeFilterMenu();   // filters belong to the plan you were looking at
-  closeTaskModal(); closeFieldsModal(); closeImportModal(); closeDataMenu(); closeScheduleMenu(); closeColumnsMenu(); closeTaskModeMenu(); closeToolbarMenus();
+  closeTaskModal(); closeFieldsModal(); closeImportModal(); closeDataMenu(); closeScheduleMenu(); closeColumnsMenu(); closeTaskModeMenu(); closeTaskTypeMenu(); closeToolbarMenus();
   clearTimeout(toastTimer); toastUndoAction = null;
   document.getElementById('toast').classList.remove('show');   // an Undo for the old plan must not act on the new one
   resetHistory();   // (and neither must the undo history)
@@ -9641,6 +9860,7 @@ function wireGlobalEvents() {
     // runs, and a detached node is no longer "inside" #filterMenu — without the check the panel closed on every expand.
     if (e.target.isConnected && !e.target.closest('#filterMenu') && !e.target.closest('.col-filter-btn')) closeFilterMenu();
     if (!e.target.closest('#taskModeMenu')) closeTaskModeMenu();
+    if (!e.target.closest('#taskTypeMenu')) closeTaskTypeMenu();
     if (!e.target.closest('#addMenu') && !e.target.closest('#addMenuBtn')) closeAddMenu();
     if (!e.target.closest('#rowMenu')) closeRowMenu();
     if (!e.target.closest('#cfAddMenu') && !e.target.closest('#cfAddBtn') && !e.target.closest('#fieldsAddBtn')) closeCfAddMenu();
@@ -9683,13 +9903,14 @@ function wireGlobalEvents() {
       || document.getElementById('filterMenu').classList.contains('open')
       || document.getElementById('columnsMenu').classList.contains('open')
       || document.getElementById('taskModeMenu').classList.contains('open')
+      || document.getElementById('taskTypeMenu').classList.contains('open')
       || document.getElementById('addMenu').classList.contains('open')
       || document.getElementById('rowMenu').classList.contains('open');
     // e.target, not document.activeElement: an inline editor's own Escape handler re-renders and destroys the
     // focused field before this runs, so by now activeElement is already <body>.
     const typing = /^(INPUT|TEXTAREA|SELECT)$/.test((e.target || {}).tagName || '');
     for (const id of modalIds) document.getElementById(id).classList.remove('open');
-    closeDataMenu(); closeScheduleMenu(); closePlanMenu(); closeFilterMenu(); closeColumnsMenu(); closeTaskModeMenu(); closeToolbarMenus();
+    closeDataMenu(); closeScheduleMenu(); closePlanMenu(); closeFilterMenu(); closeColumnsMenu(); closeTaskModeMenu(); closeTaskTypeMenu(); closeToolbarMenus();
     if (!overlayOpen && editingCell) { cancelInlineEdit(); return; }   // an inline editor that hasn't received focus yet (it gets it a frame after it appears)
     if (!overlayOpen && !typing && (selectedTaskId || selectedTaskIds.size)) { setSelection([]); render(); }
   });

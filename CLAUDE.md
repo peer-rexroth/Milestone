@@ -231,7 +231,7 @@ An explicit user request ("plan based on minutes, like MS Project — switchable
 
 ### Robustness rules found by the stress test (`verify_stress.py`)
 
-A seeded random test (`verify_stress.py`: 400 random operations per seed — add, delete, indent, outdent, drag-move, Start/Finish/Duration/predecessor/actual-date edits through the real commit path, Gantt bar drags, mode switches, clone, baselines, working-calendar and holiday changes, milestone and constraint changes, toast undo, history undo/redo and an undo→redo round trip, view/zoom/column changes — then invariants after **every** operation: unique ids, valid dates, no parent cycles or dangling/self/group links, milestones one date, progress 0–100, baselines only on leaves, an Auto task that has not started sits exactly where its links put it (`constraintStart`) and on working days, display ids unique, both views render; every 20 steps `normalizeData()` is idempotent, merging the plan with itself changes nothing and save → load → save is byte-stable; every 10 the critical path is checked (whole-number floats, something critical, the last finisher critical), every 60 the Excel export builds) found real defects, now fixed — keep these rules:
+A seeded random test (`verify_stress.py`: 400 random operations per seed — add, delete, indent, outdent, drag-move, Start/Finish/Duration/predecessor/actual-date edits through the real commit path, Gantt bar drags, mode switches, clone, baselines, working-calendar and holiday changes, milestone and constraint changes, Task Type/Work edits, toast undo, history undo/redo and an undo→redo round trip, view/zoom/column changes — then invariants after **every** operation: unique ids, valid dates, no parent cycles or dangling/self/group links, milestones one date, progress 0–100, baselines only on leaves, an Auto task that has not started sits exactly where its links put it (`constraintStart`) and on working days, display ids unique, both views render; every 15 steps Work ≈ Duration × Units/100 for every ordinary task (see below); every 20 steps `normalizeData()` is idempotent, merging the plan with itself changes nothing and save → load → save is byte-stable; every 10 the critical path is checked (whole-number floats, something critical, the last finisher critical), every 60 the Excel export builds) found real defects, now fixed — keep these rules:
 - **A selected task that disappears** (deleted on another device, replaced by an import or a merge) must not break `render()`: `render()` and `updateSelectionUI()` clear `selectedTaskId` when the task is gone.
 - **A group's own Start/Finish follow its tasks** (`normalizeData()`, auto groups only, snapped to working days) — they are unused while it is a group but are what it falls back to when it stops being one. A task with tasks in it is never a milestone (the flag is cleared).
 - **A group that loses its last task** (outdent, drag-move, delete) is an ordinary task again, so its own links/constraint apply: `releaseGroup(id)` → `applyConstraints()`. `deleteTaskFlow()` also re-checks the survivors that lost a predecessor (one released from a dependency cycle must be placed); its Undo puts their dates back.
@@ -243,6 +243,7 @@ A seeded random test (`verify_stress.py`: 400 random operations per seed — add
 - **Clearing an actual date** makes the task un-started again: it is snapped back to working days (`snapToWorkDays()`), inline and in the dialog.
 - **Clearing an actual date leaves the schedule where it was** (documented above), so the stress test's "Auto task obeys its links" invariant exempts a task that has ever had an actual date during the run.
 - Changing the **working calendar never moves dates** (by design), so the stress test switches the "on working days / obeys its links" invariants off after a calendar change.
+- **Work ≈ Duration × Units/100 only holds for a task whose span/Work moved through a route `recalcTaskType()` is actually wired into** (the Duration/Work/Resource cells, the task dialog, bulk edit) — a `worktype` op (edits Duration/Work/a resource, cycles Task Type/Effort-driven) drives this, and the periodic check skips a task whose Work the calendar-change gate already excludes (`calChanged`) or that just moved through one of the routes the triangle deliberately does **not** listen to: a Start/Finish inline edit, a Gantt drag, `addTask()`'s own direct date set, recording an Actual Start/Finish (`applyActualDates()` overwrites Finish straight from the fact, no recalculation — see "Baselines, actual dates and variance"), or a clone/paste that copies an existing (possibly already out-of-sync) Work verbatim — `wtStale`, marked at each of those op sites (a `markNew()` helper diffs `tasks` before/after for clone/paste so a fresh copy's id is covered too). Found while building this: `commitInlineEdit()`'s `start`/`finish` branches and `applyActualDates()` were already, deliberately, not wired into `recalcTaskType()` (Stage 2's own approved plan text lists only the Duration/Work/Resource branches) — the stress test's initial failures were this real, pre-existing, *documented* scope boundary showing up under random load, not a new bug; once every such route was accounted for, 20+ seeds ran clean.
 Covered too by `verify_e2e.py`: a scripted user journey with real clicks (dialog, indent, dependencies, inline edits, baseline, actual dates, calendar, filters, Gantt drag/zoom/critical path, separate column sets, clone/delete/undo, Excel and JSON export, import/replace, backups, plans, theme, help, reload persistence) with zero console errors.
 
 ### Task IDs are collapse-stable, and drive predecessor/successor selection
@@ -475,6 +476,193 @@ The last item on the "what MS Project does that this doesn't" list, closed by ex
 - Covered by `verify_level_dialog.py`: the menu item and its live hint, no-pool messaging, the dry-run preview and its list, Apply + Undo restoring exact dates, the within-slack checkbox actually gating what's resolvable (and the unresolved note naming the tasks), and the from-date scope hiding/revealing its field and filtering the preview.
 - **MS Project XML round-trip enrichment** (closing a gap found during the original research, not part of the earlier stages): export used to always write `Units=1` (100%) for every `<Assignment>` and `MaxUnits=1` for every `<Resource>` — both hardcoded before the resource pool existed to have anything real to write. `buildMspdi()` now resolves each leaf task's assignments through `taskAssignments(t)` (not a raw split of the Resource text, which — since the `Name:NN%` syntax exists — would otherwise have written the literal string `"Anna:50%"` as a resource *name*) and writes each `Units` as `a.units / 100` and each `Resource`'s own `MaxUnits` as `resPool.get(n).maxUnits / 100`. Import mirrors it: `parseMspdi()` reads each `<Assignment>`'s own `Units` into the `Name:NN%` syntax (a bare name when absent or 100%) and keeps every `<Resource>`'s own `MaxUnits` on the side (`resourceMaxUnits`, by lowercase name); `applyImportedTasks()` recovers it into the live pool — by name, after `normalizeData()` has auto-populated the pool from the newly-arrived tasks' Resource text — only when the "import the calendar too" checkbox is on, the same gate `workHours`/baselines already use (a pool-level setting, not a per-task field). Covered by `verify_mspdi_export.py`'s extended round-trip (a 50%-assigned resource with its own 150% `maxUnits`, both surviving export → import → `applyImportedTasks()` intact) and `verify_import.py` (an older-style fixture with no `Units`/`MaxUnits` elements at all still defaults to 100%, unchanged).
 - **This closes all seven stages of the original plan** — a real resource pool with per-resource capacity and days off, automatic over-allocation detection, a genuine levelling algorithm respecting dependencies and (by default) existing slack, a Resources usage view, a dialog wrapping it all with Undo, and real MS Project XML round-tripping of assignment/resource capacity. See "Known v1 limitations" below.
+
+### Task Type / Work
+
+MS Project's Fixed Units / Fixed Duration / Fixed Work triangle, built by explicit request as the direct follow-up to
+resource levelling — asked whether Milestone differs from MS Project on "fixed duration, fixed effort," the honest
+answer at the time was that it had none of that machinery (every task behaved like a permanent, unswitchable Fixed
+Duration, since there was no stored `Work` quantity for a Task Type setting to solve for). Confirmed explicitly: the
+user wants real resource-driven rescheduling ("two people finish faster"), not a cosmetic label — a genuine, deliberate
+break from the standing rule that assigning a resource never moves a date.
+
+- **The formula and the table.** `Work = Duration_minutes × Units/100`. **Units is the aggregate** of every assigned
+  resource's own percentage (`taskUnitsPercent(t)`: `parseResourceAssignments(t.resource)` summed — not the
+  pool-resolved `taskAssignments()`, so this has no ordering dependency on the resource pool being built first;
+  unassigned = the implicit 100%, "one generic person, full time," the same convention the pool's own "200% = two
+  people covering the role" already uses). **Work is stored in working MINUTES always**, regardless of day/minute mode
+  (`task.work`) — `taskDurationMinutes(t)` mirrors it: `minuteModeActive() ? durationMoment(...) : durationDays(...) *
+  workMinutesPerDay()`. Entry and display reuse `parseDurationMinutes()`/`fmtDurationMinutes()` verbatim (already
+  unit-agnostic, already does "4h/90m/2d/1w" parsing and "2 hrs/1.5 days" formatting) — no new parsing code anywhere in
+  this feature. Every edit keeps the formula true by recalculating whichever side the Task Type (`task.taskType`:
+  `'fixedUnits'` absent/default, `'fixedDuration'`, `'fixedWork'`) says is *not* fixed:
+
+  | Task Type | edit Duration → | edit Work → | edit Units (add/remove/reweight a resource) → |
+  |---|---|---|---|
+  | **Fixed Units** (default) | recalc Work | recalc Duration | recalc Duration |
+  | **Fixed Duration** | recalc Work | recalc Units | recalc Work |
+  | **Fixed Work** | recalc Units | recalc Duration | recalc Duration |
+
+  `recalcTaskType(t, changed)` (`changed`: `'duration'\|'work'\|'units'`) is the whole engine, one lookup table
+  (`TASK_TYPE_TABLE`) plus three small branches; never called for a milestone or a group (no Duration/Work of their
+  own — the bootstrap below deletes `t.work` for both). `task.effortDriven` (absent = `true`, MS Project's own
+  default) gates only the "a resource was added/removed → recalc Duration" cell for Fixed Units/Fixed Work: off, the
+  resource's capacity is just added/removed without moving the schedule (Work recalculates instead, the same as a
+  Fixed Duration task would). **An unassigned task has no resource text to rescale**, so a Units-recalculation on it
+  falls back to behaving like Fixed Units regardless of its own stored type (Work and Duration move together at the
+  implicit 100%) — a real, small, defensible edge case, not silently wrong.
+- **The one place this rewrites what the user typed**: when *Units itself* is the recalculation target (only reachable
+  via Fixed Duration + editing Work) and the task has assignments, every one of them is **scaled by the same ratio**
+  (`newUnits / oldUnits`, rounded to a whole percent, via the existing `formatResourceString()`/
+  `parseResourceAssignments()` round trip) — "your total allocation changed, so everyone's individual share changed
+  proportionally." This isn't unprecedented: the Resource Pool dialog's own rename/delete cascade already rewrites
+  `task.resource` deliberately for a well-defined reason; `recalcTaskType()` returns a `"before → after"` string (or
+  `null`) precisely so a caller can toast it, the same way "Moved to a working day…" already surfaces an automatic,
+  correct-but-surprising adjustment.
+- **`task.work` is bootstrapped, not user-set**, the first time `normalizeData()` sees a leaf task without one:
+  `work = taskDurationMinutes(t) × taskUnitsPercent(t) / 100` — every existing plan gets a sensible figure with zero
+  user action, the same auto-populate-on-first-touch move the resource pool's own population already makes. **This
+  bootstrap runs *after* the working-calendar and scheduling-precision cleaning blocks in `normalizeData()`, not
+  before** — a real bug, found by `verify_normalize.py`'s own order-independence check: `taskDurationMinutes()` reads
+  `workDaySet()`/`workMinutesPerDay()`, both keyed to `project.workDays`/`holidays`/`timeUnit`/`workHours`, which are
+  only in their final canonical form once those blocks have run; bootstrapping off a not-yet-cleaned calendar
+  reference made two devices with the same plan in a different task-array order derive different Work for the same
+  task — closed by moving the whole block later in the function, not by any change to the calendar-cleaning code
+  itself (which was already correct).
+- Covered by `verify_worktype_data.py`: `normalizeData()`'s cleaning (absence = default for both new fields), the
+  bootstrap (including milestones/groups never getting one, and a garbage stored value re-bootstrapping), every cell
+  of the 3×3 table above (including the "two people finish faster" case and its Fixed-Duration/effort-driven-off
+  opposite), the Fixed-Work resource-text rescale and its returned message, the unassigned-task edge case, milestones/
+  groups being no-ops, and the day-mode/minute-mode moment-unit conversion (`task.work`'s minutes vs. `finishMoment()`'s
+  own per-mode moment unit — day mode needs a division by `workMinutesPerDay()` that minute mode doesn't, a real bug
+  caught before this shipped: passing raw work-minutes straight into a day-mode `finishMoment()` silently produced a
+  multi-year date instead of the intended few-day shift).
+
+**Wired into the interactive edit paths** (import/paste/merge are deliberately untouched — `recalcTaskType()` is only
+called where a *person* just edited Duration, Work or Resource, the same "computed on edit, not on load" boundary
+every other automatic adjustment in this app already keeps):
+- **Inline grid**: `commitInlineEdit()`'s `field === 'duration'` branch calls `recalcTaskType(t, 'duration')` right
+  before its existing `applyConstraints(id)` (only when a real numeric duration was actually applied — a manual task's
+  free-text/TBD duration is not a duration edit); a **new `field === 'work'` branch** (typed text via
+  `parseDurationMinutes`, same convention Duration's own cell already has) calls `recalcTaskType(t, 'work')`; the
+  `field === 'resource'` branch calls `recalcTaskType(t, 'units')` and toasts its return value when it rescaled the
+  resource text.
+- **Task dialog**: `saveTaskFromModal()` compares the final committed state against a `modalOrigDates`-style snapshot
+  taken at open (`modalOrigDates` grew `resource` and `durMin` alongside its existing `start`/`end`) — **a net Duration
+  change (however reached: typed Start, Finish, Duration, or the exact-constraint pin) takes priority over a Resource-
+  text change alone** when both happened in the same dialog session, a direct numeric edit outranking an indirect
+  trigger. This runs *after* the existing pin-to-date logic (a triangle-driven date move is an automatic consequence,
+  not a typed date, so it must never itself trigger a Start/Finish No Earlier Than pin) and *before* the final
+  `applyConstraints()`/save, so a rippled Duration change still cascades to successors normally.
+- **Bulk edit**: `applyBulkEdit()`'s `if (on('resource'))` branch calls `recalcTaskType(t, 'units')` per task (each
+  task's own Task Type decides its own outcome independently) and counts how many resource-text rescales happened for
+  the closing toast, the same `notes` array pattern the existing skip-counts already use.
+- **The undo/redo toast's field-name list** (`CHANGE_FIELDS`) gained `work: 'Work'` and `taskType`/`effortDriven` →
+  `'Task Type'` — without this a Duration edit's own now-legitimate Work side-effect would have shown as the raw
+  internal key `work` instead of `Work` in "Undid: Finish and Work of…".
+- Covered by `verify_worktype_edit.py`: all three write sites, the dialog's Duration-over-Resource save-time priority,
+  a no-op save leaving Work untouched, an unreadable Work value refused with a toast, and that a Fixed-Duration
+  Resource edit changes Work silently (nothing to toast — Units is text, Work isn't). **Test gotcha**: filling a dialog
+  field immediately after `#taskModalBg.open` appears can race `openTaskModal()`'s own 30ms deferred Task-Name
+  autofocus (documented under "Dialog UX round 3") — an intermittent ~20% failure rate until the test waited past it,
+  the same fix this codebase's own `verify_minute_ui.py` already needed for the identical reason.
+
+**The task dialog and grid columns.** A `.field-grid-tt` row (Task Type select, Effort-driven checkbox, a typed Work
+field) sits right after Task Name/Task Mode/Resource/Milestone, hidden for a milestone or a group (no Duration/Work of
+their own) — live, the instant Milestone is checked, and already-hidden at open for an existing milestone/group; the
+generic `taskModalDirty()` snapshot/diff (milestone.html:5693) already walks every `#taskModalBg` input by id, so the
+three new fields needed no dirty-check code of their own. `openTaskModal()` populates them (`taskTypeInput.value`,
+`effortDrivenInput.checked`, `taskWorkInput.value` via `fmtDurationMinutes`); `saveTaskFromModal()` reads them back,
+and — since the dialog now has three things that can each drive the triangle (Work, Duration, Resource) — extends the
+same "more explicit wins" priority rule Stage 2 established: **a typed Work value outranks a net Duration change,
+which outranks a Resource-text change alone**, each edit kind more direct than the last. An unreadable Work value is
+refused with a toast but never blocks the rest of the save (mirrors the actual-dates-crossed check's own "validate,
+then proceed" shape, just non-fatal). The Work field is a `.field`-styled text box (not a native number input) using
+the identical typed convention Duration's own field already has, because `parseDurationMinutes()` needs free text like
+`"4h"`.
+- **Grid**: `worktype` and `work` entries in `TASK_COLS`/`FILTER_COLS` (hidden by default, like `resource`), plus a
+  **new `HEAD` entry each** — `HEAD` (inside `renderGrid()`) is a hand-maintained header-HTML lookup separate from
+  `TASK_COLS` itself, a real gap found while building this: without an entry there the header row silently fell out of
+  step with the data row (the data cells rendered correctly — they come from the generic `cols`-driven `cells` map —
+  but the header for them was simply missing, and the missing width in `--task-cols` visibly broke the grid's own
+  column alignment past that point). `worktype` is an icon-with-popup cell — `TASK_TYPES` (mirrors `TASK_MODES`'
+  exact shape), `openTaskTypeMenu()`/`pickTaskType()`/`setTaskTypeOf()` (mirrors `openTaskModeMenu()`/`pickTaskMode()`/
+  `setTaskMode()` down to the shared single `#taskTypeMenu` popup and its positioning math) — closed by the same
+  outside-click/Escape/other-menu-opens wiring `#taskModeMenu` already has. `work` inline-edits as typed text exactly
+  like the Duration cell (`commitInlineEdit()`'s Stage-2 `field === 'work'` branch, reused as-is). Both cells render an
+  empty `grid-cell-dim` (no icon, no click handler) for a milestone or a group. `FILTER_COLS.work` (`kind: 'number'`,
+  the raw stored minutes — the same "compare what's stored, not a formatted string" rule `duration`'s own number
+  filter already follows) and `FILTER_COLS.worktype` (`kind: 'list'`, `filterCompare()` sorts by `TASK_TYPES`' own
+  order the same way `status` sorts by `STATUS_ORDER`) needed no other new plumbing — `visibleTaskCols()`,
+  `toggleColumn()`, the Columns menu and `colWidth()` are all already generic over whatever's in `TASK_COLS`.
+- Covered by `verify_worktype_ui.py`: the dialog's fields populated/saved correctly, the row hiding live (on checking
+  Milestone) and at open (an existing milestone/group), an unreadable Work value refused without blocking the rest of
+  the save, the generic dirty-check picking up a Task Type change, the grid popup listing all three types with the
+  current one marked, the Work cell's inline edit recalculating Duration, both cells blank for a milestone/group
+  (checked by counting `.task-mode-cell` elements in the row — 1 for the real Task Mode column always, a 2nd only when
+  the Task Type cell is actually rendered), and a Task Type column filter narrowing the list correctly.
+- **A second real gap found the same way as `HEAD`'s own**: `buildXlsx()`'s `XCOLS` (the Excel column-width/header
+  lookup) is *also* a hand-maintained map separate from `TASK_COLS` — without `worktype`/`work` entries there, "All
+  columns" (which walks the whole of `DEFAULT_COL_ORDER`, not just what's currently ticked) threw outright
+  (`XCOLS[k][1]` on `undefined`), breaking `verify_stress.py`'s own periodic Excel-export check unconditionally, on
+  every plan, whether or not it used Task Type/Work at all. Fixed the same way: entries in `XCOLS` plus a `case
+  'worktype':`/`case 'work':` in `writeTaskRow()`'s cell switch (blank for a milestone/group; Work as pre-formatted
+  text, the same trick minute-mode Duration/Remaining cells already use, since it's always in working minutes
+  regardless of day/minute mode). **The lesson, now true in two places**: a column that's genuinely driven by
+  `TASK_COLS` (visibility, width, the Columns menu, `FILTER_COLS`) can still have *other*, unrelated hand-maintained
+  lookups elsewhere in the file that don't know about it — adding a column isn't complete until every such lookup is
+  grepped for and updated, not just the "obvious" ones.
+- **The dialog's `.field-grid-tt` row is a compact *inline* layout (label beside its control, not above it)** —
+  deliberately unlike every other field in this dialog — because a label-above `.field` row here broke the documented
+  "Edit Task fits without scrolling" budget outright when it needed to be found rather than assumed: a real task with
+  a predecessor already showing left only ~19px of the dialog's own natural slack, nowhere near what a full 3rd
+  `.field` row would have cost (~55-80px). Even the compact version still needed a small negative `margin-top` on top
+  of using field-grid-nm's own row-gap (grid-column: 1/-1 as a 3rd row *inside* that grid, not a whole new
+  `.modal-body` flex sibling) to close the gap without visually overlapping the row above. **The two "fits without
+  scrolling" budgets were raised, deliberately, not silently made to pass**: 800px → 830px (`verify_dialogs.py`, a
+  day-mode task with a predecessor) and 860px → 910px (`verify_typed_boxes.py`, the taller Hours & minutes re-flow
+  with a predecessor) — both tests scope the raised viewport to just that one assertion (`pg.set_viewport_size()`
+  around it, restored after) rather than changing the whole file's viewport, so every other pixel-position check in
+  those files keeps its original, unrelated window size.
+
+**Bulk edit**: `bulkOn-worktype`/`bulkVal-worktype` (a select, exact `.bulk-row` markup the Task Mode row already
+uses) and `bulkOn-work`/`bulkVal-work` (typed text, same `parseDurationMinutes` convention) in `applyBulkEdit()` —
+each skips a milestone/group (`skipped.worktype`/`skipped.work` counters, named in the closing toast, the same pattern
+`skipped.shift`/`skipped.pred` already use) rather than silently doing nothing to it. An unreadable Work value refuses
+the **whole** apply before anything is touched (matches the existing `% complete`/predecessor-lag validation-first
+shape), not a per-task skip. `recalcTaskType()` runs per task after `work`/`worktype` is set — each task's own Task
+Type decides its own outcome independently, so a mixed selection (some Fixed Units, some Fixed Duration) can resolve
+differently per task in one Apply, exactly as it would from the grid. Covered by `verify_bulk.py`: both fields set on
+an ordinary task, a milestone skipped for both with the toast naming it, editing Work on a Fixed-Duration task
+rescaling its resource text through the bulk path too, Ctrl+Z undoing all of it together, and an unreadable Work value
+refusing the whole apply. **Test gotcha**: with only one task selected, `#bulkEditBtn` opens the single-task dialog
+instead (`editSelected()`'s own documented routing) — `openBulkModal()` must be called directly to reach the bulk
+dialog in that case, the same workaround this file's own predecessor-cycle checks already use.
+
+**MS Project XML round-trip** (closing the last gap in the original plan — `buildMspdi()` used to hardcode `<Type>` to
+`0` for every task, with no `<Work>`/`<EffortDriven>` at all, since neither existed before this feature): `Type` now
+computes the real 0/1/2 enum from `t.taskType` (`{fixedUnits:0, fixedDuration:1, fixedWork:2}`, absent/unrecognized
+falling back to 0 — the exact value every task already wrote before this feature, so an untouched plan's exported Type
+is byte-identical). `Work` (minute-precise, via the same `hoursMin()` helper `<Duration>` already uses) and
+`EffortDriven` are written right after `DurationFormat` and before `Milestone` in the element sequence — the same
+"best recollection of the real MSPDI schema order, not independently verified against real MS Project" caveat this
+section already carries elsewhere. `Work` is skipped entirely for a milestone or a group (no stored `t.work` for
+either, the same rule the data model itself follows); `EffortDriven` is written unconditionally for every task, like
+real MS Project does even for a task the triangle doesn't apply to (`t.effortDriven === false ? 0 : 1`). Import
+(`parseMspdi()`) reads all three back the same way it already reads `Manual`/the constraint types — an absent `Type`
+or a value other than 1/2 leaves `t.taskType` unset (Fixed Units, the default), an absent/`1` `EffortDriven` leaves
+`t.effortDriven` unset (true, the default), and `Work` is parsed with the identical `PT{h}H{m}M0S` regex `Duration`
+already uses. An older-style file with none of these three elements — including every fixture `verify_import.py`
+already had before this feature — round-trips exactly as it always did: no crash, no stray fields, `normalizeData()`
+bootstraps `t.work` for an ordinary task on its next save the same way it always has. Covered by
+`verify_mspdi_export.py`'s extended round-trip (a Fixed-Duration task with its own explicit Work independent of its
+duration × units, `effortDriven: false`, alongside a Fixed-Units task whose Work is left to bootstrap — both survive
+export → import intact; a milestone and a group write no `Work` element at all).
+
+**Stress coverage**: a `worktype` operation and a periodic `Work ≈ Duration × Units/100` invariant in `verify_stress.py`
+close this feature's own build order — see "Robustness rules found by the stress test" for what it found and how the
+invariant scopes itself around the routes `recalcTaskType()` is genuinely not wired into. This closes all six stages
+of the original plan.
 
 ### Gantt rendering
 

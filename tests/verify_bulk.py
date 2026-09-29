@@ -154,7 +154,24 @@ with sync_playwright() as p:
     check("a % complete outside 0-100 is refused", "between 0 and 100" in pg.inner_text("#toastMsg"), pg.inner_text("#toastMsg"))
     pg.fill("#bulkVal-progress", ""); pg.uncheck("#bulkOn-progress"); pg.select_option("#bulkVal-mode", "manual"); pg.click("#bulkModalBg .modal-footer .btn-primary"); pg.wait_for_timeout(150)
     check("Task Mode can be set for the selection (A becomes Manually Scheduled)", get("A", "taskMode") == "manual")
+    # Task Type / Work (see "Task Type / Work" in CLAUDE.md)
+    seed([{"name": "A", "s": "2026-09-07", "e": "2026-09-10", "extra": {"resource": "Anna"}}, {"name": "M", "s": "2026-09-11", "e": "2026-09-11", "extra": {"milestone": True}}])
+    click("A"); click("M", ["Meta"]); pg.click("#bulkEditBtn"); pg.wait_for_selector("#bulkModalBg.open"); pg.wait_for_timeout(120)
+    pg.check("#bulkOn-worktype"); pg.select_option("#bulkVal-worktype", "fixedDuration")
+    pg.check("#bulkOn-work"); pg.fill("#bulkVal-work", "8h")
+    pg.click("#bulkModalBg .modal-footer .btn-primary"); pg.wait_for_timeout(150)
+    check("Task Type and Work are set on the ordinary task", get("A", "taskType") == "fixedDuration" and get("A", "work") == 480, (get("A", "taskType"), get("A", "work")))
+    check("...editing Work on a Fixed-Duration task rescales its resource text (Units recalculates, not Duration): 8h needs a quarter of the original 4-day/100% Work, so Anna's own share drops to 25%", ev("() => taskUnitsPercent(tasks[0])") == 25 and dates("A") == ["2026-09-07", "2026-09-10"], (ev("() => tasks[0].resource"), dates("A")))
+    check("...the milestone is skipped for both (no Duration/Work of its own) and the toast says so", get("M", "taskType") is None and get("M", "work") is None and "not set (milestone or group)" in pg.inner_text("#toastMsg"), pg.inner_text("#toastMsg"))
+    check("...and the toast names the resource-split adjustment too", "resource split" in pg.inner_text("#toastMsg"), pg.inner_text("#toastMsg"))
+    pg.keyboard.press("Control+z"); pg.wait_for_timeout(120)
+    check("Ctrl+Z undoes the whole bulk edit, including the Task Type/Work/resource-text changes", get("A", "taskType") is None and get("A", "work") != 480 and get("A", "resource") == "Anna", (get("A", "taskType"), get("A", "work"), get("A", "resource")))
+    click("A"); ev("() => openBulkModal()"); pg.wait_for_selector("#bulkModalBg.open"); pg.wait_for_timeout(120)   # with just one selected, the Edit button itself opens the single-task dialog instead (editSelected()) — force the bulk one directly, like the predecessor checks above already do
+    pg.check("#bulkOn-work"); pg.fill("#bulkVal-work", "not a duration"); pg.click("#bulkModalBg .modal-footer .btn-primary")
+    check("an unreadable Work value refuses the whole apply (nothing partially applied)", "Can't read" in pg.inner_text("#toastMsg"), pg.inner_text("#toastMsg"))
+    pg.click("#bulkModalBg .modal-footer .btn:not(.btn-primary)")   # Cancel — deliberately does not ask, unlike Escape/backdrop/x on a dirty form
     # custom fields
+    seed([{"name": "A"}, {"name": "B"}])   # a fresh, plain pair — the Task Type / Work block above reseeded down to just A and M
     ev("() => { project.fieldNames = { text1: 'Cost centre', number1: 'Budget', flag1: 'Approved' }; normalizeData(); colHidden.delete('text1'); colHidden.delete('number1'); colHidden.delete('flag1'); render(); }")
     click("A"); click("B", ["Meta"]); pg.click("#bulkEditBtn"); pg.wait_for_selector("#bulkModalBg.open"); pg.wait_for_timeout(120)
     check("custom fields that are shown as columns are offered (Text1, Number1, Flag1)", all(pg.locator(f"#bulkOn-{c}").count() == 1 for c in ("text1", "number1", "flag1")) and pg.locator("#bulkOn-text2").count() == 0)

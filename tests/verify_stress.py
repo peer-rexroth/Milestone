@@ -8,6 +8,13 @@ def check(name, cond, detail=""):
 STRESS_JS = r"""
 async ([seed, steps, allowCalendar]) => {
   let calChanged = false; const everStarted = new Set(), knownIds = new Set();   // a task whose actual dates were cleared is a normal Auto task again but stays where it was (documented: it is pushed the next time a predecessor changes)
+  // Work/Duration/Units invariant support: a task's Work only stays in sync via recalcTaskType(), which is wired into
+  // the Duration/Work/Resource edit sites — NOT the Start/Finish cells or a Gantt drag, which can resize a task's span
+  // without it (a documented scope boundary, not a bug — see "Task Type / Work" in CLAUDE.md). wtStale marks a task
+  // whose span (or Work) just moved by one of those un-wired routes, or a clone/paste that copied an existing (possibly
+  // already out-of-sync) Work verbatim, so the periodic check below skips it rather than flagging a false positive.
+  const wtStale = new Set();
+  const markNew = (fn) => { const before = new Set(tasks.map(x => x.id)); fn(); for (const x of tasks) if (!before.has(x.id)) wtStale.add(x.id); };
   let a = seed >>> 0;
   const rnd = () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
   const ri = (n) => Math.floor(rnd() * n), pick = (arr) => arr[ri(arr.length)];
@@ -60,32 +67,39 @@ async ([seed, steps, allowCalendar]) => {
   const cycle = (t) => { editingCell = { id: t.id, field: 'x' }; };
   const edit = (t, field, value) => { editingCell = { id: t.id, field }; commitInlineEdit(t.id, field, value); };
   const OPS = [
-    ['add', 10, () => { const s = anyTask(); selectedTaskId = s ? s.id : null; addTask(); closeTaskModal(); const n = tasks.find(x => x.id === selectedTaskId); if (n) { n.name = 'T' + ri(1e6); if (rnd() < .5) { const d = randDate(); n.startDate = isWorkDay(d) ? d : nextWorkDay(d); n.endDate = shiftWork(n.startDate, ri(6)); } save(); render(); } }],
+    ['add', 10, () => { const s = anyTask(); selectedTaskId = s ? s.id : null; addTask(); closeTaskModal(); const n = tasks.find(x => x.id === selectedTaskId); if (n) { n.name = 'T' + ri(1e6); if (rnd() < .5) { const d = randDate(); n.startDate = isWorkDay(d) ? d : nextWorkDay(d); n.endDate = shiftWork(n.startDate, ri(6)); wtStale.add(n.id); } save(); render(); } }],
     ['delete', 5, () => { const t = anyTask(); if (!t || tasks.length < 3) return; deleteTaskFlow(t.id); confirmModalAction(); }],
     ['indent', 6, () => { const t = anyTask(); if (!t) return; selectedTaskId = t.id; indentSelected(); }],
     ['outdent', 5, () => { const t = anyTask(); if (!t) return; selectedTaskId = t.id; outdentSelected(); }],
     ['move', 6, () => { const t = anyTask(), o = anyTask(); if (!t || !o) return; moveTask(t.id, o.id, pick(['before', 'after', 'into', 'end'])); }],
-    ['start', 8, () => { const t = anyTask(); if (t) edit(t, 'start', randDate()); }],
-    ['finish', 6, () => { const t = anyTask(); if (t) edit(t, 'finish', randDate()); }],
+    ['start', 8, () => { const t = anyTask(); if (t) { edit(t, 'start', randDate()); wtStale.add(t.id); } }],
+    ['finish', 6, () => { const t = anyTask(); if (t) { edit(t, 'finish', randDate()); wtStale.add(t.id); } }],
     ['duration', 6, () => { const t = anyTask(); if (t) edit(t, 'duration', String(1 + ri(25))); }],
     ['preds', 9, () => { const t = anyTask(); if (!t) return; const n = ri(4), toks = []; for (let i = 0; i < n; i++) { const o = anyTask(); if (o) toks.push(taskDisplayId(o.id) + pick(['FS', 'SS', 'FF', 'SF', '']) + (rnd() < .4 ? (ri(9) - 3 >= 0 ? '+' : '') + (ri(9) - 3) + pick(['', '', 'd', 'ed', 'h', 'eh', 'w', 'ew']) : '')); } edit(t, 'predecessors', toks.join(', ')); }],   // occasionally an elapsed ('e'-prefixed) unit — real calendar time, exercised alongside the plain working ones
     ['mode', 4, () => { const t = anyTask(); if (t) setTaskMode(t.id, pick(['auto', 'manual'])); }],
     ['drag', 4, () => { const t = pick(leaf()); if (!t || t.taskMode === 'manual' && rnd() < .5) return; const mode = pick(['move', 'resize-left', 'resize-right']); let ns = t.startDate, ne = t.endDate; const d = ri(40) - 15;
       if (mode === 'move') { ns = addDays(t.startDate, d); ne = addDays(t.endDate, d); } else if (mode === 'resize-left') { ns = addDays(t.startDate, d); if (dayNumber(ns) > dayNumber(ne)) ns = ne; } else { ne = addDays(t.endDate, d); if (dayNumber(ne) < dayNumber(ns)) ne = ns; }
       if (t.taskMode !== 'manual') { if (mode === 'move') { ns = nextWorkDay(ns); ne = t.milestone ? ns : finishFor(ns, durationDays(t.startDate, t.endDate)); } else if (mode === 'resize-right') { ne = prevWorkDay(ne); if (dayNumber(ne) < dayNumber(ns)) ne = ns; } else { ns = nextWorkDay(ns); if (dayNumber(ns) > dayNumber(ne)) ns = ne; } }
-      dragState = { taskId: t.id, moved: true, previewStart: ns, previewEnd: ne, mode }; onDragMouseUp(); }],
-    ['multiClone', 2, () => { const ids = many(); if (ids.length && tasks.length < 50) { setSelection(ids); cloneSelected(); } }],
+      dragState = { taskId: t.id, moved: true, previewStart: ns, previewEnd: ne, mode }; wtStale.add(t.id); onDragMouseUp(); }],
+    ['multiClone', 2, () => { const ids = many(); if (ids.length && tasks.length < 50) markNew(() => { setSelection(ids); cloneSelected(); }); }],
     ['multiDelete', 2, () => { const ids = many(); if (ids.length && tasks.length > 4) deleteTasksNow([...new Set(ids.flatMap(id => [id, ...descendantIds(id)]))]); }],
     ['multiIndent', 2, () => { const ids = many(); setSelection(ids); if (rnd() < .5) indentSelected(); else outdentSelected(); }],
-    ['copyPaste', 3, () => { const ids = many(); if (!ids.length || tasks.length > 50) return; setSelection(ids); const c = buildClip(); if (!c) return; setSelection(many()); pasteTaskPayload(c.json); }],
+    ['copyPaste', 3, () => { const ids = many(); if (!ids.length || tasks.length > 50) return; setSelection(ids); const c = buildClip(); if (!c) return; setSelection(many()); markNew(() => pasteTaskPayload(c.json)); }],
     ['pasteRows', 2, () => { if (tasks.length > 50) return; setSelection(many()); let x = 'ID\tTask Name\tStart\tFinish\tDuration\tPredecessors\n'; const n = 1 + ri(4); for (let i = 1; i <= n; i++) x += `${i}\t${rnd() < .3 ? '  ' : ''}Row ${i}\t${rnd() < .6 ? randDate() : 'TBD'}\t${rnd() < .3 ? randDate() : ''}\t${rnd() < .5 ? (1 + ri(9)) + ' days' : ''}\t${i > 1 && rnd() < .5 ? (1 + ri(i - 1)) + pick(['FS', 'SS', 'FF', 'SF']) : ''}\n`; pasteTableText(x); }],
     ['spacer', 3, () => { if (tasks.length > 60) return; const s = anyTask(); selectedTaskId = s ? s.id : null; addSpacer(); }],
     ['progress', 3, () => { const t = anyTask(); if (t && !hasChildren(t.id)) edit(t, 'progress', pick(['0', '50', '100', '7.6', '33,4', 'abc', '150', '-3', '40%', ''])); }],
-    ['clone', 3, () => { const t = anyTask(); if (t && tasks.length < 60) cloneTask(t.id); }],
-    ['actualStart', 5, () => { const t = anyTask(); if (t && !hasChildren(t.id)) edit(t, 'actualStart', rnd() < .15 ? '' : randDate()); }],
-    ['actualFinish', 5, () => { const t = anyTask(); if (t && !hasChildren(t.id)) edit(t, 'actualFinish', rnd() < .15 ? '' : randDate()); }],
+    ['clone', 3, () => { const t = anyTask(); if (t && tasks.length < 60) markNew(() => cloneTask(t.id)); }],
+    ['actualStart', 5, () => { const t = anyTask(); if (t && !hasChildren(t.id)) { edit(t, 'actualStart', rnd() < .15 ? '' : randDate()); wtStale.add(t.id); } }],   // applyActualDates() sets Start/Finish straight from the actual dates — a fact overwriting the schedule, not a planning edit — with no recalcTaskType() of its own (see "Baselines, actual dates and variance")
+    ['actualFinish', 5, () => { const t = anyTask(); if (t && !hasChildren(t.id)) { edit(t, 'actualFinish', rnd() < .15 ? '' : randDate()); wtStale.add(t.id); } }],
     ['progress', 3, () => { const t = anyTask(); if (t && !hasChildren(t.id)) { t.progress = ri(101); t.updatedAt = Date.now(); save(); render(); } }],
     ['text', 2, () => { const t = anyTask(); if (t) { edit(t, 'name', 'N' + ri(1000)); edit(t, 'resource', pick(['', 'Ann', 'Ben & Co', '<b>x</b>'])); } }],
+    // Task Type / Work: cycles the Task Type / Effort-driven settings (dormant on their own — see setTaskTypeOf) and edits
+    // Duration/Work/Resource through the same commit path a real user would, all of which recalcTaskType() keeps in sync.
+    ['worktype', 4, () => { const t = pick(leaf()); if (!t || t.milestone) return; const r = rnd();
+      if (r < .2) { t.taskType = pick(['fixedUnits', 'fixedDuration', 'fixedWork']); t.updatedAt = Date.now(); save(); render(); }
+      else if (r < .35) { t.effortDriven = t.effortDriven === false ? undefined : false; t.updatedAt = Date.now(); save(); render(); }
+      else if (r < .7) edit(t, 'work', pick(['4h', '90m', '1d', '2d', '3d', '8h', 'abc']));
+      else edit(t, 'resource', pick(['', 'Ann', 'Ann:50%, Ben', 'Ben:200%', 'Ann:150%, Ben:75%'])); }],
     ['baselineSet', 3, () => applyBaselineChange(ri(BASELINE_SLOTS), rnd() < .8 ? 'all' : (selectedTaskId && byId(selectedTaskId) ? 'selected' : 'all'), false)],
     ['baselineClear', 2, () => applyBaselineChange(ri(BASELINE_SLOTS), 'all', true)],
     ['compare', 1, () => { const s = setBaselineSlots(); if (s.length) setCompareBaseline(pick(s)); }],
@@ -133,6 +147,16 @@ async ([seed, steps, allowCalendar]) => {
       tasks = data.tasks; project = data.project; deletedTaskIds = data.deletedTaskIds; normalizeData();
       const re = canonicalText(); tasks = keepT; project = keepP; deletedTaskIds = keepD;
       if (re !== txt) return { ok: false, step, op: op[0], why: 'save -> load -> save is not stable', log };
+    }
+    if (step % 15 === 0 && !calChanged) {   // Work = Duration x Units/100 (see "Task Type / Work" in CLAUDE.md) — skipped for a task the calendar change or an un-wired route (Start/Finish edit, drag, a clone/paste of an existing Work value) may have knocked out of sync (calChanged/wtStale); a day-mode task also gets slack for the whole-working-day rounding a Fixed-Work/Fixed-Units duration recalculation applies
+      for (const t of tasks) {
+        if (t.spacer || t.milestone || hasChildren(t.id) || wtStale.has(t.id)) continue;
+        if (!Number.isFinite(t.work)) return { ok: false, step, op: op[0], why: 'ordinary task has no Work value: ' + t.name, log };
+        const durMin = taskDurationMinutes(t), units = taskUnitsPercent(t);
+        const expected = Math.max(1, Math.min(MAX_DURATION_MINUTES, Math.round(durMin * units / 100)));
+        const tol = Math.max(minuteModeActive() ? 1 : workMinutesPerDay(), Math.ceil(durMin * 0.02) + 1);
+        if (Math.abs(t.work - expected) > tol) return { ok: false, step, op: op[0], why: `Work out of sync with Duration x Units/100 on ${t.name}: work=${t.work} duration=${durMin} units=${units} expected~${expected} tol=${tol}`, log };
+      }
     }
     if (step % 10 === 0) {   // the critical path: every float is a whole number, and — provided the project's own last-finishing participant isn't already complete (nothing left to manage there, so nothing need be critical) — something is critical, and the last-finishing task always is
       const cp = criticalPathAnalysis(), part = [...cp.float.keys()];
