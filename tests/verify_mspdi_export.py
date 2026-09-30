@@ -20,7 +20,7 @@ ORDER = {
  "Task": "UID ID Name Active Manual Type IsNull WBS OutlineNumber OutlineLevel Priority Start Finish Duration ManualStart ManualFinish ManualDuration DurationFormat Work EffortDriven Milestone Summary PercentComplete PercentWorkComplete ActualStart ActualFinish ConstraintType ConstraintDate Notes PredecessorLink Baseline".split(),
  "PredecessorLink": "PredecessorUID Type CrossProject LinkLag LagFormat".split(),
  "Baseline": "Number Start Finish Duration DurationFormat".split(),
- "Resource": "UID ID Name Type IsNull MaxUnits".split(),
+ "Resource": "UID ID Name Type IsNull Initials MaterialLabel Code Group MaxUnits AccrueAt StandardRate StandardRateFormat OvertimeRate OvertimeRateFormat CostPerUse".split(),
  "Assignment": "UID TaskUID ResourceUID Units".split(),
 }
 def in_order(el, names):
@@ -36,7 +36,10 @@ SEED = """() => { tasks.length = 0; deletedTaskIds.length = 0; setSelection([]);
     mk('c', 'Decide vendor', 3, { parentId: 'g', taskMode: 'manual', startText: 'TBD', endText: 'TBD' }),
     mk('m', 'Go live', 1, { milestone: true, startDate: '2026-10-05', endDate: '2026-10-05', predecessors: [{ id: 'b', type: 'FF', lag: -2 }] }),
     mk('d', 'Pinned manual', 2, { taskMode: 'manual', startDate: '2026-10-12', endDate: '2026-10-16', predecessors: [{ id: 'm', type: 'SS', lag: 3 }] }));
-  project.baselines = { 0: { setAt: '2026-09-01' } }; normalizeData(); project.resources.find(r => r.name === 'Anna').maxUnits = 150; save(); render(); }"""
+  project.baselines = { 0: { setAt: '2026-09-01' } }; normalizeData();
+  Object.assign(project.resources.find(r => r.name === 'Anna'), { maxUnits: 150, initials: 'AS', group: 'Design', code: 'R-1', stdRate: 47.5, ovtRate: 71.25, costPerUse: 12, accrueAt: 'start' });
+  Object.assign(project.resources.find(r => r.name === 'Ben'), { type: 'cost', costPerUse: 500 });
+  save(); render(); }"""
 with sync_playwright() as p:
     b = p.chromium.launch(headless=True)
     ctx = b.new_context(viewport={"width": 1400, "height": 800}, accept_downloads=True); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
@@ -80,18 +83,36 @@ with sync_playwright() as p:
     munits = [r.find(NS + "MaxUnits").text for r in root.iter(NS + "Resource")]
     aunits = [a.find(NS + "Units").text for a in root.iter(NS + "Assignment")]
     check("real per-assignment Units (Anna 50% = 0.5, the other two 100% = 1) and real resource MaxUnits (Anna's own 150% = 1.5) — not the old always-1", munits == ["1.5", "1"] and aunits == ["0.5", "1", "1"], (munits, aunits))
+    anna_el, ben_el = [r for r in root.iter(NS + "Resource")]
+    g = lambda el, tag: (lambda e: e.text if e is not None else None)(el.find(NS + tag))
+    check("Resource Sheet fields: Anna (Work, the default Type=1) carries her real Initials/Group/Code/rates/AccrueAt=Start(1), the rate format is 2 (per hour)",
+          g(anna_el, "Type") == "1" and g(anna_el, "Initials") == "AS" and g(anna_el, "Group") == "Design" and g(anna_el, "Code") == "R-1" and g(anna_el, "AccrueAt") == "1"
+          and g(anna_el, "StandardRate") == "47.5" and g(anna_el, "StandardRateFormat") == "2" and g(anna_el, "OvertimeRate") == "71.25" and g(anna_el, "OvertimeRateFormat") == "2" and g(anna_el, "CostPerUse") == "12",
+          {c.tag.replace(NS, ""): c.text for c in anna_el})
+    check("...Ben (Cost, Type=2) has no Std/Ovt Rate written (never set) and his own Cost/Use (500), AccrueAt defaults to Prorated (2)",
+          g(ben_el, "Type") == "2" and g(ben_el, "StandardRate") == "0" and g(ben_el, "CostPerUse") == "500" and g(ben_el, "AccrueAt") == "2", {c.tag.replace(NS, ""): c.text for c in ben_el})
 
     # ---------------------------------------------------------------- reads back through the app's own MSPDI importer
     back = ev("""(x) => { const r = parseMspdi(x); const byName = n => r.tasks.find(t => t.name === n); const nm = id => (r.tasks.find(t => t.id === id) || {}).name;
-      return { project: r.project, warnings: r.warnings, resourceMaxUnits: Object.fromEntries(r.resourceMaxUnits), tasks: r.tasks.map(t => ({ n: t.name, p: nm(t.parentId), s: t.startDate, e: t.endDate, ms: t.milestone, mode: t.taskMode, prog: t.progress, res: t.resource, aS: t.actualStart, aF: t.actualFinish, ct: t.constraintType, cd: t.constraintDate, sT: t.startText, preds: t.predecessors.map(l => [nm(l.id), l.type, l.lag]), base: t.baselines || null, tt: t.taskType, work: t.work, ed: t.effortDriven })) }; }""", xml)
+      return { project: r.project, warnings: r.warnings, resourceMaxUnits: Object.fromEntries(r.resourceMaxUnits), resourceFields: Object.fromEntries(r.resourceFields), tasks: r.tasks.map(t => ({ n: t.name, p: nm(t.parentId), s: t.startDate, e: t.endDate, ms: t.milestone, mode: t.taskMode, prog: t.progress, res: t.resource, aS: t.actualStart, aF: t.actualFinish, ct: t.constraintType, cd: t.constraintDate, sT: t.startText, preds: t.predecessors.map(l => [nm(l.id), l.type, l.lag]), base: t.baselines || null, tt: t.taskType, work: t.work, ed: t.effortDriven })) }; }""", xml)
     T = {t["n"]: t for t in back["tasks"]}
     check("read back: the same tasks in the same outline (Design, Build and Decide vendor inside the group)", [t["n"] for t in back["tasks"]] == names and T["Design"]["p"] == "Website & <relaunch>" and T["Go live"]["p"] is None)
     check("...dates, milestone, progress, actual dates, manual mode and the TBD task survive", (T["Build"]["s"], T["Build"]["e"]) == ("2026-09-14", "2026-09-25") and T["Go live"]["ms"] and T["Build"]["prog"] == 40 and T["Design"]["aS"] == "2026-09-07" and T["Design"]["aF"] == "2026-09-11" and T["Pinned manual"]["mode"] == "manual" and T["Decide vendor"]["sT"] == "TBD")
     check("...links keep their type and lag (FS+1, FF−2, SS+3), the constraint and its date, the resources with their real Units back as Name:NN%", T["Build"]["preds"] == [["Design", "FS", 1]] and T["Go live"]["preds"] == [["Build", "FF", -2]] and T["Pinned manual"]["preds"] == [["Go live", "SS", 3]] and (T["Build"]["ct"], T["Build"]["cd"]) == ("SNET", "2026-09-14") and T["Design"]["res"] == "Anna:50%, Ben" and T["Build"]["res"] == "Ben", T["Design"]["res"])
     check("...and the resource's own MaxUnits (Anna's 150%) is on the side, ready for applyImportedTasks() to recover into the pool", back["resourceMaxUnits"].get("anna") == 150 and back["resourceMaxUnits"].get("ben") == 100, back.get("resourceMaxUnits"))
     check("...Task Type / Work round-trip: Design comes back Fixed Units (taskType absent) with its own 2880-min Work and no stored EffortDriven (default true); Build comes back Fixed Duration with its own 2880-min Work (not its 4320-min duration) and effortDriven false", T["Design"]["tt"] is None and T["Design"]["work"] == 2880 and T["Design"]["ed"] is None and T["Build"]["tt"] == "fixedDuration" and T["Build"]["work"] == 2880 and T["Build"]["ed"] is False, (T["Design"]["tt"], T["Design"]["work"], T["Design"]["ed"], T["Build"]["tt"], T["Build"]["work"], T["Build"]["ed"]))
-    applied = ev("""(x) => { tasks.length = 0; deletedTaskIds.length = 0; delete project.resources; const r = parseMspdi(x); applyImportedTasks(r, 'replace', { calendar: true }); return project.resources.map(x => [x.name, x.maxUnits]); }""", xml)
-    check("...and applyImportedTasks() with the calendar/settings checkbox on actually recovers it into the live pool", ["Anna", 150] in applied and ["Ben", 100] in applied, applied)
+    check("...Resource Sheet fields are on the side too (resourceFields), ready for the same recovery — Ben's Type=cost and Cost/Use=500; Anna's rates/AccrueAt/Initials/Group/Code (Work is the default, so it's absent, not stored)",
+          back["resourceFields"].get("ben", {}).get("type") == "cost" and back["resourceFields"]["ben"]["costPerUse"] == 500 and "type" not in back["resourceFields"].get("anna", {})
+          and back["resourceFields"]["anna"]["stdRate"] == 47.5 and back["resourceFields"]["anna"]["ovtRate"] == 71.25 and back["resourceFields"]["anna"]["costPerUse"] == 12
+          and back["resourceFields"]["anna"]["accrueAt"] == "start" and back["resourceFields"]["anna"]["initials"] == "AS" and back["resourceFields"]["anna"]["group"] == "Design" and back["resourceFields"]["anna"]["code"] == "R-1", back["resourceFields"])
+    applied = ev("""(x) => { tasks.length = 0; deletedTaskIds.length = 0; delete project.resources; const r = parseMspdi(x); applyImportedTasks(r, 'replace', { calendar: true }); return project.resources.map(x => Object.assign({}, x)); }""", xml)
+    check("...and applyImportedTasks() with the calendar/settings checkbox on actually recovers everything into the live pool", ["Anna", 150] in [[x["name"], x["maxUnits"]] for x in applied], applied)
+    a2 = next(x for x in applied if x["name"] == "Anna"); b2 = next(x for x in applied if x["name"] == "Ben")
+    check("...Anna's full field set lands on the live pool entry, Ben's Cost type and Cost/Use too", a2["stdRate"] == 47.5 and a2["ovtRate"] == 71.25 and a2["costPerUse"] == 12 and a2["accrueAt"] == "start" and a2["initials"] == "AS" and a2["group"] == "Design" and a2["code"] == "R-1" and b2["type"] == "cost" and b2["costPerUse"] == 500, (a2, b2))
+    old_style = ev("""() => { const x = buildMspdi().replace(/<Initials>.*?<\\/Initials>|<MaterialLabel>.*?<\\/MaterialLabel>|<Code>.*?<\\/Code>|<Group>.*?<\\/Group>|<AccrueAt>.*?<\\/AccrueAt>|<StandardRate>.*?<\\/StandardRate>|<StandardRateFormat>.*?<\\/StandardRateFormat>|<OvertimeRate>.*?<\\/OvertimeRate>|<OvertimeRateFormat>.*?<\\/OvertimeRateFormat>|<CostPerUse>.*?<\\/CostPerUse>/g, '');
+      tasks.length = 0; deletedTaskIds.length = 0; delete project.resources; const r = parseMspdi(x); applyImportedTasks(r, 'replace', { calendar: true }); return { warnings: r.warnings, pool: project.resources.map(p => Object.assign({}, p)) }; }""")
+    check("an older-style file with none of these new Resource elements (Initials/MaterialLabel/Code/Group/AccrueAt/rates — Type/MaxUnits already existed before this feature) still imports cleanly — every new field just defaults (absent), no crash, no warning",
+          old_style["warnings"] == [] and all(not any(k in p for k in ("stdRate", "ovtRate", "costPerUse", "accrueAt", "initials", "group", "code", "materialLabel")) for p in old_style["pool"]), old_style)
     check("...baselines (Build 14.–24.09.) and the plan's working week and holidays", T["Build"]["base"] == {"0": ["2026-09-14", "2026-09-24"]} and back["project"]["workDays"] == [1, 2, 3, 4, 6] and any(h["date"] == "2026-12-24" and h.get("to") == "2026-12-28" for h in back["project"]["holidays"]), (back["project"], back["warnings"]))
     check("...no import warnings", back["warnings"] == [], back["warnings"])
 

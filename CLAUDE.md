@@ -664,6 +664,129 @@ close this feature's own build order — see "Robustness rules found by the stre
 invariant scopes itself around the routes `recalcTaskType()` is genuinely not wired into. This closes all six stages
 of the original plan.
 
+### Resource Sheet
+
+MS Project's own spreadsheet view of the resource pool, built by explicit request ("build a MS project style resource
+sheet"), confirmed via two clarifying questions to mean **full MS Project fidelity including a real cost roll-up**
+(Type, Material Label, Initials, Group, Max Units, Std Rate, Ovt Rate, Cost/Use, Accrue At, Code — costs actually
+computed and shown, not just fields sitting unused) as **its own new view tab**, not an upgrade of the existing
+Resource pool dialog. Before this the app had no currency/costing concept anywhere.
+
+**The MSPDI side of this was verified directly against the real schema, not guessed** — fetched
+`https://schemas.microsoft.com/project/2007/mspdi_pj12.xsd` itself plus the Microsoft Learn Resource/Type/AccrueAt/
+StandardRateFormat reference pages, a genuine upgrade over this codebase's usual "best recollection, not
+independently verified" MSPDI caveat for the fields this touches. Confirmed facts: the `<Resource>` element's real
+child order (the slice relevant here) is `UID, ID, Name, Type, IsNull, Initials, MaterialLabel, Code, Group, MaxUnits,
+AccrueAt, StandardRate, StandardRateFormat, OvertimeRate, OvertimeRateFormat, CostPerUse`; `Type` is 0 Material / 1
+Work / 2 Cost (matching this app's own pre-existing hardcoded `Type=1`, confirming it was already correct);
+`AccrueAt` is 1 Start / 2 Prorated / 3 End; `StandardRateFormat`/`OvertimeRateFormat` are 2 for "per hour" (this
+app's own rate convention throughout) and 8 for "material resource rate" on a Material resource's own Std Rate;
+`StandardRate`/`OvertimeRate`/`CostPerUse` are plain `xsd:float` numbers, not a unit-suffixed string.
+
+**Data model** — nine new fields on each `project.resources[]` entry (previously just `{id, name, maxUnits,
+daysOff?}`), all the usual absence-is-default convention, cleaned in `normalizeData()`'s existing resource-pool block
+right next to how `maxUnits` is already clamped: `type: 'work'|'material'|'cost'` (absent = work, `RESOURCE_TYPES`/
+`resourceTypeInfo()` mirror `TASK_TYPES`/`taskTypeInfo()`'s own shape), `materialLabel`/`initials`/`group`/`code`
+(trimmed, length-capped strings), `stdRate`/`ovtRate`/`costPerUse` (≥0, rounded to 2 decimals, 0/garbage dropped —
+absent, not stored as 0), `accrueAt: 'start'|'prorated'|'end'` (absent = prorated, MS Project's own default,
+`ACCRUE_TYPES`/`accrueTypeInfo()`). A new project-level `project.currencyCode` (absent = `'USD'`) picks the currency
+for every money figure in the plan; `CURRENCIES` lists the common majors. `fmtCurrency(n)`/`currencySymbol()` are
+built on `Intl.NumberFormat` (native, zero-dependency, the same "no external libraries but native browser APIs are
+fine" convention Date/DOMParser/etc. already use throughout this codebase) — the first real currency formatting
+anywhere in the app.
+
+**The cost engine** (new pure functions near `taskAssignments`/`taskUnitsPercent`):
+- `assignmentHours(t, a)`: 0 for a milestone/group (no Work of their own); else this one assignment's own
+  proportional share (`a.units / taskUnitsPercent(t)`) of the task's total Work — reusing **the already-shipped Task
+  Type/Work engine's own authoritative `t.work` figure** (falling back to `taskDurationMinutes(t) ×
+  taskUnitsPercent(t) / 100` the identical way `recalcTaskType()` itself does when `t.work` isn't set) rather than
+  inventing a parallel notion of hours, so a Fixed-Duration task's independently-typed Work is automatically
+  respected by its cost too.
+- `assignmentCost(t, a)`: a Cost-type resource is a flat `costPerUse` regardless of its own assigned % (real MS
+  Project greys out its rate cells for exactly this reason); a Material-type resource is
+  `(a.units/100) × stdRate + costPerUse` — **its own assigned percentage stands in for "how many units consumed"**,
+  since Milestone has no separate per-assignment quantity field (a stated simplification, not silently wrong: "100%
+  assigned = 1 unit of material," the same aggregate convention Units already uses everywhere else); a Work resource
+  (the default) is `assignmentHours(t,a) × stdRate + costPerUse`.
+- `taskCost(t)`: 0 for an empty line; a group **recursively sums its children's cost** (mirrors `effectiveDates()`'s
+  own rollup shape — unlike Work, Cost genuinely is meaningful for a group); a leaf sums `assignmentCost(t,a)` over
+  `taskAssignments(t)`. **Memoized** (`_costCache`, cleared in `resetEffectiveCache()` alongside `_effCache`/
+  `_baseCache`/`_actCache`) — a group rollup without memoization risks the exact O(n²) class "Large plans" already
+  fixed once for `childrenOf()`.
+- **Deliberate, stated scope note**: `taskUnitsPercent(t)` is left exactly as it is — pure text parsing, no pool
+  lookup, per its own existing comment ("no ordering dependency on the resource pool being built first"). A Material
+  or Cost resource's own assigned percentage therefore still counts toward the task's aggregate Units/Work triangle
+  exactly like a Work resource's would (assigning a Cost-type "Permit" resource at a high % could, in principle,
+  still shrink a Fixed-Units task's Duration). Making it type-aware would need a pool lookup and risks reintroducing
+  the exact order-dependent-bootstrap bug class already found and fixed once this session for `t.work`'s own
+  bootstrap (see "Task Type / Work"). A small, defensible edge case in practice (Material/Cost resources are
+  typically assigned at low, incidental percentages), not silently wrong.
+- **Also deliberately not modelled**: a per-resource "Base Calendar" (Milestone has one calendar per plan; a
+  selector here would do nothing real); Overtime Rate is stored/edited/exported but never automatically applied (no
+  overtime-hours tracking exists anywhere in this app); no Actual Cost/Remaining Cost/earned-value tracking — just
+  planned Cost, the same "planned, not a full EVM system" scope every other schedule figure in this app already has.
+
+**A refactor, not new logic, for the rename/remove cascade**: the Resource Pool dialog's own bulk Save
+(`applyResourcePoolDraft()`) used to inline the loop that rewrites every affected task's Resource text when a
+resource is renamed or removed. That loop is now two standalone, single-resource-scoped functions —
+`renameResourceEverywhere(resourceId, newName, now)` / `removeResourceEverywhere(resourceId, now)` — that
+`applyResourcePoolDraft()` calls per row exactly as before (byte-identical behaviour; `verify_resource_pool_ui.py`/
+`verify_resource_pool_data.py` needed zero rewrites), and that the Resource Sheet's own live single-cell edits now
+share too. One source of truth for a delicate cascade, not two.
+
+**The Resource Sheet is a new, 4th `MAIN_VIEWS` tab** (`resourceSheet`, after Resources) — a flat, **deliberately not
+virtualized** (resource counts are realistically small, unlike the task list/Resources view) editable grid, one row
+per pool resource: `#` | Resource Name | Type | Material Label (shown/enabled only for Material) | Initials | Group
+| Max Units | Std Rate | Ovt Rate (disabled for Material/Cost, matching real MS Project's own greyed-out cells) |
+Cost/Use | Accrue At | Code | a "Days off (N)" link. No "Base Calendar" column (see above). Every cell is a live
+input/select, always visible — a true spreadsheet, not the task grid's click-to-edit pattern — committing
+**immediately** through `commitResourceCell(id, field, value)`: validation/clamping is left entirely to
+`normalizeData()` (the single cleaning authority every other resource field already goes through — the raw typed
+value is written straight onto the pool entry, `save()` cleans it, `render()` shows the cleaned result back), except
+renaming, which runs the shared cascade *before* the pool entry's own name changes (resolution is by name). Add
+Resource appends a blank row immediately (undoable, like the task grid's own Add Task); removing a resource in use
+asks for confirmation first (naming it and how many tasks are affected), removing an unused one doesn't — both share
+`removeResourceEverywhere()`. The "Days off (N)" link **opens the existing Resource Pool dialog**, scrolled to and
+focused on that one resource (`openResourcePoolModal(focusId)`, a small additive optional parameter — no existing
+zero-arg call site changes), rather than duplicating multi-entry date editing inline. A currency `<select>` lives in
+the view's own toolbar (mirrors the Gantt view's own zoom tabs living in *its* toolbar — a view-specific control
+belongs in that view). **The existing Resource Pool dialog is otherwise completely unchanged** — still reachable from
+the Schedule menu, still the quick Name/Max Units/Days off editor it always was.
+
+**The task grid's own `cost` column** (hidden by default like `resource`/`work`, positioned right after `work` in
+`DEFAULT_COL_ORDER`), read-only (`fmtCurrency(taskCost(t))`, like `remaining`/`status`) — unlike `work`, shown for a
+milestone or a group too, since Cost is genuinely meaningful for both. Per the exact lesson "Task Type / Work" found
+twice already ("a column that's genuinely driven by `TASK_COLS` can still have other hand-maintained lookups
+elsewhere that don't know about it"), this column touches all six wiring points: `TASK_COLS`, `FILTER_COLS` +
+`filterColValue()`'s switch (`kind: 'number'`, comparing the raw `taskCost(t)`), the `HEAD` lookup inside
+`renderGrid()`, the `cells` object in `renderGrid()`, `XCOLS` inside `buildXlsx()`, and `writeTaskRow()`'s own `case`
+switch — written as a **real Excel number** with a currency `NumFmt` string built from `currencySymbol()`, not
+pre-formatted text (unlike Work, there's a clean Excel format code for money, so Cost stays sortable/summable).
+
+**MSPDI round-trip**: `buildMspdi()`'s `<Resource>` write and `parseMspdi()`'s Resource read both extend to the full
+verified field list/order/enums above. A new side-channel Map, `resourceFields` (by lowercase name, the identical
+shape `resourceMaxUnits` already established), carries everything beyond `MaxUnits`; `applyImportedTasks()` recovers
+it into the live pool under the same "import the calendar too" checkbox `resourceMaxUnits`/`workHours`/baselines
+already gate — a pool-level setting, not a per-task field. An older-style file with none of these new elements (only
+`Type`/`MaxUnits`, which already existed before this feature) still imports cleanly: every new field just defaults,
+no crash, no warning.
+
+**Stress coverage**: a `resourceSheet` operation in `verify_stress.py` edits a random pool resource's Type/rates/
+Cost per Use/Accrue At/Max Units/name (occasionally removing it) through `commitResourceCell()`, the real commit
+path. Its invariant — `taskCost(t)` stays a finite, non-negative number for every task — runs as part of the **main
+per-step sweep** (`inv()`), not a periodic, `wtStale`-exempted check like the Work≈Duration×Units invariant needs:
+unlike that one, no edit route can legitimately break this one, so it needs no exemption bookkeeping.
+
+Covered by `verify_resource_sheet_data.py` (Stages 1-2: the new fields' cleaning/defaulting, `fmtCurrency`/
+`currencyCode`, and the cost engine — every resource type, group rollup, milestone/spacer/unassigned edge cases,
+memoization), `verify_resource_sheet_view.py` (Stages 4-5: the tab itself, the header/row structure, every field's
+live editing including the rename cascade and Type-driven cell enabling, the currency picker, the Days-off link,
+Add/Remove with confirmation and Undo), `verify_cost_column.py` (Stage 6: the task grid's Cost column, filtering by
+it, Excel's real numeric currency cell, a no-pool plan still exporting), and the extended
+`verify_mspdi_export.py`/`verify_stress.py`. `verify_resource_pool_ui.py`/`verify_resource_pool_data.py` needed no
+rewrites. This closes the "no resource costing" gap `Known v1 limitations` never actually listed (costing simply
+didn't exist before this feature) — MS Project's Resource Sheet, with real rates and a real cost roll-up, now does.
+
 ### Gantt rendering
 
 Position math is plain day-number arithmetic (`dayNumber()`/`dayNumberToIso()`, UTC-based via `Date.UTC()`) rather than local-time `Date` arithmetic — the same reasoning Pulse's own Dashboard Gantt chart uses: two devices in different timezones must compute the identical pixel position from the same ISO date string, which a local-time parse doesn't reliably guarantee across a DST boundary. Display-facing formatting (`fmtDate()`/`fmtDateY()`) still parses as local time, matching how every other date renders in this app. `fmtDate()` (used everywhere task/Gantt dates and the week-level Gantt ticks are shown) renders as fixed `DD.MM.YYYY` rather than a `toLocaleDateString()` locale format — an explicit user request to match a traditional planner's date style regardless of browser locale; `fmtDateY()` (About dialog only) is unchanged.
@@ -874,5 +997,6 @@ A **tabbed** dialog (an explicit user request: "improve the visuals … look at 
 - Version skew is *repaired and warned about*, not prevented: a build older than the guard (version 2 and earlier) has none, so it can still move a minute-mode task's `startDate` without its time sibling; this build realigns what such a build leaves behind and warns when a newer one wrote the plan (see "Version-skew guard" under "Scheduling precision"). Print/PDF and the Week/Month/Year scales stay whole-day in a minute-mode plan.
 - Auto scheduling is bidirectional like MS Project (see "Auto scheduling is bidirectional"). ~~What MS Project does that this doesn't: resource levelling~~ — closed: a real resource pool (capacity, days off), over-allocation detection, a levelling algorithm (respecting dependencies and, by default, existing slack), a Resources usage view, a dialog with Undo, and real MSPDI Units/MaxUnits round-tripping now all exist (see "Resource levelling"). Not modelled, deliberately, within that: task splitting during levelling (this app's task model is always one contiguous span) and an independent per-resource working-hours calendar (only days off are per-resource; hours are always the plan's own). "Tasks will always honor their constraint dates" **is** now a switchable option (`project.honorConstraintDates`, see "Task constraints") — closed, no longer a gap. Baselines are manual and there are eleven of them (see "Baselines, actual dates and variance"); actual dates overwrite Start/Finish, so an early actual finish pulls its Auto successors earlier.
 - ALAP and SNLT/FNLT enforcement (see "Task constraints" above) each look only one hop at each successor's/predecessor's *current* position — SNLT/FNLT needs no more than that (a predecessor-driven push already reflects the full upstream chain by the time it's read, via the ordinary forward cascade order). ALAP's own specific gap — a real MS Project network-wide push to the whole project's finish when a task has no successors — **is now modelled** (`projectEndMoment()`, see "Task constraints"), with one honestly-documented residual limit: it's computed on demand, not continuously reactive to an unrelated task elsewhere changing what the project's finish is.
+- A real Resource Sheet with costing now exists (see "Resource Sheet") — Type, rates, Cost per Use, Accrue At, a real Cost roll-up on tasks and in Excel, and a verified MSPDI round-trip. Deliberately not modelled within it: a per-resource working-hours "Base Calendar" (one calendar per plan, as elsewhere in this app), a per-assignment consumption quantity for Material resources (their own assigned % stands in for it), Overtime Rate actually being applied (no overtime-hours tracking exists), and Actual/Remaining Cost or any other earned-value figure — just planned Cost.
 - Two browser tabs on the *same* plan still race each other in `localStorage` (last write wins); with a linked file the write-time merge protects the FILE, not the other tab's memory. Two tabs on *different* plans are fine.
 - No RBAC/roles, no multi-file sync split — deliberately out of scope for a single-user, single-project local planner (unlike Pulse, which is a multi-role team dashboard). Daily backups to the linked folder *are* built — see "Daily backups".

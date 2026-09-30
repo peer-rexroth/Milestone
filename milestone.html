@@ -109,7 +109,7 @@ button:focus:not(:focus-visible) { outline: none; }
 /* Top bar only — Pulse's bordered pill tabs, bordered square icon buttons and
    semibold buttons at the browser's own 13.33px. Scoped to .topbar on purpose. */
 .topbar .view-tabs { gap: 2px; border: 1px solid var(--border); }
-.topbar .view-tab { padding: 6px 14px; font-size: 13.3333px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.topbar .view-tab { padding: 6px 11px; font-size: 13.3333px; font-weight: 600; display: flex; align-items: center; gap: 6px; }   /* trimmed from 14px once a 4th tab (Resource Sheet) arrived — see verify_layout.py's 1100px check */
 .topbar .view-tab.active { color: var(--accent); box-shadow: var(--shadow); }
 .topbar .icon-btn { border: 1px solid var(--border); background: var(--panel); font-size: 13.3333px; }
 .topbar .icon-btn:hover { background: var(--panel-2); }
@@ -628,6 +628,33 @@ svg.gantt-deps path { fill: none; stroke: var(--text-faint); stroke-width: 1.5; 
 .main:not(.view-resources) .resource-pane-outer { display: none; }
 svg.gantt-deps path.critical { stroke: var(--danger); }
 
+/* Resource Sheet: MS Project's own spreadsheet view of the resource pool (see "Resource Sheet" in CLAUDE.md) — a flat,
+   deliberately NOT virtualized grid (resource counts are realistically small, unlike the task list/Resources view),
+   every cell always a live input/select (a true spreadsheet, not click-to-edit like the task grid), direct/immediate
+   edits with full undo. --rs-cols is one fixed template shared by the header and every row, so they can never disagree. */
+.resourceSheet-pane-outer { flex: 1; min-width: 0; display: flex; flex-direction: column; background: var(--bg); }
+.rs-toolbar { display: flex; align-items: center; gap: 12px; padding: 8px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.rs-toolbar .rs-currency { display: flex; align-items: center; gap: 6px; margin-left: auto; font-size: 12.5px; color: var(--text-dim); }
+.rs-scroll { flex: 1; overflow: auto; }
+.rs-header, .rs-row { display: grid; grid-template-columns: 40px minmax(140px,1fr) 100px 110px 64px 100px 70px 92px 92px 92px 92px 80px 112px 40px; column-gap: 0; min-width: max-content; }
+.rs-header { position: sticky; top: 0; z-index: 3; height: var(--head-h); background: var(--panel-2); border-bottom: 1px solid var(--border); }
+.rs-header > div { padding-inline: 8px; display: flex; align-items: center; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; color: var(--text-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-right: 1px solid var(--border); }
+.rs-row { height: 34px; border-bottom: 1px solid var(--border); }
+.rs-row:hover { background: var(--panel-2); }
+.rs-cell { padding-inline: 4px; display: flex; align-items: center; min-width: 0; border-right: 1px solid var(--border); }
+.rs-cell.rs-id { padding-inline: 8px; color: var(--text-faint); font-size: 12px; justify-content: flex-end; border-right: none; }
+.rs-cell input.inline-edit, .rs-cell select.inline-edit { border-color: transparent; background: transparent; }
+.rs-cell input.inline-edit:hover, .rs-cell select.inline-edit:hover, .rs-cell input.inline-edit:focus, .rs-cell select.inline-edit:focus { border-color: var(--accent); background: var(--panel); }
+.rs-cell input:disabled, .rs-cell select:disabled { opacity: .35; }
+.rs-cell input[type=number] { text-align: right; }
+.rs-days-link { background: none; border: none; color: var(--text-dim); font-size: 12px; cursor: pointer; padding: 4px 6px; border-radius: 5px; white-space: nowrap; }
+.rs-days-link:hover { background: var(--panel-2); color: var(--text); }
+.rs-remove { background: none; border: none; color: var(--text-faint); cursor: pointer; width: 26px; height: 26px; border-radius: 5px; display: flex; align-items: center; justify-content: center; }
+.rs-remove:hover { background: var(--panel-2); color: var(--danger); }
+.rs-empty { padding: 40px 20px; text-align: center; color: var(--text-dim); }
+.main.view-resourceSheet .grid-pane, .main.view-resourceSheet .gantt-pane-outer, .main.view-resourceSheet .resource-pane-outer { display: none; }
+.main:not(.view-resourceSheet) .resourceSheet-pane-outer { display: none; }
+
 /* ── Modals ─────────────────────────────────────────────────────────── */
 .modal-bg {
   position: fixed; inset: 0; background: rgba(10,12,16,.4); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
@@ -967,6 +994,16 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <div class="resource-timeline-head" id="resourceTimelineHead"></div>
       </div>
       <div class="resource-body" id="resourceBody"></div>
+    </div>
+  </div>
+  <div class="resourceSheet-pane-outer" id="resourceSheetPaneOuter">
+    <div class="rs-toolbar">
+      <button class="btn" type="button" onclick="addResourceSheetRow()"><i class="fa-solid fa-plus"></i>Add Resource</button>
+      <span class="rs-currency"><label for="rsCurrencyInput">Currency</label><select id="rsCurrencyInput" onchange="setCurrencyCode(this.value)"></select></span>
+    </div>
+    <div class="rs-scroll" id="resourceSheetScroll">
+      <div class="rs-header" id="resourceSheetHeader"></div>
+      <div class="rs-rows" id="resourceSheetBody"></div>
     </div>
   </div>
 </div>
@@ -1606,6 +1643,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
           <div class="help-row"><i class="fa-solid fa-people-group"></i><span><strong>Schedule → Resource pool…</strong> lists everyone: how much of them there is (200% = two people covering the role) and their own days off on top of the plan's working week. Renaming or removing someone there updates every task that names them.</span></div>
           <div class="help-row"><i class="fa-solid fa-chart-simple"></i><span>The <strong>Resources</strong> tab shows each person's day-by-day load, colored red on a day they're over their own capacity; the Schedule menu's <strong>Level resources…</strong> item shows the same count.</span></div>
           <div class="help-row"><i class="fa-solid fa-scale-balanced"></i><span><strong>Schedule → Level resources…</strong> delays an over-allocated task to the next span with room, never earlier than its own dependencies allow and, by default, never past its own slack (so the plan's finish doesn't move) — turn that off, or scope it to a date on, then Apply. Undo brings it back.</span></div>
+          <div class="help-row"><i class="fa-solid fa-table-list"></i><span>The <strong>Resource Sheet</strong> tab is MS Project's own spreadsheet: Type (Work, Material or Cost), Std/Ovt Rate, Cost per Use, Accrue At and more, editable directly in the grid. A task's <strong>Cost</strong> column (hidden by default) adds up its assigned resources' rates; a group shows the total of everything in it. Pick the plan's currency in that tab's own toolbar.</span></div>
         </div>
         <div class="help-divider"></div>
         <div class="help-section">
@@ -1792,6 +1830,7 @@ const TASK_COLS = {
   resource:     { label: 'Resource',      width: '140px',             dflt: false },   // fixed like every column but Task Name; longer text is cut with an ellipsis (the cell's tooltip and the editor show all of it)
   worktype:     { label: 'Task Type',     width: '110px',             dflt: false },   // an icon-with-popup cell, same pattern as Task Mode's own; blank for a milestone/group
   work:         { label: 'Work',          width: '104px',             dflt: false },   // working time, typed the same way Duration is; blank for a milestone/group
+  cost:         { label: 'Cost',          width: '100px',             dflt: false },   // taskCost(t), read-only, computed from the resource pool's own rates (see "Resource Sheet" in CLAUDE.md) — an empty line/unassigned task shows $0.00
   // Baseline columns (all hidden by default): the baseline chosen in the Baseline dialog (project.compareBaseline, "Baseline" unless changed)
   baselineStart:    { label: 'Baseline Start',    width: '104px', dflt: false },   // header: Baseline / Start
   baselineFinish:   { label: 'Baseline Finish',   width: '104px', dflt: false },
@@ -1880,6 +1919,36 @@ const TASK_TYPES = [
   { id: 'fixedWork', label: 'Fixed Work', icon: 'fa-briefcase' },
 ];
 function taskTypeInfo(id) { return TASK_TYPES.find(m => m.id === id) || TASK_TYPES[0]; }
+// The Resource Sheet's own MS Project fields (see "Resource Sheet" in CLAUDE.md) — RESOURCE_TYPES mirrors TASK_TYPES'
+// own shape/pattern; the enum ids/order here (work/material/cost, start/prorated/end) match the real MSPDI schema's
+// own Type/AccrueAt integer values (verified against the schema itself, not guessed — see CLAUDE.md).
+const RESOURCE_TYPES = [
+  { id: 'work', label: 'Work', icon: 'fa-user' },
+  { id: 'material', label: 'Material', icon: 'fa-cube' },
+  { id: 'cost', label: 'Cost', icon: 'fa-sack-dollar' },
+];
+function resourceTypeInfo(id) { return RESOURCE_TYPES.find(m => m.id === id) || RESOURCE_TYPES[0]; }
+const ACCRUE_TYPES = [
+  { id: 'start', label: 'Start' },
+  { id: 'prorated', label: 'Prorated' },
+  { id: 'end', label: 'End' },
+];
+function accrueTypeInfo(id) { return ACCRUE_TYPES.find(m => m.id === id) || ACCRUE_TYPES[1]; }   // absent = Prorated, MS Project's own default
+// A currency picker for the Resource Sheet's own toolbar (project.currencyCode, absent = 'USD') — Intl.NumberFormat
+// handles symbol/decimal/grouping placement per code natively, so this is just the list of codes offered.
+const CURRENCIES = [
+  { code: 'USD', label: 'US Dollar' }, { code: 'EUR', label: 'Euro' }, { code: 'GBP', label: 'British Pound' },
+  { code: 'JPY', label: 'Japanese Yen' }, { code: 'CHF', label: 'Swiss Franc' }, { code: 'CAD', label: 'Canadian Dollar' },
+  { code: 'AUD', label: 'Australian Dollar' }, { code: 'CNY', label: 'Chinese Yuan' }, { code: 'INR', label: 'Indian Rupee' },
+  { code: 'SEK', label: 'Swedish Krona' }, { code: 'NOK', label: 'Norwegian Krone' }, { code: 'DKK', label: 'Danish Krone' },
+  { code: 'PLN', label: 'Polish Zloty' }, { code: 'BRL', label: 'Brazilian Real' }, { code: 'MXN', label: 'Mexican Peso' },
+  { code: 'ZAR', label: 'South African Rand' }, { code: 'SGD', label: 'Singapore Dollar' }, { code: 'NZD', label: 'New Zealand Dollar' },
+];
+function currencyCode() { return (project && typeof project.currencyCode === 'string' && CURRENCIES.some(c => c.code === project.currencyCode)) ? project.currencyCode : 'USD'; }
+function fmtCurrency(n) { return new Intl.NumberFormat(undefined, { style: 'currency', currency: currencyCode() }).format(Number.isFinite(n) ? n : 0); }
+// The current currency's own symbol/code, e.g. "$"/"€" — for building a real Excel number-format string (buildXlsx()'s
+// Cost column), since Excel has no built-in "format like Intl.NumberFormat" — the number itself is still real/sortable.
+function currencySymbol() { try { return new Intl.NumberFormat(undefined, { style: 'currency', currency: currencyCode() }).formatToParts(0).find(p => p.type === 'currency').value; } catch (e) { return '$'; } }
 // A manual task whose Start or Finish is blank/free text has no reliable
 // position on the timeline: no bar, ignored as a predecessor, left out of
 // summary rollups and the date range.
@@ -2715,10 +2784,24 @@ function normalizeData() {
       const mu = Math.round(Number(r.maxUnits)), maxUnits = Number.isFinite(mu) ? Math.max(1, Math.min(800, mu)) : 100;
       const entry = { id: r.id, name, maxUnits };
       const daysOff = cleanHolidays(r.daysOff); if (daysOff) entry.daysOff = daysOff;
+      // Resource Sheet fields (see "Resource Sheet" in CLAUDE.md) — the same absence-is-default convention as maxUnits.
+      if (RESOURCE_TYPES.some(x => x.id === r.type) && r.type !== 'work') entry.type = r.type;
+      if (ACCRUE_TYPES.some(x => x.id === r.accrueAt) && r.accrueAt !== 'prorated') entry.accrueAt = r.accrueAt;
+      const str = (v, cap) => typeof v === 'string' ? v.trim().slice(0, cap) : '';
+      const materialLabel = str(r.materialLabel, 20); if (materialLabel) entry.materialLabel = materialLabel;
+      const initials = str(r.initials, 20); if (initials) entry.initials = initials;
+      const group = str(r.group, 60); if (group) entry.group = group;
+      const code = str(r.code, 40); if (code) entry.code = code;
+      const num = v => { const n = Number(v); return Number.isFinite(n) && n > 0 ? Math.round(n * 100) / 100 : 0; };
+      if (num(r.stdRate)) entry.stdRate = num(r.stdRate);
+      if (num(r.ovtRate)) entry.ovtRate = num(r.ovtRate);
+      if (num(r.costPerUse)) entry.costPerUse = num(r.costPerUse);
       cleanPool.push(entry);
     }
     cleanPool.sort((a, b) => a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1);   // a canonical order (not creation order) so a merge and a plain local edit converge on the same array instead of flip-flopping
     if (cleanPool.length) project.resources = cleanPool; else delete project.resources;
+    // The Resource Sheet's currency (absent = USD, the usual default); anything not in CURRENCIES falls back too.
+    if (typeof project.currencyCode === 'string' && CURRENCIES.some(c => c.code === project.currencyCode) && project.currencyCode !== 'USD') { /* keep it */ } else delete project.currencyCode;
   }
   {   // the working calendar: distinct weekdays 0-6; nothing stored when it is the default Mon-Fri (or unusable)
     const wd = Array.isArray(project.workDays) ? [...new Set(project.workDays.map(Number).filter(n => Number.isInteger(n) && n >= 0 && n <= 6))].sort((a, b) => a - b) : [];
@@ -2954,7 +3037,7 @@ function effectiveDates(id) {
   _effCache.set(id, result);
   return result;
 }
-function resetEffectiveCache() { _effCache.clear(); _actCache.clear(); _baseCache.clear(); _filterShow.clear(); _customActive = null; }
+function resetEffectiveCache() { _effCache.clear(); _actCache.clear(); _baseCache.clear(); _costCache.clear(); _filterShow.clear(); _customActive = null; }
 
 /* ======================== Scheduling & critical path ===================== */
 function successorsMap() {
@@ -3568,6 +3651,7 @@ function renderPass() {
   updateFrozenColumns();
   if (currentView === 'gantt') renderGantt();   // (the chart is hidden in the Tasks view: it is built when you switch to it)
   else if (currentView === 'resources') renderResourceUsage();
+  else if (currentView === 'resourceSheet') renderResourceSheet();
   renderFilterBar();
   updateCollapseButtons();
   updateFileSyncUI();
@@ -3576,14 +3660,15 @@ function renderPass() {
   updateSelectionUI();
 }
 
-const MAIN_VIEWS = [{ id: 'tasks', label: 'Tasks' }, { id: 'gantt', label: 'Gantt' }, { id: 'resources', label: 'Resources' }];
+const MAIN_VIEWS = [{ id: 'tasks', label: 'Tasks' }, { id: 'gantt', label: 'Gantt' }, { id: 'resources', label: 'Resources' }, { id: 'resourceSheet', label: 'Resource Sheet' }];
 function renderMainViewTabs() {
   document.getElementById('mainViewTabs').innerHTML = MAIN_VIEWS.map(v =>
     `<button class="view-tab${v.id === currentView ? ' active' : ''}" onclick="setView('${v.id}')">${v.label}</button>`).join('');
   document.getElementById('main').classList.toggle('view-tasks', currentView === 'tasks');
   document.getElementById('main').classList.toggle('view-gantt', currentView === 'gantt');
   document.getElementById('main').classList.toggle('view-resources', currentView === 'resources');
-  document.getElementById('zoomTabs').classList.toggle('hidden', currentView !== 'gantt' && currentView !== 'resources');   // the Resources timeline shares the same timescale
+  document.getElementById('main').classList.toggle('view-resourceSheet', currentView === 'resourceSheet');
+  document.getElementById('zoomTabs').classList.toggle('hidden', currentView !== 'gantt' && currentView !== 'resources');   // the Resources timeline shares the same timescale; the Resource Sheet has none (a plain spreadsheet, no dates)
   document.getElementById('criticalPathBtn').classList.toggle('hidden', currentView !== 'gantt');
   document.getElementById('baselineBtn').classList.toggle('hidden', currentView !== 'gantt');
   document.getElementById('ganttControlsDivider').classList.toggle('hidden', currentView !== 'gantt' && currentView !== 'resources');
@@ -3667,7 +3752,8 @@ const FILTER_COLS = {
   preds:        { label: 'Predecessors',  kind: 'text' },
   resource:     { label: 'Resource',      kind: 'text' },
   worktype:     { label: 'Task Type',     kind: 'list' },
-  work:         { label: 'Work',          kind: 'number' }
+  work:         { label: 'Work',          kind: 'number' },
+  cost:         { label: 'Cost',          kind: 'number' }
 };
 for (const f of Object.values(CUSTOM_FIELDS)) FILTER_COLS[f.id] = { get label() { return customFieldName(f.id); }, kind: CUSTOM_KINDS.find(x => x.kind === f.kind).filter };
 function newColFilters() { return Object.fromEntries(Object.keys(FILTER_COLS).map(c => [c, null])); }
@@ -3723,6 +3809,7 @@ function filterColValue(t, col) {
     case 'resource': return (t.resource || '').trim() || null;
     case 'work': return (t.milestone || hasChildren(t.id) || !Number.isFinite(t.work)) ? null : t.work;
     case 'worktype': return (t.milestone || hasChildren(t.id)) ? null : ((t.taskType === 'fixedDuration' || t.taskType === 'fixedWork') ? t.taskType : 'fixedUnits');
+    case 'cost': return t.spacer ? null : taskCost(t);
     default:
       if (isCustomField(col)) {
         const v = customValue(t, col);
@@ -3742,6 +3829,7 @@ function filterValueLabel(col, v) {
     case 'remaining': return fmtRemaining(v);
     case 'work': return fmtDurationMinutes(v);
     case 'worktype': return taskTypeInfo(v).label;
+    case 'cost': return fmtCurrency(v);
   }
   return String(v);
 }
@@ -4155,6 +4243,42 @@ function recalcTaskType(t, changed) {
   t.resource = after.slice(0, 200);
   return `${before} → ${after}`;
 }
+/* ---- Resource Sheet costing (see "Resource Sheet" in CLAUDE.md): assignmentCost() x taskCost() roll up a resource's
+   own Std Rate / Ovt Rate / Cost per Use into a real per-task, per-project figure — built on the Task Type/Work
+   engine's own authoritative t.work (not a parallel notion of hours), so a Fixed-Duration task's independently-typed
+   Work is respected automatically. Deliberate scope note: taskUnitsPercent(t) is intentionally left exactly as it
+   is — pure text parsing, no pool lookup (see the comment above it) — so a Material/Cost-type resource's own assigned
+   percentage still counts toward the task's aggregate Units/Work triangle exactly like a Work resource's would;
+   making it type-aware would need a pool lookup and risks the exact order-dependent-bootstrap bug class already
+   found and fixed once this session for t.work's own bootstrap (see "Task Type / Work"). A small, defensible edge
+   case, not silently wrong. */
+// This one assignment's own share of the task's total Work, in HOURS — 0 for a milestone/group (no Work of their own).
+function assignmentHours(t, a) {
+  if (!t || t.milestone || hasChildren(t.id)) return 0;
+  const units = taskUnitsPercent(t);
+  const workMin = Number.isFinite(t.work) && t.work > 0 ? t.work : taskDurationMinutes(t) * units / 100;
+  return (workMin * (a.units / units)) / 60;
+}
+// A Cost resource is a flat per-use amount regardless of its assigned %; a Material resource's own % stands in for
+// "how many units consumed" (no separate per-assignment quantity field is modelled — see the note above); a Work
+// resource (the default) is billed by its own share of the task's hours. Cost per Use always applies once, on top.
+function assignmentCost(t, a) {
+  const r = a.resource, type = (r.type === 'material' || r.type === 'cost') ? r.type : 'work';
+  const base = type === 'cost' ? 0 : type === 'material' ? (a.units / 100) * (r.stdRate || 0) : assignmentHours(t, a) * (r.stdRate || 0);
+  return base + (r.costPerUse || 0);
+}
+// A task's total planned cost: 0 for an empty line, the sum of its own assignments' cost for a leaf, or the
+// recursive rollup of its children's cost for a group (mirrors effectiveDates()'s own rollup shape) — memoized in
+// _costCache (cleared in resetEffectiveCache() alongside _effCache/_baseCache/_actCache) so a deep tree of groups
+// stays linear, not quadratic (the exact class "Large plans" already fixed once for childrenOf()).
+const _costCache = new Map();
+function taskCost(t) {
+  if (!t || t.spacer) return 0;
+  if (_costCache.has(t.id)) return _costCache.get(t.id);
+  const cost = hasChildren(t.id) ? childrenOf(t.id).reduce((s, c) => s + taskCost(c), 0) : taskAssignments(t).reduce((s, a) => s + assignmentCost(t, a), 0);
+  _costCache.set(t.id, cost);
+  return cost;
+}
 // A resource's OWN day off (vacation etc, on top of the plan's shared working week) — the exact shape project.holidays
 // already uses, expanded the same way (a range, or a single day that comes back every year), but a resource's own list is
 // small enough that it needs none of workDaySet()'s caching (which is keyed to the plan's own calendar, not a resource's).
@@ -4357,7 +4481,7 @@ function renderGrid() {
     baselineStart: colHeadHtml('Baseline\nStart', 'baselineStart'), baselineFinish: colHeadHtml('Baseline\nFinish', 'baselineFinish'), baselineDuration: colHeadHtml('Baseline\nDuration', 'baselineDuration'),
     startVariance: colHeadHtml('Start\nVariance', 'startVariance'), finishVariance: colHeadHtml('Finish\nVariance', 'finishVariance'), durationVariance: colHeadHtml('Duration\nVariance', 'durationVariance'),
     preds: colHeadHtml('Predecessors', 'preds'), resource: colHeadHtml('Resource', 'resource'),
-    worktype: colHeadHtml('Task\nType', 'worktype'), work: colHeadHtml('Work', 'work'),
+    worktype: colHeadHtml('Task\nType', 'worktype'), work: colHeadHtml('Work', 'work'), cost: colHeadHtml('Cost', 'cost'),
     ...Object.fromEntries(Object.keys(CUSTOM_FIELDS).map(id => [id, colHeadHtml(customFieldName(id), id)]))
   };
   document.getElementById('main').style.setProperty('--task-cols', ['34px', ...cols.map(colWidth), '88px'].join(' '));
@@ -4442,6 +4566,8 @@ function renderGrid() {
       : editing('work')
         ? `<input type="text" class="inline-edit" value="${Number.isFinite(t.work) ? fmtDurationMinutes(t.work) : ''}" title="Like 4h, 90m, 2d, 1w — a bare number is hours" placeholder="e.g. 4h or 2d" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" ${blurAttr('work')}>`
         : `<div class="grid-cell-dim editable" onclick="event.stopPropagation();startInlineEdit('${t.id}','work')">${Number.isFinite(t.work) ? fmtDurationMinutes(t.work) : ''}</div>`;
+    // Cost is always computed (see "Resource Sheet" in CLAUDE.md), never typed — read-only like Remaining Duration/Status.
+    const costCell = `<div class="grid-cell-dim${summaryCls}">${fmtCurrency(taskCost(t))}</div>`;
     const mismatchDate = scheduleMismatch(t);
     const act = actualDates(t.id), canEditActual = full && !summary;   // a group's actual dates are rolled up, so not editable (a milestone's Actual Finish follows its Actual Start)
     const actualCell = (field, iso) => editing(field)
@@ -4472,7 +4598,7 @@ function renderGrid() {
       status: `<div class="grid-cell-dim${summaryCls}">${statusPillHtml(taskStatus(t.id))}</div>`,
       baselineStart: blCell(bl.start, bl.startTime, false), baselineFinish: blCell(bl.end, bl.endTime, true), baselineDuration: `<div class="grid-cell-dim${summaryCls}" title="${bn}">${fmtBaselineDurationFor(t.id, sv.baseDuration)}</div>`,
       startVariance: varCell(sv.start), finishVariance: varCell(sv.finish), durationVariance: varCell(sv.duration),
-      preds: predCell, resource: resourceCell, worktype: worktypeCell, work: workCell,
+      preds: predCell, resource: resourceCell, worktype: worktypeCell, work: workCell, cost: costCell,
       ...Object.fromEntries(cols.filter(isCustomField).map(id => [id, customCellHtml(t, id, summaryCls, editing(id), blurAttr(id), (f, iso, time) => dateEditor(f, iso, null, 'dd.mm.yyyy', minuteModeActive() ? time : undefined, true))]))
     };
     if (t.spacer) {   // an empty line: the ID and a blank cell in every column (nothing to edit)
@@ -5338,6 +5464,81 @@ let resWinRaf = 0;
 function onResourceScroll() {
   if (!resourceRenderedWin.virtual || resWinRaf) return;
   resWinRaf = requestAnimationFrame(() => { resWinRaf = 0; refreshResourceWindowIfNeeded(false); });
+}
+
+/* ============================ Resource Sheet (see "Resource Sheet" in CLAUDE.md) ============================
+   MS Project's own spreadsheet view of the resource pool — a flat, deliberately NOT virtualized grid (resource counts
+   are realistically small, unlike the task list/Resources view above), every cell a live input/select (a true
+   spreadsheet, not click-to-edit), direct/immediate edits through the ordinary save()/render()/history cycle, same as
+   the task grid's own inline editing. Renaming/removing a resource here shares its cascade (rewriting every affected
+   task's Resource text) with the Resource Pool dialog's own bulk Save — see renameResourceEverywhere()/
+   removeResourceEverywhere() above applyResourcePoolDraft(). Days off has no cell of its own; it opens that same
+   dialog, focused on the one row, rather than duplicating multi-entry date editing inline. */
+const RS_HEAD = ['#', 'Resource Name', 'Type', 'Material Label', 'Initials', 'Group', 'Max Units', 'Std Rate', 'Ovt Rate', 'Cost/Use', 'Accrue At', 'Code', 'Days Off', ''];
+function renderResourceSheet() {
+  document.getElementById('resourceSheetHeader').innerHTML = RS_HEAD.map(h => `<div>${h}</div>`).join('');
+  const cs = document.getElementById('rsCurrencyInput');
+  if (cs.children.length !== CURRENCIES.length) cs.innerHTML = CURRENCIES.map(c => `<option value="${c.code}">${c.code} — ${escapeHtml(c.label)}</option>`).join('');
+  cs.value = currencyCode();
+  const pool = project.resources || [];
+  document.getElementById('resourceSheetBody').innerHTML = pool.length ? pool.map((r, i) => resourceSheetRowHtml(r, i)).join('')
+    : '<div class="rs-empty">No resources yet — type a name in a task’s Resource field, or “Add Resource” above.</div>';
+}
+function resourceSheetRowHtml(r, i) {
+  const type = resourceTypeInfo(r.type).id, isMaterial = type === 'material', isCost = type === 'cost';
+  const accrue = accrueTypeInfo(r.accrueAt).id, n = (r.daysOff || []).length;
+  const opts = (list, cur) => list.map(o => `<option value="${o.id}"${o.id === cur ? ' selected' : ''}>${o.label}</option>`).join('');
+  return `<div class="rs-row" data-id="${r.id}">
+    <div class="rs-cell rs-id">${i + 1}</div>
+    <div class="rs-cell"><input type="text" class="inline-edit" maxlength="60" value="${escapeHtml(r.name)}" aria-label="Resource name" onchange="commitResourceCell('${r.id}','name',this.value)" onkeydown="if(event.key==='Enter')this.blur()"></div>
+    <div class="rs-cell"><select class="inline-edit" aria-label="Type" onchange="commitResourceCell('${r.id}','type',this.value)">${opts(RESOURCE_TYPES, type)}</select></div>
+    <div class="rs-cell"><input type="text" class="inline-edit" maxlength="20" placeholder="e.g. tons" value="${escapeHtml(r.materialLabel || '')}" aria-label="Material label" ${isMaterial ? '' : 'disabled'} onchange="commitResourceCell('${r.id}','materialLabel',this.value)"></div>
+    <div class="rs-cell"><input type="text" class="inline-edit" maxlength="20" value="${escapeHtml(r.initials || '')}" aria-label="Initials" onchange="commitResourceCell('${r.id}','initials',this.value)"></div>
+    <div class="rs-cell"><input type="text" class="inline-edit" maxlength="60" value="${escapeHtml(r.group || '')}" aria-label="Group" onchange="commitResourceCell('${r.id}','group',this.value)"></div>
+    <div class="rs-cell"><input type="number" min="1" max="800" class="inline-edit" value="${r.maxUnits}" aria-label="Max units, percent" onchange="commitResourceCell('${r.id}','maxUnits',this.value)"></div>
+    <div class="rs-cell"><input type="number" min="0" step="any" class="inline-edit" value="${r.stdRate || ''}" aria-label="Standard rate per hour" ${isCost ? 'disabled' : ''} onchange="commitResourceCell('${r.id}','stdRate',this.value)"></div>
+    <div class="rs-cell"><input type="number" min="0" step="any" class="inline-edit" value="${r.ovtRate || ''}" aria-label="Overtime rate per hour" ${(isMaterial || isCost) ? 'disabled' : ''} onchange="commitResourceCell('${r.id}','ovtRate',this.value)"></div>
+    <div class="rs-cell"><input type="number" min="0" step="any" class="inline-edit" value="${r.costPerUse || ''}" aria-label="Cost per use" onchange="commitResourceCell('${r.id}','costPerUse',this.value)"></div>
+    <div class="rs-cell"><select class="inline-edit" aria-label="Accrue at" onchange="commitResourceCell('${r.id}','accrueAt',this.value)">${opts(ACCRUE_TYPES, accrue)}</select></div>
+    <div class="rs-cell"><input type="text" class="inline-edit" maxlength="40" value="${escapeHtml(r.code || '')}" aria-label="Code" onchange="commitResourceCell('${r.id}','code',this.value)"></div>
+    <div class="rs-cell"><button type="button" class="rs-days-link" onclick="openResourcePoolModal('${r.id}')">${n ? `${n} day${n === 1 ? '' : 's'} off` : 'Days off'}</button></div>
+    <div class="rs-cell"><button type="button" class="rs-remove" title="Remove ${escapeHtml(r.name)}" aria-label="Remove ${escapeHtml(r.name)}" onclick="removeResourceSheetRow('${r.id}')"><i class="fa-solid fa-xmark"></i></button></div>
+  </div>`;
+}
+// Direct/immediate edit of one resource cell — validation/clamping is left to normalizeData() (run by the save() right
+// below, the same single cleaning authority every other resource field already goes through), except renaming, which
+// needs the rename cascade to run BEFORE the pool entry's own name changes (resolution is by name).
+function commitResourceCell(id, field, value) {
+  const pool = project.resources || [], r = pool.find(x => x.id === id); if (!r) return;
+  if (field === 'name') {
+    const nm = value.trim();
+    if (!nm) { showToast('Give the resource a name', true); render(); return; }
+    if (pool.some(x => x.id !== id && x.name.toLowerCase() === nm.toLowerCase())) { showToast(`“${nm}” is already the name of another resource`, true); render(); return; }
+    if (nm !== r.name) { renameResourceEverywhere(id, nm); r.name = nm; }
+  } else { r[field] = value; }
+  project.updatedAt = Date.now();
+  save(); render();
+}
+function removeResourceSheetRow(id) {
+  const r = (project.resources || []).find(x => x.id === id); if (!r) return;
+  const uses = tasks.filter(t => taskAssignments(t).some(a => a.resource.id === id)).length;
+  const doRemove = () => { removeResourceEverywhere(id); project.resources = (project.resources || []).filter(x => x.id !== id); if (!project.resources.length) delete project.resources; project.updatedAt = Date.now(); save(); render(); };
+  if (uses) openConfirmModal({ title: 'Remove resource?', body: `Remove “${escapeHtml(r.name)}”? ${uses} task${uses === 1 ? '' : 's'} will no longer list it — Undo (Ctrl+Z) brings it back.`, confirmLabel: 'Remove', action: doRemove });
+  else doRemove();
+}
+function addResourceSheetRow() {
+  const taken = new Set((project.resources || []).map(x => x.name.toLowerCase()));
+  let name = 'New resource', n = 1; while (taken.has(name.toLowerCase())) { n++; name = `New resource ${n}`; }
+  const r = { id: genId(), name, maxUnits: 100 };
+  project.resources = [...(project.resources || []), r];
+  project.updatedAt = Date.now();
+  save(); render();
+  setTimeout(() => { const el = document.querySelector(`.rs-row[data-id="${r.id}"] input`); if (el) { el.focus(); el.select(); } }, 40);
+}
+function setCurrencyCode(code) {
+  if (!CURRENCIES.some(c => c.code === code) || code === 'USD') delete project.currencyCode; else project.currencyCode = code;
+  project.updatedAt = Date.now();
+  save(); render();
 }
 
 /* ============================ Gantt interactions ========================= */
@@ -6514,7 +6715,9 @@ function applyFieldsDraft() {
    the same capture-then-cascade shape deleteTasksNow() already uses for a deleted predecessor link. */
 let resourceDraft = null, resourceOrig = null;
 function resourcePoolMenuHint() { const n = (project.resources || []).length; return n ? `${n} ${n === 1 ? 'person' : 'people'}` : 'none yet'; }
-function openResourcePoolModal() {
+// focusId (optional): the Resource Sheet's own "Days off" link opens this SAME dialog rather than duplicating days-off
+// editing UI inline — scrolls to and opens that one resource's own days-off details instead of just focusing the first row.
+function openResourcePoolModal(focusId) {
   closeScheduleMenu();
   resourceDraft = (project.resources || []).map(r => ({
     id: r.id, name: r.name, orig: r.name, maxUnits: r.maxUnits, daysOff: (r.daysOff || []).map(h => Object.assign({}, h)), isNew: false, removed: false,
@@ -6524,7 +6727,14 @@ function openResourcePoolModal() {
   document.getElementById('resourcePoolPlanName').textContent = project.name;
   renderResourceRows();
   document.getElementById('resourcePoolModalBg').classList.add('open');
-  setTimeout(() => { const i = document.querySelector('#resourceRows .res-name'); if (i) i.focus(); }, 40);
+  const focusIdx = focusId ? resourceDraft.findIndex(r => r.id === focusId) : -1;
+  setTimeout(() => {
+    if (focusIdx >= 0) {
+      const item = document.querySelectorAll('#resourceRows .res-item')[focusIdx];
+      if (item) { item.scrollIntoView({ block: 'center' }); const d = item.querySelector('.res-days'); if (d) d.open = true; const i = item.querySelector('.res-name'); if (i) i.focus(); return; }
+    }
+    const i = document.querySelector('#resourceRows .res-name'); if (i) i.focus();
+  }, 40);
 }
 function closeResourcePoolModal() { document.getElementById('resourcePoolModalBg').classList.remove('open'); resourceDraft = null; resourceOrig = null; }
 function resourcePoolDirty() { return resourceDraft !== null && document.getElementById('resourcePoolModalBg').classList.contains('open') && JSON.stringify(resourceDraft) !== resourceOrig; }
@@ -6611,6 +6821,22 @@ function saveResourcePoolModal() {
   }
   applyResourcePoolDraft();
 }
+// Rewrites every task's Resource text to drop or rename one resource's own assignment, matched by id (resolution is
+// by NAME, so the pool must still hold the OLD name while this runs — the caller renames/removes the pool entry
+// itself only AFTER calling this). Shared by the Resource Pool dialog's bulk Save (applyResourcePoolDraft(), below)
+// and the Resource Sheet's own live single-cell rename/remove — one source of truth for this cascade, not two.
+function renameResourceEverywhere(resourceId, newName, now = Date.now()) {
+  for (const t of tasks) {
+    const cur = taskAssignments(t);
+    if (cur.some(a => a.resource.id === resourceId)) { t.resource = formatResourceString(cur.map(a => ({ name: a.resource.id === resourceId ? newName : a.resource.name, units: a.units }))); t.updatedAt = now; }
+  }
+}
+function removeResourceEverywhere(resourceId, now = Date.now()) {
+  for (const t of tasks) {
+    const cur = taskAssignments(t);
+    if (cur.some(a => a.resource.id === resourceId)) { t.resource = formatResourceString(cur.filter(a => a.resource.id !== resourceId).map(a => ({ name: a.resource.name, units: a.units }))); t.updatedAt = now; }
+  }
+}
 function applyResourcePoolDraft() {
   const rows = resourceDraft; if (!rows) return;
   const now = Date.now();
@@ -6618,20 +6844,8 @@ function applyResourcePoolDraft() {
   // the pool has to still hold the old name (below, unchanged so far) while this runs.
   for (const r of rows) {
     if (r.isNew) continue;
-    if (r.removed) {
-      for (const t of tasks) {
-        const cur = taskAssignments(t);
-        if (cur.some(a => a.resource.id === r.id)) { t.resource = formatResourceString(cur.filter(a => a.resource.id !== r.id).map(a => ({ name: a.resource.name, units: a.units }))); t.updatedAt = now; }
-      }
-    } else {
-      const nm = r.name.trim();
-      if (nm && nm !== r.orig) {
-        for (const t of tasks) {
-          const cur = taskAssignments(t);
-          if (cur.some(a => a.resource.id === r.id)) { t.resource = formatResourceString(cur.map(a => ({ name: a.resource.id === r.id ? nm : a.resource.name, units: a.units }))); t.updatedAt = now; }
-        }
-      }
-    }
+    if (r.removed) { removeResourceEverywhere(r.id, now); }
+    else { const nm = r.name.trim(); if (nm && nm !== r.orig) renameResourceEverywhere(r.id, nm, now); }
   }
   const pool = [];
   for (const r of rows) {
@@ -7122,7 +7336,7 @@ function replanAfterMerge(touched) {
    A conflict = both sides changed the same field of the same task (or plan setting) since they last agreed. The merge has already
    picked the newer edit; this only makes that visible — and reversible: Review lists them and lets you take the other version. */
 let syncConflictLog = [];   // session only (a heads-up for whoever is at the keyboard, not history)
-const CONFLICT_LABELS = { name: 'Name', startDate: 'Start', endDate: 'Finish', progress: '% Complete', resource: 'Resource', predecessors: 'Predecessors', taskMode: 'Task mode', actualStart: 'Actual Start', actualFinish: 'Actual Finish', parentId: 'Parent', order: 'Position', color: 'Colour', milestone: 'Milestone', constraintType: 'Constraint', constraintDate: 'Constraint date', startTime: 'Start time', endTime: 'Finish time', actualStartTime: 'Actual Start time', actualFinishTime: 'Actual Finish time', constraintTime: 'Constraint time', timeUnit: 'Scheduling precision', workHours: 'Working hours', workHoursByDay: 'Working hours by day', lagUnit: 'Lag unit', startText: 'Start (text)', endText: 'Finish (text)', durText: 'Duration (text)', custom: 'Custom fields', baselines: 'Baselines', workDays: 'Working days', compareBaseline: 'Compared baseline', fieldNames: 'Custom field names', newTaskMode: 'New task mode', honorConstraintDates: 'Honor constraint dates', resources: 'Resource pool' };
+const CONFLICT_LABELS = { name: 'Name', startDate: 'Start', endDate: 'Finish', progress: '% Complete', resource: 'Resource', predecessors: 'Predecessors', taskMode: 'Task mode', actualStart: 'Actual Start', actualFinish: 'Actual Finish', parentId: 'Parent', order: 'Position', color: 'Colour', milestone: 'Milestone', constraintType: 'Constraint', constraintDate: 'Constraint date', startTime: 'Start time', endTime: 'Finish time', actualStartTime: 'Actual Start time', actualFinishTime: 'Actual Finish time', constraintTime: 'Constraint time', timeUnit: 'Scheduling precision', workHours: 'Working hours', workHoursByDay: 'Working hours by day', lagUnit: 'Lag unit', startText: 'Start (text)', endText: 'Finish (text)', durText: 'Duration (text)', custom: 'Custom fields', baselines: 'Baselines', workDays: 'Working days', compareBaseline: 'Compared baseline', fieldNames: 'Custom field names', newTaskMode: 'New task mode', honorConstraintDates: 'Honor constraint dates', resources: 'Resource pool', currencyCode: 'Currency' };
 function conflictLabel(key) { return CONFLICT_LABELS[key] || key; }
 function fmtConflictValue(key, v) {
   if (v === undefined || v === null || v === '') return '—';
@@ -7538,10 +7752,25 @@ function parseMspdi(xmlText) {
   // by lowercase name) for applyImportedTasks() to recover into the pool once resources are actually brought in.
   const resName = new Map(list(root, 'Resources').map(r => [txt(r, 'UID'), txt(r, 'Name')]));
   const resourceMaxUnits = new Map();
+  // The Resource Sheet's own fields (see "Resource Sheet" in CLAUDE.md), read the same way MaxUnits already is — by
+  // lowercase name, recovered into the live pool by applyImportedTasks() under the same "import settings too" gate.
+  // Type/AccrueAt/RateFormat enums are the same ones buildMspdi() writes, verified against the real MSPDI schema.
+  const RTYPE = { 0: 'material', 1: 'work', 2: 'cost' }, RACCRUE = { 1: 'start', 2: 'prorated', 3: 'end' };
+  const resourceFields = new Map();
   for (const r of list(root, 'Resources')) {
     const nm = txt(r, 'Name'); if (!nm) continue;
+    const key = nm.trim().toLowerCase();
     const mu = parseFloat(txt(r, 'MaxUnits'));
-    if (Number.isFinite(mu) && mu > 0) resourceMaxUnits.set(nm.trim().toLowerCase(), Math.round(mu * 100));
+    if (Number.isFinite(mu) && mu > 0) resourceMaxUnits.set(key, Math.round(mu * 100));
+    const f = {};
+    const type = RTYPE[parseInt(txt(r, 'Type'), 10)]; if (type && type !== 'work') f.type = type;
+    const accrue = RACCRUE[parseInt(txt(r, 'AccrueAt'), 10)]; if (accrue && accrue !== 'prorated') f.accrueAt = accrue;
+    const str = v => v ? v.trim() : ''; const initials = str(txt(r, 'Initials')), materialLabel = str(txt(r, 'MaterialLabel')), group = str(txt(r, 'Group')), code = str(txt(r, 'Code'));
+    if (initials) f.initials = initials; if (materialLabel) f.materialLabel = materialLabel; if (group) f.group = group; if (code) f.code = code;
+    const num = tag => { const n = parseFloat(txt(r, tag)); return Number.isFinite(n) && n > 0 ? n : null; };
+    const stdRate = num('StandardRate'), ovtRate = num('OvertimeRate'), costPerUse = num('CostPerUse');
+    if (stdRate) f.stdRate = stdRate; if (ovtRate) f.ovtRate = ovtRate; if (costPerUse) f.costPerUse = costPerUse;
+    if (Object.keys(f).length) resourceFields.set(key, f);
   }
   const assigned = new Map();
   for (const a of list(root, 'Assignments')) {
@@ -7647,7 +7876,7 @@ function parseMspdi(xmlText) {
     if (calByDay) project.workHoursByDay = calByDay;
     warnings.push('Times of day were found in this file — the plan was switched to Hours & minutes scheduling');
   }
-  return { tasks: made, project, warnings, lagMinutes, resourceMaxUnits, info: { header: true, links, levels: maxLevel, baselines: baselineSlots.size } };
+  return { tasks: made, project, warnings, lagMinutes, resourceMaxUnits, resourceFields, info: { header: true, links, levels: maxLevel, baselines: baselineSlots.size } };
 }
 
 /* ============================ Find a task / jump ============================
@@ -8413,6 +8642,11 @@ function applyImportedTasks(res, mode, opts = {}) {
     for (const r of (project.resources || [])) { const mu = res.resourceMaxUnits.get(r.name.toLowerCase()); if (mu) r.maxUnits = mu; }
     normalizeData();
   }
+  // The Resource Sheet's own fields (see "Resource Sheet" in CLAUDE.md) — same gate, same by-name recovery.
+  if (opts.calendar && res.resourceFields && res.resourceFields.size) {
+    for (const r of (project.resources || [])) { const f = res.resourceFields.get(r.name.toLowerCase()); if (f) Object.assign(r, f); }
+    normalizeData();
+  }
   setSelection(roots.map(t => t.id)); save(); render();
   return roots;
 }
@@ -8590,7 +8824,7 @@ function buildXlsx(opts) {
   // ---------------- Tasks sheet: ID, then the task list's own visible columns in the user's order (or all of them)
   const XCOLS = {
     id: ['ID', 6], mode: ['Mode', 10], wbs: ['WBS', 15], name: ['Task Name', 46], start: ['Start', 13], end: ['Finish', 13], actualStart: ['Actual Start', 13],
-    actualFinish: ['Actual Finish', 13], baselineStart: ['Baseline Start', 13], baselineFinish: ['Baseline Finish', 13], baselineDuration: ['Baseline Duration', 13], startVariance: ['Start Variance', 13], finishVariance: ['Finish Variance', 13], durationVariance: ['Duration Variance', 13], duration: ['Duration', 12], progress: ['% Complete', 13], remaining: ['Remaining Duration', 13], status: ['Status', 13], preds: ['Predecessors', 18], resource: ['Resource', 22], worktype: ['Task Type', 14], work: ['Work', 12]
+    actualFinish: ['Actual Finish', 13], baselineStart: ['Baseline Start', 13], baselineFinish: ['Baseline Finish', 13], baselineDuration: ['Baseline Duration', 13], startVariance: ['Start Variance', 13], finishVariance: ['Finish Variance', 13], durationVariance: ['Duration Variance', 13], duration: ['Duration', 12], progress: ['% Complete', 13], remaining: ['Remaining Duration', 13], status: ['Status', 13], preds: ['Predecessors', 18], resource: ['Resource', 22], worktype: ['Task Type', 14], work: ['Work', 12], cost: ['Cost', 13]
   };
   for (const id of Object.keys(CUSTOM_FIELDS)) XCOLS[id] = [customFieldName(id), { text: 22, number: 13, date: 13, flag: 9 }[CUSTOM_FIELDS[id].kind]];
   // "All columns" adds the custom fields that are in use (renamed, or holding a value somewhere) — not twenty empty columns.
@@ -8669,6 +8903,9 @@ function buildXlsx(opts) {
         // minute count), since it's always in working minutes regardless of day/minute mode.
         case 'worktype': sheet.cell(r, c, (t.milestone || summary) ? null : taskTypeInfo((t.taskType === 'fixedDuration' || t.taskType === 'fixedWork') ? t.taskType : 'fixedUnits').label, S({ h: 'left' })); break;
         case 'work': sheet.cell(r, c, (t.milestone || summary || !Number.isFinite(t.work)) ? null : fmtDurationMinutes(t.work), S({ h: 'center', italic: true, color: DIM, bold: false })); break;
+        // Unlike Work, Cost IS meaningful for a milestone (a Cost/Use assignment) and a group (the rollup of its
+        // children) — a real number with a currency format code, sortable/summable in Excel, not pre-formatted text.
+        case 'cost': sheet.cell(r, c, taskCost(t), S({ h: 'center', num: `"${currencySymbol().replace(/"/g, '')}"#,##0.00` })); break;
         default:
           if (isCustomField(k)) {
             const kind = CUSTOM_FIELDS[k].kind, v = customValue(t, k);
@@ -8891,7 +9128,18 @@ function buildMspdi() {
     `${T('CalendarUID', 1)}${T('DefaultStartTime', hhmmss(wh.start))}${T('DefaultFinishTime', hhmmss(wh.end))}${T('MinutesPerDay', workMinutesPerDay())}${T('MinutesPerWeek', weekMinutes())}${T('DaysPerMonth', 20)}${T('DefaultTaskType', 0)}${T('DurationFormat', 7)}${T('WorkFormat', 2)}${T('WeekStartDay', 1)}` +
     `<Calendars><Calendar>${T('UID', 1)}${T('Name', 'Standard')}${T('IsBaseCalendar', 1)}${T('IsBaselineCalendar', 0)}<WeekDays>${weekDays}</WeekDays>${exc.length ? `<Exceptions>${exc.join('')}</Exceptions>` : ''}</Calendar></Calendars>` +
     `<Tasks>${parts.join('')}</Tasks>` +
-    `<Resources>${resNames.map((n, i) => `<Resource>${T('UID', i + 1)}${T('ID', i + 1)}${T('Name', n)}${T('Type', 1)}${T('IsNull', 0)}${T('MaxUnits', resPool.get(n).maxUnits / 100)}</Resource>`).join('')}</Resources>` +
+    // Resource fields (see "Resource Sheet" in CLAUDE.md) are written in the REAL MSPDI schema order — verified
+    // directly against the schema itself (schemas.microsoft.com/project/2007/mspdi_pj12.xsd) and the Resource/Type/
+    // AccrueAt/StandardRateFormat Microsoft Learn reference pages, not guessed: UID, ID, Name, Type, IsNull, Initials,
+    // MaterialLabel, Code, Group, MaxUnits, AccrueAt, StandardRate, StandardRateFormat, OvertimeRate,
+    // OvertimeRateFormat, CostPerUse. Type: 0 Material / 1 Work / 2 Cost. AccrueAt: 1 Start / 2 Prorated / 3 End.
+    // RateFormat: 2 = per hour (this app's own rate convention throughout), 8 = "material resource rate" for a
+    // Material resource's own Std Rate (real MS Project's own value for that case).
+    `<Resources>${resNames.map((n, i) => { const r = resPool.get(n), type = resourceTypeInfo(r.type).id;
+      return `<Resource>${T('UID', i + 1)}${T('ID', i + 1)}${T('Name', n)}${T('Type', { material: 0, work: 1, cost: 2 }[type])}${T('IsNull', 0)}` +
+        `${T('Initials', r.initials)}${T('MaterialLabel', r.materialLabel)}${T('Code', r.code)}${T('Group', r.group)}${T('MaxUnits', r.maxUnits / 100)}` +
+        `${T('AccrueAt', { start: 1, prorated: 2, end: 3 }[accrueTypeInfo(r.accrueAt).id])}` +
+        `${T('StandardRate', r.stdRate || 0)}${T('StandardRateFormat', type === 'material' ? 8 : 2)}${T('OvertimeRate', r.ovtRate || 0)}${T('OvertimeRateFormat', 2)}${T('CostPerUse', r.costPerUse || 0)}</Resource>`; }).join('')}</Resources>` +
     `<Assignments>${assignments.join('')}</Assignments></Project>`;
 }
 function exportMspdi() {

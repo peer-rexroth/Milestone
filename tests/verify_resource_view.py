@@ -25,7 +25,7 @@ with sync_playwright() as p:
     # ---------------------------------------------------------------- basic rendering: the tab, its rows, its segments
     seed([{"name": "A", "s": "2026-09-07", "e": "2026-09-09", "r": "Anna"}, {"name": "B", "s": "2026-09-08", "e": "2026-09-10", "r": "Anna"}])
     pg.click("button.view-tab:has-text('Resources')")
-    check("the Resources tab is one of the three view tabs", ev("() => MAIN_VIEWS.map(v => v.id)") == ["tasks", "gantt", "resources"])
+    check("the Resources tab is the 3rd of MAIN_VIEWS' four view tabs (the 4th, Resource Sheet, is its own separate view — see verify_resource_sheet_view.py)", ev("() => MAIN_VIEWS.map(v => v.id)") == ["tasks", "gantt", "resources", "resourceSheet"])
     check("switching to it sets the view-resources class", "view-resources" in pg.get_attribute("#main", "class"))
     check("zoom tabs are visible in the Resources view (shared with Gantt)", "hidden" not in pg.get_attribute("#zoomTabs", "class"))
     check("the grid pane and Gantt pane are hidden", pg.locator(".grid-pane:visible").count() == 0 and pg.locator(".gantt-pane-outer:visible").count() == 0)

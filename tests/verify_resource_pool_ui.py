@@ -57,7 +57,7 @@ with sync_playwright() as p:
 
     # ---------------------------------------------------------------- removing a resource with NO uses needs no confirmation
     pg.click("#scheduleMenuBtn"); pg.click("#planResourcesItem"); pg.wait_for_selector("#resourcePoolModalBg.open")
-    pg.click("button:has-text('Add resource')")
+    pg.click("#resourcePoolModalBg button:has-text('Add resource')")
     pg.fill("(//input[@class='res-name'])[last()]", "Unused")
     pg.click("#resourcePoolModalBg .modal-footer button.btn-primary"); pg.wait_for_timeout(150)
     pg.click("#scheduleMenuBtn"); pg.click("#planResourcesItem"); pg.wait_for_selector("#resourcePoolModalBg.open")
@@ -70,7 +70,7 @@ with sync_playwright() as p:
     pg.fill("(//input[@class='res-units'])[1]", "9999")
     pg.click("(//input[@class='res-units'])[1]"); pg.keyboard.press("Tab")   # commit the onchange
     check("max units clamps live in the box itself (typed 9999 -> shows 800)", pg.input_value("(//input[@class='res-units'])[1]") == "800")
-    pg.click("button:has-text('Add resource')")
+    pg.click("#resourcePoolModalBg button:has-text('Add resource')")
     pg.fill("(//input[@class='res-name'])[last()]", "Ben")   # a duplicate of an existing name
     pg.click("#resourcePoolModalBg .modal-footer button.btn-primary"); pg.wait_for_timeout(150)
     check("a duplicate name (case-insensitive) is refused, the dialog stays open", "already the name" in pg.inner_text("#toastMsg") and pg.locator("#resourcePoolModalBg.open").count() == 1, pg.inner_text("#toastMsg"))

@@ -34,6 +34,10 @@ async ([seed, steps, allowCalendar]) => {
       if (t.parentId && !tasks.some(x => x.id === t.parentId)) bad.push('dangling parent on ' + t.name);
       if (t.actualStart && t.actualFinish && dayNumber(t.actualFinish) < dayNumber(t.actualStart)) bad.push('actual finish before start: ' + t.name);
       if (t.baselines) { if (hasChildren(t.id)) bad.push('baseline on a group ' + t.name); for (const [slot, b] of Object.entries(t.baselines)) if (!(slot >= 0 && slot < BASELINE_SLOTS) || !ISO.test(b[0]) || !ISO.test(b[1]) || b[1] < b[0]) bad.push('bad baseline ' + slot + ' on ' + t.name); }
+      // Resource Sheet: taskCost(t) is always a finite, non-negative number, for every task, every step — unlike the
+      // Work≈Duration×Units invariant this is genuinely load-bearing at all times (no edit route can legitimately break
+      // it), so it needs no wtStale-style exemption and runs as part of the main per-step sweep, not a periodic check.
+      const tc = taskCost(t); if (!Number.isFinite(tc) || tc < 0) bad.push('bad taskCost ' + tc + ' on ' + t.name);
     }
     for (const t of tasks) if (t.spacer) {   // an empty line stays empty: no name, links, children, WBS, baselines, custom values; nothing depends on it
       if (t.name !== '' || t.predecessors.length || hasChildren(t.id) || wbsCode(t.id) !== '' || t.baselines || t.custom || t.milestone || t.progress || t.resource || t.actualStart || t.taskMode !== 'manual') bad.push('an empty line is not empty: ' + JSON.stringify(t).slice(0, 120));
@@ -100,6 +104,19 @@ async ([seed, steps, allowCalendar]) => {
       else if (r < .35) { t.effortDriven = t.effortDriven === false ? undefined : false; t.updatedAt = Date.now(); save(); render(); }
       else if (r < .7) edit(t, 'work', pick(['4h', '90m', '1d', '2d', '3d', '8h', 'abc']));
       else edit(t, 'resource', pick(['', 'Ann', 'Ann:50%, Ben', 'Ben:200%', 'Ann:150%, Ben:75%'])); }],
+    // Resource Sheet: edits a random pool resource's own Type/rates/Cost per Use/Accrue At/Max Units/name through the
+    // real commit path (commitResourceCell(), the same one the view itself uses) — invariant: taskCost(t) stays a
+    // finite, non-negative number for every task no matter what (not exact-math — see the periodic check below and
+    // the lesson CLAUDE.md's "Robustness rules" already documents from the Work≈Duration×Units invariant's own fragility).
+    ['resourceSheet', 3, () => { const pool = project.resources || []; if (!pool.length) return; const r = pick(pool), x = rnd();
+      if (x < .25) commitResourceCell(r.id, 'type', pick(['work', 'material', 'cost']));
+      else if (x < .4) commitResourceCell(r.id, 'accrueAt', pick(['start', 'prorated', 'end']));
+      else if (x < .55) commitResourceCell(r.id, 'stdRate', pick(['10', '0', 'abc', '99999', '-5']));
+      else if (x < .65) commitResourceCell(r.id, 'ovtRate', pick(['5', '0', 'xyz']));
+      else if (x < .75) commitResourceCell(r.id, 'costPerUse', pick(['20', '0', '1e20']));
+      else if (x < .85) commitResourceCell(r.id, 'maxUnits', pick(['50', '800', '9999', '0']));
+      else if (x < .95) commitResourceCell(r.id, 'name', 'R' + ri(1000));
+      else { removeResourceSheetRow(r.id); confirmModalAction(); } }],
     ['baselineSet', 3, () => applyBaselineChange(ri(BASELINE_SLOTS), rnd() < .8 ? 'all' : (selectedTaskId && byId(selectedTaskId) ? 'selected' : 'all'), false)],
     ['baselineClear', 2, () => applyBaselineChange(ri(BASELINE_SLOTS), 'all', true)],
     ['compare', 1, () => { const s = setBaselineSlots(); if (s.length) setCompareBaseline(pick(s)); }],
