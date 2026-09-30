@@ -37,7 +37,7 @@ SEED = """() => { tasks.length = 0; deletedTaskIds.length = 0; setSelection([]);
     mk('m', 'Go live', 1, { milestone: true, startDate: '2026-10-05', endDate: '2026-10-05', predecessors: [{ id: 'b', type: 'FF', lag: -2 }] }),
     mk('d', 'Pinned manual', 2, { taskMode: 'manual', startDate: '2026-10-12', endDate: '2026-10-16', predecessors: [{ id: 'm', type: 'SS', lag: 3 }] }));
   project.baselines = { 0: { setAt: '2026-09-01' } }; normalizeData();
-  Object.assign(project.resources.find(r => r.name === 'Anna'), { maxUnits: 150, initials: 'AS', group: 'Design', code: 'R-1', stdRate: 47.5, ovtRate: 71.25, costPerUse: 12, accrueAt: 'start' });
+  Object.assign(project.resources.find(r => r.name === 'Anna'), { maxUnits: 150, group: 'Design', code: 'R-1', stdRate: 47.5, ovtRate: 71.25, costPerUse: 12, accrueAt: 'start' });
   Object.assign(project.resources.find(r => r.name === 'Ben'), { type: 'cost', costPerUse: 500 });
   save(); render(); }"""
 with sync_playwright() as p:
@@ -85,8 +85,8 @@ with sync_playwright() as p:
     check("real per-assignment Units (Anna 50% = 0.5, the other two 100% = 1) and real resource MaxUnits (Anna's own 150% = 1.5) — not the old always-1", munits == ["1.5", "1"] and aunits == ["0.5", "1", "1"], (munits, aunits))
     anna_el, ben_el = [r for r in root.iter(NS + "Resource")]
     g = lambda el, tag: (lambda e: e.text if e is not None else None)(el.find(NS + tag))
-    check("Resource Sheet fields: Anna (Work, the default Type=1) carries her real Initials/Group/Code/rates/AccrueAt=Start(1), the rate format is 2 (per hour)",
-          g(anna_el, "Type") == "1" and g(anna_el, "Initials") == "AS" and g(anna_el, "Group") == "Design" and g(anna_el, "Code") == "R-1" and g(anna_el, "AccrueAt") == "1"
+    check("Resource Sheet fields: Anna (Work, the default Type=1) carries her real Group/Code/rates (and no Initials — the field was removed)/AccrueAt=Start(1), the rate format is 2 (per hour)",
+          g(anna_el, "Type") == "1" and g(anna_el, "Initials") is None and g(anna_el, "Group") == "Design" and g(anna_el, "Code") == "R-1" and g(anna_el, "AccrueAt") == "1"
           and g(anna_el, "StandardRate") == "47.5" and g(anna_el, "StandardRateFormat") == "2" and g(anna_el, "OvertimeRate") == "71.25" and g(anna_el, "OvertimeRateFormat") == "2" and g(anna_el, "CostPerUse") == "12",
           {c.tag.replace(NS, ""): c.text for c in anna_el})
     check("...Ben (Cost, Type=2) has no Std/Ovt Rate written (never set) and his own Cost/Use (500), AccrueAt defaults to Prorated (2)",
@@ -101,14 +101,14 @@ with sync_playwright() as p:
     check("...links keep their type and lag (FS+1, FF−2, SS+3), the constraint and its date, the resources with their real Units back as Name[NN%]", T["Build"]["preds"] == [["Design", "FS", 1]] and T["Go live"]["preds"] == [["Build", "FF", -2]] and T["Pinned manual"]["preds"] == [["Go live", "SS", 3]] and (T["Build"]["ct"], T["Build"]["cd"]) == ("SNET", "2026-09-14") and T["Design"]["res"] == "Anna[50%], Ben" and T["Build"]["res"] == "Ben", T["Design"]["res"])
     check("...and the resource's own MaxUnits (Anna's 150%) is on the side, ready for applyImportedTasks() to recover into the pool", back["resourceMaxUnits"].get("anna") == 150 and back["resourceMaxUnits"].get("ben") == 100, back.get("resourceMaxUnits"))
     check("...Task Type / Work round-trip: Design comes back Fixed Units (taskType absent) with its own 2880-min Work and no stored EffortDriven (default off); Build comes back Fixed Duration with its own 2880-min Work (not its 4320-min duration) and effortDriven true", T["Design"]["tt"] is None and T["Design"]["work"] == 2880 and T["Design"]["ed"] is None and T["Build"]["tt"] == "fixedDuration" and T["Build"]["work"] == 2880 and T["Build"]["ed"] is True, (T["Design"]["tt"], T["Design"]["work"], T["Design"]["ed"], T["Build"]["tt"], T["Build"]["work"], T["Build"]["ed"]))
-    check("...Resource Sheet fields are on the side too (resourceFields), ready for the same recovery — Ben's Type=cost and Cost/Use=500; Anna's rates/AccrueAt/Initials/Group/Code (Work is the default, so it's absent, not stored)",
+    check("...Resource Sheet fields are on the side too (resourceFields), ready for the same recovery — Ben's Type=cost and Cost/Use=500; Anna's rates/AccrueAt/Group/Code (Work is the default, so it's absent, not stored)",
           back["resourceFields"].get("ben", {}).get("type") == "cost" and back["resourceFields"]["ben"]["costPerUse"] == 500 and "type" not in back["resourceFields"].get("anna", {})
           and back["resourceFields"]["anna"]["stdRate"] == 47.5 and back["resourceFields"]["anna"]["ovtRate"] == 71.25 and back["resourceFields"]["anna"]["costPerUse"] == 12
-          and back["resourceFields"]["anna"]["accrueAt"] == "start" and back["resourceFields"]["anna"]["initials"] == "AS" and back["resourceFields"]["anna"]["group"] == "Design" and back["resourceFields"]["anna"]["code"] == "R-1", back["resourceFields"])
+          and back["resourceFields"]["anna"]["accrueAt"] == "start" and "initials" not in back["resourceFields"]["anna"] and back["resourceFields"]["anna"]["group"] == "Design" and back["resourceFields"]["anna"]["code"] == "R-1", back["resourceFields"])
     applied = ev("""(x) => { tasks.length = 0; deletedTaskIds.length = 0; delete project.resources; const r = parseMspdi(x); applyImportedTasks(r, 'replace', { calendar: true }); return project.resources.map(x => Object.assign({}, x)); }""", xml)
     check("...and applyImportedTasks() with the calendar/settings checkbox on actually recovers everything into the live pool", ["Anna", 150] in [[x["name"], x["maxUnits"]] for x in applied], applied)
     a2 = next(x for x in applied if x["name"] == "Anna"); b2 = next(x for x in applied if x["name"] == "Ben")
-    check("...Anna's full field set lands on the live pool entry, Ben's Cost type and Cost/Use too", a2["stdRate"] == 47.5 and a2["ovtRate"] == 71.25 and a2["costPerUse"] == 12 and a2["accrueAt"] == "start" and a2["initials"] == "AS" and a2["group"] == "Design" and a2["code"] == "R-1" and b2["type"] == "cost" and b2["costPerUse"] == 500, (a2, b2))
+    check("...Anna's full field set lands on the live pool entry, Ben's Cost type and Cost/Use too", a2["stdRate"] == 47.5 and a2["ovtRate"] == 71.25 and a2["costPerUse"] == 12 and a2["accrueAt"] == "start" and "initials" not in a2 and a2["group"] == "Design" and a2["code"] == "R-1" and b2["type"] == "cost" and b2["costPerUse"] == 500, (a2, b2))
     old_style = ev("""() => { const x = buildMspdi().replace(/<Initials>.*?<\\/Initials>|<MaterialLabel>.*?<\\/MaterialLabel>|<Code>.*?<\\/Code>|<Group>.*?<\\/Group>|<AccrueAt>.*?<\\/AccrueAt>|<StandardRate>.*?<\\/StandardRate>|<StandardRateFormat>.*?<\\/StandardRateFormat>|<OvertimeRate>.*?<\\/OvertimeRate>|<OvertimeRateFormat>.*?<\\/OvertimeRateFormat>|<CostPerUse>.*?<\\/CostPerUse>/g, '');
       tasks.length = 0; deletedTaskIds.length = 0; delete project.resources; const r = parseMspdi(x); applyImportedTasks(r, 'replace', { calendar: true }); return { warnings: r.warnings, pool: project.resources.map(p => Object.assign({}, p)) }; }""")
     check("an older-style file with none of these new Resource elements (Initials/MaterialLabel/Code/Group/AccrueAt/rates — Type/MaxUnits already existed before this feature) still imports cleanly — every new field just defaults (absent), no crash, no warning",

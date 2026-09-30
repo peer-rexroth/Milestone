@@ -743,7 +743,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 .resourceSheet-pane-outer { flex: 1; min-width: 0; display: flex; flex-direction: column; background: var(--bg); }
 .rst-currency { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-dim); }
 .rst-scroll { flex: 1; overflow: auto; position: relative; }
-.rst-header, .rst-row { display: grid; grid-template-columns: 40px minmax(160px,1fr) 126px 128px 78px 110px 98px 98px 98px 98px 132px 90px 116px 40px; column-gap: 0; min-width: max-content; align-items: center; }
+.rst-header, .rst-row { display: grid; grid-template-columns: 40px minmax(160px,1fr) 126px 128px 110px 98px 98px 98px 98px 132px 90px 116px 40px; column-gap: 0; min-width: max-content; align-items: center; }
 .rst-header { position: sticky; top: 0; z-index: 3; height: var(--head-h); font-size: 11.5px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: .03em; border-bottom: 1px solid var(--border); --row-bg: var(--panel); background: var(--row-bg); }
 .rst-row { height: var(--row-h); border-bottom: 1px solid var(--border); font-size: 12.5px; --row-bg: var(--panel); background: var(--row-bg); }
 .rst-row:hover { --row-bg: var(--panel-2); }
@@ -3036,7 +3036,6 @@ function normalizeData() {
       if (ACCRUE_TYPES.some(x => x.id === r.accrueAt) && r.accrueAt !== 'prorated') entry.accrueAt = r.accrueAt;
       const str = (v, cap) => typeof v === 'string' ? v.trim().slice(0, cap) : '';
       const materialLabel = applies('materialLabel') && str(r.materialLabel, 20); if (materialLabel) entry.materialLabel = materialLabel;
-      const initials = str(r.initials, 20); if (initials) entry.initials = initials;
       const group = str(r.group, 60); if (group) entry.group = group;
       const code = str(r.code, 40); if (code) entry.code = code;
       const num = v => { const n = Number(v); return Number.isFinite(n) && n > 0 ? Math.round(n * 100) / 100 : 0; };
@@ -5809,7 +5808,7 @@ function onResourceScroll() {
    the task grid's own inline editing. Renaming/removing a resource here shares its cascade (rewriting every affected
    task's Resource text) via renameResourceEverywhere()/removeResourceEverywhere(). Days off has no cell of its own;
    it opens the small Days off dialog (openResourceDaysModal()) for that one resource. */
-const RS_HEAD = ['#', 'Resource Name', 'Type', 'Material Label', 'Initials', 'Group', 'Max Units', 'Std Rate', 'Ovt Rate', 'Cost/Use', 'Accrue At', 'Code', 'Days Off', ''];
+const RS_HEAD = ['#', 'Resource Name', 'Type', 'Material Label', 'Group', 'Max Units', 'Std Rate', 'Ovt Rate', 'Cost/Use', 'Accrue At', 'Code', 'Days Off', ''];
 function renderResourceSheet() {
   document.getElementById('resourceSheetHeader').innerHTML = RS_HEAD.map(h => `<div>${h}</div>`).join('');
   const cs = document.getElementById('rsCurrencyInput');
@@ -5853,7 +5852,6 @@ function resourceSheetRowHtml(r, i) {
     <div class="rst-cell"><input type="text" class="inline-edit" maxlength="60" value="${escapeHtml(r.name)}" aria-label="Resource name" onchange="commitResourceCell('${r.id}','name',this.value)" onkeydown="if(event.key==='Enter')this.blur()"></div>
     <div class="rst-cell"><select class="rst-select" aria-label="Type" onchange="commitResourceCell('${r.id}','type',this.value)">${opts(RESOURCE_TYPES, type)}</select></div>
     ${cell('materialLabel', `<input type="text" class="inline-edit" maxlength="20" placeholder="e.g. tons" value="${escapeHtml(r.materialLabel || '')}" aria-label="Material label" onchange="commitResourceCell('${r.id}','materialLabel',this.value)">`)}
-    <div class="rst-cell"><input type="text" class="inline-edit" maxlength="20" value="${escapeHtml(r.initials || '')}" aria-label="Initials" onchange="commitResourceCell('${r.id}','initials',this.value)"></div>
     <div class="rst-cell"><input type="text" class="inline-edit" maxlength="60" value="${escapeHtml(r.group || '')}" aria-label="Group" onchange="commitResourceCell('${r.id}','group',this.value)"></div>
     ${cell('maxUnits', `<input type="text" inputmode="numeric" class="inline-edit rst-pct" value="${r.maxUnits}%" aria-label="Max units, percent" title="How much of this resource is available — 100% is one full-time person, 300% three people pooled into one resource" onchange="commitResourceCell('${r.id}','maxUnits',this.value)" onkeydown="if(event.key==='Enter')this.blur()">`)}
     ${cell('stdRate', `<input type="number" min="0" step="any" class="inline-edit" value="${r.stdRate || ''}" aria-label="${isMaterial ? 'Standard rate per unit' : 'Standard rate per hour'}" onchange="commitResourceCell('${r.id}','stdRate',this.value)">`)}
@@ -8430,8 +8428,8 @@ function parseMspdi(xmlText) {
     const f = {};
     const type = RTYPE[parseInt(txt(r, 'Type'), 10)]; if (type && type !== 'work') f.type = type;
     const accrue = RACCRUE[parseInt(txt(r, 'AccrueAt'), 10)]; if (accrue && accrue !== 'prorated') f.accrueAt = accrue;
-    const str = v => v ? v.trim() : ''; const initials = str(txt(r, 'Initials')), materialLabel = str(txt(r, 'MaterialLabel')), group = str(txt(r, 'Group')), code = str(txt(r, 'Code'));
-    if (initials) f.initials = initials; if (materialLabel) f.materialLabel = materialLabel; if (group) f.group = group; if (code) f.code = code;
+    const str = v => v ? v.trim() : ''; const materialLabel = str(txt(r, 'MaterialLabel')), group = str(txt(r, 'Group')), code = str(txt(r, 'Code'));
+    if (materialLabel) f.materialLabel = materialLabel; if (group) f.group = group; if (code) f.code = code;
     const num = tag => { const n = parseFloat(txt(r, tag)); return Number.isFinite(n) && n > 0 ? n : null; };
     const stdRate = num('StandardRate'), ovtRate = num('OvertimeRate'), costPerUse = num('CostPerUse');
     if (stdRate) f.stdRate = stdRate; if (ovtRate) f.ovtRate = ovtRate; if (costPerUse) f.costPerUse = costPerUse;
@@ -9871,7 +9869,7 @@ function buildMspdi() {
     // Material resource's own Std Rate (real MS Project's own value for that case).
     `<Resources>${resNames.map((n, i) => { const r = resPool.get(n), type = resourceTypeInfo(r.type).id;
       return `<Resource>${T('UID', i + 1)}${T('ID', i + 1)}${T('Name', n)}${T('Type', { material: 0, work: 1, cost: 2 }[type])}${T('IsNull', 0)}` +
-        `${T('Initials', r.initials)}${T('MaterialLabel', r.materialLabel)}${T('Code', r.code)}${T('Group', r.group)}${T('MaxUnits', r.maxUnits / 100)}` +
+        `${T('MaterialLabel', r.materialLabel)}${T('Code', r.code)}${T('Group', r.group)}${T('MaxUnits', r.maxUnits / 100)}` +
         `${T('AccrueAt', { start: 1, prorated: 2, end: 3 }[accrueTypeInfo(r.accrueAt).id])}` +
         `${T('StandardRate', r.stdRate || 0)}${T('StandardRateFormat', type === 'material' ? 8 : 2)}${T('OvertimeRate', r.ovtRate || 0)}${T('OvertimeRateFormat', 2)}${T('CostPerUse', r.costPerUse || 0)}</Resource>`; }).join('')}</Resources>` +
     `<Assignments>${assignments.join('')}</Assignments></Project>`;

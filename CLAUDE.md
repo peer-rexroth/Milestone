@@ -670,7 +670,7 @@ of the original plan.
 
 MS Project's own spreadsheet view of the resource pool, built by explicit request ("build a MS project style resource
 sheet"), confirmed via two clarifying questions to mean **full MS Project fidelity including a real cost roll-up**
-(Type, Material Label, Initials, Group, Max Units, Std Rate, Ovt Rate, Cost/Use, Accrue At, Code — costs actually
+(Type, Material Label, Group, Max Units, Std Rate, Ovt Rate, Cost/Use, Accrue At, Code — costs actually
 computed and shown, not just fields sitting unused) as **its own new view tab**, not an upgrade of the existing
 Resource pool dialog (which it has since replaced, see "The Days off dialog" below). Before this the app had no currency/costing concept anywhere.
 
@@ -685,10 +685,12 @@ Work / 2 Cost (matching this app's own pre-existing hardcoded `Type=1`, confirmi
 app's own rate convention throughout) and 8 for "material resource rate" on a Material resource's own Std Rate;
 `StandardRate`/`OvertimeRate`/`CostPerUse` are plain `xsd:float` numbers, not a unit-suffixed string.
 
+**Initials was removed** (an explicit user request — it was stored, shown in the sheet and round-tripped through MS Project XML, but nothing in the app used it): no column, not written to or read from MSPDI, and `normalizeData()` drops an `initials` key a plan saved earlier still carries. (The XSD order below still lists `Initials`, since it's MS Project's schema.)
+
 **Data model** — nine new fields on each `project.resources[]` entry (previously just `{id, name, maxUnits,
 daysOff?}`), all the usual absence-is-default convention, cleaned in `normalizeData()`'s existing resource-pool block
 right next to how `maxUnits` is already clamped: `type: 'work'|'material'|'cost'` (absent = work, `RESOURCE_TYPES`/
-`resourceTypeInfo()` mirror `TASK_TYPES`/`taskTypeInfo()`'s own shape), `materialLabel`/`initials`/`group`/`code`
+`resourceTypeInfo()` mirror `TASK_TYPES`/`taskTypeInfo()`'s own shape), `materialLabel`/`group`/`code`
 (trimmed, length-capped strings), `stdRate`/`ovtRate`/`costPerUse` (≥0, rounded to 2 decimals, 0/garbage dropped —
 absent, not stored as 0), `accrueAt: 'start'|'prorated'|'end'` (absent = prorated, MS Project's own default,
 `ACCRUE_TYPES`/`accrueTypeInfo()`). A new project-level `project.currencyCode` (absent = `'EUR'`) picks the currency
@@ -734,7 +736,7 @@ the old Resource pool dialog's bulk Save and now called only by the Resource She
 
 **The Resource Sheet is a new, 4th `MAIN_VIEWS` tab** (`resourceSheet`, after Resources) — a flat, **deliberately not
 virtualized** (resource counts are realistically small, unlike the task list/Resources view) editable grid, one row
-per pool resource: `#` | Resource Name | Type | Material Label | Initials | Group | Max Units | Std Rate | Ovt Rate | Cost/Use | Accrue At | Code | a "Days
+per pool resource: `#` | Resource Name | Type | Material Label | Group | Max Units | Std Rate | Ovt Rate | Cost/Use | Accrue At | Code | a "Days
 off (N)" link. **Which of these a resource has depends on its Type** (`RESOURCE_TYPE_FIELDS`/`resourceFieldApplies()`,
 as in MS Project): Work — everything but Material Label; Material — Material Label, Std Rate (per unit) and
 Cost/Use; Cost — Cost/Use only. A field that doesn't apply is an **empty cell, not a disabled box** (an explicit user

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Resource Sheet, Stage 1 — the data model. project.resources[] grows nine new MS-Project fields (type, materialLabel,
-initials, group, stdRate, ovtRate, costPerUse, accrueAt, code), each the usual absence-is-default convention, cleaned
+group, stdRate, ovtRate, costPerUse, accrueAt, code), each the usual absence-is-default convention, cleaned
 in normalizeData()'s existing resource-pool block right next to how maxUnits is already clamped. project.currencyCode
 (absent = 'EUR') and fmtCurrency() round out the data model this stage builds on. See "Resource Sheet" in CLAUDE.md."""
 import os
@@ -41,7 +41,7 @@ with sync_playwright() as p:
     r = ev("""() => { project.resources = [{id: genId(), name: 'Anna', maxUnits: 100, type: 'material', materialLabel: '  tons  ', initials: '  AB  ', group: '  Eng  ', code: '  R-1  ', stdRate: 12.5, ovtRate: 18, costPerUse: 5, accrueAt: 'start'}];
       tasks.length = 0; normalizeData(); return project.resources[0]; }""")
     check("a full set of new fields survives cleaning: type/accrueAt kept (non-default), strings trimmed, rates kept",
-          r["type"] == "material" and r["accrueAt"] == "start" and r["materialLabel"] == "tons" and r["initials"] == "AB" and r["group"] == "Eng" and r["code"] == "R-1" and r["stdRate"] == 12.5 and r["costPerUse"] == 5, r)
+          r["type"] == "material" and r["accrueAt"] == "start" and r["materialLabel"] == "tons" and "initials" not in r and r["group"] == "Eng" and r["code"] == "R-1" and r["stdRate"] == 12.5 and r["costPerUse"] == 5, r)
     check("...except the Ovt Rate, which a Material resource doesn't have (resourceFieldApplies) — dropped, never left hidden", "ovtRate" not in r, r)
 
     r2 = ev("""() => { project.resources = [{id: genId(), name: 'Ben', maxUnits: 100}];
@@ -60,7 +60,7 @@ with sync_playwright() as p:
 
     r5 = ev("""() => { project.resources = [{id: genId(), name: 'Long', type: 'material', materialLabel: 'x'.repeat(99), group: 'y'.repeat(99), code: 'z'.repeat(99)}];
       tasks.length = 0; normalizeData(); return project.resources[0]; }""")
-    check("free-text fields are length-capped (materialLabel/initials shorter, group/code longer)", len(r5["materialLabel"]) == 20 and len(r5["group"]) == 60 and len(r5["code"]) == 40, {"ml": len(r5["materialLabel"]), "g": len(r5["group"]), "c": len(r5["code"])})
+    check("free-text fields are length-capped (materialLabel shorter, group/code longer)", len(r5["materialLabel"]) == 20 and len(r5["group"]) == 60 and len(r5["code"]) == 40, {"ml": len(r5["materialLabel"]), "g": len(r5["group"]), "c": len(r5["code"])})
 
     r6 = ev("() => { project.currencyCode = 'USD'; tasks.length = 0; normalizeData(); return project.currencyCode; }")
     check("a real, non-default currency code is kept", r6 == "USD")

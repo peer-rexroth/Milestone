@@ -49,8 +49,8 @@ with sync_playwright() as p:
 
     # ---------------------------------------------------------------- header, empty state, one row per resource
     heads = pg.locator("#resourceSheetHeader > div")
-    check("the header has MS Project's own column order: #, Resource Name, Type, Material Label, Initials, Group, Max Units, Std Rate, Ovt Rate, Cost/Use, Accrue At, Code, Days Off (CSS uppercases them for display)",
-          [heads.nth(i).inner_text() for i in range(13)] == [s.upper() for s in ["#", "Resource Name", "Type", "Material Label", "Initials", "Group", "Max Units", "Std Rate", "Ovt Rate", "Cost/Use", "Accrue At", "Code", "Days Off"]])
+    check("the header has MS Project's own column order: #, Resource Name, Type, Material Label, Group, Max Units, Std Rate, Ovt Rate, Cost/Use, Accrue At, Code, Days Off (CSS uppercases them for display)",
+          [heads.nth(i).inner_text() for i in range(12)] == [s.upper() for s in ["#", "Resource Name", "Type", "Material Label", "Group", "Max Units", "Std Rate", "Ovt Rate", "Cost/Use", "Accrue At", "Code", "Days Off"]])
     check("...no 'Base Calendar' column — Milestone has one calendar per plan, a per-resource selector would do nothing", "Base Calendar" not in [heads.nth(i).inner_text() for i in range(heads.count())])
     check("with no pool at all, the empty-state message shows", ev("() => document.querySelector('.rst-empty')") is not None and "Add Resource" in ev("() => document.querySelector('.rst-empty').textContent"))
 
