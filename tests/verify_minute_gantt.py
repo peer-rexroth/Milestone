@@ -159,7 +159,7 @@ with sync_playwright() as p:
 
     # ---------------------------------------------------------------- a day-mode plan never draws the scale, and a saved preference falls back
     ev("() => { project.timeUnit = 'day'; normalizeData(); save(); render(); }")
-    check("with the saved scale still 'hour', a day-mode plan draws the standard one (Year) and offers no Hours tab", ev("() => currentZoom().id") == "year" and tabs() == ["Week", "Month", "Year"], (ev("() => currentZoom().id"), tabs()))
+    check("with the saved scale still 'hour', a day-mode plan draws the standard one (Fit) and offers no Hours tab", ev("() => !!currentZoom().fit") and tabs() == ["Week", "Month", "Year"], (ev("() => currentZoom().id"), tabs()))
     ev("() => { project.timeUnit = 'minute'; normalizeData(); save(); render(); }")
     check("...and back in a minute-mode plan the Hours scale is still the chosen one", ev("() => currentZoom().id") == "hour")
 

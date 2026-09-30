@@ -69,6 +69,8 @@ with sync_playwright() as p:
       tasks.push(mk('g', 'G', null, 'Notes: 2 people'), mk('k', 'K', 'g', 'Anna:50%, Ben:100%')); normalizeData(); return [tasks[0].resource, tasks[1].resource]; }""")
     check("an older plan's 'Anna:50%, Ben:100%' becomes 'Anna[50%], Ben' on load; a group's own notes text is left exactly as typed", conv == ["Notes: 2 people", "Anna[50%], Ben"], conv)
     check("normalizeData() is idempotent on it", ev("() => { const before = tasks[1].resource; normalizeData(); return tasks[1].resource === before; }"))
+    stray = ev("""() => { tasks.length = 0; project.resources = [{ id: 'r1', name: 'Sonja', maxUnits: 100, stdRate: 40 }, { id: 'r2', name: 'Sonja[50%]', maxUnits: 100 }, { id: 'r3', name: 'Tom:25%', maxUnits: 100 }]; normalizeData(); return project.resources.map(r => [r.name, r.stdRate || 0]); }""")
+    check("a resource NAME never keeps an allocation: 'Sonja[50%]' merges into Sonja (her own entry, with its rate, wins), 'Tom:25%' becomes Tom", stray == [["Sonja", 40], ["Tom", 0]], stray)
     check("no console errors or page errors across the whole run", not errors, errors[:5])
     n_ok, n_all = sum(results), len(results)
     print(f"\n{n_ok}/{n_all} checks passed")

@@ -55,7 +55,7 @@ with sync_playwright() as p:
 
     # ---------------- the Predecessors column is only as wide as its header
     pg.evaluate("""() => { tasks.length = 0; const mk = (n, i, p) => tasks.push({id: genId(), name: n, parentId: null, order: i, startDate: '2026-09-07', endDate: '2026-09-11', progress: 0, milestone: false, color: null, predecessors: p, collapsed: false, updatedAt: 1, constraintType: 'ASAP', constraintDate: null, taskMode: 'auto', resource: '', actualStart: null, actualFinish: null});
-        mk('A', 0, []); mk('B', 1, []); mk('C', 2, []); mk('D', 3, [{id: tasks[0].id, type: 'FS', lag: 2}, {id: tasks[1].id, type: 'SS', lag: -1}, {id: tasks[2].id, type: 'FF', lag: 12}]); colHidden.add('wbs'); currentView = 'tasks'; save(); render(); }""")
+        mk('A', 0, []); mk('B', 1, []); mk('C', 2, []); mk('D', 3, [{id: tasks[0].id, type: 'FS', lag: 120}, {id: tasks[1].id, type: 'SS', lag: -10}, {id: tasks[2].id, type: 'FF', lag: 12}]); colHidden.add('wbs'); currentView = 'tasks'; save(); render(); }""")
     pg.wait_for_timeout(120)
     geo = pg.evaluate("""() => {
       const head = document.querySelector("#gridHeader .col-head:has(.col-filter-btn[data-col='preds'])"), span = head.querySelector('span'), btn = head.querySelector('button');
@@ -68,9 +68,9 @@ with sync_playwright() as p:
     check("...the header is on one line and not clipped", geo["oneLine"] and not geo["clipped"], geo)
     check("...and Task Name takes the space that freed up", geo["nameW"] > 300 and geo["nameW"] > geo["predW"] * 2, geo)
     pc = pg.evaluate("() => { const r = [...document.querySelectorAll('#gridRows .grid-row')][3], i = [...document.querySelectorAll('#gridHeader .col-filter-btn')].map(b => b.dataset.col).indexOf('preds'), c = r.children[1 + i]; return {text: c.innerText, title: c.title, clipped: c.scrollWidth > c.clientWidth}; }")
-    check("a long predecessor list is cut with an ellipsis in the narrow cell, and the tooltip shows all of it", pc["clipped"] and pc["title"] == "1FS+2, 2SS-1, 3FF+12", pc)
+    check("a long predecessor list is cut with an ellipsis in the narrow cell, and the tooltip shows all of it", pc["clipped"] and pc["title"] == "1FS+120, 2SS-10, 3FF+12", pc)
     pg.locator("#gridRows .grid-row").nth(3).locator(":scope > div").nth(1 + pg.evaluate("() => [...document.querySelectorAll('#gridHeader .col-filter-btn')].map(b => b.dataset.col).indexOf('preds')")).click(); pg.wait_for_selector(".inline-edit")
-    check("clicking the cell still opens the editor with the full text", pg.input_value(".inline-edit") == "1FS+2, 2SS-1, 3FF+12"); pg.keyboard.press("Escape")
+    check("clicking the cell still opens the editor with the full text", pg.input_value(".inline-edit") == "1FS+120, 2SS-10, 3FF+12"); pg.keyboard.press("Escape")
     check("a normal reference fits without cutting", pg.evaluate("() => { tasks[3].predecessors = [{id: tasks[0].id, type: 'FS', lag: 2}]; render(); const r = [...document.querySelectorAll('#gridRows .grid-row')][3], i = [...document.querySelectorAll('#gridHeader .col-filter-btn')].map(b => b.dataset.col).indexOf('preds'), c = r.children[1 + i]; return c.scrollWidth <= c.clientWidth; }"))
 
     print("console errors/warnings:", errors); print(f"{sum(results)}/{len(results)} passed"); b.close()

@@ -68,17 +68,21 @@ button { cursor: pointer; }
 .brand svg { width: 36px; height: 36px; color: var(--accent); }
 /* Plan switcher: the project name, as a button that opens the list of plans. 243px = the old name field's 182px + 1/3. */
 .plan-btn {
-  display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 243px;
-  border: none; background: transparent; font-weight: 600; font-size: 14px; text-align: left;
-  padding: 4px 8px; border-radius: 6px; color: var(--text-dim);
+  display: flex; align-items: center; gap: 8px; width: 243px;
+  border: 1px solid var(--border); background: var(--panel); font-weight: 600; font-size: 14px; text-align: left;
+  padding: 5px 9px; border-radius: 8px; color: var(--text);   /* a bordered box with a folder and a chevron: plainly a menu, not a title */
 }
-.plan-btn:hover, .plan-btn.open { background: var(--panel-2); color: var(--text); }
-.plan-btn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.plan-btn:hover, .plan-btn.open { background: var(--panel-2); border-color: color-mix(in srgb, var(--accent) 40%, var(--border)); }
+.plan-btn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
+.plan-btn .plan-ico { font-size: 13px; color: var(--text-dim); flex-shrink: 0; }
+.plan-status { display: flex; align-items: center; gap: 6px; margin-left: -6px; }   /* the plan's file status sits right beside its name */
+.plan-status #fileSyncBtn { padding: 5px 9px; font-size: 12.5px; }
 .plan-btn i { font-size: 10px; color: var(--text-faint); flex-shrink: 0; }
 .topbar-divider { width: 1px; height: 22px; background: var(--border); }
 .topbar-spacer { flex: 1 1 auto; }
-@media (max-width: 1240px) { .topbar .brand-name { display: none; } .plan-btn { width: 200px; } }
-@media (max-width: 1040px) { .topbar .btn-label { display: none; } .plan-btn { width: 170px; } .topbar { gap: 10px; } }
+@media (max-width: 1320px) { .topbar .brand-name { display: none; } .plan-btn { width: 200px; } }
+@media (max-width: 1180px) { .topbar .btn-label { display: none; } .plan-btn { width: 180px; } }
+@media (max-width: 1040px) { .plan-btn { width: 150px; } .topbar { gap: 10px; } }
 /* view tabs: the task views, a divider, the resource views */
 .view-tab-sep { width: 1px; align-self: stretch; margin: 4px 3px; background: var(--border); }
 
@@ -129,6 +133,9 @@ button:focus:not(:focus-visible) { outline: none; }
 .topbar .icon-btn:hover { background: var(--panel-2); }
 .topbar .icon-btn.active { border-color: var(--accent); }
 .topbar .btn { font-size: 13.3333px; font-weight: 600; }
+.topbar #resourcesBtn[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--panel)); }
+.tb-title { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; color: var(--text); white-space: nowrap; }
+.tb-title i { color: var(--accent); }
 
 .view-tabs { display: flex; background: var(--panel-2); border-radius: 8px; padding: 2px; }
 .view-tab { padding: 5px 11px; border: none; background: transparent; border-radius: 6px; font-size: 12.5px; font-weight: 500; color: var(--text-dim); }
@@ -286,13 +293,15 @@ button:focus:not(:focus-visible) { outline: none; }
 .tf-body { flex: 1; min-width: 0; min-height: 0; overflow: auto; padding: 10px 14px 10px; display: flex; flex-direction: column; gap: 8px; }
 .tf-wrap { flex: 1; min-height: 0; align-self: flex-start; width: max-content; max-width: 100%; display: flex; flex-direction: column; gap: 8px; }   /* sized to the field grid, so the tables below end exactly where the OK button does */
 .tf-empty { color: var(--text-dim); font-size: 13px; padding: 14px 2px; }
-.tf-top { display: grid; grid-template-columns: auto minmax(170px, 250px) auto minmax(150px, 180px) auto auto; gap: 6px 10px; align-items: center; font-size: 13px; }
-.tf-top.mm { grid-template-columns: auto minmax(192px, 250px) auto minmax(192px, 210px) auto auto; }   /* date + time need ~210px, or the time runs over the next label */
-.tf-top .tf-name-in { grid-column: 2 / span 2; }   /* Name takes the room above the "Finish:" label too */
-.tf-dur { grid-column: 4; display: flex; align-items: center; gap: 8px; min-width: 0; }
+.tf-top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6px 12px; align-items: start; font-size: 13px; }   /* the same two halves (and 12px gap) as the tables below, so the fields line up with them left and right */
+.tf-left { display: grid; grid-template-columns: auto minmax(150px, 1fr) auto minmax(150px, 1fr); gap: 6px 10px; align-items: center; }   /* Start and Finish share one width */
+.tf-top.mm .tf-left { grid-template-columns: auto minmax(206px, 1fr) auto minmax(206px, 1fr); }   /* date + time */
+.tf-right { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 10px; align-items: center; }
+.tf-left > label, .tf-pair > label { color: var(--text-dim); white-space: nowrap; }
+.tf-left .tf-name-in { grid-column: 2 / span 2; }   /* Name takes the room above the "Finish:" label too */
+.tf-dur { grid-column: 4; display: flex; align-items: center; gap: 8px; min-width: 0; }   /* Duration: label + a short box, above Finish's box */
 .tf-dur > label { color: var(--text-dim); white-space: nowrap; }
 .tf-dur .tf-in { flex: 1 1 auto; min-width: 0; }
-.tf-top > label, .tf-pair > label { color: var(--text-dim); white-space: nowrap; }
 .tf-in, .tf-top select { padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel); color: var(--text); width: 100%; min-width: 0; font-size: 13px; }
 .tf-in:disabled, .tf-top select:disabled { background: var(--panel-2); color: var(--text-dim); }
 .tf-top .dt-wrap > input.dt-date { padding: 5px 30px 5px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel); color: var(--text); font-size: 13px; }
@@ -302,7 +311,7 @@ button:focus:not(:focus-visible) { outline: none; }
 .tf-check { display: flex; align-items: center; gap: 6px; cursor: pointer; }
 .tf-check input:disabled + span { opacity: .5; }
 .tf-pair { display: flex; align-items: center; gap: 7px; }
-.tf-pair select { width: 124px; }
+.tf-pair select { width: 152px; }   /* "Fixed Duration" + the chevron */
 .tf-pair #tfPct { width: 62px; text-align: right; }
 .tf-btns { display: flex; gap: 6px; justify-content: flex-end; }
 .tf-btns .btn { min-width: 72px; justify-content: center; }
@@ -325,7 +334,7 @@ button:focus:not(:focus-visible) { outline: none; }
 .tf-row > *, .tf-fill > * { border-right: 1px solid var(--border); min-width: 0; }
 .tf-row > *:last-child, .tf-fill > *:last-child { border-right: none; }
 .tf-row > span { display: flex; align-items: center; padding: 0 8px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.tf-row.tf-row-head { height: 28px; background: var(--panel-2); font-size: 11px; font-weight: 700; color: var(--text-faint); text-transform: uppercase; letter-spacing: .03em; flex-shrink: 0; }
+.tf-row.tf-row-head { height: 28px; background: var(--panel-2); font-size: 11.5px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: .03em; flex-shrink: 0; }
 .tf-row .r { justify-content: flex-end; text-align: right; }
 .tf-fill { flex: 1; min-height: 0; }
 .tf-row:not(.tf-row-head):hover { background: var(--panel-2); }
@@ -347,9 +356,11 @@ input.tf-cell[type=number] { -moz-appearance: textfield; }
 .tf-remove { width: 100%; height: 100%; border: none; background: transparent; color: var(--text-faint); cursor: pointer; opacity: 0; }
 .tf-row:hover .tf-remove, .tf-remove:focus { opacity: 1; }
 .tf-remove:hover { color: var(--danger); }
+.tf-head-btn { border: none; background: transparent; color: var(--text-faint); cursor: pointer; font-size: 12px; }
+.tf-head-btn:hover { color: var(--accent); }
 .tf-remove[hidden] { display: block !important; visibility: hidden; }
 #taskFormBtn.active { background: color-mix(in srgb, var(--accent) 14%, var(--panel)); border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); color: var(--accent); }
-@media (max-width: 1080px) { .tf-wrap { width: 100%; } .tf-top, .tf-top.mm { grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr); } .tf-top .tf-name-in { grid-column: 2 / span 1; } .tf-dur { grid-column: 3 / span 2; } .tf-checks, .tf-pair, .tf-btns { grid-column: 1 / -1; justify-content: flex-start; } .tf-tables { grid-template-columns: 1fr; } }
+@media (max-width: 1080px) { .tf-wrap { width: 100%; } .tf-top { grid-template-columns: 1fr; } .tf-left, .tf-top.mm .tf-left { grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr); } .tf-checks, .tf-pair, .tf-btns { grid-column: 1 / -1; justify-content: flex-start; } .tf-tables { grid-template-columns: 1fr; } }
 .grid-pane { width: var(--grid-pane-width, 360px); flex-shrink: 0; display: flex; flex-direction: column; border-right: 1px solid var(--border); background: var(--panel); position: relative; }
 /* The task list — the same one in the Tasks view and (left of the chart) in the Gantt view; the Tasks-view rules below apply to both. */
 .grid-header, .grid-row {
@@ -362,7 +373,7 @@ input.tf-cell[type=number] { -moz-appearance: textfield; }
 .grid-resize-handle:hover, .grid-resize-handle.resizing { background: color-mix(in srgb, var(--accent) 40%, transparent); }
 .main.view-tasks .grid-resize-handle { display: none; }
 .grid-header-clip { flex-shrink: 0; overflow: hidden; }   /* the header scrolls sideways with the rows (scrollLeft is set from the rows' scroll event) but never by itself */
-.grid-header { font-size: 11px; font-weight: 700; color: var(--text-faint); text-transform: uppercase; letter-spacing: .03em; border-bottom: 1px solid var(--border); flex-shrink: 0; --row-bg: var(--panel); background: var(--row-bg); }
+.grid-header { font-size: 11.5px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: .03em; border-bottom: 1px solid var(--border); flex-shrink: 0; --row-bg: var(--panel); background: var(--row-bg); }
 .grid-rows { flex: 1; overflow: hidden; position: relative; }
 /* Task view: the grid is the only pane, so it scrolls on its own.
    Gantt view: the grid's scrollTop is instead driven programmatically from
@@ -457,6 +468,8 @@ input.inline-edit { width: 100%; min-width: 0; padding: 3px 6px; border: 1px sol
 .grid-cell-dim.summary { font-weight: 600; color: var(--text); }
 .task-mode-cell { cursor: pointer; font-size: 12px; justify-content: center; }
 .mode-manual { color: var(--task-amber); }
+.task-mode-cell { gap: 6px; }
+.task-mode-cell .mode-word { font-size: 12px; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .mode-auto { color: var(--text-faint); }
 .task-mode-cell:hover { background: var(--panel-2); border-radius: 4px; }
 .main .task-mode-cell, .main .custom-flag { justify-content: flex-start; }   /* under the left-aligned header label, like every other column */
@@ -668,6 +681,7 @@ input.inline-edit[type=date]::-webkit-calendar-picker-indicator { margin: 0 0 0 
 .gantt-bracket.br-start { border-right: none; }
 .gantt-bracket.br-end { border-left: none; }
 .gantt-bar .fill { position: absolute; top: 0; left: 0; bottom: 0; background: var(--bar-color, var(--accent)); }
+.gantt-out-label { position: absolute; height: 20px; line-height: 20px; font-size: 11px; color: var(--text-dim); white-space: nowrap; pointer-events: none; z-index: 1; }
 .gantt-bar .bar-label { position: absolute; left: 6px; top: 0; line-height: 20px; font-size: 11px; color: var(--text); white-space: nowrap; pointer-events: none; mix-blend-mode: normal; }
 .resize-handle { position: absolute; top: 0; bottom: 0; width: 7px; cursor: ew-resize; }
 .resize-handle.left { left: 0; } .resize-handle.right { right: 0; }
@@ -695,7 +709,7 @@ svg.gantt-deps path { fill: none; stroke: var(--text-faint); stroke-width: 1.5; 
 .resource-scroll { position: absolute; inset: 0; overflow: auto; }
 .resource-header-row { position: sticky; top: 0; z-index: 5; display: flex; height: var(--head-h); background: var(--panel-2); border-bottom: 1px solid var(--border); }
 .resource-name-cell { position: sticky; left: 0; z-index: 6; flex: 0 0 var(--res-name-w, 180px); width: var(--res-name-w, 180px); padding: 0 10px; display: flex; align-items: center; font-size: 12px; font-weight: 600; color: var(--text-dim); background: var(--panel-2); border-right: 1px solid var(--border); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.resource-name-cell.head { text-transform: uppercase; letter-spacing: .03em; font-size: 11px; color: var(--text-faint); }
+.resource-name-cell.head { text-transform: uppercase; letter-spacing: .03em; font-size: 11.5px; color: var(--text-dim); }
 .resource-timeline-head { position: relative; flex-shrink: 0; }
 .resource-body { position: relative; }
 .resource-row { display: flex; position: absolute; left: 0; height: var(--row-h); border-bottom: 1px solid var(--border); }   /* width set inline (name column + timeline) — an absolutely-positioned child can't size its parent's scrollWidth, so resourceBody's own width is set alongside it in JS, the same way ganttRows' is */
@@ -703,7 +717,14 @@ svg.gantt-deps path { fill: none; stroke: var(--text-faint); stroke-width: 1.5; 
 .resource-row.over .resource-name-cell { color: var(--danger); }
 .resource-timeline { position: relative; flex-shrink: 0; height: 100%; }
 .res-load-seg { position: absolute; top: 5px; height: 22px; border-radius: 3px; background: color-mix(in srgb, var(--accent) 55%, var(--panel)); }
-.res-load-seg.over { background: color-mix(in srgb, var(--danger) 65%, var(--panel)); }
+.res-load-seg.over { background: color-mix(in srgb, var(--danger) 65%, var(--panel)); cursor: pointer; }
+.res-load-seg span { display: block; font-size: 10.5px; font-weight: 600; line-height: 22px; color: #fff; text-align: center; overflow: hidden; white-space: nowrap; text-overflow: clip; padding: 0 3px; }
+.res-load-seg.over:hover { filter: brightness(1.08); box-shadow: 0 0 0 2px color-mix(in srgb, var(--danger) 40%, transparent); }
+.res-legend { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-dim); white-space: nowrap; }
+.res-legend .sw { width: 12px; height: 12px; border-radius: 3px; background: color-mix(in srgb, var(--accent) 55%, var(--panel)); }
+.res-legend .sw.over { background: color-mix(in srgb, var(--danger) 65%, var(--panel)); margin-left: 8px; }
+#loadMenu { min-width: 300px; max-width: 420px; }
+#loadMenu .dropdown-item .item-hint { margin-left: auto; }
 .main.view-resources .grid-pane, .main.view-resources .gantt-pane-outer { display: none; }
 .main:not(.view-resources) .resource-pane-outer { display: none; }
 svg.gantt-deps path.critical { stroke: var(--danger); }
@@ -722,8 +743,8 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 .resourceSheet-pane-outer { flex: 1; min-width: 0; display: flex; flex-direction: column; background: var(--bg); }
 .rst-currency { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-dim); }
 .rst-scroll { flex: 1; overflow: auto; position: relative; }
-.rst-header, .rst-row { display: grid; grid-template-columns: 40px minmax(160px,1fr) 126px 118px 78px 110px 98px 98px 98px 98px 132px 90px 116px 40px; column-gap: 0; min-width: max-content; align-items: center; }
-.rst-header { position: sticky; top: 0; z-index: 3; height: var(--head-h); font-size: 11px; font-weight: 700; color: var(--text-faint); text-transform: uppercase; letter-spacing: .03em; border-bottom: 1px solid var(--border); --row-bg: var(--panel); background: var(--row-bg); }
+.rst-header, .rst-row { display: grid; grid-template-columns: 40px minmax(160px,1fr) 126px 128px 78px 110px 98px 98px 98px 98px 132px 90px 116px 40px; column-gap: 0; min-width: max-content; align-items: center; }
+.rst-header { position: sticky; top: 0; z-index: 3; height: var(--head-h); font-size: 11.5px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: .03em; border-bottom: 1px solid var(--border); --row-bg: var(--panel); background: var(--row-bg); }
 .rst-row { height: var(--row-h); border-bottom: 1px solid var(--border); font-size: 12.5px; --row-bg: var(--panel); background: var(--row-bg); }
 .rst-row:hover { --row-bg: var(--panel-2); }
 /* The column lines: not cell borders (see the comment above) — a gradient painted on a pseudo-element from the
@@ -1023,18 +1044,19 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
     <span class="brand-name">Milestone</span>
   </div>
   <div class="dropdown-wrap">
-    <button class="plan-btn" id="planMenuBtn" onclick="togglePlanMenu()" title="Switch plan"><span id="planBtnName"></span><i class="fa-solid fa-chevron-down"></i></button>
+    <button class="plan-btn" id="planMenuBtn" onclick="togglePlanMenu()" title="Plans — switch, create, rename, link a folder" aria-haspopup="menu"><i class="fa-regular fa-folder-open plan-ico"></i><span id="planBtnName"></span><i class="fa-solid fa-chevron-down"></i></button>
     <div class="dropdown-menu plan-menu" id="planMenu"></div>
+  </div>
+  <div class="dropdown-wrap plan-status">
+    <button class="btn" id="fileSyncBtn" onclick="onFileSyncBtnClick()"></button>
+    <button class="btn conflict-btn hidden" id="syncConflictBtn" onclick="openSyncConflictsModal()"></button>
+    <span class="watch-hint hidden" id="watchHint"><button class="btn watch-btn" id="watchHintBtn" onclick="chooseWatchFolder()" title="This plan is linked to a single file (from before plans were linked by folder). Link the folder it lives in: OneDrive, Dropbox and SharePoint keep a second copy of the file when two devices save at the same time, and Milestone can then merge those copies in."><i class="fa-solid fa-folder-tree"></i>Link folder</button><button class="watch-x" onclick="declineWatch()" title="Don't remind me for this plan (the plan menu still has it)" aria-label="Don't remind me">&times;</button></span>
   </div>
   <div class="topbar-divider"></div>
   <div class="view-tabs" id="mainViewTabs"></div>
   <div class="topbar-spacer"></div>
   <div class="topbar-divider"></div>
-  <div class="dropdown-wrap">
-    <button class="btn" id="fileSyncBtn" onclick="onFileSyncBtnClick()"></button>
-    <button class="btn conflict-btn hidden" id="syncConflictBtn" onclick="openSyncConflictsModal()"></button>
-    <span class="watch-hint hidden" id="watchHint"><button class="btn watch-btn" id="watchHintBtn" onclick="chooseWatchFolder()" title="This plan is linked to a single file (from before plans were linked by folder). Link the folder it lives in: OneDrive, Dropbox and SharePoint keep a second copy of the file when two devices save at the same time, and Milestone can then merge those copies in."><i class="fa-solid fa-folder-tree"></i>Link folder</button><button class="watch-x" onclick="declineWatch()" title="Don't remind me for this plan (the plan menu still has it)" aria-label="Don't remind me">&times;</button></span>
-  </div>
+  <button class="btn" id="resourcesBtn" onclick="toggleResourceSheet()" aria-pressed="false" title="Resources — the plan's people, materials and costs, with their rates (the Resource Sheet)"><i class="fa-solid fa-users"></i><span class="btn-label">Resources</span></button>
   <div class="dropdown-wrap">
     <button class="btn" id="scheduleMenuBtn" onclick="toggleScheduleMenu()" title="Schedule: baselines, rescheduling, levelling, plan settings"><i class="fa-solid fa-gauge-high"></i><span class="btn-label">Schedule</span></button>
     <div class="dropdown-menu" id="scheduleMenu"></div>
@@ -1085,12 +1107,14 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
   </div>
   <div class="tb-group tb-filter" data-views="tasks gantt"><div class="filter-bar hidden" id="filterBar"></div></div>
   <div class="tb-group" data-views="resourceSheet">
+    <span class="tb-title" id="resourceSheetTitle"><i class="fa-solid fa-users"></i>Resources</span>
+    <span class="tb-sep"></span>
     <button class="btn" id="addResourceBtn" type="button" onclick="addResourceSheetRow()"><i class="fa-solid fa-plus"></i>Add Resource</button>
   </div>
   <span class="subbar-spacer"></span>
   <div class="tb-group" data-views="gantt resources">
     <div class="view-tabs" id="zoomTabs" data-more="1" data-more-label="Timescale" role="group" aria-label="Timescale"></div>
-    <button class="btn btn-sm" id="fitZoomBtn" data-more="3" onclick="fitZoom()" title="Pick the scale that shows the whole plan, and scroll to its start"><i class="fa-solid fa-arrows-left-right-to-line"></i>Fit</button>
+    <button class="btn btn-sm tb-toggle" id="fitZoomBtn" data-more="3" onclick="fitZoom()" aria-pressed="false" title="Fit — the whole plan across the chart's width (the standard); Week / Month / Year are fixed scales"><i class="fa-solid fa-arrows-left-right-to-line"></i>Fit</button>
   </div>
   <div class="tb-group" data-views="gantt">
     <span class="tb-sep"></span>
@@ -1099,6 +1123,9 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
   </div>
   <div class="tb-group" data-views="resources">
     <span class="tb-sep"></span>
+    <span class="res-legend" id="resLegend" data-more="8" title="Each bar is a person's load on those days, as a % of their Max Units"><span class="sw"></span>Within capacity<span class="sw over"></span>Over capacity — click a red bar</span>
+    <button class="btn btn-sm" id="levelResBtn" data-more="5" onclick="openLevelModal()" title="Level resources — delay tasks so nobody is over capacity (within slack by default)"><i class="fa-solid fa-scale-balanced"></i>Level…</button>
+    <button class="btn btn-sm" id="editResourcesBtn" data-more="3" onclick="openResourceSheet()" title="Open the Resource Sheet — the plan's people, their rates and days off"><i class="fa-solid fa-user-pen"></i>Edit resources…</button>
     <button class="btn btn-sm tb-toggle" id="overOnlyBtn" data-more="4" onclick="toggleOverOnly()" aria-pressed="false" title="Show only the resources that are over-allocated somewhere"><i class="fa-solid fa-triangle-exclamation"></i>Over-allocated only</button>
   </div>
   <div class="tb-group" data-views="resourceSheet">
@@ -1113,6 +1140,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
   <div class="dropdown-wrap hidden" id="moreWrap"><button class="btn" id="moreBtn" onclick="toggleMoreMenu(event)" aria-haspopup="menu" title="More — the toolbar buttons that don't fit this window"><i class="fa-solid fa-ellipsis"></i>More</button></div>
 </div>
 <div class="dropdown-menu" id="moreMenu" role="menu"></div>
+<div class="dropdown-menu" id="loadMenu" role="menu"></div>
 <div class="dropdown-menu" id="addMenu" role="menu">
   <button class="dropdown-item" id="addSpacerBtn" role="menuitem" onclick="closeAddMenu();addSpacer()"><i class="fa-solid fa-grip-lines"></i>Add empty line<span class="item-hint">a blank row to separate tasks</span></button>
   <button class="dropdown-item" id="pasteBtn" role="menuitem" onclick="closeAddMenu();pasteButton()"><i class="fa-regular fa-paste"></i>Paste tasks<span class="item-hint" data-kbd="V"></span></button>
@@ -1708,7 +1736,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
       <div class="help-pane" id="helpPane-start" role="tabpanel" aria-labelledby="helpTab-start">
         <div class="help-section">
           <div class="help-section-title">Building a plan</div>
-          <div class="help-row"><i class="fa-solid fa-table-cells-large"></i><span><strong>Finding your way</strong>: the top bar is the same everywhere — your plan, the views (<strong>Tasks · Gantt</strong> for the schedule, <strong>Resource Sheet · Resource Usage</strong> for the people), <strong>Schedule</strong> (baselines, rescheduling, levelling, <strong>Plan settings…</strong>) and <strong>Data</strong>. The toolbar below changes with the view and shows what that view needs; on a narrow window the rest is under <strong>More</strong>.</span></div>
+          <div class="help-row"><i class="fa-solid fa-table-cells-large"></i><span><strong>Finding your way</strong>: the top bar is the same everywhere — your plan, the views (<strong>Tasks · Gantt</strong> for the schedule, <strong>Resource Sheet · Resource Plan</strong> for the people), <strong>Schedule</strong> (baselines, rescheduling, levelling, <strong>Plan settings…</strong>) and <strong>Data</strong>. The toolbar below changes with the view and shows what that view needs; on a narrow window the rest is under <strong>More</strong>.</span></div>
           <div class="help-row"><i class="fa-solid fa-plus"></i><span><strong>Add Task</strong> inserts a task below the selected one, or at the bottom when nothing is selected. Each task has a start and end date and a % complete, and can be a <strong>milestone</strong> (a one-day diamond).</span></div>
           <div class="help-row"><i class="fa-solid fa-keyboard"></i><span><strong>Dates and times in dialogs</strong> are typed, in the same format as the list: <strong>24.12.2026</strong> (or 24.12.26, 24.12.), <strong>14:30</strong> (or 1430, 2:30pm) — or pick a date with the calendar button. Something unreadable is refused, marks the box red and puts the old value back; <strong>Enter</strong> settles a box, and in a single-purpose dialog like Reschedule or Baselines it applies the dialog.</span></div>
           <div class="help-row"><i class="fa-solid fa-computer-mouse"></i><span><strong>Right-click</strong> a task (in the list, or its row in the chart) for a menu with Edit, Add task, Add empty line, Duplicate, Copy, Cut, Paste, Indent, Outdent and Delete. Right-clicking on the empty part of the list offers Add task, Add empty line and Paste. The buttons for the selected tasks (<strong>Edit, Duplicate, Copy, Delete</strong>) appear in the toolbar while something is selected; with one task <strong>Edit</strong> opens the same dialog as a double-click.</span></div>
@@ -1840,7 +1868,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
           <div class="help-row"><i class="fa-solid fa-eye-slash"></i><span>Remaining Duration, Resource, the baseline and variance columns and the custom fields start hidden. Click a <strong>Resource</strong> or actual-date cell to edit it, or use the task dialog.</span></div>
           <div class="help-row"><i class="fa-solid fa-users"></i><span><strong>Resource</strong> takes names separated by commas or semicolons ("Anna, Ben") — typing a new name adds it to the plan's resource pool automatically, the same way MS Project does. Give a share other than full time with <code>Name[NN%]</code> ("Anna[50%], Ben"), as in MS Project — a bare name is 100%.</span></div>
           <div class="help-row"><i class="fa-solid fa-people-group"></i><span>The <strong>Resource Sheet</strong> tab lists everyone: type, Max Units (how much of a resource is available: 100% is one full-time person, 300% three people pooled into one; only Work resources have it), rates and cost per use. Renaming or removing someone there updates every task that names them; <strong>Days off</strong> on a row opens that person's own days off, on top of the plan's working week.</span></div>
-          <div class="help-row"><i class="fa-solid fa-chart-simple"></i><span>The <strong>Resource Usage</strong> tab shows each person's day-by-day load, colored red on a day they're over their own capacity (<strong>Over-allocated only</strong> in its toolbar shows just those); the Schedule menu's <strong>Level resources…</strong> item shows the same count.</span></div>
+          <div class="help-row"><i class="fa-solid fa-chart-simple"></i><span>The <strong>Resource Plan</strong> tab shows each person's load as bars with the % written in (of their Max Units), red where they're over capacity — <strong>click a red bar</strong> to see the tasks behind it and jump to one. Its toolbar has a legend, <strong>Level…</strong>, <strong>Edit resources…</strong> and <strong>Over-allocated only</strong>.</span></div>
           <div class="help-row"><i class="fa-solid fa-scale-balanced"></i><span><strong>Schedule → Level resources…</strong> delays an over-allocated task to the next span with room, never earlier than its own dependencies allow and, by default, never past its own slack (so the plan's finish doesn't move) — turn that off, or scope it to a date on, then Apply. Undo brings it back.</span></div>
           <div class="help-row"><i class="fa-solid fa-table-list"></i><span>The <strong>Resource Sheet</strong> tab is MS Project's own spreadsheet: Type (Work, Material or Cost), Std/Ovt Rate, Cost per Use, Accrue At and more, editable directly in the grid. A task's <strong>Cost</strong> column (hidden by default) adds up its assigned resources' rates; a group shows the total of everything in it. Pick the plan's currency in that tab's own toolbar.</span></div>
         </div>
@@ -1863,7 +1891,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <div class="help-section">
           <div class="help-section-title">The view</div>
           <div class="help-row"><i class="fa-solid fa-table-list"></i><span>The left side is the <strong>same task list</strong> as in the Tasks view — the same filters, editing and buttons — with the chart to its right. Drag the thin strip between them to change how much room the list gets. It scrolls sideways when it has more columns than fit, and its ID … Task Name columns stay in place.</span></div>
-          <div class="help-row"><i class="fa-solid fa-calendar"></i><span>The <strong>Week / Month / Year</strong> buttons in the Gantt toolbar change the scale, and <strong>Fit</strong> picks the one that shows the whole plan. Year (the default) shows quarters; Week is labelled by calendar week (CW — weeks start on Monday, ISO 8601). Days off are shaded.</span></div>
+          <div class="help-row"><i class="fa-solid fa-calendar"></i><span><strong>Fit</strong> (the standard) spreads the whole plan across the chart's width and follows the window; <strong>Week / Month / Year</strong> are fixed scales. A bar too short for its name has it written beside it, and a milestone's name sits next to it. Year shows quarters; Week is labelled by calendar week (CW — weeks start on Monday, ISO 8601). Days off are shaded.</span></div>
         </div>
         <div class="help-divider"></div>
         <div class="help-section">
@@ -2023,7 +2051,7 @@ const TASK_COLS = {
   actualFinish: { label: 'Actual Finish', width: '104px',             dflt: true },   // header: Actual / Finish
   duration:     { label: 'Duration',      width: '104px',             dflt: true },
   progress:     { label: '% Complete',    width: '56px',              dflt: true },
-  preds:        { label: 'Predecessors',  width: '136px',             dflt: true },   // just wide enough for its header: text 95px + gap 3px + funnel 18px + the 2×8px cell inset = 132px, plus a little slack for other fonts
+  preds:        { label: 'Predecessors',  width: '146px',             dflt: true },   // just wide enough for its header: text 95px + gap 3px + funnel 18px + the 2×8px cell inset = 132px, plus a little slack for other fonts
   remaining:    { label: 'Remaining Duration', width: '110px',        dflt: false },
   status:       { label: 'Status',        width: '108px',             dflt: true },
   resource:     { label: 'Resource',      width: '140px',             dflt: false },   // fixed like every column but Task Name; longer text is cut with an ellipsis (the cell's tooltip and the editor show all of it)
@@ -2067,8 +2095,8 @@ const DEFAULT_COL_ORDER = Object.keys(TASK_COLS);
 // are written by its first save), so loadPrefs() switches the columns listed here on ONCE for anyone still on an older revision.
 const COLS_REV = 1;
 const COLS_REV_SHOWN = { 1: ['wbs'] };
-const DEFAULT_ZOOM = 'year';        // the standard Gantt scale
-const ZOOM_DEFAULT_REV = 1;         // bump to reset everybody's saved scale to DEFAULT_ZOOM once (see loadPrefs)
+const DEFAULT_ZOOM = 'fit';         // the standard scale: the whole plan across the chart's width (see currentZoom)
+const ZOOM_DEFAULT_REV = 2;         // bump to reset everybody's saved scale to DEFAULT_ZOOM once (see loadPrefs)
 const CAL_WEEK_LABEL = 'CW';   // week scale is labelled by ISO calendar week: "CW 37"
 
 const TASK_COLORS = [
@@ -2545,8 +2573,8 @@ function loadPrefs() {
   theme = d.theme === 'dark' ? 'dark' : 'light';
   // A saved scale only counts if it was chosen under the current default: every install had the old default (Week)
   // saved by the very first save(), so without the revision check nobody would ever see a changed default.
-  zoom = (d.zoomRev === ZOOM_DEFAULT_REV && ZOOMS.some(z => z.id === d.zoom)) ? d.zoom : DEFAULT_ZOOM;
-  currentView = MAIN_VIEWS.some(v => v.id === d.view) ? d.view : 'tasks';
+  zoom = (d.zoomRev === ZOOM_DEFAULT_REV && (d.zoom === 'fit' || ZOOMS.some(z => z.id === d.zoom))) ? d.zoom : DEFAULT_ZOOM;
+  currentView = ALL_VIEWS.includes(d.view) ? d.view : 'tasks';
   showBaseline = d.showBaseline !== false;
   showTaskForm = d.showTaskForm === true;
   taskFormHeight = Number.isFinite(d.taskFormHeight) ? Math.max(TASK_FORM_MIN_H, Math.min(1200, d.taskFormHeight)) : 340;
@@ -2993,7 +3021,11 @@ function normalizeData() {
     }
     const cleanPool = [], seenName = new Set();
     for (const r of pool) {
-      const name = typeof r.name === 'string' ? r.name.trim().slice(0, 60) : ''; if (!name) continue;
+      // A resource's NAME never carries an allocation: "Sonja[50%]" / "Sonja:50%" in the pool (typed into the Resource
+      // Sheet's name cell, or left by an older build that read "[50%]" as part of the name) is "Sonja" — and when the pool
+      // already has a Sonja, the stray entry merges into her (the case-insensitive de-dup just below; the first one wins).
+      const raw = typeof r.name === 'string' ? r.name.trim() : '', bare = raw && (parseResourceAssignments(raw)[0] || {}).name;
+      const name = (bare || raw).slice(0, 60); if (!name) continue;
       const key = name.toLowerCase(); if (seenName.has(key)) continue; seenName.add(key);   // a case-insensitive collision (a corrupted file, a manual edit) — first one wins, defensive only; the dialog itself validates uniqueness on save
       const mu = Math.round(Number(r.maxUnits)), applies = f => resourceFieldApplies(r, f);
       const maxUnits = applies('maxUnits') && Number.isFinite(mu) ? Math.max(1, Math.min(MAX_UNITS_CAP, mu)) : 100;
@@ -3250,7 +3282,7 @@ function effectiveDates(id) {
   _effCache.set(id, result);
   return result;
 }
-function resetEffectiveCache() { _effCache.clear(); _actCache.clear(); _baseCache.clear(); _costCache.clear(); _filterShow.clear(); _customActive = null; }
+function resetEffectiveCache() { _effCache.clear(); _actCache.clear(); _baseCache.clear(); _costCache.clear(); _filterShow.clear(); _customActive = null; _zoomCache = null; }
 
 /* ======================== Scheduling & critical path ===================== */
 function successorsMap() {
@@ -3820,7 +3852,8 @@ function rescheduleCandidates() {
 let dateRange = { start: 0, end: 0 };
 let barGeom = {}; // taskId -> {left, width, top, cx (milestone center)}
 
-function computeDateRange() {
+// The plan's own first and last day (no padding) — what the chart has to show.
+function planSpan() {
   let start = Infinity, end = -Infinity;
   for (const t of tasks) {
     if (!t.startDate || !t.endDate || t.spacer) continue;
@@ -3832,7 +3865,10 @@ function computeDateRange() {
     const bd = baselineDates(t.id);
     for (const iso of [bd.start, bd.end]) if (iso) { start = Math.min(start, dayNumber(iso)); end = Math.max(end, dayNumber(iso)); }
   }
-  if (hourZoomOn()) {   // a day is 480px wide here: a day of padding either side, not the few days the coarser scales use
+  return { start, end };
+}
+function paddedRange(start, end, hour) {
+  if (hour) {   // a day is 480px wide here: a day of padding either side, not the few days the coarser scales use
     if (start === Infinity) { const t0 = dayNumber(todayStr()); return { start: t0 - 1, end: t0 + 7 }; }
     return { start: start - 1, end: end + 2 };
   }
@@ -3840,9 +3876,40 @@ function computeDateRange() {
   const pad = Math.max(3, Math.round((end - start) * 0.06));
   return { start: start - pad, end: end + pad };
 }
+const FIT_LABEL_ROOM = 120;   // Gantt + Fit: room after the last bar for the name written beside a short bar or milestone
+function computeDateRange() {
+  const { start, end } = planSpan(), z = currentZoom(), r = paddedRange(start, end, z.id === 'hour');
+  if (z.fit && currentView === 'gantt') r.end += Math.floor(FIT_LABEL_ROOM / z.pxPerDay);
+  return r;
+}
+function chartWidth() {
+  const sc = document.getElementById(currentView === 'resources' ? 'resourceScroll' : 'ganttPaneOuter');
+  const w = sc && sc.clientWidth ? sc.clientWidth - (currentView === 'resources' ? RESOURCE_NAME_W : 0) : window.innerWidth - gridPaneWidth - 40;
+  return Math.max(160, w - 2);
+}
+// "Fit" (the default scale): whatever px a day that puts the whole plan across the chart's width — not one of the fixed
+// scales. Its header ticks borrow the fixed scale nearest in detail (weeks, months, quarters; hours in a short
+// Hours & minutes plan), so everything downstream (ticks, shading, drag snapping) works unchanged.
+// Fit's scale is worked out once per render pass (the plan's whole span is O(n), and the scale is asked for per bar):
+// resetEffectiveCache() drops it, and so does anything that changes the zoom, the view or the chart's width.
+let _zoomCache = null;
 function currentZoom() {
-  const z = ZOOMS.find(z => z.id === zoom);
-  return z && (!z.minuteOnly || minuteModeActive()) ? z : ZOOMS.find(z => z.id === DEFAULT_ZOOM);   // (the saved scale is a global preference: a day-mode plan just draws the standard one)
+  const key = zoom + '|' + currentView + '|' + minuteModeActive() + '|' + showBaseline;
+  if (_zoomCache && _zoomCache.key === key) return _zoomCache.z;
+  const z = currentZoomUncached(); _zoomCache = { key, z }; return z;
+}
+function currentZoomUncached() {
+  const fixed = zoom !== 'fit' && ZOOMS.find(z => z.id === zoom);
+  if (fixed && (!fixed.minuteOnly || minuteModeActive())) return fixed;   // (the saved scale is a global preference: Hours in a day-mode plan draws Fit)
+  {
+    const { start, end } = planSpan(), w = chartWidth();
+    const room = currentView === 'gantt' ? FIT_LABEL_ROOM : 0;
+    const dayR = paddedRange(start, end, false), dayPx = (w - room) / Math.max(1, dayR.end - dayR.start);
+    if (minuteModeActive() && dayPx >= 160) { const hr = paddedRange(start, end, true); return { id: 'hour', label: 'Fit', fit: true, pxPerDay: Math.min(480 * 4, (w - room) / Math.max(1, hr.end - hr.start)) }; }
+    const px = Math.max(0.4, Math.min(80, dayPx));
+    return { id: px >= 9 ? 'week' : px >= 2.8 ? 'month' : 'year', label: 'Fit', fit: true, pxPerDay: px };
+  }
+
 }
 function hourZoomOn() { return currentZoom().id === 'hour'; }
 
@@ -3875,20 +3942,29 @@ function renderPass() {
   fitToolbar();
 }
 
-// The task views, then (after a divider) the resource views — MS Project's own names: the Resource Sheet (the pool as a
-// spreadsheet) and Resource Usage (each resource's load over time; its id stays 'resources').
-const MAIN_VIEWS = [{ id: 'tasks', label: 'Tasks', group: 'task' }, { id: 'gantt', label: 'Gantt', group: 'task' }, { id: 'resourceSheet', label: 'Resource Sheet', group: 'resource' }, { id: 'resources', label: 'Resource Usage', group: 'resource' }];
+// The task views, then (after a divider) the resource views: the Resource Sheet (MS Project's name — the pool as a
+// spreadsheet) and Resource Plan (each person's load over time; its id stays 'resources').
+const MAIN_VIEWS = [{ id: 'tasks', label: 'Tasks', group: 'task' }, { id: 'gantt', label: 'Gantt', group: 'task' }, { id: 'resources', label: 'Resource Plan', group: 'resource' }];
+// The Resource Sheet is not a tab: it's the plan's list of people and rates, something you manage now and then rather
+// than a way of looking at the schedule. It still fills the main area (currentView 'resourceSheet'), opened from the top
+// bar's Resources button; a view tab, that button again or Escape goes back to the view you came from.
+const ALL_VIEWS = [...MAIN_VIEWS.map(v => v.id), 'resourceSheet'];
+let viewBeforeSheet = 'tasks';
+function openResourceSheet() { if (currentView !== 'resourceSheet') setView('resourceSheet'); }
+function closeResourceSheet() { if (currentView === 'resourceSheet') setView(viewBeforeSheet || 'tasks'); }
+function toggleResourceSheet() { if (currentView === 'resourceSheet') closeResourceSheet(); else openResourceSheet(); }
 function renderMainViewTabs() {
   document.getElementById('mainViewTabs').innerHTML = MAIN_VIEWS.map((v, i) =>
     (i && MAIN_VIEWS[i - 1].group !== v.group ? '<span class="view-tab-sep" aria-hidden="true"></span>' : '') +
     `<button class="view-tab${v.id === currentView ? ' active' : ''}" onclick="setView('${v.id}')">${v.label}</button>`).join('');
   for (const g of document.querySelectorAll('#subbar [data-views]')) g.classList.toggle('hidden', !g.dataset.views.split(' ').includes(currentView));   // the toolbar belongs to the view
+  document.getElementById('resourcesBtn').setAttribute('aria-pressed', String(currentView === 'resourceSheet'));
   document.getElementById('main').classList.toggle('view-tasks', currentView === 'tasks');
   document.getElementById('main').classList.toggle('view-gantt', currentView === 'gantt');
   document.getElementById('main').classList.toggle('view-resources', currentView === 'resources');
   document.getElementById('main').classList.toggle('view-resourceSheet', currentView === 'resourceSheet');
 }
-function setView(id) { currentView = id; editingCell = null; closeColumnsMenu(); save(); render(); }
+function setView(id) { if (id === 'resourceSheet' && currentView !== 'resourceSheet') viewBeforeSheet = currentView; currentView = id; editingCell = null; closeColumnsMenu(); save(); render(); }
 
 function updateProjectNameUI() {
   document.getElementById('planBtnName').textContent = project.name;
@@ -3903,28 +3979,25 @@ function renameProject(name) {
 function renderZoomTabs() {
   const el = document.getElementById('zoomTabs');
   const cur = currentZoom().id;
-  el.innerHTML = ZOOMS.filter(z => !z.minuteOnly || minuteModeActive()).map(z => `<button class="view-tab${z.id === cur ? ' active' : ''}" onclick="setZoom('${z.id}')">${z.label}</button>`).join('');
+  el.innerHTML = ZOOMS.filter(z => !z.minuteOnly || minuteModeActive()).map(z => `<button class="view-tab${z.id === zoom ? ' active' : ''}" onclick="setZoom('${z.id}')">${z.label}</button>`).join('');
 }
 function setZoom(id) { zoom = id; save(); render(); }
 function updateCriticalPathUI() {
   document.getElementById('criticalPathBtn').setAttribute('aria-pressed', String(showCriticalPath));
   document.getElementById('baselineBtn').setAttribute('aria-pressed', String(showBaseline));
   document.getElementById('overOnlyBtn').setAttribute('aria-pressed', String(resOverOnly));
+  document.getElementById('fitZoomBtn').setAttribute('aria-pressed', String(zoom === 'fit'));
   document.getElementById('baselineBtn').title = `${showBaseline ? 'Hide' : 'Show'} ${baselineName(compareBaseline())} under the bars`;
 }
 function toggleBaseline() { showBaseline = !showBaseline; save(); render(); }
 function toggleCriticalPath() { showCriticalPath = !showCriticalPath; render(); }
-// Resource Usage: only the resources that are over-allocated somewhere (view state, like a filter — not saved).
+// Resource Plan: only the resources that are over-allocated somewhere (view state, like a filter — not saved).
 let resOverOnly = false;
 function toggleOverOnly() { resOverOnly = !resOverOnly; render(); }
 // "Fit": the most detailed scale that still shows the whole plan in the chart's width, then back to its start.
 function fitZoom() {
-  const sc = viewScroller(), avail = Math.max(200, (sc ? sc.clientWidth : 800) - (currentView === 'resources' ? RESOURCE_NAME_W : 0));
-  const range = computeDateRange(), days = Math.max(1, range.end - range.start);
-  const scales = ZOOMS.filter(z => !z.minuteOnly || minuteModeActive()).sort((a, b) => b.pxPerDay - a.pxPerDay);
-  const pick = scales.find(z => days * z.pxPerDay <= avail) || scales[scales.length - 1];
-  zoom = pick.id; save(); render();
-  const sc2 = viewScroller(); if (sc2) sc2.scrollLeft = 0;
+  zoom = 'fit'; save(); render();
+  const sc = viewScroller(); if (sc) sc.scrollLeft = 0;
 }
 function updateSelectionUI() {
   const ids = selectedIds(), n = ids.length, has = n > 0;
@@ -4056,7 +4129,7 @@ function filterValueLabel(col, v) {
     case 'duration': return fmtDuration(v);
     case 'progress': return v + '%';
     case 'remaining': return fmtRemaining(v);
-    case 'work': return fmtDurationMinutes(v);
+    case 'work': return fmtWorkHours(v);
     case 'worktype': return taskTypeInfo(v).label;
     case 'cost': return fmtCurrency(v);
   }
@@ -4167,10 +4240,10 @@ function describeSpec(col, spec) {
   if (spec.blanks) parts.push('(Blanks)');
   return parts.join(' + ') || 'nothing';
 }
-function colHeadHtml(label, col) {
+function colHeadHtml(label, col, headTitle) {
   const spec = colFilters[col], name = FILTER_COLS[col].label;
   const title = spec ? `Filtered: ${describeSpec(col, spec)}` : `Filter ${name}`;
-  return `<div class="col-head"${label ? '' : ` title="${escapeHtml(name)}"`}><span>${escapeHtml(label).replace(/\n/g, '<br>')}</span><button class="col-filter-btn${spec ? ' active' : ''}" data-col="${col}" onclick="openColumnFilter(event,'${col}')" title="${escapeHtml(title)}"><i class="fa-solid fa-filter"></i></button></div>`;
+  return `<div class="col-head"${headTitle ? ` title="${escapeHtml(headTitle)}"` : label ? '' : ` title="${escapeHtml(name)}"`}><span>${escapeHtml(label).replace(/\n/g, '<br>')}</span><button class="col-filter-btn${spec ? ' active' : ''}" data-col="${col}" onclick="openColumnFilter(event,'${col}')" title="${escapeHtml(title)}"><i class="fa-solid fa-filter"></i></button></div>`;
 }
 function renderFilterBar() {
   const el = document.getElementById('filterBar');
@@ -4725,7 +4798,7 @@ function renderGrid() {
   // The user's visible columns in the user's order (ID first, row actions last) — in both views.
   const cols = visibleTaskCols();
   const HEAD = {
-    mode: colHeadHtml('Task\nMode', 'mode'), wbs: colHeadHtml('WBS', 'wbs'), name: colHeadHtml('Task Name', 'name'), start: colHeadHtml('Start', 'start'), end: colHeadHtml('Finish', 'end'),
+    mode: colHeadHtml('Task\nMode', 'mode', 'Task Mode — Auto (chart icon): placed by its links and constraints. Manual (pin): kept where you put it. Click a cell to change.'), wbs: colHeadHtml('WBS', 'wbs'), name: colHeadHtml('Task Name', 'name'), start: colHeadHtml('Start', 'start'), end: colHeadHtml('Finish', 'end'),
     actualStart: colHeadHtml('Actual\nStart', 'actualStart'), actualFinish: colHeadHtml('Actual\nFinish', 'actualFinish'), duration: colHeadHtml('Duration', 'duration'),
     progress: colHeadHtml('%', 'progress'), remaining: colHeadHtml('Remaining\nDuration', 'remaining'), status: colHeadHtml('Status', 'status'),
     baselineStart: colHeadHtml('Baseline\nStart', 'baselineStart'), baselineFinish: colHeadHtml('Baseline\nFinish', 'baselineFinish'), baselineDuration: colHeadHtml('Baseline\nDuration', 'baselineDuration'),
@@ -4807,15 +4880,15 @@ function renderGrid() {
     // MS Project-style Task Mode column: click for a picker with the two
     // named modes (see openTaskModeMenu()).
     const mi = taskModeInfo(t.taskMode);
-    const modeCell = `<div class="grid-cell-dim task-mode-cell" style="text-align:center" title="${mi.label} — click to change" onclick="openTaskModeMenu(event,'${t.id}')"><i class="fa-solid ${mi.icon} mode-${t.taskMode}"></i></div>`;
+    const modeCell = `<div class="grid-cell-dim task-mode-cell" style="text-align:center" title="${mi.label} — ${t.taskMode === 'manual' ? 'kept exactly where you put it; its links never move it' : 'placed by its links and constraints, moved when they change'}. Click to change." onclick="openTaskModeMenu(event,'${t.id}')"><i class="fa-solid ${mi.icon} mode-${t.taskMode}"></i><span class="mode-word">${t.taskMode === 'manual' ? 'Manual' : 'Auto'}</span></div>`;
     // Task Type / Work: blank for a milestone or a group (no Duration/Work of their own — see "Task Type / Work" in CLAUDE.md).
     const ti = taskTypeInfo((t.taskType === 'fixedDuration' || t.taskType === 'fixedWork') ? t.taskType : 'fixedUnits');
     const worktypeCell = (t.milestone || summary) ? `<div class="grid-cell-dim${summaryCls}"></div>`
       : `<div class="grid-cell-dim task-mode-cell" title="${ti.label} — click to change" onclick="openTaskTypeMenu(event,'${t.id}')"><i class="fa-solid ${ti.icon}"></i> ${ti.label}</div>`;
     const workCell = (t.milestone || summary) ? `<div class="grid-cell-dim${summaryCls}"></div>`
       : editing('work')
-        ? `<input type="text" class="inline-edit" value="${Number.isFinite(t.work) ? fmtDurationMinutes(t.work) : ''}" title="Like 4h, 90m, 2d, 1w — a bare number is hours" placeholder="e.g. 4h or 2d" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" ${blurAttr('work')}>`
-        : `<div class="grid-cell-dim editable" onclick="event.stopPropagation();startInlineEdit('${t.id}','work')">${Number.isFinite(t.work) ? fmtDurationMinutes(t.work) : ''}</div>`;
+        ? `<input type="text" class="inline-edit" value="${Number.isFinite(t.work) ? fmtWorkHours(t.work) : ''}" title="Like 4h, 90m, 2d, 1w — a bare number is hours" placeholder="e.g. 4h or 2d" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" ${blurAttr('work')}>`
+        : `<div class="grid-cell-dim editable" onclick="event.stopPropagation();startInlineEdit('${t.id}','work')">${Number.isFinite(t.work) ? fmtWorkHours(t.work) : ''}</div>`;
     // Cost is always computed (see "Resource Sheet" in CLAUDE.md), never typed — read-only like Remaining Duration/Status.
     const costCell = `<div class="grid-cell-dim${summaryCls}">${fmtCurrency(taskCost(t))}</div>`;
     const mismatchDate = scheduleMismatch(t);
@@ -5517,9 +5590,8 @@ function renderGantt() {
   document.getElementById('ganttRows').style.width = totalW + 'px';
 
   const ticks = renderGanttHeaderTicks(dateRange, px);
-  // A tick that starts before the chart (the week/month/quarter holding the first day) is clipped to the chart's edge.
   document.getElementById('ganttHeader').innerHTML = ticks.map(t => {
-    const left = Math.max(0, t.left), width = t.width - (left - t.left);
+    const left = Math.max(0, t.left), width = Math.min(t.width - (left - t.left), totalW - left);   // clipped to the chart at both ends (a scale's first and last week/month/quarter run past it)
     if (width <= 0) return '';
     return `<div class="gantt-tick zoom-${z.id}${t.cls ? ' ' + t.cls : ''}${t.yearStart ? ' year-start' : ''}" style="left:${left}px;width:${width}px"${t.title ? ` title="${escapeHtml(t.title)}"` : ''}>${t.html || escapeHtml(t.label)}</div>`;
   }).join('');
@@ -5597,6 +5669,7 @@ function renderGantt() {
     if (t.milestone) {
       const cx = left; const cy = idx * ROW_H + ROW_H / 2;
       barGeom[t.id] = { left: cx - 8, width: 16, top: cy - 8, right: cx + 8, midY: cy, milestone: true };
+      html += `<div class="gantt-out-label" style="left:${cx + 12}px;top:${cy - 10}px">${escapeHtml(t.name)}</div>`;   // a milestone's name beside it, as in MS Project
       html += `<div class="gantt-milestone${cls}" style="left:${cx - 8}px;top:${cy - 8}px;--bar-color:${color}" title="${escapeHtml(t.name)}${escapeHtml(barTimeNote(eff))}${modeNote}${escapeHtml(baselineNote(t))}" onmousedown="onBarMouseDown(event,'${t.id}','move')"></div>`;
     } else {
       const width = span.width;
@@ -5604,11 +5677,12 @@ function renderGantt() {
       barGeom[t.id] = { left, width, top, right: left + width, midY };
       html += `<div class="gantt-bar${cls}" data-id="${t.id}" style="left:${left}px;width:${width}px;top:${top}px;--bar-color:${color}" title="${escapeHtml(t.name)} (${Math.round(eff.progress)}%)${escapeHtml(barTimeNote(eff))}${modeNote}${escapeHtml(baselineNote(t))}" onmousedown="onBarMouseDown(event,'${t.id}','move')">
         <div class="fill" style="width:${Math.min(100, Math.max(0, eff.progress))}%"></div>
-        <div class="bar-label">${escapeHtml(t.name)}</div>
+        ${barLabelInside(t.name, width) ? `<div class="bar-label">${escapeHtml(t.name)}</div>` : ''}
         <div class="resize-handle left" onmousedown="event.stopPropagation();onBarMouseDown(event,'${t.id}','resize-left')"></div>
         <div class="resize-handle right" onmousedown="event.stopPropagation();onBarMouseDown(event,'${t.id}','resize-right')"></div>
         <div class="link-handle" onmousedown="event.stopPropagation();onLinkHandleMouseDown(event,'${t.id}')"></div>
       </div>`;
+      if (!barLabelInside(t.name, width)) html += `<div class="gantt-out-label" style="left:${left + width + 8}px;top:${top}px">${escapeHtml(t.name)}</div>`;   // too short for its name: beside it
     }
   });
   list.slice(win.from, win.to).forEach(({ task: t }, k) => { html += baselineBarHtml(t, win.from + k, px); });   // under the bars
@@ -5656,7 +5730,7 @@ function renderResourceUsage() {
 
   const ticks = renderGanttHeaderTicks(dateRange, px);
   document.getElementById('resourceTimelineHead').innerHTML = ticks.map(t => {
-    const left = Math.max(0, t.left), width = t.width - (left - t.left);
+    const left = Math.max(0, t.left), width = Math.min(t.width - (left - t.left), totalW - left);   // clipped to the chart at both ends (a scale's first and last week/month/quarter run past it)
     if (width <= 0) return '';
     return `<div class="gantt-tick zoom-${z.id}${t.cls ? ' ' + t.cls : ''}${t.yearStart ? ' year-start' : ''}" style="left:${left}px;width:${width}px"${t.title ? ` title="${escapeHtml(t.title)}"` : ''}>${t.html || escapeHtml(t.label)}</div>`;
   }).join('');
@@ -5699,11 +5773,17 @@ function renderResourceUsage() {
   resources.slice(win.from, win.to).forEach((r, k) => {
     const idx = win.from + k, top = idx * ROW_H, overDays = overMap.get(r.id);
     const load = resourceLoadByDay(r.id);
+    // Runs of working days with the same load, one bar each, its % written in when there's room; a red run is
+    // clickable — it lists the tasks behind it.
     let segs = '';
-    for (const [d, pct] of load) {
-      const isOver = overDays && overDays.has(d);
-      const left = (d - dateRange.start) * px;
-      segs += `<div class="res-load-seg${isOver ? ' over' : ''}" style="left:${left}px;width:${Math.max(2, px - 1)}px" title="${escapeHtml(r.name)} — ${fmtDate(dayNumberToIso(d))}: ${pct}%${isOver ? ' (over capacity)' : ''}"></div>`;
+    const days = [...load.entries()].sort((a, b) => a[0] - b[0]);
+    for (let q = 0; q < days.length;) {
+      const [d0, pct] = days[q], isOver = !!(overDays && overDays.has(d0));
+      let e = q; while (e + 1 < days.length && days[e + 1][1] === pct && !!(overDays && overDays.has(days[e + 1][0])) === isOver && days[e + 1][0] - days[e][0] <= 3) e++;
+      const d1 = days[e][0], left = (d0 - dateRange.start) * px, width = Math.max(2, (d1 - d0 + 1) * px - 1);
+      const tip = `${r.name} — ${fmtDate(dayNumberToIso(d0))}${d1 > d0 ? ' – ' + fmtDate(dayNumberToIso(d1)) : ''}: ${pct}% of ${r.maxUnits}%${isOver ? ' — over capacity: click to see the tasks' : ''}`;
+      segs += `<div class="res-load-seg${isOver ? ' over' : ''}" style="left:${left}px;width:${width}px" title="${escapeHtml(tip)}" data-res="${r.id}" data-d0="${d0}" data-d1="${d1}"${isOver ? ` onclick="showLoadTasks(event,'${r.id}',${d0},${d1})"` : ''}>${width >= 30 ? `<span>${pct}%</span>` : ''}</div>`;
+      q = e + 1;
     }
     html += `<div class="resource-row${overDays ? ' over' : ''}" style="top:${top}px;width:${RESOURCE_NAME_W + totalW}px" data-row-id="${r.id}"><div class="resource-name-cell" title="${escapeHtml(r.name)}${overDays ? ' — over capacity' : ''}">${escapeHtml(r.name)}</div><div class="resource-timeline" style="width:${totalW}px">${segs}</div></div>`;
   });
@@ -6228,7 +6308,7 @@ function openTaskModal(id, isNew) {
   document.getElementById('taskTypeRow').classList.toggle('hidden', t.milestone || hasChildren(id));   // Task Type / Work: meaningless for a milestone (zero duration) or a group (rollup, not stored)
   document.getElementById('taskTypeInput').value = (t.taskType === 'fixedDuration' || t.taskType === 'fixedWork') ? t.taskType : 'fixedUnits';
   document.getElementById('effortDrivenInput').checked = t.effortDriven === true;
-  document.getElementById('taskWorkInput').value = Number.isFinite(t.work) ? fmtDurationMinutes(t.work) : '';
+  document.getElementById('taskWorkInput').value = Number.isFinite(t.work) ? fmtWorkHours(t.work) : '';
   const group = hasChildren(id), act = actualDates(id);   // a group's actual dates are rolled up from its tasks, so read-only
   document.getElementById('taskActualStartInput').value = act.start || '';
   document.getElementById('taskActualFinishInput').value = act.end || '';
@@ -7174,28 +7254,33 @@ function renderTaskForm(force) {
   const tfBtn = (id, label, title, cls = '') => `<button type="button" class="btn btn-sm${cls}" id="${id}" title="${title}">${label}</button>`;
   body.innerHTML = `<div class="tf-wrap">
     <div class="tf-top${mm ? ' mm' : ''}">
-      <label for="tfName">Name:</label><input type="text" class="tf-in tf-name-in" id="tfName" maxlength="255" value="${escapeHtml(t.name)}">
-      <div class="tf-dur"><label for="tfDur">Duration:</label><input type="text" class="tf-in" id="tfDur" value="${escapeHtml(tfOrig.dur)}" ${datesRO || ms ? 'disabled' : ''} title="${mm ? 'Working time — 4h, 90m, 2d, 1w (a bare number is hours)' : 'Working days — 5, 5d, 2w'}"></div>
-      <div class="tf-checks"><label class="tf-check" title="${noTT ? 'Only for an ordinary task (not a milestone or a group)' : 'Adding or removing a resource keeps Work the same and moves the schedule (Fixed Units / Fixed Work)'}"><input type="checkbox" id="tfEffort" ${t.effortDriven === true ? 'checked' : ''} ${noTT ? 'disabled' : ''}><span>Effort driven</span></label>
+      <div class="tf-left">
+        <label for="tfName">Name:</label><input type="text" class="tf-in tf-name-in" id="tfName" maxlength="255" value="${escapeHtml(t.name)}">
+        <div class="tf-dur"><label for="tfDur">Duration:</label><input type="text" class="tf-in" id="tfDur" value="${escapeHtml(tfOrig.dur)}" ${datesRO || ms ? 'disabled' : ''} title="${mm ? 'Working time — 4h, 90m, 2d, 1w (a bare number is hours)' : 'Working days — 5, 5d, 2w'}"></div>
+        <label for="tfStart">Start:</label><div class="tf-dt"><input type="text" class="dt-date" id="tfStart" ${datesRO ? 'disabled' : ''}>${mm ? `<input type="text" class="dt-time tf-in" id="tfStartTime" aria-label="Start time" ${datesRO ? 'disabled' : ''}>` : ''}</div>
+        <label for="tfFinish">Finish:</label><div class="tf-dt"><input type="text" class="dt-date" id="tfFinish" ${datesRO || ms ? 'disabled' : ''}>${mm ? `<input type="text" class="dt-time tf-in" id="tfFinishTime" aria-label="Finish time" ${datesRO || ms ? 'disabled' : ''}>` : ''}</div>
+      </div>
+      <div class="tf-right">
+        <div class="tf-checks"><label class="tf-check" title="${noTT ? 'Only for an ordinary task (not a milestone or a group)' : 'Adding or removing a resource keeps Work the same and moves the schedule (Fixed Units / Fixed Work)'}"><input type="checkbox" id="tfEffort" ${t.effortDriven === true ? 'checked' : ''} ${noTT ? 'disabled' : ''}><span>Effort driven</span></label>
         <label class="tf-check"><input type="checkbox" id="tfManual" ${t.taskMode === 'manual' ? 'checked' : ''}><span>Manually Scheduled</span></label></div>
-      <div class="tf-btns">${tfBtn('tfPrevBtn', 'Previous', 'Previous task (applies your changes first)')}${tfBtn('tfNextBtn', 'Next', 'Next task (applies your changes first)')}</div>
-      <label for="tfStart">Start:</label><div class="tf-dt"><input type="text" class="dt-date" id="tfStart" ${datesRO ? 'disabled' : ''}>${mm ? `<input type="text" class="dt-time tf-in" id="tfStartTime" aria-label="Start time" ${datesRO ? 'disabled' : ''}>` : ''}</div>
-      <label for="tfFinish">Finish:</label><div class="tf-dt"><input type="text" class="dt-date" id="tfFinish" ${datesRO || ms ? 'disabled' : ''}>${mm ? `<input type="text" class="dt-time tf-in" id="tfFinishTime" aria-label="Finish time" ${datesRO || ms ? 'disabled' : ''}>` : ''}</div>
-      <div class="tf-pair"><label for="tfType">Task type:</label><select id="tfType" ${noTT ? 'disabled' : ''}>${typeOpts}</select>
+        <div class="tf-btns">${tfBtn('tfPrevBtn', 'Previous', 'Previous task (applies your changes first)')}${tfBtn('tfNextBtn', 'Next', 'Next task (applies your changes first)')}</div>
+        <div class="tf-pair"><label for="tfType">Task type:</label><select id="tfType" ${noTT ? 'disabled' : ''}>${typeOpts}</select>
         <label for="tfPct">% Complete:</label><input type="text" class="tf-in" inputmode="numeric" id="tfPct" value="${group ? Math.round(effectiveProgressOf(t.id)) : t.progress}%" ${group ? 'disabled title="A group\'s % complete is worked out from its tasks"' : ''}></div>
-      <div class="tf-btns">${tfBtn('tfCancelBtn', 'Cancel', 'Discard the changes in the form (Esc)')}${tfBtn('tfOkBtn', 'OK', 'Apply the changes (Enter) — one Undo step', ' btn-primary')}</div>
+        <div class="tf-btns">${tfBtn('tfCancelBtn', 'Cancel', 'Discard the changes in the form (Esc)')}${tfBtn('tfOkBtn', 'OK', 'Apply the changes (Enter) — one Undo step', ' btn-primary')}</div>
+      </div>
     </div>
     <div class="tf-note" id="tfNote"></div>
     ${textNote.length ? `<div class="tf-hint">Free text on this task — ${escapeHtml(textNote.join(', '))}. Changing that date replaces it.</div>` : ''}
     ${group ? '<div class="tf-hint">A group rolls up its tasks: its dates, % complete, resources and links belong to the tasks in it.</div>'
       : `<div class="tf-tables">
-           <div class="tf-table tf-res"><div class="tf-row tf-row-head"><span class="r">ID</span><span>Resource Name</span><span class="r">Units</span><span class="r">Work</span><span></span></div>
+           <div class="tf-table tf-res"><div class="tf-row tf-row-head"><span class="r">ID</span><span>Resource Name</span><span class="r">Units</span><span class="r">Work</span><button type="button" class="tf-head-btn" id="tfEditResourcesBtn" title="Edit resources… — open the Resource Sheet (the plan's people, rates and days off)" aria-label="Edit resources"><i class="fa-solid fa-user-pen"></i></button></div>
              <div class="tf-scroll"><div class="tf-grid" id="tfResRows"></div><div class="tf-fill" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div></div></div>
            <div class="tf-table tf-pred"><div class="tf-row tf-row-head"><span class="r">ID</span><span>Predecessor Name</span><span>Type</span><span class="r">Lag</span><span></span></div>
              <div class="tf-scroll"><div class="tf-grid" id="tfPredRows"></div><div class="tf-fill" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div></div></div>
          </div>
          <datalist id="tfResList">${(project.resources || []).map(r => `<option value="${escapeHtml(r.name)}">`).join('')}</datalist>`}</div>`;
   body.querySelector('#tfPrevBtn').onclick = () => taskFormStep(-1); body.querySelector('#tfNextBtn').onclick = () => taskFormStep(1);
+  { const er = body.querySelector('#tfEditResourcesBtn'); if (er) er.onclick = () => { if (tfDirty() && !applyTaskForm()) return; openResourceSheet(); }; }   // (the Task Form isn't shown on the sheet: apply first, like Previous / Next)
   body.querySelector('#tfCancelBtn').onclick = cancelTaskForm; body.querySelector('#tfOkBtn').onclick = () => applyTaskForm();
   enhanceBoxes(body);
   const $ = id => document.getElementById(id);
@@ -7212,7 +7297,7 @@ function renderTaskForm(force) {
 function effectiveProgressOf(id) { const e = effectiveDates(id); return Number.isFinite(e.progress) ? e.progress : (byId(id) || {}).progress || 0; }
 function tfResRowHtml(t, r, i, blank) {
   const res = r.name ? resourceByName(r.name) : null, unchanged = !blank && r.saved !== null && res && Number(String(r.units).replace('%', '')) === r.saved;
-  const work = unchanged ? fmtDurationMinutes(Math.round(assignmentHours(t, { units: r.saved }) * 60)) : '';
+  const work = unchanged ? fmtWorkHours(Math.round(assignmentHours(t, { units: r.saved }) * 60)) : '';
   const rid = res ? (project.resources || []).indexOf(res) + 1 : '';
   return `<div class="tf-row${blank ? ' tf-blank' : ''}" data-i="${i}"><span class="tf-id">${rid || ''}</span>
       <input type="text" class="tf-cell" list="tfResList" maxlength="60" value="${escapeHtml(r.name)}" placeholder="${blank ? 'Add a resource' : ''}" aria-label="Resource name" oninput="tfResInput(${i}, 'name', this.value)">
@@ -8589,6 +8674,15 @@ const PRINT_FONT = '-apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-se
 let printPageNo = 0, printBuilt = null, printTimer = null;
 function printDefaults() { return { paper: 'A4', orient: 'landscape', cols: ['id', 'name', 'start', 'end', 'duration'], range: 'all', from: '', to: '', scale: 'auto', baseline: showBaseline, critical: showCriticalPath, deps: true, today: true, shade: true, expandAll: false, title: project.name }; }
 let _printCtx = null;
+// Does a task's name fit inside its bar (11px, 6px padding each side)? Otherwise the Gantt writes it beside the bar.
+// Work (effort) always reads in hours — how planners think about effort — whatever the plan's scheduling precision;
+// Duration stays in working days. Entry still takes 4h, 90m, 2d, 1w (a bare number is hours).
+function fmtWorkHours(min) {
+  if (!Number.isFinite(min)) return '';
+  const h = Math.round(min / 6) / 10;
+  return `${h.toLocaleString('en-US', { maximumFractionDigits: 1 })} hr${h === 1 ? '' : 's'}`;
+}
+function barLabelInside(name, width) { return printTextWidth(name, 11) + 14 <= width; }
 function printTextWidth(text, size, bold) { _printCtx = _printCtx || document.createElement('canvas').getContext('2d'); _printCtx.font = `${bold ? '600 ' : ''}${size}px ${PRINT_FONT}`; return _printCtx.measureText(text).width; }
 function printFit(text, maxW, size, bold) {   // truncated with an ellipsis so it fits maxW units
   text = String(text == null ? '' : text);
@@ -8848,6 +8942,7 @@ function renderMoreMenu() {
   menu.innerHTML = hidden.map(el => {
     if (el.id === 'zoomTabs') return `<div class="menu-head">${escapeHtml(label(el))}</div>` + [...el.querySelectorAll('button')].map((b, k) =>
       `<button class="dropdown-item" role="menuitemradio" aria-checked="${b.classList.contains('active')}" data-sub="${k}" data-for="zoomTabs"><i class="fa-regular fa-clock" style="visibility:hidden"></i>${escapeHtml(b.textContent.trim())}${b.classList.contains('active') ? '<i class="fa-solid fa-check mode-check"></i>' : ''}</button>`).join('') + '<div class="dropdown-sep"></div>';
+    if (el.tagName !== 'BUTTON') return '';   // (a legend just steps aside; there's nothing to click)
     const on = el.getAttribute('aria-pressed') === 'true';
     return `<button class="dropdown-item" role="menuitem" data-for="${el.id}" ${el.disabled ? 'disabled' : ''}>${icon(el)}${escapeHtml(label(el))}${on ? '<i class="fa-solid fa-check mode-check"></i>' : ''}</button>`;
   }).join('').replace(/<div class="dropdown-sep"><\/div>$/, '');
@@ -8866,7 +8961,24 @@ function toggleMoreMenu(event) {
   const r = document.getElementById('moreBtn').getBoundingClientRect();
   placeMenu(menu, r.right - 220, r.bottom + 4);
 }
-function closeMoreMenu() { const m = document.getElementById('moreMenu'); if (m) m.classList.remove('open'); }
+function closeMoreMenu() { const m = document.getElementById('moreMenu'); if (m) m.classList.remove('open'); const l = document.getElementById('loadMenu'); if (l) l.classList.remove('open'); }
+// Resource Plan: a red bar -> the tasks that put this person over capacity on those days (click one to see it in the Gantt).
+function showLoadTasks(event, resId, d0, d1) {
+  event.stopPropagation();
+  const r = (project.resources || []).find(x => x.id === resId); if (!r) return;
+  const rows = tasks.filter(t => !t.spacer && !hasChildren(t.id) && !t.milestone && dayNumber(t.startDate) <= d1 && dayNumber(t.endDate) >= d0)
+    .map(t => ({ t, a: taskAssignments(t).find(a => a.resource.id === resId) })).filter(x => x.a)
+    .sort((a, b) => taskDisplayId(a.t.id) - taskDisplayId(b.t.id));
+  const total = rows.reduce((n, x) => n + x.a.units, 0);
+  const menu = document.getElementById('loadMenu');
+  menu.innerHTML = `<div class="menu-head">${escapeHtml(r.name)} · ${fmtDate(dayNumberToIso(d0))}${d1 > d0 ? ' – ' + fmtDate(dayNumberToIso(d1)) : ''} · ${total}% of ${r.maxUnits}%</div>`
+    + rows.map(x => `<button class="dropdown-item" data-task="${x.t.id}"><i class="fa-solid fa-bars-progress"></i>#${taskDisplayId(x.t.id)} ${escapeHtml(x.t.name)}<span class="item-hint">${x.a.units}%</span></button>`).join('')
+    + `<div class="dropdown-sep"></div><button class="dropdown-item" data-level="1"><i class="fa-solid fa-scale-balanced"></i>Level resources…</button>`;
+  for (const it of menu.querySelectorAll('[data-task]')) it.onclick = e => { e.stopPropagation(); closeMoreMenu(); setView('gantt'); jumpToTask(it.dataset.task); };
+  menu.querySelector('[data-level]').onclick = e => { e.stopPropagation(); closeMoreMenu(); openLevelModal(); };
+  closeDataMenu(); closePlanMenu(); closeScheduleMenu();
+  placeMenu(menu, event.clientX, event.clientY + 8);
+}
 function toggleAddMenu(event) {
   event.stopPropagation();
   const menu = document.getElementById('addMenu');
@@ -9524,7 +9636,7 @@ function buildXlsx(opts) {
         // pre-formatted text like the minute-mode Duration/Remaining cells above (no clean Excel format code for a raw
         // minute count), since it's always in working minutes regardless of day/minute mode.
         case 'worktype': sheet.cell(r, c, (t.milestone || summary) ? null : taskTypeInfo((t.taskType === 'fixedDuration' || t.taskType === 'fixedWork') ? t.taskType : 'fixedUnits').label, S({ h: 'left' })); break;
-        case 'work': sheet.cell(r, c, (t.milestone || summary || !Number.isFinite(t.work)) ? null : fmtDurationMinutes(t.work), S({ h: 'center', italic: true, color: DIM, bold: false })); break;
+        case 'work': sheet.cell(r, c, (t.milestone || summary || !Number.isFinite(t.work)) ? null : fmtWorkHours(t.work), S({ h: 'center', italic: true, color: DIM, bold: false })); break;
         // Unlike Work, Cost IS meaningful for a milestone (a Cost/Use assignment) and a group (the rollup of its
         // children) — a real number with a currency format code, sortable/summable in Excel, not pre-formatted text.
         case 'cost': sheet.cell(r, c, taskCost(t), S({ h: 'center', num: `"${currencySymbol().replace(/"/g, '')}"#,##0.00` })); break;
@@ -10680,6 +10792,8 @@ function minGridPaneWidth() { return Math.max(GRID_PANE_MIN_WIDTH, frozenMinWidt
 function applyGridPaneWidth() { document.documentElement.style.setProperty('--grid-pane-width', Math.max(minGridPaneWidth(), Math.min(gridPaneWidth, window.innerWidth - 240)) + 'px'); }
 window.addEventListener('resize', applyGridPaneWidth);
 window.addEventListener('resize', () => requestAnimationFrame(fitToolbar));
+let fitRaf = 0;
+window.addEventListener('resize', () => { if (zoom !== 'fit' || fitRaf) return; fitRaf = requestAnimationFrame(() => { fitRaf = 0; if (currentView === 'gantt' || currentView === 'resources') render(); }); });   // Fit follows the window
 function wireGridResize() {
   const handle = document.getElementById('gridResizeHandle');
   handle.addEventListener('mousedown', (event) => {
@@ -10734,7 +10848,7 @@ function wireGlobalEvents() {
     if (!e.target.closest('#taskModeMenu')) closeTaskModeMenu();
     if (!e.target.closest('#taskTypeMenu')) closeTaskTypeMenu();
     if (!e.target.closest('#addMenu') && !e.target.closest('#addMenuBtn')) closeAddMenu();
-    if (!e.target.closest('#moreMenu') && !e.target.closest('#moreBtn')) closeMoreMenu();
+    if (!e.target.closest('#moreMenu') && !e.target.closest('#moreBtn') && !e.target.closest('#loadMenu') && !e.target.closest('.res-load-seg')) closeMoreMenu();
     if (!e.target.closest('#rowMenu')) closeRowMenu();
     if (!e.target.closest('#cfAddMenu') && !e.target.closest('#cfAddBtn') && !e.target.closest('#fieldsAddBtn')) closeCfAddMenu();
   });
@@ -10781,13 +10895,15 @@ function wireGlobalEvents() {
       || document.getElementById('taskTypeMenu').classList.contains('open')
       || document.getElementById('addMenu').classList.contains('open')
       || document.getElementById('rowMenu').classList.contains('open')
-      || document.getElementById('moreMenu').classList.contains('open');
+      || document.getElementById('moreMenu').classList.contains('open')
+      || document.getElementById('loadMenu').classList.contains('open');
     // e.target, not document.activeElement: an inline editor's own Escape handler re-renders and destroys the
     // focused field before this runs, so by now activeElement is already <body>.
     const typing = /^(INPUT|TEXTAREA|SELECT)$/.test((e.target || {}).tagName || '');
     for (const id of modalIds) document.getElementById(id).classList.remove('open');
     closeDataMenu(); closeScheduleMenu(); closePlanMenu(); closeFilterMenu(); closeColumnsMenu(); closeTaskModeMenu(); closeTaskTypeMenu(); closeToolbarMenus();
     if (!overlayOpen && editingCell) { cancelInlineEdit(); return; }   // an inline editor that hasn't received focus yet (it gets it a frame after it appears)
+    if (!overlayOpen && !typing && currentView === 'resourceSheet') { closeResourceSheet(); return; }   // back to the view you came from
     if (!overlayOpen && !typing && (selectedTaskId || selectedTaskIds.size)) { setSelection([]); render(); }
   });
   document.getElementById('toastUndoBtn').addEventListener('click', triggerToastUndo);

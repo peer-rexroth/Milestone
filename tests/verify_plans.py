@@ -71,7 +71,7 @@ with sync_playwright() as p:
         localStorage.setItem('milestone-backups', JSON.stringify({'2026-09-01': {project: legacy.project, tasks: legacy.tasks, deletedTaskIds: []}})); }""", LEGACY)
     A.boot()
     idx = A.index()
-    check("migration: single project becomes plan1 with its tasks, prefs (saved zoom reset to the Year default), backups", len(idx["plans"]) == 1 and idx["current"] == "plan1" and A.names() == ["Legacy 1", "Legacy 2", "Legacy 3"] and pg.evaluate("() => [theme, zoom, currentView, gridPaneWidth]") == ["dark", "year", "gantt", 640] and pg.evaluate("() => !!localStorage.getItem('milestone-backups-plan1') && !!localStorage.getItem('milestone-v1')"), idx)
+    check("migration: single project becomes plan1 with its tasks, prefs (saved zoom reset to the Fit default), backups", len(idx["plans"]) == 1 and idx["current"] == "plan1" and A.names() == ["Legacy 1", "Legacy 2", "Legacy 3"] and pg.evaluate("() => [theme, zoom, currentView, gridPaneWidth]") == ["dark", "fit", "gantt", 640] and pg.evaluate("() => !!localStorage.getItem('milestone-backups-plan1') && !!localStorage.getItem('milestone-v1')"), idx)
     pg.evaluate("() => { theme = 'light'; applyTheme(); save(); }")
     pg.evaluate("() => { localStorage.setItem('milestone-v1', '{\"project\":{\"name\":\"STALE\"},\"tasks\":[]}'); }"); A.boot()
     check("the stale pre-plans copy is never read again", A.pname() == "Legacy Proj")

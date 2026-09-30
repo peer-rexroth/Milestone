@@ -30,7 +30,7 @@ with sync_playwright() as p:
     openDialog()
     check("Task Type select shows the task's own type", pg.input_value("#taskTypeInput") == "fixedDuration")
     check("Effort-driven checkbox reflects the task", pg.is_checked("#effortDrivenInput") is False)
-    check("Work field shows the bootstrapped value, formatted", pg.input_value("#taskWorkInput") == "4 days", pg.input_value("#taskWorkInput"))
+    check("Work field shows the bootstrapped value, formatted", pg.input_value("#taskWorkInput") == "32 hrs", pg.input_value("#taskWorkInput"))
     check("the row is visible for an ordinary task", "hidden" not in pg.get_attribute("#taskTypeRow", "class"))
     pg.select_option("#taskTypeInput", "fixedWork")
     pg.check("#effortDrivenInput")

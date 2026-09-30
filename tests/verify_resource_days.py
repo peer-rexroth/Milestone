@@ -32,7 +32,7 @@ with sync_playwright() as p:
     pg.click("#scheduleMenuBtn"); pg.wait_for_selector("#scheduleMenu.open")
     check("the Schedule menu no longer has a Resource Sheet entry (it's a view tab)", pg.locator("#planResourcesItem").count() == 0)
     pg.keyboard.press("Escape")
-    pg.click("#mainViewTabs .view-tab:has-text('Resource Sheet')"); pg.wait_for_timeout(120)
+    pg.click("#resourcesBtn"); pg.wait_for_timeout(120)
     check("its view tab switches to the Resource Sheet, where the pool shows (a group's own text never enters it)", ev("() => currentView") == "resourceSheet" and pg.locator(".rst-row").count() == 2)
 
     # ---------------------------------------------------------------- opening from a Resource Sheet row

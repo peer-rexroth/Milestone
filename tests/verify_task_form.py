@@ -61,7 +61,7 @@ with sync_playwright() as p:
     check("Effort driven unticked (the default), Manually Scheduled unticked (an Auto task)", not pg.is_checked("#tfEffort") and not pg.is_checked("#tfManual"))
     res_rows = pg.locator("#tfResRows .tf-row:not(.tf-row-head)")
     check("the Resources table lists its assignment with Units and Work, plus a blank row to add one",
-          res_rows.count() == 2 and res_rows.nth(0).locator("input[aria-label='Resource name']").input_value() == "Ben" and res_rows.nth(0).locator("input[aria-label='Units']").input_value() == "100%" and res_rows.nth(0).locator(".tf-work").inner_text() == "10 days")
+          res_rows.count() == 2 and res_rows.nth(0).locator("input[aria-label='Resource name']").input_value() == "Ben" and res_rows.nth(0).locator("input[aria-label='Units']").input_value() == "100%" and res_rows.nth(0).locator(".tf-work").inner_text() == "80 hrs")   # Work always in hours
     pred_rows = pg.locator("#tfPredRows .tf-row:not(.tf-row-head)")
     check("the Predecessors table lists its link: ID 1, Design, FS, +1 — plus a blank row",
           pred_rows.count() == 2 and pred_rows.nth(0).locator("input[aria-label='Predecessor task number']").input_value() == "1" and pred_rows.nth(0).locator(".tf-pred-name").inner_text() == "Design"
@@ -173,6 +173,11 @@ with sync_playwright() as p:
     check("...and OK saves it as Dana[25%]", "Dana[25%]" in task("b")["res"], task("b"))
     pg.keyboard.press("Control+z"); pg.wait_for_timeout(150)
 
+    select("a")
+    pg.click("#tfEditResourcesBtn"); pg.wait_for_timeout(120)
+    check("the Resources table's 'Edit resources' button opens the Resource Sheet", ev("() => currentView") == "resourceSheet")
+    ev("() => closeResourceSheet()"); pg.wait_for_timeout(80)
+
     # ---------------------------------------------------------------- effort driven through the form
     ev("() => { byId('a').resource = 'Anna'; byId('a').work = null; normalizeData(); save(); render(); }")
     select("a"); pg.wait_for_timeout(80)
@@ -198,10 +203,13 @@ with sync_playwright() as p:
 
     GEOM = """() => { const r = s => document.querySelector(s).getBoundingClientRect();
       return { okR: Math.round(r('#tfOkBtn').right), predR: Math.round(r('.tf-pred').right), resL: Math.round(r('.tf-res').left), nameL: Math.round(r('label[for=tfName]').left),
-               resW: Math.round(r('.tf-res').width), predW: Math.round(r('.tf-pred').width), durW: r('#tfDur').width, nameW: r('#tfName').width }; }"""
-    def geom_ok(g): return abs(g["okR"] - g["predR"]) <= 1 and abs(g["resL"] - g["nameL"]) <= 1 and abs(g["resW"] - g["predW"]) <= 1 and g["durW"] < g["nameW"] * 0.6
+               resW: Math.round(r('.tf-res').width), predW: Math.round(r('.tf-pred').width), durW: r('#tfDur').width, nameW: r('#tfName').width,
+               resR: Math.round(r('.tf-res').right), durR: Math.round(r('#tfDur').right), finR: Math.round(document.getElementById('tfFinish').closest('.tf-dt').getBoundingClientRect().right),
+               rightL: Math.round(r('.tf-right').left), predL: Math.round(r('.tf-pred').left),
+               startW: Math.round(document.getElementById('tfStart').closest('.tf-dt').getBoundingClientRect().width), finW: Math.round(document.getElementById('tfFinish').closest('.tf-dt').getBoundingClientRect().width) }; }"""
+    def geom_ok(g): return abs(g["okR"] - g["predR"]) <= 1 and abs(g["resL"] - g["nameL"]) <= 1 and abs(g["resW"] - g["predW"]) <= 1 and g["durW"] < g["nameW"] and abs(g["durR"] - g["resR"]) <= 1 and abs(g["finR"] - g["resR"]) <= 1 and abs(g["rightL"] - g["predL"]) <= 1 and abs(g["startW"] - g["finW"]) <= 1
     seed(); select("b"); g = ev(GEOM)
-    check("day plan: both tables the same width, the right one ending exactly where the OK button does, the left one under 'Name:'; Duration short, Name wide", geom_ok(g), g)
+    check("day plan: the fields line up with the tables — left half (Name…Duration, Start…Finish) over the Resources table, right half (Effort driven…Next, Task type…OK) over the Predecessors table; Start and Finish the same width; Duration short, Name wide", geom_ok(g), g)
     # ---------------------------------------------------------------- Hours & minutes plan: times
     seed(); ev("() => { project.timeUnit = 'minute'; normalizeData(); save(); render(); }"); select("a")
     g = ev(GEOM)
@@ -210,13 +218,13 @@ with sync_playwright() as p:
           pg.locator("#tfStartTime").count() == 1 and ev("() => document.getElementById('tfStartTime').value") == "08:00" and pg.input_value("#tfDur") == "5 days", pg.input_value("#tfDur"))
     pg.fill("#tfDur", "4h"); pg.click("#tfOkBtn"); pg.wait_for_timeout(200)
     check("...a typed '4h' makes it a 4-hour task (08:00-12:00, finishing as the lunch break starts)", ev("() => [byId('a').startDate, taskMoment(byId('a'), 'start') % 1440, byId('a').endDate, byId('a').endTime]") == ["2026-09-07", 480, "2026-09-07", "12:00"], ev("() => [byId('a').startDate, byId('a').startTime, byId('a').endDate, byId('a').endTime]"))
-    layout = ev("""() => { const items = [...document.querySelectorAll('.tf-top > *, .tf-top .tf-pair > *, .tf-top .tf-dt > *, .tf-top .tf-btns > *')].map(e => e.getBoundingClientRect());
+    layout = ev("""() => { const items = [...document.querySelectorAll('.tf-left > *, .tf-right > *, .tf-top .tf-pair > *, .tf-top .tf-dt > *, .tf-top .tf-btns > *')].map(e => e.getBoundingClientRect());
       const right = document.getElementById('taskFormBody').getBoundingClientRect().right, bad = [];
       for (const a of items) for (const c of items) if (a !== c && Math.abs(a.top - c.top) < 8 && c.left > a.left && c.left < a.right - 1 && !(c.right <= a.right)) bad.push([a.left, c.left]);
       return { overlaps: bad.length, past: items.filter(r => r.right > right + 1).length }; }""")
     check("Hours & minutes: the date + time boxes don't run into the next label, and nothing is cut off at the right (1440px)", layout == {"overlaps": 0, "past": 0}, layout)
     pg.set_viewport_size({"width": 1100, "height": 900}); pg.wait_for_timeout(150)
-    layout = ev("""() => { const items = [...document.querySelectorAll('.tf-top > *, .tf-top .tf-pair > *, .tf-top .tf-dt > *, .tf-top .tf-btns > *')].map(e => e.getBoundingClientRect());
+    layout = ev("""() => { const items = [...document.querySelectorAll('.tf-left > *, .tf-right > *, .tf-top .tf-pair > *, .tf-top .tf-dt > *, .tf-top .tf-btns > *')].map(e => e.getBoundingClientRect());
       const right = document.getElementById('taskFormBody').getBoundingClientRect().right, bad = [];
       for (const a of items) for (const c of items) if (a !== c && Math.abs(a.top - c.top) < 8 && c.left > a.left && c.left < a.right - 1 && !(c.right <= a.right)) bad.push([a.left, c.left]);
       return { overlaps: bad.length, past: items.filter(r => r.right > right + 1).length }; }""")

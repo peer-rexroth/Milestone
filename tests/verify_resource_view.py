@@ -24,15 +24,23 @@ with sync_playwright() as p:
 
     # ---------------------------------------------------------------- basic rendering: the tab, its rows, its segments
     seed([{"name": "A", "s": "2026-09-07", "e": "2026-09-09", "r": "Anna"}, {"name": "B", "s": "2026-09-08", "e": "2026-09-10", "r": "Anna"}])
-    pg.click("button.view-tab:has-text('Resource Usage')")
-    check("the Resource Usage tab (id 'resources') is the last of the four view tabs, after the Resource Sheet", ev("() => MAIN_VIEWS.map(v => v.id)") == ["tasks", "gantt", "resourceSheet", "resources"])
+    pg.click("button.view-tab:has-text('Resource Plan')")
+    check("the Resource Plan tab (id 'resources') is the last view tab, after Tasks and Gantt", ev("() => MAIN_VIEWS.map(v => v.id)") == ["tasks", "gantt", "resources"])
     check("switching to it sets the view-resources class", "view-resources" in pg.get_attribute("#main", "class"))
-    check("zoom tabs are visible in the Resource Usage view (shared with Gantt), in its own toolbar", ev("() => document.getElementById('zoomTabs').offsetParent !== null"))
+    check("zoom tabs are visible in the Resource Plan view (shared with Gantt), in its own toolbar", ev("() => document.getElementById('zoomTabs').offsetParent !== null"))
     check("...with Fit and 'Over-allocated only' beside them, and no task buttons", ev("() => ['fitZoomBtn', 'overOnlyBtn'].every(i => document.getElementById(i).offsetParent !== null) && document.getElementById('addTaskBtn').offsetParent === null"))
     check("the grid pane and Gantt pane are hidden", pg.locator(".grid-pane:visible").count() == 0 and pg.locator(".gantt-pane-outer:visible").count() == 0)
     check("one row for the one pool resource (Anna)", pg.locator("#resourceBody .resource-row").count() == 1)
-    check("four load segments across the 4-day overlap span", pg.locator("#resourceBody .res-load-seg").count() == 4)
-    check("exactly the 2 truly-overlapping days are colored over", pg.locator("#resourceBody .res-load-seg.over").count() == 2)
+    segs = ev("() => [...document.querySelectorAll('#resourceBody .res-load-seg')].map(e => [Number(e.dataset.d1) - Number(e.dataset.d0) + 1, e.classList.contains('over'), e.textContent.trim()])")
+    check("the 4-day span is three runs of equal load — 100%, 200%, 100% — each labelled with its %", [(x[0], x[2]) for x in segs] == [(1, "100%"), (2, "200%"), (1, "100%")], segs)
+    check("exactly the 2 truly-overlapping days are colored over (one red run)", [x[1] for x in segs] == [False, True, False], segs)
+    pg.locator("#resourceBody .res-load-seg.over").click(); pg.wait_for_timeout(120)
+    items = pg.locator("#loadMenu .dropdown-item").all_inner_texts()
+    check("clicking the red run lists the tasks behind it (A and B, 100% each) and offers Level resources", pg.locator("#loadMenu.open").count() == 1 and any("A" in i and "100%" in i for i in items) and any("B" in i for i in items) and any("Level resources" in i for i in items), items)
+    pg.locator("#loadMenu .dropdown-item", has_text="B").click(); pg.wait_for_timeout(150)
+    check("...and a task there opens it in the Gantt, selected", ev("() => currentView") == "gantt" and ev("() => byId(selectedTaskId).name") == "B")
+    ev("() => setView('resources')"); pg.wait_for_timeout(100)
+    check("a legend explains the colours, and Level… is in this toolbar", ev("() => document.getElementById('resLegend').offsetParent !== null && document.getElementById('levelResBtn').offsetParent !== null"))
     check("the row itself is flagged over (red name)", "over" in pg.get_attribute("#resourceBody .resource-row", "class"))
     check("the name cell shows the resource's name", pg.inner_text("#resourceBody .resource-name-cell").strip() == "Anna")
     check("no console or page errors", not errors, errors[:5])
@@ -40,7 +48,7 @@ with sync_playwright() as p:
     # ---------------------------------------------------------------- the view survives a reload, like Tasks/Gantt already did
     pg.reload(); pg.wait_for_selector("#undoBtn")
     check("reloading while in the Resources view stays in it (not silently dropped back to Tasks)", ev("() => currentView") == "resources", ev("() => currentView"))
-    check("...and the Resources tab is marked active again after the reload", "active" in pg.get_attribute("button.view-tab:has-text('Resource Usage')", "class"))
+    check("...and the Resources tab is marked active again after the reload", "active" in pg.get_attribute("button.view-tab:has-text('Resource Plan')", "class"))
 
     # ---------------------------------------------------------------- the empty state
     seed([{"name": "A", "s": "2026-09-07", "e": "2026-09-08"}])
@@ -50,7 +58,7 @@ with sync_playwright() as p:
 
     # ---------------------------------------------------------------- zoom switching within the Resources view
     seed([{"name": "A", "s": "2026-09-07", "e": "2026-09-09", "r": "Anna"}])
-    pg.click("button.view-tab:has-text('Resource Usage')")
+    pg.click("button.view-tab:has-text('Resource Plan')")
     for label in ["Week", "Month", "Year"]:
         pg.click(f"#zoomTabs button:has-text('{label}')")
         pg.wait_for_timeout(50)
@@ -59,7 +67,7 @@ with sync_playwright() as p:
 
     # ---------------------------------------------------------------- non-working-time shading (mirrors Gantt's own)
     seed([{"name": "A", "s": "2026-09-01", "e": "2026-09-25", "r": "Anna"}])
-    pg.click("button.view-tab:has-text('Resource Usage')")
+    pg.click("button.view-tab:has-text('Resource Plan')")
     pg.click("#zoomTabs button:has-text('Week')")
     pg.wait_for_timeout(50)
     check("Week zoom shades the weekends", pg.locator("#resourceBody .gantt-nonwork").count() > 0)
@@ -72,7 +80,7 @@ with sync_playwright() as p:
     seed(many)
     n_pool = ev("() => project.resources.length")
     check("200 distinct names -> 200 pool resources", n_pool == 200, n_pool)
-    pg.click("button.view-tab:has-text('Resource Usage')")
+    pg.click("button.view-tab:has-text('Resource Plan')")
     win = ev("() => resourceRenderedWin")
     check("virtualization kicks in past the threshold", win["virtual"] is True, win)
     built = pg.locator("#resourceBody .resource-row").count()

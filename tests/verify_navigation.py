@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Navigation: (A) a top bar that holds only app-level things and a toolbar that belongs to the view you are in — with a
-"More" menu instead of wrapping on a narrow window; (B) the view tabs Tasks · Gantt | Resource Sheet · Resource Usage;
+"More" menu instead of wrapping on a narrow window; (B) the view tabs Tasks · Gantt | Resource Sheet · Resource Plan;
 (C) one Plan settings window with tabs (Calendar, Precision, Scheduling rules, Currency, Custom fields). See "Navigation:
 top bar, toolbar, views, Plan settings" in CLAUDE.md."""
 import os
@@ -48,7 +48,7 @@ with sync_playwright() as p:
     view("resourceSheet")
     check("Resource Sheet: Add Resource and Currency — no task buttons, and no third bar above the sheet", vis("addResourceBtn") and vis("rsCurrencyInput") and not any(vis(i) for i in ["addTaskBtn", "searchBtn", "zoomTabs"]) and pg.locator(".rst-toolbar").count() == 0)
     view("resources")
-    check("Resource Usage: the timescale, Fit and 'Over-allocated only' — no task buttons", all(vis(i) for i in ["zoomTabs", "fitZoomBtn", "overOnlyBtn"]) and not vis("addTaskBtn"))
+    check("Resource Plan: the timescale, Fit, 'Edit resources…' and 'Over-allocated only' — no task buttons", all(vis(i) for i in ["zoomTabs", "fitZoomBtn", "editResourcesBtn", "overOnlyBtn"]) and not vis("addTaskBtn"))
     rows = lambda: pg.locator("#resourceBody .resource-row").count()
     all_rows = rows()
     pg.click("#overOnlyBtn"); pg.wait_for_timeout(120)
@@ -87,7 +87,7 @@ with sync_playwright() as p:
 
     # ---------------------------------------------------------------- B: view tabs
     tabs = [t.strip() for t in pg.locator("#mainViewTabs .view-tab").all_inner_texts()]
-    check("view tabs: Tasks, Gantt | Resource Sheet, Resource Usage (MS Project's names), with a divider between the two groups", tabs == ["Tasks", "Gantt", "Resource Sheet", "Resource Usage"] and pg.locator("#mainViewTabs .view-tab-sep").count() == 1, tabs)
+    check("view tabs: Tasks, Gantt | Resource Plan with a divider; the Resource Sheet is the top bar's Resources button", tabs == ["Tasks", "Gantt", "Resource Plan"] and pg.locator("#mainViewTabs .view-tab-sep").count() == 1 and pg.locator("#resourcesBtn").count() == 1, tabs)
     view("resourceSheet"); pg.reload(); pg.wait_for_selector("#undoBtn")
     check("the Resource Sheet is remembered across a reload too (it used to fall back to Tasks)", ev("() => currentView") == "resourceSheet")
     view("tasks")
@@ -144,6 +144,30 @@ with sync_playwright() as p:
     check("...but as a Plan settings tab it has the tabs and the Plan settings title", pg.inner_text("#fieldsModalTitle") == "Plan settings" and pg.locator("#fieldsModalBg .settings-tabs").is_visible())
     pg.keyboard.press("Escape"); pg.wait_for_timeout(100)
     check("Escape closes Plan settings", open_bg() == [])
+
+    # ---------------------------------------------------------------- the UX round: Fit, labels, Work in hours, plan switcher, headers, Task Mode
+    ev("""() => { localStorage.removeItem('milestone-prefs'); }"""); pg.reload(); pg.wait_for_selector("#undoBtn")
+    ev("""() => { tasks.length = 0; const mk = (id, name, s, e, extra) => Object.assign({ id, name, parentId: null, order: tasks.length, startDate: s, endDate: e, progress: 0, milestone: false, color: null, predecessors: [], collapsed: false, updatedAt: 1, constraintType: 'ASAP', constraintDate: null, taskMode: 'auto', resource: '', actualStart: null, actualFinish: null }, extra || {});
+      tasks.push(mk('a', 'A long discovery phase', '2026-09-07', '2026-10-30', { resource: 'Anna' }), mk('b', 'QA', '2026-09-21', '2026-09-22'), mk('c', 'Launch', '2026-11-02', '2026-11-02', { milestone: true }), mk('d', 'Manual one', '2026-09-07', '2026-09-08', { taskMode: 'manual' }));
+      normalizeData(); save(); setView('gantt'); }"""); pg.wait_for_timeout(250)
+    check("a fresh install opens the Gantt on Fit: the whole plan across the chart, no sideways scrolling",
+          ev("() => zoom") == "fit" and ev("() => { const e = document.getElementById('ganttPaneOuter'); return e.scrollWidth <= e.clientWidth; }") and pg.get_attribute("#fitZoomBtn", "aria-pressed") == "true")
+    ev("() => { zoom = 'year'; save(); render(); }"); pg.click("#fitZoomBtn"); pg.wait_for_timeout(150)
+    check("the Fit button goes back to it from a fixed scale", ev("() => zoom") == "fit")
+    pg.set_viewport_size({"width": 1100, "height": 900}); pg.wait_for_timeout(250)
+    check("...and it follows the window: still no sideways scrolling after a resize", ev("() => { const e = document.getElementById('ganttPaneOuter'); return e.scrollWidth <= e.clientWidth; }"))
+    pg.set_viewport_size({"width": 1500, "height": 900}); pg.wait_for_timeout(250)
+    lab = ev("""() => ({ qaInside: !!document.querySelector('.gantt-bar[data-id="b"] .bar-label'), outside: [...document.querySelectorAll('.gantt-out-label')].map(e => e.textContent), longInside: !!document.querySelector('.gantt-bar[data-id="a"] .bar-label') })""")
+    check("a bar too short for its name gets it beside the bar (QA), a milestone gets its name beside it (Launch), a long bar keeps it inside",
+          not lab["qaInside"] and "QA" in lab["outside"] and "Launch" in lab["outside"] and lab["longInside"], lab)
+    ev("() => setView('tasks')"); pg.wait_for_timeout(100)
+    check("Work always reads in hours (a 40-day task at 100% = 320 hrs)", ev("() => fmtWorkHours(byId('a').work)") == "320 hrs", ev("() => fmtWorkHours(byId('a').work)"))
+    check("the plan switcher reads as a menu: a folder icon, a border, a chevron", pg.locator("#planMenuBtn .plan-ico").count() == 1 and ev("() => getComputedStyle(document.getElementById('planMenuBtn')).borderTopWidth") == "1px")
+    check("...with the plan's file status right beside it (not over by the menus)", ev("() => document.getElementById('planMenuBtn').closest('.dropdown-wrap').nextElementSibling.contains(document.getElementById('fileSyncBtn'))"))
+    check("column headers use the dim text colour (readable), not the faint one", ev("() => getComputedStyle(document.getElementById('gridHeader')).color === getComputedStyle(document.documentElement).getPropertyValue('--text-dim').trim() || getComputedStyle(document.getElementById('gridHeader')).color !== getComputedStyle(document.querySelector('.tf-hint') || document.body).color"))
+    modes = ev("() => [...document.querySelectorAll('#gridRows .task-mode-cell .mode-word')].map(e => e.textContent)")
+    check("Task Mode cells say Auto / Manual beside the icon, and explain themselves on hover", "Auto" in modes and "Manual" in modes and "kept exactly where you put it" in (pg.locator("#gridRows .task-mode-cell").nth(3).get_attribute("title") or ""), modes)
+    check("...and the column header explains both modes", "Manual (pin)" in (pg.locator("#gridHeader .col-head").first.get_attribute("title") or ""))
 
     check("no console errors or page errors across the whole run", not errors, errors[:5])
     n_ok, n_all = sum(results), len(results)

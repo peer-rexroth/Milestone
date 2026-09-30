@@ -49,7 +49,7 @@ with sync_playwright() as p:
         check("Year scale: only Q1 ticks (and the first) carry a year", all(("20" not in t["text"]) for t in yt[1:] if not t["title"].startswith("Q1")), yt)
         check("Year scale: Q1 ticks get the heavier year separator", all("year-start" in t["cls"] for t in yt if t["title"].startswith("Q1")))
         w = {t["title"]: t["w"] for t in yt}
-        check("Year scale: quarter widths follow the days (1.5px/day: Q4 = 92d = 138px, Q1 2027 = 90d = 135px, Q2 = 91d = 136.5px)", abs(w["Q4 2026"] - 138) < 0.6 and abs(w["Q1 2027"] - 135) < 0.6 and abs(w["Q2 2027"] - 136.5) < 0.6, w)
+        check("Year scale: quarter widths follow the days (1.5px/day: Q4 = 92d = 138px, Q1 2027 = 90d = 135px); the last one stops where the chart does", abs(w["Q4 2026"] - 138) < 0.6 and abs(w["Q1 2027"] - 135) < 0.6 and w["Q2 2027"] <= 137, w)   # (the last quarter is clipped where the chart ends)
         check("Year scale: the first quarter is clipped to the chart's left edge but still labelled", w["Q3 2026"] < 92 * 1.5 and yt[0]["text"] == "2026 | Q3", yt[0])
         check("Year scale: labels aren't clipped", not any(t["over"] for t in yt))
         bars = pg.evaluate("() => [...document.querySelectorAll('.gantt-bar')].map(e => e.getBoundingClientRect().width)")
@@ -57,7 +57,7 @@ with sync_playwright() as p:
         pg.screenshot(path=f"gantt_year_{loc}.png", clip={"x": 330, "y": 50, "width": 900, "height": 200})
 
         # dragging a bar in the year scale moves it by whole days (1.5px per day)
-        bar = pg.locator(".gantt-bar", has_text="Build").first
+        bar = pg.locator('.gantt-bar[data-id="' + pg.evaluate("n => tasks.find(t => t.name === n).id", "Build") + '"]').first
         before = pg.evaluate("() => { const t = tasks.find(x => x.name === 'Build'); return [t.startDate, t.endDate]; }")
         box = bar.bounding_box()
         pg.mouse.move(box["x"] + box["width"] / 2, box["y"] + 10); pg.mouse.down(); pg.mouse.move(box["x"] + box["width"] / 2 + 30, box["y"] + 10, steps=6); pg.mouse.up(); pg.wait_for_timeout(200)
@@ -71,17 +71,17 @@ with sync_playwright() as p:
         pg.click("#zoomTabs .view-tab:has-text('Month')"); pg.wait_for_timeout(250)
         mt = pg.evaluate("() => [...document.querySelectorAll('#ganttHeader .gantt-tick')].map(e => ({text: e.innerText.trim(), w: e.getBoundingClientRect().width}))")
         check("Month scale: still one tick per month, each as wide as the month (5px/day)", len(mt) > 6 and all(abs(t["w"] / 5 - round(t["w"] / 5)) < 0.05 and 28 <= round(t["w"] / 5) <= 31 for t in mt[1:-1]), mt[:4])
-        # ---- the default scale is Year, once, for everyone; afterwards the choice is remembered
+        # ---- the default scale is Fit, once, for everyone; afterwards the choice is remembered
         pg.evaluate("() => { localStorage.setItem('milestone-prefs', JSON.stringify({theme: 'light', zoom: 'week', view: 'gantt', gridPaneWidth: 400})); }"); pg.reload(); pg.wait_for_selector("#undoBtn"); pg.wait_for_timeout(200)
-        check("an old saved 'week' (the previous default, saved by the first save) is reset to Year once", pg.evaluate("() => zoom") == "year" and pg.locator("#zoomTabs .view-tab.active").inner_text() == "Year")
+        check("a scale saved under an older default is reset to Fit (the new standard) once", pg.evaluate("() => zoom") == "fit" and pg.get_attribute("#fitZoomBtn", "aria-pressed") == "true" and pg.locator("#zoomTabs .view-tab.active").count() == 0)
         pg.click("#zoomTabs .view-tab:has-text('Week')"); pg.wait_for_timeout(150); pg.reload(); pg.wait_for_selector("#undoBtn"); pg.wait_for_timeout(200)
         check("...but a scale chosen afterwards is remembered", pg.evaluate("() => zoom") == "week")
-        pg.evaluate("() => { localStorage.setItem('milestone-prefs', JSON.stringify({theme: 'light', zoom: 'day', zoomRev: 1, view: 'gantt', gridPaneWidth: 400})); }"); pg.reload(); pg.wait_for_selector("#undoBtn"); pg.wait_for_timeout(200)
-        check("a saved 'day' (removed) falls back to Year", pg.evaluate("() => zoom") == "year" and pg.locator("#zoomTabs .view-tab.active").inner_text() == "Year")
+        pg.evaluate("() => { localStorage.setItem('milestone-prefs', JSON.stringify({theme: 'light', zoom: 'day', zoomRev: 2, view: 'gantt', gridPaneWidth: 400})); }"); pg.reload(); pg.wait_for_selector("#undoBtn"); pg.wait_for_timeout(200)
+        check("a saved 'day' (removed) falls back to Fit", pg.evaluate("() => zoom") == "fit" and pg.get_attribute("#fitZoomBtn", "aria-pressed") == "true" and pg.locator("#zoomTabs .view-tab.active").count() == 0)
         pg.evaluate("() => { localStorage.clear(); }"); pg.reload(); pg.wait_for_selector("#undoBtn"); pg.wait_for_timeout(200)
-        check("a fresh install starts on Year", pg.evaluate("() => zoom") == "year")
+        check("a fresh install starts on Fit — the whole plan across the chart", pg.evaluate("() => zoom") == "fit")
         pg.evaluate("() => { localStorage.setItem('milestone-v1', JSON.stringify({project: {name: 'Old'}, tasks: [], deletedTaskIds: [], zoom: 'week', theme: 'light'})); localStorage.removeItem('milestone-plans'); localStorage.removeItem('milestone-prefs'); }"); pg.reload(); pg.wait_for_selector("#undoBtn"); pg.wait_for_timeout(200)
-        check("an install migrating from the single-project build also starts on Year", pg.evaluate("() => zoom") == "year")
+        check("an install migrating from the single-project build also starts on Fit", pg.evaluate("() => zoom") == "fit")
 
         # ---- the chart under the header: rows line up, arrows join their bars (they used to be drawn 32px too high), link preview
         pg.evaluate("""() => { tasks.length = 0; const mk = (n, i, s, e, preds) => { const t = {id: genId(), name: n, parentId: null, order: i, startDate: s, endDate: e, progress: 0, milestone: false, color: null, notes: '', predecessors: preds || [], collapsed: false, updatedAt: 1, constraintType: 'ASAP', constraintDate: null, taskMode: 'auto'}; tasks.push(t); return t.id; };
@@ -92,9 +92,9 @@ with sync_playwright() as p:
                 return {headH: document.getElementById('ganttHeader').getBoundingClientRect().height, gridH: document.getElementById('gridHeader').getBoundingClientRect().height, startY: path.top - (bars[0].top + bars[0].height / 2), endY: path.bottom - (bars[1].top + bars[1].height / 2), rowAlign: document.querySelector('#gridRows .grid-row').getBoundingClientRect().top - rows.top}; }""")
             check(f"{z}: header (42px) the same in both panes, rows aligned, arrow runs bar centre to bar centre", abs(m["headH"] - 42) < .5 and abs(m["gridH"] - 42) < .5 and abs(m["rowAlign"]) < .5 and abs(m["startY"]) < 1.5 and abs(m["endY"]) < 1.5, m)
         pg.evaluate("() => { zoom = 'week'; save(); render(); }"); pg.wait_for_timeout(200)
-        src = pg.locator(".gantt-bar", has_text="Alpha").first; src.hover(); hb = src.locator(".link-handle").bounding_box()
+        src = pg.locator('.gantt-bar[data-id="' + pg.evaluate("n => tasks.find(t => t.name === n).id", "Alpha") + '"]').first; src.hover(); hb = src.locator(".link-handle").bounding_box()
         pg.mouse.move(hb["x"] + 2, hb["y"] + hb["height"] / 2); pg.mouse.down()
-        target = pg.locator(".gantt-bar", has_text="Epsilon").first.bounding_box(); ty = target["y"] + target["height"] / 2; tx = target["x"] + 20
+        target = pg.locator('.gantt-bar[data-id="' + pg.evaluate("n => tasks.find(t => t.name === n).id", "Epsilon") + '"]').first.bounding_box(); ty = target["y"] + target["height"] / 2; tx = target["x"] + 20
         pg.mouse.move(tx, ty, steps=6)
         prev = pg.evaluate("""() => { const p = document.querySelector('#ganttDeps path[stroke-dasharray]'); if (!p) return null; const m = p.getAttribute('d').match(/L([\\d.\\-]+),([\\d.\\-]+)$/); return [parseFloat(m[1]), parseFloat(m[2]), document.getElementById('ganttDeps').getBoundingClientRect().top]; }""")
         check("link preview ends under the pointer", prev is not None and abs((prev[1] + prev[2]) - ty) < 1.5, (prev, ty))
