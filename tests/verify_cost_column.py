@@ -25,17 +25,17 @@ with sync_playwright() as p:
     SEED = "specs => { tasks.length = 0; deletedTaskIds.length = 0; selectedTaskId = null; delete project.resources; delete project.currencyCode; delete project.workDays; const ids = {}; for (const sp of specs) { const t = Object.assign({id: genId(), name: sp.name, parentId: sp.parent ? ids[sp.parent] : null, order: tasks.length, startDate: sp.s, endDate: sp.e, progress: 0, milestone: false, color: null, predecessors: [], collapsed: false, updatedAt: 1, constraintType: 'ASAP', constraintDate: null, taskMode: 'auto', resource: sp.r || '', actualStart: null, actualFinish: null}, sp.extra || {}); tasks.push(t); ids[sp.name] = t.id; } normalizeData(); save(); render(); }"
     seed = lambda specs: ev(SEED, specs)
     seed([{"name": "G", "s": "2026-09-07", "e": "2026-09-08"}, {"name": "A", "s": "2026-09-07", "e": "2026-09-08", "parent": "G", "r": "Anna"}, {"name": "U", "s": "2026-09-07", "e": "2026-09-08"}])
-    ev("() => { project.resources.find(r => r.name === 'Anna').stdRate = 50; save(); render(); }")   # Anna: 2 working days = 16h x $50 = $800
+    ev("() => { project.resources.find(r => r.name === 'Anna').stdRate = 50; save(); render(); }")   # Anna: 2 working days = 16h x €50 = €800
 
     ev("() => { toggleColumn('cost', true); render(); }")
     body = ev("() => document.getElementById('gridRows').innerText")
     check("the Columns menu can show it and the grid renders it without a console error", not errors, errors[:3])
     a_cost = ev("() => fmtCurrency(taskCost(tasks.find(t => t.name === 'A')))")
-    check("an assigned task's own Cost cell reads the real rolled-up figure ($800)", a_cost == "$800.00", a_cost)
+    check("an assigned task's own Cost cell reads the real rolled-up figure (€800, EUR the default)", a_cost == "€800.00", a_cost)
     g_cost = ev("() => fmtCurrency(taskCost(tasks.find(t => t.name === 'G')))")
     check("a group's Cost is the rollup, same figure as its one child (unlike Work, Cost IS meaningful for a group)", g_cost == a_cost, (g_cost, a_cost))
     u_cost = ev("() => fmtCurrency(taskCost(tasks.find(t => t.name === 'U')))")
-    check("an unassigned task reads $0.00, never blank/NaN", u_cost == "$0.00", u_cost)
+    check("an unassigned task reads €0.00, never blank/NaN", u_cost == "€0.00", u_cost)
 
     # ---------------------------------------------------------------- filtering by Cost
     ev("() => { colFilters.cost = { type: 'rule', rule: 'gt', a: 100, b: null }; render(); }")
@@ -55,17 +55,17 @@ with sync_playwright() as p:
     a_row = next(r for r in range(5, ws.max_row + 1) if ws.cell(r, header.index("Task Name") + 1).value == "A")
     cell = ws.cell(a_row, ci)
     check("...and A's Cost cell is a real number (800), not pre-formatted text — sortable/summable in Excel", cell.value == 800, cell.value)
-    check("...with a currency number format (the $ sign literal, matching the plan's default USD)", "$" in (cell.number_format or ""), cell.number_format)
+    check("...with a currency number format (the € sign literal, matching the plan's default EUR)", "€" in (cell.number_format or ""), cell.number_format)
 
     # ---------------------------------------------------------------- a plan with NO resource pool at all still exports (the exact XCOLS-gap crash class found once already)
     ev("() => { tasks.length = 0; delete project.resources; const t = {id: genId(), name: 'Solo', parentId: null, order: 0, startDate: '2026-09-07', endDate: '2026-09-08', progress: 0, milestone: false, color: null, predecessors: [], collapsed: false, updatedAt: 1, constraintType: 'ASAP', constraintDate: null, taskMode: 'auto', resource: '', actualStart: null, actualFinish: null}; tasks.push(t); normalizeData(); save(); render(); }")
     w2 = wb("all")
-    check("a plan with no pool at all still builds the 'all columns' export without crashing (Cost just reads $0.00/0)", w2 is not None)
+    check("a plan with no pool at all still builds the 'all columns' export without crashing (Cost just reads €0.00/0)", w2 is not None)
 
     # ---------------------------------------------------------------- currency setting changes the grid's own formatting too
-    ev("() => { project.currencyCode = 'EUR'; save(); render(); }")
-    eur = ev("() => fmtCurrency(800)")
-    check("switching the plan's currency changes what the Cost column would show", "€" in eur or "EUR" in eur, eur)
+    ev("() => { project.currencyCode = 'USD'; save(); render(); }")
+    usd = ev("() => fmtCurrency(800)")
+    check("switching the plan's currency changes what the Cost column would show", "$" in usd, usd)
 
     check("no console errors or page errors across the whole run", not errors, errors[:5])
     n_ok, n_all = sum(results), len(results)

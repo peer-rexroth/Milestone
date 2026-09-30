@@ -171,22 +171,11 @@ button:focus:not(:focus-visible) { outline: none; }
 .fld-remove:hover { background: var(--panel-2); color: var(--danger); }
 .fld-row.removed .fld-remove:hover { color: var(--accent); }
 .fld-empty { padding: 14px; border: 1px dashed var(--border); border-radius: 8px; color: var(--text-faint); font-size: 12.5px; text-align: center; }
-.res-rows { display: flex; flex-direction: column; gap: 8px; }
-.res-item { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
-.res-row { display: grid; grid-template-columns: 1fr 90px 64px 28px; gap: 8px; align-items: center; }
-.res-name { padding: 7px 9px; border: 1px solid var(--border); border-radius: 7px; background: var(--panel); color: var(--text); min-width: 0; }
-.res-name:disabled { opacity: .5; text-decoration: line-through; }
-.res-name.bad { border-color: var(--danger); }
-.res-units { padding: 7px 9px; border: 1px solid var(--border); border-radius: 7px; background: var(--panel); color: var(--text); width: 100%; }
-.res-uses { font-size: 11.5px; color: var(--text-faint); text-align: right; white-space: nowrap; }
-.res-remove { width: 26px; height: 26px; border: none; border-radius: 6px; background: transparent; color: var(--text-faint); }
-.res-remove:hover { background: var(--panel-2); color: var(--danger); }
-.res-item.removed .res-remove:hover { color: var(--accent); }
 .res-empty { padding: 14px; border: 1px dashed var(--border); border-radius: 8px; color: var(--text-faint); font-size: 12.5px; text-align: center; }
-.res-days summary { font-size: 11.5px; color: var(--text-dim); cursor: pointer; }
-.res-days-add { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 6px; }
-.res-days-add .dt-wrap { flex: 0 0 130px; width: 130px; }
-.res-days-add input[type=text] { flex: 1 1 140px; min-width: 100px; }
+.res-days-add { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.res-days-add .hol-field-date { flex: 0 0 136px; }
+.res-days-add .hol-field-name { flex: 1 1 120px; min-width: 100px; }
+.res-days-add input[type=text] { width: 100%; padding: 7px 9px; border: 1px solid var(--border); border-radius: 7px; background: var(--panel); color: var(--text); }
 .cols-foot { padding: 8px 12px 4px; border-top: 1px solid var(--border); margin-top: 4px; }
 .cf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .cf-flags { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; margin-top: 12px; }
@@ -270,6 +259,75 @@ button:focus:not(:focus-visible) { outline: none; }
 
 /* ── Main layout ────────────────────────────────────────────────────── */
 .main { flex: 1; min-height: 0; display: flex; overflow: hidden; }
+/* Task Form (MS Project's Task Form, shown as View -> Details there): a bottom pane under the list/chart, toggled from
+   the toolbar, laid out like MS Project's — two compact rows of fields with their labels beside them, then two LIST
+   tables (Resources, Predecessors) styled like the task list: a header row, column lines down to the bottom, cells that
+   show a box only on hover/focus. A vertical "Task Form" label on the left edge, as in MS Project. */
+.task-form-pane { flex: 0 0 var(--task-form-h, 340px); height: var(--task-form-h, 340px); display: flex; min-height: 0; border-top: 1px solid var(--border); background: var(--panel); position: relative; }
+.task-form-resize { position: absolute; left: 0; right: 0; top: -4px; height: 8px; cursor: row-resize; z-index: 5; }
+.task-form-resize:hover, .task-form-resize.dragging { background: color-mix(in srgb, var(--accent) 35%, transparent); }
+.tf-strip { flex: 0 0 22px; display: flex; align-items: center; justify-content: center; background: var(--panel-2); border-right: 1px solid var(--border); }
+.tf-strip span { writing-mode: vertical-rl; transform: rotate(180deg); font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-faint); white-space: nowrap; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.tf-body { flex: 1; min-width: 0; min-height: 0; overflow: auto; padding: 10px 14px 10px; display: flex; flex-direction: column; gap: 8px; }
+.tf-body > * { max-width: 1000px; }
+.tf-empty { color: var(--text-dim); font-size: 13px; padding: 14px 2px; }
+.tf-top { display: grid; grid-template-columns: auto minmax(170px, 250px) auto minmax(150px, 210px) auto auto; gap: 6px 10px; align-items: center; font-size: 13px; }
+.tf-top > label, .tf-pair > label { color: var(--text-dim); white-space: nowrap; }
+.tf-in, .tf-top select { padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel); color: var(--text); width: 100%; min-width: 0; font-size: 13px; }
+.tf-in:disabled, .tf-top select:disabled { background: var(--panel-2); color: var(--text-dim); }
+.tf-top .dt-wrap > input.dt-date { padding: 5px 30px 5px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel); color: var(--text); font-size: 13px; }
+.tf-top .dt-wrap > input.dt-date:disabled { background: var(--panel-2); color: var(--text-dim); }
+.tf-top .dt-cal { width: 26px; height: 26px; }
+.tf-checks { display: flex; align-items: center; gap: 16px; white-space: nowrap; }
+.tf-check { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.tf-check input:disabled + span { opacity: .5; }
+.tf-pair { display: flex; align-items: center; gap: 8px; }
+.tf-pair select { width: 140px; }
+.tf-pair #tfPct { width: 72px; text-align: right; }
+.tf-btns { display: flex; gap: 6px; justify-content: flex-end; }
+.tf-btns .btn { min-width: 84px; justify-content: center; }
+.tf-dt { display: flex; gap: 6px; min-width: 0; }
+.tf-dt .dt-wrap { flex: 1 1 120px; min-width: 116px; }
+.tf-dt input.dt-time { flex: 0 0 64px; width: 64px; }
+.tf-note { font-size: 12px; color: var(--text-faint); min-height: 0; }
+.tf-note:empty { display: none; }
+.tf-note.dirty { color: var(--warning, #bf8700); }
+.tf-hint { font-size: 12px; color: var(--text-faint); }
+/* the two list tables */
+.tf-tables { flex: 1; min-height: 110px; display: grid; grid-template-columns: 1fr 1.15fr; gap: 12px; }
+.tf-table { display: flex; flex-direction: column; min-height: 0; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: var(--panel); }
+.tf-scroll { flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; }
+.tf-grid { display: flex; flex-direction: column; flex-shrink: 0; }
+.tf-row, .tf-fill { display: grid; }
+.tf-res .tf-row, .tf-res .tf-fill { grid-template-columns: 40px minmax(110px, 1fr) 72px 84px 30px; }
+.tf-pred .tf-row, .tf-pred .tf-fill { grid-template-columns: 56px minmax(110px, 1fr) 76px 76px 30px; }
+.tf-row { height: 30px; border-bottom: 1px solid var(--border); font-size: 12.5px; }
+.tf-row > *, .tf-fill > * { border-right: 1px solid var(--border); min-width: 0; }
+.tf-row > *:last-child, .tf-fill > *:last-child { border-right: none; }
+.tf-row > span { display: flex; align-items: center; padding: 0 8px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.tf-row.tf-row-head { height: 28px; background: var(--panel-2); font-size: 11px; font-weight: 700; color: var(--text-faint); text-transform: uppercase; letter-spacing: .03em; flex-shrink: 0; }
+.tf-row .r { justify-content: flex-end; text-align: right; }
+.tf-fill { flex: 1; min-height: 0; }
+.tf-row:not(.tf-row-head):hover { background: var(--panel-2); }
+.tf-cell { width: 100%; height: 100%; border: 1px solid transparent; border-radius: 0; background: transparent; color: var(--text); padding: 0 8px; font-size: 12.5px; outline: none; min-width: 0; }
+.tf-cell:hover { border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
+.tf-cell:focus { border-color: var(--accent); background: var(--panel); }
+.tf-cell::placeholder { color: var(--text-faint); }
+select.tf-cell { padding: 0 24px 0 8px !important; background-position: right 7px center !important; }
+input.tf-cell[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+input.tf-cell[type=number] { -moz-appearance: textfield; }
+.tf-units, .tf-lag { text-align: right; }
+.tf-id { color: var(--text-faint); font-size: 12px; justify-content: flex-end; }
+.tf-work { color: var(--text-dim); font-variant-numeric: tabular-nums; justify-content: flex-end; }
+.tf-pred-name.none { color: var(--text-faint); }
+.tf-row.tf-blank select.tf-cell, .tf-row.tf-blank .tf-cell { color: var(--text-faint); }   /* the trailing add-row: its defaults (FS, 0, 100%) read as hints until typed in */
+.tf-remove { width: 100%; height: 100%; border: none; background: transparent; color: var(--text-faint); cursor: pointer; opacity: 0; }
+.tf-row:hover .tf-remove, .tf-remove:focus { opacity: 1; }
+.tf-remove:hover { color: var(--danger); }
+.tf-remove[hidden] { display: block !important; visibility: hidden; }
+#taskFormBtn.active { background: color-mix(in srgb, var(--accent) 14%, var(--panel)); border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); color: var(--accent); }
+@media (max-width: 900px) { .tf-top { grid-template-columns: auto 1fr auto 1fr; } .tf-checks, .tf-pair, .tf-btns { grid-column: 1 / -1; justify-content: flex-start; } .tf-tables { grid-template-columns: 1fr; } }
 .grid-pane { width: var(--grid-pane-width, 360px); flex-shrink: 0; display: flex; flex-direction: column; border-right: 1px solid var(--border); background: var(--panel); position: relative; }
 /* The task list — the same one in the Tasks view and (left of the chart) in the Gantt view; the Tasks-view rules below apply to both. */
 .grid-header, .grid-row {
@@ -643,7 +701,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 .rst-toolbar { display: flex; align-items: center; gap: 12px; padding: 8px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
 .rst-toolbar .rst-currency { display: flex; align-items: center; gap: 6px; margin-left: auto; font-size: 12.5px; color: var(--text-dim); }
 .rst-scroll { flex: 1; overflow: auto; position: relative; }
-.rst-header, .rst-row { display: grid; grid-template-columns: 40px minmax(160px,1fr) 108px 118px 78px 110px 98px 98px 98px 98px 126px 90px 116px 40px; column-gap: 0; min-width: max-content; align-items: center; }
+.rst-header, .rst-row { display: grid; grid-template-columns: 40px minmax(160px,1fr) 126px 118px 78px 110px 98px 98px 98px 98px 132px 90px 116px 40px; column-gap: 0; min-width: max-content; align-items: center; }
 .rst-header { position: sticky; top: 0; z-index: 3; height: var(--head-h); font-size: 11px; font-weight: 700; color: var(--text-faint); text-transform: uppercase; letter-spacing: .03em; border-bottom: 1px solid var(--border); --row-bg: var(--panel); background: var(--row-bg); }
 .rst-row { height: var(--row-h); border-bottom: 1px solid var(--border); font-size: 12.5px; --row-bg: var(--panel); background: var(--row-bg); }
 .rst-row:hover { --row-bg: var(--panel-2); }
@@ -657,14 +715,26 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 .rst-rows { position: relative; background-image: var(--rst-col-lines-r, none); background-position: var(--rst-col-pos-r, 0 0); background-size: 1px 100%; background-repeat: no-repeat; }   /* the lines continue down the empty area below the last resource, exactly like the task list's own */
 .rst-header > div, .rst-row > div { padding-inline: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; min-width: 0; }
 .rst-cell.rst-id { color: var(--text-faint); font-size: 12px; justify-content: flex-end; }
-.rst-cell input.inline-edit, .rst-cell select.inline-edit { width: calc(100% - 4px); margin-inline: 2px; border-color: transparent; background-color: transparent; }
-/* background-COLOR only, never the `background` shorthand — a select's own chevron (background-image/repeat/position/
-   size, set by the global select rule at the very end of the sheet) would otherwise be reset to its initial values
-   by the shorthand (repeat/position/size go back to "repeat"/"0 0"/"auto"), tiling the chevron across the whole box
-   instead of showing it once on the right — a real bug this feature shipped with, found from a screenshot. */
-.rst-cell input.inline-edit:hover, .rst-cell select.inline-edit:hover, .rst-cell input.inline-edit:focus, .rst-cell select.inline-edit:focus { border-color: var(--accent); background-color: var(--panel); }
-.rst-cell input:disabled, .rst-cell select:disabled { opacity: .35; }
-.rst-cell input[type=number] { text-align: right; }
+.rst-cell input.inline-edit { width: calc(100% - 4px); margin-inline: 2px; border-color: transparent; background-color: transparent; }
+.rst-cell input.inline-edit:hover, .rst-cell input.inline-edit:focus { border-color: var(--accent); background-color: var(--panel); }
+.rst-cell input.inline-edit:disabled { opacity: .5; }
+.rst-cell input.inline-edit[type=number], .rst-cell input.inline-edit.rst-pct { text-align: right; }
+.rst-cell input.inline-edit[type=number]::-webkit-inner-spin-button { margin-left: 6px; }   /* right-aligned digits otherwise sit flush against the arrows */
+/* The dropdown cells only (Type, Accrue At) get the app's own dialog-field look — the dialog fields (Resource pool
+   dialog), .cal-sec/.bulk-ctl selects — since a <select> always shows a full, permanent box regardless of styling
+   (there's no borderless "click to reveal" state the way a text .inline-edit has), so leaving it in .inline-edit's
+   own deliberately-minimal, border-color:transparent look read as visually broken here, not just different: a
+   naked box whose only affordance was the chevron. Text/number cells keep .inline-edit exactly as the task grid uses
+   it — only the dropdowns changed, not every cell. */
+select.rst-select { padding: 5px 9px; border: 1px solid var(--border); border-radius: 7px; background-color: var(--panel); color: var(--text); font-size: 12.5px; font-family: inherit; }
+/* background-COLOR only, never the `background` shorthand — the chevron (background-image/repeat/position/size, set
+   by the global select rule at the very end of the sheet) would otherwise be reset to its initial values by the
+   shorthand (repeat/position/size go back to "repeat"/"0 0"/"auto"), tiling it across the whole box instead of
+   showing it once on the right — a real bug this feature shipped with, found from a screenshot. Also sidesteps
+   .inline-edit's own `outline: none`, which would suppress the native focus ring this field relies on, same as every
+   other dialog select in this app (none of them override it with a custom border-color either). */
+.rst-cell select.rst-select { width: calc(100% - 4px); margin-inline: 2px; }
+select.rst-select:disabled { opacity: .5; }
 .rst-days-link { background: none; border: none; color: var(--text-dim); font-size: 12px; cursor: pointer; padding: 4px 6px; border-radius: 5px; white-space: nowrap; }
 .rst-days-link:hover { background: var(--panel-2); color: var(--text); }
 .rst-remove { background: none; border: none; color: var(--text-faint); cursor: pointer; width: 26px; height: 26px; border-radius: 5px; display: flex; align-items: center; justify-content: center; }
@@ -701,8 +771,9 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 .cal-sec .hol-preset, .cal-sec .hol-add, .cal-sec .wh-break-add { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .cal-sec .hol-preset select { flex: 1 1 200px; }
 .cal-sec .hol-preset input[type=number] { width: 78px; }
-.cal-sec .hol-add .dt-wrap { flex: 0 0 150px; width: 150px; }
-.cal-sec .hol-add input[type=text] { flex: 1 1 200px; min-width: 110px; }
+.cal-sec .hol-add .hol-field-date { flex: 0 0 150px; }
+.cal-sec .hol-add .hol-field-name { flex: 1 1 200px; min-width: 110px; }
+.cal-sec .hol-add input[type=text] { width: 100%; }
 .cal-sec .wh-break-add input.dt-time { width: 84px; }
 .precision-row { display: flex; flex-direction: column; gap: 8px; }
 .precision-opt { display: flex; align-items: flex-start; gap: 8px; cursor: pointer; font-size: 13px; }
@@ -731,6 +802,15 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 .whd-add { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
 .whd-add select { padding: 7px 9px; border: 1px solid var(--border); border-radius: 7px; background: var(--panel); color: var(--text); }
 .hol-break { flex-basis: 100%; height: 0; }
+/* A day-off add row (Working calendar, Days off): each box has its own small label above it, so "Last day" reads as
+   the optional second date it is rather than a required "to"; the row aligns on the boxes' bottom edge. */
+.hol-fields { align-items: flex-end !important; }
+.hol-field { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.hol-field > label { font-size: 11.5px; color: var(--text-dim); white-space: nowrap; }
+.hol-field .hol-opt { color: var(--text-faint); }
+.hol-field .dt-wrap { width: 100%; }
+.hol-fields .hol-yearly { height: 32px; }
+.hol-fields .btn { height: 32px; white-space: nowrap; }
 .cal-how summary { cursor: pointer; font-size: 12.5px; font-weight: 600; color: var(--text-dim); }
 .cal-how .cal-hint { margin-top: 8px; }
 .bl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
@@ -750,8 +830,9 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
    label-above row here would have broken that. A group or milestone hides the whole row. */
 .field-grid-tt { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px 14px; flex-wrap: wrap; margin-top: -8px; }
 .field-grid-tt label { font-size: 12px; font-weight: 600; color: var(--text-dim); white-space: nowrap; }
-.field-grid-tt select { width: 150px; }
-.field-grid-tt input[type=text] { width: 90px; }
+.field-grid-tt select, .field-grid-tt input[type=text] { padding: 8px 10px; border: 1px solid var(--border); border-radius: 7px; background: var(--panel); color: var(--text); font: inherit; }   /* the same look as every other field in the dialog (.field) */
+.field-grid-tt select { width: 160px; }
+.field-grid-tt input[type=text] { width: 100px; }
 .field-grid-tt .tt-check { display: flex; align-items: center; gap: 6px; font-weight: 500; color: var(--text); }
 .field-grid-4 > .span2 { grid-column: span 2; } .field-grid-4 > .span3 { grid-column: span 3; }
 .field-grid-4 input[type=date], .field-grid-4 input[type=number], .field-grid-4 input[type=text], .field-grid-4 select { padding: 8px 8px; }
@@ -977,6 +1058,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
   <span class="subbar-spacer"></span>
   <button class="btn" id="searchBtn" onclick="openSearch()" title="Find a task by name, WBS, number (#12), resource (@anna) or status (status:late) — Ctrl/Cmd+K, or /"><i class="fa-solid fa-magnifying-glass"></i>Find</button>
   <button class="btn" id="columnsBtn" onclick="toggleColumnsMenu()" title="Choose which columns the task list shows"><i class="fa-solid fa-table-columns"></i>Columns</button>
+  <button class="btn" id="taskFormBtn" onclick="toggleTaskForm()" aria-pressed="false" title="Show or hide the Task Form — the selected task's details, resources and predecessors in a pane below (like MS Project's Details)"><i class="fa-regular fa-rectangle-list"></i>Task Form</button>
 </div>
 <div class="dropdown-menu" id="addMenu" role="menu">
   <button class="dropdown-item" id="addSpacerBtn" role="menuitem" onclick="closeAddMenu();addSpacer()"><i class="fa-solid fa-grip-lines"></i>Add empty line<span class="item-hint">a blank row to separate tasks</span></button>
@@ -1017,13 +1099,19 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
   <div class="resourceSheet-pane-outer" id="resourceSheetPaneOuter">
     <div class="rst-toolbar">
       <button class="btn" type="button" onclick="addResourceSheetRow()"><i class="fa-solid fa-plus"></i>Add Resource</button>
-      <span class="rst-currency"><label for="rsCurrencyInput">Currency</label><select id="rsCurrencyInput" onchange="setCurrencyCode(this.value)"></select></span>
+      <span class="rst-currency"><label for="rsCurrencyInput">Currency</label><select id="rsCurrencyInput" class="rst-select" onchange="setCurrencyCode(this.value)"></select></span>
     </div>
     <div class="rst-scroll" id="resourceSheetScroll">
       <div class="rst-header" id="resourceSheetHeader"></div>
       <div class="rst-rows" id="resourceSheetBody"></div>
     </div>
   </div>
+</div>
+<div class="task-form-pane hidden" id="taskFormPane" role="region" aria-label="Task Form">
+  <div class="task-form-resize" id="taskFormResize" title="Drag to resize"></div>
+  <div class="tf-strip" aria-hidden="true"><span>Task Form</span></div>
+  <span class="sr-only" id="tfTaskLabel" aria-live="polite"></span>
+  <div class="tf-body" id="taskFormBody"></div>
 </div>
 
 <!-- Task modal -->
@@ -1306,18 +1394,23 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
 </div>
 <div class="dropdown-menu" id="cfAddMenu" role="menu"></div>
 
-<div class="modal-bg" id="resourcePoolModalBg" onclick="if(event.target===this) requestCloseResourcePoolModal()">
+<div class="modal-bg" id="resourceDaysModalBg" onclick="if(event.target===this) requestCloseResourceDaysModal()">
   <div class="modal mid">
-    <div class="modal-header"><h2>Resource pool</h2><button onclick="requestCloseResourcePoolModal()" aria-label="Close">&times;</button></div>
+    <div class="modal-header"><h2>Days off — <span id="resourceDaysName"></span></h2><button onclick="requestCloseResourceDaysModal()" aria-label="Close">&times;</button></div>
     <div class="modal-body">
-      <p class="cal-hint" style="margin:0">Who works on “<span id="resourcePoolPlanName"></span>” — typing a name in a task's Resource field adds it here automatically, the same way MS Project does. Max units is how much of them there is (200% = two people covering the role); days off are on top of the plan's own working week.</p>
-      <div class="res-rows" id="resourceRows"></div>
-      <div><button class="btn" type="button" onclick="addResourceRow()"><i class="fa-solid fa-plus"></i>Add resource</button></div>
+      <p class="cal-hint" style="margin:0">Days this resource doesn't work, on top of the plan's own working week and holidays. Levelling and over-allocation treat them as zero capacity.</p>
+      <div class="res-days-add hol-fields">
+        <div class="hol-field hol-field-date"><label for="resDayFrom">First day</label><input type="text" class="dt-date" id="resDayFrom" title="The day off, or the first day of a longer break" oninput="updateResDayAddBtn()" onchange="updateResDayAddBtn()" onkeydown="if(event.key==='Enter'){event.preventDefault();addResourceDayOff();}"></div>
+        <div class="hol-field hol-field-date"><label for="resDayTo">Last day <span class="hol-opt">(optional)</span></label><input type="text" class="dt-date" id="resDayTo" title="Only for a break of several days — leave empty for a single day" oninput="updateResDayAddBtn()" onchange="updateResDayAddBtn()" onkeydown="if(event.key==='Enter'){event.preventDefault();addResourceDayOff();}"></div>
+        <div class="hol-field hol-field-name"><label for="resDayName">Name <span class="hol-opt">(optional)</span></label><input type="text" id="resDayName" maxlength="60" onkeydown="if(event.key==='Enter'){event.preventDefault();addResourceDayOff();}"></div>
+        <button class="btn" type="button" id="resDayAddBtn" onclick="addResourceDayOff()"><i class="fa-solid fa-plus"></i><span>Add</span></button>
+      </div>
+      <div class="hol-list" id="resDayList"></div>
     </div>
     <div class="modal-footer">
-      <span class="foot-note" id="resourcePoolNote"></span>
-      <button class="btn" onclick="closeResourcePoolModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="saveResourcePoolModal()">Save</button>
+      <span class="foot-note" id="resourceDaysCount"></span>
+      <button class="btn" onclick="closeResourceDaysModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveResourceDaysModal()">Save</button>
     </div>
   </div>
 </div>
@@ -1347,14 +1440,13 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
       </section>
       <section class="cal-sec">
         <div class="cal-sec-title">Another day off <span class="cal-sec-note">a single day, a break, or a day that comes back every year</span></div>
-        <div class="hol-add">
-          <input type="text" class="dt-date" id="holFrom" aria-label="The day off, or the first day of a longer break" title="The day off, or the first day of a longer break" onkeydown="if(event.key==='Enter'){event.preventDefault();addHoliday();}">
-          <span class="hol-to">to</span>
-          <input type="text" class="dt-date" id="holTo" aria-label="Last day of a longer break" title="Last day of a longer break (leave empty for a single day)" onchange="holToChanged()" onkeydown="if(event.key==='Enter'){event.preventDefault();addHoliday();}">
-          <label class="hol-yearly" title="A single day that comes back every year, such as 25 December"><input type="checkbox" id="holYearly"> Every year</label>
+        <div class="hol-add hol-fields">
+          <div class="hol-field hol-field-date"><label for="holFrom">First day</label><input type="text" class="dt-date" id="holFrom" title="The day off, or the first day of a longer break" oninput="updateHolAddBtn()" onchange="holToChanged()" onkeydown="if(event.key==='Enter'){event.preventDefault();addHoliday();}"></div>
+          <div class="hol-field hol-field-date"><label for="holTo">Last day <span class="hol-opt">(optional)</span></label><input type="text" class="dt-date" id="holTo" title="Only for a break of several days — leave empty for a single day" oninput="holToChanged()" onchange="holToChanged()" onkeydown="if(event.key==='Enter'){event.preventDefault();addHoliday();}"></div>
+          <label class="hol-yearly" title="A single day that comes back every year, such as 25 December"><input type="checkbox" id="holYearly" onchange="updateHolAddBtn()"> Every year</label>
           <span class="hol-break"></span>
-          <input type="text" id="holName" maxlength="60" placeholder="Name (optional)" aria-label="Name of the day off" onkeydown="if(event.key==='Enter'){event.preventDefault();addHoliday();}">
-          <button class="btn" type="button" onclick="addHoliday()"><i class="fa-solid fa-plus"></i>Add</button>
+          <div class="hol-field hol-field-name"><label for="holName">Name <span class="hol-opt">(optional)</span></label><input type="text" id="holName" maxlength="60" onkeydown="if(event.key==='Enter'){event.preventDefault();addHoliday();}"></div>
+          <button class="btn" type="button" id="holAddBtn" onclick="addHoliday()"><i class="fa-solid fa-plus"></i><span>Add</span></button>
         </div>
       </section>
       <section class="cal-sec">
@@ -1595,7 +1687,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <div class="help-section">
           <div class="help-section-title">Task Type and Work</div>
           <div class="help-row"><i class="fa-solid fa-scale-balanced"></i><span>Each task has a <strong>Task Type</strong> — <strong>Fixed Units</strong> (default), <strong>Fixed Duration</strong> or <strong>Fixed Work</strong> — and a <strong>Work</strong> figure (e.g. <code>4h</code>, <code>2d</code>), both set in the task's dialog or as grid columns. Editing Duration, Work or a resource recalculates whichever of the other two the type says is not fixed, keeping Work = Duration × the assigned resources' total percentage.</span></div>
-          <div class="help-row"><i class="fa-solid fa-users"></i><span>Fixed Units and Fixed Work: adding a second resource shortens the Duration — two people finish faster. Fixed Duration: it grows the Work instead and the schedule stays put. <strong>Effort-driven</strong> (a checkbox beside Task Type) turns this off, so a resource just adds capacity without moving anything.</span></div>
+          <div class="help-row"><i class="fa-solid fa-users"></i><span>Fixed Units and Fixed Work with <strong>Effort-driven</strong> ticked (a checkbox beside Task Type, off by default): adding a second resource shortens the Duration — two people finish faster. Unticked, the resource just adds Work and nothing moves. Fixed Duration always grows the Work instead and the schedule stays put.</span></div>
         </div>
         <div class="help-divider"></div>
         <div class="help-section">
@@ -1617,7 +1709,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <div class="help-section">
           <div class="help-section-title">Working calendar</div>
           <div class="help-row"><i class="fa-solid fa-calendar-week"></i><span>Each plan has its own working days — Monday to Friday unless you change it (Schedule menu → <strong>Working calendar…</strong>). Durations, lags and dependencies count working days only: a 5-day task that starts on a Monday finishes on that Friday, and its successor starts the next Monday.</span></div>
-          <div class="help-row"><i class="fa-solid fa-umbrella-beach"></i><span>Add <strong>holidays and other days off</strong> in the same dialog: a single day, a longer break (from … to …), or a day that comes back every year, each with an optional name. They count as days off exactly like weekends, and are shaded in the Gantt chart.</span></div>
+          <div class="help-row"><i class="fa-solid fa-umbrella-beach"></i><span>Add <strong>holidays and other days off</strong> in the same dialog: a single day (just the <strong>First day</strong>), a longer break (add a <strong>Last day</strong>), or a day that comes back every year, each with an optional name — the Add button says how many days it adds. They count as days off exactly like weekends, and are shaded in the Gantt chart.</span></div>
           <div class="help-row"><i class="fa-solid fa-flag"></i><span><strong>Public holidays:</strong> pick a country or region (Germany with each of its states, Austria, Switzerland, the UK, Ireland, the US, Canada, France, the Netherlands, Belgium, Spain, Italy) and the years, then <strong>Add public holidays</strong>. Movable ones (Easter, Ascension, Thanksgiving …) are worked out for each year; days that fall on a day off anyway are left out.</span></div>
           <div class="help-row"><i class="fa-solid fa-circle-exclamation"></i><span>Treat the presets as a starting point: check them against your own calendar — regional and company days differ — and edit or remove any entry.</span></div>
           <div class="help-row"><i class="fa-solid fa-hand-pointer"></i><span>Auto tasks start and finish on working days — a date you type or drag to on a day off moves to the nearest working day. Manual tasks keep exactly the dates you give them. Changing the calendar or the holidays never moves dates that are already in the plan.</span></div>
@@ -1654,11 +1746,16 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
       </div>
       <div class="help-pane" id="helpPane-list" role="tabpanel" aria-labelledby="helpTab-list" hidden>
         <div class="help-section">
+          <div class="help-section-title">Task Form</div>
+          <div class="help-row"><i class="fa-regular fa-rectangle-list"></i><span><strong>Task Form</strong> (toolbar, Tasks and Gantt views) opens a pane below the list with the selected task's details, as in MS Project: name, duration, start, finish, Task Type, % complete, Effort driven, Manually Scheduled, and tables of its <strong>resources</strong> (Units, Work) and <strong>predecessors</strong> (Type, Lag). Drag its top edge to resize.</span></div>
+          <div class="help-row"><i class="fa-solid fa-check"></i><span>Change several fields, then <strong>OK</strong> (or <kbd>Enter</kbd>) applies them together — one Undo step; <strong>Cancel</strong> (or <kbd>Esc</kbd>) throws them away. <strong>Previous / Next</strong> apply first, then move on. Until you click OK or Cancel the form stays on its task, even if you select another row.</span></div>
+        </div>
+        <div class="help-section">
           <div class="help-section-title">Columns</div>
           <div class="help-row"><i class="fa-solid fa-table-columns"></i><span>Click <strong>Columns</strong> in the toolbar to tick the columns you want and reorder them. The <strong>Tasks view and the Gantt view each remember their own set</strong> on this device; Task Name always stays.</span></div>
           <div class="help-row"><i class="fa-solid fa-eye-slash"></i><span>Remaining Duration, Resource, the baseline and variance columns and the custom fields start hidden. Click a <strong>Resource</strong> or actual-date cell to edit it, or use the task dialog.</span></div>
-          <div class="help-row"><i class="fa-solid fa-users"></i><span><strong>Resource</strong> takes names separated by commas or semicolons ("Anna, Ben") — typing a new name adds it to the plan's resource pool automatically, the same way MS Project does. Give one less than a full share with <code>Name:NN%</code> ("Anna:50%, Ben") — a bare name is 100%.</span></div>
-          <div class="help-row"><i class="fa-solid fa-people-group"></i><span><strong>Schedule → Resource pool…</strong> lists everyone: how much of them there is (200% = two people covering the role) and their own days off on top of the plan's working week. Renaming or removing someone there updates every task that names them.</span></div>
+          <div class="help-row"><i class="fa-solid fa-users"></i><span><strong>Resource</strong> takes names separated by commas or semicolons ("Anna, Ben") — typing a new name adds it to the plan's resource pool automatically, the same way MS Project does. Give a share other than full time with <code>Name[NN%]</code> ("Anna[50%], Ben"), as in MS Project — a bare name is 100%.</span></div>
+          <div class="help-row"><i class="fa-solid fa-people-group"></i><span>The <strong>Resource Sheet</strong> tab lists everyone: type, Max Units (how much of a resource is available: 100% is one full-time person, 300% three people pooled into one; only Work resources have it), rates and cost per use. Renaming or removing someone there updates every task that names them; <strong>Days off</strong> on a row opens that person's own days off, on top of the plan's working week.</span></div>
           <div class="help-row"><i class="fa-solid fa-chart-simple"></i><span>The <strong>Resources</strong> tab shows each person's day-by-day load, colored red on a day they're over their own capacity; the Schedule menu's <strong>Level resources…</strong> item shows the same count.</span></div>
           <div class="help-row"><i class="fa-solid fa-scale-balanced"></i><span><strong>Schedule → Level resources…</strong> delays an over-allocated task to the next span with room, never earlier than its own dependencies allow and, by default, never past its own slack (so the plan's finish doesn't move) — turn that off, or scope it to a date on, then Apply. Undo brings it back.</span></div>
           <div class="help-row"><i class="fa-solid fa-table-list"></i><span>The <strong>Resource Sheet</strong> tab is MS Project's own spreadsheet: Type (Work, Material or Cost), Std/Ovt Rate, Cost per Use, Accrue At and more, editable directly in the grid. A task's <strong>Cost</strong> column (hidden by default) adds up its assigned resources' rates; a group shows the total of everything in it. Pick the plan's currency in that tab's own toolbar.</span></div>
@@ -1761,7 +1858,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
 
 <script>
 /* ============================== Constants ============================== */
-const APP_VERSION = 4;   // every save carries it (syncPayload). 2 = minute/hour-level scheduling (project.timeUnit/workHours, five per-task time fields); 3 = the version-skew guard (checkVersionSkew) — no format change; 4 = a minute-mode plan's lags are working minutes (project.lagUnit), per-weekday hours (project.workHoursByDay), a custom date field's time (custom.<id>Time)
+const APP_VERSION = 5;   // every save carries it (syncPayload). 5 = a Resource assignment is written "Anna[50%]" (an older build would read that as a name); 2 = minute/hour-level scheduling (project.timeUnit/workHours, five per-task time fields); 3 = the version-skew guard (checkVersionSkew) — no format change; 4 = a minute-mode plan's lags are working minutes (project.lagUnit), per-weekday hours (project.workHoursByDay), a custom date field's time (custom.<id>Time)
 const MINUTE_MODE_VERSION = 2;   // the first build that knows minute mode: a minute-mode plan last written by an OLDER build (a stale cached copy of the app, a device not yet updated) may have had its dates moved by a day-only scheduler
 const APP_BUILD_DATE = '2026-09-13';
 const STORAGE_KEY = 'milestone-v1';
@@ -1848,7 +1945,7 @@ const TASK_COLS = {
   resource:     { label: 'Resource',      width: '140px',             dflt: false },   // fixed like every column but Task Name; longer text is cut with an ellipsis (the cell's tooltip and the editor show all of it)
   worktype:     { label: 'Task Type',     width: '110px',             dflt: false },   // an icon-with-popup cell, same pattern as Task Mode's own; blank for a milestone/group
   work:         { label: 'Work',          width: '104px',             dflt: false },   // working time, typed the same way Duration is; blank for a milestone/group
-  cost:         { label: 'Cost',          width: '100px',             dflt: false },   // taskCost(t), read-only, computed from the resource pool's own rates (see "Resource Sheet" in CLAUDE.md) — an empty line/unassigned task shows $0.00
+  cost:         { label: 'Cost',          width: '100px',             dflt: false },   // taskCost(t), read-only, computed from the resource pool's own rates (see "Resource Sheet" in CLAUDE.md) — an empty line/unassigned task shows €0.00
   // Baseline columns (all hidden by default): the baseline chosen in the Baseline dialog (project.compareBaseline, "Baseline" unless changed)
   baselineStart:    { label: 'Baseline Start',    width: '104px', dflt: false },   // header: Baseline / Start
   baselineFinish:   { label: 'Baseline Finish',   width: '104px', dflt: false },
@@ -1946,23 +2043,34 @@ const RESOURCE_TYPES = [
   { id: 'cost', label: 'Cost', icon: 'fa-sack-dollar' },
 ];
 function resourceTypeInfo(id) { return RESOURCE_TYPES.find(m => m.id === id) || RESOURCE_TYPES[0]; }
+const MAX_UNITS_CAP = 800;   // Max Units: 100% = one full-time person; above that, several people pooled into one resource (300% = three), as in MS Project — the same ceiling an assignment's own % has
+function hasCapacity(r) { return resourceTypeInfo(r.type).id === 'work'; }
+// Which Resource Sheet fields mean anything for which resource type (as in MS Project): only a Work resource has Max
+// Units, an overtime rate and days off (capacity); a Material resource has a label and a per-unit Std Rate; a Cost
+// resource has only its Cost/Use. The sheet draws no box for a field that doesn't apply, and normalizeData() drops such
+// a value, so a hidden value can never linger behind an empty cell.
+const RESOURCE_TYPE_FIELDS = { work: ['maxUnits', 'stdRate', 'ovtRate', 'costPerUse', 'daysOff'], material: ['materialLabel', 'stdRate', 'costPerUse'], cost: ['costPerUse'] };
+function resourceFieldApplies(r, field) { return RESOURCE_TYPE_FIELDS[resourceTypeInfo(r.type).id].includes(field); }
+// Switching a resource's type resets everything type-dependent (a Work rate is per hour, a Material one per unit, a Cost
+// resource's Cost/Use is its whole cost — carrying any of them across would silently change what it means).
+const RESOURCE_TYPE_RESET = ['materialLabel', 'stdRate', 'ovtRate', 'costPerUse', 'daysOff'];
 const ACCRUE_TYPES = [
   { id: 'start', label: 'Start' },
   { id: 'prorated', label: 'Prorated' },
   { id: 'end', label: 'End' },
 ];
 function accrueTypeInfo(id) { return ACCRUE_TYPES.find(m => m.id === id) || ACCRUE_TYPES[1]; }   // absent = Prorated, MS Project's own default
-// A currency picker for the Resource Sheet's own toolbar (project.currencyCode, absent = 'USD') — Intl.NumberFormat
+// A currency picker for the Resource Sheet's own toolbar (project.currencyCode, absent = 'EUR') — Intl.NumberFormat
 // handles symbol/decimal/grouping placement per code natively, so this is just the list of codes offered.
 const CURRENCIES = [
-  { code: 'USD', label: 'US Dollar' }, { code: 'EUR', label: 'Euro' }, { code: 'GBP', label: 'British Pound' },
+  { code: 'EUR', label: 'Euro' }, { code: 'USD', label: 'US Dollar' }, { code: 'GBP', label: 'British Pound' },
   { code: 'JPY', label: 'Japanese Yen' }, { code: 'CHF', label: 'Swiss Franc' }, { code: 'CAD', label: 'Canadian Dollar' },
   { code: 'AUD', label: 'Australian Dollar' }, { code: 'CNY', label: 'Chinese Yuan' }, { code: 'INR', label: 'Indian Rupee' },
   { code: 'SEK', label: 'Swedish Krona' }, { code: 'NOK', label: 'Norwegian Krone' }, { code: 'DKK', label: 'Danish Krone' },
   { code: 'PLN', label: 'Polish Zloty' }, { code: 'BRL', label: 'Brazilian Real' }, { code: 'MXN', label: 'Mexican Peso' },
   { code: 'ZAR', label: 'South African Rand' }, { code: 'SGD', label: 'Singapore Dollar' }, { code: 'NZD', label: 'New Zealand Dollar' },
 ];
-function currencyCode() { return (project && typeof project.currencyCode === 'string' && CURRENCIES.some(c => c.code === project.currencyCode)) ? project.currencyCode : 'USD'; }
+function currencyCode() { return (project && typeof project.currencyCode === 'string' && CURRENCIES.some(c => c.code === project.currencyCode)) ? project.currencyCode : 'EUR'; }
 function fmtCurrency(n) { return new Intl.NumberFormat(undefined, { style: 'currency', currency: currencyCode() }).format(Number.isFinite(n) ? n : 0); }
 // The current currency's own symbol/code, e.g. "$"/"€" — for building a real Excel number-format string (buildXlsx()'s
 // Cost column), since Excel has no built-in "format like Intl.NumberFormat" — the number itself is still real/sortable.
@@ -1999,7 +2107,8 @@ let currentView = 'tasks';
 let gridPaneWidth = 640;
 const GRID_PANE_MIN_WIDTH = 320, GRID_PANE_MAX_WIDTH = 1800, GRID_PANE_DEFAULT = 640, GRID_PANE_REV = 1;   // (REV: the list used to be a 400px sidebar; a width saved back then isn't kept)
 let showCriticalPath = false;
-let showBaseline = true;   // the compared baseline as thin bars under the Gantt bars
+let showBaseline = true;
+let showTaskForm = false, taskFormHeight = 340;   // the Task Form pane (per device, like the other display prefs)   // the compared baseline as thin bars under the Gantt bars
 let selectedTaskId = null;
 let selectedTaskIds = new Set();   // the multi-selection (selectedTaskId is the anchor: the one clicked last)
 let selShadow = null;   // the anchor as this module last saw it: a different value means the anchor was assigned directly (older code, tests) = a single selection
@@ -2292,7 +2401,7 @@ function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c
 function byId(id) { return tasks.find(t => t.id === id); }
 
 /* ============================ Persistence =============================== */
-function prefsPayload() { return { theme, zoom, zoomRev: ZOOM_DEFAULT_REV, view: currentView, gridPaneWidth, gridPaneRev: GRID_PANE_REV, showBaseline, cols: { order: colOrder, hidden: [...colHidden], rev: COLS_REV }, gcols: { order: gColOrder, hidden: [...gColHidden] } }; }
+function prefsPayload() { return { theme, zoom, zoomRev: ZOOM_DEFAULT_REV, view: currentView, gridPaneWidth, gridPaneRev: GRID_PANE_REV, showBaseline, showTaskForm, taskFormHeight, cols: { order: colOrder, hidden: [...colHidden], rev: COLS_REV }, gcols: { order: gColOrder, hidden: [...gColHidden] } }; }
 function syncPayload() { return { version: APP_VERSION, project, tasks, deletedTaskIds }; }
 
 function planDataKey(id) { return PLAN_DATA_PREFIX + id; }
@@ -2355,6 +2464,8 @@ function loadPrefs() {
   zoom = (d.zoomRev === ZOOM_DEFAULT_REV && ZOOMS.some(z => z.id === d.zoom)) ? d.zoom : DEFAULT_ZOOM;
   currentView = (d.view === 'gantt' || d.view === 'resources') ? d.view : 'tasks';
   showBaseline = d.showBaseline !== false;
+  showTaskForm = d.showTaskForm === true;
+  taskFormHeight = Number.isFinite(d.taskFormHeight) ? Math.max(TASK_FORM_MIN_H, Math.min(1200, d.taskFormHeight)) : 340;
   gridPaneWidth = d.gridPaneRev === GRID_PANE_REV && Number.isFinite(d.gridPaneWidth) ? Math.max(GRID_PANE_MIN_WIDTH, Math.min(GRID_PANE_MAX_WIDTH, d.gridPaneWidth)) : GRID_PANE_DEFAULT;
   // Task list columns. A column the saved prefs don't know yet (added by a later version) is appended and follows its default.
   const known = id => !!TASK_COLS[id], sc = d.cols && typeof d.cols === 'object' ? d.cols : {};
@@ -2674,7 +2785,7 @@ function normalizeData() {
     // Task Type (MS Project's Fixed Units/Fixed Duration/Fixed Work triangle — see "Task Type / Work" in CLAUDE.md):
     // absent = the default for each, the usual convention — only an explicit non-default value is ever stored.
     if (t.taskType !== 'fixedDuration' && t.taskType !== 'fixedWork') delete t.taskType;
-    if (t.effortDriven === false) { /* keep it */ } else delete t.effortDriven;
+    if (t.effortDriven === true) { /* keep it */ } else delete t.effortDriven;   // absent = OFF (an explicit user request; MS Project's own default is on)
     { const cv = cleanCustomValues(t.custom); if (cv) t.custom = cv; else delete t.custom; }
     for (const f of ['actualStart', 'actualFinish']) t[f] = parseUserDate(typeof t[f] === 'string' ? t[f] : '');   // a real date or null
     if (t.actualStart && t.actualFinish && dayNumber(t.actualFinish) < dayNumber(t.actualStart)) t.actualFinish = t.actualStart;   // (a Start/Finish edit of a started task edits its actual dates: they can't cross)
@@ -2790,6 +2901,7 @@ function normalizeData() {
     const known = new Set(pool.map(r => String(r.name || '').trim().toLowerCase()));
     for (const t of tasks) {
       if (t.spacer || parentIds.has(t.id)) continue;   // a group's resource text is free-form notes, not an assignment (see MSPDI export's own precedent: a group's resource goes to Notes, not Assignments)
+      if (t.resource) { const c = canonicalResourceText(t.resource).slice(0, 200); if (c !== t.resource) t.resource = c; }   // "Anna:50%" -> "Anna[50%]"
       for (const { name } of parseResourceAssignments(t.resource)) {
         const key = name.toLowerCase();
         if (!known.has(key)) { known.add(key); pool.push({ id: genId(), name, maxUnits: 100 }); }
@@ -2799,27 +2911,26 @@ function normalizeData() {
     for (const r of pool) {
       const name = typeof r.name === 'string' ? r.name.trim().slice(0, 60) : ''; if (!name) continue;
       const key = name.toLowerCase(); if (seenName.has(key)) continue; seenName.add(key);   // a case-insensitive collision (a corrupted file, a manual edit) — first one wins, defensive only; the dialog itself validates uniqueness on save
-      const mu = Math.round(Number(r.maxUnits)), maxUnits = Number.isFinite(mu) ? Math.max(1, Math.min(800, mu)) : 100;
+      const mu = Math.round(Number(r.maxUnits)), applies = f => resourceFieldApplies(r, f);
+      const maxUnits = applies('maxUnits') && Number.isFinite(mu) ? Math.max(1, Math.min(MAX_UNITS_CAP, mu)) : 100;
       const entry = { id: r.id, name, maxUnits };
-      const daysOff = cleanHolidays(r.daysOff); if (daysOff) entry.daysOff = daysOff;
+      const daysOff = applies('daysOff') && cleanHolidays(r.daysOff); if (daysOff) entry.daysOff = daysOff;
       // Resource Sheet fields (see "Resource Sheet" in CLAUDE.md) — the same absence-is-default convention as maxUnits.
       if (RESOURCE_TYPES.some(x => x.id === r.type) && r.type !== 'work') entry.type = r.type;
       if (ACCRUE_TYPES.some(x => x.id === r.accrueAt) && r.accrueAt !== 'prorated') entry.accrueAt = r.accrueAt;
       const str = (v, cap) => typeof v === 'string' ? v.trim().slice(0, cap) : '';
-      const materialLabel = str(r.materialLabel, 20); if (materialLabel) entry.materialLabel = materialLabel;
+      const materialLabel = applies('materialLabel') && str(r.materialLabel, 20); if (materialLabel) entry.materialLabel = materialLabel;
       const initials = str(r.initials, 20); if (initials) entry.initials = initials;
       const group = str(r.group, 60); if (group) entry.group = group;
       const code = str(r.code, 40); if (code) entry.code = code;
       const num = v => { const n = Number(v); return Number.isFinite(n) && n > 0 ? Math.round(n * 100) / 100 : 0; };
-      if (num(r.stdRate)) entry.stdRate = num(r.stdRate);
-      if (num(r.ovtRate)) entry.ovtRate = num(r.ovtRate);
-      if (num(r.costPerUse)) entry.costPerUse = num(r.costPerUse);
+      for (const f of ['stdRate', 'ovtRate', 'costPerUse']) if (applies(f) && num(r[f])) entry[f] = num(r[f]);
       cleanPool.push(entry);
     }
     cleanPool.sort((a, b) => a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1);   // a canonical order (not creation order) so a merge and a plain local edit converge on the same array instead of flip-flopping
     if (cleanPool.length) project.resources = cleanPool; else delete project.resources;
-    // The Resource Sheet's currency (absent = USD, the usual default); anything not in CURRENCIES falls back too.
-    if (typeof project.currencyCode === 'string' && CURRENCIES.some(c => c.code === project.currencyCode) && project.currencyCode !== 'USD') { /* keep it */ } else delete project.currencyCode;
+    // The Resource Sheet's currency (absent = EUR, the usual default); anything not in CURRENCIES falls back too.
+    if (typeof project.currencyCode === 'string' && CURRENCIES.some(c => c.code === project.currencyCode) && project.currencyCode !== 'EUR') { /* keep it */ } else delete project.currencyCode;
   }
   {   // the working calendar: distinct weekdays 0-6; nothing stored when it is the default Mon-Fri (or unusable)
     const wd = Array.isArray(project.workDays) ? [...new Set(project.workDays.map(Number).filter(n => Number.isInteger(n) && n >= 0 && n <= 6))].sort((a, b) => a - b) : [];
@@ -3676,6 +3787,7 @@ function renderPass() {
   updateThemeToggleUI();
   updateNewTaskModeUI();
   updateSelectionUI();
+  renderTaskForm();
 }
 
 const MAIN_VIEWS = [{ id: 'tasks', label: 'Tasks' }, { id: 'gantt', label: 'Gantt' }, { id: 'resources', label: 'Resources' }, { id: 'resourceSheet', label: 'Resource Sheet' }];
@@ -4165,30 +4277,45 @@ function predecessorLabel(t) {
 /* ============================ Resource pool (levelling) ============================
    task.resource stays exactly the free-text field it always was — every existing reader (search, filters, CSV, Excel,
    MS Project XML, clipboard, bulk edit, merge) keeps working untouched. Its syntax grows one optional piece, the same way
-   an elapsed lag added an 'e' suffix to Predecessors: a name may carry ":NN%" (a bare name is 100%). project.resources is
+   an elapsed lag added an 'e' suffix to Predecessors: a name may carry "[NN%]" (MS Project's own form; the older ":NN%" is still read; a bare name is 100%). project.resources is
    populated automatically from whatever names appear in that text (normalizeData(), like MS Project auto-adding a typed
    name to its resource list) — a task's assignment is resolved by NAME match against the pool, not a stored id, so
    renaming/removing a pool entry is a deliberate cascade in its own dialog that rewrites the affected tasks' text. */
-// "Anna:50%, Ben" -> [{name:'Anna', units:50}, {name:'Ben', units:100}] — a bare name defaults to 100%; a bad or out-of-
+// "Anna[50%], Ben" -> [{name:'Anna', units:50}, {name:'Ben', units:100}] — a bare name defaults to 100%; a bad or out-of-
 // range percentage (outside roughly 1-800) is dropped back to 100 rather than refused — this field has never had the
 // Predecessors cell's strict-mode refusal, and typing "Anna:" while still typing a percentage shouldn't lose the name.
 function parseResourceAssignments(str) {
   const out = [], seen = new Set();
   for (const tok of String(str || '').split(/[,;]/).map(x => x.trim()).filter(Boolean)) {
-    const m = /^(.+?)(?:\s*:\s*(\d+(?:[.,]\d+)?)\s*%?)?$/.exec(tok);
+    // "Anna[50%]" (MS Project's own form, what this app writes), "Anna [50]", or the older "Anna:50%" this app wrote before.
+    const m = /^(.+?)(?:\s*\[\s*(\d+(?:[.,]\d+)?)\s*%?\s*\]?|\s*:\s*(\d+(?:[.,]\d+)?)\s*%?)?$/.exec(tok);
     if (!m) continue;
     const name = m[1].trim().slice(0, 60); if (!name) continue;
     const key = name.toLowerCase(); if (seen.has(key)) continue; seen.add(key);
     let units = 100;
-    if (m[2]) { const n = Math.round(parseFloat(m[2].replace(',', '.'))); if (Number.isFinite(n) && n >= 1 && n <= 800) units = n; }
+    const pct = m[2] || m[3];
+    if (pct) { const n = Math.round(parseFloat(pct.replace(',', '.'))); if (Number.isFinite(n) && n >= 1 && n <= 800) units = n; }
     out.push({ name, units });
   }
   return out;
 }
-// The inverse of parseResourceAssignments — [{name, units}] back to "Anna:50%, Ben" — used by the pool dialog's
-// rename/delete cascades to rewrite a task's Resource text, the same structured-to-text role predecessorLabel() has.
+// The inverse of parseResourceAssignments — [{name, units}] back to "Anna[50%], Ben" (MS Project's own Resource Names
+// form: a bare name is 100%) — used by the rename/delete cascades and the Task Type rescale to rewrite a task's Resource
+// text, the same structured-to-text role predecessorLabel() has.
 function formatResourceString(assignments) {
-  return assignments.map(a => a.units === 100 ? a.name : `${a.name}:${a.units}%`).join(', ');
+  return assignments.map(a => a.units === 100 ? a.name : `${a.name}[${a.units}%]`).join(', ');
+}
+// Rewrites only the percentage notation of a task's Resource text into MS Project's "Name[NN%]" — the older "Anna:50%"
+// and a loosely typed "Anna [ 50 ]" alike — leaving every other character (names, separators, spacing, anything
+// unparseable) exactly as typed. Run by normalizeData() on leaf tasks, so text typed either way reads the same.
+function canonicalResourceText(str) {
+  if (typeof str !== 'string' || !/[:\[]/.test(str)) return str;
+  return str.split(/([,;])/).map(tok => {
+    const m = /^(\s*)(.+?)\s*(?:\[\s*(\d+(?:[.,]\d+)?)\s*%?\s*\]?|:\s*(\d+(?:[.,]\d+)?)\s*%?)(\s*)$/.exec(tok);
+    if (!m) return tok;
+    const pct = m[3] || m[4];
+    return parseFloat(pct.replace(',', '.')) === 100 ? `${m[1]}${m[2]}${m[5]}` : `${m[1]}${m[2]}[${pct}%]${m[5]}`;   // 100% is just the name, as MS Project writes it
+  }).join('');
 }
 function resourceByName(name) {
   const key = String(name || '').trim().toLowerCase();
@@ -4205,7 +4332,7 @@ function taskAssignments(t) {
    Units is the AGGREGATE of every assigned resource's own percentage (parseResourceAssignments, not the pool-resolved
    taskAssignments() — the triangle needs no resolved pool object, just the percentages already in the text, so it has
    no ordering dependency on the resource pool being built first); unassigned = the implicit 100% ("one generic person,
-   full time"), the same convention the pool's own "200% = two people" already uses. Work is stored in working MINUTES
+   full time"), the same convention the pool's own Max Units percentage uses. Work is stored in working MINUTES
    always, regardless of day/minute mode — parseDurationMinutes()/fmtDurationMinutes() (below) are already unit-agnostic
    (workMinutesPerDay()-based) and reused verbatim for entry/display, no new parsing code needed. See "Task Type / Work"
    in CLAUDE.md. */
@@ -4231,9 +4358,9 @@ function recalcTaskType(t, changed) {
   const type = (t.taskType === 'fixedDuration' || t.taskType === 'fixedWork') ? t.taskType : 'fixedUnits';
   let target = TASK_TYPE_TABLE[type][changed];
   const asg = parseResourceAssignments(t.resource);
-  // effortDriven (default true) gates only "a resource was added/removed -> recalc Duration" for Fixed Units/Fixed
+  // effortDriven (default OFF) gates only "a resource was added/removed -> recalc Duration" for Fixed Units/Fixed
   // Work: off, the resource's capacity is simply added/removed without moving the schedule (Work recalculates instead).
-  if (changed === 'units' && target === 'duration' && t.effortDriven === false) target = 'work';
+  if (changed === 'units' && target === 'duration' && t.effortDriven !== true) target = 'work';
   // Units-recalculation with nothing assigned has no text to write back to: behaves like Fixed Units instead (Work and
   // Duration move together at the implicit 100%) — a real, small, defensible edge case, not silently wrong.
   if (target === 'units' && !asg.length) target = changed === 'duration' ? 'work' : 'duration';
@@ -4251,7 +4378,7 @@ function recalcTaskType(t, changed) {
   }
   // target === 'units': rescale every assignment's own percentage by the same ratio, so Work stays true at the
   // CURRENT Duration (formatResourceString/parseResourceAssignments — the same structured<->text round trip the
-  // Resource Pool dialog's own rename cascade already uses to rewrite task.resource deliberately).
+  // Resource Sheet's own rename cascade already uses to rewrite task.resource deliberately).
   const newUnits = durMin > 0 ? (work / durMin) * 100 : units;
   if (!(newUnits > 0) || Math.abs(newUnits - units) < 0.5) return null;   // no real change
   const ratio = newUnits / units, before = formatResourceString(asg);
@@ -4329,9 +4456,12 @@ function resourceLoadByDay(resourceId, excludeTaskId) {
 }
 // Every resource currently over its own capacity, and on which working days — a day the resource has taken off counts as
 // zero capacity that day (any load at all is "over"), not just as excluded from the count.
+// Only a Work resource has a capacity (Max Units): Material and Cost resources have none in MS Project either — their
+// Max Units cell is blank — so they are never over-allocated and never constrain levelling.
 function overallocatedResources() {
   const out = [];
   for (const r of (project.resources || [])) {
+    if (!hasCapacity(r)) continue;
     const load = resourceLoadByDay(r.id);
     const days = [...load.entries()].filter(([d, pct]) => pct > (resourceDayOff(r, d) ? 0 : r.maxUnits)).map(([d]) => d).sort((a, b) => a - b);
     if (days.length) out.push({ resourceId: r.id, name: r.name, days });
@@ -4353,6 +4483,7 @@ function overallocatedResources() {
 // committed elsewhere (loadByRes — resourceLoadByDay() per resource, with the task itself excluded from the sum).
 function levelFits(asg, startDay, endDay, loadByRes) {
   for (const { resource, units } of asg) {
+    if (!hasCapacity(resource)) continue;
     const load = loadByRes.get(resource.id);
     for (let d = startDay; d <= endDay; d++) {
       if (!isWorkNum(d)) continue;
@@ -5431,7 +5562,7 @@ function renderResourceUsage() {
   }).join('');
 
   if (!resources.length) {
-    document.getElementById('resourceBody').innerHTML = `<div class="empty-state" style="position:static;width:${RESOURCE_NAME_W + totalW}px"><i class="fa-solid fa-users"></i>No resources yet — type a name in a task's Resource field, or add one from <strong>Schedule → Resource pool…</strong></div>`;
+    document.getElementById('resourceBody').innerHTML = `<div class="empty-state" style="position:static;width:${RESOURCE_NAME_W + totalW}px"><i class="fa-solid fa-users"></i>No resources yet — type a name in a task's Resource field, or add one in the <strong>Resource Sheet</strong></div>`;
     resourceRenderedWin = { from: 0, to: 0, n: 0, virtual: false };
     return;
   }
@@ -5491,9 +5622,8 @@ function onResourceScroll() {
    are realistically small, unlike the task list/Resources view above), every cell a live input/select (a true
    spreadsheet, not click-to-edit), direct/immediate edits through the ordinary save()/render()/history cycle, same as
    the task grid's own inline editing. Renaming/removing a resource here shares its cascade (rewriting every affected
-   task's Resource text) with the Resource Pool dialog's own bulk Save — see renameResourceEverywhere()/
-   removeResourceEverywhere() above applyResourcePoolDraft(). Days off has no cell of its own; it opens that same
-   dialog, focused on the one row, rather than duplicating multi-entry date editing inline. */
+   task's Resource text) via renameResourceEverywhere()/removeResourceEverywhere(). Days off has no cell of its own;
+   it opens the small Days off dialog (openResourceDaysModal()) for that one resource. */
 const RS_HEAD = ['#', 'Resource Name', 'Type', 'Material Label', 'Initials', 'Group', 'Max Units', 'Std Rate', 'Ovt Rate', 'Cost/Use', 'Accrue At', 'Code', 'Days Off', ''];
 function renderResourceSheet() {
   document.getElementById('resourceSheetHeader').innerHTML = RS_HEAD.map(h => `<div>${h}</div>`).join('');
@@ -5528,23 +5658,25 @@ function updateResourceSheetColumnLines() {
   set('r', document.querySelector('#resourceSheetBody .rst-row'));
 }
 function resourceSheetRowHtml(r, i) {
-  const type = resourceTypeInfo(r.type).id, isMaterial = type === 'material', isCost = type === 'cost';
-  const accrue = accrueTypeInfo(r.accrueAt).id, n = (r.daysOff || []).length;
+  const type = resourceTypeInfo(r.type).id, isMaterial = type === 'material';
+  const accrue = accrueTypeInfo(r.accrueAt).id, n = daysOffCount(r.daysOff);
   const opts = (list, cur) => list.map(o => `<option value="${o.id}"${o.id === cur ? ' selected' : ''}>${o.label}</option>`).join('');
+  // A field that doesn't apply to this type gets an empty cell, not a disabled box (resourceFieldApplies()).
+  const cell = (field, html) => resourceFieldApplies(r, field) ? `<div class="rst-cell">${html}</div>` : `<div class="rst-cell rst-na" data-field="${field}" title="Doesn't apply to a ${resourceTypeInfo(type).label} resource"></div>`;
   return `<div class="rst-row" data-id="${r.id}">
     <div class="rst-cell rst-id">${i + 1}</div>
     <div class="rst-cell"><input type="text" class="inline-edit" maxlength="60" value="${escapeHtml(r.name)}" aria-label="Resource name" onchange="commitResourceCell('${r.id}','name',this.value)" onkeydown="if(event.key==='Enter')this.blur()"></div>
-    <div class="rst-cell"><select class="inline-edit" aria-label="Type" onchange="commitResourceCell('${r.id}','type',this.value)">${opts(RESOURCE_TYPES, type)}</select></div>
-    <div class="rst-cell"><input type="text" class="inline-edit" maxlength="20" placeholder="e.g. tons" value="${escapeHtml(r.materialLabel || '')}" aria-label="Material label" ${isMaterial ? '' : 'disabled'} onchange="commitResourceCell('${r.id}','materialLabel',this.value)"></div>
+    <div class="rst-cell"><select class="rst-select" aria-label="Type" onchange="commitResourceCell('${r.id}','type',this.value)">${opts(RESOURCE_TYPES, type)}</select></div>
+    ${cell('materialLabel', `<input type="text" class="inline-edit" maxlength="20" placeholder="e.g. tons" value="${escapeHtml(r.materialLabel || '')}" aria-label="Material label" onchange="commitResourceCell('${r.id}','materialLabel',this.value)">`)}
     <div class="rst-cell"><input type="text" class="inline-edit" maxlength="20" value="${escapeHtml(r.initials || '')}" aria-label="Initials" onchange="commitResourceCell('${r.id}','initials',this.value)"></div>
     <div class="rst-cell"><input type="text" class="inline-edit" maxlength="60" value="${escapeHtml(r.group || '')}" aria-label="Group" onchange="commitResourceCell('${r.id}','group',this.value)"></div>
-    <div class="rst-cell"><input type="number" min="1" max="800" class="inline-edit" value="${r.maxUnits}" aria-label="Max units, percent" onchange="commitResourceCell('${r.id}','maxUnits',this.value)"></div>
-    <div class="rst-cell"><input type="number" min="0" step="any" class="inline-edit" value="${r.stdRate || ''}" aria-label="Standard rate per hour" ${isCost ? 'disabled' : ''} onchange="commitResourceCell('${r.id}','stdRate',this.value)"></div>
-    <div class="rst-cell"><input type="number" min="0" step="any" class="inline-edit" value="${r.ovtRate || ''}" aria-label="Overtime rate per hour" ${(isMaterial || isCost) ? 'disabled' : ''} onchange="commitResourceCell('${r.id}','ovtRate',this.value)"></div>
+    ${cell('maxUnits', `<input type="text" inputmode="numeric" class="inline-edit rst-pct" value="${r.maxUnits}%" aria-label="Max units, percent" title="How much of this resource is available — 100% is one full-time person, 300% three people pooled into one resource" onchange="commitResourceCell('${r.id}','maxUnits',this.value)" onkeydown="if(event.key==='Enter')this.blur()">`)}
+    ${cell('stdRate', `<input type="number" min="0" step="any" class="inline-edit" value="${r.stdRate || ''}" aria-label="${isMaterial ? 'Standard rate per unit' : 'Standard rate per hour'}" onchange="commitResourceCell('${r.id}','stdRate',this.value)">`)}
+    ${cell('ovtRate', `<input type="number" min="0" step="any" class="inline-edit" value="${r.ovtRate || ''}" aria-label="Overtime rate per hour" onchange="commitResourceCell('${r.id}','ovtRate',this.value)">`)}
     <div class="rst-cell"><input type="number" min="0" step="any" class="inline-edit" value="${r.costPerUse || ''}" aria-label="Cost per use" onchange="commitResourceCell('${r.id}','costPerUse',this.value)"></div>
-    <div class="rst-cell"><select class="inline-edit" aria-label="Accrue at" onchange="commitResourceCell('${r.id}','accrueAt',this.value)">${opts(ACCRUE_TYPES, accrue)}</select></div>
+    <div class="rst-cell"><select class="rst-select" aria-label="Accrue at" onchange="commitResourceCell('${r.id}','accrueAt',this.value)">${opts(ACCRUE_TYPES, accrue)}</select></div>
     <div class="rst-cell"><input type="text" class="inline-edit" maxlength="40" value="${escapeHtml(r.code || '')}" aria-label="Code" onchange="commitResourceCell('${r.id}','code',this.value)"></div>
-    <div class="rst-cell"><button type="button" class="rst-days-link" onclick="openResourcePoolModal('${r.id}')">${n ? `${n} day${n === 1 ? '' : 's'} off` : 'Days off'}</button></div>
+    ${cell('daysOff', `<button type="button" class="rst-days-link" onclick="openResourceDaysModal('${r.id}')">${n ? `${n} day${n === 1 ? '' : 's'} off` : 'Days off'}</button>`)}
     <div class="rst-cell"><button type="button" class="rst-remove" title="Remove ${escapeHtml(r.name)}" aria-label="Remove ${escapeHtml(r.name)}" onclick="removeResourceSheetRow('${r.id}')"><i class="fa-solid fa-xmark"></i></button></div>
   </div>`;
 }
@@ -5558,6 +5690,22 @@ function commitResourceCell(id, field, value) {
     if (!nm) { showToast('Give the resource a name', true); render(); return; }
     if (pool.some(x => x.id !== id && x.name.toLowerCase() === nm.toLowerCase())) { showToast(`“${nm}” is already the name of another resource`, true); render(); return; }
     if (nm !== r.name) { renameResourceEverywhere(id, nm); r.name = nm; }
+  } else if (field === 'type') {
+    const from = resourceTypeInfo(r.type).id, to = resourceTypeInfo(value).id;
+    if (from === to) return;
+    const cleared = RESOURCE_TYPE_RESET.filter(f => r[f] != null && r[f] !== '' && !(Array.isArray(r[f]) && !r[f].length));
+    for (const f of RESOURCE_TYPE_RESET) delete r[f];
+    r.maxUnits = 100; r.type = to;
+    if (cleared.length) {
+      const names = { materialLabel: 'Material Label', stdRate: 'Std Rate', ovtRate: 'Ovt Rate', costPerUse: 'Cost/Use', daysOff: 'days off' };
+      showToast(`${r.name} is now a ${resourceTypeInfo(to).label} resource — ${cleared.map(f => names[f]).join(', ')} cleared (Ctrl+Z to undo)`);
+    }
+  } else if (field === 'maxUnits') {
+    // Typed as "80", "80%" or "80 %"; 1% to 800% (above 100% = several people pooled into one resource).
+    const n = Math.round(Number(String(value).replace('%', '').replace(',', '.').trim()));
+    if (!String(value).trim() || !Number.isFinite(n)) { showToast('Max Units must be a percentage, e.g. 50%', true); render(); return; }
+    if (n > MAX_UNITS_CAP) showToast(`Max Units can be at most ${MAX_UNITS_CAP}%`);
+    r.maxUnits = Math.max(1, Math.min(MAX_UNITS_CAP, n));
   } else { r[field] = value; }
   project.updatedAt = Date.now();
   save(); render();
@@ -5579,7 +5727,7 @@ function addResourceSheetRow() {
   setTimeout(() => { const el = document.querySelector(`.rst-row[data-id="${r.id}"] input`); if (el) { el.focus(); el.select(); } }, 40);
 }
 function setCurrencyCode(code) {
-  if (!CURRENCIES.some(c => c.code === code) || code === 'USD') delete project.currencyCode; else project.currencyCode = code;
+  if (!CURRENCIES.some(c => c.code === code) || code === 'EUR') delete project.currencyCode; else project.currencyCode = code;
   project.updatedAt = Date.now();
   save(); render();
 }
@@ -5974,7 +6122,7 @@ function openTaskModal(id, isNew) {
   document.getElementById('taskResourceInput').value = t.resource || '';
   document.getElementById('taskTypeRow').classList.toggle('hidden', t.milestone || hasChildren(id));   // Task Type / Work: meaningless for a milestone (zero duration) or a group (rollup, not stored)
   document.getElementById('taskTypeInput').value = (t.taskType === 'fixedDuration' || t.taskType === 'fixedWork') ? t.taskType : 'fixedUnits';
-  document.getElementById('effortDrivenInput').checked = t.effortDriven !== false;
+  document.getElementById('effortDrivenInput').checked = t.effortDriven === true;
   document.getElementById('taskWorkInput').value = Number.isFinite(t.work) ? fmtDurationMinutes(t.work) : '';
   const group = hasChildren(id), act = actualDates(id);   // a group's actual dates are rolled up from its tasks, so read-only
   document.getElementById('taskActualStartInput').value = act.start || '';
@@ -6267,7 +6415,7 @@ function renderLevelModal() {
   const dry = hasPool ? levelDryRun(levelOpts()) : { rows: [], unresolved: [] };
   const rows = dry.rows.slice().sort((a, b) => taskDisplayId(a.id) - taskDisplayId(b.id));
   const n = rows.length, u = dry.unresolved.length;
-  document.getElementById('levelHint').textContent = !hasPool ? 'No resources yet — type a name in a task’s Resource field, or add one from Resource pool…, then come back here.'
+  document.getElementById('levelHint').textContent = !hasPool ? 'No resources yet — type a name in a task’s Resource field, or add one in the Resource Sheet, then come back here.'
     : (!n && !u) ? 'Nothing to level — no resource is over-allocated within this scope.'
     : `${n} task${n === 1 ? '' : 's'} would move to resolve ${n === 1 ? 'a' : 'the'} conflict${u ? `; ${u} more resource-day conflict${u === 1 ? '' : 's'} could not be resolved within slack` : ''}.`;
   document.getElementById('levelBtn').disabled = !n;
@@ -6423,6 +6571,7 @@ function openCalendarModal() {
   fillHolidayPresets();
   for (const id of ['holFrom', 'holTo', 'holName']) document.getElementById(id).value = '';
   document.getElementById('holYearly').checked = false; document.getElementById('holYearly').disabled = false;
+  updateHolAddBtn();
   document.getElementById('calendarDays').onchange = updateCalendarSummary;
   const how = document.querySelector('#calendarModalBg .cal-how'); if (how) how.open = false;
   renderHolidayList();
@@ -6459,15 +6608,38 @@ function renderHolidayList() {
   document.getElementById('holClearBtn').classList.toggle('hidden', !n);
   updateCalendarSummary();
 }
-function holToChanged() {   // "every year" only makes sense for a single day
-  const to = document.getElementById('holTo').value, y = document.getElementById('holYearly');
-  if (to) y.checked = false;
-  y.disabled = !!to;
+// The First day / Last day pair of a day-off add row (Working calendar, Days off). An empty Last day, or the same date
+// as the First day, is ONE day — the common case needs nothing but the first box; only a last day before the first is
+// wrong. Returns { from, to (null for one day), days } or { error }.
+function readDayOffRange(fromId, toId) {
+  const from = document.getElementById(fromId).value, to0 = document.getElementById(toId).value;
+  if (!from) return { error: 'Pick the day off first' };
+  if (to0 && dayNumber(to0) < dayNumber(from)) return { error: 'The last day can’t be before the first day' };
+  const to = to0 && to0 !== from ? to0 : null;
+  return { from, to, days: to ? dayNumber(to) - dayNumber(from) + 1 : 1 };
+}
+// The Add button says what it will add ("Add 1 day", "Add 12 days", "Add every year"), live as the dates are typed.
+function dayOffAddLabel(r, yearly) {
+  if (r.error) return 'Add';
+  if (yearly && !r.to) return 'Add every year';
+  return `Add ${r.days} day${r.days === 1 ? '' : 's'}`;
+}
+function updateHolAddBtn() {
+  const y = document.getElementById('holYearly');
+  document.querySelector('#holAddBtn span').textContent = dayOffAddLabel(readDayOffRange('holFrom', 'holTo'), y.checked && !y.disabled);
+}
+function updateResDayAddBtn() { document.querySelector('#resDayAddBtn span').textContent = dayOffAddLabel(readDayOffRange('resDayFrom', 'resDayTo')); }
+function holToChanged() {   // "every year" only makes sense for a single day (a Last day equal to the First still is one)
+  const r = readDayOffRange('holFrom', 'holTo'), y = document.getElementById('holYearly');
+  const range = !r.error && !!r.to;
+  if (range) y.checked = false;
+  y.disabled = range;
+  updateHolAddBtn();
 }
 function addHoliday() {
-  const from = document.getElementById('holFrom').value, to = document.getElementById('holTo').value;
-  if (!from) { showToast('Pick the day off first', true); document.getElementById('holFrom').focus(); return; }
-  if (to && dayNumber(to) <= dayNumber(from)) { showToast('The last day must be after the first day', true); return; }
+  const r = readDayOffRange('holFrom', 'holTo');
+  if (r.error) { showToast(r.error, true); document.getElementById(r.error.startsWith('Pick') ? 'holFrom' : 'holTo').focus(); return; }
+  const { from, to } = r;
   const h = { date: from };
   if (to) h.to = to; else if (document.getElementById('holYearly').checked) h.yearly = true;
   const name = document.getElementById('holName').value.trim(); if (name) h.name = name;
@@ -6475,6 +6647,7 @@ function addHoliday() {
   renderHolidayList();
   for (const id of ['holFrom', 'holTo', 'holName']) document.getElementById(id).value = '';
   document.getElementById('holYearly').checked = false; document.getElementById('holYearly').disabled = false;
+  updateHolAddBtn();
   document.getElementById('holFrom').focus();
 }
 function removeHoliday(i) { calHolidays.splice(i, 1); renderHolidayList(); }
@@ -6749,125 +6922,327 @@ function applyFieldsDraft() {
   if (inMenu) renderColumnsMenu();
   if (inDialog) renderCustomFieldsTab(typed);
 }
-/* ============================ Resource pool dialog (Schedule menu → Resource pool…) ============================
-   Modelled on the Custom Fields dialog just above (the same draft-array CRUD: JSON-snapshot dirty-check, a toggle-remove
-   that discards a brand-new row but strikes through an existing one, validate-then-confirm-then-apply on Save) — but with
-   free-form ids (genId(), like a task's) instead of CUSTOM_FIELDS' fixed slots, since a resource pool has no natural
-   bound. A rename or removal here is the one place that actively rewrites the affected tasks' Resource TEXT (matched by
-   each row's ORIGINAL name, before the pool itself changes) — the cascade the whole "resolve by name" design depends on,
-   the same capture-then-cascade shape deleteTasksNow() already uses for a deleted predecessor link. */
-let resourceDraft = null, resourceOrig = null;
-function resourcePoolMenuHint() { const n = (project.resources || []).length; return n ? `${n} ${n === 1 ? 'person' : 'people'}` : 'none yet'; }
-// focusId (optional): the Resource Sheet's own "Days off" link opens this SAME dialog rather than duplicating days-off
-// editing UI inline — scrolls to and opens that one resource's own days-off details instead of just focusing the first row.
-function openResourcePoolModal(focusId) {
-  closeScheduleMenu();
-  resourceDraft = (project.resources || []).map(r => ({
-    id: r.id, name: r.name, orig: r.name, maxUnits: r.maxUnits, daysOff: (r.daysOff || []).map(h => Object.assign({}, h)), isNew: false, removed: false,
-    uses: tasks.filter(t => taskAssignments(t).some(a => a.resource.id === r.id)).length
-  }));
-  resourceOrig = JSON.stringify(resourceDraft);
-  document.getElementById('resourcePoolPlanName').textContent = project.name;
-  renderResourceRows();
-  document.getElementById('resourcePoolModalBg').classList.add('open');
-  const focusIdx = focusId ? resourceDraft.findIndex(r => r.id === focusId) : -1;
-  setTimeout(() => {
-    if (focusIdx >= 0) {
-      const item = document.querySelectorAll('#resourceRows .res-item')[focusIdx];
-      if (item) { item.scrollIntoView({ block: 'center' }); const d = item.querySelector('.res-days'); if (d) d.open = true; const i = item.querySelector('.res-name'); if (i) i.focus(); return; }
+/* ============================ Task Form (MS Project's Task Form — View → Details there) ============================
+   A pane under the task list / chart (Tasks and Gantt views), switched on and off from the toolbar (showTaskForm, a
+   per-device pref, like showBaseline), showing the SELECTED task: Name, Duration, Effort driven, Manually Scheduled,
+   Start, Finish, Task Type, % Complete, and its Resources (Name, Units, Work) and Predecessors (ID, Name, Type, Lag).
+   Edits are a draft, applied together by OK — one Undo step, through the same scheduling rules as the Edit Task dialog
+   (working-day snapping, the Start/Finish No Earlier Than pin, the Task Type triangle, the cascade) — or thrown away by
+   Cancel. While the draft holds changes the form stays on its task even if the selection moves (the header says so),
+   so nothing typed is ever lost silently; Previous / Next apply first, as in MS Project. */
+const TASK_FORM_MIN_H = 190;
+let tfTaskId = null, tfSnapshot = null, tfRes = [], tfPreds = [], tfOrig = null;
+function toggleTaskForm() {
+  if (showTaskForm && tfDirty()) { openConfirmModal({ title: 'Discard your changes?', body: 'The Task Form has changes that were not applied.', confirmLabel: 'Discard changes', cancelLabel: 'Keep editing', action() { tfSnapshot = null; showTaskForm = false; save(); render(); } }); return; }
+  showTaskForm = !showTaskForm; tfSnapshot = null; tfTaskId = null; save(); render();
+}
+function applyTaskFormHeight() {
+  const max = Math.max(TASK_FORM_MIN_H, Math.round(window.innerHeight * 0.7));
+  document.documentElement.style.setProperty('--task-form-h', Math.max(TASK_FORM_MIN_H, Math.min(max, taskFormHeight)) + 'px');
+}
+function tfState() {
+  const vals = [...document.querySelectorAll('#taskFormBody input, #taskFormBody select')].map(el => el.type === 'checkbox' ? el.checked : el.value);
+  return JSON.stringify(vals);
+}
+function tfDirty() { return tfSnapshot !== null && !!byId(tfTaskId) && tfState() !== tfSnapshot; }
+function tfDurText(t) {
+  const eff = effectiveDates(t.id);
+  if (t.milestone) return minuteModeActive() ? '0 min' : '0 days';
+  if (!eff.start) return '';
+  if (minuteModeActive() && !hasChildren(t.id)) return fmtDurationMinutes(durationMoment(taskMoment(t, 'start'), taskMoment(t, 'end')));
+  const d = durationDays(eff.start, eff.end); return `${d} day${d === 1 ? '' : 's'}`;
+}
+function tfHeader() {
+  const t = byId(tfTaskId), dirty = tfDirty(), note = document.getElementById('tfNote'), $ = id => document.getElementById(id);
+  $('tfTaskLabel').textContent = t ? `Task Form: #${taskDisplayId(t.id)} ${t.name}` : '';
+  if (!note) return;   // (nothing selected / an empty line: no fields, no buttons)
+  const elsewhere = dirty && selectedTaskId !== tfTaskId;
+  note.textContent = !t || !dirty ? '' : elsewhere ? `Changes to #${taskDisplayId(t.id)} ${t.name} not applied — the form stays on this task until you click OK or Cancel` : 'Not applied yet — OK applies, Cancel discards';
+  note.classList.toggle('dirty', dirty);
+  for (const id of ['tfOkBtn', 'tfCancelBtn']) $(id).disabled = !dirty;
+  const list = tfStepList(), i = list.indexOf(tfTaskId);
+  $('tfPrevBtn').disabled = !t || i <= 0;
+  $('tfNextBtn').disabled = !t || i < 0 || i >= list.length - 1;
+}
+function tfStepList() { return visibleTaskList().map(v => v.task).filter(t => !t.spacer).map(t => t.id); }
+function renderTaskForm(force) {
+  const avail = currentView === 'tasks' || currentView === 'gantt', on = showTaskForm && avail;
+  const btn = document.getElementById('taskFormBtn');
+  btn.classList.toggle('hidden', !avail); btn.classList.toggle('active', showTaskForm); btn.setAttribute('aria-pressed', String(showTaskForm));
+  document.getElementById('taskFormPane').classList.toggle('hidden', !on);
+  if (!on) return;
+  applyTaskFormHeight();
+  if (!force && tfDirty()) { tfHeader(); return; }   // unapplied changes: stay on that task, keep what is typed
+  if (!force && tfSnapshot !== null && tfTaskId === (byId(selectedTaskId) ? selectedTaskId : null) && document.activeElement && document.getElementById('taskFormBody').contains(document.activeElement)) { tfHeader(); return; }   // (don't rebuild under the cursor)
+  tfTaskId = byId(selectedTaskId) ? selectedTaskId : null;
+  const body = document.getElementById('taskFormBody'), t = byId(tfTaskId);
+  if (!t) { body.innerHTML = '<div class="tf-empty">Select a task to see and edit its details here.</div>'; tfSnapshot = null; tfOrig = null; tfHeader(); return; }
+  if (t.spacer) { body.innerHTML = '<div class="tf-empty">An empty line has nothing to edit.</div>'; tfSnapshot = null; tfOrig = null; tfHeader(); return; }
+  const group = hasChildren(t.id), ms = t.milestone, mm = minuteModeActive(), eff = effectiveDates(t.id);
+  const noTT = group || ms, datesRO = group;
+  const startIso = group ? (eff.start || t.startDate) : t.startDate, endIso = group ? (eff.end || t.endDate) : t.endDate;
+  tfOrig = { dur: tfDurText(t), start: startIso, startTime: mm ? (t.startTime || wStart(startIso)) : '', end: endIso, endTime: mm ? (t.endTime || wEnd(endIso)) : '' };
+  const typeOpts = TASK_TYPES.map(o => `<option value="${o.id}"${o.id === taskTypeInfo(t.taskType).id ? ' selected' : ''}>${o.label}</option>`).join('');
+  const textNote = [t.startText != null && `Start "${t.startText}"`, t.endText != null && `Finish "${t.endText}"`].filter(Boolean);
+  const tfBtn = (id, label, title, cls = '') => `<button type="button" class="btn btn-sm${cls}" id="${id}" title="${title}">${label}</button>`;
+  body.innerHTML = `
+    <div class="tf-top">
+      <label for="tfName">Name:</label><input type="text" class="tf-in" id="tfName" maxlength="255" value="${escapeHtml(t.name)}">
+      <label for="tfDur">Duration:</label><input type="text" class="tf-in" id="tfDur" value="${escapeHtml(tfOrig.dur)}" ${datesRO || ms ? 'disabled' : ''} title="${mm ? 'Working time — 4h, 90m, 2d, 1w (a bare number is hours)' : 'Working days — 5, 5d, 2w'}">
+      <div class="tf-checks"><label class="tf-check" title="${noTT ? 'Only for an ordinary task (not a milestone or a group)' : 'Adding or removing a resource keeps Work the same and moves the schedule (Fixed Units / Fixed Work)'}"><input type="checkbox" id="tfEffort" ${t.effortDriven === true ? 'checked' : ''} ${noTT ? 'disabled' : ''}><span>Effort driven</span></label>
+        <label class="tf-check"><input type="checkbox" id="tfManual" ${t.taskMode === 'manual' ? 'checked' : ''}><span>Manually Scheduled</span></label></div>
+      <div class="tf-btns">${tfBtn('tfPrevBtn', 'Previous', 'Previous task (applies your changes first)')}${tfBtn('tfNextBtn', 'Next', 'Next task (applies your changes first)')}</div>
+      <label for="tfStart">Start:</label><div class="tf-dt"><input type="text" class="dt-date" id="tfStart" ${datesRO ? 'disabled' : ''}>${mm ? `<input type="text" class="dt-time tf-in" id="tfStartTime" aria-label="Start time" ${datesRO ? 'disabled' : ''}>` : ''}</div>
+      <label for="tfFinish">Finish:</label><div class="tf-dt"><input type="text" class="dt-date" id="tfFinish" ${datesRO || ms ? 'disabled' : ''}>${mm ? `<input type="text" class="dt-time tf-in" id="tfFinishTime" aria-label="Finish time" ${datesRO || ms ? 'disabled' : ''}>` : ''}</div>
+      <div class="tf-pair"><label for="tfType">Task type:</label><select id="tfType" ${noTT ? 'disabled' : ''}>${typeOpts}</select>
+        <label for="tfPct">% Complete:</label><input type="text" class="tf-in" inputmode="numeric" id="tfPct" value="${group ? Math.round(effectiveProgressOf(t.id)) : t.progress}%" ${group ? 'disabled title="A group\'s % complete is worked out from its tasks"' : ''}></div>
+      <div class="tf-btns">${tfBtn('tfCancelBtn', 'Cancel', 'Discard the changes in the form (Esc)')}${tfBtn('tfOkBtn', 'OK', 'Apply the changes (Enter) — one Undo step', ' btn-primary')}</div>
+    </div>
+    <div class="tf-note" id="tfNote"></div>
+    ${textNote.length ? `<div class="tf-hint">Free text on this task — ${escapeHtml(textNote.join(', '))}. Changing that date replaces it.</div>` : ''}
+    ${group ? '<div class="tf-hint">A group rolls up its tasks: its dates, % complete, resources and links belong to the tasks in it.</div>'
+      : `<div class="tf-tables">
+           <div class="tf-table tf-res"><div class="tf-row tf-row-head"><span class="r">ID</span><span>Resource Name</span><span class="r">Units</span><span class="r">Work</span><span></span></div>
+             <div class="tf-scroll"><div class="tf-grid" id="tfResRows"></div><div class="tf-fill" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div></div></div>
+           <div class="tf-table tf-pred"><div class="tf-row tf-row-head"><span class="r">ID</span><span>Predecessor Name</span><span>Type</span><span class="r">Lag</span><span></span></div>
+             <div class="tf-scroll"><div class="tf-grid" id="tfPredRows"></div><div class="tf-fill" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div></div></div>
+         </div>
+         <datalist id="tfResList">${(project.resources || []).map(r => `<option value="${escapeHtml(r.name)}">`).join('')}</datalist>`}`;
+  body.querySelector('#tfPrevBtn').onclick = () => taskFormStep(-1); body.querySelector('#tfNextBtn').onclick = () => taskFormStep(1);
+  body.querySelector('#tfCancelBtn').onclick = cancelTaskForm; body.querySelector('#tfOkBtn').onclick = () => applyTaskForm();
+  enhanceBoxes(body);
+  const $ = id => document.getElementById(id);
+  $('tfStart').value = startIso; $('tfFinish').value = endIso;
+  if (mm) { $('tfStartTime').value = tfOrig.startTime; $('tfFinishTime').value = tfOrig.endTime; }
+  if (!group) {
+    tfRes = parseResourceAssignments(t.resource).map(a => ({ name: a.name, units: `${a.units}%`, saved: a.units }));
+    tfPreds = t.predecessors.filter(p => byId(p.id)).map(p => ({ num: String(taskDisplayId(p.id)), type: p.type, lag: fmtLag(p.lag, p.elapsed) || '0', orig: { id: p.id, lag: p.lag, elapsed: !!p.elapsed, lagText: fmtLag(p.lag, p.elapsed) || '0' } }));
+    renderTfResRows(); renderTfPredRows();
+  } else { tfRes = []; tfPreds = []; }
+  tfSnapshot = tfState();
+  tfHeader();
+}
+function effectiveProgressOf(id) { const e = effectiveDates(id); return Number.isFinite(e.progress) ? e.progress : (byId(id) || {}).progress || 0; }
+function tfResRowHtml(t, r, i, blank) {
+  const res = r.name ? resourceByName(r.name) : null, unchanged = !blank && r.saved !== null && res && Number(String(r.units).replace('%', '')) === r.saved;
+  const work = unchanged ? fmtDurationMinutes(Math.round(assignmentHours(t, { units: r.saved }) * 60)) : '';
+  const rid = res ? (project.resources || []).indexOf(res) + 1 : '';
+  return `<div class="tf-row${blank ? ' tf-blank' : ''}" data-i="${i}"><span class="tf-id">${rid || ''}</span>
+      <input type="text" class="tf-cell" list="tfResList" maxlength="60" value="${escapeHtml(r.name)}" placeholder="${blank ? 'Add a resource' : ''}" aria-label="Resource name" oninput="tfResInput(${i}, 'name', this.value)">
+      <input type="text" class="tf-cell tf-units" inputmode="numeric" value="${escapeHtml(r.units)}" placeholder="${blank ? '100%' : ''}" aria-label="Units" oninput="tfResInput(${i}, 'units', this.value)">
+      <span class="tf-work" title="${unchanged ? 'This assignment\'s share of the task\'s Work' : 'Worked out when you click OK'}">${work || (blank ? '' : '—')}</span>
+      <button type="button" class="tf-remove" ${blank ? 'hidden' : ''} aria-label="Remove ${escapeHtml(r.name || 'this resource')}" title="Remove" onclick="tfResRemove(${i})"><i class="fa-solid fa-xmark"></i></button></div>`;
+}
+function renderTfResRows() {
+  const t = byId(tfTaskId), el = document.getElementById('tfResRows'); if (!t || !el) return;
+  el.innerHTML = tfRes.map((r, i) => tfResRowHtml(t, r, i, false)).join('') + tfResRowHtml(t, { name: '', units: '', saved: null }, tfRes.length, true);
+}
+// Typing into the blank row makes it a real one and adds the next blank row BELOW it, in place — rebuilding the table
+// here would replace the very box the person is moving into (the click or the typing would be lost).
+function tfGrow(listSel, rowHtml) {
+  const rows = document.querySelectorAll(`${listSel} .tf-row:not(.tf-row-head)`), last = rows[rows.length - 1];
+  if (last) { last.classList.remove('tf-blank'); const x = last.querySelector('.tf-remove'); if (x) x.hidden = false; last.querySelectorAll('[placeholder]').forEach(el => { el.placeholder = ''; }); }
+  document.querySelector(listSel).insertAdjacentHTML('beforeend', rowHtml);
+}
+function tfResInput(i, key, v) {
+  if (i === tfRes.length) { tfRes.push({ name: '', units: '', saved: null }); tfRes[i][key] = v; tfGrow('#tfResRows', tfResRowHtml(byId(tfTaskId), { name: '', units: '', saved: null }, tfRes.length, true)); }
+  else tfRes[i][key] = v;
+  tfHeader();
+}
+function tfResRemove(i) { tfRes.splice(i, 1); renderTfResRows(); tfHeader(); }
+function tfPredRowHtml(p, i, blank) {
+  const pt = tfPredTask(p.num);
+  return `<div class="tf-row${blank ? ' tf-blank' : ''}" data-i="${i}"><input type="number" class="tf-cell" min="1" step="1" value="${escapeHtml(p.num)}" placeholder="${blank ? 'Task #' : ''}" aria-label="Predecessor task number" style="text-align:right" oninput="tfPredInput(${i}, 'num', this.value)">
+      <span class="tf-pred-name${pt ? '' : ' none'}" data-i="${i}" title="${pt ? escapeHtml(pt.name) : ''}">${pt ? escapeHtml(pt.name) : (p.num ? 'no such task' : '')}</span>
+      <select class="tf-cell" aria-label="Link type" title="FS finish-to-start, SS start-to-start, FF finish-to-finish, SF start-to-finish" onchange="tfPredInput(${i}, 'type', this.value)">${DEP_TYPES.map(dt => `<option value="${dt}"${dt === p.type ? ' selected' : ''}>${dt}</option>`).join('')}</select>
+      <input type="text" class="tf-cell tf-lag" value="${escapeHtml(p.lag)}" placeholder="${blank ? '0' : ''}" aria-label="Lead or lag" title="${minuteModeActive() ? 'Working time — 2h, -30m, 1d; a bare number is hours' : 'Working days — negative is a lead'}. Positive delays the task (lag), negative lets it overlap (lead)" oninput="tfPredInput(${i}, 'lag', this.value)">
+      <button type="button" class="tf-remove" ${blank ? 'hidden' : ''} aria-label="Remove this predecessor" title="Remove" onclick="tfPredRemove(${i})"><i class="fa-solid fa-xmark"></i></button></div>`;
+}
+function renderTfPredRows() {
+  const el = document.getElementById('tfPredRows'); if (!el) return;
+  el.innerHTML = tfPreds.map((p, i) => tfPredRowHtml(p, i, false)).join('') + tfPredRowHtml({ num: '', type: 'FS', lag: '' }, tfPreds.length, true);
+}
+function tfPredTask(num) { const n = parseInt(num, 10); const id = Number.isFinite(n) ? taskIdByDisplayId(n) : null; return id ? byId(id) : null; }
+function tfPredInput(i, key, v) {
+  if (i === tfPreds.length) { tfPreds.push({ num: '', type: 'FS', lag: '' }); tfGrow('#tfPredRows', tfPredRowHtml({ num: '', type: 'FS', lag: '' }, tfPreds.length, true)); }
+  tfPreds[i][key] = v;
+  if (key === 'num') { const span = document.querySelector(`#tfPredRows .tf-pred-name[data-i="${i}"]`), pt = tfPredTask(v); if (span) { span.textContent = pt ? pt.name : (v ? 'no such task' : ''); span.classList.toggle('none', !pt); } }
+  tfHeader();
+}
+function tfPredRemove(i) { tfPreds.splice(i, 1); renderTfPredRows(); tfHeader(); }
+function cancelTaskForm() { tfSnapshot = null; renderTaskForm(true); }
+// Reads and validates the whole form first (nothing changes when something is wrong), then applies it as one save.
+function applyTaskForm() {
+  const t = byId(tfTaskId); if (!t || t.spacer) return false;
+  if (!tfDirty()) return true;
+  const $ = id => document.getElementById(id), group = hasChildren(t.id), ms = t.milestone, mm = minuteModeActive();
+  const fail = (msg, id) => { showToast(msg, true); if (id && $(id)) $(id).focus(); return false; };
+  const name = $('tfName').value.trim() || 'Untitled Task', manual = $('tfManual').checked;
+  let pct = t.progress, durVal = null, rows = null, preds = null;
+  if (!group) {
+    const pv = $('tfPct').value.replace('%', '').replace(',', '.').trim(), pn = Math.round(Number(pv));
+    if (pv === '' || !Number.isFinite(pn) || pn < 0 || pn > 100) return fail('% Complete must be 0–100', 'tfPct');
+    pct = pn;
+    if (!$('tfStart').value) return fail('Start needs a date', 'tfStart');
+    if (!ms && !$('tfFinish').value) return fail('Finish needs a date', 'tfFinish');
+    if (!ms && $('tfDur').value.trim() !== tfOrig.dur) {
+      const dv = $('tfDur').value.trim();
+      if (mm) { durVal = parseDurationMinutes(dv); if (durVal === null || durVal <= 0 || durVal > MAX_DURATION_MINUTES) return fail(`Can't read "${dv}" as a duration — try 4h, 90m, 2d or 1w`, 'tfDur'); }
+      else { const d = parseTableDuration(dv); durVal = d === null ? null : Math.round(d); if (durVal === null || durVal < 1 || durVal > MAX_DURATION_DAYS) return fail(`Can't read "${dv}" as a duration in working days — try 5, 5d or 2w`, 'tfDur'); }
     }
-    const i = document.querySelector('#resourceRows .res-name'); if (i) i.focus();
-  }, 40);
+    rows = [];
+    for (const r of tfRes) {
+      const nm = r.name.trim(); if (!nm) continue;
+      const uv = String(r.units).replace('%', '').replace(',', '.').trim(), u = uv === '' ? 100 : Math.round(Number(uv));
+      if (!Number.isFinite(u) || u < 1 || u > 800) return fail(`Units for ${nm} must be 1%–800%`);
+      if (rows.some(x => x.name.toLowerCase() === nm.toLowerCase())) return fail(`${nm} is listed twice`);
+      rows.push({ name: nm.slice(0, 60), units: u });
+    }
+    preds = [];
+    for (const p of tfPreds) {
+      const num = String(p.num).trim(); if (!num) continue;
+      const pt = tfPredTask(num);
+      if (!pt) return fail(`No task #${num}`);
+      if (pt.id === t.id) return fail("A task can't depend on itself");
+      if (hasChildren(pt.id)) return fail(`#${num} is a summary task — pick one of its own tasks`);
+      if (pt.spacer) return fail("Can't depend on an empty line");
+      if (preds.some(x => x.id === pt.id)) return fail(`#${num} is listed twice`);
+      const lagText = String(p.lag).trim() || '0';
+      let lag, elapsed = false;
+      if (p.orig && p.orig.id === pt.id && lagText === p.orig.lagText) { lag = p.orig.lag; elapsed = p.orig.elapsed; }   // untouched: keep it exactly (an elapsed lag too)
+      else if (mm) { lag = parseLagInput(lagText); if (lag === null) return fail(`Can't read "${lagText}" as a lag — try 2h, -30m, 1d or 1w`); }
+      else { const m = /^([+-]?\d+)\s*(d|days?)?$/i.exec(lagText); lag = m ? parseInt(m[1], 10) : NaN; if (!Number.isFinite(lag) || Math.abs(lag) > MAX_LAG_DAYS) return fail(`Can't read "${lagText}" as a lag in working days`); }
+      const link = { id: pt.id, type: DEP_TYPES.includes(p.type) ? p.type : 'FS', lag }; if (elapsed) link.elapsed = true;
+      preds.push(link);
+    }
+  }
+  // ---- apply
+  const cyc0 = taskCycleSet(), origDurMin = taskDurationMinutes(t), origRes = t.resource, origDurMoment = durationMoment(taskMoment(t, 'start'), taskMoment(t, 'end'));
+  t.name = name;
+  const switchingToAuto = t.taskMode === 'manual' && !manual;
+  t.taskMode = manual ? 'manual' : 'auto';
+  let msg = null;
+  if (!group) {
+    const sIso = $('tfStart').value, sTime = mm ? ($('tfStartTime').value || wStart(sIso)) : null;
+    const fIso = ms ? sIso : $('tfFinish').value, fTime = mm ? (ms ? sTime : ($('tfFinishTime').value || wEnd(fIso))) : null;
+    const startChanged = sIso !== tfOrig.start || (mm && sTime !== tfOrig.startTime);
+    const finishChanged = !ms && (fIso !== tfOrig.end || (mm && fTime !== tfOrig.endTime));
+    if (startChanged) { t.startDate = sIso; if (mm) t.startTime = sTime; t.startText = null; }
+    if (ms) { t.endDate = t.startDate; if (mm) t.endTime = t.startTime; }
+    else if (durVal !== null) { if (mm) setTaskMoment(t, 'end', finishMoment(taskMoment(t, 'start'), durVal)); else t.endDate = finishFor(t.startDate, durVal); t.endText = null; t.durText = null; }
+    else if (finishChanged) { t.endDate = fIso; if (mm) t.endTime = fTime; t.endText = null; t.durText = null; }
+    else if (startChanged) { setTaskMoment(t, 'end', finishMoment(taskMoment(t, 'start'), origDurMoment)); t.endText = null; t.durText = null; }   // a moved Start keeps the duration
+    if (t.actualStart && startChanged) copyTaskField(t, 'start', 'actualStart');   // the actual dates ARE the schedule: editing one edits the other
+    if (t.actualFinish && (finishChanged || durVal !== null || startChanged)) copyTaskField(t, 'end', 'actualFinish');
+    clampTaskDates(t); applyActualDates(t);
+    if (!isStarted(t)) snapToWorkDays(t);
+    if (startChanged) pinToDate(t, 'start'); else if (finishChanged) pinToDate(t, 'finish');   // (a typed Duration never sets a constraint)
+    t.progress = pct;
+    const newRes = formatResourceString(rows);
+    if (newRes !== formatResourceString(parseResourceAssignments(origRes))) t.resource = newRes.slice(0, 200);
+    t.predecessors = preds;
+    if (!ms) {
+      t.taskType = $('tfType').value; t.effortDriven = $('tfEffort').checked;
+      const durNet = taskDurationMinutes(t) !== origDurMin, resChanged = t.resource !== origRes;
+      msg = durNet ? recalcTaskType(t, 'duration') : resChanged ? recalcTaskType(t, 'units') : null;
+    }
+  }
+  t.updatedAt = Date.now();
+  filterPinned.add(t.id);
+  normalizeData();
+  if (switchingToAuto) rescheduleAsAuto(t); else applyConstraints(t.id);
+  releaseFromCycles(cyc0);
+  tfSnapshot = null;
+  save(); render();
+  renderTaskForm(true);
+  if (msg) showToast(`Resource split adjusted to keep Work the same: ${msg}`);
+  return true;
 }
-function closeResourcePoolModal() { document.getElementById('resourcePoolModalBg').classList.remove('open'); resourceDraft = null; resourceOrig = null; }
-function resourcePoolDirty() { return resourceDraft !== null && document.getElementById('resourcePoolModalBg').classList.contains('open') && JSON.stringify(resourceDraft) !== resourceOrig; }
-function requestCloseResourcePoolModal() {
-  if (!resourcePoolDirty()) { closeResourcePoolModal(); return; }
-  openConfirmModal({ title: 'Discard your changes?', body: 'You changed the resource pool but did not save it.', confirmLabel: 'Discard changes', cancelLabel: 'Keep editing', action() { closeResourcePoolModal(); } });
+function taskFormStep(dir) {
+  if (tfDirty() && !applyTaskForm()) return;
+  const list = tfStepList(), i = list.indexOf(tfTaskId), next = list[i + dir];
+  if (!next) return;
+  tfSnapshot = null;
+  jumpToTask(next);
 }
-function renderResourceRows() {
-  const box = document.getElementById('resourceRows');
-  box.innerHTML = resourceDraft.length ? resourceDraft.map((r, i) => {
-    const n = r.daysOff.length;
-    return `<div class="res-item${r.removed ? ' removed' : ''}" data-i="${i}">
-      <div class="res-row">
-        <input type="text" class="res-name" maxlength="60" value="${escapeHtml(r.name)}" ${r.removed ? 'disabled ' : ''}aria-label="Resource name" oninput="resourceNameInput(${i}, this)" onkeydown="if(event.key==='Enter'){event.preventDefault();saveResourcePoolModal();}">
-        <input type="number" class="res-units" min="1" max="800" value="${r.maxUnits}" ${r.removed ? 'disabled ' : ''}aria-label="Max units, percent" title="Max units — 100% is one full-time person, 200% is two people covering the same role" onchange="resourceUnitsInput(${i}, this)">
-        <span class="res-uses">${r.isNew ? '' : r.uses ? `${r.uses} task${r.uses === 1 ? '' : 's'}` : '—'}</span>
-        <button type="button" class="res-remove" onclick="resourceToggleRemove(${i})" title="${r.removed ? 'Keep this resource' : r.isNew ? 'Discard this new resource' : 'Remove this resource' + (r.uses ? ' from its tasks' : '')}" aria-label="${r.removed ? 'Keep' : 'Remove'} ${escapeHtml(r.name || 'this resource')}"><i class="fa-solid ${r.removed ? 'fa-rotate-left' : 'fa-xmark'}"></i></button>
-      </div>
-      ${r.removed ? '' : `<details class="res-days"${n ? ' open' : ''}><summary>${n ? `${n} day${n === 1 ? '' : 's'} off` : 'Days off'}</summary>
-        <div class="res-days-add">
-          <input type="text" class="dt-date" id="resDayFrom-${i}" aria-label="Day off, or the first day of a longer break" title="The day off, or the first day of a longer break">
-          <span class="hol-to">to</span>
-          <input type="text" class="dt-date" id="resDayTo-${i}" aria-label="Last day of a longer break" title="Last day of a longer break (leave empty for a single day)">
-          <input type="text" id="resDayName-${i}" maxlength="60" placeholder="Name (optional)" aria-label="Name of the day off">
-          <button class="btn" type="button" onclick="addResourceDayOff(${i})"><i class="fa-solid fa-plus"></i>Add</button>
-        </div>
-        <div class="hol-list">${r.daysOff.map((h, j) => `<div class="hol-row"><span class="hol-when">${h.to ? `${fmtDate(h.date)} – ${fmtDate(h.to)}` : fmtDate(h.date)}</span><span class="hol-name" title="${escapeHtml(h.name || '')}">${escapeHtml(h.name || '')}</span><button type="button" aria-label="Remove ${escapeHtml(fmtDate(h.date))}" title="Remove" onclick="removeResourceDayOff(${i}, ${j})"><i class="fa-solid fa-xmark"></i></button></div>`).join('')}</div>
-      </details>`}
-    </div>`;
-  }).join('') : '<div class="res-empty">No resources yet — type a name in a task’s Resource field, or “Add resource” here.</div>';
-  enhanceBoxes(box);
-  const removing = resourceDraft.filter(r => r.removed && !r.isNew).length;
-  document.getElementById('resourcePoolNote').textContent = removing ? `${removing} resource${removing === 1 ? '' : 's'} will be removed when you save.` : '';
+function wireTaskForm() {
+  const pane = document.getElementById('taskFormPane');
+  pane.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { e.stopPropagation(); e.preventDefault(); if (tfDirty()) cancelTaskForm(); else document.activeElement && document.activeElement.blur(); return; }
+    if (e.key === 'Enter' && e.target.tagName === 'INPUT' && e.target.type !== 'checkbox' && !e.isComposing) { e.preventDefault(); e.stopPropagation(); if (e.target.dataset && e.target.dataset.dt) e.target.dispatchEvent(new Event('change', { bubbles: true })); setTimeout(applyTaskForm, 0); return; }
+    e.stopPropagation();   // Delete, Ctrl+A, "/" … are the list's shortcuts, not the form's
+  });
+  pane.addEventListener('input', () => tfHeader());
+  pane.addEventListener('change', () => tfHeader());
+  const handle = document.getElementById('taskFormResize');
+  handle.addEventListener('mousedown', e => {
+    e.preventDefault(); handle.classList.add('dragging');
+    const bottom = pane.getBoundingClientRect().bottom;
+    const move = ev => { taskFormHeight = Math.round(bottom - ev.clientY); applyTaskFormHeight(); };
+    const up = () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); handle.classList.remove('dragging'); taskFormHeight = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--task-form-h')) || taskFormHeight; save(); render(); };
+    document.addEventListener('mousemove', move); document.addEventListener('mouseup', up);
+  });
+  window.addEventListener('resize', () => { if (showTaskForm) applyTaskFormHeight(); });
 }
-function resourceNameInput(i, el) { resourceDraft[i].name = el.value; el.classList.remove('bad'); }
-function resourceUnitsInput(i, el) { const n = Math.round(Number(el.value)); resourceDraft[i].maxUnits = Number.isFinite(n) ? Math.max(1, Math.min(800, n)) : 100; el.value = resourceDraft[i].maxUnits; }
-function addResourceRow() {
-  resourceDraft.push({ id: genId(), name: '', orig: '', maxUnits: 100, daysOff: [], isNew: true, removed: false, uses: 0 });
-  renderResourceRows();
-  setTimeout(() => { const els = document.querySelectorAll('#resourceRows .res-name'); if (els.length) els[els.length - 1].focus(); }, 30);
+/* ============================ Days off dialog (Resource Sheet → a row's "Days off" link) ============================
+   One resource's own days off on top of the plan's working week — the one thing the Resource Sheet doesn't edit inline
+   (a multi-entry date list doesn't fit a spreadsheet cell). It used to be a full Resource pool dialog (add/rename/Max
+   Units/remove for every resource); all of that moved to the Resource Sheet, so this is now just the days-off editor.
+   A draft (resourceDaysDraft) with the usual JSON-snapshot dirty check and discard confirmation; Save writes it. */
+let resourceDaysId = null, resourceDaysDraft = null, resourceDaysOrig = null;
+function daysOffCount(list) { return (list || []).reduce((n, h) => n + (h.to ? dayNumber(h.to) - dayNumber(h.date) + 1 : 1), 0); }
+function resourceSheetMenuHint() { const n = (project.resources || []).length; return n ? `${n} ${n === 1 ? 'resource' : 'resources'}` : 'none yet'; }
+function openResourceDaysModal(id) {
+  const r = (project.resources || []).find(x => x.id === id); if (!r) return;
+  resourceDaysId = id;
+  resourceDaysDraft = (r.daysOff || []).map(h => Object.assign({}, h));
+  resourceDaysOrig = JSON.stringify(resourceDaysDraft);
+  for (const f of ['resDayFrom', 'resDayTo', 'resDayName']) document.getElementById(f).value = '';
+  updateResDayAddBtn();
+  document.getElementById('resourceDaysName').textContent = r.name;
+  renderResourceDays();
+  document.getElementById('resourceDaysModalBg').classList.add('open');
+  setTimeout(() => { const i = document.getElementById('resDayFrom'); if (i) i.focus(); }, 40);
 }
-function resourceToggleRemove(i) {
-  const r = resourceDraft[i];
-  if (r.isNew) resourceDraft.splice(i, 1); else r.removed = !r.removed;
-  renderResourceRows();
+function closeResourceDaysModal() { document.getElementById('resourceDaysModalBg').classList.remove('open'); resourceDaysId = resourceDaysDraft = resourceDaysOrig = null; }
+function resourceDaysDirty() { return resourceDaysDraft !== null && document.getElementById('resourceDaysModalBg').classList.contains('open') && JSON.stringify(resourceDaysDraft) !== resourceDaysOrig; }
+function requestCloseResourceDaysModal() {
+  if (!resourceDaysDirty()) { closeResourceDaysModal(); return; }
+  openConfirmModal({ title: 'Discard your changes?', body: 'You changed the days off but did not save them.', confirmLabel: 'Discard changes', cancelLabel: 'Keep editing', action() { closeResourceDaysModal(); } });
 }
-function addResourceDayOff(i) {
-  const fromEl = document.getElementById(`resDayFrom-${i}`), toEl = document.getElementById(`resDayTo-${i}`);
-  const from = fromEl.value, to = toEl.value;
-  if (!from) { showToast('Pick the day off first', true); fromEl.focus(); return; }
-  if (to && dayNumber(to) <= dayNumber(from)) { showToast('The last day must be after the first day', true); return; }
+function renderResourceDays() {
+  const list = document.getElementById('resDayList');
+  list.innerHTML = resourceDaysDraft.length
+    ? resourceDaysDraft.map((h, j) => `<div class="hol-row"><span class="hol-when">${h.to ? `${fmtDate(h.date)} – ${fmtDate(h.to)}` : fmtDate(h.date)}</span><span class="hol-name" title="${escapeHtml(h.name || '')}">${escapeHtml(h.name || '')}</span><button type="button" aria-label="Remove ${escapeHtml(fmtDate(h.date))}" title="Remove" onclick="removeResourceDayOff(${j})"><i class="fa-solid fa-xmark"></i></button></div>`).join('')
+    : '<div class="res-empty">No days off — this resource works whenever the plan does.</div>';
+  const n = daysOffCount(resourceDaysDraft);
+  document.getElementById('resourceDaysCount').textContent = n ? `${n} day${n === 1 ? '' : 's'} off` : '';
+}
+function addResourceDayOff() {
+  const fromEl = document.getElementById('resDayFrom'), toEl = document.getElementById('resDayTo'), nameEl = document.getElementById('resDayName');
+  const r = readDayOffRange('resDayFrom', 'resDayTo');
+  if (r.error) { showToast(r.error, true); (r.error.startsWith('Pick') ? fromEl : toEl).focus(); return; }
+  const { from, to } = r;
   const h = { date: from }; if (to) h.to = to;
-  const name = document.getElementById(`resDayName-${i}`).value.trim(); if (name) h.name = name;
-  resourceDraft[i].daysOff.push(h);
-  renderResourceRows();
-  const el = document.querySelectorAll('#resourceRows .res-days')[i]; if (el) el.open = true;
+  const name = nameEl.value.trim(); if (name) h.name = name;
+  resourceDaysDraft.push(h);
+  resourceDaysDraft.sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
+  fromEl.value = ''; toEl.value = ''; nameEl.value = '';
+  renderResourceDays(); updateResDayAddBtn(); fromEl.focus();
 }
-function removeResourceDayOff(i, j) {
-  resourceDraft[i].daysOff.splice(j, 1);
-  renderResourceRows();
-  const el = document.querySelectorAll('#resourceRows .res-days')[i]; if (el) el.open = true;
-}
-// A name has to be 1-60 characters and unique among the resources (case-insensitive — matching is case-insensitive everywhere else too).
-function resourceNameProblem(r, rows) {
-  const name = r.name.trim();
-  if (!name) return r.isNew ? 'Give the new resource a name' : null;
-  if (name.length > 60) return 'A resource name can be at most 60 characters';
-  const taken = rows.filter(o => o !== r && !o.removed).map(o => o.name.trim());
-  if (taken.some(n => n && n.toLowerCase() === name.toLowerCase())) return `“${name}” is already the name of another resource`;
-  return null;
-}
-function saveResourcePoolModal() {
-  const rows = resourceDraft; if (!rows) return;
-  for (let i = 0; i < rows.length; i++) {
-    if (rows[i].removed) continue;
-    const msg = resourceNameProblem(rows[i], rows);
-    if (msg) { showToast(msg, true); const el = document.querySelectorAll('#resourceRows .res-name')[i]; if (el) { el.classList.add('bad'); el.focus(); } return; }
+function removeResourceDayOff(j) { resourceDaysDraft.splice(j, 1); renderResourceDays(); }
+function saveResourceDaysModal() {
+  const r = (project.resources || []).find(x => x.id === resourceDaysId);
+  if (r) {
+    if (resourceDaysDraft.length) r.daysOff = resourceDaysDraft; else delete r.daysOff;
+    project.updatedAt = Date.now();
   }
-  const gone = rows.filter(r => r.removed && !r.isNew), withUses = gone.filter(r => r.uses);
-  if (withUses.length) {
-    const nTasks = new Set(tasks.filter(t => withUses.some(r => taskAssignments(t).some(a => a.resource.id === r.id))).map(t => t.id)).size;
-    openConfirmModal({ title: 'Remove resources?', body: `Remove ${withUses.map(r => `“${escapeHtml(r.orig)}”`).join(', ')}? ${nTasks} task${nTasks === 1 ? '' : 's'} will no longer list ${withUses.length === 1 ? 'it' : 'them'} — Undo (Ctrl+Z) brings it back.`, confirmLabel: 'Remove', action() { applyResourcePoolDraft(); } });
-    return;
-  }
-  applyResourcePoolDraft();
+  closeResourceDaysModal();
+  if (r) { save(); render(); }
 }
 // Rewrites every task's Resource text to drop or rename one resource's own assignment, matched by id (resolution is
 // by NAME, so the pool must still hold the OLD name while this runs — the caller renames/removes the pool entry
-// itself only AFTER calling this). Shared by the Resource Pool dialog's bulk Save (applyResourcePoolDraft(), below)
-// and the Resource Sheet's own live single-cell rename/remove — one source of truth for this cascade, not two.
+// itself only AFTER calling this). Used by the Resource Sheet's live rename/remove.
 function renameResourceEverywhere(resourceId, newName, now = Date.now()) {
   for (const t of tasks) {
     const cur = taskAssignments(t);
@@ -6879,29 +7254,6 @@ function removeResourceEverywhere(resourceId, now = Date.now()) {
     const cur = taskAssignments(t);
     if (cur.some(a => a.resource.id === resourceId)) { t.resource = formatResourceString(cur.filter(a => a.resource.id !== resourceId).map(a => ({ name: a.resource.name, units: a.units }))); t.updatedAt = now; }
   }
-}
-function applyResourcePoolDraft() {
-  const rows = resourceDraft; if (!rows) return;
-  const now = Date.now();
-  // Rewrite every affected task's Resource text first, matched by each row's ORIGINAL name — resolution is by name, so
-  // the pool has to still hold the old name (below, unchanged so far) while this runs.
-  for (const r of rows) {
-    if (r.isNew) continue;
-    if (r.removed) { removeResourceEverywhere(r.id, now); }
-    else { const nm = r.name.trim(); if (nm && nm !== r.orig) renameResourceEverywhere(r.id, nm, now); }
-  }
-  const pool = [];
-  for (const r of rows) {
-    if (r.removed) continue;
-    const nm = r.name.trim(); if (!nm) continue;
-    const entry = { id: r.id, name: nm, maxUnits: r.maxUnits };
-    if (r.daysOff.length) entry.daysOff = r.daysOff;
-    pool.push(entry);
-  }
-  if (pool.length) project.resources = pool; else delete project.resources;
-  project.updatedAt = now;
-  closeResourcePoolModal();
-  normalizeData(); save(); render();
 }
 function setTaskModalTab(tab) {
   const custom = tab === 'custom';
@@ -7252,7 +7604,7 @@ function closeScheduleMenu() { document.getElementById('scheduleMenu').classList
 function renderScheduleMenu() {
   document.getElementById('scheduleMenu').innerHTML =
     `<button class="dropdown-item" id="planBaselineItem" onclick="openBaselineModal()"><i class="fa-solid fa-ruler-horizontal"></i>Baseline…<span class="item-hint">${escapeHtml(baselineMenuHint())}</span></button>` +
-    `<button class="dropdown-item" id="planResourcesItem" onclick="openResourcePoolModal()"><i class="fa-solid fa-users"></i>Resource pool…<span class="item-hint">${escapeHtml(resourcePoolMenuHint())}</span></button>` +
+    `<button class="dropdown-item" id="planResourcesItem" onclick="closeScheduleMenu(); setView('resourceSheet')"><i class="fa-solid fa-users"></i>Resource Sheet<span class="item-hint">${escapeHtml(resourceSheetMenuHint())}</span></button>` +
     `<button class="dropdown-item" id="planRescheduleItem" onclick="openRescheduleModal()"><i class="fa-solid fa-calendar-check"></i>Reschedule remaining work…</button>` +
     `<button class="dropdown-item" id="planLevelItem" onclick="openLevelModal()"><i class="fa-solid fa-scale-balanced"></i>Level resources…${overallocatedResources().length ? `<span class="item-hint">${overallocatedResources().length} over-allocated</span>` : ''}</button>` +
     `<button class="dropdown-item" id="planCalendarItem" onclick="openCalendarModal()"><i class="fa-regular fa-calendar-days"></i>Working calendar…<span class="item-hint">${escapeHtml(calendarSummary())}</span></button>` +
@@ -7790,7 +8142,7 @@ function parseMspdi(xmlText) {
     if (hol.length) project.holidays = hol;
     if (recurring) warnings.push(`${recurring} recurring calendar exception${recurring === 1 ? '' : 's'} came in as single days only`);
   }
-  // resources per task — each <Assignment>'s own Units (a fraction, 1 = 100%) becomes the Name:NN% syntax (bare name at
+  // resources per task — each <Assignment>'s own Units (a fraction, 1 = 100%) becomes the Name[NN%] syntax (bare name at
   // 100%, matching the display convention exactly); each <Resource>'s own MaxUnits is kept on the side (resourceMaxUnits,
   // by lowercase name) for applyImportedTasks() to recover into the pool once resources are actually brought in.
   const resName = new Map(list(root, 'Resources').map(r => [txt(r, 'UID'), txt(r, 'Name')]));
@@ -7861,7 +8213,7 @@ function parseMspdi(xmlText) {
     // group and bootstraps it for an ordinary task that arrives without one, so nothing here needs to special-case those).
     const ttMap = { 0: 'fixedUnits', 1: 'fixedDuration', 2: 'fixedWork' }, tType = ttMap[parseInt(txt(el, 'Type'), 10)];
     if (tType && tType !== 'fixedUnits') t.taskType = tType;
-    if (txt(el, 'EffortDriven') === '0') t.effortDriven = false;
+    if (txt(el, 'EffortDriven') === '1') t.effortDriven = true;
     const workRaw = txt(el, 'Work');
     if (workRaw) { const wm = /^PT?(?:(\d+)H)?(?:(\d+)M)?/.exec(workRaw); if (wm) { const wMin = parseInt(wm[1] || 0, 10) * 60 + parseInt(wm[2] || 0, 10); if (wMin > 0) t.work = wMin; } }
     const pc = parseInt(txt(el, 'PercentComplete'), 10); if (pc >= 0) t.progress = Math.min(100, pc);
@@ -9103,7 +9455,7 @@ function buildMspdi() {
   const startIso = dayNumberToIso(d0), endIso = dayNumberToIso(d1), now = new Date().toISOString().slice(0, 19), title = project.name || 'Project';
   // ---- resources: taskAssignments(t) resolves against the pool, so a name's real Units (the assigned %) and its own
   // pool MaxUnits both round-trip now — this used to just split the raw Resource text on its own, which (since the
-  // Name:NN% syntax was added) would have written the literal "Anna:50%" text as a resource NAME, not a real 50% Units.
+  // Name[NN%] syntax was added) would have written the literal "Anna[50%]" text as a resource NAME, not a real 50% Units.
   const resNames = []; const resPool = new Map();   // name -> the pool resource object, first one seen
   for (const t of rows) if (!hasChildren(t.id)) for (const a of taskAssignments(t)) if (!resNames.includes(a.resource.name)) { resNames.push(a.resource.name); resPool.set(a.resource.name, a.resource); }
   // ---- calendar
@@ -9144,7 +9496,7 @@ function buildMspdi() {
     // group has no stored t.work (normalizeData() deletes it for both). EffortDriven is written unconditionally, like
     // real MS Project does for every task, even one the triangle doesn't apply to.
     if (!group && !t.milestone && Number.isFinite(t.work)) x += T('Work', hoursMin(t.work));
-    x += T('EffortDriven', t.effortDriven === false ? 0 : 1);
+    x += T('EffortDriven', t.effortDriven === true ? 1 : 0);
     x += T('Milestone', t.milestone && !group ? 1 : 0) + T('Summary', group ? 1 : 0) + T('PercentComplete', Math.round(e.progress)) + T('PercentWorkComplete', Math.round(e.progress));
     if (act.start && !group) x += T('ActualStart', dt(act.start, hhmmss(taskTime(t, 'actualStartTime', wStart(act.start)))));
     if (act.end && !group) x += T('ActualFinish', dt(act.end, hhmmss(taskTime(t, 'actualFinishTime', t.milestone ? wStart(act.end) : wEnd(act.end)))));
@@ -9862,7 +10214,7 @@ function createPlanRecord(name, data) {
   return id;
 }
 function resetTransientUI() {
-  setSelection([]); editingCell = null; editingPredecessors = [];
+  setSelection([]); editingCell = null; editingPredecessors = []; tfTaskId = null; tfSnapshot = null;
   colFilters = newColFilters(); filterPinned.clear(); closeFilterMenu();   // filters belong to the plan you were looking at
   closeTaskModal(); closeFieldsModal(); closeImportModal(); closeDataMenu(); closeScheduleMenu(); closeColumnsMenu(); closeTaskModeMenu(); closeTaskTypeMenu(); closeToolbarMenus();
   clearTimeout(toastTimer); toastUndoAction = null;
@@ -10176,7 +10528,7 @@ function wireGlobalEvents() {
     if (e.key !== 'Escape') return;
     if (document.getElementById('cfAddMenu').classList.contains('open')) { closeCfAddMenu(); return; }
     if (document.getElementById('fieldsModalBg').classList.contains('open')) { if (document.getElementById('confirmModalBg').classList.contains('open')) closeConfirmModal(); else requestCloseFieldsModal(); return; }   // only the topmost dialog: the task dialog underneath keeps its unsaved edits
-    if (document.getElementById('resourcePoolModalBg').classList.contains('open')) { if (document.getElementById('confirmModalBg').classList.contains('open')) closeConfirmModal(); else requestCloseResourcePoolModal(); return; }
+    if (document.getElementById('resourceDaysModalBg').classList.contains('open')) { if (document.getElementById('confirmModalBg').classList.contains('open')) closeConfirmModal(); else requestCloseResourceDaysModal(); return; }
     if (document.getElementById('confirmModalBg').classList.contains('open') && (taskModalDirty() || calendarDirty() || precisionDirty() || bulkDirty())) { closeConfirmModal(); return; }   // the "discard your changes?" question: Escape = keep editing
     if (taskModalDirty()) { requestCloseTaskModal(); return; }
     if (calendarDirty()) { requestCloseCalendarModal(); return; }
@@ -10378,6 +10730,7 @@ document.addEventListener('DOMContentLoaded', () => {
   applyTheme(); applyGridPaneWidth();
   document.title = project.name + ' · Milestone';
   wireGlobalEvents();
+  wireTaskForm();
   wireScrollSync();
   wireGridResize();
   render();

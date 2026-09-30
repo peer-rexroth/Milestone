@@ -36,7 +36,7 @@ with sync_playwright() as p:
     pg.check("#effortDrivenInput")
     pg.click("#taskModalBg .btn-primary")
     pg.wait_for_selector("#taskModalBg.open", state="hidden")
-    check("saving persists Task Type and Effort-driven", ev("() => [tasks[0].taskType, tasks[0].effortDriven]") == ["fixedWork", None], ev("() => [tasks[0].taskType, tasks[0].effortDriven]"))
+    check("saving persists Task Type and Effort-driven", ev("() => [tasks[0].taskType, tasks[0].effortDriven]") == ["fixedWork", True], ev("() => [tasks[0].taskType, tasks[0].effortDriven]"))
 
     # ---------------------------------------------------------------- dialog: hidden for a milestone, live
     seed([{"name": "A", "s": "2026-09-07", "e": "2026-09-10", "r": "Anna"}])

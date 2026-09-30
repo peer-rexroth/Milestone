@@ -23,7 +23,7 @@ with sync_playwright() as p:
     f = lambda n: ev("n => { const t = tasks.find(x => x.name === n); return [t.startDate, t.startTime, t.endDate, t.endTime]; }", n)
     app_version = ev("() => APP_VERSION")
 
-    check("this build is version 4 and every save carries it", app_version == 4 and ev("() => syncPayload().version") == 4 and '"version": 4' in ev("() => canonicalText()"))
+    check("this build is version 5 and every save carries it", app_version == 5 and ev("() => syncPayload().version") == 5 and '"version": 5' in ev("() => canonicalText()"))
     check("a minute-mode plan first came with version 2 (MINUTE_MODE_VERSION)", ev("() => MINUTE_MODE_VERSION") == 2)
 
     def plant(version, minute=True):

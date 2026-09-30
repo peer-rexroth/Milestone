@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Resource levelling, Stage 1 — the data model. task.resource stays exactly the free-text field it always was (unchanged
-shape, unchanged consumers); its syntax grows an optional "Name:NN%" allocation, mirroring exactly how elapsed lags added
+shape, unchanged consumers); its syntax grows an optional "Name[NN%]" allocation (MS Project's form; the older "Name:NN%" is still read), mirroring exactly how elapsed lags added
 an 'e' suffix to Predecessors. project.resources (the pool) is populated automatically from whatever names appear in that
 text, inside normalizeData() — the same way MS Project auto-adds a typed name to its resource list. No new task field:
 assignments are resolved on demand (taskAssignments()) by matching a task's text against the pool, not a stored id.
@@ -20,12 +20,15 @@ with sync_playwright() as p:
     ev = pg.evaluate
 
     # ---------------------------------------------------------------- parseResourceAssignments / formatResourceString
-    check("'Anna:50%, Ben' -> [{Anna,50},{Ben,100}] (a bare name is 100%)", ev("() => parseResourceAssignments('Anna:50%, Ben')") == [{"name": "Anna", "units": 50}, {"name": "Ben", "units": 100}])
+    check("'Anna[50%], Ben' (MS Project's form) -> [{Anna,50},{Ben,100}] (a bare name is 100%)", ev("() => parseResourceAssignments('Anna[50%], Ben')") == [{"name": "Anna", "units": 50}, {"name": "Ben", "units": 100}])
+    check("the older 'Anna:50%' form and a loosely typed 'Anna [ 50 ]' read the same", ev("() => [parseResourceAssignments('Anna:50%, Ben'), parseResourceAssignments('Anna [ 50 ], Ben')]") == [[{"name": "Anna", "units": 50}, {"name": "Ben", "units": 100}]] * 2)
+    check("canonicalResourceText() rewrites only the % notation into Name[NN%] (100% bare), keeping separators and anything unparseable",
+          ev("() => [canonicalResourceText('Anna:50%; Ben[100%], Carl [ 25 ]'), canonicalResourceText('Anna[abc], Ben')]") == ["Anna[50%]; Ben, Carl[25%]", "Anna[abc], Ben"])
     check("a semicolon separates too, and extra spaces are trimmed", ev("() => parseResourceAssignments(' Anna ; Ben:75 % ')") == [{"name": "Anna", "units": 100}, {"name": "Ben", "units": 75}])
     check("a percentage outside 1-800 falls back to 100, not refused (never a strict field)", ev("() => parseResourceAssignments('Anna:0%, Ben:9000%')") == [{"name": "Anna", "units": 100}, {"name": "Ben", "units": 100}])
     check("a duplicate name (case-insensitive) in one string counts once", ev("() => parseResourceAssignments('Anna, anna:50%')") == [{"name": "Anna", "units": 100}])
     check("empty / blank text has no assignments", ev("() => parseResourceAssignments('')") == [] and ev("() => parseResourceAssignments('   ')") == [])
-    check("formatResourceString is the inverse (100% is written bare)", ev("() => formatResourceString([{name:'Anna',units:50},{name:'Ben',units:100}])") == "Anna:50%, Ben")
+    check("formatResourceString is the inverse (100% is written bare)", ev("() => formatResourceString([{name:'Anna',units:50},{name:'Ben',units:100}])") == "Anna[50%], Ben")
 
     # ---------------------------------------------------------------- normalizeData(): the pool auto-populates from task text
     SEED = "specs => { tasks.length = 0; deletedTaskIds.length = 0; selectedTaskId = null; delete project.resources; const ids = {}; for (const sp of specs) { const t = Object.assign({id: genId(), name: sp.name, parentId: sp.parent ? ids[sp.parent] : null, order: tasks.length, startDate: sp.s, endDate: sp.e, progress: 0, milestone: false, color: null, predecessors: [], collapsed: false, updatedAt: 1, constraintType: 'ASAP', constraintDate: null, taskMode: 'auto', resource: sp.r || '', actualStart: null, actualFinish: null}, sp.extra || {}); tasks.push(t); ids[sp.name] = t.id; } normalizeData(); save(); render(); }"
@@ -62,6 +65,10 @@ with sync_playwright() as p:
     r5 = ev("() => { project.resources = [{id: 'not a safe id!', name: 'X'}]; tasks.length = 0; normalizeData(); return 'resources' in project; }")
     check("an entry with a malformed id is dropped outright, not kept with a bad id", r5 == False, r5)
 
+    conv = ev("""() => { tasks.length = 0; const mk = (id, name, parentId, resource) => ({ id, name, parentId, order: tasks.length, startDate: '2026-09-07', endDate: '2026-09-08', progress: 0, milestone: false, color: null, predecessors: [], collapsed: false, updatedAt: 1, constraintType: 'ASAP', constraintDate: null, taskMode: 'auto', resource, actualStart: null, actualFinish: null });
+      tasks.push(mk('g', 'G', null, 'Notes: 2 people'), mk('k', 'K', 'g', 'Anna:50%, Ben:100%')); normalizeData(); return [tasks[0].resource, tasks[1].resource]; }""")
+    check("an older plan's 'Anna:50%, Ben:100%' becomes 'Anna[50%], Ben' on load; a group's own notes text is left exactly as typed", conv == ["Notes: 2 people", "Anna[50%], Ben"], conv)
+    check("normalizeData() is idempotent on it", ev("() => { const before = tasks[1].resource; normalizeData(); return tasks[1].resource === before; }"))
     check("no console errors or page errors across the whole run", not errors, errors[:5])
     n_ok, n_all = sum(results), len(results)
     print(f"\n{n_ok}/{n_all} checks passed")

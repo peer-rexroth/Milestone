@@ -101,7 +101,7 @@ async ([seed, steps, allowCalendar]) => {
     // Duration/Work/Resource through the same commit path a real user would, all of which recalcTaskType() keeps in sync.
     ['worktype', 4, () => { const t = pick(leaf()); if (!t || t.milestone) return; const r = rnd();
       if (r < .2) { t.taskType = pick(['fixedUnits', 'fixedDuration', 'fixedWork']); t.updatedAt = Date.now(); save(); render(); }
-      else if (r < .35) { t.effortDriven = t.effortDriven === false ? undefined : false; t.updatedAt = Date.now(); save(); render(); }
+      else if (r < .35) { t.effortDriven = t.effortDriven === true ? undefined : true; t.updatedAt = Date.now(); save(); render(); }
       else if (r < .7) edit(t, 'work', pick(['4h', '90m', '1d', '2d', '3d', '8h', 'abc']));
       else edit(t, 'resource', pick(['', 'Ann', 'Ann:50%, Ben', 'Ben:200%', 'Ann:150%, Ben:75%'])); }],
     // Resource Sheet: edits a random pool resource's own Type/rates/Cost per Use/Accrue At/Max Units/name through the

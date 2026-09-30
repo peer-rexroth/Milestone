@@ -39,12 +39,20 @@ with sync_playwright() as p:
     ev("() => { const b = tasks.find(t => t.name === 'B'); b.startDate = '2026-09-10'; b.endDate = '2026-09-11'; normalizeData(); save(); render(); }")
     check("no more overlap -> no over-allocation", ev("() => overallocatedResources()") == [])
 
-    # ---------------------------------------------------------------- max units above 100% raises the bar
-    seed([{"name": "A", "s": "2026-09-07", "e": "2026-09-08", "r": "Anna"}, {"name": "B", "s": "2026-09-07", "e": "2026-09-08", "r": "Anna"}])
-    ev("() => { project.resources[0].maxUnits = 200; save(); render(); }")
-    check("two 100% tasks together (200%) fit exactly within a 200% max-units resource — not over-allocated", ev("() => overallocatedResources()") == [])
+    # ---------------------------------------------------------------- max units below 100% lowers the bar, above 100% raises it
+    seed([{"name": "A", "s": "2026-09-07", "e": "2026-09-08", "r": "Anna:30%"}, {"name": "B", "s": "2026-09-07", "e": "2026-09-08", "r": "Anna:20%"}])
+    ev("() => { project.resources[0].maxUnits = 50; save(); render(); }")
+    check("30% + 20% fit exactly within a 50% max-units resource — not over-allocated", ev("() => overallocatedResources()") == [])
     ev("() => { const t = { id: genId(), name: 'C', parentId: null, order: 2, startDate: '2026-09-07', endDate: '2026-09-08', progress: 0, milestone: false, color: null, predecessors: [], collapsed: false, updatedAt: 1, constraintType: 'ASAP', constraintDate: null, taskMode: 'auto', resource: 'Anna:1%', actualStart: null, actualFinish: null }; tasks.push(t); normalizeData(); save(); render(); }")
-    check("...but one percent more (201%) tips it over", len(ev("() => overallocatedResources()")) == 1)
+    check("...but one percent more (51%) tips it over", len(ev("() => overallocatedResources()")) == 1)
+    check("max units above 100% is allowed (several people pooled into one resource): 200% is kept", ev("() => { project.resources[0].maxUnits = 200; normalizeData(); return project.resources[0].maxUnits; }") == 200)
+    check("...and at 200% the 51% that tipped it over now fits", ev("() => { save(); render(); return overallocatedResources(); }") == [])
+    check("...but not above 800% — normalizeData() caps it", ev("() => { project.resources[0].maxUnits = 9999; normalizeData(); return project.resources[0].maxUnits; }") == 800)
+
+    # ---------------------------------------------------------------- Material and Cost resources have no capacity
+    seed([{"name": "A", "s": "2026-09-07", "e": "2026-09-08", "r": "Concrete:300%, Permit:250%"}])
+    ev("() => { for (const r of project.resources) r.type = r.name === 'Concrete' ? 'material' : 'cost'; save(); render(); }")
+    check("a Material or Cost resource is never over-allocated, however much is assigned (no Max Units, as in MS Project)", ev("() => overallocatedResources()") == [])
 
     # ---------------------------------------------------------------- a day off makes ANY assignment that day a conflict, even alone
     seed([{"name": "A", "s": "2026-09-07", "e": "2026-09-07", "r": "Anna"}])

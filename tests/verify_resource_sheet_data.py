@@ -2,7 +2,7 @@
 """Resource Sheet, Stage 1 — the data model. project.resources[] grows nine new MS-Project fields (type, materialLabel,
 initials, group, stdRate, ovtRate, costPerUse, accrueAt, code), each the usual absence-is-default convention, cleaned
 in normalizeData()'s existing resource-pool block right next to how maxUnits is already clamped. project.currencyCode
-(absent = 'USD') and fmtCurrency() round out the data model this stage builds on. See "Resource Sheet" in CLAUDE.md."""
+(absent = 'EUR') and fmtCurrency() round out the data model this stage builds on. See "Resource Sheet" in CLAUDE.md."""
 import os
 from playwright.sync_api import sync_playwright
 URL = os.environ.get("MILESTONE_URL", "http://127.0.0.1:8937/milestone.html")
@@ -27,11 +27,12 @@ with sync_playwright() as p:
     check("CURRENCIES includes the common majors", set(ev("() => CURRENCIES.map(c => c.code)")) >= {"USD", "EUR", "GBP", "JPY"})
 
     # ---------------------------------------------------------------- fmtCurrency() / currencyCode()
-    check("currencyCode() defaults to USD when unset", ev("() => { delete project.currencyCode; return currencyCode(); }") == "USD")
-    check("fmtCurrency(1234.5) in USD reads like real money ($1,234.50)", ev("() => { delete project.currencyCode; return fmtCurrency(1234.5); }") == "$1,234.50")
-    check("fmtCurrency(0) and a non-finite input both read as zero, never NaN/undefined text", ev("() => fmtCurrency(0)") == "$0.00" and ev("() => fmtCurrency(NaN)") == "$0.00" and ev("() => fmtCurrency(undefined)") == "$0.00")
-    eur = ev("() => { project.currencyCode = 'EUR'; return fmtCurrency(50); }")
-    check("switching project.currencyCode changes the formatted output (a real euro sign appears)", "€" in eur or "EUR" in eur, eur)
+    check("currencyCode() defaults to EUR when unset", ev("() => { delete project.currencyCode; return currencyCode(); }") == "EUR")
+    eur0 = ev("() => { delete project.currencyCode; return fmtCurrency(1234.5); }")
+    check("fmtCurrency(1234.5) in EUR reads like real money (a euro sign, 1,234.50)", ("€" in eur0 or "EUR" in eur0) and "1,234.50" in eur0, eur0)
+    check("fmtCurrency(0) and a non-finite input both read as zero, never NaN/undefined text", all(("0.00" in ev(f"() => fmtCurrency({v})")) for v in ["0", "NaN", "undefined"]))
+    usd = ev("() => { project.currencyCode = 'USD'; return fmtCurrency(50); }")
+    check("switching project.currencyCode changes the formatted output (a real dollar sign appears)", "$" in usd, usd)
 
     # ---------------------------------------------------------------- normalizeData(): the new resource fields are cleaned/defaulted
     SEED = "specs => { tasks.length = 0; deletedTaskIds.length = 0; selectedTaskId = null; delete project.resources; delete project.currencyCode; const ids = {}; for (const sp of specs) { const t = Object.assign({id: genId(), name: sp.name, parentId: sp.parent ? ids[sp.parent] : null, order: tasks.length, startDate: sp.s, endDate: sp.e, progress: 0, milestone: false, color: null, predecessors: [], collapsed: false, updatedAt: 1, constraintType: 'ASAP', constraintDate: null, taskMode: 'auto', resource: sp.r || '', actualStart: null, actualFinish: null}, sp.extra || {}); tasks.push(t); ids[sp.name] = t.id; } normalizeData(); save(); render(); }"
@@ -40,7 +41,8 @@ with sync_playwright() as p:
     r = ev("""() => { project.resources = [{id: genId(), name: 'Anna', maxUnits: 100, type: 'material', materialLabel: '  tons  ', initials: '  AB  ', group: '  Eng  ', code: '  R-1  ', stdRate: 12.5, ovtRate: 18, costPerUse: 5, accrueAt: 'start'}];
       tasks.length = 0; normalizeData(); return project.resources[0]; }""")
     check("a full set of new fields survives cleaning: type/accrueAt kept (non-default), strings trimmed, rates kept",
-          r["type"] == "material" and r["accrueAt"] == "start" and r["materialLabel"] == "tons" and r["initials"] == "AB" and r["group"] == "Eng" and r["code"] == "R-1" and r["stdRate"] == 12.5 and r["ovtRate"] == 18 and r["costPerUse"] == 5, r)
+          r["type"] == "material" and r["accrueAt"] == "start" and r["materialLabel"] == "tons" and r["initials"] == "AB" and r["group"] == "Eng" and r["code"] == "R-1" and r["stdRate"] == 12.5 and r["costPerUse"] == 5, r)
+    check("...except the Ovt Rate, which a Material resource doesn't have (resourceFieldApplies) — dropped, never left hidden", "ovtRate" not in r, r)
 
     r2 = ev("""() => { project.resources = [{id: genId(), name: 'Ben', maxUnits: 100}];
       tasks.length = 0; normalizeData(); return project.resources[0]; }""")
@@ -56,16 +58,16 @@ with sync_playwright() as p:
       tasks.length = 0; normalizeData(); return project.resources[0]; }""")
     check("an unrecognized type/accrueAt value is dropped (falls back to the default), not stored verbatim", "type" not in r4 and "accrueAt" not in r4, r4)
 
-    r5 = ev("""() => { project.resources = [{id: genId(), name: 'Long', materialLabel: 'x'.repeat(99), group: 'y'.repeat(99), code: 'z'.repeat(99)}];
+    r5 = ev("""() => { project.resources = [{id: genId(), name: 'Long', type: 'material', materialLabel: 'x'.repeat(99), group: 'y'.repeat(99), code: 'z'.repeat(99)}];
       tasks.length = 0; normalizeData(); return project.resources[0]; }""")
     check("free-text fields are length-capped (materialLabel/initials shorter, group/code longer)", len(r5["materialLabel"]) == 20 and len(r5["group"]) == 60 and len(r5["code"]) == 40, {"ml": len(r5["materialLabel"]), "g": len(r5["group"]), "c": len(r5["code"])})
 
-    r6 = ev("() => { project.currencyCode = 'EUR'; tasks.length = 0; normalizeData(); return project.currencyCode; }")
-    check("a real, non-default currency code is kept", r6 == "EUR")
-    r7 = ev("() => { project.currencyCode = 'USD'; tasks.length = 0; normalizeData(); return 'currencyCode' in project; }")
-    check("USD (the default) is never stored, same convention as everything else", r7 == False)
+    r6 = ev("() => { project.currencyCode = 'USD'; tasks.length = 0; normalizeData(); return project.currencyCode; }")
+    check("a real, non-default currency code is kept", r6 == "USD")
+    r7 = ev("() => { project.currencyCode = 'EUR'; tasks.length = 0; normalizeData(); return 'currencyCode' in project; }")
+    check("EUR (the default) is never stored, same convention as everything else", r7 == False)
     r8 = ev("() => { project.currencyCode = 'not-a-code'; tasks.length = 0; normalizeData(); return 'currencyCode' in project; }")
-    check("a garbage currency code is dropped, falling back to the USD default", r8 == False)
+    check("a garbage currency code is dropped, falling back to the EUR default", r8 == False)
 
     # ---------------------------------------------------------------- cost engine: assignmentHours / assignmentCost / taskCost
     ev("() => { project.workDays = [1,2,3,4,5]; }")   # a plain Mon-Fri calendar, so "2 days" below is exactly 2 working days

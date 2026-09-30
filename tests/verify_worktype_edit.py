@@ -20,7 +20,7 @@ with sync_playwright() as p:
     ev = pg.evaluate
     SEED = ("specs => { tasks.length = 0; deletedTaskIds.length = 0; selectedTaskId = null; delete project.resources; delete project.workDays; delete project.holidays; "
             "const ids = {}; for (const sp of specs) { const t = Object.assign({id: genId(), name: sp.name, parentId: null, order: tasks.length, startDate: sp.s, endDate: sp.e, "
-            "progress: 0, milestone: false, color: null, predecessors: [], collapsed: false, updatedAt: 1, constraintType: 'ASAP', constraintDate: null, taskMode: 'auto', resource: sp.r || '', "
+            "progress: 0, milestone: false, color: null, predecessors: [], collapsed: false, updatedAt: 1, constraintType: 'ASAP', constraintDate: null, taskMode: 'auto', effortDriven: true, resource: sp.r || '', "
             "actualStart: null, actualFinish: null}, sp.extra || {}); tasks.push(t); ids[sp.name] = t.id; } normalizeData(); save(); render(); }")
     seed = lambda specs: ev(SEED, specs)
     days = lambda i=0: ev(f"() => durationDays(tasks[{i}].startDate, tasks[{i}].endDate)")

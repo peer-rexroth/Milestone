@@ -30,11 +30,11 @@ with sync_playwright() as p:
     # ---------------------------------------------------------------- normalizeData() cleaning: absence = default
     seed([{"name": "A", "s": "2026-09-07", "e": "2026-09-08"}])
     check("taskType absent by default (Fixed Units)", ev("() => tasks[0].taskType") is None)
-    check("effortDriven absent by default (true)", ev("() => tasks[0].effortDriven") is None)
-    ev("() => { tasks[0].taskType = 'bogus'; tasks[0].effortDriven = true; normalizeData(); }")
-    check("garbage taskType and an explicit true (the default) both clean to absent", ev("() => tasks[0].taskType") is None and ev("() => tasks[0].effortDriven") is None)
-    ev("() => { tasks[0].taskType = 'fixedWork'; tasks[0].effortDriven = false; normalizeData(); }")
-    check("a real non-default value is kept", ev("() => [tasks[0].taskType, tasks[0].effortDriven]") == ["fixedWork", False])
+    check("effortDriven absent by default (OFF — the app's default, unlike MS Project's)", ev("() => tasks[0].effortDriven") is None)
+    ev("() => { tasks[0].taskType = 'bogus'; tasks[0].effortDriven = false; normalizeData(); }")
+    check("garbage taskType and an explicit false (the default) both clean to absent", ev("() => tasks[0].taskType") is None and ev("() => tasks[0].effortDriven") is None)
+    ev("() => { tasks[0].taskType = 'fixedWork'; tasks[0].effortDriven = true; normalizeData(); }")
+    check("a real non-default value is kept", ev("() => [tasks[0].taskType, tasks[0].effortDriven]") == ["fixedWork", True])
 
     # ---------------------------------------------------------------- work bootstrap
     seed([{"name": "A", "s": "2026-09-07", "e": "2026-09-10", "r": "Anna:50%"}])   # 4 working days at 50%
@@ -62,7 +62,7 @@ with sync_playwright() as p:
     seed([{"name": "A", "s": "2026-09-07", "e": "2026-09-10", "r": "Anna"}])
     ev("() => { tasks[0].work = tasks[0].work / 2; recalcTaskType(tasks[0], 'work'); }")
     check("Fixed Units: editing Work recalculates Duration", ev("() => durationDays(tasks[0].startDate, tasks[0].endDate)") == 2)
-    seed([{"name": "A", "s": "2026-09-07", "e": "2026-09-10", "r": "Anna"}])
+    seed([{"name": "A", "s": "2026-09-07", "e": "2026-09-10", "r": "Anna", "extra": {"effortDriven": True}}])
     work1 = ev("() => tasks[0].work")
     ev("() => { tasks[0].resource = 'Anna, Ben'; recalcTaskType(tasks[0], 'units'); }")
     check("Fixed Units: adding a resource recalculates Duration, keeps Work — 'two people finish faster'", ev("() => durationDays(tasks[0].startDate, tasks[0].endDate)") == 2 and ev("() => tasks[0].work") == work1)
@@ -86,13 +86,13 @@ with sync_playwright() as p:
     check("Fixed Work: shrinking Duration rescales Units (a message describing the change is returned)", isinstance(msg, str) and "→" in msg, msg)
     check("...aggregate units doubled to preserve Work at the shorter span", ev("() => taskUnitsPercent(tasks[0])") == 400)
     check("...Work itself is untouched", ev("() => tasks[0].work") == work2)
-    seed([{"name": "A", "s": "2026-09-07", "e": "2026-09-10", "r": "Anna", "extra": {"taskType": "fixedWork"}}])
+    seed([{"name": "A", "s": "2026-09-07", "e": "2026-09-10", "r": "Anna", "extra": {"taskType": "fixedWork", "effortDriven": True}}])
     work3 = ev("() => tasks[0].work")
     ev("() => { tasks[0].resource = 'Anna, Ben'; recalcTaskType(tasks[0], 'units'); }")
     check("Fixed Work: adding a resource recalculates Duration too (like Fixed Units) — also gets faster", ev("() => durationDays(tasks[0].startDate, tasks[0].endDate)") == 2 and ev("() => tasks[0].work") == work3)
 
-    # ---------------------------------------------------------------- effort-driven off: a resource change never moves dates
-    seed([{"name": "A", "s": "2026-09-07", "e": "2026-09-10", "r": "Anna", "extra": {"effortDriven": False}}])
+    # ---------------------------------------------------------------- effort-driven off (the default): a resource change never moves dates
+    seed([{"name": "A", "s": "2026-09-07", "e": "2026-09-10", "r": "Anna"}])
     d2 = dates()
     ev("() => { tasks[0].resource = 'Anna, Ben'; recalcTaskType(tasks[0], 'units'); }")
     check("effortDriven=false on a Fixed Units task: adding a resource does not shrink it", dates() == d2)
@@ -118,7 +118,7 @@ with sync_playwright() as p:
       progress: 0, milestone: false, color: null, predecessors: [], collapsed: false, updatedAt: 1, constraintType: 'ASAP', constraintDate: null, taskMode: 'auto', resource: 'Anna', actualStart: null, actualFinish: null };
       tasks.push(t); normalizeData(); save(); render(); }""")
     check("minute mode: a 2h task's work bootstraps to 120 minutes", ev("() => tasks[0].work") == 120)
-    ev("() => { tasks[0].resource = 'Anna, Ben'; recalcTaskType(tasks[0], 'units'); }")
+    ev("() => { tasks[0].effortDriven = true; tasks[0].resource = 'Anna, Ben'; recalcTaskType(tasks[0], 'units'); }")
     check("minute mode: adding a resource halves the duration to 1h (09:00-10:00), not a garbled multi-year date", ev("() => [tasks[0].startTime, tasks[0].endTime]") == ["09:00", "10:00"], ev("() => [tasks[0].startDate, tasks[0].endDate, tasks[0].startTime, tasks[0].endTime]"))
     check("...Work is unchanged", ev("() => tasks[0].work") == 120)
 
