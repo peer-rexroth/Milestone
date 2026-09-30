@@ -47,6 +47,12 @@ with sync_playwright() as p:
     ev("() => setView('tasks')")
 
     # ---------------------------------------------------------------- what it shows
+    ev("() => { setSelection(['b']); render(); }"); pg.wait_for_timeout(80)
+    lines = ev("""() => { const row = document.querySelector('#tfResRows .tf-row'), head = document.querySelector('.tf-res .tf-row-head');
+      const edges = el => [...el.children].slice(0, -1).map(c => Math.round(c.getBoundingClientRect().right));
+      const colored = [...row.children].slice(0, -1).every(c => getComputedStyle(c).borderRightColor !== 'rgba(0, 0, 0, 0)');
+      return { same: JSON.stringify(edges(row)) === JSON.stringify(edges(head)), colored }; }""")
+    check("the tables are real lists: a data row's column lines sit exactly under the header's, and every cell (editable ones too) draws its line", lines == {"same": True, "colored": True}, lines)
     seed(); select("b")
     check("it shows the selected task: header, name, duration, start, finish, % complete, type",
           "#2 Build" in pg.inner_text("#tfTaskLabel") and pg.input_value("#tfName") == "Build" and pg.input_value("#tfDur") == "10 days"
@@ -190,12 +196,32 @@ with sync_playwright() as p:
     select("sp")
     check("an empty line has nothing to edit", "nothing to edit" in pg.inner_text("#taskFormBody"))
 
+    GEOM = """() => { const r = s => document.querySelector(s).getBoundingClientRect();
+      return { okR: Math.round(r('#tfOkBtn').right), predR: Math.round(r('.tf-pred').right), resL: Math.round(r('.tf-res').left), nameL: Math.round(r('label[for=tfName]').left),
+               resW: Math.round(r('.tf-res').width), predW: Math.round(r('.tf-pred').width), durW: r('#tfDur').width, nameW: r('#tfName').width }; }"""
+    def geom_ok(g): return abs(g["okR"] - g["predR"]) <= 1 and abs(g["resL"] - g["nameL"]) <= 1 and abs(g["resW"] - g["predW"]) <= 1 and g["durW"] < g["nameW"] * 0.6
+    seed(); select("b"); g = ev(GEOM)
+    check("day plan: both tables the same width, the right one ending exactly where the OK button does, the left one under 'Name:'; Duration short, Name wide", geom_ok(g), g)
     # ---------------------------------------------------------------- Hours & minutes plan: times
     seed(); ev("() => { project.timeUnit = 'minute'; normalizeData(); save(); render(); }"); select("a")
+    g = ev(GEOM)
+    check("Hours & minutes plan: the same alignment holds with the wider date + time columns", geom_ok(g), g)
     check("in an Hours & minutes plan Start and Finish get a time box and Duration reads in working time",
           pg.locator("#tfStartTime").count() == 1 and ev("() => document.getElementById('tfStartTime').value") == "08:00" and pg.input_value("#tfDur") == "5 days", pg.input_value("#tfDur"))
     pg.fill("#tfDur", "4h"); pg.click("#tfOkBtn"); pg.wait_for_timeout(200)
     check("...a typed '4h' makes it a 4-hour task (08:00-12:00, finishing as the lunch break starts)", ev("() => [byId('a').startDate, taskMoment(byId('a'), 'start') % 1440, byId('a').endDate, byId('a').endTime]") == ["2026-09-07", 480, "2026-09-07", "12:00"], ev("() => [byId('a').startDate, byId('a').startTime, byId('a').endDate, byId('a').endTime]"))
+    layout = ev("""() => { const items = [...document.querySelectorAll('.tf-top > *, .tf-top .tf-pair > *, .tf-top .tf-dt > *, .tf-top .tf-btns > *')].map(e => e.getBoundingClientRect());
+      const right = document.getElementById('taskFormBody').getBoundingClientRect().right, bad = [];
+      for (const a of items) for (const c of items) if (a !== c && Math.abs(a.top - c.top) < 8 && c.left > a.left && c.left < a.right - 1 && !(c.right <= a.right)) bad.push([a.left, c.left]);
+      return { overlaps: bad.length, past: items.filter(r => r.right > right + 1).length }; }""")
+    check("Hours & minutes: the date + time boxes don't run into the next label, and nothing is cut off at the right (1440px)", layout == {"overlaps": 0, "past": 0}, layout)
+    pg.set_viewport_size({"width": 1100, "height": 900}); pg.wait_for_timeout(150)
+    layout = ev("""() => { const items = [...document.querySelectorAll('.tf-top > *, .tf-top .tf-pair > *, .tf-top .tf-dt > *, .tf-top .tf-btns > *')].map(e => e.getBoundingClientRect());
+      const right = document.getElementById('taskFormBody').getBoundingClientRect().right, bad = [];
+      for (const a of items) for (const c of items) if (a !== c && Math.abs(a.top - c.top) < 8 && c.left > a.left && c.left < a.right - 1 && !(c.right <= a.right)) bad.push([a.left, c.left]);
+      return { overlaps: bad.length, past: items.filter(r => r.right > right + 1).length }; }""")
+    check("...nor at a 1100px window", layout == {"overlaps": 0, "past": 0}, layout)
+    pg.set_viewport_size({"width": 1440, "height": 900}); pg.wait_for_timeout(150)
     ev("() => { delete project.timeUnit; normalizeData(); save(); render(); }")
 
     # ---------------------------------------------------------------- resizing, switching off

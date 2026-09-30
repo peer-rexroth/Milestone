@@ -837,7 +837,15 @@ field), both MS Project's own behaviour.
   Scheduled, Previous / Next — then `Start:` `Finish:` `Task type:` `% Complete:`, Cancel / OK); below, the two tables
   as **list tables** styled like the task list — a header row, column lines running to the bottom (`.tf-fill`), cells
   that show a box only on hover/focus (`.tf-cell`), ✕ appearing on row hover, and an ID column (a resource's number in
-  the Resource Sheet). The trailing add-row's defaults (FS, 0, 100%) are dimmed until typed in (`.tf-blank`).
+  the Resource Sheet). The trailing add-row's defaults (FS, 0, 100%) are dimmed until typed in (`.tf-blank`). Two layout rules found from a screenshot: an editable cell is a
+  grid track itself, so its *own* border carries the column line (`.tf-row > .tf-cell { border-right-color }` — a plain
+  `border: 1px solid transparent` wiped the line out in every data row); and an Hours & minutes plan widens the Start /
+  Finish columns (`.tf-top.mm`, date + time need ~190px) so the time box never runs over the next label — checked at
+  1100 / 1440px in `verify_task_form.py`, with a stacked layout below 1080px. The fields and tables sit in one block sized to the field grid
+  (`.tf-wrap`, `width: max-content`): Name spans into the column above "Finish:" (`.tf-name-in`), Duration's label and a
+  short box share the column above the Finish date (`.tf-dur`), and the two tables split the block evenly — the same
+  width, the left one under "Name:", the right one ending exactly where OK does — in both precision modes (a user
+  request; checked in `verify_task_form.py`).
 - **What it shows** (`renderTaskForm()`, called at the end of every `renderPass()`): the selected task (the anchor,
   `selectedTaskId`). Top: Name, Duration, Effort driven, Manually Scheduled, Start, Finish (with time boxes in an Hours
   & minutes plan), Task Type, % Complete — the dialogs' field look. Below: a **Resources** table (Resource Name with the

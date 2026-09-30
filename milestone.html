@@ -270,9 +270,14 @@ button:focus:not(:focus-visible) { outline: none; }
 .tf-strip span { writing-mode: vertical-rl; transform: rotate(180deg); font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-faint); white-space: nowrap; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 .tf-body { flex: 1; min-width: 0; min-height: 0; overflow: auto; padding: 10px 14px 10px; display: flex; flex-direction: column; gap: 8px; }
-.tf-body > * { max-width: 1000px; }
+.tf-wrap { flex: 1; min-height: 0; align-self: flex-start; width: max-content; max-width: 100%; display: flex; flex-direction: column; gap: 8px; }   /* sized to the field grid, so the tables below end exactly where the OK button does */
 .tf-empty { color: var(--text-dim); font-size: 13px; padding: 14px 2px; }
-.tf-top { display: grid; grid-template-columns: auto minmax(170px, 250px) auto minmax(150px, 210px) auto auto; gap: 6px 10px; align-items: center; font-size: 13px; }
+.tf-top { display: grid; grid-template-columns: auto minmax(170px, 250px) auto minmax(150px, 180px) auto auto; gap: 6px 10px; align-items: center; font-size: 13px; }
+.tf-top.mm { grid-template-columns: auto minmax(192px, 250px) auto minmax(192px, 210px) auto auto; }   /* date + time need ~210px, or the time runs over the next label */
+.tf-top .tf-name-in { grid-column: 2 / span 2; }   /* Name takes the room above the "Finish:" label too */
+.tf-dur { grid-column: 4; display: flex; align-items: center; gap: 8px; min-width: 0; }
+.tf-dur > label { color: var(--text-dim); white-space: nowrap; }
+.tf-dur .tf-in { flex: 1 1 auto; min-width: 0; }
 .tf-top > label, .tf-pair > label { color: var(--text-dim); white-space: nowrap; }
 .tf-in, .tf-top select { padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel); color: var(--text); width: 100%; min-width: 0; font-size: 13px; }
 .tf-in:disabled, .tf-top select:disabled { background: var(--panel-2); color: var(--text-dim); }
@@ -282,20 +287,20 @@ button:focus:not(:focus-visible) { outline: none; }
 .tf-checks { display: flex; align-items: center; gap: 16px; white-space: nowrap; }
 .tf-check { display: flex; align-items: center; gap: 6px; cursor: pointer; }
 .tf-check input:disabled + span { opacity: .5; }
-.tf-pair { display: flex; align-items: center; gap: 8px; }
-.tf-pair select { width: 140px; }
-.tf-pair #tfPct { width: 72px; text-align: right; }
+.tf-pair { display: flex; align-items: center; gap: 7px; }
+.tf-pair select { width: 124px; }
+.tf-pair #tfPct { width: 62px; text-align: right; }
 .tf-btns { display: flex; gap: 6px; justify-content: flex-end; }
-.tf-btns .btn { min-width: 84px; justify-content: center; }
+.tf-btns .btn { min-width: 72px; justify-content: center; }
 .tf-dt { display: flex; gap: 6px; min-width: 0; }
-.tf-dt .dt-wrap { flex: 1 1 120px; min-width: 116px; }
-.tf-dt input.dt-time { flex: 0 0 64px; width: 64px; }
+.tf-dt .dt-wrap { flex: 1 1 122px; min-width: 122px; }
+.tf-dt input.dt-time { flex: 0 0 64px; width: 64px; padding-inline: 8px; text-align: left; }
 .tf-note { font-size: 12px; color: var(--text-faint); min-height: 0; }
 .tf-note:empty { display: none; }
 .tf-note.dirty { color: var(--warning, #bf8700); }
 .tf-hint { font-size: 12px; color: var(--text-faint); }
 /* the two list tables */
-.tf-tables { flex: 1; min-height: 110px; display: grid; grid-template-columns: 1fr 1.15fr; gap: 12px; }
+.tf-tables { flex: 1; min-height: 110px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }   /* two tables of the same width */
 .tf-table { display: flex; flex-direction: column; min-height: 0; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: var(--panel); }
 .tf-scroll { flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; }
 .tf-grid { display: flex; flex-direction: column; flex-shrink: 0; }
@@ -311,8 +316,11 @@ button:focus:not(:focus-visible) { outline: none; }
 .tf-fill { flex: 1; min-height: 0; }
 .tf-row:not(.tf-row-head):hover { background: var(--panel-2); }
 .tf-cell { width: 100%; height: 100%; border: 1px solid transparent; border-radius: 0; background: transparent; color: var(--text); padding: 0 8px; font-size: 12.5px; outline: none; min-width: 0; }
-.tf-cell:hover { border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
-.tf-cell:focus { border-color: var(--accent); background: var(--panel); }
+/* An editable cell is a grid track itself, so its OWN border must carry the column line (a plain border: 1px transparent
+   would otherwise wipe out the `.tf-row > *` border-right every other cell draws — the lines went missing in data rows). */
+.tf-row > .tf-cell { border-right-color: var(--border); }
+.tf-row > .tf-cell:hover { border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
+.tf-row > .tf-cell:focus { border-color: var(--accent); background: var(--panel); }
 .tf-cell::placeholder { color: var(--text-faint); }
 select.tf-cell { padding: 0 24px 0 8px !important; background-position: right 7px center !important; }
 input.tf-cell[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
@@ -327,7 +335,7 @@ input.tf-cell[type=number] { -moz-appearance: textfield; }
 .tf-remove:hover { color: var(--danger); }
 .tf-remove[hidden] { display: block !important; visibility: hidden; }
 #taskFormBtn.active { background: color-mix(in srgb, var(--accent) 14%, var(--panel)); border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); color: var(--accent); }
-@media (max-width: 900px) { .tf-top { grid-template-columns: auto 1fr auto 1fr; } .tf-checks, .tf-pair, .tf-btns { grid-column: 1 / -1; justify-content: flex-start; } .tf-tables { grid-template-columns: 1fr; } }
+@media (max-width: 1080px) { .tf-wrap { width: 100%; } .tf-top, .tf-top.mm { grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr); } .tf-top .tf-name-in { grid-column: 2 / span 1; } .tf-dur { grid-column: 3 / span 2; } .tf-checks, .tf-pair, .tf-btns { grid-column: 1 / -1; justify-content: flex-start; } .tf-tables { grid-template-columns: 1fr; } }
 .grid-pane { width: var(--grid-pane-width, 360px); flex-shrink: 0; display: flex; flex-direction: column; border-right: 1px solid var(--border); background: var(--panel); position: relative; }
 /* The task list — the same one in the Tasks view and (left of the chart) in the Gantt view; the Tasks-view rules below apply to both. */
 .grid-header, .grid-row {
@@ -6985,10 +6993,10 @@ function renderTaskForm(force) {
   const typeOpts = TASK_TYPES.map(o => `<option value="${o.id}"${o.id === taskTypeInfo(t.taskType).id ? ' selected' : ''}>${o.label}</option>`).join('');
   const textNote = [t.startText != null && `Start "${t.startText}"`, t.endText != null && `Finish "${t.endText}"`].filter(Boolean);
   const tfBtn = (id, label, title, cls = '') => `<button type="button" class="btn btn-sm${cls}" id="${id}" title="${title}">${label}</button>`;
-  body.innerHTML = `
-    <div class="tf-top">
-      <label for="tfName">Name:</label><input type="text" class="tf-in" id="tfName" maxlength="255" value="${escapeHtml(t.name)}">
-      <label for="tfDur">Duration:</label><input type="text" class="tf-in" id="tfDur" value="${escapeHtml(tfOrig.dur)}" ${datesRO || ms ? 'disabled' : ''} title="${mm ? 'Working time — 4h, 90m, 2d, 1w (a bare number is hours)' : 'Working days — 5, 5d, 2w'}">
+  body.innerHTML = `<div class="tf-wrap">
+    <div class="tf-top${mm ? ' mm' : ''}">
+      <label for="tfName">Name:</label><input type="text" class="tf-in tf-name-in" id="tfName" maxlength="255" value="${escapeHtml(t.name)}">
+      <div class="tf-dur"><label for="tfDur">Duration:</label><input type="text" class="tf-in" id="tfDur" value="${escapeHtml(tfOrig.dur)}" ${datesRO || ms ? 'disabled' : ''} title="${mm ? 'Working time — 4h, 90m, 2d, 1w (a bare number is hours)' : 'Working days — 5, 5d, 2w'}"></div>
       <div class="tf-checks"><label class="tf-check" title="${noTT ? 'Only for an ordinary task (not a milestone or a group)' : 'Adding or removing a resource keeps Work the same and moves the schedule (Fixed Units / Fixed Work)'}"><input type="checkbox" id="tfEffort" ${t.effortDriven === true ? 'checked' : ''} ${noTT ? 'disabled' : ''}><span>Effort driven</span></label>
         <label class="tf-check"><input type="checkbox" id="tfManual" ${t.taskMode === 'manual' ? 'checked' : ''}><span>Manually Scheduled</span></label></div>
       <div class="tf-btns">${tfBtn('tfPrevBtn', 'Previous', 'Previous task (applies your changes first)')}${tfBtn('tfNextBtn', 'Next', 'Next task (applies your changes first)')}</div>
@@ -7007,7 +7015,7 @@ function renderTaskForm(force) {
            <div class="tf-table tf-pred"><div class="tf-row tf-row-head"><span class="r">ID</span><span>Predecessor Name</span><span>Type</span><span class="r">Lag</span><span></span></div>
              <div class="tf-scroll"><div class="tf-grid" id="tfPredRows"></div><div class="tf-fill" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div></div></div>
          </div>
-         <datalist id="tfResList">${(project.resources || []).map(r => `<option value="${escapeHtml(r.name)}">`).join('')}</datalist>`}`;
+         <datalist id="tfResList">${(project.resources || []).map(r => `<option value="${escapeHtml(r.name)}">`).join('')}</datalist>`}</div>`;
   body.querySelector('#tfPrevBtn').onclick = () => taskFormStep(-1); body.querySelector('#tfNextBtn').onclick = () => taskFormStep(1);
   body.querySelector('#tfCancelBtn').onclick = cancelTaskForm; body.querySelector('#tfOkBtn').onclick = () => applyTaskForm();
   enhanceBoxes(body);
