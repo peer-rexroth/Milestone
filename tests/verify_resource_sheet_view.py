@@ -36,14 +36,31 @@ with sync_playwright() as p:
     check("the header has MS Project's own column order: #, Resource Name, Type, Material Label, Initials, Group, Max Units, Std Rate, Ovt Rate, Cost/Use, Accrue At, Code, Days Off (CSS uppercases them for display)",
           [heads.nth(i).inner_text() for i in range(13)] == [s.upper() for s in ["#", "Resource Name", "Type", "Material Label", "Initials", "Group", "Max Units", "Std Rate", "Ovt Rate", "Cost/Use", "Accrue At", "Code", "Days Off"]])
     check("...no 'Base Calendar' column — Milestone has one calendar per plan, a per-resource selector would do nothing", "Base Calendar" not in [heads.nth(i).inner_text() for i in range(heads.count())])
-    check("with no pool at all, the empty-state message shows", ev("() => document.querySelector('.rs-empty')") is not None and "Add Resource" in ev("() => document.querySelector('.rs-empty').textContent"))
+    check("with no pool at all, the empty-state message shows", ev("() => document.querySelector('.rst-empty')") is not None and "Add Resource" in ev("() => document.querySelector('.rst-empty').textContent"))
 
     seed([{"name": "A", "s": "2026-09-07", "e": "2026-09-08", "r": "Anna:50%, Ben"}, {"name": "B", "s": "2026-09-07", "e": "2026-09-08", "r": "Anna"}])
     ev("() => render()")
-    rows = pg.locator(".rs-row")
+    rows = pg.locator(".rst-row")
     check("one row per POOL resource (not per assignment) — Anna and Ben, two rows, not three or four", rows.count() == 2)
     names = [rows.nth(i).locator('input[aria-label="Resource name"]').input_value() for i in range(2)]
-    check("row #s are 1, 2 and the names match the (alphabetically sorted) pool", sorted(names) == ["Anna", "Ben"] and [rows.nth(i).locator(".rs-id").inner_text() for i in range(2)] == ["1", "2"])
+    check("row #s are 1, 2 and the names match the (alphabetically sorted) pool", sorted(names) == ["Anna", "Ben"] and [rows.nth(i).locator(".rst-id").inner_text() for i in range(2)] == ["1", "2"])
+
+    # ---------------------------------------------------------------- alignment: a real grid (not a stray class-name collision with an unrelated ".rs-row"), header and rows agree pixel-for-pixel, no cell's own text overflows its column
+    check("the header and every row are real CSS grids (not overridden by some other, unrelated rule sharing a class name — see updateResourceSheetColumnLines()'s own comment)",
+          ev("() => getComputedStyle(document.getElementById('resourceSheetHeader')).display") == "grid" and ev("() => getComputedStyle(document.querySelector('.rst-row')).display") == "grid")
+    cols = ev("""() => { const h = getComputedStyle(document.getElementById('resourceSheetHeader')).gridTemplateColumns, r = getComputedStyle(document.querySelector('.rst-row')).gridTemplateColumns; return [h, r]; }""")
+    check("the header's and a row's own resolved column widths are identical, track for track (so the two can never drift out of alignment)", cols[0] == cols[1], cols)
+    check("the column-line CSS variables are actually populated (not left at their 'none' fallback) after a render", ev("() => getComputedStyle(document.getElementById('main')).getPropertyValue('--rst-col-lines-h').trim()") not in ("", "none"))
+    overflow_h = ev("""() => [...document.querySelectorAll('#resourceSheetHeader > div')].map(el => el.scrollWidth - el.clientWidth)""")
+    check("no header cell's own label text overflows its column (would read as truncated/overlapping the next column, like 'MAX UNITS' once did)", all(d <= 0 for d in overflow_h), overflow_h)
+    accrue_select = pg.locator(".rst-row select[aria-label='Accrue at']").first
+    check("a select cell's own chosen option isn't clipped either (e.g. 'Prorated', once cut to 'Proratec')", accrue_select.evaluate("el => el.scrollWidth <= el.clientWidth + 1"))
+    type_select = pg.locator(".rst-row select[aria-label='Type']").first
+    type_select.evaluate("el => el.focus()")
+    focus_bg = type_select.evaluate("el => { const cs = getComputedStyle(el); return [cs.backgroundRepeat, cs.backgroundSize, cs.backgroundPosition]; }")
+    check("a select's own chevron keeps its single, right-aligned position when focused/hovered (the hover/focus rule sets background-COLOR only, never the `background` shorthand — that shorthand once silently reset the chevron's background-repeat/position/size to their initial values, tiling it across the whole box)",
+          focus_bg[0] == "no-repeat" and focus_bg[1] == "11px 7px", focus_bg)
+    type_select.evaluate("el => el.blur()")
 
     # ---------------------------------------------------------------- editing: rename cascades, type/rate cells, live enabling
     anna_row = rows.filter(has=pg.locator('input[aria-label="Resource name"][value="Anna"]'))
@@ -53,42 +70,42 @@ with sync_playwright() as p:
           ev("() => tasks.find(t => t.name === 'A').resource") == "Anna Schmidt:50%, Ben" and ev("() => tasks.find(t => t.name === 'B').resource") == "Anna Schmidt", ev("() => tasks.map(t => t.resource)"))
     check("...and the pool entry itself is renamed", ev("() => project.resources.find(r => r.name === 'Anna Schmidt')") is not None)
 
-    rows = pg.locator(".rs-row")
+    rows = pg.locator(".rst-row")
     anna_row = rows.filter(has=pg.locator('input[aria-label="Resource name"][value="Anna Schmidt"]'))
     anna_row.locator('input[aria-label="Resource name"]').fill("Ben")
     anna_row.locator('input[aria-label="Resource name"]').press("Tab"); pg.wait_for_timeout(120)
     check("renaming to an existing name (case-insensitive) is refused, nothing changes", ev("() => project.resources.map(r => r.name).sort()") == ["Anna Schmidt", "Ben"], ev("() => project.resources"))
 
-    anna_row = pg.locator(".rs-row").filter(has=pg.locator('input[aria-label="Resource name"][value="Anna Schmidt"]'))
+    anna_row = pg.locator(".rst-row").filter(has=pg.locator('input[aria-label="Resource name"][value="Anna Schmidt"]'))
     anna_row.locator('input[aria-label="Resource name"]').fill("  ")
     anna_row.locator('input[aria-label="Resource name"]').press("Tab"); pg.wait_for_timeout(120)
     check("clearing the name entirely is refused too (not silently removed)", "Anna Schmidt" in ev("() => project.resources.map(r => r.name)"))
 
     anna_row.locator('select[aria-label="Type"]').select_option("material")
     pg.wait_for_timeout(120)
-    anna_row = pg.locator(".rs-row").filter(has=pg.locator('input[aria-label="Resource name"][value="Anna Schmidt"]'))
+    anna_row = pg.locator(".rst-row").filter(has=pg.locator('input[aria-label="Resource name"][value="Anna Schmidt"]'))
     check("switching Type to Material enables Material Label, disables Ovt Rate (matches real MS Project's own greyed-out behavior)",
           not anna_row.locator('input[aria-label="Material label"]').is_disabled() and anna_row.locator('input[aria-label="Overtime rate per hour"]').is_disabled())
     anna_row.locator('select[aria-label="Type"]').select_option("cost")
     pg.wait_for_timeout(120)
-    anna_row = pg.locator(".rs-row").filter(has=pg.locator('input[aria-label="Resource name"][value="Anna Schmidt"]'))
+    anna_row = pg.locator(".rst-row").filter(has=pg.locator('input[aria-label="Resource name"][value="Anna Schmidt"]'))
     check("switching to Cost also disables Std Rate (a Cost resource is billed only by Cost/Use)", anna_row.locator('input[aria-label="Standard rate per hour"]').is_disabled())
     anna_row.locator('select[aria-label="Type"]').select_option("work")
     pg.wait_for_timeout(120)
 
-    anna_row = pg.locator(".rs-row").filter(has=pg.locator('input[aria-label="Resource name"][value="Anna Schmidt"]'))
+    anna_row = pg.locator(".rst-row").filter(has=pg.locator('input[aria-label="Resource name"][value="Anna Schmidt"]'))
     anna_row.locator('input[aria-label="Standard rate per hour"]').fill("47.5")
     anna_row.locator('input[aria-label="Standard rate per hour"]').press("Tab"); pg.wait_for_timeout(120)
     check("Std Rate commits and normalizeData() keeps it (2 decimals kept)", ev("() => project.resources.find(r => r.name === 'Anna Schmidt').stdRate") == 47.5)
-    anna_row = pg.locator(".rs-row").filter(has=pg.locator('input[aria-label="Resource name"][value="Anna Schmidt"]'))
+    anna_row = pg.locator(".rst-row").filter(has=pg.locator('input[aria-label="Resource name"][value="Anna Schmidt"]'))
     anna_row.locator('input[aria-label="Max units, percent"]').fill("9999")
     anna_row.locator('input[aria-label="Max units, percent"]').press("Tab"); pg.wait_for_timeout(120)
     check("Max Units is clamped to 800 by the same normalizeData() cleaning every other route already goes through", ev("() => project.resources.find(r => r.name === 'Anna Schmidt').maxUnits") == 800)
-    anna_row = pg.locator(".rs-row").filter(has=pg.locator('input[aria-label="Resource name"][value="Anna Schmidt"]'))
+    anna_row = pg.locator(".rst-row").filter(has=pg.locator('input[aria-label="Resource name"][value="Anna Schmidt"]'))
     anna_row.locator('input[aria-label="Group"]').fill("Engineering")
     anna_row.locator('input[aria-label="Group"]').press("Tab"); pg.wait_for_timeout(120)
     check("a plain text field (Group) commits too", ev("() => project.resources.find(r => r.name === 'Anna Schmidt').group") == "Engineering")
-    anna_row = pg.locator(".rs-row").filter(has=pg.locator('input[aria-label="Resource name"][value="Anna Schmidt"]'))
+    anna_row = pg.locator(".rst-row").filter(has=pg.locator('input[aria-label="Resource name"][value="Anna Schmidt"]'))
     anna_row.locator('select[aria-label="Accrue at"]').select_option("start")
     pg.wait_for_timeout(120)
     check("Accrue At commits", ev("() => project.resources.find(r => r.name === 'Anna Schmidt').accrueAt") == "start")
@@ -102,17 +119,17 @@ with sync_playwright() as p:
     check("...and switching back to USD (the default) doesn't store it, same convention as everywhere else", ev("() => 'currencyCode' in project") == False)
 
     # ---------------------------------------------------------------- Days off link -> the existing Resource pool dialog, focused
-    ben_row = pg.locator(".rs-row").filter(has=pg.locator('input[aria-label="Resource name"][value="Ben"]'))
-    ben_row.locator(".rs-days-link").click(); pg.wait_for_timeout(120)
+    ben_row = pg.locator(".rst-row").filter(has=pg.locator('input[aria-label="Resource name"][value="Ben"]'))
+    ben_row.locator(".rst-days-link").click(); pg.wait_for_timeout(120)
     check("clicking Days off opens the existing Resource pool dialog", ev("() => document.getElementById('resourcePoolModalBg').classList.contains('open')"))
     check("...with Ben's own row already scrolled to and its days-off details open (not the first row)", ev("() => { const items = [...document.querySelectorAll('#resourceRows .res-item')]; const i = items.findIndex(el => el.querySelector('.res-name').value === 'Ben'); return items[i] && items[i].querySelector('.res-days').open; }"))
     pg.click("#resourcePoolModalBg .modal-header button"); pg.wait_for_timeout(120)
 
     # ---------------------------------------------------------------- Add / Remove, shared cascade, Undo
     before = ev("() => (project.resources||[]).length")
-    pg.click('.rs-toolbar button:has-text("Add Resource")'); pg.wait_for_timeout(120)
+    pg.click('.rst-toolbar button:has-text("Add Resource")'); pg.wait_for_timeout(120)
     check("Add Resource appends a new, editable, immediately-saved row", ev("() => (project.resources||[]).length") == before + 1)
-    new_row = pg.locator(".rs-row").filter(has=pg.locator('input[aria-label="Resource name"][value^="New resource"]'))
+    new_row = pg.locator(".rst-row").filter(has=pg.locator('input[aria-label="Resource name"][value^="New resource"]'))
     check("...its name field is focused and selected, ready to type over", ev("() => document.activeElement.getAttribute('aria-label')") == "Resource name")
 
     new_id = ev("() => project.resources.find(r => r.name.startsWith('New resource')).id")
