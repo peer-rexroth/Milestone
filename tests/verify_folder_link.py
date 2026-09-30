@@ -22,7 +22,7 @@ with sync_playwright() as p:
     ls = lambda: ev("async () => { const r = await navigator.storage.getDirectory(), o = []; for await (const e of r.values()) o.push(e.name); return o.sort(); }")
     toast = lambda: pg.inner_text("#toastMsg")
     settle = lambda: (pg.wait_for_function("() => !fileSyncWriteInFlight && !fileSyncWritePending && !planSwitching", timeout=8000), pg.wait_for_timeout(150))
-    pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.wait_for_function("() => fileSyncStatus !== 'checking'"); pg.wait_for_selector("#fileSyncModalBg.open")
+    pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.wait_for_function("() => fileSyncStatus !== 'checking'"); pg.wait_for_selector("#fileSyncModalBg.open")
     folder_open = lambda: ev("() => document.getElementById('folderFilesModalBg').classList.contains('open')")
 
     # ---------------------------------------------------------------- the link dialog itself
@@ -69,7 +69,7 @@ with sync_playwright() as p:
     check("opening 'Other.json' makes a new plan named after its project, linked to it and its folder", ev("() => project.name") == "Other" and ev("() => tasks.map(t => t.name)") == ["X"] and ev("() => watchingFolder()") is True and "Other.json" in (pg.get_attribute("#fileSyncBtn", "title") or "") and ev("() => JSON.parse(localStorage.getItem('milestone-plans')).plans.length") == 2)
 
     # ---------------------------------------------------------------- reload
-    pg.reload(); pg.wait_for_selector("#addTaskBtn"); pg.wait_for_function("() => fileSyncStatus !== 'checking'"); pg.wait_for_timeout(300)
+    pg.reload(); pg.wait_for_selector("#undoBtn"); pg.wait_for_function("() => fileSyncStatus !== 'checking'"); pg.wait_for_timeout(300)
     check("after a reload the plan is still linked to file and folder (no dialog)", ev("() => fileSyncStatus") == "linked" and ev("() => watchingFolder()") is True and pg.locator("#fileSyncModalBg.open").count() == 0 and ev("() => syncDirPerm") == "granted", (ev("() => fileSyncStatus"), ev("() => syncDirPerm")))
     put("Other-LAPTOP.json", PLAN("Other", ["From the other laptop"], 99))
     ev("() => pollFileSync()"); pg.wait_for_timeout(600); settle()

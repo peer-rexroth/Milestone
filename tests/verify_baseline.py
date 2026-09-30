@@ -12,7 +12,7 @@ with sync_playwright() as p:
     b = p.chromium.launch(headless=True)
     ctx = b.new_context(viewport={"width": 1800, "height": 800}); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
-    pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn")
+    pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn")
     def seed(specs, view="tasks"):
         pg.evaluate(SEED, specs); pg.evaluate("() => normalizeData()"); pg.evaluate("v => { for (const c of ['actualStart', 'actualFinish', ...%s]) colHidden.delete(c); currentView = v; render(); }" % json.dumps(BASECOLS), view); pg.wait_for_timeout(150)
     tid = lambda n: pg.evaluate("n => tasks.find(t => t.name === n).id", n)
@@ -44,7 +44,7 @@ with sync_playwright() as p:
     check("...and without a baseline their cells are blank", all(txt("A", c) == "" for c in BASECOLS))
     # old data (before this version): actual dates kept beside the plan; opening it changes nothing
     pg.evaluate(SEED, [{"name": "Old", "s": "2026-09-07", "e": "2026-09-11", "extra": {"actualStart": "2026-09-09", "actualFinish": "2026-09-14", "progress": 100}}, {"name": "Run", "s": "2026-09-14", "e": "2026-09-18", "extra": {"actualStart": "2026-09-16"}}])
-    pg.reload(); pg.wait_for_selector("#addTaskBtn"); pg.wait_for_timeout(300)
+    pg.reload(); pg.wait_for_selector("#undoBtn"); pg.wait_for_timeout(300)
     check("a plan from before this version keeps its dates exactly when it is opened (Start/Finish still the old plan; no baseline made)", dates("Old") == ["2026-09-07", "2026-09-11"] and dates("Run") == ["2026-09-14", "2026-09-18"] and pg.evaluate("() => tasks.every(t => !t.baselines)"), (dates("Old"), dates("Run")))
     open_dialog()
     info = pg.inner_text("#baselineActualsInfo")
@@ -176,7 +176,7 @@ with sync_playwright() as p:
     check("dependency arrows leave from the END OF THE BAR (the schedule already includes the actual dates); no separate anchors", pg.evaluate("() => { const t = tasks.find(x => x.name === 'A'); const g = barGeom[t.id]; const p = [...document.querySelectorAll('#ganttDeps path[marker-end]')][0]; const m = /^M([-\\d.]+),([-\\d.]+)/.exec(p.getAttribute('d')); return g.link === undefined && Math.abs(parseFloat(m[1]) - g.right) < .6; }"))
     pg.click("#baselineBtn"); pg.wait_for_timeout(200)
     check("the ruler button hides the baseline lines (and they come back)", pg.locator(".gantt-base").count() == 0 and "active" not in (pg.get_attribute("#baselineBtn", "class") or ""))
-    pg.reload(); pg.wait_for_selector("#addTaskBtn"); pg.wait_for_timeout(300)
+    pg.reload(); pg.wait_for_selector("#undoBtn"); pg.wait_for_timeout(300)
     check("...the choice is remembered on this device", pg.evaluate("() => showBaseline") is False and pg.evaluate("() => JSON.parse(localStorage.getItem('milestone-prefs')).showBaseline") is False)
     pg.click("#baselineBtn"); pg.wait_for_timeout(200)
     check("...and shows them again", pg.locator(".gantt-base").count() == 3)
@@ -194,7 +194,7 @@ with sync_playwright() as p:
     check("switching the compared baseline redraws the lines from that baseline (Baseline 1: A 09.09-11.09 = 3 days)", abs(gb("A")["width"] - (3 * px - 2)) < .6 and "Baseline 1" in (pg.get_attribute("#baselineBtn", "title") or ""), (gb("A"), pg.get_attribute("#baselineBtn", "title")))
     # ================================================================ persistence, clone, export
     seed(CH()); set_slot(0); set_slot(4)
-    pg.reload(); pg.wait_for_selector("#addTaskBtn"); pg.wait_for_timeout(300)
+    pg.reload(); pg.wait_for_selector("#undoBtn"); pg.wait_for_timeout(300)
     check("baselines survive a reload (tasks and project)", base("A", 0) is not None and base("A", 4) is not None and pg.evaluate("() => Object.keys(project.baselines).join()") == "0,4")
     check("...and are part of the data that is saved / synced with the plan file", pg.evaluate("() => { const d = syncPayload(); return d.tasks.every(t => t.baselines && t.baselines[0]) && d.project.baselines[4].setAt === todayStr(); }"))
     pg.evaluate("() => cloneTask(tasks.find(t => t.name === 'A').id)"); pg.wait_for_timeout(150)

@@ -15,9 +15,9 @@ with sync_playwright() as p:
     def new_page(prefs=None, w=1500):
         ctx = b.new_context(viewport={"width": w, "height": 700}); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
         pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
-        pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => localStorage.clear()")
+        pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()")
         if prefs is not None: pg.evaluate("p => localStorage.setItem('milestone-prefs', JSON.stringify(p))", prefs)
-        pg.reload(); pg.wait_for_selector("#addTaskBtn"); pg.evaluate(SEED, SPECS); pg.wait_for_timeout(200); return pg
+        pg.reload(); pg.wait_for_selector("#undoBtn"); pg.evaluate(SEED, SPECS); pg.wait_for_timeout(200); return pg
     pg = new_page()
     shown = lambda v: pg.evaluate("v => visibleTaskCols(v)", v)
     hdr = lambda: pg.evaluate("() => [...document.querySelectorAll('#gridHeader .col-filter-btn')].map(b => b.dataset.col)")
@@ -63,7 +63,7 @@ with sync_playwright() as p:
     tab("Gantt"); open_menu(); tick("status", True); pg.keyboard.press("Escape")
     check("...and 'Reset to default' in the Tasks view restores the Tasks defaults, not the Gantt view's (which keeps Status)", shown("tasks") == TASKS_DEFAULT and "status" in shown("gantt"), (shown("tasks"), shown("gantt")))
     # ================================================================ persistence
-    pg.reload(); pg.wait_for_selector("#addTaskBtn"); pg.wait_for_timeout(300)
+    pg.reload(); pg.wait_for_selector("#undoBtn"); pg.wait_for_timeout(300)
     prefs = pg.evaluate("() => JSON.parse(localStorage.getItem('milestone-prefs'))")
     check("both sets are saved on this device (cols for the Tasks view, gcols for the Gantt view) and come back after a reload", prefs["cols"]["hidden"] is not None and prefs["gcols"]["order"] and "status" not in prefs["gcols"]["hidden"] and shown("gantt") == GANTT_DEFAULT[:6] + ["status"] + GANTT_DEFAULT[6:] and shown("tasks") == TASKS_DEFAULT, (shown("gantt"), shown("tasks")))
     # ================================================================ upgrades and garbage

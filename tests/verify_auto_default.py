@@ -9,8 +9,8 @@ TASK = lambda name, mode: {"id": "t" + name.lower(), "name": name, "parentId": N
 with sync_playwright() as p:
     b = p.chromium.launch(headless=True); ctx = b.new_context(viewport={"width": 1400, "height": 800}); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
-    boot = lambda: (pg.goto(URL), pg.wait_for_selector("#addTaskBtn"), pg.wait_for_timeout(150))
-    reload = lambda: (pg.reload(), pg.wait_for_selector("#addTaskBtn"), pg.wait_for_timeout(150))
+    boot = lambda: (pg.goto(URL), pg.wait_for_selector("#undoBtn"), pg.wait_for_timeout(150))
+    reload = lambda: (pg.reload(), pg.wait_for_selector("#undoBtn"), pg.wait_for_timeout(150))
     mode = lambda: pg.evaluate("() => project.newTaskMode")
     boot(); pg.evaluate("() => localStorage.clear()"); reload()
 

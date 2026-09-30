@@ -16,7 +16,7 @@ with sync_playwright() as p:
     b = p.chromium.launch(headless=True)
     ctx = b.new_context(viewport={"width": 1700, "height": 850}); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
-    pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn")
+    pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn")
     ev = pg.evaluate
     def fresh(): ev(SEED); pg.wait_for_timeout(150)
     state = lambda: ev("() => ({ editing: !!editingCell, field: editingCell && editingCell.field, input: !!document.querySelector('#gridRows .inline-edit'), modal: document.getElementById('taskModalBg').classList.contains('open'), sel: selectedIds().map(id => byId(id).name) })")

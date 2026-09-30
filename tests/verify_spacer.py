@@ -18,7 +18,7 @@ with sync_playwright() as p:
     b = p.chromium.launch(headless=True)
     ctx = b.new_context(viewport={"width": 1700, "height": 850}); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
-    pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn")
+    pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn")
     ev = pg.evaluate
     def add_line(): pg.click("#addMenuBtn"); pg.click("#addSpacerBtn")   # the Add menu's "Add empty line"
     def fresh(): ev(SEED); pg.wait_for_timeout(120)
@@ -156,7 +156,7 @@ with sync_playwright() as p:
     ev("() => closePrintModal()")
 
     # ---------------------------------------------------------------- persistence and sync
-    pg.reload(); pg.wait_for_selector("#addTaskBtn"); pg.wait_for_timeout(300)
+    pg.reload(); pg.wait_for_selector("#undoBtn"); pg.wait_for_timeout(300)
     check("the empty lines survive a reload", sp() == 1 and "·" in ev(OUTLINE), ev(OUTLINE))
     merged = ev("""() => { const before = stableStringify(tasks); const data = JSON.parse(JSON.stringify(syncPayload())); mergeData(data, { respectTombstones: true }); normalizeData(); return before === stableStringify(tasks); }""")
     check("merging the plan with itself changes nothing", merged)

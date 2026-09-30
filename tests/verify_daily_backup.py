@@ -19,7 +19,7 @@ with sync_playwright() as p:
     ls = lambda path="": ev("async (path) => { let d = await navigator.storage.getDirectory(); for (const seg of path.split('/').filter(Boolean)) d = await d.getDirectoryHandle(seg); const o = []; for await (const e of d.values()) o.push(e.name); return o.sort(); }", path)
     readf = lambda path: ev("async (path) => { const parts = path.split('/'); let d = await navigator.storage.getDirectory(); for (const seg of parts.slice(0, -1)) d = await d.getDirectoryHandle(seg); const h = await d.getFileHandle(parts[parts.length - 1]); return (await h.getFile()).text(); }", path)
     settle = lambda: (pg.wait_for_function("() => !fileSyncWriteInFlight && !fileSyncWritePending && !planSwitching", timeout=8000), pg.wait_for_timeout(150))
-    pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.wait_for_function("() => fileSyncStatus !== 'checking'"); pg.wait_for_selector("#fileSyncModalBg.open")
+    pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.wait_for_function("() => fileSyncStatus !== 'checking'"); pg.wait_for_selector("#fileSyncModalBg.open")
 
     # ---------------------------------------------------------------- linking writes today's backup right away, on the initial "opening" path
     pg.click("#linkFolderBtn"); pg.wait_for_selector("#folderFilesModalBg.open"); pg.fill("#folderNewName", "cbm.json"); pg.click("#folderFilesOkBtn"); settle()

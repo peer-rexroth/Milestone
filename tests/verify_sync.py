@@ -30,7 +30,7 @@ def make(b, shared):
     pg = ctx.new_page(); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None); pg.on("pageerror", lambda e: errors.append(str(e)))
     class D: pass
     d = D(); d.pg = pg; d.shared = shared
-    def boot(): pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.wait_for_function("() => fileSyncStatus !== 'checking'"); pg.wait_for_timeout(150)
+    def boot(): pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.wait_for_function("() => fileSyncStatus !== 'checking'"); pg.wait_for_timeout(150)
     def settle(): pg.wait_for_function("() => !fileSyncWriteInFlight && !fileSyncWritePending", timeout=8000); pg.wait_for_timeout(150)
     def read(): return pg.evaluate("async () => { const r = await navigator.storage.getDirectory(); const h = await r.getFileHandle('shared.json'); return (await h.getFile()).text(); }")
     def write(text): pg.evaluate("async t => { window.__ignore = true; const r = await navigator.storage.getDirectory(); const h = await r.getFileHandle('shared.json', {create: true}); const w = await h.createWritable(); await w.write(t); await w.close(); window.__ignore = false; }", text)
@@ -145,7 +145,7 @@ with sync_playwright() as p:
     check("the last-synced state is kept per plan in localStorage (the base of the next merge)", A5.pg.evaluate("id => !!localStorage.getItem('milestone-syncbase-' + id)", plan_id))
     A5.pg.evaluate("() => { const t = tasks.find(x => x.name === 'Alpha'); t.resource = 'offline A'; t.updatedAt = Date.now(); persistLocal(); }")   # edited, page closed before it reached the file
     B5.edit("Alpha", progress=70)
-    A5.op(lambda: (A5.pg.reload(), A5.pg.wait_for_selector("#addTaskBtn"), A5.pg.wait_for_function("() => fileSyncStatus !== 'checking'")))   # reopening the app: it meets the shared file (with B's change) again
+    A5.op(lambda: (A5.pg.reload(), A5.pg.wait_for_selector("#undoBtn"), A5.pg.wait_for_function("() => fileSyncStatus !== 'checking'")))   # reopening the app: it meets the shared file (with B's change) again
     tt = A5.task("Alpha")
     check("A edited offline (Resource), B edited another field (% Complete) meanwhile: after A reloads and syncs, BOTH survive (three-way merge with the saved base)", tt["resource"] == "offline A" and tt["progress"] == 70, tt)
     check("...and the file gets A's offline work too", A5.ftask("Alpha")["resource"] == "offline A" and A5.ftask("Alpha")["progress"] == 70, A5.ftask("Alpha"))

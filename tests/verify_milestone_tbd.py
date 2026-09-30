@@ -16,7 +16,7 @@ with sync_playwright() as p:
     b = p.chromium.launch(headless=True)
     ctx = b.new_context(viewport={"width": 1600, "height": 900}); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
-    pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn")
+    pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn")
     ev = pg.evaluate
     ev("() => { historyCoalesceMs = 0; }")
     ev(SEED)
@@ -40,7 +40,7 @@ with sync_playwright() as p:
     pg.keyboard.press("Control+z"); pg.wait_for_timeout(150)
     check("Ctrl+Z takes the TBD back", get("M", "endText") is None and get("M", "endDate") == "2026-09-14")
     cell("M", "finish").click(); pg.wait_for_timeout(150); pg.fill(".inline-wrap input[type=text]", "TBD"); pg.keyboard.press("Enter"); pg.wait_for_timeout(200)
-    pg.reload(); pg.wait_for_selector("#addTaskBtn")
+    pg.reload(); pg.wait_for_selector("#undoBtn")
     check("the text survives a reload (normalizing keeps it on a manual milestone)", get("M", "endText") == "TBD" and get("M", "milestone") is True)
 
     # a real date afterwards

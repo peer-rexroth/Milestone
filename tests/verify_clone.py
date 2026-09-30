@@ -19,7 +19,7 @@ with sync_playwright() as p:
     b = p.chromium.launch(headless=True)
     ctx = b.new_context(viewport={"width": 1600, "height": 900}); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
-    pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn")
+    pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn")
     seed = lambda specs: (pg.evaluate(SEED, specs), pg.wait_for_timeout(100))
     tid = lambda n: pg.evaluate("n => (tasks.find(t => t.name === n) || {}).id", n)
     names = lambda: pg.evaluate("() => visibleTaskList().map(v => v.task ? v.task.name : v.name)") 
@@ -110,7 +110,7 @@ with sync_playwright() as p:
     # persistence
     pg.wait_for_timeout(200)
     total = pg.evaluate("() => tasks.length")
-    pg.reload(); pg.wait_for_selector("#addTaskBtn"); pg.wait_for_timeout(300)
+    pg.reload(); pg.wait_for_selector("#undoBtn"); pg.wait_for_timeout(300)
     check("the clones survive a reload (saved)", pg.evaluate("() => tasks.length") == total and pg.evaluate("() => tasks.some(t => t.name === 'C (copy)')"), pg.evaluate("() => tasks.length"))
 
     # ---------------------------------------------------------- toolbar button

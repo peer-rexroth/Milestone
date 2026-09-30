@@ -17,13 +17,13 @@ with sync_playwright() as p:
     b = p.chromium.launch(headless=True)
     ctx = b.new_context(viewport={"width": 1500, "height": 900}); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
-    pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn")
+    pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn")
     ev = pg.evaluate
     seed = lambda specs: ev(SEED, specs)
     tid = lambda n: ev("n => tasks.find(t => t.name === n).id", n)
 
     # ---------------------------------------------------------------- Scheduling precision dialog: the precision toggle
-    pg.click("#scheduleMenuBtn"); pg.wait_for_selector("#scheduleMenu.open"); pg.click("#planPrecisionItem"); pg.wait_for_selector("#precisionModalBg.open")
+    pg.click("#scheduleMenuBtn"); pg.wait_for_selector("#scheduleMenu.open"); pg.click("#planSettingsItem"); pg.click(".modal-bg.open [data-settings-tab='precision']"); pg.wait_for_selector("#precisionModalBg.open")
     check("opens on Days, the standard", pg.is_checked("#precisionDay") and not pg.is_checked("#precisionMinute"))
     check("the working-hours editor starts hidden", "hidden" in (pg.get_attribute("#workHoursEditor", "class") or ""))
     pg.check("#precisionMinute")
@@ -35,7 +35,7 @@ with sync_playwright() as p:
     check("Escape with nothing changed just closes", pg.locator("#precisionModalBg.open").count() == 0)
 
     # ---------------------------------------------------------------- saving a custom precision + working hours
-    pg.click("#scheduleMenuBtn"); pg.click("#planPrecisionItem"); pg.wait_for_selector("#precisionModalBg.open")
+    pg.click("#scheduleMenuBtn"); pg.click("#planSettingsItem"); pg.click(".modal-bg.open [data-settings-tab='precision']"); pg.wait_for_selector("#precisionModalBg.open")
     pg.check("#precisionMinute")
     pg.fill("#whStart", "09:00"); pg.fill("#whEnd", "18:00")
     pg.click("#whBreakList .hol-row button")   # remove the default 12:00-13:00 break first — an overlapping add would be deduped, not replace it
@@ -47,7 +47,7 @@ with sync_playwright() as p:
     check("the Schedule menu's Scheduling precision hint mentions the hours", "09:00" in ev("() => precisionSummary()"))
 
     # ---------------------------------------------------------------- reopening shows the saved state; discard-confirmation catches a precision change
-    pg.click("#scheduleMenuBtn"); pg.click("#planPrecisionItem"); pg.wait_for_selector("#precisionModalBg.open")
+    pg.click("#scheduleMenuBtn"); pg.click("#planSettingsItem"); pg.click(".modal-bg.open [data-settings-tab='precision']"); pg.wait_for_selector("#precisionModalBg.open")
     check("reopening shows Hours & minutes checked with the saved values", pg.is_checked("#precisionMinute") and ev("() => document.getElementById('whStart').value") == "09:00" and ev("() => document.getElementById('whEnd').value") == "18:00")
     pg.click("#precisionDay")
     pg.click("#precisionModalBg .modal-header button")   # the × close button
@@ -57,7 +57,7 @@ with sync_playwright() as p:
     check("returning to the saved state before closing asks nothing", pg.locator("#precisionModalBg.open").count() == 0 and pg.locator("#confirmModalBg.open").count() == 0)
 
     # ---------------------------------------------------------------- an invalid break is refused with a message, not silently dropped
-    pg.click("#scheduleMenuBtn"); pg.click("#planPrecisionItem"); pg.wait_for_selector("#precisionModalBg.open")
+    pg.click("#scheduleMenuBtn"); pg.click("#planSettingsItem"); pg.click(".modal-bg.open [data-settings-tab='precision']"); pg.wait_for_selector("#precisionModalBg.open")
     pg.fill("#whBreakFrom", "14:00"); pg.fill("#whBreakTo", "13:00"); pg.click("#precisionModalBg .wh-break-add button")
     check("a break ending before it starts is refused with a toast, not added", "end after it starts" in pg.inner_text("#toastMsg"))
     pg.keyboard.press("Escape")

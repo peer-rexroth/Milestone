@@ -16,7 +16,7 @@ with sync_playwright() as p:
     b = p.chromium.launch(headless=True)
     ctx = b.new_context(viewport={"width": 1600, "height": 900}); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
-    pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn")
+    pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn")
     ev = lambda js, *a: pg.evaluate(js, *a) if a else pg.evaluate(js)
     seed = lambda specs: pg.evaluate(SEED, specs)
     dates = lambda n: pg.evaluate("n => { const t = tasks.find(x => x.name === n); return [t.startDate, t.endDate]; }", n)
@@ -89,7 +89,7 @@ with sync_playwright() as p:
 
     # ------------------------------------------------------------ the dialog
     seed([{"name": "A", "s": "2026-09-07", "e": "2026-09-11"}])
-    pg.click("#scheduleMenuBtn"); pg.wait_for_selector("#scheduleMenu.open"); pg.click("#planCalendarItem"); pg.wait_for_selector("#calendarModalBg.open"); pg.wait_for_timeout(150)
+    pg.click("#scheduleMenuBtn"); pg.wait_for_selector("#scheduleMenu.open"); pg.click("#planSettingsItem"); pg.click(".modal-bg.open [data-settings-tab='calendar']"); pg.wait_for_selector("#calendarModalBg.open"); pg.wait_for_timeout(150)
     check("the dialog has a holiday section with an empty list", pg.locator("#holList .hol-row").count() == 0 and "No days off" in (pg.evaluate("() => getComputedStyle(document.getElementById('holList'), '::before').content") or ""))
     pg.click("#holFrom + .hol-to") if False else None
     pg.fill("#holFrom", "2026-12-25"); pg.fill("#holName", "Christmas Day"); pg.check("#holYearly"); pg.click("#calendarModalBg .hol-add .btn"); pg.wait_for_timeout(80)
@@ -119,12 +119,12 @@ with sync_playwright() as p:
     check("Save stores the list in the plan (sorted, yearly flag, range, names)", saved == [{"date": "2026-12-25", "name": "Christmas Day", "yearly": True}, {"date": "2026-12-28", "to": "2027-01-01", "name": "Shutdown"}], saved)
     check("...the toast and the plan menu say how many holidays", "2 holidays" in pg.inner_text("#toastMsg"), pg.inner_text("#toastMsg"))
     pg.click("#scheduleMenuBtn"); pg.wait_for_selector("#scheduleMenu.open")
-    check("...the menu item shows 'Mon–Fri · 2 holidays'", "Mon–Fri · 2 holidays" in pg.inner_text("#planCalendarItem"), pg.inner_text("#planCalendarItem"))
-    pg.click("#planCalendarItem"); pg.wait_for_selector("#calendarModalBg.open"); pg.wait_for_timeout(150)
+    check("...the menu item shows 'Mon–Fri · 2 holidays'", "Mon–Fri · 2 holidays" in pg.inner_text("#planSettingsItem"), pg.inner_text("#planSettingsItem"))
+    pg.click("#planSettingsItem"); pg.click(".modal-bg.open [data-settings-tab='calendar']"); pg.wait_for_selector("#calendarModalBg.open"); pg.wait_for_timeout(150)
     check("reopening the dialog shows the saved list", pg.locator("#holList .hol-row").count() == 2)
     pg.locator("#holList .hol-row").nth(0).locator("button").click(); pg.keyboard.press("Escape"); pg.wait_for_timeout(200)
     check("Escape leaves the plan untouched", ev("() => project.holidays.length") == 2)
-    pg.reload(); pg.wait_for_selector("#addTaskBtn")
+    pg.reload(); pg.wait_for_selector("#undoBtn")
     check("holidays survive a reload and are in effect (25.12.2026 off, and again 25.12.2029)", ev("() => [project.holidays.length, isWorkDay('2026-12-25'), isWorkDay('2029-12-25')]") == [2, False, False], ev("() => [project.holidays.length, isWorkDay('2026-12-25'), isWorkDay('2029-12-25')]"))
     pg.evaluate("() => { historyCoalesceMs = 0; }")
     ev("() => { project.holidays = [{ date: '2026-09-09' }]; project.updatedAt = Date.now(); save(); }")

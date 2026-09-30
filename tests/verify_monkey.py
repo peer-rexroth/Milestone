@@ -64,7 +64,7 @@ def run(seed, actions):
         pg = ctx.new_page(); errs = []
         pg.on("pageerror", lambda e: errs.append("pageerror: " + str(e))); pg.on("console", lambda m: errs.append("console: " + m.text) if m.type == "error" else None)
         pg.on("dialog", lambda d: d.accept()); pg.on("filechooser", lambda fc: None); pg.on("download", lambda d: None)
-        pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn")
+        pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn")
         pg.evaluate("() => { historyCoalesceMs = 0; window.print = () => {}; }"); pg.evaluate(HELPERS); pg.evaluate(SEED_PLAN)
         problems = []
         def health(where):
@@ -116,7 +116,7 @@ def run(seed, actions):
                 elif kind < 0.98:
                     log.append("theme"); pg.evaluate("() => toggleTheme()")
                 else:
-                    log.append("reload"); pg.reload(); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => { historyCoalesceMs = 0; window.print = () => {}; }"); pg.evaluate(HELPERS)
+                    log.append("reload"); pg.reload(); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => { historyCoalesceMs = 0; window.print = () => {}; }"); pg.evaluate(HELPERS)
             except Hang as e:
                 problems.append(f"HANG at action {i} ({log[-1] if log else '?'}): {e}"); signal.alarm(0); break
             except Exception as e:

@@ -22,7 +22,7 @@ with sync_playwright() as p:
     b = p.chromium.launch(headless=True)
     ctx = b.new_context(viewport={"width": 1500, "height": 900}, accept_downloads=True); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
-    pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn")
+    pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn")
     ev = pg.evaluate
     f = lambda n: ev("n => { const t = tasks.find(x => x.name === n); return [t.startDate, t.startTime, t.endDate, t.endTime]; }", n)
     toast = lambda: ev("() => document.getElementById('toastMsg').textContent")
@@ -108,7 +108,7 @@ with sync_playwright() as p:
 
     # ---------------------------------------------------------------- the dialog
     plan([], None)
-    pg.click("#scheduleMenuBtn"); pg.click("#planPrecisionItem"); pg.wait_for_selector("#precisionModalBg.open")
+    pg.click("#scheduleMenuBtn"); pg.click("#planSettingsItem"); pg.click(".modal-bg.open [data-settings-tab='precision']"); pg.wait_for_selector("#precisionModalBg.open")
     check("with no different days the section is folded away and empty, with an 'Add a different day' control offering all 5 working weekdays", not ev("() => document.getElementById('whDayDetails').open") and pg.locator("#whDayRows .whd-row").count() == 0 and pg.locator("#whDayAddSelect option").count() == 5)
     ev("() => { document.getElementById('whDayDetails').open = true; }")
     pg.select_option("#whDayAddSelect", "5"); pg.click("#whDayAddRow button")
@@ -117,7 +117,7 @@ with sync_playwright() as p:
     check("...and Friday no longer offers itself in 'Add a different day' (4 left)", pg.locator("#whDayAddSelect option").count() == 4)
     pg.click("#precisionModalBg .modal-footer button.btn-primary"); pg.wait_for_timeout(200)
     check("saving an added day that is still the standard day stores nothing (it IS the standard day)", ev("() => 'workHoursByDay' in project") is False)
-    pg.click("#scheduleMenuBtn"); pg.click("#planPrecisionItem"); pg.wait_for_selector("#precisionModalBg.open")
+    pg.click("#scheduleMenuBtn"); pg.click("#planSettingsItem"); pg.click(".modal-bg.open [data-settings-tab='precision']"); pg.wait_for_selector("#precisionModalBg.open")
     check("...and reopening shows no different days again (nothing was saved)", pg.locator("#whDayRows .whd-row").count() == 0)
     ev("() => { document.getElementById('whDayDetails').open = true; }")
     pg.select_option("#whDayAddSelect", "5"); pg.click("#whDayAddRow button")
@@ -137,7 +137,7 @@ with sync_playwright() as p:
     pg.click("#precisionModalBg .modal-footer button.btn-primary"); pg.wait_for_timeout(200)
     check("saved: Friday 08:00–13:00 with no break, stored under weekday 5", ev("() => project.workHoursByDay") == {"5": FRI}, ev("() => project.workHoursByDay"))
     check("the Schedule menu's hint says one day differs", "1 day differs" in ev("() => precisionSummary()"), ev("() => precisionSummary()"))
-    pg.click("#scheduleMenuBtn"); pg.click("#planPrecisionItem"); pg.wait_for_selector("#precisionModalBg.open")
+    pg.click("#scheduleMenuBtn"); pg.click("#planSettingsItem"); pg.click(".modal-bg.open [data-settings-tab='precision']"); pg.wait_for_selector("#precisionModalBg.open")
     fri = pg.locator("#whDayRows .whd-row[data-wd='5']")
     check("reopened, the section opens by itself with Friday's own hours; no other day has a row", ev("() => document.getElementById('whDayDetails').open") and fri.locator(".whd-end").input_value() == "13:00" and pg.locator("#whDayRows .whd-row").count() == 1)
     fri.locator(".whd-remove").click()
@@ -145,7 +145,7 @@ with sync_playwright() as p:
     pg.click("#precisionModalBg .modal-footer button.btn-primary"); pg.wait_for_timeout(200)
     check("saving with it removed puts Friday back on the standard day", ev("() => 'workHoursByDay' in project") is False)
     ev("() => { project.workHoursByDay = { 5: { start: '08:00', end: '13:00', breaks: [] } }; project.workDays = [1, 2, 3, 4]; normalizeData(); save(); }")
-    pg.click("#scheduleMenuBtn"); pg.click("#planPrecisionItem"); pg.wait_for_selector("#precisionModalBg.open"); ev("() => { document.getElementById('whDayDetails').open = true; }")
+    pg.click("#scheduleMenuBtn"); pg.click("#planSettingsItem"); pg.click(".modal-bg.open [data-settings-tab='precision']"); pg.wait_for_selector("#precisionModalBg.open"); ev("() => { document.getElementById('whDayDetails').open = true; }")
     check("a stale override for a weekday that is no longer a working day (Friday, now that this plan works Mon–Thu) shows no row, and 'Add a different day' offers only the 4 real working weekdays", pg.locator("#whDayRows .whd-row").count() == 0 and pg.locator("#whDayAddSelect option").count() == 4)
     pg.keyboard.press("Escape")
 

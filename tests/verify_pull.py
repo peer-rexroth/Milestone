@@ -17,7 +17,7 @@ with sync_playwright() as p:
     b = p.chromium.launch(headless=True)
     ctx = b.new_context(viewport={"width": 1600, "height": 900}); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
-    pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn")
+    pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn")
     seed = lambda specs: pg.evaluate(SEED, specs)
     dates = lambda n: pg.evaluate("n => { const t = tasks.find(x => x.name === n); return [t.startDate, t.endDate]; }", n)
     con = lambda n: pg.evaluate("n => { const t = tasks.find(x => x.name === n); return [t.constraintType, t.constraintDate]; }", n)
@@ -171,7 +171,7 @@ with sync_playwright() as p:
     check("a pinned task shows the constraint icon, and its tooltip says which", icon and "Start No Earlier Than" in icon and "21.09.2026" in icon, icon)
 
     # ------------------------------------------------------------ reload keeps it
-    pg.reload(); pg.wait_for_selector("#addTaskBtn")
+    pg.reload(); pg.wait_for_selector("#undoBtn")
     check("the pin survives a reload", con("B") == ["SNET", "2026-09-21"], con("B"))
     check("no console errors", not errors, errors[:5])
     print("console errors/warnings:", errors[:5]); print(f"{sum(results)}/{len(results)} passed"); b.close()

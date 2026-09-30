@@ -16,7 +16,7 @@ with sync_playwright() as p:
     b = p.chromium.launch(headless=True)
     ctx = b.new_context(viewport={"width": 1440, "height": 800}); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
-    pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn")
+    pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn")
     ev = pg.evaluate
     def fresh(): ev(SEED); pg.wait_for_timeout(120)
     open_ = lambda id_: ev("(i) => document.getElementById(i).classList.contains('open')", id_)
@@ -68,7 +68,7 @@ with sync_playwright() as p:
     # ------------------------------------------------------------------ Working calendar
     fresh(); ev("() => openCalendarModal()"); pg.wait_for_timeout(300)
     check("the calendar dialog fits without scrolling and has a summary chip in its header ('Mon–Fri')", fits("#calendarModalBg") and pg.inner_text("#calendarSummaryLive") == "Mon–Fri", pg.inner_text("#calendarSummaryLive"))
-    check("...sections: Working week, Constraints, Public holidays, Another day off, Days off in this plan", [t.strip().split("\n")[0].strip().upper() for t in pg.locator("#calendarModalBg .cal-sec-title").all_inner_texts()] == ["WORKING WEEK OF “MY PROJECT”", "CONSTRAINTS", "PUBLIC HOLIDAYS", "ANOTHER DAY OFF A SINGLE DAY, A BREAK, OR A DAY THAT COMES BACK EVERY YEAR", "DAYS OFF IN THIS PLAN"] or len(pg.locator("#calendarModalBg .cal-sec-title").all()) == 5)
+    check("...sections: Working week, Public holidays, Another day off, Days off in this plan (constraint dates moved to Plan settings → Scheduling rules)", [t.strip().split("\n")[0].strip().upper() for t in pg.locator("#calendarModalBg .cal-sec-title").all_inner_texts()] == ["WORKING WEEK OF “MY PROJECT”", "PUBLIC HOLIDAYS", "ANOTHER DAY OFF A SINGLE DAY, A BREAK, OR A DAY THAT COMES BACK EVERY YEAR", "DAYS OFF IN THIS PLAN"] or len(pg.locator("#calendarModalBg .cal-sec-title").all()) == 4)
     check("...the region, both years and the Add button are on ONE row (they used to stack)", max(abs(mid(x) - mid("#holRegion")) for x in ["#holYearFrom", "#holYearTo", "#calendarModalBg .hol-preset .btn"]) <= 3)
     check("...the two dates of a break are side by side, the name and Add on the row below", abs(top("#holFrom") - top("#holTo")) <= 1 and top("#holName") > top("#holFrom") and abs(top("#holName") - top("#calendarModalBg .hol-add .btn")) <= 2)
     check("...the long explanation is folded away ('How this works')", ev("() => !document.querySelector('#calendarModalBg .cal-how').open") and not pg.locator("#calendarModalBg .cal-how .cal-hint").is_visible())

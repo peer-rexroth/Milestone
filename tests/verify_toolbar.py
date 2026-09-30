@@ -18,7 +18,7 @@ with sync_playwright() as p:
     b = p.chromium.launch(headless=True)
     ctx = b.new_context(viewport={"width": 1500, "height": 800}); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
-    pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn")
+    pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn")
     ev = pg.evaluate
     def fresh(): ev(SEED); pg.wait_for_timeout(120)
     def row(name): return pg.locator(f".grid-row[data-id='{ev('(n) => tasks.find(t => t.name === n).id', name)}']")
@@ -34,7 +34,7 @@ with sync_playwright() as p:
     check("the Print button is not in the toolbar any more (it is in the Data menu, and Ctrl/Cmd+P)", pg.locator("#printBtn").count() == 0 and pg.locator("#newTaskModeBtn").count() == 0)
     check("nothing selected: Indent / Outdent are disabled, and Edit / Duplicate / Copy / Delete are not shown", pg.is_disabled("#indentBtn") and all(not pg.locator("#" + i).is_visible() for i in ["bulkEditBtn", "cloneTaskBtn", "copyBtn", "deleteTaskBtn", "selChip"]))
     check("the visible toolbar: Undo, Redo, Add Task + arrow, Indent, Outdent … Find, Columns", all(pg.locator("#" + i).is_visible() for i in ["undoBtn", "redoBtn", "addTaskBtn", "addMenuBtn", "indentBtn", "outdentBtn", "searchBtn", "columnsBtn"]))
-    check("...separators divide the groups", pg.locator(".subbar > .tb-sep").count() >= 2)
+    check("...separators divide the groups", pg.locator(".subbar .tb-sep").count() >= 2)
     pick("Gamma")
     check("a selection shows '1 selected' and four labelled buttons", pg.inner_text("#selChip").strip() == "1 selected" and [pg.inner_text("#" + i).strip() for i in ["bulkEditBtn", "cloneTaskBtn", "copyBtn", "deleteTaskBtn"]] == ["Edit", "Duplicate", "Copy", "Delete"])
     pick("Alpha"); pick("Beta", ["Meta"])

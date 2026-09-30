@@ -20,7 +20,7 @@ with sync_playwright() as p:
     b = p.chromium.launch(headless=True)
     ctx = b.new_context(viewport={"width": 1300, "height": 800}, accept_downloads=True); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
-    pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn")
+    pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn")
     ev = pg.evaluate
 
     # ---------------------------------------------------------------- Excel export: date+time cells, minute-unit duration/variance/baseline text
@@ -103,7 +103,7 @@ with sync_playwright() as p:
     check("an ordinary file (every task at the calendar's default 08:00/17:00) is NOT treated as minute-precise", r2["timeUnit"] is None and not r2["warnings"], r2)
 
     # ---------------------------------------------------------------- the real import UI: "import calendar too" gates whether minute mode is actually applied
-    pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn")
+    pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn")
     pg.evaluate("(xml) => openForeignImport(xml, 'test.xml')", xml)
     pg.wait_for_selector("#foreignImportModalBg.open")
     check("the calendar checkbox is offered and checked by default", pg.is_visible("#foreignImportCalRow") and pg.is_checked("#foreignImportCal"))
@@ -111,7 +111,7 @@ with sync_playwright() as p:
     r3 = ev("() => ({ timeUnit: project.timeUnit, workHours: project.workHours, task: { startTime: tasks[0].startTime, endTime: tasks[0].endTime } })")
     check("importing with the calendar checked actually switches the live plan to minute mode", r3["timeUnit"] == "minute" and r3["workHours"]["start"] == "09:00" and r3["task"]["startTime"] == "10:00", r3)
 
-    pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn")
+    pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn")
     pg.evaluate("(xml) => openForeignImport(xml, 'test.xml')", xml)
     pg.wait_for_selector("#foreignImportModalBg.open")
     pg.uncheck("#foreignImportCal")

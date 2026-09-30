@@ -100,7 +100,7 @@ with sync_playwright() as p:
     b = p.chromium.launch(headless=True)
     ctx = b.new_context(viewport={"width": 1600, "height": 900}, accept_downloads=True); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
-    pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn")
+    pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn")
     ev = pg.evaluate
     ev("() => { historyCoalesceMs = 0; window.print = () => {}; }"); ev(HELPERS)
 
@@ -249,7 +249,7 @@ with sync_playwright() as p:
     check("undoing every step brings the plan back to EXACTLY where it started (tasks and settings; the removed tasks are tombstoned so a synced file learns they are gone)", ev("() => __planSig()") == start and ev("() => deletedTaskIds.every(d => !tasks.some(t => t.id === d.id))"), n_undo)
     ev("() => { let n = 0; while (redoStack.length && n < 50) { historyRedo(); n++; } }")
     check("...and redoing them all reaches exactly the final state again", ev("() => __planSig()") == end_state)
-    ev("() => { save(); }"); pg.reload(); pg.wait_for_selector("#addTaskBtn")
+    ev("() => { save(); }"); pg.reload(); pg.wait_for_selector("#undoBtn")
     ev(HELPERS)
     check("after a reload the plan is byte-for-byte what was saved, and saving again changes nothing", ev("() => __planSig()") == end_state and ev("() => { const a = canonicalText(); normalizeData(); save(); return canonicalText() === a; }"))
     # filters + selection + bulk

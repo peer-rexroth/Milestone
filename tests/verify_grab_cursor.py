@@ -8,7 +8,7 @@ with sync_playwright() as p:
     pg = b.new_page(viewport={"width": 1300, "height": 800}); errs = []
     pg.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg.on("pageerror", lambda e: errs.append(str(e))); pg.on("console", lambda m: errs.append(m.text) if m.type == "error" else None)
-    pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn")
+    pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn")
     pg.evaluate("""() => { tasks.length = 0; selectedTaskId = null;
       ['One','Two','Three'].forEach((n,i) => tasks.push({id: genId(), name:n, parentId:null, order:i, startDate:'2026-09-21', endDate:'2026-09-23', progress:0, milestone:false, color:null, notes:'', predecessors:[], collapsed:false, updatedAt:1, constraintType:'ASAP', constraintDate:null, taskMode:'auto'}));
       save(); render(); }""")

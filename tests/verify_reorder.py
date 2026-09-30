@@ -12,8 +12,8 @@ with sync_playwright() as p:
     pg.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
     pg.on("pageerror", lambda e: errors.append(str(e)))
-    pg.goto(URL); pg.wait_for_selector("#addTaskBtn")
-    pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn")
+    pg.goto(URL); pg.wait_for_selector("#undoBtn")
+    pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn")
 
     def seed():
         pg.evaluate("""() => {
@@ -82,7 +82,7 @@ with sync_playwright() as p:
     check("top-level orders stay contiguous", orders == list(range(len(orders))), orders)
     check("predecessor links survive a move (by id)", pg.evaluate("() => { const two = tasks.find(t=>t.name==='Two'); return two.predecessors.length === 1 && byId(two.predecessors[0].id).name === 'One'; }"))
     check("the dragged task ends up selected", pg.evaluate("() => byId(selectedTaskId).name") == "Three")
-    pg.reload(); pg.wait_for_selector("#addTaskBtn")
+    pg.reload(); pg.wait_for_selector("#undoBtn")
     check("new order survives a reload", names()[:3] == ["Three", "One", "Two"], names())
 
     # Escape clears the selection

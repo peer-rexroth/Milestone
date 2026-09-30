@@ -18,7 +18,7 @@ with sync_playwright() as p:
     b = p.chromium.launch(headless=True)
     ctx = b.new_context(viewport={"width": 1400, "height": 860}); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
-    pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn")
+    pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn")
     ev = pg.evaluate
     tid = lambda n: ev("n => tasks.find(t => t.name === n).id", n)
     def plan(specs, minute=True):
@@ -31,14 +31,14 @@ with sync_playwright() as p:
 
     # ================================================================ 1. pronoun agreement
     plan([A])
-    pg.click("#scheduleMenuBtn"); pg.click("#planPrecisionItem"); pg.wait_for_selector("#precisionModalBg.open")
+    pg.click("#scheduleMenuBtn"); pg.click("#planSettingsItem"); pg.click(".modal-bg.open [data-settings-tab='precision']"); pg.wait_for_selector("#precisionModalBg.open")
     pg.click("#precisionDay"); pg.click("#precisionModalBg .modal-footer button.btn-primary"); pg.wait_for_timeout(200)
     body1 = pg.inner_text("#confirmModalBody")
     check("exactly one task: 'will lose ITS time of day', not 'their'", "will lose its time of day" in body1 and "their" not in body1, body1)
     pg.click("#confirmModalActionBtn"); pg.wait_for_timeout(150)
     close_all()
     plan([A, dict(B, extra={"startTime": "09:00", "endTime": "10:00"})])
-    pg.click("#scheduleMenuBtn"); pg.click("#planPrecisionItem"); pg.wait_for_selector("#precisionModalBg.open")
+    pg.click("#scheduleMenuBtn"); pg.click("#planSettingsItem"); pg.click(".modal-bg.open [data-settings-tab='precision']"); pg.wait_for_selector("#precisionModalBg.open")
     pg.click("#precisionDay"); pg.click("#precisionModalBg .modal-footer button.btn-primary"); pg.wait_for_timeout(200)
     body2 = pg.inner_text("#confirmModalBody")
     check("two tasks: 'will lose THEIR time of day' (plural is correct here)", "will lose their time of day" in body2, body2)

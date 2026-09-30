@@ -12,7 +12,7 @@ with sync_playwright() as p:
     def new_page(w, h=600):
         ctx = b.new_context(viewport={"width": w, "height": h}); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
         pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
-        pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => { for (const c of ['actualStart', 'actualFinish', 'status']) colHidden.add(c); }")
+        pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => { for (const c of ['actualStart', 'actualFinish', 'status']) colHidden.add(c); }")
         pg.evaluate(SEED, SPECS); pg.wait_for_timeout(150); return pg
     dims = lambda pg: pg.evaluate("() => { const r = document.getElementById('gridRows'); return {sw: r.scrollWidth, cw: r.clientWidth, ox: getComputedStyle(r).overflowX, minw: parseFloat(getComputedStyle(document.getElementById('main')).getPropertyValue('--grid-min-w'))}; }")
     show_more = lambda pg: (pg.evaluate("() => { for (const c of ['actualStart', 'actualFinish', 'status', 'resource']) colHidden.delete(c); render(); }"), pg.wait_for_timeout(200))

@@ -14,7 +14,7 @@ with sync_playwright() as p:
     b = p.chromium.launch(headless=True)
     ctx = b.new_context(viewport={"width": 1440, "height": 900}); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type == "error" else None)
-    pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn")
+    pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn")
     ev = pg.evaluate
     ev("() => { historyCoalesceMs = 0; project.workDays = [1,2,3,4,5]; }")
     SEED = """() => { tasks.length = 0; deletedTaskIds.length = 0; delete project.resources;
@@ -37,7 +37,7 @@ with sync_playwright() as p:
     box_main, box_pane = pg.locator("#main").bounding_box(), pg.locator("#taskFormPane").bounding_box()
     check("it sits below the list, full width (a bottom split pane)", box_pane["y"] >= box_main["y"] + box_main["height"] - 1 and abs(box_pane["width"] - 1440) <= 2, (box_main, box_pane))
     check("with nothing selected it says to select a task", "Select a task" in pg.inner_text("#taskFormBody"))
-    pg.reload(); pg.wait_for_selector("#addTaskBtn")
+    pg.reload(); pg.wait_for_selector("#undoBtn")
     check("the on/off choice is remembered on this device (a display preference)", pane_open())
     ev("() => { historyCoalesceMs = 0; }")
     ev("() => setView('resources')"); pg.wait_for_timeout(80)

@@ -15,7 +15,7 @@ with sync_playwright() as p:
     b = p.chromium.launch(headless=True)
     ctx = b.new_context(viewport={"width": 1500, "height": 900}); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
-    pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn")
+    pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn")
     ev = pg.evaluate
     seed = lambda specs: ev(SEED, specs)
     tid = lambda n: ev("n => tasks.find(t => t.name === n).id", n)
@@ -24,18 +24,18 @@ with sync_playwright() as p:
     apply = lambda n: ev("n => { applyConstraints(tasks.find(t => t.name === n).id); save(); render(); }", n)
 
     # ---------------------------------------------------------------- the dialog: default, toggling, save, dirty-check
-    pg.click("#scheduleMenuBtn"); pg.wait_for_selector("#scheduleMenu.open"); pg.click("#planCalendarItem"); pg.wait_for_selector("#calendarModalBg.open")
+    pg.click("#scheduleMenuBtn"); pg.wait_for_selector("#scheduleMenu.open"); pg.click("#planSettingsItem"); pg.click(".modal-bg.open [data-settings-tab='rules']"); pg.wait_for_selector("#rulesModalBg.open")
     check("defaults checked (the standard: constraints always win)", pg.is_checked("#honorConstraintDatesInput"))
     pg.uncheck("#honorConstraintDatesInput")
-    pg.click("#calendarModalBg .modal-header button")
+    pg.click("#rulesModalBg .modal-header button")
     check("unchecking it and closing without saving asks first", pg.locator("#confirmModalBg.open").count() == 1)
     pg.click("#confirmModalBg button:has-text('Keep editing')")
-    pg.click("#calendarModalBg .modal-footer button.btn-primary"); pg.wait_for_timeout(150)
+    pg.click("#rulesModalBg .modal-footer button.btn-primary"); pg.wait_for_timeout(150)
     check("saved: project.honorConstraintDates is false", ev("() => project.honorConstraintDates") == False)
-    pg.click("#scheduleMenuBtn"); pg.click("#planCalendarItem"); pg.wait_for_selector("#calendarModalBg.open")
+    pg.click("#scheduleMenuBtn"); pg.click("#planSettingsItem"); pg.click(".modal-bg.open [data-settings-tab='rules']"); pg.wait_for_selector("#rulesModalBg.open")
     check("reopening shows it unchecked", not pg.is_checked("#honorConstraintDatesInput"))
     pg.check("#honorConstraintDatesInput")
-    pg.click("#calendarModalBg .modal-footer button.btn-primary"); pg.wait_for_timeout(150)
+    pg.click("#rulesModalBg .modal-footer button.btn-primary"); pg.wait_for_timeout(150)
     check("checking it again saves absent (the standard), not a stored true", "honorConstraintDates" not in ev("() => Object.keys(project)"))
 
     # ---------------------------------------------------------------- engine: an upper bound (SNLT) caps a predecessor push only when honored

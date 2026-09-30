@@ -19,7 +19,7 @@ with sync_playwright() as p:
     b = p.chromium.launch(headless=True)
     ctx = b.new_context(viewport={"width": 1600, "height": 900}); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
-    pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn")
+    pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn")
     ev = pg.evaluate
     tid = lambda n: ev("n => tasks.find(t => t.name === n).id", n)
     f = lambda n: ev("n => { const t = tasks.find(x => x.name === n); return [t.startDate, t.startTime, t.endDate, t.endTime]; }", n)
@@ -45,14 +45,14 @@ with sync_playwright() as p:
     ev("() => { delete project.lagUnit; tasks.find(t => t.name === 'B').predecessors[0].lag = 3; normalizeData(); }")
     check("a minute-mode plan saved before lags were minutes (no marker, lag 3) is read as 3 days = 1440 min", lag("B") == 1440, lag("B"))
     ev("() => { project.lagUnit = 'minute'; tasks.find(t => t.name === 'B').predecessors[0].lag = 90; normalizeData(); }")
-    pg.click("#scheduleMenuBtn"); pg.click("#planPrecisionItem"); pg.wait_for_selector("#precisionModalBg.open"); pg.click("#precisionDay"); pg.click("#precisionModalBg .modal-footer button.btn-primary"); pg.wait_for_timeout(200)
+    pg.click("#scheduleMenuBtn"); pg.click("#planSettingsItem"); pg.click(".modal-bg.open [data-settings-tab='precision']"); pg.wait_for_selector("#precisionModalBg.open"); pg.click("#precisionDay"); pg.click("#precisionModalBg .modal-footer button.btn-primary"); pg.wait_for_timeout(200)
     check("a lag that won't round evenly (90 min) warns before switching to days", pg.locator("#confirmModalBg.open").count() == 1 and "round to whole working days" in pg.inner_text("#confirmModalBody"), pg.inner_text("#confirmModalBody") if pg.locator("#confirmModalBg.open").count() else None)
     pg.click("#confirmModalActionBtn"); pg.wait_for_timeout(200)
     check("switching back to days converts minutes to days, rounded (90 min of an 8h day = 0), and drops the marker", lag("B") == 0 and ev("() => project.lagUnit") is None, (lag("B"), ev("() => project.lagUnit")))
     ev("() => { tasks.find(t => t.name === 'B').predecessors[0].lag = 2; save(); }")
-    pg.click("#scheduleMenuBtn"); pg.click("#planPrecisionItem"); pg.wait_for_selector("#precisionModalBg.open"); pg.click("#precisionMinute"); pg.click("#precisionModalBg .modal-footer button.btn-primary"); pg.wait_for_timeout(200)
+    pg.click("#scheduleMenuBtn"); pg.click("#planSettingsItem"); pg.click(".modal-bg.open [data-settings-tab='precision']"); pg.wait_for_selector("#precisionModalBg.open"); pg.click("#precisionMinute"); pg.click("#precisionModalBg .modal-footer button.btn-primary"); pg.wait_for_timeout(200)
     check("...and days -> minutes -> days round-trips whole-day lags (2 -> 960 -> 2)", lag("B") == 960)
-    pg.click("#scheduleMenuBtn"); pg.click("#planPrecisionItem"); pg.wait_for_selector("#precisionModalBg.open"); pg.click("#precisionDay"); pg.click("#precisionModalBg .modal-footer button.btn-primary"); pg.wait_for_timeout(200)
+    pg.click("#scheduleMenuBtn"); pg.click("#planSettingsItem"); pg.click(".modal-bg.open [data-settings-tab='precision']"); pg.wait_for_selector("#precisionModalBg.open"); pg.click("#precisionDay"); pg.click("#precisionModalBg .modal-footer button.btn-primary"); pg.wait_for_timeout(200)
     check("(the day-mode lag is back to 2)", lag("B") == 2, lag("B"))
 
     # ---------------------------------------------------------------- the Predecessors cell

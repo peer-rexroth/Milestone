@@ -12,9 +12,9 @@ with sync_playwright() as p:
     def new_page(w=1500, h=700, prefs=None):
         ctx = b.new_context(viewport={"width": w, "height": h}); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
         pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
-        pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => localStorage.clear()")
+        pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()")
         if prefs: pg.evaluate("p => localStorage.setItem('milestone-prefs', JSON.stringify(p))", prefs)
-        pg.reload(); pg.wait_for_selector("#addTaskBtn"); pg.evaluate(SEED, SPECS); pg.evaluate("() => { gColOrder = [...colOrder]; gColHidden = new Set(colHidden); currentView = 'gantt'; zoom = 'week'; render(); }"); pg.wait_for_timeout(200); return pg   # (the Gantt view gets the Tasks view's columns: its own default is the compact four, see verify_gantt_columns.py)
+        pg.reload(); pg.wait_for_selector("#undoBtn"); pg.evaluate(SEED, SPECS); pg.evaluate("() => { gColOrder = [...colOrder]; gColHidden = new Set(colHidden); currentView = 'gantt'; zoom = 'week'; render(); }"); pg.wait_for_timeout(200); return pg   # (the Gantt view gets the Tasks view's columns: its own default is the compact four, see verify_gantt_columns.py)
     pg = new_page()
     cols = lambda: pg.evaluate("() => [...document.querySelectorAll('#gridHeader .col-filter-btn')].map(b => b.dataset.col)")
     # ================================================================ the same list

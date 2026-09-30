@@ -24,7 +24,7 @@ def make(b, init):
     pg.on("pageerror", lambda e: errors.append(str(e)))
     class H: pass
     h = H(); h.pg = pg
-    def boot(): pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.wait_for_function("() => fileSyncStatus !== 'checking'"); pg.wait_for_timeout(150)
+    def boot(): pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.wait_for_function("() => fileSyncStatus !== 'checking'"); pg.wait_for_timeout(150)
     def settle(): pg.wait_for_function("() => !fileSyncWriteInFlight && !fileSyncWritePending && !planSwitching", timeout=8000); pg.wait_for_timeout(120)
     h.boot, h.settle = boot, settle
     h.names = lambda: pg.evaluate("() => tasks.map(t => t.name)")

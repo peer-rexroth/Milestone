@@ -19,10 +19,10 @@ with sync_playwright() as p:
     page.on("console", lambda m: errors.append(f"[{m.type}] {m.text}") if m.type in ("error", "warning") else None)
     page.on("pageerror", lambda e: errors.append(f"[pageerror] {e}"))
     page.goto(URL)
-    page.wait_for_selector("#addTaskBtn")
+    page.wait_for_selector("#undoBtn")
     page.evaluate("() => { localStorage.clear(); }")
-    page.reload(); page.wait_for_selector("#addTaskBtn"); page.evaluate("() => { project.workDays = [0,1,2,3,4,5,6]; }"); page.evaluate("() => { for (const c of ['actualStart', 'actualFinish', 'status']) colHidden.add(c); }"); page.evaluate("() => { colHidden.add('wbs'); save(); render(); }")   # these checks index cells by position, so keep the pre-WBS column layout
-    page.wait_for_selector("#addTaskBtn")
+    page.reload(); page.wait_for_selector("#undoBtn"); page.evaluate("() => { project.workDays = [0,1,2,3,4,5,6]; }"); page.evaluate("() => { for (const c of ['actualStart', 'actualFinish', 'status']) colHidden.add(c); }"); page.evaluate("() => { colHidden.add('wbs'); save(); render(); }")   # these checks index cells by position, so keep the pre-WBS column layout
+    page.wait_for_selector("#undoBtn")
 
     def mk(name, start, end, mode="auto", parent=None, preds=None, milestone=False):
         return page.evaluate("""([name, start, end, mode, parent, preds, milestone]) => {
@@ -189,7 +189,7 @@ with sync_playwright() as p:
     # ---- legacy data and integrity
     page.evaluate("""() => { localStorage.setItem('milestone-v1', JSON.stringify({version:1, project:{name:'Old',updatedAt:1}, tasks:[
         {id:'legacy1', name:'Old task', parentId:null, order:0, startDate:'2026-09-01', endDate:'2026-09-03', progress:0, milestone:false, color:null, notes:'', predecessors:[], collapsed:false, updatedAt:1}], deletedTaskIds:[]})); }""")
-    page.reload(); page.wait_for_selector("#addTaskBtn")
+    page.reload(); page.wait_for_selector("#undoBtn")
     check("legacy tasks without a mode stay Auto Scheduled", page.evaluate("() => tasks[0].taskMode") == "auto")
     check("legacy project gets the Manual new-task default", page.evaluate("() => project.newTaskMode") == "manual")
 

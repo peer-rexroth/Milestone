@@ -16,7 +16,7 @@ with sync_playwright() as p:
         ctx = b.new_context(viewport={"width": 1300, "height": 520}, locale=loc, device_scale_factor=2)
         ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
         pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
-        pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => { project.workDays = [0,1,2,3,4,5,6]; }")
+        pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => { project.workDays = [0,1,2,3,4,5,6]; }")
         pg.evaluate(SEED, CFG); pg.wait_for_timeout(200)
         print(f"--- locale {loc} ---")
 
@@ -66,21 +66,21 @@ with sync_playwright() as p:
         check("Year scale: dragging a bar 30px moves it 20 days", moved == 20 and (pg.evaluate("([a, b]) => dayNumber(b) - dayNumber(a)", [before[1], after[1]]) == 20), (before, after, moved))
 
         # ---- persistence and the other scales
-        pg.reload(); pg.wait_for_selector("#addTaskBtn"); pg.wait_for_timeout(200)
+        pg.reload(); pg.wait_for_selector("#undoBtn"); pg.wait_for_timeout(200)
         check("the Year scale is remembered after a reload", pg.evaluate("() => zoom") == "year" and pg.locator("#zoomTabs .view-tab.active").inner_text() == "Year")
         pg.click("#zoomTabs .view-tab:has-text('Month')"); pg.wait_for_timeout(250)
         mt = pg.evaluate("() => [...document.querySelectorAll('#ganttHeader .gantt-tick')].map(e => ({text: e.innerText.trim(), w: e.getBoundingClientRect().width}))")
         check("Month scale: still one tick per month, each as wide as the month (5px/day)", len(mt) > 6 and all(abs(t["w"] / 5 - round(t["w"] / 5)) < 0.05 and 28 <= round(t["w"] / 5) <= 31 for t in mt[1:-1]), mt[:4])
         # ---- the default scale is Year, once, for everyone; afterwards the choice is remembered
-        pg.evaluate("() => { localStorage.setItem('milestone-prefs', JSON.stringify({theme: 'light', zoom: 'week', view: 'gantt', gridPaneWidth: 400})); }"); pg.reload(); pg.wait_for_selector("#addTaskBtn"); pg.wait_for_timeout(200)
+        pg.evaluate("() => { localStorage.setItem('milestone-prefs', JSON.stringify({theme: 'light', zoom: 'week', view: 'gantt', gridPaneWidth: 400})); }"); pg.reload(); pg.wait_for_selector("#undoBtn"); pg.wait_for_timeout(200)
         check("an old saved 'week' (the previous default, saved by the first save) is reset to Year once", pg.evaluate("() => zoom") == "year" and pg.locator("#zoomTabs .view-tab.active").inner_text() == "Year")
-        pg.click("#zoomTabs .view-tab:has-text('Week')"); pg.wait_for_timeout(150); pg.reload(); pg.wait_for_selector("#addTaskBtn"); pg.wait_for_timeout(200)
+        pg.click("#zoomTabs .view-tab:has-text('Week')"); pg.wait_for_timeout(150); pg.reload(); pg.wait_for_selector("#undoBtn"); pg.wait_for_timeout(200)
         check("...but a scale chosen afterwards is remembered", pg.evaluate("() => zoom") == "week")
-        pg.evaluate("() => { localStorage.setItem('milestone-prefs', JSON.stringify({theme: 'light', zoom: 'day', zoomRev: 1, view: 'gantt', gridPaneWidth: 400})); }"); pg.reload(); pg.wait_for_selector("#addTaskBtn"); pg.wait_for_timeout(200)
+        pg.evaluate("() => { localStorage.setItem('milestone-prefs', JSON.stringify({theme: 'light', zoom: 'day', zoomRev: 1, view: 'gantt', gridPaneWidth: 400})); }"); pg.reload(); pg.wait_for_selector("#undoBtn"); pg.wait_for_timeout(200)
         check("a saved 'day' (removed) falls back to Year", pg.evaluate("() => zoom") == "year" and pg.locator("#zoomTabs .view-tab.active").inner_text() == "Year")
-        pg.evaluate("() => { localStorage.clear(); }"); pg.reload(); pg.wait_for_selector("#addTaskBtn"); pg.wait_for_timeout(200)
+        pg.evaluate("() => { localStorage.clear(); }"); pg.reload(); pg.wait_for_selector("#undoBtn"); pg.wait_for_timeout(200)
         check("a fresh install starts on Year", pg.evaluate("() => zoom") == "year")
-        pg.evaluate("() => { localStorage.setItem('milestone-v1', JSON.stringify({project: {name: 'Old'}, tasks: [], deletedTaskIds: [], zoom: 'week', theme: 'light'})); localStorage.removeItem('milestone-plans'); localStorage.removeItem('milestone-prefs'); }"); pg.reload(); pg.wait_for_selector("#addTaskBtn"); pg.wait_for_timeout(200)
+        pg.evaluate("() => { localStorage.setItem('milestone-v1', JSON.stringify({project: {name: 'Old'}, tasks: [], deletedTaskIds: [], zoom: 'week', theme: 'light'})); localStorage.removeItem('milestone-plans'); localStorage.removeItem('milestone-prefs'); }"); pg.reload(); pg.wait_for_selector("#undoBtn"); pg.wait_for_timeout(200)
         check("an install migrating from the single-project build also starts on Year", pg.evaluate("() => zoom") == "year")
 
         # ---- the chart under the header: rows line up, arrows join their bars (they used to be drawn 32px too high), link preview

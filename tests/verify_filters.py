@@ -18,7 +18,7 @@ with sync_playwright() as p:
     b = p.chromium.launch(headless=True)
     ctx = b.new_context(viewport={"width": 1300, "height": 760}); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
-    pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => { project.workDays = [0,1,2,3,4,5,6]; }"); pg.evaluate("() => { for (const c of ['actualStart', 'actualFinish', 'status']) colHidden.add(c); }"); pg.evaluate("() => { colHidden.add('wbs'); save(); render(); }")
+    pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => { project.workDays = [0,1,2,3,4,5,6]; }"); pg.evaluate("() => { for (const c of ['actualStart', 'actualFinish', 'status']) colHidden.add(c); }"); pg.evaluate("() => { colHidden.add('wbs'); save(); render(); }")
     def seed(): pg.evaluate(SEED); pg.wait_for_timeout(150)
     rows = lambda: pg.evaluate("() => visibleTaskList().map(x => x.task.name)")
     def open_filter(col, expand=True):
@@ -187,7 +187,7 @@ with sync_playwright() as p:
     check("Gantt view: the chart shows exactly the filtered rows, in step with the list", pg.locator(".gantt-row-bg").count() == n == pg.locator("#gridRows .grid-row").count() and n == 5, (n, pg.locator('.gantt-row-bg').count()))
     pg.evaluate("() => { currentView = 'tasks'; render(); }")
     check("the filter follows you from Gantt back to Tasks", pg.evaluate("() => filtersActive()") and pg.locator(".col-filter-btn.active").count() == 1)
-    pg.reload(); pg.wait_for_selector("#addTaskBtn")
+    pg.reload(); pg.wait_for_selector("#undoBtn")
     check("filters are view state: gone after a reload", not pg.evaluate("() => filtersActive()"))
     pg.evaluate(SEED); apply_rule("start", "equals", "2026-09-07")
     pg.evaluate("() => { switchPlan(createPlanRecord('Other', null)); }"); pg.wait_for_timeout(500)

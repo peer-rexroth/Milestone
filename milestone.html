@@ -77,13 +77,27 @@ button { cursor: pointer; }
 .plan-btn i { font-size: 10px; color: var(--text-faint); flex-shrink: 0; }
 .topbar-divider { width: 1px; height: 22px; background: var(--border); }
 .topbar-spacer { flex: 1 1 auto; }
+@media (max-width: 1240px) { .topbar .brand-name { display: none; } .plan-btn { width: 200px; } }
+@media (max-width: 1040px) { .topbar .btn-label { display: none; } .plan-btn { width: 170px; } .topbar { gap: 10px; } }
+/* view tabs: the task views, a divider, the resource views */
+.view-tab-sep { width: 1px; align-self: stretch; margin: 4px 3px; background: var(--border); }
 
 .subbar {
   display: flex; align-items: center; gap: 6px 10px; min-height: 46px; padding: 5px 14px;
   background: var(--panel-2); border-bottom: 1px solid var(--border);
-  flex-shrink: 0; flex-wrap: wrap;   /* a narrow window wraps the toolbar onto a second row instead of hiding the buttons on the right */
+  flex-shrink: 0; flex-wrap: nowrap; overflow: hidden;   /* one row always: what doesn't fit goes into the "More" menu (fitToolbar()) instead of wrapping */
 }
 .subbar > * { flex-shrink: 0; }
+/* The toolbar belongs to the view: each group shows only in its views (data-views, toggled in renderPass). */
+.tb-group { display: flex; align-items: center; gap: 6px 10px; flex-shrink: 0; }
+.tb-group.tb-filter { flex: 0 1 auto; min-width: 0; overflow: hidden; }
+.tb-group .filter-bar { min-width: 0; }
+.tb-over { display: none !important; }
+.tb-toggle[aria-pressed="true"] { background: color-mix(in srgb, var(--accent) 14%, var(--panel)); border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); color: var(--accent); }
+.subbar #zoomTabs { border: 1px solid var(--border); }
+.subbar #zoomTabs .view-tab { padding: 4px 10px; }
+#moreMenu .menu-head { padding-top: 8px; }
+#moreMenu .dropdown-item .mode-check { margin-left: auto; color: var(--accent); }
 
 .btn {
   display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px;
@@ -706,8 +720,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
    this feature's own review: the task list's later ".rs-row { display:flex }" rule was silently overriding this
    grid's ".rs-row { display:grid }", since both features independently chose the same "rs-" shorthand). */
 .resourceSheet-pane-outer { flex: 1; min-width: 0; display: flex; flex-direction: column; background: var(--bg); }
-.rst-toolbar { display: flex; align-items: center; gap: 12px; padding: 8px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-.rst-toolbar .rst-currency { display: flex; align-items: center; gap: 6px; margin-left: auto; font-size: 12.5px; color: var(--text-dim); }
+.rst-currency { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-dim); }
 .rst-scroll { flex: 1; overflow: auto; position: relative; }
 .rst-header, .rst-row { display: grid; grid-template-columns: 40px minmax(160px,1fr) 126px 118px 78px 110px 98px 98px 98px 98px 132px 90px 116px 40px; column-gap: 0; min-width: max-content; align-items: center; }
 .rst-header { position: sticky; top: 0; z-index: 3; height: var(--head-h); font-size: 11px; font-weight: 700; color: var(--text-faint); text-transform: uppercase; letter-spacing: .03em; border-bottom: 1px solid var(--border); --row-bg: var(--panel); background: var(--row-bg); }
@@ -846,6 +859,14 @@ select.rst-select:disabled { opacity: .5; }
 .field-grid-4 input[type=date], .field-grid-4 input[type=number], .field-grid-4 input[type=text], .field-grid-4 select { padding: 8px 8px; }
 .ms-field { align-self: end; padding-bottom: 9px; }   /* the task dialog: a lot of fields, so more room before it scrolls */
 .modal.wide { width: 620px; }
+.modal.settings-modal { width: 680px; height: min(760px, 94vh); max-height: 94vh; }
+.modal.settings-modal .modal-body { flex: 1; min-height: 0; }
+.settings-tabs { display: flex; gap: 2px; padding: 0 14px; border-bottom: 1px solid var(--border); flex-shrink: 0; overflow-x: auto; }
+.settings-tabs.hidden { display: none; }
+.settings-tab { border: none; background: none; padding: 10px 12px 9px; font-size: 13px; font-weight: 600; color: var(--text-dim); border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; display: flex; align-items: center; gap: 7px; }
+.settings-tab i { font-size: 12px; opacity: .8; }
+.settings-tab:hover { color: var(--text); }
+.settings-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 .minute-mode #taskDatesBlock { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
 .minute-mode #taskDatesBlock > .field-grid-4 { display: contents; }   /* (the two rows of fields become one grid, so they can be ordered together) */
 .minute-mode #taskDatesBlock #taskTextDatesNote { grid-column: 1 / -1; order: 9; }
@@ -999,7 +1020,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
 <div class="topbar">
   <div class="brand">
     <svg viewBox="0 0 120 120" aria-hidden="true"><mask id="logoMaskBar"><rect width="120" height="120" fill="#fff"/><rect x="40" y="34" width="40" height="14" rx="7" fill="#000"/><rect x="26" y="53" width="58" height="14" rx="7" fill="#000"/><rect x="50" y="72" width="34" height="14" rx="7" fill="#000"/></mask><polygon mask="url(#logoMaskBar)" points="60,3 117,60 60,117 3,60" fill="currentColor"/></svg>
-    Milestone
+    <span class="brand-name">Milestone</span>
   </div>
   <div class="dropdown-wrap">
     <button class="plan-btn" id="planMenuBtn" onclick="togglePlanMenu()" title="Switch plan"><span id="planBtnName"></span><i class="fa-solid fa-chevron-down"></i></button>
@@ -1007,10 +1028,6 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
   </div>
   <div class="topbar-divider"></div>
   <div class="view-tabs" id="mainViewTabs"></div>
-  <div class="topbar-divider" id="ganttControlsDivider"></div>
-  <div class="view-tabs" id="zoomTabs"></div>
-  <button class="icon-btn" id="baselineBtn" onclick="toggleBaseline()" title="Show the baseline under the bars"><i class="fa-solid fa-ruler-horizontal"></i></button>
-  <button class="icon-btn" id="criticalPathBtn" onclick="toggleCriticalPath()" title="Highlight critical path"><i class="fa-solid fa-route"></i></button>
   <div class="topbar-spacer"></div>
   <div class="topbar-divider"></div>
   <div class="dropdown-wrap">
@@ -1019,11 +1036,11 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
     <span class="watch-hint hidden" id="watchHint"><button class="btn watch-btn" id="watchHintBtn" onclick="chooseWatchFolder()" title="This plan is linked to a single file (from before plans were linked by folder). Link the folder it lives in: OneDrive, Dropbox and SharePoint keep a second copy of the file when two devices save at the same time, and Milestone can then merge those copies in."><i class="fa-solid fa-folder-tree"></i>Link folder</button><button class="watch-x" onclick="declineWatch()" title="Don't remind me for this plan (the plan menu still has it)" aria-label="Don't remind me">&times;</button></span>
   </div>
   <div class="dropdown-wrap">
-    <button class="btn" id="scheduleMenuBtn" onclick="toggleScheduleMenu()"><i class="fa-solid fa-gauge-high"></i>Schedule</button>
+    <button class="btn" id="scheduleMenuBtn" onclick="toggleScheduleMenu()" title="Schedule: baselines, rescheduling, levelling, plan settings"><i class="fa-solid fa-gauge-high"></i><span class="btn-label">Schedule</span></button>
     <div class="dropdown-menu" id="scheduleMenu"></div>
   </div>
   <div class="dropdown-wrap">
-    <button class="btn" id="dataMenuBtn" onclick="toggleDataMenu()"><i class="fa-solid fa-database"></i>Data</button>
+    <button class="btn" id="dataMenuBtn" onclick="toggleDataMenu()" title="Data: import, export, print, backups"><i class="fa-solid fa-database"></i><span class="btn-label">Data</span></button>
     <div class="dropdown-menu" id="dataMenu">
       <button class="dropdown-item" onclick="exportProject()"><i class="fa-solid fa-file-export"></i>Export JSON</button>
       <button class="dropdown-item" onclick="triggerImport()"><i class="fa-solid fa-file-import"></i>Import JSON</button>
@@ -1043,31 +1060,59 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
   <button class="icon-btn" onclick="openAboutModal()" title="About"><i class="fa-solid fa-circle-info"></i></button>
 </div>
 
-<div class="subbar">
+<!-- The toolbar belongs to the view you are in: each .tb-group lists the views it shows in (data-views). A button with
+     data-more goes into the "More" menu when the toolbar is too narrow for everything (the higher the number, the sooner). -->
+<div class="subbar" id="subbar">
   <button class="icon-btn" id="undoBtn" onclick="historyUndo()" title="Undo (Ctrl+Z)" disabled><i class="fa-solid fa-rotate-left"></i></button>
   <button class="icon-btn" id="redoBtn" onclick="historyRedo()" title="Redo (Ctrl+Shift+Z)" disabled><i class="fa-solid fa-rotate-right"></i></button>
   <span class="tb-sep"></span>
-  <div class="split-btn">
-    <button class="btn" id="addTaskBtn" onclick="addTask()"><i class="fa-solid fa-plus"></i>Add Task</button>
-    <button class="btn split-caret" id="addMenuBtn" onclick="toggleAddMenu(event)" title="More ways to add rows — an empty line, paste — and how new tasks are scheduled" aria-haspopup="menu" aria-label="More add options"><i class="fa-solid fa-chevron-down"></i></button>
-  </div>
-  <span class="tb-sep"></span>
-  <button class="icon-btn" id="indentBtn" onclick="indentSelected()" title="Indent (make sub-task)"><i class="fa-solid fa-indent"></i></button>
-  <button class="icon-btn" id="outdentBtn" onclick="outdentSelected()" title="Outdent"><i class="fa-solid fa-outdent"></i></button>
-  <div class="sel-actions hidden" id="selActions">
+  <div class="tb-group" data-views="tasks gantt">
+    <div class="split-btn">
+      <button class="btn" id="addTaskBtn" onclick="addTask()"><i class="fa-solid fa-plus"></i>Add Task</button>
+      <button class="btn split-caret" id="addMenuBtn" onclick="toggleAddMenu(event)" title="More ways to add rows — an empty line, paste — and how new tasks are scheduled" aria-haspopup="menu" aria-label="More add options"><i class="fa-solid fa-chevron-down"></i></button>
+    </div>
     <span class="tb-sep"></span>
-    <button class="sel-chip" id="selChip" onclick="clearSelection()" title="Clear the selection (Esc)"></button>
-    <button class="btn btn-sm" id="bulkEditBtn" onclick="editSelected()" title="Edit the selected task"><i class="fa-solid fa-pen-to-square"></i>Edit</button>
-    <button class="btn btn-sm" id="cloneTaskBtn" onclick="cloneSelected()" title="Duplicate — an exact copy right below, with all its sub-tasks"><i class="fa-regular fa-clone"></i>Duplicate</button>
-    <button class="btn btn-sm" id="copyBtn" onclick="copySelectionButton()" title="Copy the selected tasks (Ctrl/Cmd+C) — paste into Milestone or Excel"><i class="fa-regular fa-copy"></i>Copy</button>
-    <button class="btn btn-sm btn-danger" id="deleteTaskBtn" onclick="deleteSelected()" title="Delete the selected tasks (Delete)"><i class="fa-solid fa-trash"></i>Delete</button>
+    <button class="icon-btn" id="indentBtn" data-more="6" data-more-label="Indent" onclick="indentSelected()" title="Indent (make sub-task)"><i class="fa-solid fa-indent"></i></button>
+    <button class="icon-btn" id="outdentBtn" data-more="6" data-more-label="Outdent" onclick="outdentSelected()" title="Outdent"><i class="fa-solid fa-outdent"></i></button>
+    <div class="sel-actions hidden" id="selActions">
+      <span class="tb-sep"></span>
+      <button class="sel-chip" id="selChip" onclick="clearSelection()" title="Clear the selection (Esc)"></button>
+      <button class="btn btn-sm" id="bulkEditBtn" onclick="editSelected()" title="Edit the selected task"><i class="fa-solid fa-pen-to-square"></i>Edit</button>
+      <button class="btn btn-sm" id="cloneTaskBtn" data-more="8" onclick="cloneSelected()" title="Duplicate — an exact copy right below, with all its sub-tasks"><i class="fa-regular fa-clone"></i>Duplicate</button>
+      <button class="btn btn-sm" id="copyBtn" data-more="9" onclick="copySelectionButton()" title="Copy the selected tasks (Ctrl/Cmd+C) — paste into Milestone or Excel"><i class="fa-regular fa-copy"></i>Copy</button>
+      <button class="btn btn-sm btn-danger" id="deleteTaskBtn" onclick="deleteSelected()" title="Delete the selected tasks (Delete)"><i class="fa-solid fa-trash"></i>Delete</button>
+    </div>
   </div>
-  <div class="filter-bar hidden" id="filterBar"></div>
+  <div class="tb-group tb-filter" data-views="tasks gantt"><div class="filter-bar hidden" id="filterBar"></div></div>
+  <div class="tb-group" data-views="resourceSheet">
+    <button class="btn" id="addResourceBtn" type="button" onclick="addResourceSheetRow()"><i class="fa-solid fa-plus"></i>Add Resource</button>
+  </div>
   <span class="subbar-spacer"></span>
-  <button class="btn" id="searchBtn" onclick="openSearch()" title="Find a task by name, WBS, number (#12), resource (@anna) or status (status:late) — Ctrl/Cmd+K, or /"><i class="fa-solid fa-magnifying-glass"></i>Find</button>
-  <button class="btn" id="columnsBtn" onclick="toggleColumnsMenu()" title="Choose which columns the task list shows"><i class="fa-solid fa-table-columns"></i>Columns</button>
-  <button class="btn" id="taskFormBtn" onclick="toggleTaskForm()" aria-pressed="false" title="Show or hide the Task Form — the selected task's details, resources and predecessors in a pane below (like MS Project's Details)"><i class="fa-regular fa-rectangle-list"></i>Task Form</button>
+  <div class="tb-group" data-views="gantt resources">
+    <div class="view-tabs" id="zoomTabs" data-more="1" data-more-label="Timescale" role="group" aria-label="Timescale"></div>
+    <button class="btn btn-sm" id="fitZoomBtn" data-more="3" onclick="fitZoom()" title="Pick the scale that shows the whole plan, and scroll to its start"><i class="fa-solid fa-arrows-left-right-to-line"></i>Fit</button>
+  </div>
+  <div class="tb-group" data-views="gantt">
+    <span class="tb-sep"></span>
+    <button class="btn btn-sm tb-toggle" id="baselineBtn" data-more="4" onclick="toggleBaseline()" aria-pressed="false" title="Show the baseline under the bars"><i class="fa-solid fa-ruler-horizontal"></i>Baseline</button>
+    <button class="btn btn-sm tb-toggle" id="criticalPathBtn" data-more="5" onclick="toggleCriticalPath()" aria-pressed="false" title="Highlight critical path"><i class="fa-solid fa-route"></i>Critical path</button>
+  </div>
+  <div class="tb-group" data-views="resources">
+    <span class="tb-sep"></span>
+    <button class="btn btn-sm tb-toggle" id="overOnlyBtn" data-more="4" onclick="toggleOverOnly()" aria-pressed="false" title="Show only the resources that are over-allocated somewhere"><i class="fa-solid fa-triangle-exclamation"></i>Over-allocated only</button>
+  </div>
+  <div class="tb-group" data-views="resourceSheet">
+    <span class="rst-currency"><label for="rsCurrencyInput">Currency</label><select id="rsCurrencyInput" class="rst-select" onchange="setCurrencyCode(this.value)"></select></span>
+  </div>
+  <div class="tb-group" data-views="tasks gantt">
+    <span class="tb-sep"></span>
+    <button class="btn" id="searchBtn" data-more="2" onclick="openSearch()" title="Find a task by name, WBS, number (#12), resource (@anna) or status (status:late) — Ctrl/Cmd+K, or /"><i class="fa-solid fa-magnifying-glass"></i>Find</button>
+    <button class="btn" id="columnsBtn" data-more="7" onclick="toggleColumnsMenu()" title="Choose which columns the task list shows"><i class="fa-solid fa-table-columns"></i>Columns</button>
+    <button class="btn" id="taskFormBtn" data-more="7" onclick="toggleTaskForm()" aria-pressed="false" title="Show or hide the Task Form — the selected task's details, resources and predecessors in a pane below (like MS Project's Details)"><i class="fa-regular fa-rectangle-list"></i>Task Form</button>
+  </div>
+  <div class="dropdown-wrap hidden" id="moreWrap"><button class="btn" id="moreBtn" onclick="toggleMoreMenu(event)" aria-haspopup="menu" title="More — the toolbar buttons that don't fit this window"><i class="fa-solid fa-ellipsis"></i>More</button></div>
 </div>
+<div class="dropdown-menu" id="moreMenu" role="menu"></div>
 <div class="dropdown-menu" id="addMenu" role="menu">
   <button class="dropdown-item" id="addSpacerBtn" role="menuitem" onclick="closeAddMenu();addSpacer()"><i class="fa-solid fa-grip-lines"></i>Add empty line<span class="item-hint">a blank row to separate tasks</span></button>
   <button class="dropdown-item" id="pasteBtn" role="menuitem" onclick="closeAddMenu();pasteButton()"><i class="fa-regular fa-paste"></i>Paste tasks<span class="item-hint" data-kbd="V"></span></button>
@@ -1105,10 +1150,6 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
     </div>
   </div>
   <div class="resourceSheet-pane-outer" id="resourceSheetPaneOuter">
-    <div class="rst-toolbar">
-      <button class="btn" type="button" onclick="addResourceSheetRow()"><i class="fa-solid fa-plus"></i>Add Resource</button>
-      <span class="rst-currency"><label for="rsCurrencyInput">Currency</label><select id="rsCurrencyInput" class="rst-select" onchange="setCurrencyCode(this.value)"></select></span>
-    </div>
     <div class="rst-scroll" id="resourceSheetScroll">
       <div class="rst-header" id="resourceSheetHeader"></div>
       <div class="rst-rows" id="resourceSheetBody"></div>
@@ -1386,8 +1427,9 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
 
 <!-- Rename custom field (opens above the task dialog, so it sits after it in the page) -->
 <div class="modal-bg" id="fieldsModalBg" onclick="if(event.target===this) requestCloseFieldsModal()">
-  <div class="modal mid">
-    <div class="modal-header"><h2>Custom fields</h2><button onclick="requestCloseFieldsModal()" aria-label="Close">&times;</button></div>
+  <div class="modal wide settings-modal" id="fieldsModal">
+    <div class="modal-header"><h2 id="fieldsModalTitle">Plan settings</h2><button onclick="requestCloseFieldsModal()" aria-label="Close">&times;</button></div>
+    <div class="settings-tabs" role="tablist" aria-label="Plan settings" data-current="fields"></div>
     <div class="modal-body">
       <p class="cal-hint" style="margin:0">Fields of your own for the tasks of “<span id="fieldsPlanName"></span>” — text, numbers, dates and yes/no ticks. They are kept with this plan; tick them under <strong>Columns</strong> to show them in the list.</p>
       <div class="fields-rows" id="fieldsRows"></div>
@@ -1424,17 +1466,13 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
 </div>
 
 <div class="modal-bg" id="calendarModalBg" onclick="if(event.target===this) requestCloseCalendarModal()">
-  <div class="modal wide">
-    <div class="modal-header"><div class="mh-title"><h2>Working calendar</h2><span class="cal-summary" id="calendarSummaryLive"></span></div><button onclick="requestCloseCalendarModal()" aria-label="Close">&times;</button></div>
+  <div class="modal wide settings-modal">
+    <div class="modal-header"><div class="mh-title"><h2>Plan settings</h2><span class="cal-summary" id="calendarSummaryLive"></span></div><button onclick="requestCloseCalendarModal()" aria-label="Close">&times;</button></div>
+    <div class="settings-tabs" role="tablist" aria-label="Plan settings" data-current="calendar"></div>
     <div class="modal-body">
       <section class="cal-sec">
         <div class="cal-sec-title">Working week <span class="cal-sec-note">of “<span id="calendarPlanName"></span>”</span></div>
         <div class="cal-days" id="calendarDays"></div>
-      </section>
-      <section class="cal-sec">
-        <div class="cal-sec-title">Constraints</div>
-        <label class="hol-yearly" title="On: a Must Start On/Finish On/No Earlier Than/No Later Than date always wins, even over what a task's links would otherwise compute — today's standard. Off: a link wins when the two disagree; the constraint is still shown as unmet, just not forced."><input type="checkbox" id="honorConstraintDatesInput"> Tasks always honor their constraint dates</label>
-        <p class="cal-hint" style="margin:0">On (the standard): a task's own constraint date always overrides what its links would otherwise schedule. Off: its links win when they disagree with the constraint — the constraint still shows as unmet (see the warning icon), it just no longer forces the date.</p>
       </section>
       <section class="cal-sec">
         <div class="cal-sec-title">Public holidays</div>
@@ -1472,9 +1510,46 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
   </div>
 </div>
 
+<div class="modal-bg" id="rulesModalBg" onclick="if(event.target===this) requestCloseRulesModal()">
+  <div class="modal wide settings-modal">
+    <div class="modal-header"><h2>Plan settings</h2><button onclick="requestCloseRulesModal()" aria-label="Close">&times;</button></div>
+    <div class="settings-tabs" role="tablist" aria-label="Plan settings" data-current="rules"></div>
+    <div class="modal-body">
+      <section class="cal-sec">
+        <div class="cal-sec-title">Constraint dates</div>
+        <label class="hol-yearly" title="On: a Must Start On/Finish On/No Earlier Than/No Later Than date always wins, even over what a task's links would otherwise compute — today's standard. Off: a link wins when the two disagree; the constraint is still shown as unmet, just not forced."><input type="checkbox" id="honorConstraintDatesInput"> Tasks always honor their constraint dates</label>
+        <p class="cal-hint" style="margin:0">On (the standard): a task's own constraint date always overrides what its links would otherwise schedule. Off: its links win when they disagree with the constraint — the constraint still shows as unmet (see the warning icon), it just no longer forces the date.</p>
+      </section>
+      <section class="cal-sec">
+        <div class="cal-sec-title">New tasks</div>
+        <div class="precision-row">
+          <label class="precision-opt"><input type="radio" name="rulesNewMode" id="rulesNewAuto" value="auto"><span>Auto Scheduled<span class="cal-sec-note">placed by their links and constraints, and moved when those change</span></span></label>
+          <label class="precision-opt"><input type="radio" name="rulesNewMode" id="rulesNewManual" value="manual"><span>Manually Scheduled<span class="cal-sec-note">kept exactly where you put them</span></span></label>
+        </div>
+        <p class="cal-hint" style="margin:0">Only the default for tasks you add from now on — each task keeps its own mode (the pushpin column). Also in the arrow beside Add Task.</p>
+      </section>
+    </div>
+    <div class="modal-footer"><span class="foot-note">Changes apply when you save.</span><button class="btn" onclick="closeRulesModal()">Cancel</button><button class="btn btn-primary" onclick="saveRulesModal()">Save</button></div>
+  </div>
+</div>
+<div class="modal-bg" id="currencyModalBg" onclick="if(event.target===this) requestCloseCurrencyModal()">
+  <div class="modal wide settings-modal">
+    <div class="modal-header"><h2>Plan settings</h2><button onclick="requestCloseCurrencyModal()" aria-label="Close">&times;</button></div>
+    <div class="settings-tabs" role="tablist" aria-label="Plan settings" data-current="currency"></div>
+    <div class="modal-body">
+      <section class="cal-sec">
+        <div class="cal-sec-title">Currency</div>
+        <select id="planCurrencyInput" aria-label="Currency" onchange="updateCurrencyPreview()"></select>
+        <p class="cal-hint" style="margin:0">Every money figure in this plan — the Resource Sheet's rates, the Cost column, Excel — is shown in it, e.g. <strong id="planCurrencyPreview"></strong>. Nothing is converted; only the symbol and format change. Also in the Resource Sheet's toolbar.</p>
+      </section>
+    </div>
+    <div class="modal-footer"><span class="foot-note">Changes apply when you save.</span><button class="btn" onclick="closeCurrencyModal()">Cancel</button><button class="btn btn-primary" onclick="saveCurrencyModal()">Save</button></div>
+  </div>
+</div>
 <div class="modal-bg" id="precisionModalBg" onclick="if(event.target===this) requestClosePrecisionModal()">
-  <div class="modal wide">
-    <div class="modal-header"><h2>Scheduling precision</h2><button onclick="requestClosePrecisionModal()" aria-label="Close">&times;</button></div>
+  <div class="modal wide settings-modal">
+    <div class="modal-header"><h2>Plan settings</h2><button onclick="requestClosePrecisionModal()" aria-label="Close">&times;</button></div>
+    <div class="settings-tabs" role="tablist" aria-label="Plan settings" data-current="precision"></div>
     <div class="modal-body">
       <section class="cal-sec">
         <div class="precision-row" id="precisionRow">
@@ -1633,6 +1708,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
       <div class="help-pane" id="helpPane-start" role="tabpanel" aria-labelledby="helpTab-start">
         <div class="help-section">
           <div class="help-section-title">Building a plan</div>
+          <div class="help-row"><i class="fa-solid fa-table-cells-large"></i><span><strong>Finding your way</strong>: the top bar is the same everywhere — your plan, the views (<strong>Tasks · Gantt</strong> for the schedule, <strong>Resource Sheet · Resource Usage</strong> for the people), <strong>Schedule</strong> (baselines, rescheduling, levelling, <strong>Plan settings…</strong>) and <strong>Data</strong>. The toolbar below changes with the view and shows what that view needs; on a narrow window the rest is under <strong>More</strong>.</span></div>
           <div class="help-row"><i class="fa-solid fa-plus"></i><span><strong>Add Task</strong> inserts a task below the selected one, or at the bottom when nothing is selected. Each task has a start and end date and a % complete, and can be a <strong>milestone</strong> (a one-day diamond).</span></div>
           <div class="help-row"><i class="fa-solid fa-keyboard"></i><span><strong>Dates and times in dialogs</strong> are typed, in the same format as the list: <strong>24.12.2026</strong> (or 24.12.26, 24.12.), <strong>14:30</strong> (or 1430, 2:30pm) — or pick a date with the calendar button. Something unreadable is refused, marks the box red and puts the old value back; <strong>Enter</strong> settles a box, and in a single-purpose dialog like Reschedule or Baselines it applies the dialog.</span></div>
           <div class="help-row"><i class="fa-solid fa-computer-mouse"></i><span><strong>Right-click</strong> a task (in the list, or its row in the chart) for a menu with Edit, Add task, Add empty line, Duplicate, Copy, Cut, Paste, Indent, Outdent and Delete. Right-clicking on the empty part of the list offers Add task, Add empty line and Paste. The buttons for the selected tasks (<strong>Edit, Duplicate, Copy, Delete</strong>) appear in the toolbar while something is selected; with one task <strong>Edit</strong> opens the same dialog as a double-click.</span></div>
@@ -1710,13 +1786,13 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
           <div class="help-row"><i class="fa-solid fa-wand-magic-sparkles"></i><span>An Auto task always sits at the <strong>earliest date its links allow</strong>. Move a predecessor later and the dependent tasks are pushed later; make it shorter, finish it early (record an Actual Finish) or delete it, and they are pulled earlier.</span></div>
           <div class="help-row"><i class="fa-solid fa-calendar-day"></i><span><strong>A date you choose is kept.</strong> Type a Start later than its links allow (or drag the bar later, or change it in the task's dialog) — a deliberate delay — and the task stays there with a <em>Start No Earlier Than</em> constraint at that date; a later Finish gets <em>Finish No Earlier Than</em>. Links can still push the task later, but never pull it before that date.</span></div>
           <div class="help-row"><i class="fa-solid fa-circle-info"></i><span>A date that is not a delay adds no constraint: a milestone or a task with no links stays a plain as-soon-as-possible task. Change or remove a constraint in the task's dialog. Manual tasks and tasks that have already started are never moved.</span></div>
-          <div class="help-row"><i class="fa-solid fa-toggle-on"></i><span><strong>Tasks always honor their constraint dates</strong> (Schedule menu → Working calendar) is on by default: a constraint always wins over what a task's links would otherwise compute. Turn it off and a link wins instead when the two disagree — the constraint still shows as unmet (the warning icon), it just no longer forces the date.</span></div>
+          <div class="help-row"><i class="fa-solid fa-toggle-on"></i><span><strong>Tasks always honor their constraint dates</strong> (Schedule → Plan settings → <strong>Scheduling rules</strong>) is on by default: a constraint always wins over what a task's links would otherwise compute. Turn it off and a link wins instead when the two disagree — the constraint still shows as unmet (the warning icon), it just no longer forces the date.</span></div>
         </div>
       </div>
       <div class="help-pane" id="helpPane-progress" role="tabpanel" aria-labelledby="helpTab-progress" hidden>
         <div class="help-section">
           <div class="help-section-title">Working calendar</div>
-          <div class="help-row"><i class="fa-solid fa-calendar-week"></i><span>Each plan has its own working days — Monday to Friday unless you change it (Schedule menu → <strong>Working calendar…</strong>). Durations, lags and dependencies count working days only: a 5-day task that starts on a Monday finishes on that Friday, and its successor starts the next Monday.</span></div>
+          <div class="help-row"><i class="fa-solid fa-calendar-week"></i><span>Each plan has its own working days — Monday to Friday unless you change it (Schedule → <strong>Plan settings…</strong> → Calendar). Durations, lags and dependencies count working days only: a 5-day task that starts on a Monday finishes on that Friday, and its successor starts the next Monday.</span></div>
           <div class="help-row"><i class="fa-solid fa-umbrella-beach"></i><span>Add <strong>holidays and other days off</strong> in the same dialog: a single day (just the <strong>First day</strong>), a longer break (add a <strong>Last day</strong>), or a day that comes back every year, each with an optional name — the Add button says how many days it adds. They count as days off exactly like weekends, and are shaded in the Gantt chart.</span></div>
           <div class="help-row"><i class="fa-solid fa-flag"></i><span><strong>Public holidays:</strong> pick a country or region (Germany with each of its states, Austria, Switzerland, the UK, Ireland, the US, Canada, France, the Netherlands, Belgium, Spain, Italy) and the years, then <strong>Add public holidays</strong>. Movable ones (Easter, Ascension, Thanksgiving …) are worked out for each year; days that fall on a day off anyway are left out.</span></div>
           <div class="help-row"><i class="fa-solid fa-circle-exclamation"></i><span>Treat the presets as a starting point: check them against your own calendar — regional and company days differ — and edit or remove any entry.</span></div>
@@ -1735,7 +1811,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <div class="help-section">
           <div class="help-section-title">Baselines and variance</div>
           <div class="help-row"><i class="fa-solid fa-ruler-horizontal"></i><span>The bar is the <strong>current schedule</strong>. To keep the original plan, set a <strong>baseline</strong> (Schedule menu → <strong>Baseline…</strong>): a frozen copy of every task's Start and Finish, only ever taken when you ask. Keep up to eleven — Baseline and Baseline 1–10 — and choose which one to compare with.</span></div>
-          <div class="help-row"><i class="fa-solid fa-minus"></i><span>The baseline shows as a thin grey line under each bar in the Gantt chart (the ruler button hides it).</span></div>
+          <div class="help-row"><i class="fa-solid fa-minus"></i><span>The baseline shows as a thin grey line under each bar in the Gantt chart (the <strong>Baseline</strong> button in the Gantt toolbar hides it).</span></div>
           <div class="help-row"><i class="fa-solid fa-plus-minus"></i><span>The <strong>Start Variance</strong>, <strong>Finish Variance</strong>, <strong>Baseline Start/Finish/Duration</strong> and <strong>Duration Variance</strong> columns show how far each task has moved, in working days (working minutes for a leaf task in an Hours &amp; minutes plan) — positive means later than the baseline.</span></div>
           <div class="help-row"><i class="fa-solid fa-calendar-check"></i><span><strong>Reschedule remaining work…</strong> (Schedule menu) catches the plan up with a status date you choose: an overdue task moves there, an in-progress task keeps its remaining work from that date if it would otherwise finish later. Finished tasks and tasks ahead of schedule are left alone. The dialog says how many would move, with a <strong>Which tasks</strong> list; in an Hours &amp; minutes plan the status date has a time. Undo brings everything back.</span></div>
         </div>
@@ -1744,8 +1820,8 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <div class="help-section">
           <div class="help-section-title">Hours &amp; minutes planning</div>
           <div class="help-row"><i class="fa-solid fa-hourglass-half"></i><span>A plan counts <strong>whole days</strong> by default. Switch it to <strong>Hours &amp; minutes</strong> when tasks last hours rather than days — a setting of that plan alone, so your other plans stay in days. Times of day then appear everywhere: the list, the dialogs, the chart, Remaining and baselines, Excel, MS Project XML and print.</span></div>
-          <div class="help-row"><i class="fa-solid fa-clock"></i><span><strong>Scheduling precision</strong> (Schedule menu → <strong>Scheduling precision…</strong>, its own dialog): the standard is whole days, but a plan can switch to <strong>Hours &amp; minutes</strong> — like MS Project — so tasks can start and finish at a time of day. Set the working day's start/end and its breaks there too; date fields, Duration and the columns adapt once it's on. Switching in keeps a task's whole day; switching back drops every time and warns first if that would lose something.</span></div>
-          <div class="help-row"><i class="fa-solid fa-business-time"></i><span><strong>Different hours on some days</strong> (Schedule → Scheduling precision…): add a weekday — a short Friday, say — and give it its own start, end and breaks. A task with no time of its own then starts and finishes at its day's own open and close, and the chart, print-out, Excel and MS Project export follow each day's hours.</span></div>
+          <div class="help-row"><i class="fa-solid fa-clock"></i><span><strong>Scheduling precision</strong> (Schedule → <strong>Plan settings…</strong> → Precision): the standard is whole days, but a plan can switch to <strong>Hours &amp; minutes</strong> — like MS Project — so tasks can start and finish at a time of day. Set the working day's start/end and its breaks there too; date fields, Duration and the columns adapt once it's on. Switching in keeps a task's whole day; switching back drops every time and warns first if that would lose something.</span></div>
+          <div class="help-row"><i class="fa-solid fa-business-time"></i><span><strong>Different hours on some days</strong> (Plan settings → Precision): add a weekday — a short Friday, say — and give it its own start, end and breaks. A task with no time of its own then starts and finishes at its day's own open and close, and the chart, print-out, Excel and MS Project export follow each day's hours.</span></div>
           <div class="help-row"><i class="fa-solid fa-link"></i><span><strong>Lags are working time</strong> in an Hours &amp; minutes plan: type <strong>3FS+2h</strong>, <strong>5SS-30m</strong> or <strong>1FS+1d</strong> in the Predecessors cell (d is a working day, w five of them; a bare number is hours), or the same in the task dialog and Edit tasks. Switching a plan to Hours &amp; minutes converts its lags (2 days become 16 hours).</span></div>
           <div class="help-row"><i class="fa-solid fa-chart-gantt"></i><span><strong>In an Hours &amp; minutes plan</strong> the chart gets an <strong>Hours</strong> scale (20&nbsp;px an hour, the day over its 24 hours; nights, the lunch break and days off are shaded). Drag a bar, or its edges, in 15-minute steps: an Auto task lands on working time (a move into the lunch break comes out after it), a Manual task goes exactly where you drop it, and linked tasks follow.</span></div>
           <div class="help-row"><i class="fa-solid fa-pen"></i><span>In the list, click a Start, Finish or Actual cell and type <strong>date and time</strong> (<strong>07.09.2026 14:30</strong>) — a date alone keeps the time, a time alone (<strong>14:30</strong>) keeps the date. The Duration cell takes <strong>4h</strong>, <strong>90m</strong>, <strong>2d</strong> or <strong>1w</strong>. The Excel Gantt sheet gets one column per working hour.</span></div>
@@ -1764,7 +1840,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
           <div class="help-row"><i class="fa-solid fa-eye-slash"></i><span>Remaining Duration, Resource, the baseline and variance columns and the custom fields start hidden. Click a <strong>Resource</strong> or actual-date cell to edit it, or use the task dialog.</span></div>
           <div class="help-row"><i class="fa-solid fa-users"></i><span><strong>Resource</strong> takes names separated by commas or semicolons ("Anna, Ben") — typing a new name adds it to the plan's resource pool automatically, the same way MS Project does. Give a share other than full time with <code>Name[NN%]</code> ("Anna[50%], Ben"), as in MS Project — a bare name is 100%.</span></div>
           <div class="help-row"><i class="fa-solid fa-people-group"></i><span>The <strong>Resource Sheet</strong> tab lists everyone: type, Max Units (how much of a resource is available: 100% is one full-time person, 300% three people pooled into one; only Work resources have it), rates and cost per use. Renaming or removing someone there updates every task that names them; <strong>Days off</strong> on a row opens that person's own days off, on top of the plan's working week.</span></div>
-          <div class="help-row"><i class="fa-solid fa-chart-simple"></i><span>The <strong>Resources</strong> tab shows each person's day-by-day load, colored red on a day they're over their own capacity; the Schedule menu's <strong>Level resources…</strong> item shows the same count.</span></div>
+          <div class="help-row"><i class="fa-solid fa-chart-simple"></i><span>The <strong>Resource Usage</strong> tab shows each person's day-by-day load, colored red on a day they're over their own capacity (<strong>Over-allocated only</strong> in its toolbar shows just those); the Schedule menu's <strong>Level resources…</strong> item shows the same count.</span></div>
           <div class="help-row"><i class="fa-solid fa-scale-balanced"></i><span><strong>Schedule → Level resources…</strong> delays an over-allocated task to the next span with room, never earlier than its own dependencies allow and, by default, never past its own slack (so the plan's finish doesn't move) — turn that off, or scope it to a date on, then Apply. Undo brings it back.</span></div>
           <div class="help-row"><i class="fa-solid fa-table-list"></i><span>The <strong>Resource Sheet</strong> tab is MS Project's own spreadsheet: Type (Work, Material or Cost), Std/Ovt Rate, Cost per Use, Accrue At and more, editable directly in the grid. A task's <strong>Cost</strong> column (hidden by default) adds up its assigned resources' rates; a group shows the total of everything in it. Pick the plan's currency in that tab's own toolbar.</span></div>
         </div>
@@ -1787,7 +1863,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <div class="help-section">
           <div class="help-section-title">The view</div>
           <div class="help-row"><i class="fa-solid fa-table-list"></i><span>The left side is the <strong>same task list</strong> as in the Tasks view — the same filters, editing and buttons — with the chart to its right. Drag the thin strip between them to change how much room the list gets. It scrolls sideways when it has more columns than fit, and its ID … Task Name columns stay in place.</span></div>
-          <div class="help-row"><i class="fa-solid fa-calendar"></i><span>The <strong>Week / Month / Year</strong> buttons change the scale. Year (the default) shows quarters; Week is labelled by calendar week (CW — weeks start on Monday, ISO 8601). Days off are shaded.</span></div>
+          <div class="help-row"><i class="fa-solid fa-calendar"></i><span>The <strong>Week / Month / Year</strong> buttons in the Gantt toolbar change the scale, and <strong>Fit</strong> picks the one that shows the whole plan. Year (the default) shows quarters; Week is labelled by calendar week (CW — weeks start on Monday, ISO 8601). Days off are shaded.</span></div>
         </div>
         <div class="help-divider"></div>
         <div class="help-section">
@@ -2470,7 +2546,7 @@ function loadPrefs() {
   // A saved scale only counts if it was chosen under the current default: every install had the old default (Week)
   // saved by the very first save(), so without the revision check nobody would ever see a changed default.
   zoom = (d.zoomRev === ZOOM_DEFAULT_REV && ZOOMS.some(z => z.id === d.zoom)) ? d.zoom : DEFAULT_ZOOM;
-  currentView = (d.view === 'gantt' || d.view === 'resources') ? d.view : 'tasks';
+  currentView = MAIN_VIEWS.some(v => v.id === d.view) ? d.view : 'tasks';
   showBaseline = d.showBaseline !== false;
   showTaskForm = d.showTaskForm === true;
   taskFormHeight = Number.isFinite(d.taskFormHeight) ? Math.max(TASK_FORM_MIN_H, Math.min(1200, d.taskFormHeight)) : 340;
@@ -3796,20 +3872,21 @@ function renderPass() {
   updateNewTaskModeUI();
   updateSelectionUI();
   renderTaskForm();
+  fitToolbar();
 }
 
-const MAIN_VIEWS = [{ id: 'tasks', label: 'Tasks' }, { id: 'gantt', label: 'Gantt' }, { id: 'resources', label: 'Resources' }, { id: 'resourceSheet', label: 'Resource Sheet' }];
+// The task views, then (after a divider) the resource views — MS Project's own names: the Resource Sheet (the pool as a
+// spreadsheet) and Resource Usage (each resource's load over time; its id stays 'resources').
+const MAIN_VIEWS = [{ id: 'tasks', label: 'Tasks', group: 'task' }, { id: 'gantt', label: 'Gantt', group: 'task' }, { id: 'resourceSheet', label: 'Resource Sheet', group: 'resource' }, { id: 'resources', label: 'Resource Usage', group: 'resource' }];
 function renderMainViewTabs() {
-  document.getElementById('mainViewTabs').innerHTML = MAIN_VIEWS.map(v =>
+  document.getElementById('mainViewTabs').innerHTML = MAIN_VIEWS.map((v, i) =>
+    (i && MAIN_VIEWS[i - 1].group !== v.group ? '<span class="view-tab-sep" aria-hidden="true"></span>' : '') +
     `<button class="view-tab${v.id === currentView ? ' active' : ''}" onclick="setView('${v.id}')">${v.label}</button>`).join('');
+  for (const g of document.querySelectorAll('#subbar [data-views]')) g.classList.toggle('hidden', !g.dataset.views.split(' ').includes(currentView));   // the toolbar belongs to the view
   document.getElementById('main').classList.toggle('view-tasks', currentView === 'tasks');
   document.getElementById('main').classList.toggle('view-gantt', currentView === 'gantt');
   document.getElementById('main').classList.toggle('view-resources', currentView === 'resources');
   document.getElementById('main').classList.toggle('view-resourceSheet', currentView === 'resourceSheet');
-  document.getElementById('zoomTabs').classList.toggle('hidden', currentView !== 'gantt' && currentView !== 'resources');   // the Resources timeline shares the same timescale; the Resource Sheet has none (a plain spreadsheet, no dates)
-  document.getElementById('criticalPathBtn').classList.toggle('hidden', currentView !== 'gantt');
-  document.getElementById('baselineBtn').classList.toggle('hidden', currentView !== 'gantt');
-  document.getElementById('ganttControlsDivider').classList.toggle('hidden', currentView !== 'gantt' && currentView !== 'resources');
 }
 function setView(id) { currentView = id; editingCell = null; closeColumnsMenu(); save(); render(); }
 
@@ -3830,12 +3907,25 @@ function renderZoomTabs() {
 }
 function setZoom(id) { zoom = id; save(); render(); }
 function updateCriticalPathUI() {
-  document.getElementById('criticalPathBtn').classList.toggle('active', showCriticalPath);
-  document.getElementById('baselineBtn').classList.toggle('active', showBaseline);
+  document.getElementById('criticalPathBtn').setAttribute('aria-pressed', String(showCriticalPath));
+  document.getElementById('baselineBtn').setAttribute('aria-pressed', String(showBaseline));
+  document.getElementById('overOnlyBtn').setAttribute('aria-pressed', String(resOverOnly));
   document.getElementById('baselineBtn').title = `${showBaseline ? 'Hide' : 'Show'} ${baselineName(compareBaseline())} under the bars`;
 }
 function toggleBaseline() { showBaseline = !showBaseline; save(); render(); }
 function toggleCriticalPath() { showCriticalPath = !showCriticalPath; render(); }
+// Resource Usage: only the resources that are over-allocated somewhere (view state, like a filter — not saved).
+let resOverOnly = false;
+function toggleOverOnly() { resOverOnly = !resOverOnly; render(); }
+// "Fit": the most detailed scale that still shows the whole plan in the chart's width, then back to its start.
+function fitZoom() {
+  const sc = viewScroller(), avail = Math.max(200, (sc ? sc.clientWidth : 800) - (currentView === 'resources' ? RESOURCE_NAME_W : 0));
+  const range = computeDateRange(), days = Math.max(1, range.end - range.start);
+  const scales = ZOOMS.filter(z => !z.minuteOnly || minuteModeActive()).sort((a, b) => b.pxPerDay - a.pxPerDay);
+  const pick = scales.find(z => days * z.pxPerDay <= avail) || scales[scales.length - 1];
+  zoom = pick.id; save(); render();
+  const sc2 = viewScroller(); if (sc2) sc2.scrollLeft = 0;
+}
 function updateSelectionUI() {
   const ids = selectedIds(), n = ids.length, has = n > 0;
   document.getElementById('indentBtn').disabled = !has;
@@ -3845,6 +3935,7 @@ function updateSelectionUI() {
   const nEdit = ids.filter(id => !byId(id).spacer).length;
   document.getElementById('bulkEditBtn').title = nEdit > 1 ? `Change a field for all ${nEdit} selected tasks` : 'Edit the selected task (select several with Ctrl/Cmd+click or Shift+click to change a field for all of them)';
   document.getElementById('selChip').innerHTML = `${n} selected <i class="fa-solid fa-xmark"></i>`;
+  fitToolbar();   // the selection buttons come and go: the toolbar may need the More menu (or not) now
 }
 
 // A bar is coloured by STATUS only (complete / late / in progress / not started). A task's own colour is a label for its ROW (see taskColorVar):
@@ -5555,7 +5646,8 @@ function renderResourceUsage() {
   dateRange = computeDateRange();
   const px = z.pxPerDay;
   const totalW = (dateRange.end - dateRange.start) * px;
-  const resources = project.resources || [];
+  const overIds = resOverOnly ? new Set(overallocatedResources().map(o => o.resourceId)) : null;
+  const resources = (project.resources || []).filter(r => !overIds || overIds.has(r.id));
   const totalH = Math.max(resources.length * ROW_H, ROW_H);
 
   document.getElementById('resourceTimelineHead').style.width = totalW + 'px';
@@ -5569,6 +5661,11 @@ function renderResourceUsage() {
     return `<div class="gantt-tick zoom-${z.id}${t.cls ? ' ' + t.cls : ''}${t.yearStart ? ' year-start' : ''}" style="left:${left}px;width:${width}px"${t.title ? ` title="${escapeHtml(t.title)}"` : ''}>${t.html || escapeHtml(t.label)}</div>`;
   }).join('');
 
+  if (!resources.length && overIds && (project.resources || []).length) {
+    document.getElementById('resourceBody').innerHTML = `<div class="empty-state" style="position:static;width:${RESOURCE_NAME_W + totalW}px"><i class="fa-solid fa-circle-check"></i>Nobody is over-allocated — <button class="btn-link" onclick="toggleOverOnly()">show everyone</button></div>`;
+    resourceRenderedWin = { from: 0, to: 0, n: 0, virtual: false };
+    return;
+  }
   if (!resources.length) {
     document.getElementById('resourceBody').innerHTML = `<div class="empty-state" style="position:static;width:${RESOURCE_NAME_W + totalW}px"><i class="fa-solid fa-users"></i>No resources yet — type a name in a task's Resource field, or add one in the <strong>Resource Sheet</strong></div>`;
     resourceRenderedWin = { from: 0, to: 0, n: 0, virtual: false };
@@ -6568,6 +6665,85 @@ function addHolidayPreset() {
   showToast(added ? `Added ${added} holiday${added === 1 ? '' : 's'} for ${label} ${yrs}${offDays ? ` (${offDays} on days off anyway)` : ''}` : `Nothing new for ${label} ${yrs} — everything is already in the list${offDays ? ' or on a day off' : ''}`);
 }
 let calHolidays = [];   // the dialog's working copy of project.holidays
+/* ============================ Plan settings (one window, five tabs) ============================
+   Everything that is a setting of the plan, in one place: Calendar (working week, holidays), Precision (days or hours &
+   minutes), Scheduling rules (honor constraint dates, the new-task default), Currency and Custom fields. Each tab is
+   its own dialog underneath (its own draft, Save and dirty check — they already existed and keep working exactly as
+   they did), sharing one tab strip and one size so switching tab never jumps; switching away from a tab with unsaved
+   edits asks first. */
+const SETTINGS_TABS = [
+  { id: 'calendar', label: 'Calendar', icon: 'fa-regular fa-calendar-days', bg: 'calendarModalBg', open: () => openCalendarModal(), close: () => closeCalendarModal(), dirty: () => calendarDirty(), what: 'the working calendar' },
+  { id: 'precision', label: 'Precision', icon: 'fa-regular fa-clock', bg: 'precisionModalBg', open: () => openPrecisionModal(), close: () => closePrecisionModal(), dirty: () => precisionDirty(), what: 'the scheduling precision' },
+  { id: 'rules', label: 'Scheduling rules', icon: 'fa-solid fa-scale-balanced', bg: 'rulesModalBg', open: () => openRulesModal(), close: () => closeRulesModal(), dirty: () => rulesDirty(), what: 'the scheduling rules' },
+  { id: 'currency', label: 'Currency', icon: 'fa-solid fa-coins', bg: 'currencyModalBg', open: () => openCurrencyModal(), close: () => closeCurrencyModal(), dirty: () => currencyDirty(), what: 'the currency' },
+  { id: 'fields', label: 'Custom fields', icon: 'fa-solid fa-table-list', bg: 'fieldsModalBg', open: () => openFieldsModal(), close: () => closeFieldsModal(), dirty: () => fieldsDirty(), what: 'the custom fields' },
+];
+let settingsTab = 'calendar';
+function renderSettingsTabs() {
+  for (const el of document.querySelectorAll('.settings-tabs')) el.innerHTML = SETTINGS_TABS.map(t =>
+    `<button type="button" class="settings-tab${t.id === el.dataset.current ? ' active' : ''}" role="tab" aria-selected="${t.id === el.dataset.current}" data-settings-tab="${t.id}" onclick="openSettingsTab('${t.id}')"><i class="${t.icon}"></i>${t.label}</button>`).join('');
+}
+function currentSettingsTab() { const t = SETTINGS_TABS.find(t => document.getElementById(t.bg).classList.contains('open')); return t ? t.id : null; }
+function openSettingsTab(id) {
+  const cur = currentSettingsTab(), target = SETTINGS_TABS.find(t => t.id === id); if (!target || cur === id) return;
+  const from = SETTINGS_TABS.find(t => t.id === cur);
+  const go = () => { if (from) from.close(); settingsTab = id; target.open(); };
+  if (from && from.dirty()) openConfirmModal({ title: 'Discard your changes?', body: `You changed ${from.what} but did not save it.`, confirmLabel: 'Discard changes', cancelLabel: 'Keep editing', action: go });
+  else go();
+}
+function openPlanSettings(tab) { closeScheduleMenu(); closePlanMenu(); openSettingsTab(tab || settingsTab || 'calendar'); }
+function planSettingsHint() { return calendarSummary() + (minuteModeActive() ? ' · Hours & minutes' : ''); }
+// Scheduling rules: whether a constraint date always wins over the links, and the default mode for new tasks.
+let rulesSnapshot = null;
+function rulesState() { return JSON.stringify([document.getElementById('honorConstraintDatesInput').checked, document.getElementById('rulesNewManual').checked]); }
+function openRulesModal() {
+  closeScheduleMenu();
+  document.getElementById('honorConstraintDatesInput').checked = project.honorConstraintDates !== false;
+  document.getElementById(project.newTaskMode === 'manual' ? 'rulesNewManual' : 'rulesNewAuto').checked = true;
+  rulesSnapshot = rulesState();
+  document.getElementById('rulesModalBg').classList.add('open');
+}
+function closeRulesModal() { document.getElementById('rulesModalBg').classList.remove('open'); rulesSnapshot = null; }
+function rulesDirty() { return rulesSnapshot !== null && document.getElementById('rulesModalBg').classList.contains('open') && rulesState() !== rulesSnapshot; }
+function requestCloseRulesModal() {
+  if (!rulesDirty()) { closeRulesModal(); return; }
+  openConfirmModal({ title: 'Discard your changes?', body: 'You changed the scheduling rules but did not save them.', confirmLabel: 'Discard changes', cancelLabel: 'Keep editing', action() { closeRulesModal(); } });
+}
+function saveRulesModal() {
+  const honor = document.getElementById('honorConstraintDatesInput').checked, mode = document.getElementById('rulesNewManual').checked ? 'manual' : 'auto';
+  if (honor === (project.honorConstraintDates !== false) && mode === (project.newTaskMode === 'manual' ? 'manual' : 'auto')) { closeRulesModal(); return; }
+  if (honor) delete project.honorConstraintDates; else project.honorConstraintDates = false;
+  project.newTaskMode = mode;
+  project.updatedAt = Date.now();
+  normalizeData(); save(); render(); closeRulesModal();
+  showToast('Scheduling rules saved');
+}
+// Currency: the same setting as the Resource Sheet's toolbar picker (setCurrencyCode), here with a preview.
+let currencySnapshot = null;
+function openCurrencyModal() {
+  closeScheduleMenu();
+  const sel = document.getElementById('planCurrencyInput');
+  if (sel.children.length !== CURRENCIES.length) sel.innerHTML = CURRENCIES.map(c => `<option value="${c.code}">${c.code} — ${escapeHtml(c.label)}</option>`).join('');
+  sel.value = currencyCode(); currencySnapshot = sel.value;
+  updateCurrencyPreview();
+  document.getElementById('currencyModalBg').classList.add('open');
+}
+function updateCurrencyPreview() {
+  const code = document.getElementById('planCurrencyInput').value;
+  let txt; try { txt = new Intl.NumberFormat(undefined, { style: 'currency', currency: code }).format(1234.5); } catch (e) { txt = code + ' 1,234.50'; }
+  document.getElementById('planCurrencyPreview').textContent = txt;
+}
+function closeCurrencyModal() { document.getElementById('currencyModalBg').classList.remove('open'); currencySnapshot = null; }
+function currencyDirty() { return currencySnapshot !== null && document.getElementById('currencyModalBg').classList.contains('open') && document.getElementById('planCurrencyInput').value !== currencySnapshot; }
+function requestCloseCurrencyModal() {
+  if (!currencyDirty()) { closeCurrencyModal(); return; }
+  openConfirmModal({ title: 'Discard your changes?', body: 'You changed the currency but did not save it.', confirmLabel: 'Discard changes', cancelLabel: 'Keep editing', action() { closeCurrencyModal(); } });
+}
+function saveCurrencyModal() {
+  const code = document.getElementById('planCurrencyInput').value, changed = code !== currencyCode();
+  closeCurrencyModal();
+  if (changed) { setCurrencyCode(code); showToast(`Currency: ${code}`); }
+}
 function openCalendarModal() {
   closeScheduleMenu();
   document.getElementById('calendarPlanName').textContent = project.name;
@@ -6575,7 +6751,6 @@ function openCalendarModal() {
   document.getElementById('calendarDays').innerHTML = WEEKDAY_ORDER.map(d =>
     `<label class="cal-day"><input type="checkbox" value="${d}"${on.has(d) ? ' checked' : ''}><span>${WEEKDAY_NAMES[d]}</span></label>`).join('');
   calHolidays = (project.holidays || []).map(h => Object.assign({}, h));
-  document.getElementById('honorConstraintDatesInput').checked = project.honorConstraintDates !== false;
   fillHolidayPresets();
   for (const id of ['holFrom', 'holTo', 'holName']) document.getElementById(id).value = '';
   document.getElementById('holYearly').checked = false; document.getElementById('holYearly').disabled = false;
@@ -6590,7 +6765,7 @@ function openCalendarModal() {
 function closeCalendarModal() { document.getElementById('calendarModalBg').classList.remove('open'); }
 // What the dialog holds right now (chips + the list): × / Escape / a click outside ask before throwing edits away.
 let calSnapshot = null;
-function calendarDraftState() { return JSON.stringify([[...document.querySelectorAll('#calendarDays input:checked')].map(i => i.value), calHolidays, document.getElementById('honorConstraintDatesInput').checked]); }
+function calendarDraftState() { return JSON.stringify([[...document.querySelectorAll('#calendarDays input:checked')].map(i => i.value), calHolidays]); }
 function calendarDirty() { return calSnapshot !== null && document.getElementById('calendarModalBg').classList.contains('open') && calendarDraftState() !== calSnapshot; }
 function requestCloseCalendarModal() {
   if (!calendarDirty()) { closeCalendarModal(); return; }
@@ -6662,11 +6837,10 @@ function removeHoliday(i) { calHolidays.splice(i, 1); renderHolidayList(); }
 function saveCalendar() {
   const days = [...document.querySelectorAll('#calendarDays input:checked')].map(i => Number(i.value)).sort((a, b) => a - b);
   if (!days.length) { showToast('Pick at least one working day', true); return; }
-  const hol = cleanHolidays(calHolidays), honor = document.getElementById('honorConstraintDatesInput').checked;
-  if (days.join() === currentWorkDays().join() && stableStringify(hol) === stableStringify(project.holidays || null) && honor === (project.honorConstraintDates !== false)) { closeCalendarModal(); return; }
+  const hol = cleanHolidays(calHolidays);
+  if (days.join() === currentWorkDays().join() && stableStringify(hol) === stableStringify(project.holidays || null)) { closeCalendarModal(); return; }
   project.workDays = days;
   if (hol) project.holidays = hol; else delete project.holidays;
-  if (honor) delete project.honorConstraintDates; else project.honorConstraintDates = false;
   project.updatedAt = Date.now();
   normalizeData();   // drops workDays again if it is the default
   save(); render(); closeCalendarModal();
@@ -6847,6 +7021,11 @@ function chooseNewFieldKind(kind) {
   if (document.getElementById('fieldsModalBg').classList.contains('open')) fieldsAddRow(kind); else openFieldsModal(kind);
 }
 function openFieldsModal(addKind) {
+  {   // over the task dialog it stands alone (switching to another settings tab from there would make no sense)
+    const standalone = document.getElementById('taskModalBg').classList.contains('open');
+    document.querySelector('#fieldsModalBg .settings-tabs').classList.toggle('hidden', standalone);
+    document.getElementById('fieldsModalTitle').textContent = standalone ? 'Custom fields' : 'Plan settings';
+  }
   closePlanMenu && closePlanMenu();
   fieldsDraft = activeCustomFields().map(id => ({ id, kind: CUSTOM_FIELDS[id].kind, name: customFieldName(id), orig: customFieldName(id), isNew: false, removed: false, uses: tasks.filter(t => customValue(t, id) !== undefined).length }));
   fieldsOrig = JSON.stringify(fieldsDraft);
@@ -7199,7 +7378,6 @@ function wireTaskForm() {
    A draft (resourceDaysDraft) with the usual JSON-snapshot dirty check and discard confirmation; Save writes it. */
 let resourceDaysId = null, resourceDaysDraft = null, resourceDaysOrig = null;
 function daysOffCount(list) { return (list || []).reduce((n, h) => n + (h.to ? dayNumber(h.to) - dayNumber(h.date) + 1 : 1), 0); }
-function resourceSheetMenuHint() { const n = (project.resources || []).length; return n ? `${n} ${n === 1 ? 'resource' : 'resources'}` : 'none yet'; }
 function openResourceDaysModal(id) {
   const r = (project.resources || []).find(x => x.id === id); if (!r) return;
   resourceDaysId = id;
@@ -7612,11 +7790,10 @@ function closeScheduleMenu() { document.getElementById('scheduleMenu').classList
 function renderScheduleMenu() {
   document.getElementById('scheduleMenu').innerHTML =
     `<button class="dropdown-item" id="planBaselineItem" onclick="openBaselineModal()"><i class="fa-solid fa-ruler-horizontal"></i>Baseline…<span class="item-hint">${escapeHtml(baselineMenuHint())}</span></button>` +
-    `<button class="dropdown-item" id="planResourcesItem" onclick="closeScheduleMenu(); setView('resourceSheet')"><i class="fa-solid fa-users"></i>Resource Sheet<span class="item-hint">${escapeHtml(resourceSheetMenuHint())}</span></button>` +
     `<button class="dropdown-item" id="planRescheduleItem" onclick="openRescheduleModal()"><i class="fa-solid fa-calendar-check"></i>Reschedule remaining work…</button>` +
     `<button class="dropdown-item" id="planLevelItem" onclick="openLevelModal()"><i class="fa-solid fa-scale-balanced"></i>Level resources…${overallocatedResources().length ? `<span class="item-hint">${overallocatedResources().length} over-allocated</span>` : ''}</button>` +
-    `<button class="dropdown-item" id="planCalendarItem" onclick="openCalendarModal()"><i class="fa-regular fa-calendar-days"></i>Working calendar…<span class="item-hint">${escapeHtml(calendarSummary())}</span></button>` +
-    `<button class="dropdown-item" id="planPrecisionItem" onclick="openPrecisionModal()"><i class="fa-regular fa-clock"></i>Scheduling precision…<span class="item-hint">${escapeHtml(precisionSummary())}</span></button>`;
+    `<div class="dropdown-sep"></div>` +
+    `<button class="dropdown-item" id="planSettingsItem" onclick="openPlanSettings()"><i class="fa-solid fa-sliders"></i>Plan settings…<span class="item-hint">${escapeHtml(planSettingsHint())}</span></button>`;
 }
 
 /* ============================ Merge (sync/import) =========================
@@ -8647,7 +8824,49 @@ function placeMenu(menu, x, y, alignRightOf) {   // a fixed menu at (x, y) kept 
 }
 function closeAddMenu() { document.getElementById('addMenu').classList.remove('open'); }
 function closeRowMenu() { document.getElementById('rowMenu').classList.remove('open'); }
-function closeToolbarMenus() { closeAddMenu(); closeRowMenu(); }
+function closeToolbarMenus() { closeAddMenu(); closeRowMenu(); closeMoreMenu(); }
+// The toolbar never wraps: when the current view's buttons don't fit, the ones with the highest data-more go into the
+// "More" menu first (Copy, Duplicate, Columns, Task Form … the zoom tabs last), and come back as soon as there's room.
+function fitToolbar() {
+  const bar = document.getElementById('subbar'), wrap = document.getElementById('moreWrap');
+  if (!bar) return;
+  for (const el of bar.querySelectorAll('.tb-over')) el.classList.remove('tb-over');
+  wrap.classList.add('hidden');
+  if (bar.scrollWidth <= bar.clientWidth + 1) { closeMoreMenu(); return; }
+  wrap.classList.remove('hidden');
+  const items = [...bar.querySelectorAll('[data-more]')].filter(el => el.offsetParent !== null);
+  for (const pri of [...new Set(items.map(el => Number(el.dataset.more)))].sort((a, b) => b - a)) {   // buttons of one priority go together (Indent + Outdent, Columns + Task Form)
+    if (bar.scrollWidth <= bar.clientWidth + 1) break;
+    for (const el of items) if (Number(el.dataset.more) === pri) el.classList.add('tb-over');
+  }
+  if (document.getElementById('moreMenu').classList.contains('open')) renderMoreMenu();
+}
+function renderMoreMenu() {
+  const menu = document.getElementById('moreMenu'), hidden = [...document.querySelectorAll('#subbar .tb-over')];
+  const label = el => el.dataset.moreLabel || el.textContent.trim() || el.title;
+  const icon = el => { const i = el.querySelector('i'); return i ? i.outerHTML : '<i class="fa-solid fa-circle" style="visibility:hidden"></i>'; };
+  menu.innerHTML = hidden.map(el => {
+    if (el.id === 'zoomTabs') return `<div class="menu-head">${escapeHtml(label(el))}</div>` + [...el.querySelectorAll('button')].map((b, k) =>
+      `<button class="dropdown-item" role="menuitemradio" aria-checked="${b.classList.contains('active')}" data-sub="${k}" data-for="zoomTabs"><i class="fa-regular fa-clock" style="visibility:hidden"></i>${escapeHtml(b.textContent.trim())}${b.classList.contains('active') ? '<i class="fa-solid fa-check mode-check"></i>' : ''}</button>`).join('') + '<div class="dropdown-sep"></div>';
+    const on = el.getAttribute('aria-pressed') === 'true';
+    return `<button class="dropdown-item" role="menuitem" data-for="${el.id}" ${el.disabled ? 'disabled' : ''}>${icon(el)}${escapeHtml(label(el))}${on ? '<i class="fa-solid fa-check mode-check"></i>' : ''}</button>`;
+  }).join('').replace(/<div class="dropdown-sep"><\/div>$/, '');
+  for (const it of menu.querySelectorAll('[data-for]')) it.onclick = e => {
+    e.stopPropagation(); closeMoreMenu();
+    const src = document.getElementById(it.dataset.for);
+    (it.dataset.sub != null ? src.querySelectorAll('button')[Number(it.dataset.sub)] : src).click();
+  };
+}
+function toggleMoreMenu(event) {
+  if (event) event.stopPropagation();
+  const menu = document.getElementById('moreMenu');
+  if (menu.classList.contains('open')) { closeMoreMenu(); return; }
+  closeDataMenu(); closePlanMenu(); closeScheduleMenu(); closeColumnsMenu(); closeFilterMenu(); closeAddMenu(); closeRowMenu();
+  renderMoreMenu();
+  const r = document.getElementById('moreBtn').getBoundingClientRect();
+  placeMenu(menu, r.right - 220, r.bottom + 4);
+}
+function closeMoreMenu() { const m = document.getElementById('moreMenu'); if (m) m.classList.remove('open'); }
 function toggleAddMenu(event) {
   event.stopPropagation();
   const menu = document.getElementById('addMenu');
@@ -10282,6 +10501,7 @@ function renderPlanMenu() {
     (fileSyncSupported() && syncFileHandle && !syncDirHandle ? `<button class="dropdown-item" id="planWatchItem" onclick="chooseWatchFolder()" title="This plan is linked to a single file. Link the folder it lives in: OneDrive, Dropbox and SharePoint keep a second copy of the file when two devices save at the same time, and Milestone can then merge those copies in"><i class="fa-solid fa-folder-tree"></i>Link this plan’s folder…<span class="item-hint">file only</span></button>` : '') +
     `<div class="dropdown-sep"></div>` +
     `<button class="dropdown-item" id="planRenameItem" onclick="openPlanModal('rename')"><i class="fa-solid fa-pen"></i>Rename plan…</button>` +
+    `<button class="dropdown-item" id="planMenuSettingsItem" onclick="openPlanSettings()"><i class="fa-solid fa-sliders"></i>Plan settings…</button>` +
     `<button class="dropdown-item" id="planDuplicateItem" onclick="duplicatePlan()"><i class="fa-regular fa-copy"></i>Duplicate plan</button>` +
     (fileSyncSupported() ? `<button class="dropdown-item" id="planDisconnectItem" onclick="disconnectFile()"${syncFileHandle ? '' : ' disabled title="This plan isn’t linked to a file"'}><i class="fa-solid fa-link-slash"></i>Disconnect folder…</button>` : '') +
     `<button class="dropdown-item" id="planDeleteItem" onclick="deleteCurrentPlan()"${idx.plans.length < 2 ? ' disabled title="You need at least one plan"' : ''}><i class="fa-solid fa-trash"></i>Delete plan…</button>`;
@@ -10459,6 +10679,7 @@ function closeAboutModal() { document.getElementById('aboutModalBg').classList.r
 function minGridPaneWidth() { return Math.max(GRID_PANE_MIN_WIDTH, frozenMinWidth + 60); }
 function applyGridPaneWidth() { document.documentElement.style.setProperty('--grid-pane-width', Math.max(minGridPaneWidth(), Math.min(gridPaneWidth, window.innerWidth - 240)) + 'px'); }
 window.addEventListener('resize', applyGridPaneWidth);
+window.addEventListener('resize', () => requestAnimationFrame(fitToolbar));
 function wireGridResize() {
   const handle = document.getElementById('gridResizeHandle');
   handle.addEventListener('mousedown', (event) => {
@@ -10513,6 +10734,7 @@ function wireGlobalEvents() {
     if (!e.target.closest('#taskModeMenu')) closeTaskModeMenu();
     if (!e.target.closest('#taskTypeMenu')) closeTaskTypeMenu();
     if (!e.target.closest('#addMenu') && !e.target.closest('#addMenuBtn')) closeAddMenu();
+    if (!e.target.closest('#moreMenu') && !e.target.closest('#moreBtn')) closeMoreMenu();
     if (!e.target.closest('#rowMenu')) closeRowMenu();
     if (!e.target.closest('#cfAddMenu') && !e.target.closest('#cfAddBtn') && !e.target.closest('#fieldsAddBtn')) closeCfAddMenu();
   });
@@ -10537,15 +10759,17 @@ function wireGlobalEvents() {
     if (document.getElementById('cfAddMenu').classList.contains('open')) { closeCfAddMenu(); return; }
     if (document.getElementById('fieldsModalBg').classList.contains('open')) { if (document.getElementById('confirmModalBg').classList.contains('open')) closeConfirmModal(); else requestCloseFieldsModal(); return; }   // only the topmost dialog: the task dialog underneath keeps its unsaved edits
     if (document.getElementById('resourceDaysModalBg').classList.contains('open')) { if (document.getElementById('confirmModalBg').classList.contains('open')) closeConfirmModal(); else requestCloseResourceDaysModal(); return; }
-    if (document.getElementById('confirmModalBg').classList.contains('open') && (taskModalDirty() || calendarDirty() || precisionDirty() || bulkDirty())) { closeConfirmModal(); return; }   // the "discard your changes?" question: Escape = keep editing
+    if (document.getElementById('confirmModalBg').classList.contains('open') && (taskModalDirty() || calendarDirty() || precisionDirty() || rulesDirty() || currencyDirty() || bulkDirty())) { closeConfirmModal(); return; }   // the "discard your changes?" question: Escape = keep editing
     if (taskModalDirty()) { requestCloseTaskModal(); return; }
     if (calendarDirty()) { requestCloseCalendarModal(); return; }
     if (precisionDirty()) { requestClosePrecisionModal(); return; }
+    if (rulesDirty()) { requestCloseRulesModal(); return; }
+    if (currencyDirty()) { requestCloseCurrencyModal(); return; }
     if (bulkDirty()) { requestCloseBulkModal(); return; }
     // Escape closes whatever overlay is open first; only when there is none — and
     // the user isn't typing in a field, where Escape already means "cancel this
     // edit" — does it clear the task selection.
-    const modalIds = ['taskModalBg', 'folderFilesModalBg', 'confirmModalBg', 'calendarModalBg', 'precisionModalBg', 'baselineModalBg', 'rescheduleModalBg', 'levelModalBg', 'syncConflictsModalBg', 'planModalBg', 'excelModalBg', 'importModalBg', 'foreignImportModalBg', 'bulkModalBg', 'searchModalBg', 'printModalBg', 'backupsModalBg', 'helpModalBg', 'aboutModalBg'];
+    const modalIds = ['taskModalBg', 'folderFilesModalBg', 'confirmModalBg', 'calendarModalBg', 'precisionModalBg', 'rulesModalBg', 'currencyModalBg', 'baselineModalBg', 'rescheduleModalBg', 'levelModalBg', 'syncConflictsModalBg', 'planModalBg', 'excelModalBg', 'importModalBg', 'foreignImportModalBg', 'bulkModalBg', 'searchModalBg', 'printModalBg', 'backupsModalBg', 'helpModalBg', 'aboutModalBg'];
     const overlayOpen = modalIds.some(id => document.getElementById(id).classList.contains('open'))
       || document.getElementById('fileSyncModalBg').classList.contains('open')   // mandatory: Escape can't close it
       || document.getElementById('dataMenu').classList.contains('open')
@@ -10556,7 +10780,8 @@ function wireGlobalEvents() {
       || document.getElementById('taskModeMenu').classList.contains('open')
       || document.getElementById('taskTypeMenu').classList.contains('open')
       || document.getElementById('addMenu').classList.contains('open')
-      || document.getElementById('rowMenu').classList.contains('open');
+      || document.getElementById('rowMenu').classList.contains('open')
+      || document.getElementById('moreMenu').classList.contains('open');
     // e.target, not document.activeElement: an inline editor's own Escape handler re-renders and destroys the
     // focused field before this runs, so by now activeElement is already <body>.
     const typing = /^(INPUT|TEXTAREA|SELECT)$/.test((e.target || {}).tagName || '');
@@ -10739,6 +10964,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.title = project.name + ' · Milestone';
   wireGlobalEvents();
   wireTaskForm();
+  renderSettingsTabs();
   wireScrollSync();
   wireGridResize();
   render();

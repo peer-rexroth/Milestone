@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """The Days off dialog — one resource's own days off, opened from a Resource Sheet row's "Days off" link. It replaced
 the old Resource pool dialog (add/rename/Max Units/remove for every resource), whose CRUD moved to the Resource Sheet;
-the Schedule menu's old "Resource pool…" entry now switches to the Resource Sheet view. Rename/remove cascades are
+the Resource Sheet is a view tab. Rename/remove cascades are
 covered by verify_resource_sheet_view.py. See "Resource levelling" and "Resource Sheet" in CLAUDE.md."""
 import os
 from playwright.sync_api import sync_playwright
@@ -14,7 +14,7 @@ with sync_playwright() as p:
     b = p.chromium.launch(headless=True)
     ctx = b.new_context(viewport={"width": 1500, "height": 900}); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
-    pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn")
+    pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn")
     ev = pg.evaluate
     SEED = "specs => { tasks.length = 0; deletedTaskIds.length = 0; selectedTaskId = null; delete project.resources; const ids = {}; for (const sp of specs) { const t = Object.assign({id: genId(), name: sp.name, parentId: sp.parent ? ids[sp.parent] : null, order: tasks.length, startDate: sp.s, endDate: sp.e, progress: 0, milestone: false, color: null, predecessors: [], collapsed: false, updatedAt: 1, constraintType: 'ASAP', constraintDate: null, taskMode: 'auto', resource: sp.r || '', actualStart: null, actualFinish: null}, sp.extra || {}); tasks.push(t); ids[sp.name] = t.id; } normalizeData(); save(); render(); resetHistory(); }"
     seed = lambda specs: ev(SEED, specs)
@@ -27,19 +27,13 @@ with sync_playwright() as p:
     check("the shared rename/remove cascades the Resource Sheet uses are still there",
           ev("() => typeof renameResourceEverywhere === 'function' && typeof removeResourceEverywhere === 'function'"))
 
-    # ---------------------------------------------------------------- Schedule menu -> Resource Sheet
-    seed([])
-    pg.click("#scheduleMenuBtn"); pg.wait_for_selector("#scheduleMenu.open")
-    check("the Schedule menu's resource entry is now 'Resource Sheet', hint 'none yet' with no resources",
-          "Resource Sheet" in pg.inner_text("#planResourcesItem") and "none yet" in pg.inner_text("#planResourcesItem"), pg.inner_text("#planResourcesItem"))
-    pg.click("#planResourcesItem"); pg.wait_for_timeout(120)
-    check("clicking it switches to the Resource Sheet view and closes the menu",
-          ev("() => currentView") == "resourceSheet" and pg.locator("#scheduleMenu.open").count() == 0)
-
+    # ---------------------------------------------------------------- the Resource Sheet is a view tab (the Schedule menu holds only actions now)
     seed([{"name": "A", "s": "2026-09-07", "e": "2026-09-08", "r": "Anna:50%, Ben"}, {"name": "G", "s": "2026-09-07", "e": "2026-09-08", "r": "GroupOnly"}, {"name": "K", "s": "2026-09-07", "e": "2026-09-08", "parent": "G", "r": "Ben"}])
     pg.click("#scheduleMenuBtn"); pg.wait_for_selector("#scheduleMenu.open")
-    check("...its hint counts the auto-populated pool (a group's own text never enters it)", "2 resources" in pg.inner_text("#planResourcesItem"), pg.inner_text("#planResourcesItem"))
+    check("the Schedule menu no longer has a Resource Sheet entry (it's a view tab)", pg.locator("#planResourcesItem").count() == 0)
     pg.keyboard.press("Escape")
+    pg.click("#mainViewTabs .view-tab:has-text('Resource Sheet')"); pg.wait_for_timeout(120)
+    check("its view tab switches to the Resource Sheet, where the pool shows (a group's own text never enters it)", ev("() => currentView") == "resourceSheet" and pg.locator(".rst-row").count() == 2)
 
     # ---------------------------------------------------------------- opening from a Resource Sheet row
     ben_row = lambda: pg.locator(".rst-row").filter(has=pg.locator('input[aria-label="Resource name"][value="Ben"]'))

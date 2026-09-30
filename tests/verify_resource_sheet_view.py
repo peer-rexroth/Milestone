@@ -15,21 +15,25 @@ with sync_playwright() as p:
     b = p.chromium.launch(headless=True)
     ctx = b.new_context(viewport={"width": 1600, "height": 900}); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
-    pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn")
+    pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn")
     ev = pg.evaluate
 
     SEED = "specs => { tasks.length = 0; deletedTaskIds.length = 0; selectedTaskId = null; delete project.resources; delete project.currencyCode; const ids = {}; for (const sp of specs) { const t = Object.assign({id: genId(), name: sp.name, parentId: sp.parent ? ids[sp.parent] : null, order: tasks.length, startDate: sp.s, endDate: sp.e, progress: 0, milestone: false, color: null, predecessors: [], collapsed: false, updatedAt: 1, constraintType: 'ASAP', constraintDate: null, taskMode: 'auto', resource: sp.r || '', actualStart: null, actualFinish: null}, sp.extra || {}); tasks.push(t); ids[sp.name] = t.id; } normalizeData(); save(); render(); }"
     seed = lambda specs: ev(SEED, specs)
 
     # ---------------------------------------------------------------- the view tab itself
-    check("MAIN_VIEWS has a 4th 'Resource Sheet' tab, after Resources", ev("() => MAIN_VIEWS.map(v => v.id)") == ["tasks", "gantt", "resources", "resourceSheet"])
+    check("MAIN_VIEWS: the task views, then the resource views — Resource Sheet, then Resource Usage (id 'resources')", ev("() => MAIN_VIEWS.map(v => v.id)") == ["tasks", "gantt", "resourceSheet", "resources"])
     tabs = pg.locator("#mainViewTabs .view-tab")
-    check("4 view tabs render, the 4th labelled 'Resource Sheet'", tabs.count() == 4 and tabs.nth(3).inner_text() == "Resource Sheet")
-    tabs.nth(3).click(); pg.wait_for_timeout(100)
+    check("4 view tabs render: Tasks, Gantt | Resource Sheet, Resource Usage — a divider between the two groups",
+          [t.strip() for t in tabs.all_inner_texts()] == ["Tasks", "Gantt", "Resource Sheet", "Resource Usage"] and pg.locator("#mainViewTabs .view-tab-sep").count() == 1)
+    tabs.nth(2).click(); pg.wait_for_timeout(100)
     check("clicking it switches currentView and tags #main with .view-resourceSheet", ev("() => currentView") == "resourceSheet" and ev("() => document.getElementById('main').classList.contains('view-resourceSheet')"))
     check("...the pane is actually visible, the task grid pane and the two other timeline panes are hidden", ev("() => getComputedStyle(document.getElementById('resourceSheetPaneOuter')).display") != "none"
           and ev("() => getComputedStyle(document.getElementById('gridPane')).display") == "none" and ev("() => getComputedStyle(document.getElementById('ganttPaneOuter')).display") == "none" and ev("() => getComputedStyle(document.getElementById('resourcePaneOuter')).display") == "none")
-    check("the zoom tabs (no timescale here) and the Gantt-only controls are hidden in this view", ev("() => document.getElementById('zoomTabs').classList.contains('hidden')") and ev("() => document.getElementById('criticalPathBtn').classList.contains('hidden')"))
+    vis = lambda i: ev("i => document.getElementById(i).offsetParent !== null", i)
+    check("the toolbar is the Resource Sheet's own: Add Resource and Currency — no zoom, no Gantt toggles, no task buttons (Add Task, Find, Columns)",
+          vis("addResourceBtn") and vis("rsCurrencyInput") and not any(vis(i) for i in ["zoomTabs", "criticalPathBtn", "addTaskBtn", "searchBtn", "columnsBtn"]))
+    check("...and there is no third bar above the sheet any more", pg.locator(".rst-toolbar").count() == 0)
 
     # ---------------------------------------------------------------- header, empty state, one row per resource
     heads = pg.locator("#resourceSheetHeader > div")
@@ -178,7 +182,7 @@ with sync_playwright() as p:
 
     # ---------------------------------------------------------------- Add / Remove, shared cascade, Undo
     before = ev("() => (project.resources||[]).length")
-    pg.click('.rst-toolbar button:has-text("Add Resource")'); pg.wait_for_timeout(120)
+    pg.click('#addResourceBtn'); pg.wait_for_timeout(120)
     check("Add Resource appends a new, editable, immediately-saved row", ev("() => (project.resources||[]).length") == before + 1)
     new_row = pg.locator(".rst-row").filter(has=pg.locator('input[aria-label="Resource name"][value^="New resource"]'))
     check("...its name field is focused and selected, ready to type over", ev("() => document.activeElement.getAttribute('aria-label')") == "Resource name")

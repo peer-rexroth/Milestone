@@ -11,7 +11,7 @@ with sync_playwright() as p:
     b = p.chromium.launch(headless=True)
     ctx = b.new_context(viewport={"width": 1600, "height": 900}, accept_downloads=True); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append("PAGEERROR " + str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
-    pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn"); pg.wait_for_timeout(300)
+    pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn"); pg.wait_for_timeout(300)
     T = lambda n: pg.evaluate("n => { const t = tasks.find(x => x.name === n); return t ? JSON.parse(JSON.stringify(t)) : null; }", n)
     dates = lambda n: (lambda t: [t["startDate"], t["endDate"]])(T(n))
     rows = lambda: pg.locator("#gridRows .grid-row").count()
@@ -75,8 +75,8 @@ with sync_playwright() as p:
     inline("Sketches", "actualFinish", "2026-09-11")
     check("an Actual Finish completes the task (100%, Status Complete) and Finish Variance shows +2 days", T("Sketches")["progress"] == 100 and cell("Sketches", "finishVariance").inner_text().strip() == "+2 days" and "Complete" in pg.inner_text(f".grid-row[data-id='{T('Sketches')['id']}']"))
     # ============================================================ 7. calendar
-    pg.click("#scheduleMenuBtn"); pg.click("#planCalendarItem"); pg.wait_for_selector("#calendarModalBg.open"); pg.locator("#calendarDays .cal-day", has_text="Sat").click(); pg.click("#calendarModalBg .btn-primary"); pg.wait_for_timeout(200)
-    check("Working calendar: adding Saturday (Mon-Sat) is saved with the plan and shown in the schedule menu", pg.evaluate("() => project.workDays.join()") == "1,2,3,4,5,6" and "Mon–Sat" in (pg.click("#scheduleMenuBtn") or pg.inner_text("#planCalendarItem")))
+    pg.click("#scheduleMenuBtn"); pg.click("#planSettingsItem"); pg.click(".modal-bg.open [data-settings-tab='calendar']"); pg.wait_for_selector("#calendarModalBg.open"); pg.locator("#calendarDays .cal-day", has_text="Sat").click(); pg.click("#calendarModalBg .btn-primary"); pg.wait_for_timeout(200)
+    check("Working calendar: adding Saturday (Mon-Sat) is saved with the plan and shown in the schedule menu", pg.evaluate("() => project.workDays.join()") == "1,2,3,4,5,6" and "Mon–Sat" in (pg.click("#scheduleMenuBtn") or pg.inner_text("#planSettingsItem")))
     pg.keyboard.press("Escape")
     # ============================================================ 8. filters
     pg.click(".col-filter-btn[data-col='name']"); pg.wait_for_selector("#filterMenu.open"); pg.fill("#filterSearch", "Build"); pg.wait_for_timeout(120); pg.click("#filterOkBtn"); pg.wait_for_timeout(200)
@@ -145,7 +145,7 @@ with sync_playwright() as p:
     pg.keyboard.press("Escape"); pg.wait_for_timeout(150)
     pg.click("button[title='About']"); pg.wait_for_selector("#aboutModalBg.open"); pg.keyboard.press("Escape"); pg.wait_for_timeout(120)
     state = pg.evaluate("() => ({ tasks: tasks.length, view: currentView, cols: visibleTaskCols('tasks').join(), gcols: visibleTaskCols('gantt').join(), text: canonicalText() })")
-    pg.reload(); pg.wait_for_selector("#addTaskBtn"); pg.wait_for_timeout(400)
+    pg.reload(); pg.wait_for_selector("#undoBtn"); pg.wait_for_timeout(400)
     after = pg.evaluate("() => ({ tasks: tasks.length, view: currentView, cols: visibleTaskCols('tasks').join(), gcols: visibleTaskCols('gantt').join(), text: canonicalText() })")
     check("after a reload everything is exactly as it was: the plan (byte for byte), the view, both column sets", after == state, {k: (state[k], after[k]) for k in state if state[k] != after[k]})
     check("the whole journey produced no console errors or page errors", not errors, errors[:5])

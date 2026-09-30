@@ -25,7 +25,7 @@ with sync_playwright() as p:
     ctx = b.new_context(viewport={"width": 1400, "height": 800}); ctx.add_init_script(FS_INIT)
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
     ev = pg.evaluate
-    pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.wait_for_function("() => fileSyncStatus !== 'checking'"); pg.wait_for_timeout(200)
+    pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.wait_for_function("() => fileSyncStatus !== 'checking'"); pg.wait_for_timeout(200)
     ls = lambda: ev("async () => { const r = await navigator.storage.getDirectory(), out = []; for await (const e of r.values()) out.push(e.name); return out.sort(); }")
     put = lambda name, text: ev("async ([n, t]) => { const r = await navigator.storage.getDirectory(); const h = await r.getFileHandle(n, { create: true }); const w = await h.createWritable(); await w.write(t); await w.close(); }", [name, text if isinstance(text, str) else json.dumps(text)])
     read = lambda name: ev("async (n) => { const r = await navigator.storage.getDirectory(); return (await (await r.getFileHandle(n)).getFile()).text(); }", name)

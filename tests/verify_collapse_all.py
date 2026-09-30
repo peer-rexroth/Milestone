@@ -11,7 +11,7 @@ MK = """(specs) => { tasks.length = 0; selectedTaskId = null; colFilters = newCo
 with sync_playwright() as p:
     b = p.chromium.launch(headless=True); ctx = b.new_context(viewport={"width": 1400, "height": 760}); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
-    pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn")
+    pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn")
     names = lambda: pg.evaluate("() => visibleTaskList().map(x => x.task.name)")
     st = lambda: pg.evaluate("() => { const b = document.getElementById('collapseToggleBtn'); return {disabled: b.disabled, icon: b.firstElementChild.className.replace('fa-solid fa-angles-', ''), title: b.title}; }")
     click = lambda: (pg.click("#collapseToggleBtn"), pg.wait_for_timeout(90))
@@ -55,7 +55,7 @@ with sync_playwright() as p:
     check("...so the next click restarts from 'Collapse all'", st()["title"] == "Collapse all groups", st())
     click(); check("...and does collapse everything", names() == L0, names())
     # ---- state comes from the stored flags: survives a reload mid-cycle
-    click(); pg.reload(); pg.wait_for_selector("#addTaskBtn"); pg.wait_for_timeout(200)
+    click(); pg.reload(); pg.wait_for_selector("#undoBtn"); pg.wait_for_timeout(200)
     check("reload at level 1 keeps the outline as it was and the button knows the next step is level 2", names() == L1 and st()["title"] == "Expand to level 2", (names(), st()))
     # ---- Gantt view
     pg.evaluate("() => { currentView = 'gantt'; render(); }")

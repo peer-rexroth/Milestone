@@ -17,7 +17,7 @@ with sync_playwright() as p:
     b = p.chromium.launch(headless=True)
     ctx = b.new_context(viewport={"width": 1400, "height": 800}); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
-    pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn")
+    pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn")
     ev = pg.evaluate
     toast = lambda: ev("() => { const e = document.getElementById('toastMsg'); return e ? e.textContent : ''; }")
     f = lambda n: ev("n => { const t = tasks.find(x => x.name === n); return [t.startDate, t.startTime, t.endDate, t.endTime]; }", n)
@@ -38,7 +38,7 @@ with sync_playwright() as p:
             B.startTime = '09:00'; B.endTime = '10:00'; C.startTime = '14:00'; C.endTime = '10:00';
             if (v === null) delete raw.version; else raw.version = v;
             localStorage.setItem(k, JSON.stringify(raw)); }""", version)
-        pg.reload(); pg.wait_for_selector("#addTaskBtn"); pg.wait_for_timeout(700)
+        pg.reload(); pg.wait_for_selector("#undoBtn"); pg.wait_for_timeout(700)
     stored = lambda: ev("() => JSON.parse(localStorage.getItem(planDataKey(currentPlanId))).version")
 
     # ---------------------------------------------------------------- an older build wrote a minute-mode plan
@@ -50,7 +50,7 @@ with sync_playwright() as p:
     check("C's finish is no longer before its start", c[2] > c[0] or (c[2] == c[0] and c[3] >= c[1]), c)
     check("the plan says so: a toast naming the older build and the count", "older Milestone" in toast() and "realigned" in toast(), toast())
     check("the repaired plan is stored (now under this build's version), so it is repaired once, not on every open", stored() == app_version, stored())
-    pg.reload(); pg.wait_for_selector("#addTaskBtn"); pg.wait_for_timeout(700)
+    pg.reload(); pg.wait_for_selector("#undoBtn"); pg.wait_for_timeout(700)
     check("...and opening it again says nothing and moves nothing", f("B")[1] == "11:30" and "older Milestone" not in toast(), (f("B"), toast()))
 
     # a file with no version at all is an older build's, too

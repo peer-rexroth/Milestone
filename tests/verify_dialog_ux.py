@@ -21,7 +21,7 @@ with sync_playwright() as p:
     b = p.chromium.launch(headless=True)
     ctx = b.new_context(viewport={"width": 1400, "height": 860}, accept_downloads=True); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
-    pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn")
+    pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn")
     ev = pg.evaluate
     tid = lambda n: ev("n => tasks.find(t => t.name === n).id", n)
     task = lambda n: ev("n => { const t = tasks.find(x => x.name === n); return [t.startDate, t.startTime, t.endDate, t.endTime]; }", n)
@@ -133,12 +133,12 @@ with sync_playwright() as p:
 
     # ================================================================ 2. the Scheduling precision dialog
     plan([A])
-    pg.click("#scheduleMenuBtn"); pg.click("#planPrecisionItem"); pg.wait_for_selector("#precisionModalBg.open"); pg.wait_for_timeout(200)
+    pg.click("#scheduleMenuBtn"); pg.click("#planSettingsItem"); pg.click(".modal-bg.open [data-settings-tab='precision']"); pg.wait_for_selector("#precisionModalBg.open"); pg.wait_for_timeout(200)
     check("it needs no scrolling at 1400x860 with the per-weekday section folded away", ev("() => { const b = document.querySelector('#precisionModalBg .modal-body'); return b.scrollHeight <= b.clientHeight + 1; }"))
     check("...and that section is a folded 'Different hours on some days' with no overrides yet", not ev("() => document.getElementById('whDayDetails').open") and "Different hours" in pg.inner_text("#whDayDetails summary"))
     w = ev("() => [...document.querySelectorAll('#precisionModalBg input.dt-time')].map(e => Math.round(e.getBoundingClientRect().width))")
     check("every time box (typed 24-hour, no AM/PM to fit) is at least 80px", all(x >= 80 for x in w[:2]), w)
-    check("the dialog is the wide (620px) size", ev("() => Math.round(document.querySelector('#precisionModalBg .modal').getBoundingClientRect().width)") == 620)
+    check("the dialog is the Plan settings size (680px, the same for every settings tab)", ev("() => Math.round(document.querySelector('#precisionModalBg .modal').getBoundingClientRect().width)") == 680)
     check("the breaks list and the day rows write a break the same way ('12:00-13:00')", "12:00-13:00" in pg.inner_text("#whBreakList") and ev("() => breaksText([{start:'12:00',end:'13:00'}])") == "12:00-13:00")
     check("with no different days yet, only 'Add a different day' is offered — no rows to open the section for", pg.locator("#whDayRows .whd-row").count() == 0 and pg.locator("#whDayAddSelect option").count() == 5)
     pg.click("#whDayDetails summary"); pg.wait_for_timeout(100)
@@ -149,7 +149,7 @@ with sync_playwright() as p:
     check("adding a day updates the summary count ('1 day differs')", "1 day differs" in pg.inner_text("#whDayDetails summary"), pg.inner_text("#whDayDetails summary"))
     pg.keyboard.press("Escape"); pg.click("#confirmModalBg button:has-text('Discard')"); pg.wait_for_timeout(150)
     ev("() => { project.workHoursByDay = { 5: { start: '08:00', end: '13:00', breaks: [] } }; normalizeData(); save(); }")
-    pg.click("#scheduleMenuBtn"); pg.click("#planPrecisionItem"); pg.wait_for_selector("#precisionModalBg.open"); pg.wait_for_timeout(200)
+    pg.click("#scheduleMenuBtn"); pg.click("#planSettingsItem"); pg.click(".modal-bg.open [data-settings-tab='precision']"); pg.wait_for_selector("#precisionModalBg.open"); pg.wait_for_timeout(200)
     check("with a different day saved the section opens by itself and says so", ev("() => document.getElementById('whDayDetails').open") and "1 day differs" in pg.inner_text("#whDayDetails summary"))
     pg.keyboard.press("Escape")
 

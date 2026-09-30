@@ -16,7 +16,7 @@ with sync_playwright() as p:
     b = p.chromium.launch(headless=True)
     ctx = b.new_context(viewport={"width": 1400, "height": 800}); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
-    pg.goto(URL); pg.wait_for_selector("#addTaskBtn")
+    pg.goto(URL); pg.wait_for_selector("#undoBtn")
 
     # ---------------------------------------------------------------- the split itself
     pg.click("#planMenuBtn"); pg.wait_for_selector("#planMenu.open")
@@ -27,12 +27,11 @@ with sync_playwright() as p:
 
     pg.click("#scheduleMenuBtn"); pg.wait_for_selector("#scheduleMenu.open")
     sched_items = pg.locator("#scheduleMenu .dropdown-item").all_inner_texts()
-    check("the Schedule menu has exactly Baseline, Resource Sheet, Reschedule remaining work, Level resources, Working calendar, Scheduling precision, in that order",
-          len(sched_items) == 6 and "Baseline" in sched_items[0] and "Resource Sheet" in sched_items[1] and "Reschedule remaining work" in sched_items[2] and "Level resources" in sched_items[3] and "Working calendar" in sched_items[4] and "Scheduling precision" in sched_items[5], sched_items)
+    check("the Schedule menu has only actions — Baseline, Reschedule remaining work, Level resources — then Plan settings, in that order",
+          len(sched_items) == 4 and "Baseline" in sched_items[0] and "Reschedule remaining work" in sched_items[1] and "Level resources" in sched_items[2] and "Plan settings" in sched_items[3], sched_items)
     check("Baseline's hint is there (not set at first)", "not set" in sched_items[0], sched_items[0])
-    check("Resource Sheet's hint is there (none yet at first)", "none yet" in sched_items[1], sched_items[1])
-    check("Working calendar's hint is there (Mon–Fri by default)", "Mon–Fri" in sched_items[4], sched_items[4])
-    check("Scheduling precision's hint is there (Days by default)", "Days" in sched_items[5], sched_items[5])
+    check("Plan settings' hint shows the calendar (Mon–Fri by default)", "Mon–Fri" in sched_items[3], sched_items[3])
+    check("Resource Sheet / Working calendar / Scheduling precision are no longer menu items of their own", all(pg.locator("#" + i).count() == 0 for i in ["planResourcesItem", "planCalendarItem", "planPrecisionItem"]))
 
     # ---------------------------------------------------------------- opening a dialog from it closes the menu, not the dialog
     pg.click("#planBaselineItem"); pg.wait_for_selector("#baselineModalBg.open")
@@ -46,13 +45,13 @@ with sync_playwright() as p:
     pg.keyboard.press("Escape")
 
     pg.click("#scheduleMenuBtn"); pg.wait_for_selector("#scheduleMenu.open")
-    pg.click("#planCalendarItem"); pg.wait_for_selector("#calendarModalBg.open")
-    check("opening Working calendar… also closes the Schedule menu", pg.locator("#scheduleMenu.open").count() == 0)
+    pg.click("#planSettingsItem"); pg.click(".modal-bg.open [data-settings-tab='calendar']"); pg.wait_for_selector("#calendarModalBg.open")
+    check("opening Plan settings (Calendar tab) also closes the Schedule menu", pg.locator("#scheduleMenu.open").count() == 0)
     pg.keyboard.press("Escape")
 
     pg.click("#scheduleMenuBtn"); pg.wait_for_selector("#scheduleMenu.open")
-    pg.click("#planPrecisionItem"); pg.wait_for_selector("#precisionModalBg.open")
-    check("opening Scheduling precision… also closes the Schedule menu", pg.locator("#scheduleMenu.open").count() == 0)
+    pg.click("#planSettingsItem"); pg.click(".modal-bg.open [data-settings-tab='precision']"); pg.wait_for_selector("#precisionModalBg.open")
+    check("...and so does opening it on the Precision tab", pg.locator("#scheduleMenu.open").count() == 0)
     pg.keyboard.press("Escape"); pg.wait_for_timeout(100)
     check("Escape closes the precision dialog too", pg.locator("#precisionModalBg.open").count() == 0)
 

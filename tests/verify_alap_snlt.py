@@ -20,7 +20,7 @@ with sync_playwright() as p:
     b = p.chromium.launch(headless=True)
     ctx = b.new_context(viewport={"width": 1600, "height": 900}); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
-    pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn")
+    pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn")
     seed = lambda specs: pg.evaluate(SEED, specs)
     dates = lambda n: pg.evaluate("n => { const t = tasks.find(x => x.name === n); return [t.startDate, t.endDate]; }", n)
     violated = lambda n: pg.evaluate("n => constraintViolated(tasks.find(x => x.name === n))", n)
@@ -99,7 +99,7 @@ with sync_playwright() as p:
     pg.evaluate("() => { applyConstraints(tasks.find(t => t.name === 'C').id); save(); }")   # seed() alone never runs the cascade — trigger the ALAP pull first
     before = dates("B")
     check("...the seeded chain really did pull B (sanity check before reloading)", before != ["2026-09-10", "2026-09-14"], before)
-    pg.reload(); pg.wait_for_selector("#addTaskBtn"); pg.wait_for_timeout(150)
+    pg.reload(); pg.wait_for_selector("#undoBtn"); pg.wait_for_timeout(150)
     check("reload keeps the ALAP placement (nothing recomputes it differently on load)", dates("B") == before, [before, dates("B")])
 
     check("no console errors or page errors across the whole run", not errors, errors[:5])

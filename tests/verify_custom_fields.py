@@ -20,7 +20,7 @@ with sync_playwright() as p:
     b = p.chromium.launch(headless=True)
     ctx = b.new_context(viewport={"width": 1600, "height": 900}, accept_downloads=True); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
-    pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn")
+    pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn")
     ev = pg.evaluate
     make = lambda specs: (ev(MK, specs), pg.wait_for_timeout(100))
     head_cols = lambda: ev("() => [...document.querySelectorAll('#gridHeader .col-filter-btn')].map(b => b.dataset.col)")
@@ -207,7 +207,7 @@ with sync_playwright() as p:
     check("...and can name the same field differently", head_text("text1") == "Owner")
     ev("() => { const id = JSON.parse(localStorage.getItem('milestone-plans')).plans.find(p => p.name === 'My Project').id; switchPlan(id); }"); pg.wait_for_timeout(500)
     check("switching back: plan A keeps ITS names", head_text("text1") == "Cost centre" and head_text("flag1") == "Approved")
-    pg.reload(); pg.wait_for_selector("#addTaskBtn"); pg.wait_for_timeout(200)
+    pg.reload(); pg.wait_for_selector("#undoBtn"); pg.wait_for_timeout(200)
     check("...and both survive a reload", head_text("text1") == "Cost centre")
 
     # ================================================================= filters

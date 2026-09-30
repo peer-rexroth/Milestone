@@ -12,8 +12,8 @@ with sync_playwright() as p:
     pg.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
     pg.on("pageerror", lambda e: errors.append(str(e)))
-    pg.goto(URL); pg.wait_for_selector("#addTaskBtn")
-    pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn")
+    pg.goto(URL); pg.wait_for_selector("#undoBtn")
+    pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn")
 
     def seed():
         pg.evaluate("""() => {
@@ -74,7 +74,7 @@ with sync_playwright() as p:
     check("sub-task order inside the group is untouched", after["Kid A"] == stamps_before["Kid A"])
 
     # 9) persists across reload in the same order
-    pg.reload(); pg.wait_for_selector("#addTaskBtn")
+    pg.reload(); pg.wait_for_selector("#undoBtn")
     check("order survives a reload", visible_names() == ["One", "Two", "NEW", "Three", "Group", "Kid A", "Kid B", "Four"], visible_names())
 
     print("console errors:", errors)

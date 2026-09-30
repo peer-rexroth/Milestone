@@ -21,7 +21,7 @@ with sync_playwright() as p:
     b = p.chromium.launch(headless=True)
     ctx = b.new_context(viewport={"width": 1400, "height": 860}); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
-    pg.goto(URL); pg.wait_for_selector("#addTaskBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#addTaskBtn")
+    pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn")
     ev = pg.evaluate
     toast = lambda: ev("() => document.getElementById('toastMsg').textContent")
     tid = lambda n: ev("n => tasks.find(t => t.name === n).id", n)
@@ -80,7 +80,7 @@ with sync_playwright() as p:
     plan([A, B])
     ev("() => { tasks.find(t => t.name === 'B').predecessors[0].lag = 90; save(); }")   # a lag that won't round evenly
     before = ev("() => JSON.stringify({ tasks, timeUnit: project.timeUnit })")
-    pg.click("#scheduleMenuBtn"); pg.click("#planPrecisionItem"); pg.wait_for_selector("#precisionModalBg.open")
+    pg.click("#scheduleMenuBtn"); pg.click("#planSettingsItem"); pg.click(".modal-bg.open [data-settings-tab='precision']"); pg.wait_for_selector("#precisionModalBg.open")
     pg.click("#precisionDay"); pg.click("#precisionModalBg .modal-footer button.btn-primary"); pg.wait_for_timeout(200)
     body = pg.inner_text("#confirmModalBody")
     check("the warning names both what is lost: a task's time of day AND a lag that will round", "task" in body and "time of day" in body and "lag" in body and "round to whole working days" in body, body)
@@ -90,7 +90,7 @@ with sync_playwright() as p:
     check("confirming actually switches to Days", ev("() => project.timeUnit") is None)
     close_all()
     plan([{"name": "A", "s": "2026-09-07", "e": "2026-09-08"}])   # no times, no odd lags: nothing to lose
-    pg.click("#scheduleMenuBtn"); pg.click("#planPrecisionItem"); pg.wait_for_selector("#precisionModalBg.open")
+    pg.click("#scheduleMenuBtn"); pg.click("#planSettingsItem"); pg.click(".modal-bg.open [data-settings-tab='precision']"); pg.wait_for_selector("#precisionModalBg.open")
     pg.click("#precisionDay"); pg.click("#precisionModalBg .modal-footer button.btn-primary"); pg.wait_for_timeout(200)
     check("switching to Days with nothing to lose asks nothing", pg.locator("#confirmModalBg.open").count() == 0 and ev("() => project.timeUnit") is None)
     close_all()
