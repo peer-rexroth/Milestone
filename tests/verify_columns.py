@@ -13,11 +13,11 @@ def d(n): return (TODAY + datetime.timedelta(days=n)).isoformat()
 def fmt(iso): y, m, dd = iso.split("-"); return f"{dd}.{m}.{y}"
 
 OLD_ORDER = ["mode", "wbs", "name", "start", "end", "actualStart", "actualFinish", "duration", "progress", "preds", "remaining", "status", "resource"]   # the 13 columns of an install from before the baseline columns
-DEFAULT_ORDER = ["mode", "wbs", "name", "start", "end", "actualStart", "actualFinish", "duration", "progress", "preds", "remaining", "status", "resource", "worktype", "work", "cost", "baselineStart", "baselineFinish", "baselineDuration", "startVariance", "finishVariance", "durationVariance"]
+DEFAULT_ORDER = ["mode", "wbs", "name", "start", "end", "actualStart", "actualFinish", "duration", "progress", "preds", "resource", "status", "remaining", "worktype", "work", "cost", "baselineStart", "baselineFinish", "baselineDuration", "startVariance", "finishVariance", "durationVariance"]
 # (the 20 custom fields are in the registry too, but the Columns menu lists only the ones a plan uses — none here)
 ALL_ORDER = DEFAULT_ORDER + [k + str(i) for k in ("text", "number", "date", "flag") for i in range(1, 6)]   # what colOrder itself holds
 OLD_SHOWN = ["mode", "wbs", "name", "start", "end", "duration", "progress", "preds"]   # what an install from before Actual Start/Finish and Status became default columns still shows
-DEFAULT_SHOWN = ["mode", "wbs", "name", "start", "end", "actualStart", "actualFinish", "duration", "progress", "preds", "status"]
+DEFAULT_SHOWN = ["name", "start", "end", "duration", "progress", "preds", "resource", "status"]   # Task Mode, WBS and the Actual dates start hidden
 
 MK = """(specs) => { tasks.length = 0; selectedTaskId = null; colFilters = newColFilters(); filterPinned.clear();
   let n = 0; const ids = {};
@@ -45,7 +45,7 @@ with sync_playwright() as p:
 
     # ============================================================ defaults and the Columns menu
     make([{"name": "Solo"}])
-    check("out of the box the list shows the familiar columns plus WBS; the other new fields are hidden", head_cols() == DEFAULT_SHOWN, head_cols())
+    check("out of the box the list shows Task Name, Start, Finish, Duration, %, Predecessors, Resource, Status; Task Mode, WBS, the Actual dates and the rest are hidden", head_cols() == DEFAULT_SHOWN, head_cols())
     check("the Columns button is in the toolbar (Tasks view)", pg.locator("#columnsBtn:not(.hidden)").count() == 1)
     pg.evaluate("() => { currentView = 'gantt'; render(); }")
     check("...and it is available in the Gantt view too (the list there is the same one)", pg.locator("#columnsBtn.hidden").count() == 0)
@@ -56,10 +56,10 @@ with sync_playwright() as p:
     check("Task Name is ticked and can't be unticked", [x for x in listed if x[0] == "name"][0][1:] == [True, True])
     check("the first column can't move up, the last can't move down", pg.locator("#columnsMenu .cols-row").first.locator(".cols-move button").first.is_disabled() and pg.locator("#columnsMenu .cols-row").last.locator(".cols-move button").last.is_disabled())
     # show a hidden column
-    set_col("resource", True)
-    check("ticking Resource adds it (after Predecessors, its default place) and the menu stays open", head_cols() == DEFAULT_SHOWN + ["resource"] and pg.locator("#columnsMenu.open").count() == 1, head_cols())
+    set_col("wbs", True)
+    check("ticking WBS adds it at its default place (before Task Name) and the menu stays open", head_cols() == ["wbs"] + DEFAULT_SHOWN and pg.locator("#columnsMenu.open").count() == 1, head_cols())
     set_col("actualStart", True)
-    check("ticking Actual Start puts it at its default place (after Finish)", head_cols() == ["mode", "wbs", "name", "start", "end", "actualStart", "actualFinish", "duration", "progress", "preds", "status", "resource"], head_cols())
+    check("ticking Actual Start puts it at its default place (after Finish)", head_cols() == ["wbs", "name", "start", "end", "actualStart", "duration", "progress", "preds", "resource", "status"], head_cols())
     cols_now = head_cols(); ncells = pg.locator(".grid-row").first.locator(":scope > div").count()
     check("every row has exactly one cell per visible column (+ ID and actions)", ncells == len(cols_now) + 2 and pg.locator("#gridHeader > div").count() == len(cols_now) + 2, (ncells, len(cols_now)))
     check("the grid template has a track for each", len(pg.evaluate("() => getComputedStyle(document.querySelector('.grid-row')).gridTemplateColumns.split(' ')")) == len(cols_now) + 2)
@@ -72,7 +72,7 @@ with sync_playwright() as p:
     pg.locator("#columnsMenu .cols-row:has(input[data-col='name']) .cols-move button").first.click(); pg.wait_for_timeout(80)   # Name up
     check("Task Name can be moved too", head_cols().index("name") < head_cols().index("wbs"), head_cols())
     saved = pg.evaluate("() => JSON.parse(localStorage.getItem('milestone-prefs')).cols")
-    check("the choice is stored with the device preferences (not in the plan)", saved["order"] == pg.evaluate("() => colOrder") and "remaining" in saved["hidden"] and "baselineStart" in saved["hidden"] and "actualFinish" not in saved["hidden"] and "cols" not in json.dumps(pg.evaluate("() => JSON.parse(localStorage.getItem('milestone-plan-' + currentPlanId))")), saved)
+    check("the choice is stored with the device preferences (not in the plan)", saved["order"] == pg.evaluate("() => colOrder") and "remaining" in saved["hidden"] and "baselineStart" in saved["hidden"] and "actualFinish" in saved["hidden"] and "wbs" not in saved["hidden"] and "cols" not in json.dumps(pg.evaluate("() => JSON.parse(localStorage.getItem('milestone-plan-' + currentPlanId))")), saved)
     close_cols(); before = head_cols()
     pg.reload(); pg.wait_for_selector("#undoBtn"); pg.wait_for_timeout(200)
     check("...and survives a reload", head_cols() == before, (head_cols(), before))
@@ -270,14 +270,14 @@ with sync_playwright() as p:
     pg.click("#dataMenuBtn"); pg.click("#excelExportItem"); pg.wait_for_selector("#excelModalBg.open")
     check("Excel dialog: 'As shown in the task list' is the default column choice", pg.is_checked("input[name='excelCols'][value='shown']")); pg.keyboard.press("Escape"); pg.wait_for_timeout(80)
     export("shown", "cols_shown.xlsx"); ws = openpyxl.load_workbook("cols_shown.xlsx")["Tasks"]
-    check("Excel 'as shown': ID, the visible columns in the list's order (WBS is one of them now)", [c.value for c in ws[4]] == ["ID", "Mode", "WBS", "Task Name", "Start", "Finish", "Actual Start", "Actual Finish", "Duration", "% Complete", "Predecessors", "Status"], [c.value for c in ws[4]])
-    pg.evaluate("() => { colHidden.delete('resource'); colHidden.delete('status'); colHidden.delete('remaining'); colHidden.delete('wbs'); colOrder = ['name'].concat(colOrder.filter(c => c !== 'name')); save(); render(); }")
+    check("Excel 'as shown': ID, the visible columns in the list's order (WBS is one of them now)", [c.value for c in ws[4]] == ["ID", "Task Name", "Start", "Finish", "Duration", "% Complete", "Predecessors", "Resource", "Status"], [c.value for c in ws[4]])
+    pg.evaluate("() => { colHidden.delete('mode'); colHidden.delete('remaining'); colHidden.delete('wbs'); colOrder = ['name'].concat(colOrder.filter(c => c !== 'name')); save(); render(); }")
     export("shown", "cols_custom.xlsx"); wc = openpyxl.load_workbook("cols_custom.xlsx")["Tasks"]
     hdr = [c.value for c in wc[4]]
     check("Excel 'as shown' follows the user's choice and order (Task Name first after ID; WBS, Remaining, Status, Resource included)", hdr[:3] == ["ID", "Task Name", "Mode"] and {"WBS", "Remaining Duration", "Status", "Resource"} <= set(hdr) and "Notes" not in hdr, hdr)
     check("...the pane is frozen through Task Name wherever it sits (B), autofilter covers all columns", wc.freeze_panes == "C5" and wc.auto_filter.ref == f"A4:{openpyxl.utils.get_column_letter(len(hdr))}8", (wc.freeze_panes, wc.auto_filter.ref))
     export("all", "cols_all.xlsx"); wa = openpyxl.load_workbook("cols_all.xlsx")["Tasks"]; ha = [c.value for c in wa[4]]
-    check("Excel 'all columns': every field, in the default order", ha == ["ID", "Mode", "WBS", "Task Name", "Start", "Finish", "Actual Start", "Actual Finish", "Duration", "% Complete", "Predecessors", "Remaining Duration", "Status", "Resource", "Task Type", "Work", "Cost", "Baseline Start", "Baseline Finish", "Baseline Duration", "Start Variance", "Finish Variance", "Duration Variance"], ha)
+    check("Excel 'all columns': every field, in the default order", ha == ["ID", "Mode", "WBS", "Task Name", "Start", "Finish", "Actual Start", "Actual Finish", "Duration", "% Complete", "Predecessors", "Resource", "Status", "Remaining Duration", "Task Type", "Work", "Cost", "Baseline Start", "Baseline Finish", "Baseline Duration", "Start Variance", "Finish Variance", "Duration Variance"], ha)
     rowsx = {wa.cell(r, ha.index("Task Name") + 1).value.strip(): r for r in range(5, wa.max_row + 1)}
     def X(name, col): return wa.cell(rowsx[name], ha.index(col) + 1)
     check("Excel: WBS as text (1.1 stays '1.1', not a number)", X("T1", "WBS").value == "1.1" and X("T1", "WBS").data_type == "s", (X("T1", "WBS").value, X("T1", "WBS").data_type))

@@ -1,5 +1,8 @@
 import re, json
 from playwright.sync_api import sync_playwright
+import sys
+sys.path.insert(0, __import__('os').path.dirname(__import__('os').path.abspath(__file__)))
+from _legacy_cols import LEGACY_COLS
 import os
 URL = os.environ.get("MILESTONE_URL", "http://127.0.0.1:8937/milestone.html")
 errors, results = [], []
@@ -14,7 +17,7 @@ with sync_playwright() as p:
         pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
         pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()")
         if prefs: pg.evaluate("p => localStorage.setItem('milestone-prefs', JSON.stringify(p))", prefs)
-        pg.reload(); pg.wait_for_selector("#undoBtn"); pg.evaluate(SEED, SPECS); pg.evaluate("() => { gColOrder = [...colOrder]; gColHidden = new Set(colHidden); currentView = 'gantt'; zoom = 'week'; render(); }"); pg.wait_for_timeout(200); return pg   # (the Gantt view gets the Tasks view's columns: its own default is the compact four, see verify_gantt_columns.py)
+        pg.reload(); pg.wait_for_selector("#undoBtn"); pg.evaluate(LEGACY_COLS); pg.evaluate(SEED, SPECS); pg.evaluate("() => { gColOrder = [...colOrder]; gColHidden = new Set(colHidden); currentView = 'gantt'; zoom = 'week'; render(); }"); pg.wait_for_timeout(200); return pg   # (the Gantt view gets the Tasks view's columns: its own default is the compact four, see verify_gantt_columns.py)
     pg = new_page()
     cols = lambda: pg.evaluate("() => [...document.querySelectorAll('#gridHeader .col-filter-btn')].map(b => b.dataset.col)")
     # ================================================================ the same list

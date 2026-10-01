@@ -1,5 +1,7 @@
 from playwright.sync_api import sync_playwright
-import os
+import os, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from _legacy_cols import LEGACY_COLS
 URL = os.environ.get("MILESTONE_URL", "http://127.0.0.1:8937/milestone.html")
 errors, results = [], []
 def check(name, cond, detail=""):
@@ -7,7 +9,7 @@ def check(name, cond, detail=""):
 with sync_playwright() as p:
     b = p.chromium.launch(headless=True); ctx = b.new_context(viewport={"width": 1400, "height": 500}); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
-    pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => { for (const c of ['actualStart', 'actualFinish', 'status']) colHidden.add(c); }")
+    pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn"); pg.evaluate(LEGACY_COLS); pg.evaluate("() => { for (const c of ['actualStart', 'actualFinish', 'status']) colHidden.add(c); }")
     pg.evaluate("""() => { tasks.length = 0; ['One', 'Two'].forEach((n, i) => tasks.push({id: genId(), name: n, parentId: null, order: i, startDate: '2026-09-07', endDate: '2026-09-11', progress: 0, milestone: false, color: null, notes: '', predecessors: [], collapsed: false, updatedAt: 1, constraintType: 'ASAP', constraintDate: null, taskMode: i ? 'auto' : 'manual', resource: '', actualStart: null, actualFinish: null})); currentView = 'tasks'; save(); render(); }""")
     hdr = pg.locator("#gridHeader .col-head:has(.col-filter-btn[data-col='mode'])")
     check("Tasks view: the Task Mode column has a header label", " ".join(hdr.locator("span").text_content().split()).lower() == "task mode" or hdr.locator("span").inner_html().replace("<br>", " ").lower() == "task mode", hdr.inner_html())

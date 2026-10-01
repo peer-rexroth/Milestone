@@ -1,4 +1,7 @@
 from playwright.sync_api import sync_playwright
+import sys
+sys.path.insert(0, __import__('os').path.dirname(__import__('os').path.abspath(__file__)))
+from _legacy_cols import LEGACY_COLS
 
 import os
 URL = os.environ.get("MILESTONE_URL", "http://127.0.0.1:8937/milestone.html")
@@ -10,7 +13,7 @@ with sync_playwright() as p:
     page.on("console", lambda m: errors.append(f"[{m.type}] {m.text}") if m.type in ("error", "warning") else None)
     page.on("pageerror", lambda e: errors.append(f"[pageerror] {e}"))
     page.goto(URL); page.wait_for_selector("#undoBtn")
-    page.evaluate("() => { localStorage.clear(); }"); page.reload(); page.wait_for_selector("#undoBtn"); page.evaluate("() => { project.workDays = [0,1,2,3,4,5,6]; }"); page.evaluate("() => { for (const c of ['actualStart', 'actualFinish', 'status']) colHidden.add(c); }"); page.evaluate("() => { colHidden.add('wbs'); save(); render(); }")
+    page.evaluate("() => { localStorage.clear(); }"); page.reload(); page.wait_for_selector("#undoBtn"); page.evaluate("() => { project.workDays = [0,1,2,3,4,5,6]; }"); page.evaluate(LEGACY_COLS); page.evaluate("() => { for (const c of ['actualStart', 'actualFinish', 'status']) colHidden.add(c); }"); page.evaluate("() => { colHidden.add('wbs'); save(); render(); }")
 
     def mk(name, start, end, mode, preds=None):
         return page.evaluate("""([name, start, end, mode, preds]) => {

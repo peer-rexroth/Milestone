@@ -2,6 +2,9 @@ import datetime, io, json, re, zipfile
 import xml.etree.ElementTree as ET
 import openpyxl
 from playwright.sync_api import sync_playwright
+import sys
+sys.path.insert(0, __import__('os').path.dirname(__import__('os').path.abspath(__file__)))
+from _legacy_cols import LEGACY_COLS
 
 import os
 URL = os.environ.get("MILESTONE_URL", "http://127.0.0.1:8937/milestone.html")
@@ -25,7 +28,7 @@ with sync_playwright() as p:
     b = p.chromium.launch(headless=True)
     ctx = b.new_context(viewport={"width": 1300, "height": 760}, accept_downloads=True); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
-    pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => { project.workDays = [0,1,2,3,4,5,6]; }"); pg.evaluate("() => { for (const c of ['actualStart', 'actualFinish', 'status']) colHidden.add(c); gColHidden = new Set(DEFAULT_COL_ORDER.filter(c => !['name', 'start', 'end'].includes(c))); }"); pg.evaluate("() => { colHidden.add('wbs'); save(); render(); }")
+    pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn"); pg.evaluate(LEGACY_COLS); pg.evaluate("() => { project.workDays = [0,1,2,3,4,5,6]; }"); pg.evaluate("() => { for (const c of ['actualStart', 'actualFinish', 'status']) colHidden.add(c); gColHidden = new Set(DEFAULT_COL_ORDER.filter(c => !['name', 'start', 'end'].includes(c))); }"); pg.evaluate("() => { colHidden.add('wbs'); save(); render(); }")
 
     def do_export(gantt=True, scope="all", path="out.xlsx"):
         pg.click("#dataMenuBtn"); pg.click("#excelExportItem"); pg.wait_for_selector("#excelModalBg.open")

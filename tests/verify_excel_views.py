@@ -32,7 +32,7 @@ with sync_playwright() as p:
     set_cols("tasks", ["name", "start", "end", "progress", "status", "resource"]); set_cols("gantt", ["name", "baselineStart", "baselineFinish", "startVariance"])
     pg.evaluate("() => { currentView = 'tasks'; render(); }")
     w = wb()
-    check("Tasks sheet: ID + the TASKS view's columns in its order (Task Name, Start, Finish, % Complete, Status, Resource)", header(w["Tasks"]) == ["ID", "Task Name", "Start", "Finish", "% Complete", "Status", "Resource"], header(w["Tasks"]))
+    check("Tasks sheet: ID + the TASKS view's columns in its order (Task Name, Start, Finish, % Complete, Resource, Status — the shared sequence puts Resource before Status)", header(w["Tasks"]) == ["ID", "Task Name", "Start", "Finish", "% Complete", "Resource", "Status"], header(w["Tasks"]))
     check("Gantt sheet: ID + the GANTT view's columns (Task Name, Baseline Start, Baseline Finish, Start Variance), then the weeks", header(w["Gantt"]) == ["ID", "Task Name", "Baseline Start", "Baseline Finish", "Start Variance"], header(w["Gantt"]))
     pg.evaluate("() => { currentView = 'gantt'; render(); }")
     w2 = wb()
@@ -56,7 +56,7 @@ with sync_playwright() as p:
     # defaults: the Gantt view's own default in the Gantt sheet
     pg.evaluate("() => { gColOrder = [...GANTT_DEFAULT_ORDER]; gColHidden = new Set(DEFAULT_COL_ORDER.filter(c => !GANTT_DEFAULT_SHOWN.includes(c))); colOrder = [...DEFAULT_COL_ORDER]; colHidden = new Set(DEFAULT_COL_ORDER.filter(c => !TASK_COLS[c].dflt)); render(); }")
     wd = wb()
-    check("with the defaults: the Tasks sheet has the Tasks view's default columns, the Gantt sheet the Gantt view's (Mode, WBS, Task Name, Start, Finish, Duration, Baseline Start/Finish, Duration Variance)", header(wd["Tasks"]) == ["ID", "Mode", "WBS", "Task Name", "Start", "Finish", "Actual Start", "Actual Finish", "Duration", "% Complete", "Predecessors", "Status"] and header(wd["Gantt"]) == ["ID", "Mode", "WBS", "Task Name", "Start", "Finish", "Duration", "Baseline Start", "Baseline Finish", "Duration Variance"], (header(wd["Tasks"]), header(wd["Gantt"])))
+    check("with the defaults: the Tasks sheet has the Tasks view's default columns, the Gantt sheet the Gantt view's (Task Name, Start, Finish, Duration, % Complete)", header(wd["Tasks"]) == ["ID", "Task Name", "Start", "Finish", "Duration", "% Complete", "Predecessors", "Resource", "Status"] and header(wd["Gantt"]) == ["ID", "Task Name", "Start", "Finish", "Duration", "% Complete"], (header(wd["Tasks"]), header(wd["Gantt"])))
     # ================================================================ the dialog path
     pg.click("#dataMenuBtn"); pg.click("#dataMenu >> text=Export to Excel"); pg.wait_for_selector("#excelModalBg.open")
     check("the export dialog says which view each sheet follows", "Tasks view" in pg.inner_text("#excelModalBg") and "Gantt view" in pg.inner_text("#excelModalBg"))

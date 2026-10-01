@@ -4,12 +4,16 @@ and removed in the Manage dialog (an Add-field menu by type); the four kinds edi
 import json, os
 import openpyxl
 from playwright.sync_api import sync_playwright
+import sys
+sys.path.insert(0, __import__('os').path.dirname(__import__('os').path.abspath(__file__)))
+from _legacy_cols import LEGACY_COLS
 URL = os.environ.get("MILESTONE_URL", "http://127.0.0.1:8937/milestone.html")
 errors, results = [], []
 def check(name, cond, detail=""):
     results.append(bool(cond)); print(("PASS  " if cond else "FAIL  ") + name + (f"   [{str(detail)[:300]}]" if not cond and detail else ""))
 
-DEFAULT_SHOWN = ["mode", "wbs", "name", "start", "end", "actualStart", "actualFinish", "duration", "progress", "preds", "status"]
+DEFAULT_SHOWN = ["mode", "wbs", "name", "start", "end", "actualStart", "actualFinish", "duration", "progress", "preds", "status"]   # (the columns this file runs with — LEGACY_COLS)
+NEW_DEFAULT = ["name", "start", "end", "duration", "progress", "preds", "resource", "status"]   # what 'Reset to default' gives now
 FOUR = {"text1": "Cost centre", "number1": "Budget", "date1": "Due", "flag1": "Approved"}   # the fields most sections work with (named = in use)
 MK = """(specs) => { tasks.length = 0; selectedTaskId = null; colFilters = newColFilters(); filterPinned.clear();
   let n = 0; const ids = {};
@@ -20,7 +24,7 @@ with sync_playwright() as p:
     b = p.chromium.launch(headless=True)
     ctx = b.new_context(viewport={"width": 1600, "height": 900}, accept_downloads=True); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
-    pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn")
+    pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn"); pg.evaluate(LEGACY_COLS)
     ev = pg.evaluate
     make = lambda specs: (ev(MK, specs), pg.wait_for_timeout(100))
     head_cols = lambda: ev("() => [...document.querySelectorAll('#gridHeader .col-filter-btn')].map(b => b.dataset.col)")
@@ -282,7 +286,7 @@ with sync_playwright() as p:
     open_cols(); pg.locator("#columnsMenu .cols-row:has(input[data-col='text2']) .cols-move button").first.click(); pg.wait_for_timeout(100)
     check("custom columns can be reordered like any other (Beta moved above Alpha)", head_cols().index("text2") < head_cols().index("text1"), head_cols())
     pg.click("#columnsMenu .btn-link:has-text('Reset')"); pg.wait_for_timeout(100)
-    check("'Reset to default' hides them again and restores the order — but keeps the plan's names", head_cols() == DEFAULT_SHOWN and ev("() => project.fieldNames") == {"text1": "Alpha", "text2": "Beta"}, head_cols())
+    check("'Reset to default' hides them again and restores the default columns — but keeps the plan's names", head_cols() == NEW_DEFAULT and ev("() => project.fieldNames") == {"text1": "Alpha", "text2": "Beta"}, head_cols())
     check("the Columns menu's link opens the Manage dialog", (pg.click("#columnsMenu .cols-foot .btn-link"), pg.wait_for_selector("#fieldsModalBg.open"), True)[2] and not ev("() => document.getElementById('columnsMenu').classList.contains('open')"))
     pg.wait_for_timeout(120)
     check("...with the cursor in the first name field", ev("() => document.activeElement.classList.contains('fld-name')")); pg.keyboard.press("Escape"); pg.wait_for_timeout(150)
@@ -291,7 +295,7 @@ with sync_playwright() as p:
     pg.keyboard.press("Escape"); pg.wait_for_timeout(100)
     ev("() => { resetColumns(); }"); open_cols()
     order = ev("() => [...document.querySelectorAll('#columnsMenu input[data-col]')].map(i => i.dataset.col)")
-    check("the default column sequence: standard columns first, then the custom fields in use", order[:13] == ["mode", "wbs", "name", "start", "end", "actualStart", "actualFinish", "duration", "progress", "preds", "remaining", "status", "resource"] and order[-2:] == ["text1", "text2"], order)
+    check("the default column sequence: standard columns first, then the custom fields in use", order[:13] == ["mode", "wbs", "name", "start", "end", "actualStart", "actualFinish", "duration", "progress", "preds", "resource", "status", "remaining"] and order[-2:] == ["text1", "text2"], order)
     close_cols()
 
     check("no console errors", not errors, errors[:5])

@@ -1,5 +1,8 @@
 import json
 from playwright.sync_api import sync_playwright
+import sys
+sys.path.insert(0, __import__('os').path.dirname(__import__('os').path.abspath(__file__)))
+from _legacy_cols import LEGACY_COLS
 import os
 URL = os.environ.get("MILESTONE_URL", "http://127.0.0.1:8937/milestone.html")
 errors, results = [], []
@@ -12,7 +15,7 @@ with sync_playwright() as p:
     boot = lambda: (pg.goto(URL), pg.wait_for_selector("#undoBtn"), pg.wait_for_timeout(150))
     reload = lambda: (pg.reload(), pg.wait_for_selector("#undoBtn"), pg.wait_for_timeout(150))
     mode = lambda: pg.evaluate("() => project.newTaskMode")
-    boot(); pg.evaluate("() => localStorage.clear()"); reload()
+    boot(); pg.evaluate("() => localStorage.clear()"); reload(); pg.evaluate(LEGACY_COLS)
 
     # ---- a fresh install
     check("fresh install: the 'New tasks' button reads Auto Scheduled", "Auto Scheduled" in pg.evaluate("() => document.querySelector('#addMenu .dropdown-item.active').textContent"))

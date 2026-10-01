@@ -1896,7 +1896,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <div class="help-section">
           <div class="help-section-title">Columns</div>
           <div class="help-row"><i class="fa-solid fa-table-columns"></i><span>Click <strong>Columns</strong> in the toolbar to tick the columns you want and reorder them. The <strong>Tasks view and the Gantt view each remember their own set</strong> on this device; Task Name always stays.</span></div>
-          <div class="help-row"><i class="fa-solid fa-eye-slash"></i><span>Remaining Duration, Resource, the baseline and variance columns and the custom fields start hidden. Click a <strong>Resource</strong> or actual-date cell to edit it, or use the task dialog.</span></div>
+          <div class="help-row"><i class="fa-solid fa-eye-slash"></i><span>The list starts with Task Name, Start, Finish, Duration, % Complete, Predecessors, Resource and Status; Task Mode, WBS, the Actual dates, Remaining Duration, Task Type, Work, Cost, the baseline and variance columns and your custom fields start hidden (<strong>Columns</strong> shows them). The Gantt's list starts with just Name, Start, Finish, Duration and % Complete. Click a <strong>Resource</strong> or actual-date cell to edit it, or use the task dialog.</span></div>
           <div class="help-row"><i class="fa-solid fa-users"></i><span><strong>Resource</strong> takes names separated by commas or semicolons ("Anna, Ben") — typing a new name adds it to the plan's resource pool automatically, the same way MS Project does. Give a share other than full time with <code>Name[NN%]</code> ("Anna[50%], Ben"), as in MS Project — a bare name is 100%.</span></div>
           <div class="help-row"><i class="fa-solid fa-people-group"></i><span>The <strong>Resource Sheet</strong> tab lists everyone: type, Max Units (how much of a resource is available: 100% is one full-time person, 300% three people pooled into one; only Work resources have it), rates and cost per use. Renaming or removing someone there updates every task that names them; <strong>Days off</strong> on a row opens that person's own days off, on top of the plan's working week.</span></div>
           <div class="help-row"><i class="fa-solid fa-chart-simple"></i><span>The <strong>Resource Plan</strong> tab shows each person's load as bars with the % written in (of their Max Units), red where they're over capacity — <strong>click a red bar</strong> to see the tasks behind it and jump to one. Its toolbar has a legend, <strong>Level…</strong>, <strong>Edit resources…</strong> and <strong>Over-allocated only</strong>.</span></div>
@@ -2073,19 +2073,19 @@ const ZOOMS = [
 // always first and the row actions always last; everything in between can be shown, hidden and reordered (Columns button).
 // `dflt` = shown until the user says otherwise. Insertion order = the default order. Task Name can't be hidden.
 const TASK_COLS = {
-  mode:         { label: 'Task Mode',     width: '76px',              dflt: true },   // its header is two lines (Task / Mode)
-  wbs:          { label: 'WBS',           width: '104px',             dflt: true },   // sized for eight levels, 2.2.2.2.2.2.2.2 (83px of text in the widest digit) + the 8px inset on each side + a little slack
+  mode:         { label: 'Task Mode',     width: '76px',              dflt: false },   // its header is two lines (Task / Mode)
+  wbs:          { label: 'WBS',           width: '104px',             dflt: false },   // sized for eight levels, 2.2.2.2.2.2.2.2 (83px of text in the widest digit) + the 8px inset on each side + a little slack
   name:         { label: 'Task Name',     width: 'minmax(160px,1fr)', dflt: true, locked: true },
   start:        { label: 'Start',         width: '104px',             dflt: true },
   end:          { label: 'Finish',        width: '104px',             dflt: true },
-  actualStart:  { label: 'Actual Start',  width: '104px',             dflt: true },   // header: Actual / Start
-  actualFinish: { label: 'Actual Finish', width: '104px',             dflt: true },   // header: Actual / Finish
+  actualStart:  { label: 'Actual Start',  width: '104px',             dflt: false },   // header: Actual / Start
+  actualFinish: { label: 'Actual Finish', width: '104px',             dflt: false },   // header: Actual / Finish
   duration:     { label: 'Duration',      width: '104px',             dflt: true },
   progress:     { label: '% Complete',    width: '56px',              dflt: true },
   preds:        { label: 'Predecessors',  width: '146px',             dflt: true },   // just wide enough for its header: text 95px + gap 3px + funnel 18px + the 2×8px cell inset = 132px, plus a little slack for other fonts
-  remaining:    { label: 'Remaining Duration', width: '110px',        dflt: false },
+  resource:     { label: 'Resource',      width: '140px',             dflt: true },   // fixed like every column but Task Name; longer text is cut with an ellipsis (the cell's tooltip and the editor show all of it)
   status:       { label: 'Status',        width: '108px',             dflt: true },
-  resource:     { label: 'Resource',      width: '140px',             dflt: false },   // fixed like every column but Task Name; longer text is cut with an ellipsis (the cell's tooltip and the editor show all of it)
+  remaining:    { label: 'Remaining Duration', width: '110px',        dflt: false },
   worktype:     { label: 'Task Type',     width: '110px',             dflt: false },   // an icon-with-popup cell, same pattern as Task Mode's own; blank for a milestone/group
   work:         { label: 'Work',          width: '104px',             dflt: false },   // working time, typed the same way Duration is; blank for a milestone/group
   cost:         { label: 'Cost',          width: '100px',             dflt: false },   // taskCost(t), read-only, computed from the resource pool's own rates (see "Resource Sheet" in CLAUDE.md) — an empty line/unassigned task shows €0.00
@@ -2239,11 +2239,8 @@ let colHidden = new Set(DEFAULT_COL_ORDER.filter(c => !TASK_COLS[c].dflt));   //
 // The GANTT view's list has a set of its own (an explicit user request: "the columns shown in the Gantt view should save a separate
 // set"): the same columns to choose from, its own order and visibility. Its default (chosen by the user from the Columns menu): the
 // order below and these columns shown.
-const GANTT_DEFAULT_SHOWN = ['mode', 'wbs', 'name', 'start', 'end', 'duration', 'baselineStart', 'baselineFinish', 'durationVariance'];
-const GANTT_DEFAULT_ORDER = (() => {   // explicit: it is NOT the Tasks view's order (Duration comes before the actual dates, Resource after the baseline columns)
-  const head = ['mode', 'wbs', 'name', 'start', 'end', 'duration', 'actualStart', 'actualFinish', 'progress', 'preds', 'remaining', 'status', 'baselineStart', 'baselineFinish', 'baselineDuration', 'startVariance', 'finishVariance', 'durationVariance', 'resource'];
-  return [...head, ...DEFAULT_COL_ORDER.filter(c => !head.includes(c))];   // then the custom fields
-})();
+const GANTT_DEFAULT_SHOWN = ['name', 'start', 'end', 'duration', 'progress'];   // the list pane beside the chart is only 640px wide: what fits
+const GANTT_DEFAULT_ORDER = [...DEFAULT_COL_ORDER];   // the same sequence as the Tasks view (it used to have an order of its own)
 let gColOrder = [...GANTT_DEFAULT_ORDER];
 let gColHidden = new Set(DEFAULT_COL_ORDER.filter(c => !GANTT_DEFAULT_SHOWN.includes(c)));
 let currentView = 'tasks';
@@ -2616,7 +2613,7 @@ function loadPrefs() {
   colOrder = savedOrder ? [...new Set([...savedOrder, ...DEFAULT_COL_ORDER])] : [...DEFAULT_COL_ORDER];
   colHidden = new Set(Array.isArray(sc.hidden) ? sc.hidden.filter(known) : []);
   for (const id of DEFAULT_COL_ORDER) if ((!savedOrder || !savedOrder.includes(id)) && !TASK_COLS[id].dflt) colHidden.add(id);
-  for (let r = (Number(sc.rev) || 0) + 1; r <= COLS_REV; r++) for (const id of (COLS_REV_SHOWN[r] || [])) colHidden.delete(id);
+  if (d.cols && typeof d.cols === 'object') for (let r = (Number(sc.rev) || 0) + 1; r <= COLS_REV; r++) for (const id of (COLS_REV_SHOWN[r] || [])) colHidden.delete(id);   // (a one-time unhide for an install that has a saved choice — never for a fresh one, which just follows the defaults)
   colHidden.delete('name');
   {   // the Gantt view's own set: what is saved, plus any column this version knows and the save doesn't (appended, hidden), never Task Name hidden
     const gc = d.gcols && typeof d.gcols === 'object' ? d.gcols : {}, gOrder = Array.isArray(gc.order) ? gc.order.filter(known) : null;

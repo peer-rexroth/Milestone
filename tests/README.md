@@ -83,3 +83,5 @@ set `MILESTONE_URL` / `--url` to test another address. Suites run three at a tim
 Older suites are written in calendar days: they pin `project.workDays = [0,1,2,3,4,5,6]` right after their first reload. When
 a suite fails, its `FAIL` line names the check and shows the values it saw; the stress test prints the seed and the last
 operations, so `python3 tests/verify_stress.py <seed>` reproduces it.
+
+`_legacy_cols.py` (not a suite): `LEGACY_COLS`, the column set the older tests were written against (Task Mode, WBS and the Actual dates shown); a suite that only needs those visible runs it after its first load. The suites that test the defaults themselves (`verify_columns`, `verify_gantt_columns`, `verify_hscroll`, `verify_navigation`) don't.

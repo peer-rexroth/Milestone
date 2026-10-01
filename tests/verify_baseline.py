@@ -1,6 +1,8 @@
 import re, json, base64, io
 from playwright.sync_api import sync_playwright
-import os
+import os, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from _legacy_cols import LEGACY_COLS
 URL = os.environ.get("MILESTONE_URL", "http://127.0.0.1:8937/milestone.html")
 errors, results = [], []
 def check(name, cond, detail=""):
@@ -12,7 +14,7 @@ with sync_playwright() as p:
     b = p.chromium.launch(headless=True)
     ctx = b.new_context(viewport={"width": 1800, "height": 800}); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
-    pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn")
+    pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn"); pg.evaluate(LEGACY_COLS)
     def seed(specs, view="tasks"):
         pg.evaluate(SEED, specs); pg.evaluate("() => normalizeData()"); pg.evaluate("v => { for (const c of ['actualStart', 'actualFinish', ...%s]) colHidden.delete(c); currentView = v; render(); }" % json.dumps(BASECOLS), view); pg.wait_for_timeout(150)
     tid = lambda n: pg.evaluate("n => tasks.find(t => t.name === n).id", n)
@@ -40,7 +42,7 @@ with sync_playwright() as p:
     # ================================================================ nothing happens by itself
     seed(CH())
     check("a plan has NO baseline until you set one: no task carries one, the project lists none", pg.evaluate("() => tasks.every(t => !t.baselines) && project.baselines === undefined"))
-    check("...the six baseline / variance columns exist in the column picker, hidden by default, after Resource (and the Task Type / Work / Cost trio)", pg.evaluate("() => { const o = DEFAULT_COL_ORDER; const i = o.indexOf('resource'); return o.slice(i + 4, i + 10).join() === %s && %s.every(c => !TASK_COLS[c].dflt); }" % (json.dumps(",".join(BASECOLS)), json.dumps(BASECOLS)) ))
+    check("...the six baseline / variance columns exist in the column picker, hidden by default, after Cost (the Remaining / Task Type / Work / Cost group before them)", pg.evaluate("() => { const o = DEFAULT_COL_ORDER; const i = o.indexOf('cost'); return o.slice(i + 1, i + 7).join() === %s && %s.every(c => !TASK_COLS[c].dflt); }" % (json.dumps(",".join(BASECOLS)), json.dumps(BASECOLS)) ))
     check("...and without a baseline their cells are blank", all(txt("A", c) == "" for c in BASECOLS))
     # old data (before this version): actual dates kept beside the plan; opening it changes nothing
     pg.evaluate(SEED, [{"name": "Old", "s": "2026-09-07", "e": "2026-09-11", "extra": {"actualStart": "2026-09-09", "actualFinish": "2026-09-14", "progress": 100}}, {"name": "Run", "s": "2026-09-14", "e": "2026-09-18", "extra": {"actualStart": "2026-09-16"}}])

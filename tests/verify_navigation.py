@@ -165,6 +165,7 @@ with sync_playwright() as p:
     check("the plan switcher reads as a menu: a folder icon, a border, a chevron", pg.locator("#planMenuBtn .plan-ico").count() == 1 and ev("() => getComputedStyle(document.getElementById('planMenuBtn')).borderTopWidth") == "1px")
     check("...with the plan's file status right beside it (not over by the menus)", ev("() => document.getElementById('planMenuBtn').closest('.dropdown-wrap').nextElementSibling.contains(document.getElementById('fileSyncBtn'))"))
     check("column headers use the dim text colour (readable), not the faint one", ev("() => getComputedStyle(document.getElementById('gridHeader')).color === getComputedStyle(document.documentElement).getPropertyValue('--text-dim').trim() || getComputedStyle(document.getElementById('gridHeader')).color !== getComputedStyle(document.querySelector('.tf-hint') || document.body).color"))
+    ev("() => { colHidden.delete('mode'); render(); }")   # (Task Mode starts hidden)
     modes = ev("() => [...document.querySelectorAll('#gridRows .task-mode-cell .mode-word')].map(e => e.textContent)")
     check("Task Mode cells say Auto / Manual beside the icon, and explain themselves on hover", "Auto" in modes and "Manual" in modes and "kept exactly where you put it" in (pg.locator("#gridRows .task-mode-cell").nth(3).get_attribute("title") or ""), modes)
     check("...and the column header explains both modes", "Manual (pin)" in (pg.locator("#gridHeader .col-head").first.get_attribute("title") or ""))
@@ -208,6 +209,19 @@ with sync_playwright() as p:
     ev("() => setView('resourceSheet')"); pg.wait_for_timeout(100)
     check("in the resource views it counts resources instead of tasks", "resource" in pg.inner_text("#sbCount"), pg.inner_text("#sbCount"))
     ev("() => { zoom = 'fit'; setView('tasks'); }")
+
+    # ---------------------------------------------------------------- the default columns and their sequence
+    ev("() => localStorage.removeItem('milestone-prefs')"); pg.reload(); pg.wait_for_selector("#undoBtn")
+    ev("() => setView('tasks')")
+    check("a fresh install's Tasks view shows Task Name, Start, Finish, Duration, % Complete, Predecessors, Resource, Status — in that order",
+          ev("() => visibleTaskCols('tasks')") == ["name", "start", "end", "duration", "progress", "preds", "resource", "status"], ev("() => visibleTaskCols('tasks')"))
+    check("...the Gantt list just Name, Start, Finish, Duration, % Complete", ev("() => visibleTaskCols('gantt')") == ["name", "start", "end", "duration", "progress"], ev("() => visibleTaskCols('gantt')"))
+    check("...Task Mode, WBS and the Actual dates start hidden, but come first / next to the planned dates when ticked", ev("() => DEFAULT_COL_ORDER.slice(0, 7)") == ["mode", "wbs", "name", "start", "end", "actualStart", "actualFinish"] and all(ev("c => !TASK_COLS[c].dflt", c) for c in ["mode", "wbs", "actualStart", "actualFinish"]))
+    check("both views share one sequence (Resource before Status, then Remaining, Task Type / Work / Cost, the baseline group)", ev("() => JSON.stringify(GANTT_DEFAULT_ORDER) === JSON.stringify(DEFAULT_COL_ORDER)") and ev("() => DEFAULT_COL_ORDER.slice(10, 16)") == ["resource", "status", "remaining", "worktype", "work", "cost"])
+    ev("() => { colHidden.add('resource'); colOrder = ['status', ...colOrder.filter(c => c !== 'status')]; save(); }"); pg.reload(); pg.wait_for_selector("#undoBtn")
+    check("an install with a saved choice keeps it — the new defaults don't override it", "resource" not in ev("() => visibleTaskCols('tasks')") and ev("() => visibleTaskCols('tasks')")[0] == "status", ev("() => visibleTaskCols('tasks')"))
+    ev("() => { resetColumns(); }")
+    check("...and 'Reset to default' gives the new defaults", ev("() => visibleTaskCols('tasks')") == ["name", "start", "end", "duration", "progress", "preds", "resource", "status"])
 
     check("no console errors or page errors across the whole run", not errors, errors[:5])
     n_ok, n_all = sum(results), len(results)

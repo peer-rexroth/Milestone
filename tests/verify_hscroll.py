@@ -1,6 +1,8 @@
 import re
 from playwright.sync_api import sync_playwright
-import os
+import os, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from _legacy_cols import LEGACY_COLS
 URL = os.environ.get("MILESTONE_URL", "http://127.0.0.1:8937/milestone.html")
 errors, results = [], []
 def check(name, cond, detail=""):
@@ -9,15 +11,20 @@ SEED = re.search(r'SEED = """(.*?)"""', open(os.path.join(os.path.dirname(os.pat
 SPECS = [{"name": "Design", "s": "2026-09-07", "e": "2026-09-18"}, {"name": "Sketch", "parent": "Design", "s": "2026-09-07", "e": "2026-09-11"}, {"name": "Review", "parent": "Design", "s": "2026-09-14", "e": "2026-09-18"}, {"name": "Build", "s": "2026-09-21", "e": "2026-09-30"}]
 with sync_playwright() as p:
     b = p.chromium.launch(headless=True)
-    def new_page(w, h=600):
+    def new_page(w, h=600, legacy=True):
         ctx = b.new_context(viewport={"width": w, "height": h}); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
         pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
-        pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => { for (const c of ['actualStart', 'actualFinish', 'status']) colHidden.add(c); }")
+        pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn"); legacy and pg.evaluate(LEGACY_COLS); legacy and pg.evaluate("() => { for (const c of ['actualStart', 'actualFinish', 'status']) colHidden.add(c); }")
         pg.evaluate(SEED, SPECS); pg.wait_for_timeout(150); return pg
     dims = lambda pg: pg.evaluate("() => { const r = document.getElementById('gridRows'); return {sw: r.scrollWidth, cw: r.clientWidth, ox: getComputedStyle(r).overflowX, minw: parseFloat(getComputedStyle(document.getElementById('main')).getPropertyValue('--grid-min-w'))}; }")
     show_more = lambda pg: (pg.evaluate("() => { for (const c of ['actualStart', 'actualFinish', 'status', 'resource']) colHidden.delete(c); render(); }"), pg.wait_for_timeout(200))
 
-    # ============================================================ when does it scroll?
+    # ============================================================ the real defaults fit
+    pg0 = new_page(1100, legacy=False)
+    d0 = dims(pg0)
+    check("the real default columns (Name, Start, Finish, Duration, %, Predecessors, Resource, Status) need 1064px and fit a 1100px window without scrolling", d0["minw"] == 1064 and d0["sw"] == d0["cw"], d0)
+
+    # ============================================================ when does it scroll? (the older default set — Mode and WBS shown, no Actual dates / Status)
     pg = new_page(1100)
     d = dims(pg)
     check("1100px window, default columns: everything fits — no horizontal scrolling", d["sw"] == d["cw"] and d["minw"] == 996 and not pg.evaluate("() => document.getElementById('gridPane').classList.contains('h-scrolled')"), d)
