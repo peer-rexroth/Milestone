@@ -833,8 +833,8 @@ field), both MS Project's own behaviour.
 - **The pane** (`#taskFormPane`, after `#main` in the body's flex column, so the list/chart shrink above it): shown in
   the Tasks and Gantt views while `showTaskForm` is on — a per-device preference in `milestone-prefs` with its height
   (`taskFormHeight`, dragged on its top edge `#taskFormResize`, clamped to 190px … 70% of the window by
-  `applyTaskFormHeight()`), like `showBaseline`. The toolbar's **Task Form** button (`#taskFormBtn`, `aria-pressed`,
-  hidden in the Resources / Resource Sheet views) toggles it; switching it off with unapplied edits asks first.
+  `applyTaskFormHeight()`), like `showBaseline`. The **Task Form** toggle (`#taskFormBtn`, `aria-pressed`) — first in the toolbar, since moved to the **left end of the
+  status bar** (it changes the layout, and sits right under the pane it opens); task views only — toggles it; switching it off with unapplied edits asks first.
 - **Looks like MS Project's** (an explicit follow-up request, from a screenshot of it): a vertical "Task Form" label on
   the left edge; two compact rows of fields with their labels beside them (`Name:` `Duration:` Effort driven / Manually
   Scheduled, Previous / Next — then `Start:` `Finish:` `Task type:` `% Complete:`, Cancel / OK); below, the two tables
@@ -926,7 +926,7 @@ dialogs. Built as three pieces (the review's A, B and C):
   change: plan switcher, view tabs, file status, Schedule, Data, theme / Help / About. On narrower windows the wordmark
   goes first (<1240px), then the Schedule / Data labels (icons stay, <1040px). The **toolbar** (`#subbar`) is groups
   of buttons, each with `data-views` naming the views it shows in (toggled in `renderMainViewTabs()`): Tasks — Add
-  Task, indent, the selection buttons, filters, Find, Columns, Task Form; Gantt — the same plus the timescale tabs
+  Task, indent, the selection buttons, Find, Columns (filters and the Task Form toggle later moved to the status bar); Gantt — the same plus the timescale tabs
   (`#zoomTabs`, moved down from the top bar), **Fit** (`fitZoom()`: the most detailed scale whose width still shows
   the whole plan, then scroll to its start) and labelled **Baseline** / **Critical path** toggles (`aria-pressed`,
   `.tb-toggle`); Resource Sheet — Add Resource and Currency (its own `.rst-toolbar` third bar is gone); Resource
@@ -996,6 +996,19 @@ Built from a UX review's findings (#1, #2, #4, #9, #11, #12), plus renaming the 
   the column header's tooltip explains both (`colHeadHtml(label, col, headTitle)`).
 - Covered by `verify_navigation.py` (Fit, labels, Work, switcher, headers, Task Mode), `verify_resource_view.py` (runs,
   %, the click-through, legend) and updated scale / Work expectations in several older tests.
+
+### Status bar
+
+The review's proposal D: a status bar along the bottom of the window (`#statusbar`, after the Task Form pane), like
+MS Project's. Left to right: the **Task Form toggle** (`#taskFormBtn`, task views), **New tasks: Auto / Manually Scheduled** (`#sbMode`; opens a small menu upwards,
+`toggleSbModeMenu()` → `setNewTaskMode()`), the **count** (`#sbCount`: "40 tasks · 2 selected" in the task views,
+"N resources" in the resource views), the **filter summary** (`#filterBar` — chips, "N of M tasks", Clear all — moved
+here from the toolbar, task views only; no filter = no section, no stray divider) and, in the Gantt and Resource Plan,
+a **zoom slider** with − / + and its label (Fit / Week / Month / Year / Custom). The slider is px per day on a log scale between
+0.5 and 60 (480 in an Hours & minutes plan, `zoomSliderRange()`); dragging sets `zoom = 'px:N'` — a scale like Fit
+whose ticks borrow the nearest fixed scale's (`currentZoomUncached()`), remembered in the prefs like any other zoom
+(`loadPrefs()` accepts `px:N`). `updateStatusBar()` runs at the end of every `renderPass()`. Covered by
+`verify_navigation.py`.
 
 ### Top bar matches Pulse (and nothing else does)
 

@@ -231,7 +231,24 @@ button:focus:not(:focus-visible) { outline: none; }
 .col-filter-btn { flex-shrink: 0; width: 18px; height: 18px; padding: 0; border: none; border-radius: 4px; background: transparent; color: var(--text-faint); font-size: 9px; opacity: .55; }
 .col-filter-btn:hover { background: var(--panel-2); color: var(--text); opacity: 1; }
 .col-filter-btn.active { color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--panel)); opacity: 1; }
-.filter-bar { display: flex; align-items: center; gap: 8px; margin-left: 6px; font-size: 12px; color: var(--text-dim); min-width: 0; }
+.filter-bar { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-dim); min-width: 0; overflow: hidden; }
+/* ── Status bar ── */
+.statusbar { display: flex; align-items: center; gap: 10px; min-height: 30px; padding: 2px 12px; background: var(--panel-2); border-top: 1px solid var(--border); font-size: 12px; color: var(--text-dim); flex-shrink: 0; white-space: nowrap; overflow: hidden; }
+.statusbar > * { flex-shrink: 0; }
+.statusbar .sb-views { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.statusbar .sb-views:has(#filterBar) { flex-shrink: 1; overflow: hidden; }
+.statusbar .sb-views.hidden, .statusbar .sb-views:has(#filterBar.hidden) { display: none; }   /* (no filter: no divider either) */
+.sb-sep { width: 1px; height: 16px; background: var(--border); }
+.sb-spacer { flex: 1 1 auto; }
+.sb-btn { display: inline-flex; align-items: center; gap: 6px; border: none; background: transparent; color: var(--text-dim); font-size: 12px; padding: 3px 7px; border-radius: 6px; cursor: pointer; }
+.sb-btn:hover { background: color-mix(in srgb, var(--text) 8%, transparent); color: var(--text); }
+.sb-btn.hidden { display: none; }
+.sb-toggle[aria-pressed="true"] { color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }   /* the Task Form toggle: highlighted while the pane is open */
+.sb-icon { border: none; background: transparent; color: var(--text-dim); width: 22px; height: 22px; border-radius: 5px; cursor: pointer; font-size: 10px; }
+.sb-icon:hover { background: color-mix(in srgb, var(--text) 8%, transparent); color: var(--text); }
+#zoomSlider { width: 140px; accent-color: var(--accent); }
+.sb-zoom-label { min-width: 74px; }
+.statusbar .filter-chip { padding: 1px 3px 1px 7px; }
 .filter-bar.hidden { display: none; }
 .filter-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 4px 3px 8px; border-radius: 999px; white-space: nowrap; font-size: 12px; color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--panel)); border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--panel)); }
 .filter-chip i { font-size: 10px; }
@@ -359,7 +376,6 @@ input.tf-cell[type=number] { -moz-appearance: textfield; }
 .tf-head-btn { border: none; background: transparent; color: var(--text-faint); cursor: pointer; font-size: 12px; }
 .tf-head-btn:hover { color: var(--accent); }
 .tf-remove[hidden] { display: block !important; visibility: hidden; }
-#taskFormBtn.active { background: color-mix(in srgb, var(--accent) 14%, var(--panel)); border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); color: var(--accent); }
 @media (max-width: 1080px) { .tf-wrap { width: 100%; } .tf-top { grid-template-columns: 1fr; } .tf-left, .tf-top.mm .tf-left { grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr); } .tf-checks, .tf-pair, .tf-btns { grid-column: 1 / -1; justify-content: flex-start; } .tf-tables { grid-template-columns: 1fr; } }
 .grid-pane { width: var(--grid-pane-width, 360px); flex-shrink: 0; display: flex; flex-direction: column; border-right: 1px solid var(--border); background: var(--panel); position: relative; }
 /* The task list — the same one in the Tasks view and (left of the chart) in the Gantt view; the Tasks-view rules below apply to both. */
@@ -1105,7 +1121,6 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
       <button class="btn btn-sm btn-danger" id="deleteTaskBtn" onclick="deleteSelected()" title="Delete the selected tasks (Delete)"><i class="fa-solid fa-trash"></i>Delete</button>
     </div>
   </div>
-  <div class="tb-group tb-filter" data-views="tasks gantt"><div class="filter-bar hidden" id="filterBar"></div></div>
   <div class="tb-group" data-views="resourceSheet">
     <span class="tb-title" id="resourceSheetTitle"><i class="fa-solid fa-users"></i>Resources</span>
     <span class="tb-sep"></span>
@@ -1135,7 +1150,6 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
     <span class="tb-sep"></span>
     <button class="btn" id="searchBtn" data-more="2" onclick="openSearch()" title="Find a task by name, WBS, number (#12), resource (@anna) or status (status:late) — Ctrl/Cmd+K, or /"><i class="fa-solid fa-magnifying-glass"></i>Find</button>
     <button class="btn" id="columnsBtn" data-more="7" onclick="toggleColumnsMenu()" title="Choose which columns the task list shows"><i class="fa-solid fa-table-columns"></i>Columns</button>
-    <button class="btn" id="taskFormBtn" data-more="7" onclick="toggleTaskForm()" aria-pressed="false" title="Show or hide the Task Form — the selected task's details, resources and predecessors in a pane below (like MS Project's Details)"><i class="fa-regular fa-rectangle-list"></i>Task Form</button>
   </div>
   <div class="dropdown-wrap hidden" id="moreWrap"><button class="btn" id="moreBtn" onclick="toggleMoreMenu(event)" aria-haspopup="menu" title="More — the toolbar buttons that don't fit this window"><i class="fa-solid fa-ellipsis"></i>More</button></div>
 </div>
@@ -1190,6 +1204,22 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
   <span class="sr-only" id="tfTaskLabel" aria-live="polite"></span>
   <div class="tf-body" id="taskFormBody"></div>
 </div>
+<!-- The status bar (MS Project has one): the new-task mode, what's shown and selected, the filters, the file, the zoom. -->
+<div class="statusbar" id="statusbar" role="status" aria-label="Status bar">
+  <span class="sb-views" data-sb-views="tasks gantt"><button class="sb-btn sb-toggle" id="taskFormBtn" onclick="toggleTaskForm()" aria-pressed="false" title="Show or hide the Task Form — the selected task's details, resources and predecessors in a pane below (like MS Project's Details)"><i class="fa-regular fa-rectangle-list"></i>Task Form</button><span class="sb-sep"></span></span>
+  <button class="sb-btn" id="sbMode" onclick="toggleSbModeMenu(event)" aria-haspopup="menu" title="How new tasks are scheduled — click to change"></button>
+  <span class="sb-sep"></span>
+  <span class="sb-text" id="sbCount"></span>
+  <span class="sb-views" data-sb-views="tasks gantt"><span class="sb-sep"></span><div class="filter-bar hidden" id="filterBar"></div></span>
+  <span class="sb-spacer"></span>
+  <span class="sb-views sb-zoom" data-sb-views="gantt resources"><span class="sb-sep"></span>
+    <button class="sb-icon" onclick="nudgeZoom(-1)" title="Zoom out" aria-label="Zoom out"><i class="fa-solid fa-minus"></i></button>
+    <input type="range" id="zoomSlider" min="0" max="1000" step="1" aria-label="Zoom" title="Zoom — drag for any scale between the presets" oninput="onZoomSlider(this.value)" onchange="save()">
+    <button class="sb-icon" onclick="nudgeZoom(1)" title="Zoom in" aria-label="Zoom in"><i class="fa-solid fa-plus"></i></button>
+    <span class="sb-text sb-zoom-label" id="sbZoomLabel"></span>
+  </span>
+</div>
+<div class="dropdown-menu" id="sbModeMenu" role="menu"></div>
 
 <!-- Task modal -->
 <div class="modal-bg" id="taskModalBg" onclick="if(event.target===this) requestCloseTaskModal()">
@@ -1737,6 +1767,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <div class="help-section">
           <div class="help-section-title">Building a plan</div>
           <div class="help-row"><i class="fa-solid fa-table-cells-large"></i><span><strong>Finding your way</strong>: the top bar is the same everywhere — your plan, the views (<strong>Tasks · Gantt</strong> for the schedule, <strong>Resource Sheet · Resource Plan</strong> for the people), <strong>Schedule</strong> (baselines, rescheduling, levelling, <strong>Plan settings…</strong>) and <strong>Data</strong>. The toolbar below changes with the view and shows what that view needs; on a narrow window the rest is under <strong>More</strong>.</span></div>
+          <div class="help-row"><i class="fa-solid fa-window-minimize"></i><span>The <strong>status bar</strong> along the bottom shows how new tasks are scheduled (click to change), how many tasks there are and are selected, the active filters, and — in the Gantt and Resource Plan — a zoom slider. The Task Form switch is its first button.</span></div>
           <div class="help-row"><i class="fa-solid fa-plus"></i><span><strong>Add Task</strong> inserts a task below the selected one, or at the bottom when nothing is selected. Each task has a start and end date and a % complete, and can be a <strong>milestone</strong> (a one-day diamond).</span></div>
           <div class="help-row"><i class="fa-solid fa-keyboard"></i><span><strong>Dates and times in dialogs</strong> are typed, in the same format as the list: <strong>24.12.2026</strong> (or 24.12.26, 24.12.), <strong>14:30</strong> (or 1430, 2:30pm) — or pick a date with the calendar button. Something unreadable is refused, marks the box red and puts the old value back; <strong>Enter</strong> settles a box, and in a single-purpose dialog like Reschedule or Baselines it applies the dialog.</span></div>
           <div class="help-row"><i class="fa-solid fa-computer-mouse"></i><span><strong>Right-click</strong> a task (in the list, or its row in the chart) for a menu with Edit, Add task, Add empty line, Duplicate, Copy, Cut, Paste, Indent, Outdent and Delete. Right-clicking on the empty part of the list offers Add task, Add empty line and Paste. The buttons for the selected tasks (<strong>Edit, Duplicate, Copy, Delete</strong>) appear in the toolbar while something is selected; with one task <strong>Edit</strong> opens the same dialog as a double-click.</span></div>
@@ -1859,7 +1890,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
       <div class="help-pane" id="helpPane-list" role="tabpanel" aria-labelledby="helpTab-list" hidden>
         <div class="help-section">
           <div class="help-section-title">Task Form</div>
-          <div class="help-row"><i class="fa-regular fa-rectangle-list"></i><span><strong>Task Form</strong> (toolbar, Tasks and Gantt views) opens a pane below the list with the selected task's details, as in MS Project: name, duration, start, finish, Task Type, % complete, Effort driven, Manually Scheduled, and tables of its <strong>resources</strong> (Units, Work) and <strong>predecessors</strong> (Type, Lag). Drag its top edge to resize.</span></div>
+          <div class="help-row"><i class="fa-regular fa-rectangle-list"></i><span><strong>Task Form</strong> (the toggle at the left of the status bar, Tasks and Gantt views) opens a pane below the list with the selected task's details, as in MS Project: name, duration, start, finish, Task Type, % complete, Effort driven, Manually Scheduled, and tables of its <strong>resources</strong> (Units, Work) and <strong>predecessors</strong> (Type, Lag). Drag its top edge to resize.</span></div>
           <div class="help-row"><i class="fa-solid fa-check"></i><span>Change several fields, then <strong>OK</strong> (or <kbd>Enter</kbd>) applies them together — one Undo step; <strong>Cancel</strong> (or <kbd>Esc</kbd>) throws them away. <strong>Previous / Next</strong> apply first, then move on. Until you click OK or Cancel the form stays on its task, even if you select another row.</span></div>
         </div>
         <div class="help-section">
@@ -1891,7 +1922,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <div class="help-section">
           <div class="help-section-title">The view</div>
           <div class="help-row"><i class="fa-solid fa-table-list"></i><span>The left side is the <strong>same task list</strong> as in the Tasks view — the same filters, editing and buttons — with the chart to its right. Drag the thin strip between them to change how much room the list gets. It scrolls sideways when it has more columns than fit, and its ID … Task Name columns stay in place.</span></div>
-          <div class="help-row"><i class="fa-solid fa-calendar"></i><span><strong>Fit</strong> (the standard) spreads the whole plan across the chart's width and follows the window; <strong>Week / Month / Year</strong> are fixed scales. A bar too short for its name has it written beside it, and a milestone's name sits next to it. Year shows quarters; Week is labelled by calendar week (CW — weeks start on Monday, ISO 8601). Days off are shaded.</span></div>
+          <div class="help-row"><i class="fa-solid fa-calendar"></i><span><strong>Fit</strong> (the standard) spreads the whole plan across the chart's width and follows the window; <strong>Week / Month / Year</strong> are fixed scales, and the <strong>zoom slider</strong> in the status bar (or its − / +) gives any scale in between. A bar too short for its name has it written beside it, and a milestone's name sits next to it. Year shows quarters; Week is labelled by calendar week (CW — weeks start on Monday, ISO 8601). Days off are shaded.</span></div>
         </div>
         <div class="help-divider"></div>
         <div class="help-section">
@@ -2573,7 +2604,7 @@ function loadPrefs() {
   theme = d.theme === 'dark' ? 'dark' : 'light';
   // A saved scale only counts if it was chosen under the current default: every install had the old default (Week)
   // saved by the very first save(), so without the revision check nobody would ever see a changed default.
-  zoom = (d.zoomRev === ZOOM_DEFAULT_REV && (d.zoom === 'fit' || ZOOMS.some(z => z.id === d.zoom))) ? d.zoom : DEFAULT_ZOOM;
+  zoom = (d.zoomRev === ZOOM_DEFAULT_REV && (d.zoom === 'fit' || /^px:[\d.]+$/.test(d.zoom || '') || ZOOMS.some(z => z.id === d.zoom))) ? d.zoom : DEFAULT_ZOOM;
   currentView = ALL_VIEWS.includes(d.view) ? d.view : 'tasks';
   showBaseline = d.showBaseline !== false;
   showTaskForm = d.showTaskForm === true;
@@ -3898,6 +3929,10 @@ function currentZoom() {
   const z = currentZoomUncached(); _zoomCache = { key, z }; return z;
 }
 function currentZoomUncached() {
+  if (String(zoom).startsWith('px:')) {   // the status bar's zoom slider: any px per day between the presets
+    const r = zoomSliderRange(), px = Math.max(Math.exp(r.lo), Math.min(Math.exp(r.hi), parseFloat(zoom.slice(3)) || 5));
+    return { id: minuteModeActive() && px >= 160 ? 'hour' : px >= 9 ? 'week' : px >= 2.8 ? 'month' : 'year', label: 'Custom', custom: true, pxPerDay: px };
+  }
   const fixed = zoom !== 'fit' && ZOOMS.find(z => z.id === zoom);
   if (fixed && (!fixed.minuteOnly || minuteModeActive())) return fixed;   // (the saved scale is a global preference: Hours in a day-mode plan draws Fit)
   {
@@ -3938,6 +3973,7 @@ function renderPass() {
   updateNewTaskModeUI();
   updateSelectionUI();
   renderTaskForm();
+  updateStatusBar();
   fitToolbar();
 }
 
@@ -8916,7 +8952,48 @@ function placeMenu(menu, x, y, alignRightOf) {   // a fixed menu at (x, y) kept 
 }
 function closeAddMenu() { document.getElementById('addMenu').classList.remove('open'); }
 function closeRowMenu() { document.getElementById('rowMenu').classList.remove('open'); }
-function closeToolbarMenus() { closeAddMenu(); closeRowMenu(); closeMoreMenu(); }
+function closeToolbarMenus() { closeAddMenu(); closeRowMenu(); closeMoreMenu(); closeSbModeMenu(); }
+/* ---- the status bar ---- */
+function updateStatusBar() {
+  const auto = project.newTaskMode !== 'manual', mode = document.getElementById('sbMode');
+  mode.innerHTML = `<i class="fa-solid ${auto ? 'fa-chart-gantt' : 'fa-thumbtack'}"${auto ? '' : ' style="color:var(--task-amber)"'}></i>New tasks: ${auto ? 'Auto Scheduled' : 'Manually Scheduled'}`;
+  const all = tasks.filter(t => !t.spacer).length, sel = selectedIds().filter(id => !byId(id).spacer).length, nRes = (project.resources || []).length;
+  document.getElementById('sbCount').textContent = currentView === 'tasks' || currentView === 'gantt'
+    ? `${all} task${all === 1 ? '' : 's'}${sel ? ` · ${sel} selected` : ''}` : `${nRes} resource${nRes === 1 ? '' : 's'}`;
+  for (const el of document.querySelectorAll('#statusbar [data-sb-views]')) el.classList.toggle('hidden', !el.dataset.sbViews.split(' ').includes(currentView));
+  if (currentView === 'gantt' || currentView === 'resources') {
+    const z = currentZoom(), r = zoomSliderRange();
+    document.getElementById('zoomSlider').value = Math.round((Math.log(z.pxPerDay) - r.lo) / (r.hi - r.lo) * 1000);
+    document.getElementById('sbZoomLabel').textContent = zoom === 'fit' ? 'Fit' : String(zoom).startsWith('px:') ? 'Custom' : (ZOOMS.find(x => x.id === zoom) || {}).label || '';
+  }
+}
+// The zoom slider: px per day on a log scale between the coarsest and finest scale this plan offers.
+function zoomSliderRange() { return { lo: Math.log(0.5), hi: Math.log(minuteModeActive() ? 480 : 60) }; }
+let zoomRaf = 0, zoomPending = null;
+function onZoomSlider(v) {
+  const r = zoomSliderRange(), px = Math.exp(r.lo + (Number(v) / 1000) * (r.hi - r.lo));
+  zoomPending = Math.round(px * 100) / 100;
+  if (zoomRaf) return;
+  zoomRaf = requestAnimationFrame(() => { zoomRaf = 0; zoom = 'px:' + zoomPending; render(); });
+}
+function nudgeZoom(dir) {   // the − / + buttons: a step of the slider (a fifth of a "decade" of px per day)
+  const r = zoomSliderRange(), cur = Math.log(currentZoom().pxPerDay), step = (r.hi - r.lo) / 12;
+  const px = Math.exp(Math.max(r.lo, Math.min(r.hi, cur + dir * step)));
+  zoom = 'px:' + Math.round(px * 100) / 100; save(); render();
+}
+function toggleSbModeMenu(event) {
+  if (event) event.stopPropagation();
+  const menu = document.getElementById('sbModeMenu');
+  if (menu.classList.contains('open')) { closeSbModeMenu(); return; }
+  closeMoreMenu(); closeAddMenu(); closeDataMenu(); closePlanMenu(); closeScheduleMenu();
+  const cur = project.newTaskMode === 'manual' ? 'manual' : 'auto';
+  menu.innerHTML = '<div class="menu-head">New tasks are</div>' + [['auto', 'Auto Scheduled', 'fa-chart-gantt', 'placed by their links and constraints'], ['manual', 'Manually Scheduled', 'fa-thumbtack', 'kept where you put them']].map(([id, label, icon, hint]) =>
+    `<button class="dropdown-item${cur === id ? ' active' : ''}" role="menuitemradio" aria-checked="${cur === id}" onclick="closeSbModeMenu(); setNewTaskMode('${id}')"><i class="fa-solid ${icon}"></i>${label}<span class="item-hint">${hint}</span></button>`).join('');
+  const r = document.getElementById('sbMode').getBoundingClientRect();
+  placeMenu(menu, r.left, r.top - 4);
+  menu.style.top = Math.max(8, r.top - menu.offsetHeight - 4) + 'px';   // it opens upwards, from the bottom of the window
+}
+function closeSbModeMenu() { const m = document.getElementById('sbModeMenu'); if (m) m.classList.remove('open'); }
 // The toolbar never wraps: when the current view's buttons don't fit, the ones with the highest data-more go into the
 // "More" menu first (Copy, Duplicate, Columns, Task Form … the zoom tabs last), and come back as soon as there's room.
 function fitToolbar() {
@@ -10847,6 +10924,7 @@ function wireGlobalEvents() {
     if (!e.target.closest('#taskTypeMenu')) closeTaskTypeMenu();
     if (!e.target.closest('#addMenu') && !e.target.closest('#addMenuBtn')) closeAddMenu();
     if (!e.target.closest('#moreMenu') && !e.target.closest('#moreBtn') && !e.target.closest('#loadMenu') && !e.target.closest('.res-load-seg')) closeMoreMenu();
+    if (!e.target.closest('#sbModeMenu') && !e.target.closest('#sbMode')) closeSbModeMenu();
     if (!e.target.closest('#rowMenu')) closeRowMenu();
     if (!e.target.closest('#cfAddMenu') && !e.target.closest('#cfAddBtn') && !e.target.closest('#fieldsAddBtn')) closeCfAddMenu();
   });
@@ -10894,7 +10972,8 @@ function wireGlobalEvents() {
       || document.getElementById('addMenu').classList.contains('open')
       || document.getElementById('rowMenu').classList.contains('open')
       || document.getElementById('moreMenu').classList.contains('open')
-      || document.getElementById('loadMenu').classList.contains('open');
+      || document.getElementById('loadMenu').classList.contains('open')
+      || document.getElementById('sbModeMenu').classList.contains('open');
     // e.target, not document.activeElement: an inline editor's own Escape handler re-renders and destroys the
     // focused field before this runs, so by now activeElement is already <body>.
     const typing = /^(INPUT|TEXTAREA|SELECT)$/.test((e.target || {}).tagName || '');

@@ -41,7 +41,7 @@ CANDIDATES = r"""() => {
 }"""
 FIELDS = r"""() => {
   const out = [];
-  for (const el of document.querySelectorAll('input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=hidden]), select, textarea')) {
+  for (const el of document.querySelectorAll('input:not([type=checkbox]):not([type=radio]):not([type=file]):not([type=hidden]):not([type=range]), select, textarea')) {
     const r = el.getBoundingClientRect(); if (r.width < 3 || r.height < 3 || el.disabled || el.readOnly) continue;
     if (!(r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth)) continue;
     out.push([el.id || el.className || el.tagName, el.tagName, el.type || '']);
