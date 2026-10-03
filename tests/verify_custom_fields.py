@@ -295,7 +295,7 @@ with sync_playwright() as p:
     pg.keyboard.press("Escape"); pg.wait_for_timeout(100)
     ev("() => { resetColumns(); }"); open_cols()
     order = ev("() => [...document.querySelectorAll('#columnsMenu input[data-col]')].map(i => i.dataset.col)")
-    check("the default column sequence: standard columns first, then the custom fields in use", order[:13] == ["mode", "wbs", "name", "start", "end", "actualStart", "actualFinish", "duration", "progress", "preds", "resource", "status", "remaining"] and order[-2:] == ["text1", "text2"], order)
+    check("the default column sequence: standard columns first, then the custom fields in use", order[:15] == ["mode", "wbs", "name", "start", "end", "deadline", "actualStart", "actualFinish", "duration", "progress", "preds", "resource", "status", "totalSlack", "remaining"] and order[-2:] == ["text1", "text2"], order)
     close_cols()
 
     check("no console errors", not errors, errors[:5])

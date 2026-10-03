@@ -126,6 +126,16 @@ with sync_playwright() as p:
     clip = ev("() => ['deadline', 'totalSlack', 'notes'].map(c => clipCell(byId('a'), c, 0))")
     check("copying a row copies them too (notes on one line)", clip == ["", "0 days", "Agreed with the client. See mail."], clip)
 
+    # ---------------------------------------------------------------- the column configurator's order (one-time move of the three new columns)
+    ev("""() => { const d = JSON.parse(localStorage.getItem('milestone-prefs')); const old = DEFAULT_COL_ORDER.filter(c => !['deadline', 'totalSlack', 'notes'].includes(c));
+      const mine = ['name', 'status', ...old.filter(c => c !== 'name' && c !== 'status'), 'deadline', 'totalSlack', 'notes'];
+      d.cols = { order: mine, hidden: [], rev: 1 }; d.gcols = { order: [...mine], hidden: [] }; localStorage.setItem('milestone-prefs', JSON.stringify(d)); }""")
+    pg.reload(); pg.wait_for_selector("#undoBtn")
+    o = ev("() => colOrder"); g = ev("() => gColOrder")
+    check("a saved order gets Deadline after Finish, Total Slack after Status, Notes after the variances — once, in both views", all(x[x.index("end") + 1] == "deadline" and x[x.index("status") + 1] == "totalSlack" and x[x.index("durationVariance") + 1] == "notes" for x in (o, g)), o)
+    check("...and every other column stays where the user put it (Task Name, Status first)", o[:2] == ["name", "status"], o[:4])
+    ev("() => { moveColumn('deadline', 1); }"); pg.reload(); pg.wait_for_selector("#undoBtn")
+    check("...not again: a later move of those columns is kept", ev("() => colOrder.indexOf('deadline') !== colOrder.indexOf('end') + 1"))
     check("no console errors", not errors, errors[:5])
     b.close()
 n = sum(results); print(f"\n{n}/{len(results)} passed"); raise SystemExit(0 if n == len(results) else 1)

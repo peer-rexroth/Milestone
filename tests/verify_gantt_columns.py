@@ -9,7 +9,7 @@ SEED = re.search(r'SEED = """(.*?)"""', open(os.path.join(os.path.dirname(os.pat
 SPECS = [{"name": "Design", "s": "2026-09-07", "e": "2026-09-18"}, {"name": "Sketch", "parent": "Design", "s": "2026-09-07", "e": "2026-09-11"}, {"name": "Build", "s": "2026-09-21", "e": "2026-09-30"}]
 TASKS_DEFAULT = ["name", "start", "end", "duration", "progress", "preds", "resource", "status"]   # the Tasks view's default
 GANTT_DEFAULT = ["name", "start", "end", "duration", "progress"]   # the Gantt view's default: what fits the 640px list pane beside the chart
-GANTT_ORDER_HEAD = ["mode", "wbs", "name", "start", "end", "actualStart", "actualFinish", "duration", "progress", "preds", "resource", "status", "remaining", "worktype", "work", "cost", "baselineStart", "baselineFinish", "baselineDuration", "startVariance", "finishVariance", "durationVariance", "deadline", "totalSlack", "notes"]   # the same sequence as the Tasks view
+GANTT_ORDER_HEAD = ["mode", "wbs", "name", "start", "end", "deadline", "actualStart", "actualFinish", "duration", "progress", "preds", "resource", "status", "totalSlack", "remaining", "worktype", "work", "cost", "baselineStart", "baselineFinish", "baselineDuration", "startVariance", "finishVariance", "durationVariance", "notes"]   # the same sequence as the Tasks view
 with sync_playwright() as p:
     b = p.chromium.launch(headless=True)
     def new_page(prefs=None, w=1500):

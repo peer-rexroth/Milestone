@@ -2160,6 +2160,7 @@ const TASK_COLS = {
   name:         { label: 'Task Name',     width: 'minmax(160px,1fr)', dflt: true, locked: true },
   start:        { label: 'Start',         width: '104px',             dflt: true },
   end:          { label: 'Finish',        width: '104px',             dflt: true },
+  deadline:     { label: 'Deadline',      width: '104px',             dflt: false },   // a target date (t.deadline): red once Finish runs past it
   actualStart:  { label: 'Actual Start',  width: '104px',             dflt: false },   // header: Actual / Start
   actualFinish: { label: 'Actual Finish', width: '104px',             dflt: false },   // header: Actual / Finish
   duration:     { label: 'Duration',      width: '104px',             dflt: true },
@@ -2167,6 +2168,7 @@ const TASK_COLS = {
   preds:        { label: 'Predecessors',  width: '146px',             dflt: true },   // just wide enough for its header: text 95px + gap 3px + funnel 18px + the 2×8px cell inset = 132px, plus a little slack for other fonts
   resource:     { label: 'Resource',      width: '140px',             dflt: true },   // fixed like every column but Task Name; longer text is cut with an ellipsis (the cell's tooltip and the editor show all of it)
   status:       { label: 'Status',        width: '108px',             dflt: true },
+  totalSlack:   { label: 'Total Slack',   width: '96px',              dflt: false },   // how far a task can slip without moving the plan's finish (taskTotalSlack), read-only
   remaining:    { label: 'Remaining Duration', width: '110px',        dflt: false },
   worktype:     { label: 'Task Type',     width: '110px',             dflt: false },   // an icon-with-popup cell, same pattern as Task Mode's own; blank for a milestone/group
   work:         { label: 'Work',          width: '104px',             dflt: false },   // working time, typed the same way Duration is; blank for a milestone/group
@@ -2178,9 +2180,7 @@ const TASK_COLS = {
   startVariance:    { label: 'Start Variance',    width: '104px', dflt: false },   // Start minus Baseline Start, in working days
   finishVariance:   { label: 'Finish Variance',   width: '104px', dflt: false },
   durationVariance: { label: 'Duration Variance', width: '104px', dflt: false },
-  // MS Project's Deadline, Total Slack and Notes — after the baseline group, so the earlier default sequence stays as it was
-  deadline:     { label: 'Deadline',      width: '104px',             dflt: false },   // a target date (t.deadline): red once Finish runs past it
-  totalSlack:   { label: 'Total Slack',   width: '96px',              dflt: false },   // how far a task can slip without moving the plan's finish (taskTotalSlack), read-only
+  // Notes: free text, last of the standard columns
   notes:        { label: 'Notes',         width: '200px',             dflt: false },   // the first line of t.notes; a click opens the task's Notes tab   // taskCost(t), read-only, computed from the resource pool's own rates (see "Resource Sheet" in CLAUDE.md) — an empty line/unassigned task shows €0.00
 };
 // ---- Custom fields: Text1-5, Number1-5, Date1-5, Flag1-5. A task keeps its values in `task.custom` ({ text1: 'x', number2: 4.5,
@@ -2211,6 +2211,9 @@ const DEFAULT_COL_ORDER = Object.keys(TASK_COLS);
 // Bump COLS_REV when a column becomes shown-by-default: an install's saved choice already lists it as hidden (the defaults
 // are written by its first save), so loadPrefs() switches the columns listed here on ONCE for anyone still on an older revision.
 const COLS_REV = 1;
+// Column order revisions: Deadline (after Finish), Total Slack (after Status) and Notes (after the variances) came in at the end
+// of everyone's saved order; revision 1 puts them where the default sequence has them.
+const COLS_ORDER_REV = 1, COLS_ORDER_MOVES = [['deadline', 'end'], ['totalSlack', 'status'], ['notes', 'durationVariance']];
 const COLS_REV_SHOWN = { 1: ['wbs'] };
 const DEFAULT_ZOOM = 'fit';         // the standard scale: the whole plan across the chart's width (see currentZoom)
 const ZOOM_DEFAULT_REV = 2;         // bump to reset everybody's saved scale to DEFAULT_ZOOM once (see loadPrefs)
@@ -2633,7 +2636,7 @@ function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c
 function byId(id) { return tasks.find(t => t.id === id); }
 
 /* ============================ Persistence =============================== */
-function prefsPayload() { return { theme, zoom, zoomRev: ZOOM_DEFAULT_REV, view: currentView, gridPaneWidth, gridPaneRev: GRID_PANE_REV, showBaseline, showTaskForm, taskFormHeight, showChanges, cw: colWidths, cwMode, rsCols: rsColShow, rsCw: rsColWidths, cols: { order: colOrder, hidden: [...colHidden], rev: COLS_REV }, gcols: { order: gColOrder, hidden: [...gColHidden] } }; }
+function prefsPayload() { return { theme, zoom, zoomRev: ZOOM_DEFAULT_REV, view: currentView, gridPaneWidth, gridPaneRev: GRID_PANE_REV, showBaseline, showTaskForm, taskFormHeight, showChanges, cw: colWidths, cwMode, rsCols: rsColShow, rsCw: rsColWidths, cols: { order: colOrder, hidden: [...colHidden], rev: COLS_REV, orev: COLS_ORDER_REV }, gcols: { order: gColOrder, hidden: [...gColHidden] } }; }
 function syncPayload() { return { version: APP_VERSION, project, tasks, deletedTaskIds }; }
 
 function planDataKey(id) { return PLAN_DATA_PREFIX + id; }
@@ -2721,6 +2724,13 @@ function loadPrefs() {
     for (const id of DEFAULT_COL_ORDER) if ((!gOrder || !gOrder.includes(id)) && !GANTT_DEFAULT_SHOWN.includes(id)) gColHidden.add(id);
     gColHidden.delete('name');
   }
+  // A one-time move of columns whose default place changed (COLS_ORDER_MOVES): each goes right after its anchor in a saved
+  // order — the user's own arrangement of every other column is left as it is. Both views; once per install.
+  if (d.cols && typeof d.cols === 'object' && (Number(d.cols.orev) || 0) < COLS_ORDER_REV)
+    for (const order of [colOrder, gColOrder]) for (const [id, after] of COLS_ORDER_MOVES) {
+      const i = order.indexOf(id); if (i < 0 || !order.includes(after)) continue;
+      order.splice(i, 1); order.splice(order.indexOf(after) + 1, 0, id);
+    }
 }
 // The columns the list of a view shows: each view keeps its own choice (Tasks view: colOrder / colHidden, Gantt view: gColOrder / gColHidden).
 function viewColOrder(view = currentView) { return view === 'gantt' ? gColOrder : colOrder; }
