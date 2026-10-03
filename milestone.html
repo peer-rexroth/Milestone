@@ -791,7 +791,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 .rst-cur { border: none; background: transparent; padding: 0 2px; margin-left: 3px; font: inherit; color: var(--accent); cursor: pointer; border-radius: 4px; letter-spacing: 0; }
 .rst-cur:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); }
 .rst-scroll { flex: 1; overflow: auto; position: relative; }
-.rst-header, .rst-row { display: grid; grid-template-columns: 40px minmax(160px,1fr) 126px 128px 110px 98px 108px 108px 108px 132px 90px 116px 40px; column-gap: 0; min-width: max-content; align-items: center; }
+.rst-header, .rst-row { display: grid; grid-template-columns: var(--rs-cols, 40px minmax(160px,1fr) 126px 110px 98px 108px 108px 132px 116px 40px); column-gap: 0; min-width: max-content; align-items: center; }
 .rst-header { position: sticky; top: 0; z-index: 3; height: var(--head-h); font-size: 11.5px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: .03em; border-bottom: 1px solid var(--border); --row-bg: var(--panel); background: var(--row-bg); }
 .rst-row { height: var(--row-h); border-bottom: 1px solid var(--border); font-size: 12.5px; --row-bg: var(--panel); background: var(--row-bg); }
 .rst-row:hover { --row-bg: var(--panel-2); }
@@ -803,6 +803,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 .rst-header::before { background-image: var(--rst-col-lines-h, none); background-position: var(--rst-col-pos-h, 0 0); }
 .rst-row::before { background-image: var(--rst-col-lines-r, none); background-position: var(--rst-col-pos-r, 0 0); }
 .rst-rows { position: relative; }   /* (no column lines below the last resource — see .grid-add-row) */
+.rst-header > div { position: relative; align-self: stretch; }   /* the whole header height, like the task list's: the column's resize handle (its right edge) is as tall as the header */
 .rst-header > div, .rst-row > div { padding-inline: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; min-width: 0; }
 .rst-cell.rst-id { color: var(--text-faint); font-size: 12px; justify-content: flex-end; }
 .rst-cell input.inline-edit { width: calc(100% - 4px); margin-inline: 2px; border-color: transparent; background-color: transparent; }
@@ -825,10 +826,19 @@ select.rst-select { padding: 5px 9px; border: 1px solid var(--border); border-ra
    other dialog select in this app (none of them override it with a custom border-color either). */
 .rst-cell select.rst-select { width: calc(100% - 4px); margin-inline: 2px; }
 select.rst-select:disabled { opacity: .5; }
-.rst-days-link { background: none; border: none; color: var(--text-dim); font-size: 12px; cursor: pointer; padding: 4px 6px; border-radius: 5px; white-space: nowrap; }
-.rst-days-link:hover { background: var(--panel-2); color: var(--text); }
+.rst-days-link { background: none; border: none; color: var(--accent); font-size: 12px; cursor: pointer; padding: 4px 6px; border-radius: 5px; white-space: nowrap; }   /* a link: it opens that person's days off */
+.rst-days-link:hover { text-decoration: underline; background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.rst-days-link.has { font-weight: 600; }
 .rst-remove { background: none; border: none; color: var(--text-faint); cursor: pointer; width: 26px; height: 26px; border-radius: 5px; display: flex; align-items: center; justify-content: center; }
 .rst-remove:hover { background: var(--panel-2); color: var(--danger); }
+/* UX review #8: the sheet at rest reads as a table, not a form — the dropdowns show as text (box and chevron on the row you
+   point at, or the one you are in), the remove button only on that row, an empty rate a faint 0.00. (The more specific
+   selectors beat the global select rule, which comes last in the sheet.) */
+.rst-row .rst-cell select.rst-select { border-color: transparent; background-color: transparent; background-size: 0 0; }
+.rst-row:hover .rst-cell select.rst-select, .rst-row .rst-cell select.rst-select:focus { border-color: var(--border); background-color: var(--panel); background-size: 11px 7px; }
+.rst-row .rst-remove { opacity: 0; }
+.rst-row:hover .rst-remove, .rst-row:focus-within .rst-remove { opacity: 1; }
+.rst-cell input.inline-edit::placeholder { color: var(--text-faint); opacity: .7; }
 .rst-empty { padding: 40px 20px; text-align: center; color: var(--text-dim); }
 .main.view-resourceSheet .grid-pane, .main.view-resourceSheet .gantt-pane-outer, .main.view-resourceSheet .resource-pane-outer { display: none; }
 .main:not(.view-resourceSheet) .resourceSheet-pane-outer { display: none; }
@@ -1157,6 +1167,9 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
     <button class="btn" id="addResourceBtn" type="button" onclick="addResourceSheetRow()"><i class="fa-solid fa-plus"></i>Add Resource</button>
   </div>
   <span class="subbar-spacer"></span>
+  <div class="tb-group" data-views="resourceSheet">
+    <button class="btn" id="rsColumnsBtn" onclick="toggleRsColumnsMenu()" aria-haspopup="menu" title="Choose the columns of the Resource Sheet"><i class="fa-solid fa-table-columns"></i>Columns</button>
+  </div>
   <div class="tb-group" data-views="gantt">
     <span class="tb-sep"></span>
     <button class="btn btn-sm tb-toggle" id="baselineBtn" data-more="4" onclick="toggleBaseline()" aria-pressed="false" title="Show the baseline under the bars"><i class="fa-solid fa-ruler-horizontal"></i>Baseline</button>
@@ -1193,6 +1206,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
 <div class="dropdown-menu filter-menu" id="filterMenu"></div>
 <div class="dropdown-menu cols-menu" id="columnsMenu"></div>
 <div class="dropdown-menu" id="colWidthMenu" role="menu"></div>
+<div class="dropdown-menu cols-menu" id="rsColumnsMenu"></div>
 
 <div class="main" id="main">
   <div class="grid-pane" id="gridPane">
@@ -1927,6 +1941,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
           <div class="help-row"><i class="fa-solid fa-eye-slash"></i><span>The list starts with Task Name, Start, Finish, Duration, % Complete, Predecessors, Resource and Status; Task Mode, WBS, the Actual dates, Remaining Duration, Task Type, Work, Cost, the baseline and variance columns and your custom fields start hidden (<strong>Columns</strong> shows them). The Gantt's list starts with just Name, Start, Finish, Duration and % Complete. Click a <strong>Resource</strong> or actual-date cell to edit it, or use the task dialog.</span></div>
           <div class="help-row"><i class="fa-solid fa-users"></i><span><strong>Resource</strong> takes names separated by commas or semicolons ("Anna, Ben") — typing a new name adds it to the plan's resource pool automatically, the same way MS Project does. Give a share other than full time with <code>Name[NN%]</code> ("Anna[50%], Ben"), as in MS Project — a bare name is 100%. In the list a share other than 100% shows as a small <strong>%</strong> chip next to the name, so it stays visible however narrow the column is.</span></div>
           <div class="help-row"><i class="fa-solid fa-people-group"></i><span>The <strong>Resources</strong> tab (the Resource Sheet) lists everyone: type, Max Units (how much of a resource is available: 100% is one full-time person, 300% three people pooled into one; only Work resources have it), rates and cost per use. Renaming or removing someone there updates every task that names them; <strong>Days off</strong> on a row opens that person's own days off, on top of the plan's working week.</span></div>
+          <div class="help-row"><i class="fa-solid fa-table-columns"></i><span>Its <strong>Columns</strong> button shows or hides columns — Material Label, Ovt Rate and Code start hidden and appear by themselves once a resource uses them. Resize the columns like the task list's: drag a header's edge, double-click it to fit, right-click for more.</span></div>
           <div class="help-row"><i class="fa-solid fa-chart-simple"></i><span>The <strong>Resource Plan</strong> tab shows each person's load as bars with the % written in (of their Max Units), red where they're over capacity — <strong>click a red bar</strong> to see the tasks behind it and jump to one. Its toolbar has a legend, <strong>Level…</strong> and <strong>Over-allocated only</strong>; the people themselves are edited in the <strong>Resources</strong> tab next to it.</span></div>
           <div class="help-row"><i class="fa-solid fa-scale-balanced"></i><span><strong>Schedule → Level resources…</strong> delays an over-allocated task to the next span with room, never earlier than its own dependencies allow and, by default, never past its own slack (so the plan's finish doesn't move) — turn that off, or scope it to a date on, then Apply. Undo brings it back.</span></div>
           <div class="help-row"><i class="fa-solid fa-table-list"></i><span>The <strong>Resources</strong> tab is MS Project's Resource Sheet: Type (Work, Material or Cost), Std/Ovt Rate, Cost per Use, Accrue At and more, editable directly in the grid. A task's <strong>Cost</strong> column (hidden by default) adds up its assigned resources' rates; a group shows the total of everything in it. The currency is a plan setting: the money columns show it — "Std Rate (€)" — and a click on it opens <strong>Plan settings → Currency</strong>.</span></div>
@@ -2271,7 +2286,9 @@ const GANTT_DEFAULT_SHOWN = ['name', 'start', 'end', 'duration', 'progress'];   
 const GANTT_DEFAULT_ORDER = [...DEFAULT_COL_ORDER];   // the same sequence as the Tasks view (it used to have an order of its own)
 const COL_MIN_W = 36, COL_MAX_W = 700;
 let colWidths = {};
-let cwMode = null;   // the precision ('day' | 'minute') the saved date-column widths were made for — see syncDateColWidths()   // columns the user resized: id -> px (absent = the column's default width); one set for both views, per device
+let cwMode = null;
+let rsColWidths = {};   // Resource Sheet columns you resized: key -> px (absent = its default width)
+let rsColShow = {};   // Resource Sheet columns you showed/hid (key -> bool); absent = its default (see rsColVisible())   // the precision ('day' | 'minute') the saved date-column widths were made for — see syncDateColWidths()   // columns the user resized: id -> px (absent = the column's default width); one set for both views, per device
 let showChanges = true;   // shade the cells the last edit changed
 let gColOrder = [...GANTT_DEFAULT_ORDER];
 let gColHidden = new Set(DEFAULT_COL_ORDER.filter(c => !GANTT_DEFAULT_SHOWN.includes(c)));
@@ -2573,7 +2590,7 @@ function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c
 function byId(id) { return tasks.find(t => t.id === id); }
 
 /* ============================ Persistence =============================== */
-function prefsPayload() { return { theme, zoom, zoomRev: ZOOM_DEFAULT_REV, view: currentView, gridPaneWidth, gridPaneRev: GRID_PANE_REV, showBaseline, showTaskForm, taskFormHeight, showChanges, cw: colWidths, cwMode, cols: { order: colOrder, hidden: [...colHidden], rev: COLS_REV }, gcols: { order: gColOrder, hidden: [...gColHidden] } }; }
+function prefsPayload() { return { theme, zoom, zoomRev: ZOOM_DEFAULT_REV, view: currentView, gridPaneWidth, gridPaneRev: GRID_PANE_REV, showBaseline, showTaskForm, taskFormHeight, showChanges, cw: colWidths, cwMode, rsCols: rsColShow, rsCw: rsColWidths, cols: { order: colOrder, hidden: [...colHidden], rev: COLS_REV }, gcols: { order: gColOrder, hidden: [...gColHidden] } }; }
 function syncPayload() { return { version: APP_VERSION, project, tasks, deletedTaskIds }; }
 
 function planDataKey(id) { return PLAN_DATA_PREFIX + id; }
@@ -2640,6 +2657,9 @@ function loadPrefs() {
   showChanges = d.showChanges !== false;
   colWidths = {};
   cwMode = d.cwMode === 'day' || d.cwMode === 'minute' ? d.cwMode : null;
+  rsColShow = {}; rsColWidths = {};
+  if (d.rsCw && typeof d.rsCw === 'object') for (const [k, v] of Object.entries(d.rsCw)) if (RS_COLS.some(c => c.key === k && k !== 'id' && k !== 'remove') && Number.isFinite(v)) rsColWidths[k] = Math.round(v);
+  if (d.rsCols && typeof d.rsCols === 'object') for (const [k, v] of Object.entries(d.rsCols)) if (RS_COLS.some(c => c.key === k && !c.fixed) && typeof v === 'boolean') rsColShow[k] = v;
   if (d.cw && typeof d.cw === 'object') for (const [id, w] of Object.entries(d.cw)) if (TASK_COLS[id] && Number.isFinite(w)) colWidths[id] = Math.max(COL_MIN_W, Math.min(COL_MAX_W, Math.round(w)));
   taskFormHeight = Number.isFinite(d.taskFormHeight) ? Math.max(TASK_FORM_MIN_H, Math.min(1200, d.taskFormHeight)) : 340;
   gridPaneWidth = d.gridPaneRev === GRID_PANE_REV && Number.isFinite(d.gridPaneWidth) ? Math.max(GRID_PANE_MIN_WIDTH, Math.min(GRID_PANE_MAX_WIDTH, d.gridPaneWidth)) : GRID_PANE_DEFAULT;
@@ -5993,11 +6013,110 @@ function onResourceScroll() {
    the task grid's own inline editing. Renaming/removing a resource here shares its cascade (rewriting every affected
    task's Resource text) via renameResourceEverywhere()/removeResourceEverywhere(). Days off has no cell of its own;
    it opens the small Days off dialog (openResourceDaysModal()) for that one resource. */
-const RS_HEAD = ['#', 'Resource Name', 'Type', 'Material Label', 'Group', 'Max Units', 'Std Rate', 'Ovt Rate', 'Cost/Use', 'Accrue At', 'Code', 'Days Off', ''];
+// The sheet's columns, in MS Project's order. # / Resource Name / the remove button always show; the others can be hidden from
+// the toolbar's Columns menu. Material Label, Ovt Rate and Code are rarely used, so they start hidden — but a column whose
+// data this plan uses (a Material resource, an overtime rate, a code) shows until you hide it yourself, so nothing is ever
+// silently out of sight.
+const RS_COLS = [
+  { key: 'id', label: '#', w: '40px', fixed: true }, { key: 'name', label: 'Resource Name', w: 'minmax(160px,1fr)', fixed: true },
+  { key: 'type', label: 'Type', w: '126px' }, { key: 'materialLabel', label: 'Material Label', w: '128px', optional: true },
+  { key: 'group', label: 'Group', w: '110px' }, { key: 'maxUnits', label: 'Max Units', w: '98px' },
+  { key: 'stdRate', label: 'Std Rate', w: '108px', money: true }, { key: 'ovtRate', label: 'Ovt Rate', w: '108px', money: true, optional: true },
+  { key: 'costPerUse', label: 'Cost/Use', w: '108px', money: true }, { key: 'accrueAt', label: 'Accrue At', w: '132px' },
+  { key: 'code', label: 'Code', w: '90px', optional: true }, { key: 'daysOff', label: 'Days Off', w: '116px' },
+  { key: 'remove', label: '', w: '40px', fixed: true }
+];
+function rsColUsed(key) {
+  const pool = project.resources || [];
+  return key === 'materialLabel' ? pool.some(r => r.type === 'material' || r.materialLabel) : key === 'ovtRate' ? pool.some(r => r.ovtRate) : key === 'code' ? pool.some(r => r.code) : true;
+}
+function rsColVisible(c) { return c.fixed || (c.key in rsColShow ? rsColShow[c.key] : (!c.optional || rsColUsed(c.key))); }
+function rsVisibleCols() { return RS_COLS.filter(rsColVisible); }
+function toggleRsColumn(key, show) { rsColShow[key] = show; save(); render(); renderRsColumnsMenu(); }
+function resetRsColumns() { rsColShow = {}; save(); render(); renderRsColumnsMenu(); }
+function renderRsColumnsMenu() {
+  const menu = document.getElementById('rsColumnsMenu'); if (!menu) return;
+  menu.innerHTML = `<div class="cols-head"><strong>Columns · Resources</strong><button class="btn-link" onclick="resetRsColumns()">Reset to default</button></div>`
+    + `<div class="cols-hint">Material Label, Ovt Rate and Code start hidden, and show by themselves once a resource uses them.</div>`
+    + RS_COLS.filter(c => !c.fixed).map(c => `<div class="cols-row"><label class="cols-check"><input type="checkbox" data-rscol="${c.key}"${rsColVisible(c) ? ' checked' : ''} onchange="toggleRsColumn('${c.key}', this.checked)"><span>${escapeHtml(c.label)}</span></label></div>`).join('')
+    + `<div class="cols-opts"><button class="cols-opt" onclick="closeRsColumnsMenu(); fitAllRsColumns()"><i class="fa-solid fa-left-right"></i>Fit all columns to content</button><button class="cols-opt"${Object.keys(rsColWidths).length ? '' : ' disabled'} onclick="resetAllRsColWidths(); renderRsColumnsMenu()"><i class="fa-solid fa-rotate-left"></i>Reset column widths</button></div>`;
+}
+function toggleRsColumnsMenu() {
+  const menu = document.getElementById('rsColumnsMenu');
+  if (menu.classList.contains('open')) { closeRsColumnsMenu(); return; }
+  closeDataMenu(); closePlanMenu(); closeToolbarMenus();
+  renderRsColumnsMenu(); positionDropdown('rsColumnsBtn', 'rsColumnsMenu'); menu.classList.add('open');
+  menu.style.maxHeight = Math.max(220, window.innerHeight - document.getElementById('rsColumnsBtn').getBoundingClientRect().bottom - 16) + 'px';
+}
+function closeRsColumnsMenu() { const m = document.getElementById('rsColumnsMenu'); if (m) m.classList.remove('open'); }
+/* ---- resizable Resource Sheet columns: the task list's treatment (drag a header's edge, double-click it to fit, right-click
+   a header for Fit to content / Fit all columns / Default width / Reset all), saved on this device as rsCw. # and the remove
+   column keep their width. A column can't get narrower than what it holds needs (a dropdown its longest choice and chevron). */
+const RS_MIN_W = { name: 100, type: 104, accrueAt: 108, maxUnits: 60, stdRate: 70, ovtRate: 70, costPerUse: 70, daysOff: 84 };
+function rsColMinW(key) { return RS_MIN_W[key] || 56; }
+function rsColWidth(c) { return rsColWidths[c.key] ? Math.max(rsColMinW(c.key), Math.min(COL_MAX_W, rsColWidths[c.key])) + 'px' : c.w; }
+function applyRsColTemplate() { document.getElementById('resourceSheetPaneOuter').style.setProperty('--rs-cols', rsVisibleCols().map(rsColWidth).join(' ')); }
+let lastRsResizeDown = { key: null, at: 0 };
+function startRsColResize(e, key) {
+  e.preventDefault(); e.stopPropagation(); closeColWidthMenu();
+  const now = Date.now();
+  if (lastRsResizeDown.key === key && now - lastRsResizeDown.at < 450) { lastRsResizeDown = { key: null, at: 0 }; fitRsColumn(key); return; }   // a double-click (see startColResize)
+  lastRsResizeDown = { key, at: now };
+  const head = e.target.parentElement, x0 = e.clientX, w0 = head.getBoundingClientRect().width; let moved = false;
+  e.target.classList.add('active'); document.body.classList.add('col-resizing');
+  const move = ev => { moved = true; rsColWidths[key] = Math.max(rsColMinW(key), Math.min(COL_MAX_W, Math.round(w0 + ev.clientX - x0))); applyRsColTemplate(); updateResourceSheetColumnLines(); };
+  const up = () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); document.body.classList.remove('col-resizing'); if (moved) { save(); render(); } else e.target.classList.remove('active'); };
+  document.addEventListener('mousemove', move); document.addEventListener('mouseup', up);
+}
+// What a column needs: per row the text of its field (a typed value, the chosen option, a link) plus the field's own padding and
+// chevron, plus the cell's 8px inset each side; and its header (label + the currency button).
+function measureRsFit(key) {
+  const k = rsVisibleCols().findIndex(c => c.key === key); if (k < 0) return 0;
+  const probe = document.createElement('span'); probe.style.cssText = 'position:absolute;visibility:hidden;white-space:pre'; document.body.appendChild(probe);
+  const textW = (txt, el) => { const cs = getComputedStyle(el); probe.style.font = cs.font; probe.style.letterSpacing = cs.letterSpacing; probe.style.textTransform = cs.textTransform; probe.textContent = txt; return probe.getBoundingClientRect().width; };   // (a header is uppercase and letter-spaced)
+  let w = 0;
+  for (const row of document.querySelectorAll('#resourceSheetBody .rst-row')) {
+    const cell = row.children[k]; if (!cell) continue;
+    const f = cell.querySelector('input, select, button'); let need = 0;
+    if (f && f.tagName === 'SELECT') { const cs = getComputedStyle(f); need = textW(f.options[f.selectedIndex] ? f.options[f.selectedIndex].text : '', f) + parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight) + 2 + 4; }
+    else if (f && f.tagName === 'INPUT') { const cs = getComputedStyle(f); need = textW(f.value || f.placeholder || '', f) + parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight) + 2 + 4 + (f.type === 'number' ? 28 : 0); }   // (a number field keeps room for its arrows)
+    else if (f) need = f.getBoundingClientRect().width;
+    else need = textW(cell.textContent, cell);
+    w = Math.max(w, need + 16);
+  }
+  const head = document.getElementById('resourceSheetHeader').children[k];
+  if (head) { const cur = head.querySelector('.rst-cur'); w = Math.max(w, textW(RS_COLS.find(c => c.key === key).label, head) + (cur ? cur.getBoundingClientRect().width + 3 : 0) + 16 + 6); }
+  probe.remove();
+  return Math.max(rsColMinW(key), Math.min(COL_MAX_W, Math.ceil(w)));
+}
+function fitRsColumn(key) { const w = measureRsFit(key); if (!w) return; rsColWidths[key] = w; save(); render(); }
+function fitAllRsColumns() {   // every shown column but # / remove, and Resource Name, which keeps filling the sheet
+  for (const c of rsVisibleCols()) if (!c.fixed) { const w = measureRsFit(c.key); if (w) rsColWidths[c.key] = w; }
+  delete rsColWidths.name; save(); render();
+}
+function resetRsColWidth(key) { delete rsColWidths[key]; save(); render(); }
+function resetAllRsColWidths() { rsColWidths = {}; save(); render(); }
+function openRsColWidthMenu(e, key) {
+  e.preventDefault(); e.stopPropagation(); closeToolbarMenus();
+  const menu = document.getElementById('colWidthMenu'), c = RS_COLS.find(x => x.key === key);
+  menu.innerHTML = `<div class="menu-head">${escapeHtml(c.label)} column</div>`
+    + `<button class="dropdown-item" role="menuitem" onclick="closeColWidthMenu(); fitRsColumn('${key}')"><i class="fa-solid fa-left-right"></i>Fit to content</button>`
+    + `<button class="dropdown-item" role="menuitem" onclick="closeColWidthMenu(); fitAllRsColumns()"><i class="fa-solid fa-arrows-left-right-to-line"></i>Fit all columns</button>`
+    + `<button class="dropdown-item" role="menuitem"${rsColWidths[key] ? '' : ' disabled'} onclick="closeColWidthMenu(); resetRsColWidth('${key}')"><i class="fa-solid fa-rotate-left"></i>Default width</button>`
+    + `<button class="dropdown-item" role="menuitem"${Object.keys(rsColWidths).length ? '' : ' disabled'} onclick="closeColWidthMenu(); resetAllRsColWidths()"><i class="fa-solid fa-table-columns"></i>Reset all column widths</button>`;
+  placeMenu(menu, e.clientX, e.clientY);
+}
+{
+  const hdr = document.getElementById('resourceSheetHeader');
+  hdr.addEventListener('mousedown', e => { const r = e.target.closest('.col-resizer'); if (r && e.button === 0) startRsColResize(e, r.dataset.rscol); });
+  hdr.addEventListener('contextmenu', e => { const h = e.target.closest('[data-rskey]'); if (h) openRsColWidthMenu(e, h.dataset.rskey); });
+}
 function renderResourceSheet() {
   // The currency is a plan setting (Plan settings → Currency, its one editor); the money columns name it, and a click on it opens that tab.
   const cur = `<button type="button" class="rst-cur" onclick="openSettingsTab('currency')" title="Currency: ${currencyCode()} — click to change it in Plan settings">(${escapeHtml(currencySymbol())})</button>`;
-  document.getElementById('resourceSheetHeader').innerHTML = RS_HEAD.map(h => `<div>${h}${['Std Rate', 'Ovt Rate', 'Cost/Use'].includes(h) ? cur : ''}</div>`).join('');
+  const cols = rsVisibleCols();
+  applyRsColTemplate();
+  document.getElementById('resourceSheetHeader').innerHTML = cols.map(c => `<div data-rskey="${c.key}">${c.label}${c.money ? cur : ''}${c.key === 'id' || c.key === 'remove' ? '' : `<div class="col-resizer" data-rscol="${c.key}" title="Drag to resize · double-click to fit the content · right-click for more"></div>`}</div>`).join('');
   const pool = project.resources || [];
   document.getElementById('resourceSheetBody').innerHTML = pool.length ? pool.map((r, i) => resourceSheetRowHtml(r, i)).join('') + '<button type="button" class="rst-add-row" onclick="addResourceSheetRow()"><i class="fa-solid fa-plus"></i>Add resource</button>'
     : '<div class="rst-empty">No resources yet — type a name in a task’s Resource field, or “Add Resource” above.</div>';
@@ -6031,21 +6150,23 @@ function resourceSheetRowHtml(r, i) {
   const opts = (list, cur) => list.map(o => `<option value="${o.id}"${o.id === cur ? ' selected' : ''}>${o.label}</option>`).join('');
   // A field that doesn't apply to this type gets an empty cell, not a disabled box (resourceFieldApplies()).
   const cell = (field, html) => resourceFieldApplies(r, field) ? `<div class="rst-cell">${html}</div>` : `<div class="rst-cell rst-na" data-field="${field}" title="Doesn't apply to a ${resourceTypeInfo(type).label} resource"></div>`;
-  return `<div class="rst-row" data-id="${r.id}">
-    <div class="rst-cell rst-id">${i + 1}</div>
-    <div class="rst-cell"><input type="text" class="inline-edit" maxlength="60" value="${escapeHtml(r.name)}" aria-label="Resource name" onchange="commitResourceCell('${r.id}','name',this.value)" onkeydown="if(event.key==='Enter')this.blur()"></div>
-    <div class="rst-cell"><select class="rst-select" aria-label="Type" onchange="commitResourceCell('${r.id}','type',this.value)">${opts(RESOURCE_TYPES, type)}</select></div>
-    ${cell('materialLabel', `<input type="text" class="inline-edit" maxlength="20" placeholder="e.g. tons" value="${escapeHtml(r.materialLabel || '')}" aria-label="Material label" onchange="commitResourceCell('${r.id}','materialLabel',this.value)">`)}
-    <div class="rst-cell"><input type="text" class="inline-edit" maxlength="60" value="${escapeHtml(r.group || '')}" aria-label="Group" onchange="commitResourceCell('${r.id}','group',this.value)"></div>
-    ${cell('maxUnits', `<input type="text" inputmode="numeric" class="inline-edit rst-pct" value="${r.maxUnits}%" aria-label="Max units, percent" title="How much of this resource is available — 100% is one full-time person, 300% three people pooled into one resource" onchange="commitResourceCell('${r.id}','maxUnits',this.value)" onkeydown="if(event.key==='Enter')this.blur()">`)}
-    ${cell('stdRate', `<input type="number" min="0" step="any" class="inline-edit" value="${r.stdRate || ''}" aria-label="${isMaterial ? 'Standard rate per unit' : 'Standard rate per hour'}" onchange="commitResourceCell('${r.id}','stdRate',this.value)">`)}
-    ${cell('ovtRate', `<input type="number" min="0" step="any" class="inline-edit" value="${r.ovtRate || ''}" aria-label="Overtime rate per hour" onchange="commitResourceCell('${r.id}','ovtRate',this.value)">`)}
-    <div class="rst-cell"><input type="number" min="0" step="any" class="inline-edit" value="${r.costPerUse || ''}" aria-label="Cost per use" onchange="commitResourceCell('${r.id}','costPerUse',this.value)"></div>
-    <div class="rst-cell"><select class="rst-select" aria-label="Accrue at" onchange="commitResourceCell('${r.id}','accrueAt',this.value)">${opts(ACCRUE_TYPES, accrue)}</select></div>
-    <div class="rst-cell"><input type="text" class="inline-edit" maxlength="40" value="${escapeHtml(r.code || '')}" aria-label="Code" onchange="commitResourceCell('${r.id}','code',this.value)"></div>
-    ${cell('daysOff', `<button type="button" class="rst-days-link" onclick="openResourceDaysModal('${r.id}')">${n ? `${n} day${n === 1 ? '' : 's'} off` : 'Days off'}</button>`)}
-    <div class="rst-cell"><button type="button" class="rst-remove" title="Remove ${escapeHtml(r.name)}" aria-label="Remove ${escapeHtml(r.name)}" onclick="removeResourceSheetRow('${r.id}')"><i class="fa-solid fa-xmark"></i></button></div>
-  </div>`;
+  const money = (field, label) => `<input type="number" min="0" step="any" class="inline-edit" value="${r[field] || ''}" placeholder="0.00" aria-label="${label}" onchange="commitResourceCell('${r.id}','${field}',this.value)">`;
+  const cells = {
+    id: `<div class="rst-cell rst-id">${i + 1}</div>`,
+    name: `<div class="rst-cell"><input type="text" class="inline-edit" maxlength="60" value="${escapeHtml(r.name)}" aria-label="Resource name" onchange="commitResourceCell('${r.id}','name',this.value)" onkeydown="if(event.key==='Enter')this.blur()"></div>`,
+    type: `<div class="rst-cell"><select class="rst-select" aria-label="Type" onchange="commitResourceCell('${r.id}','type',this.value)">${opts(RESOURCE_TYPES, type)}</select></div>`,
+    materialLabel: cell('materialLabel', `<input type="text" class="inline-edit" maxlength="20" placeholder="e.g. tons" value="${escapeHtml(r.materialLabel || '')}" aria-label="Material label" onchange="commitResourceCell('${r.id}','materialLabel',this.value)">`),
+    group: `<div class="rst-cell"><input type="text" class="inline-edit" maxlength="60" value="${escapeHtml(r.group || '')}" aria-label="Group" onchange="commitResourceCell('${r.id}','group',this.value)"></div>`,
+    maxUnits: cell('maxUnits', `<input type="text" inputmode="numeric" class="inline-edit rst-pct" value="${r.maxUnits}%" aria-label="Max units, percent" title="How much of this resource is available — 100% is one full-time person, 300% three people pooled into one resource" onchange="commitResourceCell('${r.id}','maxUnits',this.value)" onkeydown="if(event.key==='Enter')this.blur()">`),
+    stdRate: cell('stdRate', money('stdRate', isMaterial ? 'Standard rate per unit' : 'Standard rate per hour')),
+    ovtRate: cell('ovtRate', money('ovtRate', 'Overtime rate per hour')),
+    costPerUse: `<div class="rst-cell">${money('costPerUse', 'Cost per use')}</div>`,
+    accrueAt: `<div class="rst-cell"><select class="rst-select" aria-label="Accrue at" onchange="commitResourceCell('${r.id}','accrueAt',this.value)">${opts(ACCRUE_TYPES, accrue)}</select></div>`,
+    code: `<div class="rst-cell"><input type="text" class="inline-edit" maxlength="40" value="${escapeHtml(r.code || '')}" aria-label="Code" onchange="commitResourceCell('${r.id}','code',this.value)"></div>`,
+    daysOff: cell('daysOff', `<button type="button" class="rst-days-link${n ? ' has' : ''}" onclick="openResourceDaysModal('${r.id}')">${n ? `${n} day${n === 1 ? '' : 's'} off` : 'Days off'}</button>`),
+    remove: `<div class="rst-cell"><button type="button" class="rst-remove" title="Remove ${escapeHtml(r.name)}" aria-label="Remove ${escapeHtml(r.name)}" onclick="removeResourceSheetRow('${r.id}')"><i class="fa-solid fa-xmark"></i></button></div>`
+  };
+  return `<div class="rst-row" data-id="${r.id}">${rsVisibleCols().map(c => cells[c.key]).join('')}</div>`;
 }
 // Direct/immediate edit of one resource cell — validation/clamping is left to normalizeData() (run by the save() right
 // below, the same single cleaning authority every other resource field already goes through), except renaming, which
@@ -9143,7 +9264,7 @@ function placeMenu(menu, x, y, alignRightOf) {   // a fixed menu at (x, y) kept 
 }
 function closeAddMenu() { document.getElementById('addMenu').classList.remove('open'); }
 function closeRowMenu() { document.getElementById('rowMenu').classList.remove('open'); }
-function closeToolbarMenus() { closeAddMenu(); closeRowMenu(); closeMoreMenu(); closeSbModeMenu(); closeColWidthMenu(); }
+function closeToolbarMenus() { closeAddMenu(); closeRowMenu(); closeMoreMenu(); closeSbModeMenu(); closeColWidthMenu(); closeRsColumnsMenu(); }
 /* ---- the status bar ---- */
 function updateStatusBar() {
   const auto = project.newTaskMode !== 'manual', mode = document.getElementById('sbMode');
@@ -11116,6 +11237,7 @@ function wireGlobalEvents() {
     if (!e.target.closest('#moreMenu') && !e.target.closest('#moreBtn') && !e.target.closest('#loadMenu') && !e.target.closest('.res-load-seg')) closeMoreMenu();
     if (!e.target.closest('#sbModeMenu') && !e.target.closest('#sbMode')) closeSbModeMenu();
     if (!e.target.closest('#colWidthMenu')) closeColWidthMenu();
+    if (!e.target.closest('#rsColumnsMenu') && !e.target.closest('#rsColumnsBtn')) closeRsColumnsMenu();
     if (!e.target.closest('#rowMenu')) closeRowMenu();
     if (!e.target.closest('#cfAddMenu') && !e.target.closest('#cfAddBtn') && !e.target.closest('#fieldsAddBtn')) closeCfAddMenu();
   });
