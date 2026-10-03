@@ -48,7 +48,7 @@ with sync_playwright() as p:
     view("resourceSheet")
     check("Resource Sheet: Add Resource — no task buttons, no currency picker (it is a plan setting), and no third bar above the sheet", vis("addResourceBtn") and pg.locator("#rsCurrencyInput").count() == 0 and not any(vis(i) for i in ["addTaskBtn", "searchBtn", "zoomTabs"]) and pg.locator(".rst-toolbar").count() == 0)
     view("resources")
-    check("Resource Plan: the timescale and Fit (status bar), 'Edit resources…' and 'Over-allocated only' — no task buttons", all(vis(i) for i in ["zoomTabs", "fitZoomBtn", "editResourcesBtn", "overOnlyBtn"]) and not vis("addTaskBtn"))
+    check("Resource Plan: the timescale and Fit (status bar) and 'Over-allocated only' — no task buttons, no 'Edit resources…' (the Resources tab is next to it)", pg.locator("#editResourcesBtn").count() == 0 and all(vis(i) for i in ["zoomTabs", "fitZoomBtn", "overOnlyBtn"]) and not vis("addTaskBtn"))
     rows = lambda: pg.locator("#resourceBody .resource-row").count()
     all_rows = rows()
     pg.click("#overOnlyBtn"); pg.wait_for_timeout(120)
@@ -87,7 +87,7 @@ with sync_playwright() as p:
 
     # ---------------------------------------------------------------- B: view tabs
     tabs = [t.strip() for t in pg.locator("#mainViewTabs .view-tab").all_inner_texts()]
-    check("view tabs: Tasks, Gantt | Resource Plan with a divider; the Resource Sheet is the top bar's Resources button", tabs == ["Tasks", "Gantt", "Resource Plan"] and pg.locator("#mainViewTabs .view-tab-sep").count() == 1 and pg.locator("#resourcesBtn").count() == 1, tabs)
+    check("view tabs: Tasks, Gantt | Resource Plan, Resources (the Resource Sheet) with a divider — no top-bar Resources button any more (UX review #4)", tabs == ["Tasks", "Gantt", "Resource Plan", "Resources"] and pg.locator("#mainViewTabs .view-tab-sep").count() == 1 and pg.locator("#resourcesBtn").count() == 0, tabs)
     view("resourceSheet"); pg.reload(); pg.wait_for_selector("#undoBtn")
     check("the Resource Sheet is remembered across a reload too (it used to fall back to Tasks)", ev("() => currentView") == "resourceSheet")
     view("tasks")

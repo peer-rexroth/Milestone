@@ -21,12 +21,11 @@ with sync_playwright() as p:
     SEED = "specs => { tasks.length = 0; deletedTaskIds.length = 0; selectedTaskId = null; delete project.resources; delete project.currencyCode; const ids = {}; for (const sp of specs) { const t = Object.assign({id: genId(), name: sp.name, parentId: sp.parent ? ids[sp.parent] : null, order: tasks.length, startDate: sp.s, endDate: sp.e, progress: 0, milestone: false, color: null, predecessors: [], collapsed: false, updatedAt: 1, constraintType: 'ASAP', constraintDate: null, taskMode: 'auto', resource: sp.r || '', actualStart: null, actualFinish: null}, sp.extra || {}); tasks.push(t); ids[sp.name] = t.id; } normalizeData(); save(); render(); }"
     seed = lambda specs: ev(SEED, specs)
 
-    # ---------------------------------------------------------------- reached from the top bar's Resources button, not a view tab
-    check("the Resource Sheet is not a view tab: the tabs are Tasks, Gantt | Resource Plan", ev("() => MAIN_VIEWS.map(v => v.id)") == ["tasks", "gantt", "resources"] and [t.strip() for t in pg.locator("#mainViewTabs .view-tab").all_inner_texts()] == ["Tasks", "Gantt", "Resource Plan"])
+    # ---------------------------------------------------------------- a view tab (UX review #4: it was a top-bar button)
+    check("the Resource Sheet is the last view tab, 'Resources', after Resource Plan", ev("() => MAIN_VIEWS.map(v => v.id)") == ["tasks", "gantt", "resources", "resourceSheet"] and [t.strip() for t in pg.locator("#mainViewTabs .view-tab").all_inner_texts()] == ["Tasks", "Gantt", "Resource Plan", "Resources"] and pg.locator("#resourcesBtn").count() == 0)
     ev("() => setView('gantt')"); pg.wait_for_timeout(80)
-    pg.click("#resourcesBtn"); pg.wait_for_timeout(100)
-    check("the top bar's Resources button opens it: marked pressed, no view tab active, the toolbar titled 'Resources'",
-          pg.get_attribute("#resourcesBtn", "aria-pressed") == "true" and pg.locator("#mainViewTabs .view-tab.active").count() == 0 and "Resources" in pg.inner_text("#resourceSheetTitle"))
+    pg.click("#mainViewTabs .view-tab:has-text('Resources')"); pg.wait_for_timeout(100)
+    check("its tab opens it and is the active one (the toolbar needs no title of its own)", pg.locator("#mainViewTabs .view-tab.active").inner_text().strip() == "Resources" and pg.locator("#resourceSheetTitle").count() == 0)
     check("clicking it switches currentView and tags #main with .view-resourceSheet", ev("() => currentView") == "resourceSheet" and ev("() => document.getElementById('main').classList.contains('view-resourceSheet')"))
     check("...the pane is actually visible, the task grid pane and the two other timeline panes are hidden", ev("() => getComputedStyle(document.getElementById('resourceSheetPaneOuter')).display") != "none"
           and ev("() => getComputedStyle(document.getElementById('gridPane')).display") == "none" and ev("() => getComputedStyle(document.getElementById('ganttPaneOuter')).display") == "none" and ev("() => getComputedStyle(document.getElementById('resourcePaneOuter')).display") == "none")
@@ -35,16 +34,10 @@ with sync_playwright() as p:
           vis("addResourceBtn") and pg.locator("#rsCurrencyInput").count() == 0 and not any(vis(i) for i in ["zoomTabs", "criticalPathBtn", "addTaskBtn", "searchBtn", "columnsBtn"]))
     check("...and there is no third bar above the sheet any more", pg.locator(".rst-toolbar").count() == 0)
 
-    pg.click("#resourcesBtn"); pg.wait_for_timeout(100)
-    check("the button again goes back to the view you came from (Gantt)", ev("() => currentView") == "gantt" and pg.get_attribute("#resourcesBtn", "aria-pressed") == "false")
-    pg.click("#resourcesBtn"); pg.wait_for_timeout(80); pg.keyboard.press("Escape"); pg.wait_for_timeout(100)
-    check("...and so does Escape", ev("() => currentView") == "gantt")
-    pg.click("#resourcesBtn"); pg.wait_for_timeout(80); pg.click("#mainViewTabs .view-tab:has-text('Tasks')"); pg.wait_for_timeout(100)
-    check("...and a view tab goes to that view", ev("() => currentView") == "tasks")
-    pg.click("#resourcesBtn"); pg.wait_for_timeout(80)
-    ev("() => document.querySelector('#resourceSheetBody input') && document.querySelector('#resourceSheetBody input').focus()")
-    pg.keyboard.press("Escape"); pg.wait_for_timeout(80)
-    check("Escape while typing in a sheet cell does not leave the sheet", ev("() => currentView") == "resourceSheet" or ev("() => !document.querySelector('#resourceSheetBody input')"))
+    pg.click("#mainViewTabs .view-tab:has-text('Tasks')"); pg.wait_for_timeout(100)
+    check("another tab goes to that view", ev("() => currentView") == "tasks")
+    pg.click("#mainViewTabs .view-tab:has-text('Resources')"); pg.wait_for_timeout(80); pg.keyboard.press("Escape"); pg.wait_for_timeout(100)
+    check("Escape doesn't leave it (it's a view like the others)", ev("() => currentView") == "resourceSheet")
     ev("() => setView('resourceSheet')")
 
     # ---------------------------------------------------------------- header, empty state, one row per resource

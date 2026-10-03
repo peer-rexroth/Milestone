@@ -176,7 +176,7 @@ with sync_playwright() as p:
     select("a")
     pg.click("#tfEditResourcesBtn"); pg.wait_for_timeout(120)
     check("the Resources table's 'Edit resources' button opens the Resource Sheet", ev("() => currentView") == "resourceSheet")
-    ev("() => closeResourceSheet()"); pg.wait_for_timeout(80)
+    ev("() => setView('tasks')"); pg.wait_for_timeout(80)
 
     # ---------------------------------------------------------------- Work follows what is typed (a live preview of what OK will do)
     ev("() => { byId('a').resource = 'Ben, Carl'; byId('a').work = null; byId('a').effortDriven = false; byId('a').taskType = 'fixedUnits'; normalizeData(); save(); render(); }"); select("a"); pg.wait_for_timeout(80)

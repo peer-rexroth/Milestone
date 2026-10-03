@@ -134,7 +134,6 @@ button:focus:not(:focus-visible) { outline: none; }
 .topbar .icon-btn:hover { background: var(--panel-2); }
 .topbar .icon-btn.active { border-color: var(--accent); }
 .topbar .btn { font-size: 13.3333px; font-weight: 600; }
-.topbar #resourcesBtn[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--panel)); }
 .tb-title { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; color: var(--text); white-space: nowrap; }
 .tb-title i { color: var(--accent); }
 
@@ -1106,7 +1105,6 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
   <div class="view-tabs" id="mainViewTabs"></div>
   <div class="topbar-spacer"></div>
   <div class="topbar-divider"></div>
-  <button class="btn" id="resourcesBtn" onclick="toggleResourceSheet()" aria-pressed="false" title="Resources — the plan's people, materials and costs, with their rates (the Resource Sheet)"><i class="fa-solid fa-users"></i><span class="btn-label">Resources</span></button>
   <div class="dropdown-wrap">
     <button class="btn" id="scheduleMenuBtn" onclick="toggleScheduleMenu()" title="Schedule: baselines, rescheduling, levelling"><i class="fa-solid fa-calendar-check"></i><span class="btn-label">Schedule</span></button>
     <div class="dropdown-menu" id="scheduleMenu"></div>
@@ -1156,8 +1154,6 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
     </div>
   </div>
   <div class="tb-group" data-views="resourceSheet">
-    <span class="tb-title" id="resourceSheetTitle"><i class="fa-solid fa-users"></i>Resources</span>
-    <span class="tb-sep"></span>
     <button class="btn" id="addResourceBtn" type="button" onclick="addResourceSheetRow()"><i class="fa-solid fa-plus"></i>Add Resource</button>
   </div>
   <span class="subbar-spacer"></span>
@@ -1170,7 +1166,6 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
     <span class="tb-sep"></span>
     <span class="res-legend" id="resLegend" data-more="8" title="Each bar is a person's load on those days, as a % of their Max Units"><span class="sw"></span>Within capacity<span class="sw over"></span>Over capacity — click a red bar</span>
     <button class="btn btn-sm" id="levelResBtn" data-more="5" onclick="openLevelModal()" title="Level resources — delay tasks so nobody is over capacity (within slack by default)"><i class="fa-solid fa-scale-balanced"></i>Level…</button>
-    <button class="btn btn-sm" id="editResourcesBtn" data-more="3" onclick="openResourceSheet()" title="Open the Resource Sheet — the plan's people, their rates and days off"><i class="fa-solid fa-user-pen"></i>Edit resources…</button>
     <button class="btn btn-sm tb-toggle" id="overOnlyBtn" data-more="4" onclick="toggleOverOnly()" aria-pressed="false" title="Show only the resources that are over-allocated somewhere"><i class="fa-solid fa-triangle-exclamation"></i>Over-allocated only</button>
   </div>
   <div class="tb-group" data-views="resourceSheet">
@@ -1796,7 +1791,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
       <div class="help-pane" id="helpPane-start" role="tabpanel" aria-labelledby="helpTab-start">
         <div class="help-section">
           <div class="help-section-title">Building a plan</div>
-          <div class="help-row"><i class="fa-solid fa-table-cells-large"></i><span><strong>Finding your way</strong>: the top bar is the same everywhere — your plan, the views (<strong>Tasks · Gantt · Resource Plan</strong>), <strong>Resources</strong> (the Resource Sheet: people, rates, days off), <strong>Schedule</strong> (baselines, rescheduling, levelling), <strong>Data</strong>, and the <strong>gear</strong> for the plan's settings (calendar, precision, rules, currency, custom fields). The toolbar below changes with the view and shows what that view needs; on a narrow window the rest is under <strong>More</strong>.</span></div>
+          <div class="help-row"><i class="fa-solid fa-table-cells-large"></i><span><strong>Finding your way</strong>: the top bar is the same everywhere — your plan, the views (<strong>Tasks · Gantt</strong> for the schedule, <strong>Resource Plan · Resources</strong> for the people — Resources is the Resource Sheet: people, rates, days off), <strong>Schedule</strong> (baselines, rescheduling, levelling), <strong>Data</strong>, and the <strong>gear</strong> for the plan's settings (calendar, precision, rules, currency, custom fields). The toolbar below changes with the view and shows what that view needs; on a narrow window the rest is under <strong>More</strong>.</span></div>
           <div class="help-row"><i class="fa-solid fa-window-minimize"></i><span>The <strong>status bar</strong> along the bottom shows how new tasks are scheduled (click to change), how many tasks there are and are selected, the active filters, and — in the Gantt and Resource Plan — a zoom slider. The Task Form switch is its first button.</span></div>
           <div class="help-row"><i class="fa-solid fa-plus"></i><span><strong>Add Task</strong> inserts a task below the selected one, or at the bottom when nothing is selected. Each task has a start and end date and a % complete, and can be a <strong>milestone</strong> (a one-day diamond).</span></div>
           <div class="help-row"><i class="fa-solid fa-keyboard"></i><span><strong>Dates and times in dialogs</strong> are typed, in the same format as the list: <strong>24.12.2026</strong> (or 24.12.26, 24.12.), <strong>14:30</strong> (or 1430, 2:30pm) — or pick a date with the calendar button. Something unreadable is refused, marks the box red and puts the old value back; <strong>Enter</strong> settles a box, and in a single-purpose dialog like Reschedule or Baselines it applies the dialog.</span></div>
@@ -1931,10 +1926,10 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
           <div class="help-row"><i class="fa-solid fa-highlighter"></i><span>After an edit the cells it <strong>changed</strong> are shaded pale yellow (blue is the selection) — a later task that moved, a Finish or Work that was recalculated — as in MS Project. What you typed yourself is not shaded; the next edit, Undo or Redo clears it. Switch it off with <em>Highlight what the last edit changed</em> in the Columns menu.</span></div>
           <div class="help-row"><i class="fa-solid fa-eye-slash"></i><span>The list starts with Task Name, Start, Finish, Duration, % Complete, Predecessors, Resource and Status; Task Mode, WBS, the Actual dates, Remaining Duration, Task Type, Work, Cost, the baseline and variance columns and your custom fields start hidden (<strong>Columns</strong> shows them). The Gantt's list starts with just Name, Start, Finish, Duration and % Complete. Click a <strong>Resource</strong> or actual-date cell to edit it, or use the task dialog.</span></div>
           <div class="help-row"><i class="fa-solid fa-users"></i><span><strong>Resource</strong> takes names separated by commas or semicolons ("Anna, Ben") — typing a new name adds it to the plan's resource pool automatically, the same way MS Project does. Give a share other than full time with <code>Name[NN%]</code> ("Anna[50%], Ben"), as in MS Project — a bare name is 100%. In the list a share other than 100% shows as a small <strong>%</strong> chip next to the name, so it stays visible however narrow the column is.</span></div>
-          <div class="help-row"><i class="fa-solid fa-people-group"></i><span>The <strong>Resource Sheet</strong> tab lists everyone: type, Max Units (how much of a resource is available: 100% is one full-time person, 300% three people pooled into one; only Work resources have it), rates and cost per use. Renaming or removing someone there updates every task that names them; <strong>Days off</strong> on a row opens that person's own days off, on top of the plan's working week.</span></div>
-          <div class="help-row"><i class="fa-solid fa-chart-simple"></i><span>The <strong>Resource Plan</strong> tab shows each person's load as bars with the % written in (of their Max Units), red where they're over capacity — <strong>click a red bar</strong> to see the tasks behind it and jump to one. Its toolbar has a legend, <strong>Level…</strong>, <strong>Edit resources…</strong> and <strong>Over-allocated only</strong>.</span></div>
+          <div class="help-row"><i class="fa-solid fa-people-group"></i><span>The <strong>Resources</strong> tab (the Resource Sheet) lists everyone: type, Max Units (how much of a resource is available: 100% is one full-time person, 300% three people pooled into one; only Work resources have it), rates and cost per use. Renaming or removing someone there updates every task that names them; <strong>Days off</strong> on a row opens that person's own days off, on top of the plan's working week.</span></div>
+          <div class="help-row"><i class="fa-solid fa-chart-simple"></i><span>The <strong>Resource Plan</strong> tab shows each person's load as bars with the % written in (of their Max Units), red where they're over capacity — <strong>click a red bar</strong> to see the tasks behind it and jump to one. Its toolbar has a legend, <strong>Level…</strong> and <strong>Over-allocated only</strong>; the people themselves are edited in the <strong>Resources</strong> tab next to it.</span></div>
           <div class="help-row"><i class="fa-solid fa-scale-balanced"></i><span><strong>Schedule → Level resources…</strong> delays an over-allocated task to the next span with room, never earlier than its own dependencies allow and, by default, never past its own slack (so the plan's finish doesn't move) — turn that off, or scope it to a date on, then Apply. Undo brings it back.</span></div>
-          <div class="help-row"><i class="fa-solid fa-table-list"></i><span>The <strong>Resource Sheet</strong> tab is MS Project's own spreadsheet: Type (Work, Material or Cost), Std/Ovt Rate, Cost per Use, Accrue At and more, editable directly in the grid. A task's <strong>Cost</strong> column (hidden by default) adds up its assigned resources' rates; a group shows the total of everything in it. The currency is a plan setting: the money columns show it — "Std Rate (€)" — and a click on it opens <strong>Plan settings → Currency</strong>.</span></div>
+          <div class="help-row"><i class="fa-solid fa-table-list"></i><span>The <strong>Resources</strong> tab is MS Project's Resource Sheet: Type (Work, Material or Cost), Std/Ovt Rate, Cost per Use, Accrue At and more, editable directly in the grid. A task's <strong>Cost</strong> column (hidden by default) adds up its assigned resources' rates; a group shows the total of everything in it. The currency is a plan setting: the money columns show it — "Std Rate (€)" — and a click on it opens <strong>Plan settings → Currency</strong>.</span></div>
         </div>
         <div class="help-divider"></div>
         <div class="help-section">
@@ -4042,29 +4037,24 @@ function renderPass() {
   fitToolbar();
 }
 
-// The task views, then (after a divider) the resource views: the Resource Sheet (MS Project's name — the pool as a
-// spreadsheet) and Resource Plan (each person's load over time; its id stays 'resources').
-const MAIN_VIEWS = [{ id: 'tasks', label: 'Tasks', group: 'task' }, { id: 'gantt', label: 'Gantt', group: 'task' }, { id: 'resources', label: 'Resource Plan', group: 'resource' }];
-// The Resource Sheet is not a tab: it's the plan's list of people and rates, something you manage now and then rather
-// than a way of looking at the schedule. It still fills the main area (currentView 'resourceSheet'), opened from the top
-// bar's Resources button; a view tab, that button again or Escape goes back to the view you came from.
-const ALL_VIEWS = [...MAIN_VIEWS.map(v => v.id), 'resourceSheet'];
-let viewBeforeSheet = 'tasks';
-function openResourceSheet() { if (currentView !== 'resourceSheet') setView('resourceSheet'); }
-function closeResourceSheet() { if (currentView === 'resourceSheet') setView(viewBeforeSheet || 'tasks'); }
-function toggleResourceSheet() { if (currentView === 'resourceSheet') closeResourceSheet(); else openResourceSheet(); }
+// The task views, then (after a divider) the resource views: Resource Plan (each person's load over time; its id stays
+// 'resources') and Resources (the Resource Sheet — MS Project's spreadsheet of the plan's people, rates and costs; id
+// 'resourceSheet'). The sheet was a top-bar button for a while; a tab won (UX review #4) — with nothing active in the tabs
+// you couldn't tell where you were, and a tab says it and is the way back.
+const MAIN_VIEWS = [{ id: 'tasks', label: 'Tasks', group: 'task' }, { id: 'gantt', label: 'Gantt', group: 'task' }, { id: 'resources', label: 'Resource Plan', group: 'resource' }, { id: 'resourceSheet', label: 'Resources', group: 'resource' }];
+const ALL_VIEWS = MAIN_VIEWS.map(v => v.id);
+function openResourceSheet() { if (currentView !== 'resourceSheet') setView('resourceSheet'); }   // (the Task Form's "Edit resources" icon)
 function renderMainViewTabs() {
   document.getElementById('mainViewTabs').innerHTML = MAIN_VIEWS.map((v, i) =>
     (i && MAIN_VIEWS[i - 1].group !== v.group ? '<span class="view-tab-sep" aria-hidden="true"></span>' : '') +
     `<button class="view-tab${v.id === currentView ? ' active' : ''}" onclick="setView('${v.id}')">${v.label}</button>`).join('');
   for (const g of document.querySelectorAll('#subbar [data-views]')) g.classList.toggle('hidden', !g.dataset.views.split(' ').includes(currentView));   // the toolbar belongs to the view
-  document.getElementById('resourcesBtn').setAttribute('aria-pressed', String(currentView === 'resourceSheet'));
   document.getElementById('main').classList.toggle('view-tasks', currentView === 'tasks');
   document.getElementById('main').classList.toggle('view-gantt', currentView === 'gantt');
   document.getElementById('main').classList.toggle('view-resources', currentView === 'resources');
   document.getElementById('main').classList.toggle('view-resourceSheet', currentView === 'resourceSheet');
 }
-function setView(id) { if (id === 'resourceSheet' && currentView !== 'resourceSheet') viewBeforeSheet = currentView; currentView = id; editingCell = null; closeColumnsMenu(); save(); render(); }
+function setView(id) { currentView = id; editingCell = null; closeColumnsMenu(); save(); render(); }
 
 function updateProjectNameUI() {
   document.getElementById('planBtnName').textContent = project.name;
@@ -11181,7 +11171,6 @@ function wireGlobalEvents() {
     for (const id of modalIds) document.getElementById(id).classList.remove('open');
     closeDataMenu(); closeScheduleMenu(); closePlanMenu(); closeFilterMenu(); closeColumnsMenu(); closeTaskModeMenu(); closeTaskTypeMenu(); closeToolbarMenus();
     if (!overlayOpen && editingCell) { cancelInlineEdit(); return; }   // an inline editor that hasn't received focus yet (it gets it a frame after it appears)
-    if (!overlayOpen && !typing && currentView === 'resourceSheet') { closeResourceSheet(); return; }   // back to the view you came from
     if (!overlayOpen && !typing && (selectedTaskId || selectedTaskIds.size)) { setSelection([]); render(); }
   });
   document.getElementById('toastUndoBtn').addEventListener('click', triggerToastUndo);

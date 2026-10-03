@@ -25,7 +25,7 @@ with sync_playwright() as p:
     # ---------------------------------------------------------------- basic rendering: the tab, its rows, its segments
     seed([{"name": "A", "s": "2026-09-07", "e": "2026-09-09", "r": "Anna"}, {"name": "B", "s": "2026-09-08", "e": "2026-09-10", "r": "Anna"}])
     pg.click("button.view-tab:has-text('Resource Plan')")
-    check("the Resource Plan tab (id 'resources') is the last view tab, after Tasks and Gantt", ev("() => MAIN_VIEWS.map(v => v.id)") == ["tasks", "gantt", "resources"])
+    check("the Resource Plan tab (id 'resources') comes after Tasks and Gantt, before Resources", ev("() => MAIN_VIEWS.map(v => v.id)") == ["tasks", "gantt", "resources", "resourceSheet"])
     check("switching to it sets the view-resources class", "view-resources" in pg.get_attribute("#main", "class"))
     check("zoom tabs are visible in the Resource Plan view (shared with Gantt), in the status bar", ev("() => document.getElementById('zoomTabs').offsetParent !== null"))
     check("...with Fit and 'Over-allocated only' beside them, and no task buttons", ev("() => ['fitZoomBtn', 'overOnlyBtn'].every(i => document.getElementById(i).offsetParent !== null) && document.getElementById('addTaskBtn').offsetParent === null"))
