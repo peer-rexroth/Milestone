@@ -999,7 +999,7 @@ Built from a UX review's findings (#1, #2, #4, #9, #11, #12), plus renaming the 
 
 ### Plan settings moved to a gear; Task Form Work preview
 
-- **Plan settings is a gear button in the top bar** (`#planSettingsBtn`, beside the theme / Help / About icons) — a user
+- **Plan settings is a gear button in the top bar** (`#planSettingsBtn`, right after the plan switcher and file status — it is plan-level, so it sits with the plan, not with the app-level theme / Help / About icons) — a user
   request: the Schedule menu held three scheduling actions *and* a settings window whose tabs (currency, custom fields…)
   have nothing to do with scheduling. **Schedule** keeps just Baseline…, Reschedule remaining work… and Level resources…;
   the plan menu keeps a Plan settings… entry too (with the calendar summary as its hint). The calendar summary the old

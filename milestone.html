@@ -1084,6 +1084,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
     <button class="btn conflict-btn hidden" id="syncConflictBtn" onclick="openSyncConflictsModal()"></button>
     <span class="watch-hint hidden" id="watchHint"><button class="btn watch-btn" id="watchHintBtn" onclick="chooseWatchFolder()" title="This plan is linked to a single file (from before plans were linked by folder). Link the folder it lives in: OneDrive, Dropbox and SharePoint keep a second copy of the file when two devices save at the same time, and Milestone can then merge those copies in."><i class="fa-solid fa-folder-tree"></i>Link folder</button><button class="watch-x" onclick="declineWatch()" title="Don't remind me for this plan (the plan menu still has it)" aria-label="Don't remind me">&times;</button></span>
   </div>
+  <button class="icon-btn" id="planSettingsBtn" onclick="openPlanSettings()" aria-label="Plan settings" title="Plan settings — calendar, precision, scheduling rules, currency, custom fields"><i class="fa-solid fa-gear"></i></button>
   <div class="topbar-divider"></div>
   <div class="view-tabs" id="mainViewTabs"></div>
   <div class="topbar-spacer"></div>
@@ -1109,7 +1110,6 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
   <input type="file" id="fileInput" accept="application/json" class="hidden" onchange="handleFileImport(event)">
   <input type="file" id="foreignFileInput" accept=".xml,.csv,.tsv,.txt,.mpp,.xlsx,text/csv,text/xml,application/xml,text/plain" class="hidden" onchange="handleForeignFile(event)">
   <div class="topbar-divider"></div>
-  <button class="icon-btn" id="planSettingsBtn" onclick="openPlanSettings()" aria-label="Plan settings" title="Plan settings — calendar, precision, scheduling rules, currency, custom fields"><i class="fa-solid fa-gear"></i></button>
   <button class="icon-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Toggle light/dark"></button>
   <button class="icon-btn" onclick="openHelpModal()" title="Help"><i class="fa-regular fa-circle-question"></i></button>
   <button class="icon-btn" onclick="openAboutModal()" title="About"><i class="fa-solid fa-circle-info"></i></button>

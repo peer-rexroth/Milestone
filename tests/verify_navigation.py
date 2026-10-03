@@ -95,7 +95,7 @@ with sync_playwright() as p:
     # ---------------------------------------------------------------- C: Plan settings
     pg.click("#scheduleMenuBtn"); pg.wait_for_selector("#scheduleMenu.open")
     items = [t.split("\n")[0].strip() for t in pg.locator("#scheduleMenu .dropdown-item").all_inner_texts()]
-    check("the Schedule menu holds just the three actions (Baseline, Reschedule, Level) — Plan settings is the gear next to the theme / help buttons", items == ["Baseline…", "Reschedule remaining work…", "Level resources…"] and pg.locator(".topbar #planSettingsBtn").count() == 1, items)
+    check("the Schedule menu holds just the three actions (Baseline, Reschedule, Level) — Plan settings is the gear next to the plan switcher", items == ["Baseline…", "Reschedule remaining work…", "Level resources…"] and pg.locator(".topbar #planSettingsBtn").count() == 1, items)
     pg.keyboard.press("Escape")
     pg.click("#planSettingsBtn"); pg.wait_for_timeout(150)
     open_bg = lambda: ev("() => [...document.querySelectorAll('.modal-bg.open')].map(e => e.id)")
