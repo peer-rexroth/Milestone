@@ -111,6 +111,8 @@ button { cursor: pointer; }
 .btn:hover { background: var(--panel-2); }
 .btn:disabled { opacity: .45; cursor: default; }
 .btn:disabled:hover { background: var(--panel); }
+.btn-primary:disabled:hover { background: var(--task-green); filter: none; }   /* (a disabled green button keeps its green on hover — the rule above would leave white text on white) */
+.btn-primary.btn-danger:disabled:hover { background: var(--danger); }
 .btn-primary { background: var(--task-green); border-color: var(--task-green); color: #fff; }
 .btn-primary:hover { background: var(--task-green); filter: brightness(1.06); }
 .btn-danger { color: var(--danger); }
