@@ -197,6 +197,11 @@ button:focus:not(:focus-visible) { outline: none; }
 .res-days-add .hol-field-date { flex: 0 0 136px; }
 .res-days-add .hol-field-name { flex: 1 1 120px; min-width: 100px; }
 .res-days-add input[type=text] { width: 100%; padding: 7px 9px; border: 1px solid var(--border); border-radius: 7px; background: var(--panel); color: var(--text); }
+.cols-opts { padding: 6px 6px 2px; border-top: 1px solid var(--border); margin-top: 4px; display: flex; flex-direction: column; }
+.cols-opt { display: flex; align-items: center; gap: 8px; border: none; background: transparent; color: var(--text); font-size: 12.5px; padding: 5px 8px; border-radius: 6px; text-align: left; cursor: pointer; }
+.cols-opt i { width: 14px; color: var(--text-dim); }
+.cols-opt:hover:not(:disabled) { background: var(--panel-2); }
+.cols-opt:disabled { opacity: .45; cursor: default; }
 .cols-foot { padding: 8px 12px 4px; border-top: 1px solid var(--border); margin-top: 4px; }
 .cf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .cf-flags { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; margin-top: 12px; }
@@ -221,13 +226,24 @@ button:focus:not(:focus-visible) { outline: none; }
 .cols-move button:hover:not(:disabled) { background: var(--panel-2); color: var(--text); }
 .cols-move button:disabled { opacity: .3; cursor: default; }
 /* ---- column filters ---- */
-.col-head { display: flex; align-items: center; gap: 3px; min-width: 0; }
+.col-head { display: flex; align-items: center; gap: 3px; min-width: 0; position: relative; }
+.col-resizer { position: absolute; top: 0; right: 0; bottom: 0; width: 7px; cursor: col-resize; z-index: 2; }
+.col-resizer:hover, body.col-resizing .col-resizer.active { background: linear-gradient(90deg, transparent 3px, var(--accent) 3px, var(--accent) 5px, transparent 5px); }
+body.col-resizing, body.col-resizing * { cursor: col-resize !important; user-select: none !important; }
+/* the cells the last edit changed (MS Project's change highlighting) */
+.main .grid-row > .chg { background-color: color-mix(in srgb, var(--accent) 17%, var(--row-bg)); }
+/* a Resource cell: a share other than 100% shows as a chip that never gets cut off with the name */
+.res-a { display: inline-flex; align-items: center; min-width: 0; flex: 0 1 auto; }
+.res-n { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.res-p { flex: none; margin-left: 3px; padding: 0 4px; border-radius: 4px; font-size: 11px; font-weight: 600; line-height: 16px; color: var(--accent); background: color-mix(in srgb, var(--accent) 13%, transparent); font-variant-numeric: tabular-nums; }
+.res-sep { flex: none; margin-right: 4px; }
+#gridRows.measuring .grid-row > div { width: max-content; justify-self: start; overflow: visible; }
 .col-head > span { overflow: hidden; text-overflow: ellipsis; line-height: 1.2; min-width: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 /* Tasks view: a header may run to two lines — a two-word name breaks after its first word, and anything longer than two lines is
    cut with an ellipsis. That is what lets Task Mode and the actual dates be narrow columns; the header row is taller to make room.
    (The Gantt view's list is the same list, and the chart's timescale is the same height, --head-h.) */
 .main .grid-header { height: var(--head-h); }
-.main .grid-header > .col-head { white-space: normal; }
+.main .grid-header > .col-head { white-space: normal; align-self: stretch; }   /* (the whole header height is the resize handle's) */
 .col-filter-btn { flex-shrink: 0; width: 18px; height: 18px; padding: 0; border: none; border-radius: 4px; background: transparent; color: var(--text-faint); font-size: 9px; opacity: .55; }
 .col-filter-btn:hover { background: var(--panel-2); color: var(--text); opacity: 1; }
 .col-filter-btn.active { color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--panel)); opacity: 1; }
@@ -1169,6 +1185,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
 <div class="dropdown-menu" id="taskTypeMenu"></div>
 <div class="dropdown-menu filter-menu" id="filterMenu"></div>
 <div class="dropdown-menu cols-menu" id="columnsMenu"></div>
+<div class="dropdown-menu" id="colWidthMenu" role="menu"></div>
 
 <div class="main" id="main">
   <div class="grid-pane" id="gridPane">
@@ -1897,8 +1914,10 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <div class="help-section">
           <div class="help-section-title">Columns</div>
           <div class="help-row"><i class="fa-solid fa-table-columns"></i><span>Click <strong>Columns</strong> in the toolbar to tick the columns you want and reorder them. The <strong>Tasks view and the Gantt view each remember their own set</strong> on this device; Task Name always stays.</span></div>
+          <div class="help-row"><i class="fa-solid fa-left-right"></i><span><strong>Resize a column</strong> by dragging the edge of its header; <strong>double-click the edge</strong> to fit it to its content. <strong>Right-click a header</strong> for <em>Fit to content</em>, <em>Fit all columns</em>, <em>Default width</em> and <em>Reset all column widths</em> (also in the Columns menu). Widths are remembered on this device and shared by the Tasks and Gantt lists; a resized Task Name keeps its width instead of filling the pane.</span></div>
+          <div class="help-row"><i class="fa-solid fa-highlighter"></i><span>After an edit the cells it <strong>changed</strong> are shaded light blue — a later task that moved, a Finish or Work that was recalculated — as in MS Project. What you typed yourself is not shaded; the next edit, Undo or Redo clears it. Switch it off with <em>Highlight what the last edit changed</em> in the Columns menu.</span></div>
           <div class="help-row"><i class="fa-solid fa-eye-slash"></i><span>The list starts with Task Name, Start, Finish, Duration, % Complete, Predecessors, Resource and Status; Task Mode, WBS, the Actual dates, Remaining Duration, Task Type, Work, Cost, the baseline and variance columns and your custom fields start hidden (<strong>Columns</strong> shows them). The Gantt's list starts with just Name, Start, Finish, Duration and % Complete. Click a <strong>Resource</strong> or actual-date cell to edit it, or use the task dialog.</span></div>
-          <div class="help-row"><i class="fa-solid fa-users"></i><span><strong>Resource</strong> takes names separated by commas or semicolons ("Anna, Ben") — typing a new name adds it to the plan's resource pool automatically, the same way MS Project does. Give a share other than full time with <code>Name[NN%]</code> ("Anna[50%], Ben"), as in MS Project — a bare name is 100%.</span></div>
+          <div class="help-row"><i class="fa-solid fa-users"></i><span><strong>Resource</strong> takes names separated by commas or semicolons ("Anna, Ben") — typing a new name adds it to the plan's resource pool automatically, the same way MS Project does. Give a share other than full time with <code>Name[NN%]</code> ("Anna[50%], Ben"), as in MS Project — a bare name is 100%. In the list a share other than 100% shows as a small <strong>%</strong> chip next to the name, so it stays visible however narrow the column is.</span></div>
           <div class="help-row"><i class="fa-solid fa-people-group"></i><span>The <strong>Resource Sheet</strong> tab lists everyone: type, Max Units (how much of a resource is available: 100% is one full-time person, 300% three people pooled into one; only Work resources have it), rates and cost per use. Renaming or removing someone there updates every task that names them; <strong>Days off</strong> on a row opens that person's own days off, on top of the plan's working week.</span></div>
           <div class="help-row"><i class="fa-solid fa-chart-simple"></i><span>The <strong>Resource Plan</strong> tab shows each person's load as bars with the % written in (of their Max Units), red where they're over capacity — <strong>click a red bar</strong> to see the tasks behind it and jump to one. Its toolbar has a legend, <strong>Level…</strong>, <strong>Edit resources…</strong> and <strong>Over-allocated only</strong>.</span></div>
           <div class="help-row"><i class="fa-solid fa-scale-balanced"></i><span><strong>Schedule → Level resources…</strong> delays an over-allocated task to the next span with room, never earlier than its own dependencies allow and, by default, never past its own slack (so the plan's finish doesn't move) — turn that off, or scope it to a date on, then Apply. Undo brings it back.</span></div>
@@ -2242,6 +2261,9 @@ let colHidden = new Set(DEFAULT_COL_ORDER.filter(c => !TASK_COLS[c].dflt));   //
 // order below and these columns shown.
 const GANTT_DEFAULT_SHOWN = ['name', 'start', 'end', 'duration', 'progress'];   // the list pane beside the chart is only 640px wide: what fits
 const GANTT_DEFAULT_ORDER = [...DEFAULT_COL_ORDER];   // the same sequence as the Tasks view (it used to have an order of its own)
+const COL_MIN_W = 36, COL_MAX_W = 700;
+let colWidths = {};   // columns the user resized: id -> px (absent = the column's default width); one set for both views, per device
+let showChanges = true;   // shade the cells the last edit changed
 let gColOrder = [...GANTT_DEFAULT_ORDER];
 let gColHidden = new Set(DEFAULT_COL_ORDER.filter(c => !GANTT_DEFAULT_SHOWN.includes(c)));
 let currentView = 'tasks';
@@ -2542,7 +2564,7 @@ function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c
 function byId(id) { return tasks.find(t => t.id === id); }
 
 /* ============================ Persistence =============================== */
-function prefsPayload() { return { theme, zoom, zoomRev: ZOOM_DEFAULT_REV, view: currentView, gridPaneWidth, gridPaneRev: GRID_PANE_REV, showBaseline, showTaskForm, taskFormHeight, cols: { order: colOrder, hidden: [...colHidden], rev: COLS_REV }, gcols: { order: gColOrder, hidden: [...gColHidden] } }; }
+function prefsPayload() { return { theme, zoom, zoomRev: ZOOM_DEFAULT_REV, view: currentView, gridPaneWidth, gridPaneRev: GRID_PANE_REV, showBaseline, showTaskForm, taskFormHeight, showChanges, cw: colWidths, cols: { order: colOrder, hidden: [...colHidden], rev: COLS_REV }, gcols: { order: gColOrder, hidden: [...gColHidden] } }; }
 function syncPayload() { return { version: APP_VERSION, project, tasks, deletedTaskIds }; }
 
 function planDataKey(id) { return PLAN_DATA_PREFIX + id; }
@@ -2606,6 +2628,9 @@ function loadPrefs() {
   currentView = ALL_VIEWS.includes(d.view) ? d.view : 'tasks';
   showBaseline = d.showBaseline !== false;
   showTaskForm = d.showTaskForm === true;
+  showChanges = d.showChanges !== false;
+  colWidths = {};
+  if (d.cw && typeof d.cw === 'object') for (const [id, w] of Object.entries(d.cw)) if (TASK_COLS[id] && Number.isFinite(w)) colWidths[id] = Math.max(COL_MIN_W, Math.min(COL_MAX_W, Math.round(w)));
   taskFormHeight = Number.isFinite(d.taskFormHeight) ? Math.max(TASK_FORM_MIN_H, Math.min(1200, d.taskFormHeight)) : 340;
   gridPaneWidth = d.gridPaneRev === GRID_PANE_REV && Number.isFinite(d.gridPaneWidth) ? Math.max(GRID_PANE_MIN_WIDTH, Math.min(GRID_PANE_MAX_WIDTH, d.gridPaneWidth)) : GRID_PANE_DEFAULT;
   // Task list columns. A column the saved prefs don't know yet (added by a later version) is appended and follows its default.
@@ -2661,6 +2686,9 @@ function renderColumnsMenu() {
       return `<div class="cols-row"><label class="cols-check${c.locked ? ' locked' : ''}"><input type="checkbox" data-col="${id}"${shown.has(id) ? ' checked' : ''}${c.locked ? ' disabled' : ''} onchange="toggleColumn('${id}', this.checked)"><span>${lab}</span>${c.locked ? '<span class="cols-tag">always shown</span>' : ''}</label>` +
         `<span class="cols-move"><button aria-label="Move ${lab} up" onclick="moveColumn('${id}',-1)"${i === 0 ? ' disabled' : ''}><i class="fa-solid fa-chevron-up"></i></button><button aria-label="Move ${lab} down" onclick="moveColumn('${id}',1)"${i === order.length - 1 ? ' disabled' : ''}><i class="fa-solid fa-chevron-down"></i></button></span></div>`;
     }).join('') +
+    `<div class="cols-opts"><button class="cols-opt" onclick="showChanges = !showChanges; save(); render(); renderColumnsMenu()" aria-pressed="${showChanges}"><i class="fa-solid ${showChanges ? 'fa-square-check' : 'fa-square'}"></i>Highlight what the last edit changed</button>` +
+    `<button class="cols-opt" onclick="closeColumnsMenu(); fitAllColumns()"><i class="fa-solid fa-left-right"></i>Fit all columns to content</button>` +
+    `<button class="cols-opt"${Object.keys(colWidths).length ? '' : ' disabled'} onclick="resetAllColWidths()"><i class="fa-solid fa-rotate-left"></i>Reset column widths</button></div>` +
     `<div class="cols-foot"><button class="btn-link" onclick="closeColumnsMenu();openFieldsModal()"><i class="fa-solid fa-sliders"></i> ${activeCustomFields().length ? 'Manage custom fields…' : 'Add a custom field…'}</button></div>`;
   menu.scrollTop = scroll;   // the rows: re-rendering after a tick or a move must not jump back to the top
 }
@@ -2747,12 +2775,16 @@ const HISTORY_MAX = 100, HISTORY_MAX_CHARS = 40e6;
 let historyCoalesceMs = 300;   // saves closer together than this belong to one gesture and share one undo step
 let undoStack = [], redoStack = [], histText = null, histSig = null, histBusy = false, histLastAt = 0;
 const stateSig = text => text.replace(/"(updatedAt|deletedAt)": \d+/g, '"$1": 0');   // timestamps are not changes
-function resetHistory() { undoStack = []; redoStack = []; histText = canonicalText(); histSig = stateSig(histText); histLastAt = 0; updateUndoUI(); }
+let changeMarks = new Map();   // task id -> Set of column ids the last edit changed (shaded in the list); gone with the next edit, Undo/Redo or a plan switch
+let userEdit = null;           // {id, cols, at}: the cell(s) the user typed into — they are the edit, not a consequence, so they are not shaded
+function noteUserEdit(id, cols) { userEdit = { id, cols: new Set(cols), at: Date.now() }; }
+function resetHistory() { changeMarks = new Map(); undoStack = []; redoStack = []; histText = canonicalText(); histSig = stateSig(histText); histLastAt = 0; updateUndoUI(); }
 function recordHistory() {
   if (histBusy) return;
   const text = canonicalText(), sig = stateSig(text);
   if (histText === null || sig === histSig) { histText = text; histSig = sig; return; }   // nothing but updatedAt stamps moved: not a change
   const now = Date.now();
+  markChanges(histText, text, now);
   if (!undoStack.length || now - histLastAt >= historyCoalesceMs) {
     undoStack.push({ text: histText });
     let chars = undoStack.reduce((n, e) => n + e.text.length, 0);
@@ -2761,6 +2793,24 @@ function recordHistory() {
   histLastAt = now; redoStack = [];
   histText = text; histSig = sig;
   updateUndoUI();
+}
+// Which list cells did this edit change? The marks are what the user did NOT type: a cascade moving other tasks, a Duration
+// that moved Finish, a Work figure that was recalculated.
+const CHANGE_COLS = { startDate: 'start', startText: 'start', startTime: 'start', endDate: 'end', endText: 'end', endTime: 'end', durText: 'duration', progress: 'progress', resource: 'resource', work: 'work', taskType: 'worktype', effortDriven: 'worktype', name: 'name', taskMode: 'mode', predecessors: 'preds', actualStart: 'actualStart', actualStartTime: 'actualStart', actualFinish: 'actualFinish', actualFinishTime: 'actualFinish' };
+function markChanges(beforeText, afterText, now) {
+  let B, A; try { B = JSON.parse(beforeText); A = JSON.parse(afterText); } catch (e) { return; }
+  const bm = new Map(B.tasks.map(t => [t.id, t])), out = now - histLastAt < historyCoalesceMs ? changeMarks : new Map();   // (saves of one gesture add up)
+  const ue = userEdit && now - userEdit.at < 1500 ? userEdit : null;
+  for (const a of A.tasks) {
+    const b = bm.get(a.id); if (!b || a.spacer) continue;
+    const cols = out.get(a.id) || new Set(), before = cols.size;
+    for (const k of Object.keys(CHANGE_COLS)) if (stableStringify(a[k]) !== stableStringify(b[k])) cols.add(CHANGE_COLS[k]);
+    for (const k of new Set([...Object.keys(a.custom || {}), ...Object.keys(b.custom || {})])) if (stableStringify((a.custom || {})[k]) !== stableStringify((b.custom || {})[k])) cols.add(k.replace(/Time$/, ''));
+    if (cols.has('start') || cols.has('end')) { try { if (taskDurationMinutes(a) !== taskDurationMinutes(b)) cols.add('duration'); } catch (e) { /* not a schedulable task */ } }
+    if (ue && ue.id === a.id) for (const c of ue.cols) cols.delete(c);
+    if (cols.size) out.set(a.id, cols); else if (!before) out.delete(a.id);
+  }
+  changeMarks = out; userEdit = null;
 }
 function taskSig(t) { const c = Object.assign({}, t); delete c.updatedAt; return stableStringify(c); }
 const CHANGE_FIELDS = { name: 'Name', startDate: 'Start', endDate: 'Finish', startText: 'Start', endText: 'Finish', durText: 'Duration', progress: '% complete', predecessors: 'Predecessors', taskMode: 'Task Mode', milestone: 'Milestone', resource: 'Resource', actualStart: 'Actual Start', actualFinish: 'Actual Finish', color: 'Colour', constraintType: 'Constraint', constraintDate: 'Constraint', custom: 'Custom field', baselines: 'Baseline', parentId: 'Position', order: 'Position', work: 'Work', taskType: 'Task Type', effortDriven: 'Task Type' };
@@ -2805,6 +2855,7 @@ function stepHistory(dir) {
   const e = from.pop(), now = histText;
   to.push({ text: now });
   const what = dir === 'undo' ? describeChange(e.text, now) : describeChange(now, e.text);   // what was undone / redone: the change that led from the earlier state to the later one
+  changeMarks = new Map();
   histBusy = true;
   try {
     applySnapshot(e.text);
@@ -4277,7 +4328,7 @@ function describeSpec(col, spec) {
 function colHeadHtml(label, col, headTitle) {
   const spec = colFilters[col], name = FILTER_COLS[col].label;
   const title = spec ? `Filtered: ${describeSpec(col, spec)}` : `Filter ${name}`;
-  return `<div class="col-head"${headTitle ? ` title="${escapeHtml(headTitle)}"` : label ? '' : ` title="${escapeHtml(name)}"`}><span>${escapeHtml(label).replace(/\n/g, '<br>')}</span><button class="col-filter-btn${spec ? ' active' : ''}" data-col="${col}" onclick="openColumnFilter(event,'${col}')" title="${escapeHtml(title)}"><i class="fa-solid fa-filter"></i></button></div>`;
+  return `<div class="col-head"${headTitle ? ` title="${escapeHtml(headTitle)}"` : label ? '' : ` title="${escapeHtml(name)}"`}><span>${escapeHtml(label).replace(/\n/g, '<br>')}</span><button class="col-filter-btn${spec ? ' active' : ''}" data-col="${col}" onclick="openColumnFilter(event,'${col}')" title="${escapeHtml(title)}"><i class="fa-solid fa-filter"></i></button><div class="col-resizer" data-col="${col}" title="Drag to resize · double-click to fit the content · right-click for more"></div></div>`;
 }
 function renderFilterBar() {
   const el = document.getElementById('filterBar');
@@ -4786,6 +4837,59 @@ function updateColumnLines() {
   set('h', document.getElementById('gridHeader'));
   set('r', document.querySelector('#gridRows .grid-row'));
 }
+/* ---- resizable columns: drag the edge of a header (it is saved on this device, for both views), double-click it to fit the
+   content, right-click a header for "Fit to content" / "Default width". A column nobody resized has its default width. ---- */
+let lastResizeDown = { id: null, at: 0 };
+function startColResize(e, id) {
+  e.preventDefault(); e.stopPropagation(); closeColWidthMenu();
+  const now = Date.now();
+  if (lastResizeDown.id === id && now - lastResizeDown.at < 450) { lastResizeDown = { id: null, at: 0 }; fitColumn(id); return; }   // a double-click (the header is rebuilt after a drag, so the browser's own dblclick would miss)
+  lastResizeDown = { id, at: now };
+  const head = e.target.closest('.col-head'), x0 = e.clientX, w0 = head.getBoundingClientRect().width; let moved = false;
+  e.target.classList.add('active'); document.body.classList.add('col-resizing');
+  const move = ev => { moved = true; colWidths[id] = Math.max(COL_MIN_W, Math.min(COL_MAX_W, Math.round(w0 + ev.clientX - x0))); applyColTemplate(); updateColumnLines(); };
+  const up = () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); document.body.classList.remove('col-resizing'); if (moved) { save(); render(); } else e.target.classList.remove('active'); };
+  document.addEventListener('mousemove', move); document.addEventListener('mouseup', up);
+}
+// The width a column needs to show everything in it: the widest rendered cell, or its header, whichever is wider.
+function measureFit(id) {
+  const k = visibleTaskCols().indexOf(id); if (k < 0) return 0;
+  const rows = document.getElementById('gridRows'); let w = 0;
+  rows.classList.add('measuring');   // every cell at its natural width, nothing shrunk or cut
+  for (const row of rows.querySelectorAll('.grid-row')) { const c = row.children[k + 1]; if (c && !c.querySelector('input')) w = Math.max(w, c.getBoundingClientRect().width); }
+  rows.classList.remove('measuring');
+  const head = document.getElementById('gridHeader').children[k + 1], label = head && head.querySelector(':scope > span');
+  if (label) {   // the longest line of the header text (a two-word header breaks onto two lines) + the filter button + the cell's inset
+    const probe = document.createElement('span'); probe.style.cssText = 'position:absolute;visibility:hidden;white-space:nowrap'; label.parentNode.appendChild(probe);
+    for (const line of label.innerHTML.split('<br>')) { probe.innerHTML = line; w = Math.max(w, probe.getBoundingClientRect().width + 3 + 18 + 16 + 6); }
+    probe.remove();
+  }
+  return Math.max(COL_MIN_W, Math.min(COL_MAX_W, Math.ceil(w)));
+}
+function fitColumn(id) { const w = measureFit(id); if (!w) return; colWidths[id] = w; save(); render(); }
+// Every shown column to its content — except Task Name, which keeps filling the pane (a fixed name column would leave blank space on a wide screen).
+function fitAllColumns() {
+  for (const id of visibleTaskCols()) if (id !== 'name') { const w = measureFit(id); if (w) colWidths[id] = w; }
+  delete colWidths.name; save(); render();
+}
+function resetColWidth(id) { delete colWidths[id]; save(); render(); }
+function resetAllColWidths() { colWidths = {}; save(); render(); if (document.getElementById('columnsMenu').classList.contains('open')) renderColumnsMenu(); }
+function openColWidthMenu(e, id) {
+  e.preventDefault(); e.stopPropagation(); closeToolbarMenus(); closeColumnsMenu();
+  const menu = document.getElementById('colWidthMenu'), custom = !!colWidths[id];
+  menu.innerHTML = `<div class="menu-head">${escapeHtml(TASK_COLS[id].label)} column</div>`
+    + `<button class="dropdown-item" role="menuitem" onclick="closeColWidthMenu(); fitColumn('${id}')"><i class="fa-solid fa-left-right"></i>Fit to content</button>`
+    + `<button class="dropdown-item" role="menuitem" onclick="closeColWidthMenu(); fitAllColumns()"><i class="fa-solid fa-arrows-left-right-to-line"></i>Fit all columns</button>`
+    + `<button class="dropdown-item" role="menuitem"${custom ? '' : ' disabled'} onclick="closeColWidthMenu(); resetColWidth('${id}')"><i class="fa-solid fa-rotate-left"></i>Default width</button>`
+    + `<button class="dropdown-item" role="menuitem"${Object.keys(colWidths).length ? '' : ' disabled'} onclick="closeColWidthMenu(); resetAllColWidths()"><i class="fa-solid fa-table-columns"></i>Reset all column widths</button>`;
+  placeMenu(menu, e.clientX, e.clientY);
+}
+function closeColWidthMenu() { const m = document.getElementById('colWidthMenu'); if (m) m.classList.remove('open'); }
+{
+  const hdr = document.getElementById('gridHeader');
+  hdr.addEventListener('mousedown', e => { const r = e.target.closest('.col-resizer'); if (r && e.button === 0) startColResize(e, r.dataset.col); });
+  hdr.addEventListener('contextmenu', e => { const h = e.target.closest('.col-head'); if (h) openColWidthMenu(e, h.querySelector('.col-resizer').dataset.col); });
+}
 // The ID column and everything up to and including Task Name are frozen (Tasks view): marked with .frz, each given the `left` it
 // sticks at (the row's padding plus the columns before it). Called after every render, when the cells are brand new.
 function updateFrozenColumns() {
@@ -4826,7 +4930,21 @@ else window.addEventListener('resize', updateResourceSheetColumnLines);
 // "column width should be adapted when switched" the user explicitly asked for. Baselines and custom Date fields stay
 // day-only for now (Phase 4/5), so their width is unaffected.
 const MINUTE_WIDE_COLS = new Set(['start', 'end', 'actualStart', 'actualFinish', 'baselineStart', 'baselineFinish']);
-function colWidth(id) { return minuteModeActive() && (MINUTE_WIDE_COLS.has(id) || (isCustomField(id) && CUSTOM_FIELDS[id].kind === 'date')) ? '150px' : TASK_COLS[id].width; }   // (a custom Date column too: it can carry a time)
+function colWidth(id) { if (colWidths[id]) return Math.max(COL_MIN_W, Math.min(COL_MAX_W, colWidths[id])) + 'px';   // (a resized Task Name stops filling the pane: it keeps the width you gave it)
+   return minuteModeActive() && (MINUTE_WIDE_COLS.has(id) || (isCustomField(id) && CUSTOM_FIELDS[id].kind === 'date')) ? '150px' : TASK_COLS[id].width; }   // (a custom Date column too: it can carry a time)
+function applyColTemplate(cols = visibleTaskCols()) {
+  document.getElementById('main').style.setProperty('--task-cols', ['34px', ...cols.map(colWidth), '88px'].join(' '));
+  // the narrowest the row can get (Task Name at its minimum) + the row's 10px padding on each side: below this width the list scrolls sideways
+  const px = w => { const m = /^(\d+(?:\.\d+)?)px$/.exec(w) || /^minmax\((\d+(?:\.\d+)?)px/.exec(w); return m ? parseFloat(m[1]) : 0; };
+  document.getElementById('main').style.setProperty('--grid-min-w', (34 + cols.reduce((a, c) => a + px(colWidth(c)), 0) + 88 + 20) + 'px');
+}
+// The Resource cell: the text as typed — except that once any share is not 100% each name gets its percentage as a chip
+// (so a long list is cut at the names, never at the numbers). A group's Resource text is free-form notes: shown as is.
+function resourceCellHtml(t, summary) {
+  const asg = summary ? [] : parseResourceAssignments(t.resource);
+  if (!asg.some(a => a.units !== 100)) return escapeHtml(t.resource);
+  return asg.map((a, i) => `${i ? '<span class="res-sep">,</span>' : ''}<span class="res-a"><span class="res-n">${escapeHtml(a.name)}</span>${a.units !== 100 ? `<span class="res-p">${a.units}%</span>` : ''}</span>`).join('');
+}
 function renderGrid() {
   const full = true;   // the same full list in both views (before, the Gantt view had a compact four-column one)
   // The user's visible columns in the user's order (ID first, row actions last) — in both views.
@@ -4841,11 +4959,7 @@ function renderGrid() {
     worktype: colHeadHtml('Task\nType', 'worktype'), work: colHeadHtml('Work', 'work'), cost: colHeadHtml('Cost', 'cost'),
     ...Object.fromEntries(Object.keys(CUSTOM_FIELDS).map(id => [id, colHeadHtml(customFieldName(id), id)]))
   };
-  document.getElementById('main').style.setProperty('--task-cols', ['34px', ...cols.map(colWidth), '88px'].join(' '));
-  {   // the narrowest the row can get (Task Name at its minimum) + the row's 10px padding on each side: below this width the list scrolls sideways
-    const px = w => { const m = /^(\d+(?:\.\d+)?)px$/.exec(w) || /^minmax\((\d+(?:\.\d+)?)px/.exec(w); return m ? parseFloat(m[1]) : 0; };
-    document.getElementById('main').style.setProperty('--grid-min-w', (34 + cols.reduce((a, c) => a + px(colWidth(c)), 0) + 88 + 20) + 'px');
-  }
+  applyColTemplate(cols);
   document.getElementById('gridHeader').innerHTML = `<div class="id-head"><button class="id-toggle" id="collapseToggleBtn" onclick="toggleAllCollapsed()"><i class="fa-solid fa-angles-up"></i></button></div>${cols.map(c => HEAD[c]).join('')}${full ? '<div class="actions-head">Actions</div>' : ''}`;
   const list = visibleTaskList();
   const el = document.getElementById('gridRows');
@@ -4861,6 +4975,7 @@ function renderGrid() {
   el.innerHTML = (win.virtual ? spacer(win.from * ROW_H) : '') + list.slice(win.from, win.to).map(({ task: t, depth }) => {
     const eff = effectiveDates(t.id);
     const summary = hasChildren(t.id);
+    const marks = showChanges ? changeMarks.get(t.id) : null;
     // Compact MS-Project-style reference — "3FS+2", "5SS" — an ID plus
     // dependency type plus signed lag, not the predecessor's name, so it
     // stays meaningful (and short enough for this column) however that
@@ -4932,7 +5047,7 @@ function renderGrid() {
       : `<div class="grid-cell-dim${summaryCls}${canEditActual && !(t.milestone && field === 'actualFinish') ? ' editable' : ''}"${canEditActual && !(t.milestone && field === 'actualFinish') ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','${field}')"` : ''}>${gridDateTimeText(iso, field === 'actualStart' ? t.actualStartTime : t.actualFinishTime, minuteModeActive() && !summary, field === 'actualFinish')}</div>`;
     const resourceCell = editing('resource')
       ? `<input type="text" class="inline-edit" maxlength="200" value="${escapeHtml(t.resource)}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" ${blurAttr('resource')}>`
-      : `<div class="grid-cell-dim${summaryCls}${full ? ' editable' : ''}" title="${escapeHtml(t.resource)}"${full ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','resource')"` : ''}>${escapeHtml(t.resource)}</div>`;
+      : `<div class="grid-cell-dim${summaryCls}${full ? ' editable' : ''}" title="${escapeHtml(t.resource)}"${full ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','resource')"` : ''}>${resourceCellHtml(t, summary)}</div>`;
     const bl = baselineDates(t.id), sv = scheduleVariance(t.id), bn = baselineName(compareBaseline());
     const blCell = (iso, time, isEnd) => `<div class="grid-cell-dim${summaryCls}" title="${bn}">${baselineDateText(t.id, iso, time, isEnd)}</div>`;
     const varCell = n => `<div class="grid-cell-dim${summaryCls}${n > 0 ? ' var-late' : n < 0 ? ' var-early' : ''}" title="${bn}">${fmtVarianceFor(t.id, n)}</div>`;
@@ -4964,7 +5079,7 @@ function renderGrid() {
     }
     return `<div class="grid-row${isSelected(t.id) ? ' selected' : ''}${t.spacer ? ' spacer-row' : ''}${t.color ? ' colored' : ''}"${t.color ? ` style="--row-accent:var(--task-${t.color})"` : ''} data-id="${t.id}" onclick="selectTask('${t.id}', event)" ondblclick="rowDblClick(event, '${t.id}')" draggable="${editingCell && editingCell.id === t.id ? 'false' : 'true'}" ondragstart="dragStartTask(event,'${t.id}')" ondragend="dragEndTask()" ondragover="dragOverTask(event,'${t.id}')" ondrop="dropOnTask(event,'${t.id}')">
       <div class="grid-cell-dim" style="text-align:center">${taskDisplayId(t.id)}</div>
-      ${cols.map(c => cells[c]).join('')}
+      ${cols.map(c => marks && marks.has(c) ? cells[c].replace(/^(\s*<div class=")/, '$1chg ') : cells[c]).join('')}
       ${full ? `<div class="grid-actions">
         ${t.spacer ? '' : `<button class="icon-btn" onclick="event.stopPropagation();openTaskModal('${t.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>`}
         <button class="icon-btn" onclick="event.stopPropagation();cloneTask('${t.id}')" title="Clone${hasChildren(t.id) ? ' (with all its sub-tasks)' : ''}"><i class="fa-regular fa-clone"></i></button>
@@ -5365,6 +5480,7 @@ function commitInlineEdit(id, field, rawValue) {
   const t = byId(id);
   if (!t) { render(); return; }
   filterPinned.add(id);   // an edited row stays put even if its new date no longer matches the filter
+  noteUserEdit(id, [field === 'finish' ? 'end' : field]);
   const val = (rawValue || '').trim();
   const manual = t.taskMode === 'manual';
   if (field === 'name') {
@@ -7459,6 +7575,9 @@ function applyTaskForm() {
     }
   }
   // ---- apply
+  const pre = { name: t.name, mode: t.taskMode === 'manual', pct: t.progress, preds: JSON.stringify(t.predecessors), type: taskTypeInfo(t.taskType).id, effort: t.effortDriven === true }, edited = [];
+  if (name !== pre.name) edited.push('name');
+  if (manual !== pre.mode) edited.push('mode');
   const cyc0 = taskCycleSet(), origDurMin = taskDurationMinutes(t), origRes = t.resource, origDurMoment = durationMoment(taskMoment(t, 'start'), taskMoment(t, 'end'));
   t.name = name;
   const switchingToAuto = t.taskMode === 'manual' && !manual;
@@ -7469,6 +7588,10 @@ function applyTaskForm() {
     const fIso = ms ? sIso : $('tfFinish').value, fTime = mm ? (ms ? sTime : ($('tfFinishTime').value || wEnd(fIso))) : null;
     const startChanged = sIso !== tfOrig.start || (mm && sTime !== tfOrig.startTime);
     const finishChanged = !ms && (fIso !== tfOrig.end || (mm && fTime !== tfOrig.endTime));
+    if (startChanged) edited.push('start'); if (finishChanged) edited.push('end'); if (durVal !== null) edited.push('duration');
+    if (pct !== pre.pct) edited.push('progress'); if (JSON.stringify(preds) !== pre.preds) edited.push('preds');
+    if ($('tfType').value !== pre.type || $('tfEffort').checked !== pre.effort) edited.push('worktype');
+    if (formatResourceString(rows) !== formatResourceString(parseResourceAssignments(origRes))) edited.push('resource');
     if (startChanged) { t.startDate = sIso; if (mm) t.startTime = sTime; t.startText = null; }
     if (ms) { t.endDate = t.startDate; if (mm) t.endTime = t.startTime; }
     else if (durVal !== null) { if (mm) setTaskMoment(t, 'end', finishMoment(taskMoment(t, 'start'), durVal)); else t.endDate = finishFor(t.startDate, durVal); t.endText = null; t.durText = null; }
@@ -7489,6 +7612,7 @@ function applyTaskForm() {
       msg = durNet ? recalcTaskType(t, 'duration') : resChanged ? recalcTaskType(t, 'units') : null;
     }
   }
+  noteUserEdit(t.id, edited);
   t.updatedAt = Date.now();
   filterPinned.add(t.id);
   normalizeData();
@@ -8986,7 +9110,7 @@ function placeMenu(menu, x, y, alignRightOf) {   // a fixed menu at (x, y) kept 
 }
 function closeAddMenu() { document.getElementById('addMenu').classList.remove('open'); }
 function closeRowMenu() { document.getElementById('rowMenu').classList.remove('open'); }
-function closeToolbarMenus() { closeAddMenu(); closeRowMenu(); closeMoreMenu(); closeSbModeMenu(); }
+function closeToolbarMenus() { closeAddMenu(); closeRowMenu(); closeMoreMenu(); closeSbModeMenu(); closeColWidthMenu(); }
 /* ---- the status bar ---- */
 function updateStatusBar() {
   const auto = project.newTaskMode !== 'manual', mode = document.getElementById('sbMode');
@@ -10959,6 +11083,7 @@ function wireGlobalEvents() {
     if (!e.target.closest('#addMenu') && !e.target.closest('#addMenuBtn')) closeAddMenu();
     if (!e.target.closest('#moreMenu') && !e.target.closest('#moreBtn') && !e.target.closest('#loadMenu') && !e.target.closest('.res-load-seg')) closeMoreMenu();
     if (!e.target.closest('#sbModeMenu') && !e.target.closest('#sbMode')) closeSbModeMenu();
+    if (!e.target.closest('#colWidthMenu')) closeColWidthMenu();
     if (!e.target.closest('#rowMenu')) closeRowMenu();
     if (!e.target.closest('#cfAddMenu') && !e.target.closest('#cfAddBtn') && !e.target.closest('#fieldsAddBtn')) closeCfAddMenu();
   });
