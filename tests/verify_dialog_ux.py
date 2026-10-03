@@ -133,7 +133,7 @@ with sync_playwright() as p:
 
     # ================================================================ 2. the Scheduling precision dialog
     plan([A])
-    pg.click("#scheduleMenuBtn"); pg.click("#planSettingsItem"); pg.click(".modal-bg.open [data-settings-tab='precision']"); pg.wait_for_selector("#precisionModalBg.open"); pg.wait_for_timeout(200)
+    pg.click("#planSettingsBtn"); pg.click(".modal-bg.open [data-settings-tab='precision']"); pg.wait_for_selector("#precisionModalBg.open"); pg.wait_for_timeout(200)
     check("it needs no scrolling at 1400x860 with the per-weekday section folded away", ev("() => { const b = document.querySelector('#precisionModalBg .modal-body'); return b.scrollHeight <= b.clientHeight + 1; }"))
     check("...and that section is a folded 'Different hours on some days' with no overrides yet", not ev("() => document.getElementById('whDayDetails').open") and "Different hours" in pg.inner_text("#whDayDetails summary"))
     w = ev("() => [...document.querySelectorAll('#precisionModalBg input.dt-time')].map(e => Math.round(e.getBoundingClientRect().width))")
@@ -149,7 +149,7 @@ with sync_playwright() as p:
     check("adding a day updates the summary count ('1 day differs')", "1 day differs" in pg.inner_text("#whDayDetails summary"), pg.inner_text("#whDayDetails summary"))
     pg.keyboard.press("Escape"); pg.click("#confirmModalBg button:has-text('Discard')"); pg.wait_for_timeout(150)
     ev("() => { project.workHoursByDay = { 5: { start: '08:00', end: '13:00', breaks: [] } }; normalizeData(); save(); }")
-    pg.click("#scheduleMenuBtn"); pg.click("#planSettingsItem"); pg.click(".modal-bg.open [data-settings-tab='precision']"); pg.wait_for_selector("#precisionModalBg.open"); pg.wait_for_timeout(200)
+    pg.click("#planSettingsBtn"); pg.click(".modal-bg.open [data-settings-tab='precision']"); pg.wait_for_selector("#precisionModalBg.open"); pg.wait_for_timeout(200)
     check("with a different day saved the section opens by itself and says so", ev("() => document.getElementById('whDayDetails').open") and "1 day differs" in pg.inner_text("#whDayDetails summary"))
     pg.keyboard.press("Escape")
 

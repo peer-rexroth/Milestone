@@ -1093,6 +1093,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
   <input type="file" id="fileInput" accept="application/json" class="hidden" onchange="handleFileImport(event)">
   <input type="file" id="foreignFileInput" accept=".xml,.csv,.tsv,.txt,.mpp,.xlsx,text/csv,text/xml,application/xml,text/plain" class="hidden" onchange="handleForeignFile(event)">
   <div class="topbar-divider"></div>
+  <button class="icon-btn" id="planSettingsBtn" onclick="openPlanSettings()" aria-label="Plan settings" title="Plan settings — calendar, precision, scheduling rules, currency, custom fields"><i class="fa-solid fa-gear"></i></button>
   <button class="icon-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Toggle light/dark"></button>
   <button class="icon-btn" onclick="openHelpModal()" title="Help"><i class="fa-regular fa-circle-question"></i></button>
   <button class="icon-btn" onclick="openAboutModal()" title="About"><i class="fa-solid fa-circle-info"></i></button>
@@ -1766,7 +1767,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
       <div class="help-pane" id="helpPane-start" role="tabpanel" aria-labelledby="helpTab-start">
         <div class="help-section">
           <div class="help-section-title">Building a plan</div>
-          <div class="help-row"><i class="fa-solid fa-table-cells-large"></i><span><strong>Finding your way</strong>: the top bar is the same everywhere — your plan, the views (<strong>Tasks · Gantt</strong> for the schedule, <strong>Resource Sheet · Resource Plan</strong> for the people), <strong>Schedule</strong> (baselines, rescheduling, levelling, <strong>Plan settings…</strong>) and <strong>Data</strong>. The toolbar below changes with the view and shows what that view needs; on a narrow window the rest is under <strong>More</strong>.</span></div>
+          <div class="help-row"><i class="fa-solid fa-table-cells-large"></i><span><strong>Finding your way</strong>: the top bar is the same everywhere — your plan, the views (<strong>Tasks · Gantt</strong> for the schedule, <strong>Resource Sheet · Resource Plan</strong> for the people), <strong>Schedule</strong> (baselines, rescheduling, levelling), <strong>Data</strong>, and the <strong>gear</strong> for the plan's settings (calendar, precision, rules, currency, custom fields). The toolbar below changes with the view and shows what that view needs; on a narrow window the rest is under <strong>More</strong>.</span></div>
           <div class="help-row"><i class="fa-solid fa-window-minimize"></i><span>The <strong>status bar</strong> along the bottom shows how new tasks are scheduled (click to change), how many tasks there are and are selected, the active filters, and — in the Gantt and Resource Plan — a zoom slider. The Task Form switch is its first button.</span></div>
           <div class="help-row"><i class="fa-solid fa-plus"></i><span><strong>Add Task</strong> inserts a task below the selected one, or at the bottom when nothing is selected. Each task has a start and end date and a % complete, and can be a <strong>milestone</strong> (a one-day diamond).</span></div>
           <div class="help-row"><i class="fa-solid fa-keyboard"></i><span><strong>Dates and times in dialogs</strong> are typed, in the same format as the list: <strong>24.12.2026</strong> (or 24.12.26, 24.12.), <strong>14:30</strong> (or 1430, 2:30pm) — or pick a date with the calendar button. Something unreadable is refused, marks the box red and puts the old value back; <strong>Enter</strong> settles a box, and in a single-purpose dialog like Reschedule or Baselines it applies the dialog.</span></div>
@@ -3971,6 +3972,7 @@ function renderPass() {
   updateSelectionUI();
   renderTaskForm();
   updateStatusBar();
+  updatePlanSettingsBtn();
   fitToolbar();
 }
 
@@ -6803,6 +6805,7 @@ function openSettingsTab(id) {
   else go();
 }
 function openPlanSettings(tab) { closeScheduleMenu(); closePlanMenu(); openSettingsTab(tab || settingsTab || 'calendar'); }
+function updatePlanSettingsBtn() { const b = document.getElementById('planSettingsBtn'); if (b) b.title = `Plan settings — ${planSettingsHint()}  (calendar, precision, scheduling rules, currency, custom fields)`; }
 function planSettingsHint() { return calendarSummary() + (minuteModeActive() ? ' · Hours & minutes' : ''); }
 // Scheduling rules: whether a constraint date always wins over the links, and the default mode for new tasks.
 let rulesSnapshot = null;
@@ -7339,6 +7342,42 @@ function tfResRowHtml(t, r, i, blank) {
 function renderTfResRows() {
   const t = byId(tfTaskId), el = document.getElementById('tfResRows'); if (!t || !el) return;
   el.innerHTML = tfRes.map((r, i) => tfResRowHtml(t, r, i, false)).join('') + tfResRowHtml(t, { name: '', units: '', saved: null }, tfRes.length, true);
+  tfRefreshWork();
+}
+// What OK would make of Work right now, per resource row: worked out on a COPY of the task with the very rules OK applies
+// (the Task Type triangle, Effort driven; a typed Duration too), so the Work column follows what is typed instead of
+// staying at its old value — or "—" — until OK is clicked. Null when an entry isn't valid yet.
+function tfWorkPreview() {
+  const t = byId(tfTaskId), $ = id => document.getElementById(id);
+  if (!t || t.milestone || hasChildren(t.id) || !$('tfType') || !tfOrig) return null;
+  const rows = [];
+  for (const r of tfRes) {
+    const nm = r.name.trim(); if (!nm) continue;
+    const uv = String(r.units).replace('%', '').replace(',', '.').trim(), u = uv === '' ? 100 : Math.round(Number(uv));
+    if (!Number.isFinite(u) || u < 1 || u > 800) return null;
+    rows.push({ i: tfRes.indexOf(r), name: nm.slice(0, 60), units: u });
+  }
+  const c = JSON.parse(JSON.stringify(t)), newRes = formatResourceString(rows.map(r => ({ name: r.name, units: r.units })));
+  if (newRes !== formatResourceString(parseResourceAssignments(t.resource))) c.resource = newRes.slice(0, 200);
+  c.taskType = $('tfType').value; c.effortDriven = $('tfEffort').checked;
+  const origDurMin = taskDurationMinutes(t), dv = !$('tfDur').disabled ? $('tfDur').value.trim() : '';
+  if (dv && dv !== tfOrig.dur) {
+    if (minuteModeActive()) { const m = parseDurationMinutes(dv); if (m && m > 0 && m <= MAX_DURATION_MINUTES) setTaskMoment(c, 'end', finishMoment(taskMoment(c, 'start'), m)); }
+    else { const d = parseTableDuration(dv), n = d === null ? null : Math.round(d); if (n && n >= 1 && n <= MAX_DURATION_DAYS) c.endDate = finishFor(c.startDate, n); }
+  }
+  const durNet = taskDurationMinutes(c) !== origDurMin, resChanged = c.resource !== t.resource;
+  if (durNet) recalcTaskType(c, 'duration'); else if (resChanged) recalcTaskType(c, 'units');
+  return rows.map(r => ({ i: r.i, text: fmtWorkHours(Math.round(assignmentHours(c, { units: r.units }) * 60)) }));
+}
+function tfRefreshWork() {
+  const prev = tfWorkPreview();
+  for (const row of document.querySelectorAll('#tfResRows .tf-row')) {
+    const i = Number(row.dataset.i), cell = row.querySelector('.tf-work');
+    if (!cell || i >= tfRes.length) continue;   // (the blank add-row has none)
+    const hit = prev && prev.find(x => x.i === i);
+    cell.textContent = hit ? hit.text : '—';
+    cell.title = hit ? "This assignment's share of the task's Work — follows what you type; applied with OK" : "Not worked out yet — check the Units (1%–800%)";
+  }
 }
 // Typing into the blank row makes it a real one and adds the next blank row BELOW it, in place — rebuilding the table
 // here would replace the very box the person is moving into (the click or the typing would be lost).
@@ -7475,8 +7514,8 @@ function wireTaskForm() {
     if (e.key === 'Enter' && e.target.tagName === 'INPUT' && e.target.type !== 'checkbox' && !e.isComposing) { e.preventDefault(); e.stopPropagation(); if (e.target.dataset && e.target.dataset.dt) e.target.dispatchEvent(new Event('change', { bubbles: true })); setTimeout(applyTaskForm, 0); return; }
     e.stopPropagation();   // Delete, Ctrl+A, "/" … are the list's shortcuts, not the form's
   });
-  pane.addEventListener('input', () => tfHeader());
-  pane.addEventListener('change', () => tfHeader());
+  pane.addEventListener('input', () => { tfHeader(); tfRefreshWork(); });
+  pane.addEventListener('change', () => { tfHeader(); tfRefreshWork(); });
   const handle = document.getElementById('taskFormResize');
   handle.addEventListener('mousedown', e => {
     e.preventDefault(); handle.classList.add('dragging');
@@ -7907,9 +7946,7 @@ function renderScheduleMenu() {
   document.getElementById('scheduleMenu').innerHTML =
     `<button class="dropdown-item" id="planBaselineItem" onclick="openBaselineModal()"><i class="fa-solid fa-ruler-horizontal"></i>Baseline…<span class="item-hint">${escapeHtml(baselineMenuHint())}</span></button>` +
     `<button class="dropdown-item" id="planRescheduleItem" onclick="openRescheduleModal()"><i class="fa-solid fa-calendar-check"></i>Reschedule remaining work…</button>` +
-    `<button class="dropdown-item" id="planLevelItem" onclick="openLevelModal()"><i class="fa-solid fa-scale-balanced"></i>Level resources…${overallocatedResources().length ? `<span class="item-hint">${overallocatedResources().length} over-allocated</span>` : ''}</button>` +
-    `<div class="dropdown-sep"></div>` +
-    `<button class="dropdown-item" id="planSettingsItem" onclick="openPlanSettings()"><i class="fa-solid fa-sliders"></i>Plan settings…<span class="item-hint">${escapeHtml(planSettingsHint())}</span></button>`;
+    `<button class="dropdown-item" id="planLevelItem" onclick="openLevelModal()"><i class="fa-solid fa-scale-balanced"></i>Level resources…${overallocatedResources().length ? `<span class="item-hint">${overallocatedResources().length} over-allocated</span>` : ''}</button>`;
 }
 
 /* ============================ Merge (sync/import) =========================
@@ -10685,7 +10722,7 @@ function renderPlanMenu() {
     (fileSyncSupported() && syncFileHandle && !syncDirHandle ? `<button class="dropdown-item" id="planWatchItem" onclick="chooseWatchFolder()" title="This plan is linked to a single file. Link the folder it lives in: OneDrive, Dropbox and SharePoint keep a second copy of the file when two devices save at the same time, and Milestone can then merge those copies in"><i class="fa-solid fa-folder-tree"></i>Link this plan’s folder…<span class="item-hint">file only</span></button>` : '') +
     `<div class="dropdown-sep"></div>` +
     `<button class="dropdown-item" id="planRenameItem" onclick="openPlanModal('rename')"><i class="fa-solid fa-pen"></i>Rename plan…</button>` +
-    `<button class="dropdown-item" id="planMenuSettingsItem" onclick="openPlanSettings()"><i class="fa-solid fa-sliders"></i>Plan settings…</button>` +
+    `<button class="dropdown-item" id="planMenuSettingsItem" onclick="openPlanSettings()"><i class="fa-solid fa-gear"></i>Plan settings…<span class="item-hint">${escapeHtml(planSettingsHint())}</span></button>` +
     `<button class="dropdown-item" id="planDuplicateItem" onclick="duplicatePlan()"><i class="fa-regular fa-copy"></i>Duplicate plan</button>` +
     (fileSyncSupported() ? `<button class="dropdown-item" id="planDisconnectItem" onclick="disconnectFile()"${syncFileHandle ? '' : ' disabled title="This plan isn’t linked to a file"'}><i class="fa-solid fa-link-slash"></i>Disconnect folder…</button>` : '') +
     `<button class="dropdown-item" id="planDeleteItem" onclick="deleteCurrentPlan()"${idx.plans.length < 2 ? ' disabled title="You need at least one plan"' : ''}><i class="fa-solid fa-trash"></i>Delete plan…</button>`;

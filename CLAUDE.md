@@ -997,6 +997,20 @@ Built from a UX review's findings (#1, #2, #4, #9, #11, #12), plus renaming the 
 - Covered by `verify_navigation.py` (Fit, labels, Work, switcher, headers, Task Mode), `verify_resource_view.py` (runs,
   %, the click-through, legend) and updated scale / Work expectations in several older tests.
 
+### Plan settings moved to a gear; Task Form Work preview
+
+- **Plan settings is a gear button in the top bar** (`#planSettingsBtn`, beside the theme / Help / About icons) — a user
+  request: the Schedule menu held three scheduling actions *and* a settings window whose tabs (currency, custom fields…)
+  have nothing to do with scheduling. **Schedule** keeps just Baseline…, Reschedule remaining work… and Level resources…;
+  the plan menu keeps a Plan settings… entry too (with the calendar summary as its hint). The calendar summary the old
+  menu item showed ("Mon–Fri · 3 holidays") is the gear's tooltip (`updatePlanSettingsBtn()`).
+- **The Task Form's Work column follows what is typed** (a user report: "I lowered a resource's Units and Work wasn't
+  recalculated"). OK always applied the Task Type triangle correctly, but until then the column kept its old value
+  — or "—" for a changed row — so it *looked* un-recalculated. `tfWorkPreview()` now works out what OK would do on a
+  copy of the task, with the same rules (Task Type, Effort driven, a typed Duration), and `tfRefreshWork()` writes it
+  into each row's Work on every edit; an invalid Units entry shows "—". (With Effort driven ticked the total Work stays
+  and the Duration stretches instead — MS Project's behaviour — so the preview redistributes the same total.)
+
 ### Status bar
 
 The review's proposal D: a status bar along the bottom of the window (`#statusbar`, after the Task Form pane), like

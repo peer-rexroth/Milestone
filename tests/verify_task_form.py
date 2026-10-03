@@ -178,6 +178,28 @@ with sync_playwright() as p:
     check("the Resources table's 'Edit resources' button opens the Resource Sheet", ev("() => currentView") == "resourceSheet")
     ev("() => closeResourceSheet()"); pg.wait_for_timeout(80)
 
+    # ---------------------------------------------------------------- Work follows what is typed (a live preview of what OK will do)
+    ev("() => { byId('a').resource = 'Ben, Carl'; byId('a').work = null; byId('a').effortDriven = false; byId('a').taskType = 'fixedUnits'; normalizeData(); save(); render(); }"); select("a"); pg.wait_for_timeout(80)
+    works = lambda: [x.inner_text() for x in pg.locator("#tfResRows .tf-work").all()][:2]
+    w0 = works()
+    pg.locator("#tfResRows .tf-row").nth(0).locator("input[aria-label='Units']").fill("50")
+    w1 = works()
+    check("lowering a resource's Units updates its Work column right away (before OK) — half the hours", w1[0] != w0[0] and w1[1] == w0[1] and float(w1[0].split()[0]) == float(w0[0].split()[0]) / 2, (w0, w1))
+    check("...while nothing is written to the task until OK", ev("() => byId('a').resource") == "Ben, Carl")
+    pg.click("#tfOkBtn"); pg.wait_for_timeout(200)
+    check("...and OK applies exactly what the preview showed", works() == w1 and ev("() => byId('a').work") == int(float(w1[0].split()[0]) * 60) + int(float(w1[1].split()[0]) * 60), (works(), w1))
+    pg.locator("#tfResRows .tf-row").nth(0).locator("input[aria-label='Units']").fill("100")
+    pg.check("#tfEffort"); w2 = works()
+    check("ticking Effort driven keeps the saved total Work and shares it between the people (the Duration stretches instead): the preview follows — Ben back at 100% gets more of the same 60 hrs", w2 != w1 and abs(sum(float(x.split()[0]) for x in w2) - sum(float(x.split()[0]) for x in w1)) < 0.2, (w1, w2))
+    pg.uncheck("#tfEffort")
+    pg.locator("#tfResRows .tf-row").nth(0).locator("input[aria-label='Units']").fill("abc")
+    check("an invalid Units entry shows '—' instead of a stale number", works() == ["—", "—"], works())
+    pg.click("#tfCancelBtn"); pg.wait_for_timeout(100)
+    pg.fill("#tfDur", "20")
+    check("a typed Duration is previewed too (Fixed Units: twice the days, twice the hours)", float(works()[0].split()[0]) == float(w0[0].split()[0]) * 2 or float(works()[0].split()[0]) > float(w0[0].split()[0]), (w0, works()))
+    pg.click("#tfCancelBtn"); pg.wait_for_timeout(100)
+    ev("() => { byId('a').resource = 'Anna'; byId('a').work = null; normalizeData(); save(); render(); }"); select("a")
+
     # ---------------------------------------------------------------- effort driven through the form
     ev("() => { byId('a').resource = 'Anna'; byId('a').work = null; normalizeData(); save(); render(); }")
     select("a"); pg.wait_for_timeout(80)

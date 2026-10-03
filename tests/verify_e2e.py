@@ -75,8 +75,8 @@ with sync_playwright() as p:
     inline("Sketches", "actualFinish", "2026-09-11")
     check("an Actual Finish completes the task (100%, Status Complete) and Finish Variance shows +2 days", T("Sketches")["progress"] == 100 and cell("Sketches", "finishVariance").inner_text().strip() == "+2 days" and "Complete" in pg.inner_text(f".grid-row[data-id='{T('Sketches')['id']}']"))
     # ============================================================ 7. calendar
-    pg.click("#scheduleMenuBtn"); pg.click("#planSettingsItem"); pg.click(".modal-bg.open [data-settings-tab='calendar']"); pg.wait_for_selector("#calendarModalBg.open"); pg.locator("#calendarDays .cal-day", has_text="Sat").click(); pg.click("#calendarModalBg .btn-primary"); pg.wait_for_timeout(200)
-    check("Working calendar: adding Saturday (Mon-Sat) is saved with the plan and shown in the schedule menu", pg.evaluate("() => project.workDays.join()") == "1,2,3,4,5,6" and "Mon–Sat" in (pg.click("#scheduleMenuBtn") or pg.inner_text("#planSettingsItem")))
+    pg.click("#planSettingsBtn"); pg.click(".modal-bg.open [data-settings-tab='calendar']"); pg.wait_for_selector("#calendarModalBg.open"); pg.locator("#calendarDays .cal-day", has_text="Sat").click(); pg.click("#calendarModalBg .btn-primary"); pg.wait_for_timeout(200)
+    check("Working calendar: adding Saturday (Mon-Sat) is saved with the plan and shown in the Plan settings gear's tooltip", pg.evaluate("() => project.workDays.join()") == "1,2,3,4,5,6" and "Mon–Sat" in pg.get_attribute("#planSettingsBtn", "title"))
     pg.keyboard.press("Escape")
     # ============================================================ 8. filters
     pg.click(".col-filter-btn[data-col='name']"); pg.wait_for_selector("#filterMenu.open"); pg.fill("#filterSearch", "Build"); pg.wait_for_timeout(120); pg.click("#filterOkBtn"); pg.wait_for_timeout(200)

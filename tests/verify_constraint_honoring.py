@@ -24,7 +24,7 @@ with sync_playwright() as p:
     apply = lambda n: ev("n => { applyConstraints(tasks.find(t => t.name === n).id); save(); render(); }", n)
 
     # ---------------------------------------------------------------- the dialog: default, toggling, save, dirty-check
-    pg.click("#scheduleMenuBtn"); pg.wait_for_selector("#scheduleMenu.open"); pg.click("#planSettingsItem"); pg.click(".modal-bg.open [data-settings-tab='rules']"); pg.wait_for_selector("#rulesModalBg.open")
+    pg.click("#planSettingsBtn"); pg.click(".modal-bg.open [data-settings-tab='rules']"); pg.wait_for_selector("#rulesModalBg.open")
     check("defaults checked (the standard: constraints always win)", pg.is_checked("#honorConstraintDatesInput"))
     pg.uncheck("#honorConstraintDatesInput")
     pg.click("#rulesModalBg .modal-header button")
@@ -32,7 +32,7 @@ with sync_playwright() as p:
     pg.click("#confirmModalBg button:has-text('Keep editing')")
     pg.click("#rulesModalBg .modal-footer button.btn-primary"); pg.wait_for_timeout(150)
     check("saved: project.honorConstraintDates is false", ev("() => project.honorConstraintDates") == False)
-    pg.click("#scheduleMenuBtn"); pg.click("#planSettingsItem"); pg.click(".modal-bg.open [data-settings-tab='rules']"); pg.wait_for_selector("#rulesModalBg.open")
+    pg.click("#planSettingsBtn"); pg.click(".modal-bg.open [data-settings-tab='rules']"); pg.wait_for_selector("#rulesModalBg.open")
     check("reopening shows it unchecked", not pg.is_checked("#honorConstraintDatesInput"))
     pg.check("#honorConstraintDatesInput")
     pg.click("#rulesModalBg .modal-footer button.btn-primary"); pg.wait_for_timeout(150)

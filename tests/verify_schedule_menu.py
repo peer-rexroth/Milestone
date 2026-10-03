@@ -27,10 +27,10 @@ with sync_playwright() as p:
 
     pg.click("#scheduleMenuBtn"); pg.wait_for_selector("#scheduleMenu.open")
     sched_items = pg.locator("#scheduleMenu .dropdown-item").all_inner_texts()
-    check("the Schedule menu has only actions — Baseline, Reschedule remaining work, Level resources — then Plan settings, in that order",
-          len(sched_items) == 4 and "Baseline" in sched_items[0] and "Reschedule remaining work" in sched_items[1] and "Level resources" in sched_items[2] and "Plan settings" in sched_items[3], sched_items)
+    check("the Schedule menu has only actions — Baseline, Reschedule remaining work, Level resources, in that order (Plan settings is the gear in the top bar)",
+          len(sched_items) == 3 and "Baseline" in sched_items[0] and "Reschedule remaining work" in sched_items[1] and "Level resources" in sched_items[2], sched_items)
     check("Baseline's hint is there (not set at first)", "not set" in sched_items[0], sched_items[0])
-    check("Plan settings' hint shows the calendar (Mon–Fri by default)", "Mon–Fri" in sched_items[3], sched_items[3])
+    check("the Plan settings gear's tooltip shows the calendar (Mon–Fri by default)", "Mon–Fri" in pg.get_attribute("#planSettingsBtn", "title"), pg.get_attribute("#planSettingsBtn", "title"))
     check("Resource Sheet / Working calendar / Scheduling precision are no longer menu items of their own", all(pg.locator("#" + i).count() == 0 for i in ["planResourcesItem", "planCalendarItem", "planPrecisionItem"]))
 
     # ---------------------------------------------------------------- opening a dialog from it closes the menu, not the dialog
@@ -45,12 +45,12 @@ with sync_playwright() as p:
     pg.keyboard.press("Escape")
 
     pg.click("#scheduleMenuBtn"); pg.wait_for_selector("#scheduleMenu.open")
-    pg.click("#planSettingsItem"); pg.click(".modal-bg.open [data-settings-tab='calendar']"); pg.wait_for_selector("#calendarModalBg.open")
-    check("opening Plan settings (Calendar tab) also closes the Schedule menu", pg.locator("#scheduleMenu.open").count() == 0)
+    pg.click("#planSettingsBtn"); pg.click(".modal-bg.open [data-settings-tab='calendar']"); pg.wait_for_selector("#calendarModalBg.open")
+    check("opening Plan settings (the gear) with the Schedule menu open closes the menu", pg.locator("#scheduleMenu.open").count() == 0)
     pg.keyboard.press("Escape")
 
     pg.click("#scheduleMenuBtn"); pg.wait_for_selector("#scheduleMenu.open")
-    pg.click("#planSettingsItem"); pg.click(".modal-bg.open [data-settings-tab='precision']"); pg.wait_for_selector("#precisionModalBg.open")
+    pg.click("#planSettingsBtn"); pg.click(".modal-bg.open [data-settings-tab='precision']"); pg.wait_for_selector("#precisionModalBg.open")
     check("...and so does opening it on the Precision tab", pg.locator("#scheduleMenu.open").count() == 0)
     pg.keyboard.press("Escape"); pg.wait_for_timeout(100)
     check("Escape closes the precision dialog too", pg.locator("#precisionModalBg.open").count() == 0)
