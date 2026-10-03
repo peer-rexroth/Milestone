@@ -85,7 +85,7 @@ with sync_playwright() as p:
     check("Fit all fits every shown column but Resource Name (which keeps filling the sheet)", "name" not in fa and all(k in fa for k in ("type", "group", "stdRate", "accrueAt")), fa)
     check("...with nothing cut: Std Rate 1250.75 and the uppercase headers show whole", ev("() => { const i = rsVisibleCols().findIndex(c => c.key === 'stdRate'), e = document.querySelector('.rst-row').children[i].querySelector('input'); return e.scrollWidth <= e.clientWidth; }") and ev("() => [...document.querySelectorAll('#resourceSheetHeader > div')].every(d => d.scrollWidth <= d.clientWidth + 1)"))
     pg.click('#resourceSheetHeader [data-rskey="group"]', button="right"); pg.click("#colWidthMenu .dropdown-item:has-text('Default width')"); pg.wait_for_timeout(120)
-    check("Default width gives one column back its own width", "group" not in ev("() => rsColWidths") and cw("group") == 110)
+    check("Default width gives one column back its own width", "group" not in ev("() => rsColWidths") and cw("group") == 75)
     pg.click('#resourceSheetHeader [data-rskey="type"]', button="right"); pg.click("#colWidthMenu .dropdown-item:has-text('Reset all')"); pg.wait_for_timeout(120)
     check("Reset all column widths clears them all", ev("() => Object.keys(rsColWidths).length") == 0)
 

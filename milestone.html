@@ -791,7 +791,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 .rst-cur { border: none; background: transparent; padding: 0 2px; margin-left: 3px; font: inherit; color: var(--accent); cursor: pointer; border-radius: 4px; letter-spacing: 0; }
 .rst-cur:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); }
 .rst-scroll { flex: 1; overflow: auto; position: relative; }
-.rst-header, .rst-row { display: grid; grid-template-columns: var(--rs-cols, 40px minmax(160px,1fr) 126px 110px 98px 108px 108px 132px 116px 40px); column-gap: 0; min-width: max-content; align-items: center; }
+.rst-header, .rst-row { display: grid; grid-template-columns: var(--rs-cols, 40px minmax(160px,1fr) 111px 75px 93px 108px 110px 114px 88px 40px); column-gap: 0; min-width: max-content; align-items: center; }
 .rst-header { position: sticky; top: 0; z-index: 3; height: var(--head-h); font-size: 11.5px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: .03em; border-bottom: 1px solid var(--border); --row-bg: var(--panel); background: var(--row-bg); }
 .rst-row { height: var(--row-h); border-bottom: 1px solid var(--border); font-size: 12.5px; --row-bg: var(--panel); background: var(--row-bg); }
 .rst-row:hover { --row-bg: var(--panel-2); }
@@ -6017,13 +6017,13 @@ function onResourceScroll() {
 // the toolbar's Columns menu. Material Label, Ovt Rate and Code are rarely used, so they start hidden — but a column whose
 // data this plan uses (a Material resource, an overtime rate, a code) shows until you hide it yourself, so nothing is ever
 // silently out of sight.
-const RS_COLS = [
+const RS_COLS = [   // the default widths are what Fit all columns gives a typical sheet (the header or the longest choice decides most of them)
   { key: 'id', label: '#', w: '40px', fixed: true }, { key: 'name', label: 'Resource Name', w: 'minmax(160px,1fr)', fixed: true },
-  { key: 'type', label: 'Type', w: '126px' }, { key: 'materialLabel', label: 'Material Label', w: '128px', optional: true },
-  { key: 'group', label: 'Group', w: '110px' }, { key: 'maxUnits', label: 'Max Units', w: '98px' },
+  { key: 'type', label: 'Type', w: '111px' }, { key: 'materialLabel', label: 'Material Label', w: '128px', optional: true },
+  { key: 'group', label: 'Group', w: '75px' }, { key: 'maxUnits', label: 'Max Units', w: '93px' },
   { key: 'stdRate', label: 'Std Rate', w: '108px', money: true }, { key: 'ovtRate', label: 'Ovt Rate', w: '108px', money: true, optional: true },
-  { key: 'costPerUse', label: 'Cost/Use', w: '108px', money: true }, { key: 'accrueAt', label: 'Accrue At', w: '132px' },
-  { key: 'code', label: 'Code', w: '90px', optional: true }, { key: 'daysOff', label: 'Days Off', w: '116px' },
+  { key: 'costPerUse', label: 'Cost/Use', w: '110px', money: true }, { key: 'accrueAt', label: 'Accrue At', w: '114px' },
+  { key: 'code', label: 'Code', w: '80px', optional: true }, { key: 'daysOff', label: 'Days Off', w: '88px' },
   { key: 'remove', label: '', w: '40px', fixed: true }
 ];
 function rsColUsed(key) {
