@@ -443,6 +443,10 @@ input.tf-cell[type=number] { -moz-appearance: textfield; }
 .main .grid-row > input.inline-edit { width: calc(100% - 4px); margin-inline: 2px; padding-inline: 5px; }   /* the typed text starts exactly where the cell's text does (2 + 1 border + 5 = 8px) */
 .main .grid-row > input.inline-edit[type=date] { width: max(calc(100% - 4px), 95px); padding-inline: 4px 2px; }   /* the native control needs ~93px for its fields + picker icon; the date columns are 104px = 2px + 100px + 2px, so it sits inside its column with equal space left and right */
 .main .grid-row > .inline-wrap { width: max(calc(100% - 4px), 92px); margin-inline: 2px; }
+/* An editor that is wider than its column (a narrow custom column, an unusual font) is the active layer, as in Excel: above the
+   neighbouring cells (z-index works on a grid item without position — the frozen cells keep their sticky positioning), opaque,
+   and lifted by a shadow, so it never reads as two values running into each other. */
+.main .grid-row > input.inline-edit, .main .grid-row > .inline-wrap { z-index: 4; background-color: var(--panel); box-shadow: 0 2px 8px rgba(0, 0, 0, .14); }
 /* Frozen columns: the ID column and everything up to and including Task Name stay put while the rest scrolls sideways (like Excel's
    "freeze panes"; updateFrozenColumns() marks the cells and gives each its `left`). They need an opaque background, or the columns
    scrolling underneath would show through: they inherit the row's (which changes on hover / selection). The column line at their
@@ -2271,7 +2275,8 @@ let colHidden = new Set(DEFAULT_COL_ORDER.filter(c => !TASK_COLS[c].dflt));   //
 const GANTT_DEFAULT_SHOWN = ['name', 'start', 'end', 'duration', 'progress'];   // the list pane beside the chart is only 640px wide: what fits
 const GANTT_DEFAULT_ORDER = [...DEFAULT_COL_ORDER];   // the same sequence as the Tasks view (it used to have an order of its own)
 const COL_MIN_W = 36, COL_MAX_W = 700;
-let colWidths = {};   // columns the user resized: id -> px (absent = the column's default width); one set for both views, per device
+let colWidths = {};
+let cwMode = null;   // the precision ('day' | 'minute') the saved date-column widths were made for — see syncDateColWidths()   // columns the user resized: id -> px (absent = the column's default width); one set for both views, per device
 let showChanges = true;   // shade the cells the last edit changed
 let gColOrder = [...GANTT_DEFAULT_ORDER];
 let gColHidden = new Set(DEFAULT_COL_ORDER.filter(c => !GANTT_DEFAULT_SHOWN.includes(c)));
@@ -2573,7 +2578,7 @@ function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c
 function byId(id) { return tasks.find(t => t.id === id); }
 
 /* ============================ Persistence =============================== */
-function prefsPayload() { return { theme, zoom, zoomRev: ZOOM_DEFAULT_REV, view: currentView, gridPaneWidth, gridPaneRev: GRID_PANE_REV, showBaseline, showTaskForm, taskFormHeight, showChanges, cw: colWidths, cols: { order: colOrder, hidden: [...colHidden], rev: COLS_REV }, gcols: { order: gColOrder, hidden: [...gColHidden] } }; }
+function prefsPayload() { return { theme, zoom, zoomRev: ZOOM_DEFAULT_REV, view: currentView, gridPaneWidth, gridPaneRev: GRID_PANE_REV, showBaseline, showTaskForm, taskFormHeight, showChanges, cw: colWidths, cwMode, cols: { order: colOrder, hidden: [...colHidden], rev: COLS_REV }, gcols: { order: gColOrder, hidden: [...gColHidden] } }; }
 function syncPayload() { return { version: APP_VERSION, project, tasks, deletedTaskIds }; }
 
 function planDataKey(id) { return PLAN_DATA_PREFIX + id; }
@@ -2639,6 +2644,7 @@ function loadPrefs() {
   showTaskForm = d.showTaskForm === true;
   showChanges = d.showChanges !== false;
   colWidths = {};
+  cwMode = d.cwMode === 'day' || d.cwMode === 'minute' ? d.cwMode : null;
   if (d.cw && typeof d.cw === 'object') for (const [id, w] of Object.entries(d.cw)) if (TASK_COLS[id] && Number.isFinite(w)) colWidths[id] = Math.max(COL_MIN_W, Math.min(COL_MAX_W, Math.round(w)));
   taskFormHeight = Number.isFinite(d.taskFormHeight) ? Math.max(TASK_FORM_MIN_H, Math.min(1200, d.taskFormHeight)) : 340;
   gridPaneWidth = d.gridPaneRev === GRID_PANE_REV && Number.isFinite(d.gridPaneWidth) ? Math.max(GRID_PANE_MIN_WIDTH, Math.min(GRID_PANE_MAX_WIDTH, d.gridPaneWidth)) : GRID_PANE_DEFAULT;
@@ -4857,7 +4863,7 @@ function startColResize(e, id) {
   lastResizeDown = { id, at: now };
   const head = e.target.closest('.col-head'), x0 = e.clientX, w0 = head.getBoundingClientRect().width; let moved = false;
   e.target.classList.add('active'); document.body.classList.add('col-resizing');
-  const move = ev => { moved = true; colWidths[id] = Math.max(COL_MIN_W, Math.min(COL_MAX_W, Math.round(w0 + ev.clientX - x0))); applyColTemplate(); updateColumnLines(); };
+  const move = ev => { moved = true; colWidths[id] = Math.max(colMinW(id), Math.min(COL_MAX_W, Math.round(w0 + ev.clientX - x0))); applyColTemplate(); updateColumnLines(); };
   const up = () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); document.body.classList.remove('col-resizing'); if (moved) { save(); render(); } else e.target.classList.remove('active'); };
   document.addEventListener('mousemove', move); document.addEventListener('mouseup', up);
 }
@@ -4874,7 +4880,7 @@ function measureFit(id) {
     for (const line of label.innerHTML.split('<br>')) { probe.innerHTML = line; w = Math.max(w, probe.getBoundingClientRect().width + 3 + 18 + 16 + 6); }
     probe.remove();
   }
-  return Math.max(COL_MIN_W, Math.min(COL_MAX_W, Math.ceil(w)));
+  return Math.max(colMinW(id), Math.min(COL_MAX_W, Math.ceil(w)));
 }
 function fitColumn(id) { const w = measureFit(id); if (!w) return; colWidths[id] = w; save(); render(); }
 // Every shown column to its content — except Task Name, which keeps filling the pane (a fixed name column would leave blank space on a wide screen).
@@ -4940,8 +4946,19 @@ else window.addEventListener('resize', updateResourceSheetColumnLines);
 // "column width should be adapted when switched" the user explicitly asked for. Baselines and custom Date fields stay
 // day-only for now (Phase 4/5), so their width is unaffected.
 const MINUTE_WIDE_COLS = new Set(['start', 'end', 'actualStart', 'actualFinish', 'baselineStart', 'baselineFinish']);
-function colWidth(id) { if (colWidths[id]) return Math.max(COL_MIN_W, Math.min(COL_MAX_W, colWidths[id])) + 'px';   // (a resized Task Name stops filling the pane: it keeps the width you gave it)
-   return minuteModeActive() && (MINUTE_WIDE_COLS.has(id) || (isCustomField(id) && CUSTOM_FIELDS[id].kind === 'date')) ? '150px' : TASK_COLS[id].width; }   // (a custom Date column too: it can carry a time)
+// The narrowest a resized column may get: a column you type dates into needs room for its editor (the native date field is
+// ~95px with its calendar button; the typed date-and-time box of a minute-mode plan ~135px), so the editor never spills over the
+// next column and the date itself is never cut. Clamped where the width is used, so it follows a switch of precision.
+// A minute-mode date column: the typed date-and-time editor needs ~135px ("28.09.2026 08:00" 103px + padding, calendar button,
+// border, margins) and the shown value 106px + the 8px inset each side — 138px leaves the same ~16px of air a day-mode date column has.
+const MINUTE_DATE_W = 138;
+const DATE_EDIT_COLS = new Set(['start', 'end', 'actualStart', 'actualFinish']);
+function colMinW(id) {
+  const dateEdit = DATE_EDIT_COLS.has(id) || (isCustomField(id) && CUSTOM_FIELDS[id].kind === 'date');
+  return dateEdit ? (minuteModeActive() ? MINUTE_DATE_W : 100) : COL_MIN_W;
+}
+function colWidth(id) { if (colWidths[id]) return Math.max(colMinW(id), Math.min(COL_MAX_W, colWidths[id])) + 'px';   // (a resized Task Name stops filling the pane: it keeps the width you gave it)
+   return minuteModeActive() && (MINUTE_WIDE_COLS.has(id) || (isCustomField(id) && CUSTOM_FIELDS[id].kind === 'date')) ? MINUTE_DATE_W + 'px' : TASK_COLS[id].width; }   // (a custom Date column too: it can carry a time)
 function applyColTemplate(cols = visibleTaskCols()) {
   document.getElementById('main').style.setProperty('--task-cols', ['34px', ...cols.map(colWidth), '88px'].join(' '));
   // the narrowest the row can get (Task Name at its minimum) + the row's 10px padding on each side: below this width the list scrolls sideways
@@ -4955,7 +4972,21 @@ function resourceCellHtml(t, summary) {
   if (!asg.some(a => a.units !== 100)) return escapeHtml(t.resource);
   return asg.map((a, i) => `${i ? '<span class="res-sep">,</span>' : ''}<span class="res-a"><span class="res-n">${escapeHtml(a.name)}</span>${a.units !== 100 ? `<span class="res-p">${a.units}%</span>` : ''}</span>`).join('');
 }
+// Switching precision (day <-> hours & minutes) resizes the date columns: a date column's width is made for one precision
+// (104px for a date, MINUTE_DATE_W for a date and time), so a width you gave it under the other one is dropped and the column
+// takes its default for the new one. Checked on every render, so it also covers Undo, a sync and opening a plan of the
+// other precision. The other columns keep their widths.
+function syncDateColWidths() {
+  const mode = minuteModeActive() ? 'minute' : 'day';
+  if (cwMode === mode) return;
+  const had = cwMode !== null; cwMode = mode;
+  let dropped = false;
+  if (had) for (const id of Object.keys(colWidths)) if (MINUTE_WIDE_COLS.has(id) || (isCustomField(id) && CUSTOM_FIELDS[id].kind === 'date')) { delete colWidths[id]; dropped = true; }
+  try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefsPayload())); } catch (e) { /* prefs are a convenience */ }
+  if (dropped && document.getElementById('columnsMenu').classList.contains('open')) renderColumnsMenu();
+}
 function renderGrid() {
+  syncDateColWidths();
   const full = true;   // the same full list in both views (before, the Gantt view had a compact four-column one)
   // The user's visible columns in the user's order (ID first, row actions last) — in both views.
   const cols = visibleTaskCols();

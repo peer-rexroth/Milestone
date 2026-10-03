@@ -43,7 +43,7 @@ with sync_playwright() as p:
     check("an invalid time is dropped, the date stays", cust("B") == ["2026-09-08", None])
     ev("() => { tasks.find(t => t.name === 'B').custom = { date1: '2026-09-08', date1Time: '09:15' }; normalizeData(); }")
     w = ev("() => getComputedStyle(document.getElementById('main')).getPropertyValue('--task-cols')").split()
-    check("the custom Date column is 150px wide in a minute-mode plan (104px in a day-mode one)", "150px" in w, w)
+    check("the custom Date column is 138px wide in a minute-mode plan (104px in a day-mode one)", "138px" in w, w)
 
     # ---------------------------------------------------------------- the list editor
     plan(True)
@@ -115,7 +115,7 @@ with sync_playwright() as p:
     check("switching to days with a time still set warns first", pg.locator("#confirmModalBg.open").count() == 1 and "lose its time of day" in pg.inner_text("#confirmModalBody"), pg.inner_text("#confirmModalBody") if pg.locator("#confirmModalBg.open").count() else None)
     pg.click("#confirmModalActionBtn"); pg.wait_for_timeout(200)
     check("switching the plan back to days drops the time and keeps the date", cust("A") == ["2026-09-11", None], cust("A"))
-    check("a day-mode plan's cell shows the date only, in a 104px column", cell("A").inner_text() == "11.09.2026" and "150px" not in ev("() => getComputedStyle(document.getElementById('main')).getPropertyValue('--task-cols')"))
+    check("a day-mode plan's cell shows the date only, in a 104px column", cell("A").inner_text() == "11.09.2026" and "138px" not in ev("() => getComputedStyle(document.getElementById('main')).getPropertyValue('--task-cols')"))
     cell("A").click(); pg.wait_for_selector(".inline-edit")
     check("...and its editor is the native date input, as before", pg.get_attribute(".inline-edit", "type") == "date")
     pg.keyboard.press("Escape")

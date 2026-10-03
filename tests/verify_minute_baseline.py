@@ -74,7 +74,7 @@ with sync_playwright() as p:
     check("...Duration Variance in minute units ('+15 min', the task grew by 15 working minutes)", txt("durationVariance") == "+15 min", txt("durationVariance"))
     bsi, bfi = hc().index("baselineStart"), hc().index("baselineFinish")
     tracks = ev("() => getComputedStyle(document.getElementById('main')).getPropertyValue('--task-cols')").strip().split()
-    check("Baseline Start/Finish widen to 150px like Start/Finish do", tracks[1 + bsi] == "150px" and tracks[1 + bfi] == "150px", (bsi, bfi, tracks))
+    check("Baseline Start/Finish widen to 138px like Start/Finish do", tracks[1 + bsi] == "138px" and tracks[1 + bfi] == "138px", (bsi, bfi, tracks))
 
     # ---------------------------------------------------------------- the task dialog's baseline-info box, live as you type
     pg.click(".grid-row .icon-btn[title=Edit]"); pg.wait_for_selector("#taskModalBg.open")

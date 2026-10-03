@@ -83,6 +83,36 @@ with sync_playwright() as p:
     check("the Columns menu has Fit all columns too", ev("() => Object.keys(colWidths).length") > 5)
     ev("() => { colWidths = {}; save(); render(); }")
 
+    # ------------------------------------------------------------ date columns keep room for their editor
+    seed(); ev("() => { colWidths = { start: 60, end: 60, progress: 40 }; save(); render(); }")
+    check("a date column can't get narrower than its editor needs (100px), other columns can", abs(cellw("start") - 100) <= 1 and abs(cellw("end") - 100) <= 1 and cellw("progress") < 50, (cellw("start"), cellw("progress")))
+    box2 = pg.locator('#gridHeader .col-resizer[data-col="start"]').bounding_box()
+    pg.mouse.move(box2["x"] + 3, box2["y"] + 20); pg.mouse.down(); pg.mouse.move(box2["x"] - 80, box2["y"] + 20, steps=4); pg.mouse.up(); pg.wait_for_timeout(150)
+    check("...dragging stops there too", ev("() => colWidths.start") == 100 and abs(cellw("start") - 100) <= 1, ev("() => colWidths.start"))
+    ev("() => startInlineEdit('a', 'start')"); pg.wait_for_timeout(120)
+    r = ev("() => { const row = document.querySelector('#gridRows .grid-row[data-id=\"a\"]'), k = visibleTaskCols().indexOf('start') + 1; return [row.children[k].getBoundingClientRect().right, row.children[k + 1].getBoundingClientRect().left]; }")
+    check("...so the open date editor stays inside its column (no overlap with Finish)", r[0] <= r[1], r)
+    st = ev("() => { const e = document.querySelector('#gridRows input.inline-edit'), cs = getComputedStyle(e); return [cs.zIndex, cs.boxShadow !== 'none', cs.backgroundColor]; }")
+    check("an open editor is the top layer: above the neighbours, lifted, opaque", st[0] == "4" and st[1] and st[2] not in ("rgba(0, 0, 0, 0)", "transparent"), st)
+    pg.keyboard.press("Escape")
+    ev("() => { project.timeUnit = 'minute'; save(); render(); }")
+    check("in a minute-mode plan the minimum is the date-and-time editor's 138px", abs(cellw("start") - 138) <= 1, cellw("start"))
+    ev("() => { delete project.timeUnit; colWidths = {}; save(); render(); }")
+
+    # ------------------------------------------------------------ switching precision resizes the date columns
+    seed(); ev("() => { colWidths = { start: 200, end: 120, resource: 250 }; save(); render(); }")
+    ev("() => { project.timeUnit = 'minute'; save(); render(); }")
+    check("switching to hours & minutes drops the date columns' own widths: Start and Finish are the 138px date-and-time columns", abs(cellw("start") - 138) <= 1 and abs(cellw("end") - 138) <= 1 and "start" not in ev("() => colWidths"), (cellw("start"), ev("() => colWidths")))
+    check("...the other columns keep theirs (Resource 250px), and it is saved", abs(cellw("resource") - 250) <= 1 and ev("() => JSON.parse(localStorage.getItem('milestone-prefs')).cwMode") == "minute")
+    ev("() => { colWidths.start = 170; save(); render(); }")
+    ev("() => { delete project.timeUnit; save(); render(); }")
+    check("...and back to days: the 104px date columns again", abs(cellw("start") - 104) <= 1 and abs(cellw("end") - 104) <= 1, (cellw("start"), cellw("end")))
+    ev("() => { colWidths.start = 180; save(); render(); }"); pg.reload(); pg.wait_for_selector("#undoBtn"); ev("() => { historyCoalesceMs = 0; }")
+    check("a width you give in the same precision stays, also after a reload", abs(cellw("start") - 180) <= 1, cellw("start"))
+    ev("() => { project.timeUnit = 'minute'; save(); render(); }"); ev("() => historyUndo()")
+    check("Undo of the switch (back to days) gives the day width too, not the old 180px", abs(cellw("start") - 104) <= 1, cellw("start"))
+    ev("() => { colWidths = {}; save(); render(); }")
+
     # ------------------------------------------------------------ change highlighting
     seed()
     ev("() => { startInlineEdit('a', 'duration'); }"); pg.wait_for_timeout(80)

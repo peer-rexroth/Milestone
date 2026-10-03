@@ -113,7 +113,7 @@ with sync_playwright() as p:
     check("the grid's Start cell shows the date AND the time", "09:30" in cell and "07.09.2026" in cell, cell)
     cols_css = ev("() => getComputedStyle(document.getElementById('main')).getPropertyValue('--task-cols')")
     tracks = cols_css.strip().split()
-    check("Start/Finish/Actual Start/Actual Finish widen to 150px in minute mode (the standard day-mode 104px column)", tracks[4:8] == ["150px"] * 4, tracks)
+    check("Start/Finish/Actual Start/Actual Finish widen to 138px in minute mode (the standard day-mode 104px column)", tracks[4:8] == ["138px"] * 4, tracks)
 
     # ---------------------------------------------------------------- switching back to day mode: grid and dialog revert, times dropped
     ev("() => { project.timeUnit = 'day'; delete project.workHours; normalizeData(); save(); render(); }")
