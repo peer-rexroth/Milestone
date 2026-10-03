@@ -27,7 +27,7 @@ with sync_playwright() as p:
     pg.click("button.view-tab:has-text('Resource Plan')")
     check("the Resource Plan tab (id 'resources') is the last view tab, after Tasks and Gantt", ev("() => MAIN_VIEWS.map(v => v.id)") == ["tasks", "gantt", "resources"])
     check("switching to it sets the view-resources class", "view-resources" in pg.get_attribute("#main", "class"))
-    check("zoom tabs are visible in the Resource Plan view (shared with Gantt), in its own toolbar", ev("() => document.getElementById('zoomTabs').offsetParent !== null"))
+    check("zoom tabs are visible in the Resource Plan view (shared with Gantt), in the status bar", ev("() => document.getElementById('zoomTabs').offsetParent !== null"))
     check("...with Fit and 'Over-allocated only' beside them, and no task buttons", ev("() => ['fitZoomBtn', 'overOnlyBtn'].every(i => document.getElementById(i).offsetParent !== null) && document.getElementById('addTaskBtn').offsetParent === null"))
     check("the grid pane and Gantt pane are hidden", pg.locator(".grid-pane:visible").count() == 0 and pg.locator(".gantt-pane-outer:visible").count() == 0)
     check("one row for the one pool resource (Anna)", pg.locator("#resourceBody .resource-row").count() == 1)

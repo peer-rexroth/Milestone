@@ -22,7 +22,7 @@
   --bg: #f6f8fa; --panel: #ffffff; --panel-2: #eaeef2; --border: rgba(31,35,40,0.12);
   --text: #1f2328; --text-dim: #656d76; --text-faint: #8c959f;
   --accent: #0969da; --danger: #cf222e;
-  --task-blue: #0969da; --task-teal: #1b7c83; --task-purple: #8250df; --task-amber: #9a6700;
+  --task-blue: #0969da; --task-teal: #1b7c83; --task-purple: #8250df; --task-amber: #9a6700; --chg-bg: #fdf1c7; --chg-bg-sel: #f8e3a0;
   --task-pink: #ce2c85; --task-green: #1a7f37; --task-red: #cf222e; --task-grey: #656d76;
   --status-not-started: #8c959f; --status-complete: #0969da;
   --radius: 10px;
@@ -38,7 +38,7 @@ html[data-theme="dark"] {
   --bg: #262c36; --panel: #212830; --panel-2: #2d3640; --border: rgba(209,215,224,0.10);
   --text: #d1d7e0; --text-dim: #9198a1; --text-faint: #6b7280;
   --accent: #478be6; --danger: #e5534b;
-  --task-blue: #478be6; --task-teal: #4cb6c4; --task-purple: #986ee2; --task-amber: #c69026;
+  --task-blue: #478be6; --task-teal: #4cb6c4; --task-purple: #986ee2; --task-amber: #c69026; --chg-bg: color-mix(in srgb, #c69026 20%, #22272e); --chg-bg-sel: color-mix(in srgb, #c69026 30%, #22272e);
   --task-pink: #c96b96; --task-green: #57ab5a; --task-red: #e5534b; --task-grey: #9198a1;
   --status-not-started: #6b7280; --status-complete: #478be6;
   --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.35);
@@ -98,8 +98,6 @@ button { cursor: pointer; }
 .tb-group .filter-bar { min-width: 0; }
 .tb-over { display: none !important; }
 .tb-toggle[aria-pressed="true"] { background: color-mix(in srgb, var(--accent) 14%, var(--panel)); border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); color: var(--accent); }
-.subbar #zoomTabs { border: 1px solid var(--border); }
-.subbar #zoomTabs .view-tab { padding: 4px 10px; }
 #moreMenu .menu-head { padding-top: 8px; }
 #moreMenu .dropdown-item .mode-check { margin-left: auto; color: var(--accent); }
 
@@ -233,7 +231,8 @@ button:focus:not(:focus-visible) { outline: none; }
 .col-resizer:hover, body.col-resizing .col-resizer.active { background: linear-gradient(90deg, transparent 3px, var(--accent) 3px, var(--accent) 5px, transparent 5px); }
 body.col-resizing, body.col-resizing * { cursor: col-resize !important; user-select: none !important; }
 /* the cells the last edit changed (MS Project's change highlighting) */
-.main .grid-row > .chg { background-color: color-mix(in srgb, var(--accent) 17%, var(--row-bg)); }
+.main .grid-row > .chg { background-color: var(--chg-bg); }
+.main .grid-row.selected > .chg { background-color: var(--chg-bg-sel); }   /* (over the panel, not the selection tint: amber mixed into lavender turns grey) */   /* amber, never the accent: blue is selection */
 /* a Resource cell: a share other than 100% shows as a chip that never gets cut off with the name */
 .res-a { display: inline-flex; align-items: center; min-width: 0; flex: 0 1 auto; }
 .res-n { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
@@ -265,7 +264,12 @@ body.col-resizing, body.col-resizing * { cursor: col-resize !important; user-sel
 .sb-icon { border: none; background: transparent; color: var(--text-dim); width: 22px; height: 22px; border-radius: 5px; cursor: pointer; font-size: 10px; }
 .sb-icon:hover { background: color-mix(in srgb, var(--text) 8%, transparent); color: var(--text); }
 #zoomSlider { width: 140px; accent-color: var(--accent); }
-.sb-zoom-label { min-width: 74px; }
+.sb-scale { display: inline-flex; align-items: center; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: var(--panel); }
+.sb-scale #zoomTabs { display: inline-flex; padding: 0; gap: 0; border: none; background: transparent; border-radius: 0; }
+.sb-scale .sb-seg, .sb-scale .view-tab { border: none; border-left: 1px solid var(--border); background: transparent; color: var(--text-dim); font-size: 11.5px; font-weight: 500; padding: 2px 9px; line-height: 18px; border-radius: 0; box-shadow: none; cursor: pointer; }
+.sb-scale .sb-seg { border-left: none; }
+.sb-scale .sb-seg:hover, .sb-scale .view-tab:hover { background: color-mix(in srgb, var(--text) 7%, transparent); color: var(--text); }
+.sb-scale .sb-seg[aria-pressed="true"], .sb-scale .view-tab.active { background: color-mix(in srgb, var(--accent) 14%, var(--panel)); color: var(--accent); font-weight: 600; }
 .statusbar .filter-chip { padding: 1px 3px 1px 7px; }
 .filter-bar.hidden { display: none; }
 .filter-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 4px 3px 8px; border-radius: 999px; white-space: nowrap; font-size: 12px; color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--panel)); border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--panel)); }
@@ -1146,10 +1150,6 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
     <button class="btn" id="addResourceBtn" type="button" onclick="addResourceSheetRow()"><i class="fa-solid fa-plus"></i>Add Resource</button>
   </div>
   <span class="subbar-spacer"></span>
-  <div class="tb-group" data-views="gantt resources">
-    <div class="view-tabs" id="zoomTabs" data-more="1" data-more-label="Timescale" role="group" aria-label="Timescale"></div>
-    <button class="btn btn-sm tb-toggle" id="fitZoomBtn" data-more="3" onclick="fitZoom()" aria-pressed="false" title="Fit — the whole plan across the chart's width (the standard); Week / Month / Year are fixed scales"><i class="fa-solid fa-arrows-left-right-to-line"></i>Fit</button>
-  </div>
   <div class="tb-group" data-views="gantt">
     <span class="tb-sep"></span>
     <button class="btn btn-sm tb-toggle" id="baselineBtn" data-more="4" onclick="toggleBaseline()" aria-pressed="false" title="Show the baseline under the bars"><i class="fa-solid fa-ruler-horizontal"></i>Baseline</button>
@@ -1233,10 +1233,10 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
   <span class="sb-views" data-sb-views="tasks gantt"><span class="sb-sep"></span><div class="filter-bar hidden" id="filterBar"></div></span>
   <span class="sb-spacer"></span>
   <span class="sb-views sb-zoom" data-sb-views="gantt resources"><span class="sb-sep"></span>
+    <span class="sb-scale" role="group" aria-label="Timescale"><button class="sb-seg" id="fitZoomBtn" onclick="fitZoom()" aria-pressed="false" title="Fit — the whole plan across the chart's width (the standard); Week / Month / Year are fixed scales">Fit</button><span class="view-tabs" id="zoomTabs"></span></span>
     <button class="sb-icon" onclick="nudgeZoom(-1)" title="Zoom out" aria-label="Zoom out"><i class="fa-solid fa-minus"></i></button>
     <input type="range" id="zoomSlider" min="0" max="1000" step="1" aria-label="Zoom" title="Zoom — drag for any scale between the presets" oninput="onZoomSlider(this.value)" onchange="save()">
     <button class="sb-icon" onclick="nudgeZoom(1)" title="Zoom in" aria-label="Zoom in"><i class="fa-solid fa-plus"></i></button>
-    <span class="sb-text sb-zoom-label" id="sbZoomLabel"></span>
   </span>
 </div>
 <div class="dropdown-menu" id="sbModeMenu" role="menu"></div>
@@ -1917,7 +1917,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
           <div class="help-section-title">Columns</div>
           <div class="help-row"><i class="fa-solid fa-table-columns"></i><span>Click <strong>Columns</strong> in the toolbar to tick the columns you want and reorder them. The <strong>Tasks view and the Gantt view each remember their own set</strong> on this device; Task Name always stays.</span></div>
           <div class="help-row"><i class="fa-solid fa-left-right"></i><span><strong>Resize a column</strong> by dragging the edge of its header; <strong>double-click the edge</strong> to fit it to its content. <strong>Right-click a header</strong> for <em>Fit to content</em>, <em>Fit all columns</em>, <em>Default width</em> and <em>Reset all column widths</em> (also in the Columns menu). Widths are remembered on this device and shared by the Tasks and Gantt lists; a resized Task Name keeps its width instead of filling the pane.</span></div>
-          <div class="help-row"><i class="fa-solid fa-highlighter"></i><span>After an edit the cells it <strong>changed</strong> are shaded light blue — a later task that moved, a Finish or Work that was recalculated — as in MS Project. What you typed yourself is not shaded; the next edit, Undo or Redo clears it. Switch it off with <em>Highlight what the last edit changed</em> in the Columns menu.</span></div>
+          <div class="help-row"><i class="fa-solid fa-highlighter"></i><span>After an edit the cells it <strong>changed</strong> are shaded pale yellow (blue is the selection) — a later task that moved, a Finish or Work that was recalculated — as in MS Project. What you typed yourself is not shaded; the next edit, Undo or Redo clears it. Switch it off with <em>Highlight what the last edit changed</em> in the Columns menu.</span></div>
           <div class="help-row"><i class="fa-solid fa-eye-slash"></i><span>The list starts with Task Name, Start, Finish, Duration, % Complete, Predecessors, Resource and Status; Task Mode, WBS, the Actual dates, Remaining Duration, Task Type, Work, Cost, the baseline and variance columns and your custom fields start hidden (<strong>Columns</strong> shows them). The Gantt's list starts with just Name, Start, Finish, Duration and % Complete. Click a <strong>Resource</strong> or actual-date cell to edit it, or use the task dialog.</span></div>
           <div class="help-row"><i class="fa-solid fa-users"></i><span><strong>Resource</strong> takes names separated by commas or semicolons ("Anna, Ben") — typing a new name adds it to the plan's resource pool automatically, the same way MS Project does. Give a share other than full time with <code>Name[NN%]</code> ("Anna[50%], Ben"), as in MS Project — a bare name is 100%. In the list a share other than 100% shows as a small <strong>%</strong> chip next to the name, so it stays visible however narrow the column is.</span></div>
           <div class="help-row"><i class="fa-solid fa-people-group"></i><span>The <strong>Resource Sheet</strong> tab lists everyone: type, Max Units (how much of a resource is available: 100% is one full-time person, 300% three people pooled into one; only Work resources have it), rates and cost per use. Renaming or removing someone there updates every task that names them; <strong>Days off</strong> on a row opens that person's own days off, on top of the plan's working week.</span></div>
@@ -1944,7 +1944,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <div class="help-section">
           <div class="help-section-title">The view</div>
           <div class="help-row"><i class="fa-solid fa-table-list"></i><span>The left side is the <strong>same task list</strong> as in the Tasks view — the same filters, editing and buttons — with the chart to its right. Drag the thin strip between them to change how much room the list gets. It scrolls sideways when it has more columns than fit, and its ID … Task Name columns stay in place.</span></div>
-          <div class="help-row"><i class="fa-solid fa-calendar"></i><span><strong>Fit</strong> (the standard) spreads the whole plan across the chart's width and follows the window; <strong>Week / Month / Year</strong> are fixed scales, and the <strong>zoom slider</strong> in the status bar (or its − / +) gives any scale in between. A bar too short for its name has it written beside it, and a milestone's name sits next to it. Year shows quarters; Week is labelled by calendar week (CW — weeks start on Monday, ISO 8601). Days off are shaded.</span></div>
+          <div class="help-row"><i class="fa-solid fa-calendar"></i><span><strong>Fit</strong> (the standard) spreads the whole plan across the chart's width and follows the window; <strong>Week / Month / Year</strong> are fixed scales — all of them at the right of the <strong>status bar</strong>, next to the <strong>zoom slider</strong> (or its − / +), which gives any scale in between. A bar too short for its name has it written beside it, and a milestone's name sits next to it. Year shows quarters; Week is labelled by calendar week (CW — weeks start on Monday, ISO 8601). Days off are shaded.</span></div>
         </div>
         <div class="help-divider"></div>
         <div class="help-section">
@@ -9124,7 +9124,6 @@ function updateStatusBar() {
   if (currentView === 'gantt' || currentView === 'resources') {
     const z = currentZoom(), r = zoomSliderRange();
     document.getElementById('zoomSlider').value = Math.round((Math.log(z.pxPerDay) - r.lo) / (r.hi - r.lo) * 1000);
-    document.getElementById('sbZoomLabel').textContent = zoom === 'fit' ? 'Fit' : String(zoom).startsWith('px:') ? 'Custom' : (ZOOMS.find(x => x.id === zoom) || {}).label || '';
   }
 }
 // The zoom slider: px per day on a log scale between the coarsest and finest scale this plan offers.
