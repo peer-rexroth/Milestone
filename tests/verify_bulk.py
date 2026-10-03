@@ -41,7 +41,7 @@ with sync_playwright() as p:
     check("Ctrl+click adds a task to the selection (B and D), both rows are highlighted", sel() == ["B", "D"] and ev("() => document.querySelectorAll('.grid-row.selected').length") == 2, sel())
     check("...the chip in the toolbar says '2 selected'", "2 selected" in pg.inner_text("#selChip") and not ev("() => document.getElementById('selActions').classList.contains('hidden')"))
     click("B", ["Meta"])
-    check("Ctrl+click on a selected task removes it (only D is left: the chip says '1 selected')", sel() == ["D"] and "1 selected" in pg.inner_text("#selChip"), sel())
+    check("Ctrl+click on a selected task removes it (only D is left: the chip goes, one row needs none)", sel() == ["D"] and not pg.locator("#selChip").is_visible(), sel())
     click("A"); click("D", ["Shift"])
     check("Shift+click selects the rows from the last clicked one (A to D)", sel() == ["A", "B", "C", "D"], sel())
     click("E", ["Shift"])

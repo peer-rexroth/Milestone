@@ -32,7 +32,7 @@ with sync_playwright() as p:
           and ev("() => getComputedStyle(document.getElementById('gridPane')).display") == "none" and ev("() => getComputedStyle(document.getElementById('ganttPaneOuter')).display") == "none" and ev("() => getComputedStyle(document.getElementById('resourcePaneOuter')).display") == "none")
     vis = lambda i: ev("i => document.getElementById(i).offsetParent !== null", i)
     check("the toolbar is the Resource Sheet's own: Add Resource and Currency — no zoom, no Gantt toggles, no task buttons (Add Task, Find, Columns)",
-          vis("addResourceBtn") and vis("rsCurrencyInput") and not any(vis(i) for i in ["zoomTabs", "criticalPathBtn", "addTaskBtn", "searchBtn", "columnsBtn"]))
+          vis("addResourceBtn") and pg.locator("#rsCurrencyInput").count() == 0 and not any(vis(i) for i in ["zoomTabs", "criticalPathBtn", "addTaskBtn", "searchBtn", "columnsBtn"]))
     check("...and there is no third bar above the sheet any more", pg.locator(".rst-toolbar").count() == 0)
 
     pg.click("#resourcesBtn"); pg.wait_for_timeout(100)
@@ -50,7 +50,7 @@ with sync_playwright() as p:
     # ---------------------------------------------------------------- header, empty state, one row per resource
     heads = pg.locator("#resourceSheetHeader > div")
     check("the header has MS Project's own column order: #, Resource Name, Type, Material Label, Group, Max Units, Std Rate, Ovt Rate, Cost/Use, Accrue At, Code, Days Off (CSS uppercases them for display)",
-          [heads.nth(i).inner_text() for i in range(12)] == [s.upper() for s in ["#", "Resource Name", "Type", "Material Label", "Group", "Max Units", "Std Rate", "Ovt Rate", "Cost/Use", "Accrue At", "Code", "Days Off"]])
+          [heads.nth(i).inner_text().split("(")[0].strip() for i in range(12)] == [s.upper() for s in ["#", "Resource Name", "Type", "Material Label", "Group", "Max Units", "Std Rate", "Ovt Rate", "Cost/Use", "Accrue At", "Code", "Days Off"]])
     check("...no 'Base Calendar' column — Milestone has one calendar per plan, a per-resource selector would do nothing", "Base Calendar" not in [heads.nth(i).inner_text() for i in range(heads.count())])
     check("with no pool at all, the empty-state message shows", ev("() => document.querySelector('.rst-empty')") is not None and "Add Resource" in ev("() => document.querySelector('.rst-empty').textContent"))
 
@@ -175,14 +175,13 @@ with sync_playwright() as p:
     check("Accrue At commits", ev("() => project.resources.find(r => r.name === 'Anna Schmidt').accrueAt") == "start")
 
     # ---------------------------------------------------------------- currency picker
-    pg.select_option("#rsCurrencyInput", "USD")
-    pg.wait_for_timeout(120)
-    check("the currency select writes project.currencyCode", ev("() => project.currencyCode") == "USD")
-    cur_style = ev("""() => { const el = document.getElementById('rsCurrencyInput'); const cs = getComputedStyle(el); return [cs.borderRadius, cs.borderTopWidth, el.className]; }""")
-    check("the currency dropdown has the same dialog-field look as Type/Accrue At (.rst-select, 7px rounded corners, a real border)",
-          cur_style[0] == "7px" and cur_style[1] == "1px" and "rst-select" in cur_style[2], cur_style)
-    pg.select_option("#rsCurrencyInput", "EUR")
-    pg.wait_for_timeout(120)
+    heads = ev("() => [...document.querySelectorAll('#resourceSheetHeader > div')].filter(d => d.querySelector('.rst-cur')).map(d => d.textContent.trim())")
+    check("the money columns name the currency in their header (Std Rate (€), Ovt Rate (€), Cost/Use (€))", heads == ["Std Rate(€)", "Ovt Rate(€)", "Cost/Use(€)"], heads)
+    pg.locator("#resourceSheetHeader .rst-cur").first.click(); pg.wait_for_timeout(150)
+    check("...clicking it opens Plan settings on the Currency tab (its one editor)", pg.locator("#currencyModalBg.open").count() == 1)
+    pg.select_option("#planCurrencyInput", "USD"); pg.click("#currencyModalBg .btn-primary"); pg.wait_for_timeout(150)
+    check("the setting writes project.currencyCode and the headers follow ($)", ev("() => project.currencyCode") == "USD" and "($)" in pg.inner_text("#resourceSheetHeader"))
+    ev("() => setCurrencyCode('EUR')"); pg.wait_for_timeout(100)
     check("...and switching back to EUR (the default) doesn't store it, same convention as everywhere else", ev("() => 'currencyCode' in project") == False)
 
     # ---------------------------------------------------------------- Days off link -> the Days off dialog for that one resource

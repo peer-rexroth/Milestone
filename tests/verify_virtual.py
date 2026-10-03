@@ -31,7 +31,7 @@ with sync_playwright() as p:
     ev(SEED, 1000); pg.wait_for_timeout(200)
     n = ev("() => visibleTaskList().length")
     check("a plan of 1,000 rows builds only the rows in view plus a buffer (well under 100), between two spacers", 20 < len(rows()) < 100 and pg.locator(".virt-spacer").count() == 1 and n == 1000, (len(rows()), n, pg.locator(".virt-spacer").count()))
-    check("...the list is exactly as tall as 1,000 rows of 32px (the scrollbar is right), and every built row is 32px", ev("() => document.getElementById('gridRows').scrollHeight") == n * 32 and ev("() => [...document.querySelectorAll('#gridRows .grid-row')].every(r => Math.round(r.getBoundingClientRect().height) === 32)"), ev("() => document.getElementById('gridRows').scrollHeight"))
+    check("...the list is exactly as tall as 1,000 rows of 32px (the scrollbar is right), and every built row is 32px", ev("() => document.getElementById('gridRows').scrollHeight - document.querySelector('#gridRows .grid-add-row').offsetHeight") == n * 32 and ev("() => [...document.querySelectorAll('#gridRows .grid-row')].every(r => Math.round(r.getBoundingClientRect().height) === 32)"), ev("() => document.getElementById('gridRows').scrollHeight"))
     check("...the frozen columns and column lines are on the built rows", ev("() => [...document.querySelectorAll('#gridRows .grid-row')].every(r => r.children[0].classList.contains('frz'))"))
 
     # ---------------------------------------------------------------- scrolling
@@ -43,7 +43,7 @@ with sync_playwright() as p:
     check("scrolling to the middle, the end and back always leaves rows under the viewport (no blank area)", ok)
     scroll(16000); r = rows()
     check("...the rows built follow the scroll position (around row 500 now, not row 0)", 400 < first_idx() < 520 and len(r) < 100, first_idx())
-    check("...the spacers add up (rows built + both spacers = the whole list)", ev("() => { const el = document.getElementById('gridRows'); return [...el.children].reduce((h, c) => h + c.getBoundingClientRect().height, 0); }") == n * 32)
+    check("...the spacers add up (rows built + both spacers = the whole list)", ev("() => { const el = document.getElementById('gridRows'); return [...el.children].filter(c => !c.classList.contains('grid-add-row')).reduce((h, c) => h + c.getBoundingClientRect().height, 0); }") == n * 32)
     scroll(16000 + 32 * 5); r2 = rows()
     check("a small scroll does not rebuild the rows (they are only rebuilt near the edge of what is built)", r2 == r)
     ev("() => { window.__builds = 0; const o = renderGrid; window.renderGrid = function () { window.__builds++; return o.apply(this, arguments); }; }")

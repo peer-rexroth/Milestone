@@ -46,7 +46,7 @@ with sync_playwright() as p:
         x = row["l"] + r[3]; y = row["t"] + 4
         check("a line is really painted in a row (a pixel at its position differs from the background next to it)", has_line(x, y)[2], has_line(x, y))
         below = pg.evaluate("() => { const rows = document.getElementById('gridRows').getBoundingClientRect(); const last = [...document.querySelectorAll('#gridRows .grid-row')].pop().getBoundingClientRect(); return {y: (last.bottom + rows.bottom) / 2}; }")
-        check("...and it continues below the last task (empty area)", has_line(x, below["y"])[2], has_line(x, below["y"]))
+        check("...and it stops at the last row: the empty area below is plain (UX review #11)", not has_line(x, below["y"])[2], has_line(x, below["y"]))
         pg.hover(f".grid-row >> nth=1"); pg.wait_for_timeout(100)
         y1 = pg.evaluate("() => { const r = document.querySelectorAll('#gridRows .grid-row')[1].getBoundingClientRect(); return r.top + 4; }")
         check("a hovered row keeps its lines", has_line(x, y1)[2], has_line(x, y1))

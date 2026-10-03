@@ -75,7 +75,7 @@ with sync_playwright() as p:
     check("the scroll position survives a re-render (an edit doesn't jump the list back)", pg.evaluate("() => { document.getElementById('gridRows').scrollLeft = 400; tasks[0].name = 'Design 2'; save(); render(); return document.getElementById('gridRows').scrollLeft; }") == 400)
     check("scrolled sideways, the empty area under the last task has no stray column lines (they would cross the frozen columns)", pg.evaluate("() => getComputedStyle(document.getElementById('gridRows')).backgroundImage") == "none")
     pg.evaluate("() => { document.getElementById('gridRows').scrollLeft = 0; }"); pg.wait_for_timeout(150)
-    check("...and they are back at scroll 0", pg.evaluate("() => getComputedStyle(document.getElementById('gridRows')).backgroundImage") != "none")
+    check("...and none at scroll 0 either (the lines stop at the last row — UX review #11)", pg.evaluate("() => getComputedStyle(document.getElementById('gridRows')).backgroundImage") == "none")
     # editing a frozen cell while scrolled
     pg.evaluate("() => { document.getElementById('gridRows').scrollLeft = 400; }"); pg.wait_for_timeout(150)
     pg.locator("#gridRows .grid-row .name-text").nth(3).click(); pg.wait_for_selector(".inline-edit"); pg.wait_for_function("() => document.activeElement && document.activeElement.classList.contains('inline-edit')")

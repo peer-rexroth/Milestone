@@ -81,7 +81,8 @@ button { cursor: pointer; }
 .topbar-divider { width: 1px; height: 22px; background: var(--border); }
 .topbar-spacer { flex: 1 1 auto; }
 @media (max-width: 1320px) { .topbar .brand-name { display: none; } .plan-btn { width: 200px; } }
-@media (max-width: 1180px) { .topbar .btn-label { display: none; } .plan-btn { width: 180px; } }
+@media (max-width: 1180px) { .topbar .btn-label { display: none; } .topbar #scheduleMenuBtn .btn-label { display: inline; } .plan-btn { width: 180px; } }   /* Schedule keeps its word longest: its icon alone is the least obvious */
+@media (max-width: 960px) { .topbar #scheduleMenuBtn .btn-label { display: none; } }
 @media (max-width: 1040px) { .plan-btn { width: 150px; } .topbar { gap: 10px; } }
 /* view tabs: the task views, a divider, the resource views */
 .view-tab-sep { width: 1px; align-self: stretch; margin: 4px 3px; background: var(--border); }
@@ -451,9 +452,13 @@ input.tf-cell[type=number] { -moz-appearance: textfield; }
 .main .grid-row > .frz:not(input), .main .grid-header > .frz { align-self: stretch; }   /* cover the whole row height (cells are otherwise only as tall as their content); a cell's own flex box keeps its content centred */
 .main .grid-row > .frz:first-child, .main .grid-header > .frz:first-child { box-shadow: -10px 0 0 var(--row-bg), inset -1px 0 0 var(--border); }   /* ...and the row's 10px left padding, where the scrolled columns would show */
 .main .grid-pane.h-scrolled .grid-row > .frz-last, .main .grid-pane.h-scrolled .grid-header > .frz-last { box-shadow: inset -1px 0 0 var(--border), 5px 0 6px -4px rgba(0, 0, 0, .28); }   /* a soft edge while content slides underneath */
-.main .grid-pane.h-scrolled .grid-rows { background-image: none; }   /* scrolled sideways: those lines would cross the frozen columns, so the empty area goes plain */
-/* ...and the same lines run on down the empty area under the last task (the rows are transparent, so they line up exactly) */
-.main .grid-rows { background-image: var(--col-lines-r, none); background-position: var(--col-pos-r, 0 0); background-size: 1px 100%; background-repeat: no-repeat; background-attachment: local; }   /* local: the lines below the last task scroll sideways with the content */
+/* The column lines stop at the last row: below it the list is plain (it read as an empty spreadsheet). The end of the list
+   offers a quiet "Add task" row instead, as MS Project's blank rows do (Tasks view only — in the Gantt view the list and the
+   chart scroll together row for row, so the list gets no extra row). */
+.grid-add-row, .rst-add-row { display: flex; align-items: center; gap: 8px; height: var(--row-h); padding-left: 52px; border: none; background: transparent; color: var(--text-faint); font-size: 12.5px; cursor: pointer; width: 100%; text-align: left; }
+.grid-add-row:hover, .rst-add-row:hover, .grid-add-row:focus-visible, .rst-add-row:focus-visible { color: var(--accent); background: color-mix(in srgb, var(--accent) 6%, transparent); }
+.grid-add-row i, .rst-add-row i { font-size: 11px; }
+.rst-add-row { padding-left: 56px; }
 .grid-row { border-bottom: 1px solid var(--border); font-size: 12.5px; cursor: default; position: relative; --row-bg: var(--panel); background: var(--row-bg); }   /* --row-bg: the row's background, also painted by the frozen cells so what scrolls underneath doesn't show through */
 .virt-spacer { pointer-events: none; }
 .fb-line { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; min-width: 0; }
@@ -528,6 +533,7 @@ input.inline-edit { width: 100%; min-width: 0; padding: 3px 6px; border: 1px sol
 .sel-chip { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border: 1px solid var(--accent); border-radius: 13px; background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--text); font-size: 12px; font-weight: 600; cursor: pointer; }
 .sel-chip:hover { background: color-mix(in srgb, var(--accent) 22%, transparent); }
 .sel-chip i { font-size: 11px; color: var(--text-dim); }
+.sel-chip.hidden { display: none; }
 .bulk-row { display: grid; grid-template-columns: 190px 1fr; gap: 10px; align-items: center; }
 .bulk-on { display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; }
 .bulk-ctl { display: flex; gap: 6px; align-items: center; min-width: 0; }
@@ -779,9 +785,10 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
    this feature's own review: the task list's later ".rs-row { display:flex }" rule was silently overriding this
    grid's ".rs-row { display:grid }", since both features independently chose the same "rs-" shorthand). */
 .resourceSheet-pane-outer { flex: 1; min-width: 0; display: flex; flex-direction: column; background: var(--bg); }
-.rst-currency { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-dim); }
+.rst-cur { border: none; background: transparent; padding: 0 2px; margin-left: 3px; font: inherit; color: var(--accent); cursor: pointer; border-radius: 4px; letter-spacing: 0; }
+.rst-cur:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); }
 .rst-scroll { flex: 1; overflow: auto; position: relative; }
-.rst-header, .rst-row { display: grid; grid-template-columns: 40px minmax(160px,1fr) 126px 128px 110px 98px 98px 98px 98px 132px 90px 116px 40px; column-gap: 0; min-width: max-content; align-items: center; }
+.rst-header, .rst-row { display: grid; grid-template-columns: 40px minmax(160px,1fr) 126px 128px 110px 98px 108px 108px 108px 132px 90px 116px 40px; column-gap: 0; min-width: max-content; align-items: center; }
 .rst-header { position: sticky; top: 0; z-index: 3; height: var(--head-h); font-size: 11.5px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: .03em; border-bottom: 1px solid var(--border); --row-bg: var(--panel); background: var(--row-bg); }
 .rst-row { height: var(--row-h); border-bottom: 1px solid var(--border); font-size: 12.5px; --row-bg: var(--panel); background: var(--row-bg); }
 .rst-row:hover { --row-bg: var(--panel-2); }
@@ -792,7 +799,7 @@ svg.gantt-deps path.critical { stroke: var(--danger); }
 .rst-header::before, .rst-row::before { content: ''; position: absolute; inset: 0; pointer-events: none; background-repeat: no-repeat; background-size: 1px 100%; }
 .rst-header::before { background-image: var(--rst-col-lines-h, none); background-position: var(--rst-col-pos-h, 0 0); }
 .rst-row::before { background-image: var(--rst-col-lines-r, none); background-position: var(--rst-col-pos-r, 0 0); }
-.rst-rows { position: relative; background-image: var(--rst-col-lines-r, none); background-position: var(--rst-col-pos-r, 0 0); background-size: 1px 100%; background-repeat: no-repeat; }   /* the lines continue down the empty area below the last resource, exactly like the task list's own */
+.rst-rows { position: relative; }   /* (no column lines below the last resource — see .grid-add-row) */
 .rst-header > div, .rst-row > div { padding-inline: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; min-width: 0; }
 .rst-cell.rst-id { color: var(--text-faint); font-size: 12px; justify-content: flex-end; }
 .rst-cell input.inline-edit { width: calc(100% - 4px); margin-inline: 2px; border-color: transparent; background-color: transparent; }
@@ -1097,7 +1104,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
   <div class="topbar-divider"></div>
   <button class="btn" id="resourcesBtn" onclick="toggleResourceSheet()" aria-pressed="false" title="Resources — the plan's people, materials and costs, with their rates (the Resource Sheet)"><i class="fa-solid fa-users"></i><span class="btn-label">Resources</span></button>
   <div class="dropdown-wrap">
-    <button class="btn" id="scheduleMenuBtn" onclick="toggleScheduleMenu()" title="Schedule: baselines, rescheduling, levelling, plan settings"><i class="fa-solid fa-gauge-high"></i><span class="btn-label">Schedule</span></button>
+    <button class="btn" id="scheduleMenuBtn" onclick="toggleScheduleMenu()" title="Schedule: baselines, rescheduling, levelling"><i class="fa-solid fa-calendar-check"></i><span class="btn-label">Schedule</span></button>
     <div class="dropdown-menu" id="scheduleMenu"></div>
   </div>
   <div class="dropdown-wrap">
@@ -1163,7 +1170,6 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
     <button class="btn btn-sm tb-toggle" id="overOnlyBtn" data-more="4" onclick="toggleOverOnly()" aria-pressed="false" title="Show only the resources that are over-allocated somewhere"><i class="fa-solid fa-triangle-exclamation"></i>Over-allocated only</button>
   </div>
   <div class="tb-group" data-views="resourceSheet">
-    <span class="rst-currency"><label for="rsCurrencyInput">Currency</label><select id="rsCurrencyInput" class="rst-select" onchange="setCurrencyCode(this.value)"></select></span>
   </div>
   <div class="tb-group" data-views="tasks gantt">
     <span class="tb-sep"></span>
@@ -1786,7 +1792,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
       <div class="help-pane" id="helpPane-start" role="tabpanel" aria-labelledby="helpTab-start">
         <div class="help-section">
           <div class="help-section-title">Building a plan</div>
-          <div class="help-row"><i class="fa-solid fa-table-cells-large"></i><span><strong>Finding your way</strong>: the top bar is the same everywhere — your plan, the views (<strong>Tasks · Gantt</strong> for the schedule, <strong>Resource Sheet · Resource Plan</strong> for the people), <strong>Schedule</strong> (baselines, rescheduling, levelling), <strong>Data</strong>, and the <strong>gear</strong> for the plan's settings (calendar, precision, rules, currency, custom fields). The toolbar below changes with the view and shows what that view needs; on a narrow window the rest is under <strong>More</strong>.</span></div>
+          <div class="help-row"><i class="fa-solid fa-table-cells-large"></i><span><strong>Finding your way</strong>: the top bar is the same everywhere — your plan, the views (<strong>Tasks · Gantt · Resource Plan</strong>), <strong>Resources</strong> (the Resource Sheet: people, rates, days off), <strong>Schedule</strong> (baselines, rescheduling, levelling), <strong>Data</strong>, and the <strong>gear</strong> for the plan's settings (calendar, precision, rules, currency, custom fields). The toolbar below changes with the view and shows what that view needs; on a narrow window the rest is under <strong>More</strong>.</span></div>
           <div class="help-row"><i class="fa-solid fa-window-minimize"></i><span>The <strong>status bar</strong> along the bottom shows how new tasks are scheduled (click to change), how many tasks there are and are selected, the active filters, and — in the Gantt and Resource Plan — a zoom slider. The Task Form switch is its first button.</span></div>
           <div class="help-row"><i class="fa-solid fa-plus"></i><span><strong>Add Task</strong> inserts a task below the selected one, or at the bottom when nothing is selected. Each task has a start and end date and a % complete, and can be a <strong>milestone</strong> (a one-day diamond).</span></div>
           <div class="help-row"><i class="fa-solid fa-keyboard"></i><span><strong>Dates and times in dialogs</strong> are typed, in the same format as the list: <strong>24.12.2026</strong> (or 24.12.26, 24.12.), <strong>14:30</strong> (or 1430, 2:30pm) — or pick a date with the calendar button. Something unreadable is refused, marks the box red and puts the old value back; <strong>Enter</strong> settles a box, and in a single-purpose dialog like Reschedule or Baselines it applies the dialog.</span></div>
@@ -1916,6 +1922,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <div class="help-section">
           <div class="help-section-title">Columns</div>
           <div class="help-row"><i class="fa-solid fa-table-columns"></i><span>Click <strong>Columns</strong> in the toolbar to tick the columns you want and reorder them. The <strong>Tasks view and the Gantt view each remember their own set</strong> on this device; Task Name always stays.</span></div>
+          <div class="help-row"><i class="fa-solid fa-plus"></i><span><strong>Add task</strong> under the last row (Tasks view) adds a task at the end of the plan; the toolbar's <strong>Add Task</strong> adds it below the selected one. The Resource Sheet ends with <strong>Add resource</strong>.</span></div>
           <div class="help-row"><i class="fa-solid fa-left-right"></i><span><strong>Resize a column</strong> by dragging the edge of its header; <strong>double-click the edge</strong> to fit it to its content. <strong>Right-click a header</strong> for <em>Fit to content</em>, <em>Fit all columns</em>, <em>Default width</em> and <em>Reset all column widths</em> (also in the Columns menu). Widths are remembered on this device and shared by the Tasks and Gantt lists; a resized Task Name keeps its width instead of filling the pane.</span></div>
           <div class="help-row"><i class="fa-solid fa-highlighter"></i><span>After an edit the cells it <strong>changed</strong> are shaded pale yellow (blue is the selection) — a later task that moved, a Finish or Work that was recalculated — as in MS Project. What you typed yourself is not shaded; the next edit, Undo or Redo clears it. Switch it off with <em>Highlight what the last edit changed</em> in the Columns menu.</span></div>
           <div class="help-row"><i class="fa-solid fa-eye-slash"></i><span>The list starts with Task Name, Start, Finish, Duration, % Complete, Predecessors, Resource and Status; Task Mode, WBS, the Actual dates, Remaining Duration, Task Type, Work, Cost, the baseline and variance columns and your custom fields start hidden (<strong>Columns</strong> shows them). The Gantt's list starts with just Name, Start, Finish, Duration and % Complete. Click a <strong>Resource</strong> or actual-date cell to edit it, or use the task dialog.</span></div>
@@ -1923,7 +1930,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
           <div class="help-row"><i class="fa-solid fa-people-group"></i><span>The <strong>Resource Sheet</strong> tab lists everyone: type, Max Units (how much of a resource is available: 100% is one full-time person, 300% three people pooled into one; only Work resources have it), rates and cost per use. Renaming or removing someone there updates every task that names them; <strong>Days off</strong> on a row opens that person's own days off, on top of the plan's working week.</span></div>
           <div class="help-row"><i class="fa-solid fa-chart-simple"></i><span>The <strong>Resource Plan</strong> tab shows each person's load as bars with the % written in (of their Max Units), red where they're over capacity — <strong>click a red bar</strong> to see the tasks behind it and jump to one. Its toolbar has a legend, <strong>Level…</strong>, <strong>Edit resources…</strong> and <strong>Over-allocated only</strong>.</span></div>
           <div class="help-row"><i class="fa-solid fa-scale-balanced"></i><span><strong>Schedule → Level resources…</strong> delays an over-allocated task to the next span with room, never earlier than its own dependencies allow and, by default, never past its own slack (so the plan's finish doesn't move) — turn that off, or scope it to a date on, then Apply. Undo brings it back.</span></div>
-          <div class="help-row"><i class="fa-solid fa-table-list"></i><span>The <strong>Resource Sheet</strong> tab is MS Project's own spreadsheet: Type (Work, Material or Cost), Std/Ovt Rate, Cost per Use, Accrue At and more, editable directly in the grid. A task's <strong>Cost</strong> column (hidden by default) adds up its assigned resources' rates; a group shows the total of everything in it. Pick the plan's currency in that tab's own toolbar.</span></div>
+          <div class="help-row"><i class="fa-solid fa-table-list"></i><span>The <strong>Resource Sheet</strong> tab is MS Project's own spreadsheet: Type (Work, Material or Cost), Std/Ovt Rate, Cost per Use, Accrue At and more, editable directly in the grid. A task's <strong>Cost</strong> column (hidden by default) adds up its assigned resources' rates; a group shows the total of everything in it. The currency is a plan setting: the money columns show it — "Std Rate (€)" — and a click on it opens <strong>Plan settings → Currency</strong>.</span></div>
         </div>
         <div class="help-divider"></div>
         <div class="help-section">
@@ -4095,6 +4102,7 @@ function updateSelectionUI() {
   const nEdit = ids.filter(id => !byId(id).spacer).length;
   document.getElementById('bulkEditBtn').title = nEdit > 1 ? `Change a field for all ${nEdit} selected tasks` : 'Edit the selected task (select several with Ctrl/Cmd+click or Shift+click to change a field for all of them)';
   document.getElementById('selChip').innerHTML = `${n} selected <i class="fa-solid fa-xmark"></i>`;
+  document.getElementById('selChip').classList.toggle('hidden', n < 2);   // one row: the row itself shows it (and the status bar says "1 selected"); the chip only earns its place for a multi-selection, where Clear matters
   fitToolbar();   // the selection buttons come and go: the toolbar may need the More menu (or not) now
 }
 
@@ -5088,8 +5096,11 @@ function renderGrid() {
         <button class="icon-btn btn-danger" onclick="event.stopPropagation();deleteTaskFlow('${t.id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
       </div>` : ''}
     </div>`;
-  }).join('') + (win.virtual ? spacer((list.length - win.to) * ROW_H) : '');
+  }).join('') + (win.virtual ? spacer((list.length - win.to) * ROW_H) : '')
+    + (currentView === 'tasks' ? '<button type="button" class="grid-add-row" onclick="addTaskAtEnd()" title="Add a task at the end of the plan"><i class="fa-solid fa-plus"></i>Add task</button>' : '');
 }
+// The "Add task" row under the last task: a new top-level task at the very end, whatever is selected.
+function addTaskAtEnd() { setSelection([]); addTask(); }
 // A cell being edited keeps its editor while you work in it: selecting text with the mouse — a double-click on a word, or a drag that ends outside
 // the box — sends a click / double-click to the ROW (the nearest ancestor of where the press and the release happened), which used to select the row
 // (re-rendering it, so the editor vanished) or open the task dialog. A press that started inside an editor is not a click on the row.
@@ -5963,12 +5974,11 @@ function onResourceScroll() {
    it opens the small Days off dialog (openResourceDaysModal()) for that one resource. */
 const RS_HEAD = ['#', 'Resource Name', 'Type', 'Material Label', 'Group', 'Max Units', 'Std Rate', 'Ovt Rate', 'Cost/Use', 'Accrue At', 'Code', 'Days Off', ''];
 function renderResourceSheet() {
-  document.getElementById('resourceSheetHeader').innerHTML = RS_HEAD.map(h => `<div>${h}</div>`).join('');
-  const cs = document.getElementById('rsCurrencyInput');
-  if (cs.children.length !== CURRENCIES.length) cs.innerHTML = CURRENCIES.map(c => `<option value="${c.code}">${c.code} — ${escapeHtml(c.label)}</option>`).join('');
-  cs.value = currencyCode();
+  // The currency is a plan setting (Plan settings → Currency, its one editor); the money columns name it, and a click on it opens that tab.
+  const cur = `<button type="button" class="rst-cur" onclick="openSettingsTab('currency')" title="Currency: ${currencyCode()} — click to change it in Plan settings">(${escapeHtml(currencySymbol())})</button>`;
+  document.getElementById('resourceSheetHeader').innerHTML = RS_HEAD.map(h => `<div>${h}${['Std Rate', 'Ovt Rate', 'Cost/Use'].includes(h) ? cur : ''}</div>`).join('');
   const pool = project.resources || [];
-  document.getElementById('resourceSheetBody').innerHTML = pool.length ? pool.map((r, i) => resourceSheetRowHtml(r, i)).join('')
+  document.getElementById('resourceSheetBody').innerHTML = pool.length ? pool.map((r, i) => resourceSheetRowHtml(r, i)).join('') + '<button type="button" class="rst-add-row" onclick="addResourceSheetRow()"><i class="fa-solid fa-plus"></i>Add resource</button>'
     : '<div class="rst-empty">No resources yet — type a name in a task’s Resource field, or “Add Resource” above.</div>';
   updateResourceSheetColumnLines();
 }
@@ -6950,7 +6960,7 @@ function saveRulesModal() {
   normalizeData(); save(); render(); closeRulesModal();
   showToast('Scheduling rules saved');
 }
-// Currency: the same setting as the Resource Sheet's toolbar picker (setCurrencyCode), here with a preview.
+// Currency: its one editor (the Resource Sheet's money headers name it and open this tab), with a preview.
 let currencySnapshot = null;
 function openCurrencyModal() {
   closeScheduleMenu();

@@ -36,7 +36,7 @@ with sync_playwright() as p:
     check("the visible toolbar: Undo, Redo, Add Task + arrow, Indent, Outdent … Find, Columns", all(pg.locator("#" + i).is_visible() for i in ["undoBtn", "redoBtn", "addTaskBtn", "addMenuBtn", "indentBtn", "outdentBtn", "searchBtn", "columnsBtn"]))
     check("...separators divide the groups", pg.locator(".subbar .tb-sep").count() >= 2)
     pick("Gamma")
-    check("a selection shows '1 selected' and four labelled buttons", pg.inner_text("#selChip").strip() == "1 selected" and [pg.inner_text("#" + i).strip() for i in ["bulkEditBtn", "cloneTaskBtn", "copyBtn", "deleteTaskBtn"]] == ["Edit", "Duplicate", "Copy", "Delete"])
+    check("a single selection shows no chip (the status bar says it), just the four labelled buttons", not pg.locator("#selChip").is_visible() and [pg.inner_text("#" + i).strip() for i in ["bulkEditBtn", "cloneTaskBtn", "copyBtn", "deleteTaskBtn"]] == ["Edit", "Duplicate", "Copy", "Delete"])
     pick("Alpha"); pick("Beta", ["Meta"])
     check("...two selected: '2 selected'", pg.inner_text("#selChip").strip() == "2 selected")
     pg.click("#selChip"); pg.wait_for_timeout(80)
