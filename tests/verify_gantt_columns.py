@@ -9,7 +9,7 @@ SEED = re.search(r'SEED = """(.*?)"""', open(os.path.join(os.path.dirname(os.pat
 SPECS = [{"name": "Design", "s": "2026-09-07", "e": "2026-09-18"}, {"name": "Sketch", "parent": "Design", "s": "2026-09-07", "e": "2026-09-11"}, {"name": "Build", "s": "2026-09-21", "e": "2026-09-30"}]
 TASKS_DEFAULT = ["name", "start", "end", "duration", "progress", "preds", "resource", "status"]   # the Tasks view's default
 GANTT_DEFAULT = ["name", "start", "end", "duration", "progress"]   # the Gantt view's default: what fits the 640px list pane beside the chart
-GANTT_ORDER_HEAD = ["mode", "wbs", "name", "start", "end", "actualStart", "actualFinish", "duration", "progress", "preds", "resource", "status", "remaining", "worktype", "work", "cost", "baselineStart", "baselineFinish", "baselineDuration", "startVariance", "finishVariance", "durationVariance"]   # the same sequence as the Tasks view
+GANTT_ORDER_HEAD = ["mode", "wbs", "name", "start", "end", "actualStart", "actualFinish", "duration", "progress", "preds", "resource", "status", "remaining", "worktype", "work", "cost", "baselineStart", "baselineFinish", "baselineDuration", "startVariance", "finishVariance", "durationVariance", "deadline", "totalSlack", "notes"]   # the same sequence as the Tasks view
 with sync_playwright() as p:
     b = p.chromium.launch(headless=True)
     def new_page(prefs=None, w=1500):
@@ -30,7 +30,7 @@ with sync_playwright() as p:
     # ================================================================ defaults
     check("the Tasks view's default columns: Mode, WBS, Name, Start, Finish, Actual Start, Actual Finish, Duration, %, Predecessors, Status", shown("tasks") == TASKS_DEFAULT, shown("tasks"))
     check("the Gantt view has its own default: Mode, WBS, Name, Start, Finish, Duration, Baseline Start, Baseline Finish, Duration Variance", shown("gantt") == GANTT_DEFAULT, shown("gantt"))
-    check("...and its own default ORDER of all columns (Duration in front of the actual dates; the custom fields at the end)", pg.evaluate("() => gColOrder.slice(0, 22)") == GANTT_ORDER_HEAD and pg.evaluate("() => gColOrder.length") == pg.evaluate("() => DEFAULT_COL_ORDER.length") and pg.evaluate("() => colOrder.indexOf('actualStart') < colOrder.indexOf('duration')"))
+    check("...and its own default ORDER of all columns (Duration in front of the actual dates; the custom fields at the end)", pg.evaluate("() => gColOrder.slice(0, 25)") == GANTT_ORDER_HEAD and pg.evaluate("() => gColOrder.length") == pg.evaluate("() => DEFAULT_COL_ORDER.length") and pg.evaluate("() => colOrder.indexOf('actualStart') < colOrder.indexOf('duration')"))
     tab("Gantt")
     check("switching to the Gantt view shows ITS columns in the list header", hdr() == GANTT_DEFAULT, hdr())
     tab("Tasks")
@@ -58,7 +58,7 @@ with sync_playwright() as p:
     check("moving a column in the Gantt view reorders the Gantt list (Start now before Task Name) and leaves the Tasks view's order alone", order_g.index("start") < order_g.index("name") and pg.evaluate("() => colOrder") == before_t and hdr().index("start") < hdr().index("name"), (hdr(), order_g[:6]))
     # ================================================================ reset
     open_menu(); pg.click("#columnsMenu .btn-link"); pg.wait_for_timeout(200); pg.keyboard.press("Escape")
-    check("'Reset to default' in the Gantt view restores the Gantt default (columns and order) and does not touch the Tasks view", shown("gantt") == GANTT_DEFAULT and pg.evaluate("() => gColOrder.slice(0, 22)") == GANTT_ORDER_HEAD and "baselineStart" in shown("tasks") and "start" not in shown("tasks"), (shown("gantt"), shown("tasks")))
+    check("'Reset to default' in the Gantt view restores the Gantt default (columns and order) and does not touch the Tasks view", shown("gantt") == GANTT_DEFAULT and pg.evaluate("() => gColOrder.slice(0, 25)") == GANTT_ORDER_HEAD and "baselineStart" in shown("tasks") and "start" not in shown("tasks"), (shown("gantt"), shown("tasks")))
     tab("Tasks"); open_menu(); pg.click("#columnsMenu .btn-link"); pg.wait_for_timeout(200); pg.keyboard.press("Escape")
     tab("Gantt"); open_menu(); tick("status", True); pg.keyboard.press("Escape")
     check("...and 'Reset to default' in the Tasks view restores the Tasks defaults, not the Gantt view's (which keeps Status)", shown("tasks") == TASKS_DEFAULT and "status" in shown("gantt"), (shown("tasks"), shown("gantt")))

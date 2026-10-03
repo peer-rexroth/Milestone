@@ -13,7 +13,7 @@ def d(n): return (TODAY + datetime.timedelta(days=n)).isoformat()
 def fmt(iso): y, m, dd = iso.split("-"); return f"{dd}.{m}.{y}"
 
 OLD_ORDER = ["mode", "wbs", "name", "start", "end", "actualStart", "actualFinish", "duration", "progress", "preds", "remaining", "status", "resource"]   # the 13 columns of an install from before the baseline columns
-DEFAULT_ORDER = ["mode", "wbs", "name", "start", "end", "actualStart", "actualFinish", "duration", "progress", "preds", "resource", "status", "remaining", "worktype", "work", "cost", "baselineStart", "baselineFinish", "baselineDuration", "startVariance", "finishVariance", "durationVariance"]
+DEFAULT_ORDER = ["mode", "wbs", "name", "start", "end", "actualStart", "actualFinish", "duration", "progress", "preds", "resource", "status", "remaining", "worktype", "work", "cost", "baselineStart", "baselineFinish", "baselineDuration", "startVariance", "finishVariance", "durationVariance", "deadline", "totalSlack", "notes"]
 # (the 20 custom fields are in the registry too, but the Columns menu lists only the ones a plan uses — none here)
 ALL_ORDER = DEFAULT_ORDER + [k + str(i) for k in ("text", "number", "date", "flag") for i in range(1, 6)]   # what colOrder itself holds
 OLD_SHOWN = ["mode", "wbs", "name", "start", "end", "duration", "progress", "preds"]   # what an install from before Actual Start/Finish and Status became default columns still shows
@@ -277,7 +277,7 @@ with sync_playwright() as p:
     check("Excel 'as shown' follows the user's choice and order (Task Name first after ID; WBS, Remaining, Status, Resource included)", hdr[:3] == ["ID", "Task Name", "Mode"] and {"WBS", "Remaining Duration", "Status", "Resource"} <= set(hdr) and "Notes" not in hdr, hdr)
     check("...the pane is frozen through Task Name wherever it sits (B), autofilter covers all columns", wc.freeze_panes == "C5" and wc.auto_filter.ref == f"A4:{openpyxl.utils.get_column_letter(len(hdr))}8", (wc.freeze_panes, wc.auto_filter.ref))
     export("all", "cols_all.xlsx"); wa = openpyxl.load_workbook("cols_all.xlsx")["Tasks"]; ha = [c.value for c in wa[4]]
-    check("Excel 'all columns': every field, in the default order", ha == ["ID", "Mode", "WBS", "Task Name", "Start", "Finish", "Actual Start", "Actual Finish", "Duration", "% Complete", "Predecessors", "Resource", "Status", "Remaining Duration", "Task Type", "Work", "Cost", "Baseline Start", "Baseline Finish", "Baseline Duration", "Start Variance", "Finish Variance", "Duration Variance"], ha)
+    check("Excel 'all columns': every field, in the default order", ha == ["ID", "Mode", "WBS", "Task Name", "Start", "Finish", "Actual Start", "Actual Finish", "Duration", "% Complete", "Predecessors", "Resource", "Status", "Remaining Duration", "Task Type", "Work", "Cost", "Baseline Start", "Baseline Finish", "Baseline Duration", "Start Variance", "Finish Variance", "Duration Variance", "Deadline", "Total Slack", "Notes"], ha)
     rowsx = {wa.cell(r, ha.index("Task Name") + 1).value.strip(): r for r in range(5, wa.max_row + 1)}
     def X(name, col): return wa.cell(rowsx[name], ha.index(col) + 1)
     check("Excel: WBS as text (1.1 stays '1.1', not a number)", X("T1", "WBS").value == "1.1" and X("T1", "WBS").data_type == "s", (X("T1", "WBS").value, X("T1", "WBS").data_type))
@@ -379,14 +379,15 @@ with sync_playwright() as p:
     check("turning a task into a milestone collapses its actual dates to the start", pg.evaluate("() => { const t = tasks.find(x => x.name === 'Normal'); return [t.actualStart, t.actualFinish]; }") == [d(-3), d(-3)])
 
 
-    # ============================================================ notes were removed from tasks
-    make([{"name": "WithOldNotes", "extra": {"notes": "kept in the data, not shown"}}])
+    # ============================================================ notes are back (on request): a Notes tab; text an older version kept under `notes` shows again
+    make([{"name": "WithOldNotes", "extra": {"notes": "kept in the data all along"}}])
     pg.evaluate("() => { addTask(); }"); pg.wait_for_selector("#taskModalBg.open")
-    check("the task dialog has no Notes field any more", "Notes" not in pg.inner_text("#taskModalBg") and pg.locator("#taskNotesInput").count() == 0)
+    check("the task dialog has a Notes tab", pg.locator("#taskTabBtnNotes").count() == 1 and pg.locator("#taskNotesInput").count() == 1)
     pg.evaluate("() => closeTaskModal()")
-    check("a task created now has no notes value", pg.evaluate("() => tasks.filter(t => t.name !== 'WithOldNotes').every(t => !('notes' in t))"))
+    check("a task created now has no notes value (absent = none)", pg.evaluate("() => tasks.filter(t => t.name !== 'WithOldNotes').every(t => !('notes' in t))"))
+    check("...and the older note is still there", pg.evaluate("() => tasks.find(t => t.name === 'WithOldNotes').notes") == "kept in the data all along")
     open_dialog("WithOldNotes"); pg.click("#taskModalBg .btn-primary"); pg.wait_for_timeout(120)
-    check("saving a task doesn't destroy notes text an earlier version stored (it is simply not shown or exported)", pg.evaluate("() => tasks.find(t => t.name === 'WithOldNotes').notes") == "kept in the data, not shown")
+    check("saving a task keeps its notes", pg.evaluate("() => tasks.find(t => t.name === 'WithOldNotes').notes") == "kept in the data all along")
 
     print("console errors/warnings:", errors)
     print(f"{sum(results)}/{len(results)} passed")

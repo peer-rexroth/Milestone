@@ -17,7 +17,7 @@ ORDER = {
  "Calendar": "UID Name IsBaseCalendar IsBaselineCalendar WeekDays Exceptions".split(),
  "WeekDay": "DayType DayWorking WorkingTimes".split(),
  "Exception": "EnteredByOccurrences TimePeriod Occurrences Name Type DayWorking".split(),
- "Task": "UID ID Name Active Manual Type IsNull WBS OutlineNumber OutlineLevel Priority Start Finish Duration ManualStart ManualFinish ManualDuration DurationFormat Work EffortDriven Milestone Summary PercentComplete PercentWorkComplete ActualStart ActualFinish ConstraintType ConstraintDate Notes PredecessorLink Baseline".split(),
+ "Task": "UID ID Name Active Manual Type IsNull WBS OutlineNumber OutlineLevel Priority Start Finish Duration ManualStart ManualFinish ManualDuration DurationFormat Work EffortDriven Milestone Summary PercentComplete PercentWorkComplete ActualStart ActualFinish ConstraintType ConstraintDate Deadline Notes PredecessorLink Baseline".split(),
  "PredecessorLink": "PredecessorUID Type CrossProject LinkLag LagFormat".split(),
  "Baseline": "Number Start Finish Duration DurationFormat".split(),
  "Resource": "UID ID Name Type IsNull Initials MaterialLabel Code Group MaxUnits AccrueAt StandardRate StandardRateFormat OvertimeRate OvertimeRateFormat CostPerUse".split(),

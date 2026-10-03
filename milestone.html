@@ -171,6 +171,11 @@ button:focus:not(:focus-visible) { outline: none; }
 .modal-tab { display: inline-flex; align-items: center; gap: 6px; padding: 9px 12px; margin-bottom: -1px; border: none; border-bottom: 2px solid transparent; background: transparent; font-size: 13px; font-weight: 600; color: var(--text-dim); }
 .modal-tab:hover { color: var(--text); }
 .modal-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-left: 6px; display: inline-block; vertical-align: middle; }
+.tab-dot.hidden { display: none; }
+.task-notes { width: 100%; min-height: 300px; resize: vertical; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); color: var(--text); font: inherit; font-size: 13px; line-height: 1.5; }
+.deadline-note { font-weight: 500; color: var(--text-faint); }
+.deadline-note.late { color: var(--danger); font-weight: 600; }
 .tab-badge { min-width: 18px; padding: 0 5px; border-radius: 999px; background: color-mix(in srgb, var(--accent) 16%, var(--panel)); color: var(--accent); font-size: 11px; line-height: 17px; text-align: center; }
 .tab-pane { display: flex; flex-direction: column; gap: 12px; }
 .cf-hint { font-size: 12.5px; color: var(--text-dim); line-height: 1.5; }
@@ -245,6 +250,7 @@ body.col-resizing, body.col-resizing * { cursor: col-resize !important; user-sel
    (The Gantt view's list is the same list, and the chart's timescale is the same height, --head-h.) */
 .main .grid-header { height: var(--head-h); }
 .main .grid-header > .col-head { white-space: normal; align-self: stretch; }   /* (the whole header height is the resize handle's) */
+.sort-ind { flex: none; font-size: 10px; color: var(--accent); }
 .col-filter-btn { flex-shrink: 0; width: 18px; height: 18px; padding: 0; border: none; border-radius: 4px; background: transparent; color: var(--text-faint); font-size: 9px; opacity: .55; }
 .col-filter-btn:hover { background: var(--panel-2); color: var(--text); opacity: 1; }
 .col-filter-btn.active { color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--panel)); opacity: 1; }
@@ -260,6 +266,7 @@ body.col-resizing, body.col-resizing * { cursor: col-resize !important; user-sel
 .sb-btn { display: inline-flex; align-items: center; gap: 6px; border: none; background: transparent; color: var(--text-dim); font-size: 12px; padding: 3px 7px; border-radius: 6px; cursor: pointer; }
 .sb-btn:hover { background: color-mix(in srgb, var(--text) 8%, transparent); color: var(--text); }
 .sb-btn.hidden { display: none; }
+.sb-btn:disabled { opacity: .45; cursor: default; background: transparent; }
 .sb-toggle[aria-pressed="true"] { color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }   /* the Task Form toggle: highlighted while the pane is open */
 .sb-icon { border: none; background: transparent; color: var(--text-dim); width: 22px; height: 22px; border-radius: 5px; cursor: pointer; font-size: 10px; }
 .sb-icon:hover { background: color-mix(in srgb, var(--text) 8%, transparent); color: var(--text); }
@@ -282,6 +289,10 @@ body.col-resizing, body.col-resizing * { cursor: col-resize !important; user-sel
 .btn-link:disabled { color: var(--text-faint); cursor: default; }
 .filter-menu { width: 300px; padding: 0; overflow: hidden; z-index: 90; flex-direction: column; }
 .filter-menu.open { display: flex; }
+.filter-sort { display: flex; gap: 6px; padding: 0 0 8px; }   /* (the next section draws the line below) */
+.filter-sort-btn { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel); color: var(--text); font-size: 12px; cursor: pointer; white-space: nowrap; }
+.filter-sort-btn:hover { background: var(--panel-2); }
+.filter-sort-btn.active { border-color: var(--accent); color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--panel)); }
 .filter-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px 8px; font-size: 13px; }
 .filter-section { padding: 6px 12px 10px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 6px; }
 .filter-label { font-size: 11.5px; font-weight: 600; color: var(--text-dim); }
@@ -512,6 +523,10 @@ input.inline-edit { width: 100%; min-width: 0; padding: 3px 6px; border: 1px sol
 .grid-name .constraint-icon.violated { color: var(--danger); }
 .grid-cell-dim { color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-height: 1em; align-self: stretch; display: flex; align-items: center; }
 .grid-cell-dim.summary { font-weight: 600; color: var(--text); }
+.grid-cell-dim.deadline-late { color: var(--danger); font-weight: 600; }
+.note-ind { font-size: 11px; color: var(--text-dim); margin-right: 5px; cursor: pointer; flex: none; }
+.note-ind:hover { color: var(--accent); }
+.deadline-warn { font-size: 10px; color: var(--danger); margin-right: 5px; flex: none; }
 .task-mode-cell { cursor: pointer; font-size: 12px; justify-content: center; }
 .mode-manual { color: var(--task-amber); }
 .task-mode-cell { gap: 6px; }
@@ -710,6 +725,11 @@ input.inline-edit[type=date]::-webkit-calendar-picker-indicator { margin: 0 0 0 
 .gantt-row-bg.spacer { background: color-mix(in srgb, var(--panel-2) 50%, transparent); }
 .gantt-row-bg { position: absolute; left: 0; right: 0; height: var(--row-h); border-bottom: 1px solid var(--border); }
 .gantt-row-bg.selected { background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.gantt-deadline { position: absolute; width: 12px; height: 26px; z-index: 4; pointer-events: auto; }
+.gantt-deadline::before { content: ''; position: absolute; left: 0; top: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid var(--task-green); }
+.gantt-deadline::after { content: ''; position: absolute; left: 5px; top: 7px; width: 2px; height: 19px; background: var(--task-green); }
+.gantt-deadline.missed::before { border-top-color: var(--danger); }
+.gantt-deadline.missed::after { background: var(--danger); }
 .gantt-today-line { position: absolute; top: 0; width: 2px; background: var(--danger); opacity: .6; z-index: 3; pointer-events: none; }
 .gantt-bar {
   position: absolute; height: 20px; border-radius: 4px; cursor: grab;
@@ -1252,6 +1272,9 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
   <span class="sb-views" data-sb-views="tasks gantt"><span class="sb-sep"></span><div class="filter-bar hidden" id="filterBar"></div></span>
   <span class="sb-spacer"></span>
   <span class="sb-views sb-zoom" data-sb-views="gantt resources"><span class="sb-sep"></span>
+    <button class="sb-btn" id="sbTodayBtn" onclick="goToToday()" title="Scroll the chart to today"><i class="fa-solid fa-calendar-day"></i>Today</button>
+    <button class="sb-btn" id="sbScrollTaskBtn" onclick="scrollToSelectedTask()" title="Scroll the chart to the selected task's bar"><i class="fa-solid fa-crosshairs"></i>Scroll to task</button>
+    <span class="sb-sep"></span>
     <span class="sb-scale" role="group" aria-label="Timescale"><button class="sb-seg" id="fitZoomBtn" onclick="fitZoom()" aria-pressed="false" title="Fit — the whole plan across the chart's width (the standard); Week / Month / Year are fixed scales">Fit</button><span class="view-tabs" id="zoomTabs"></span></span>
     <button class="sb-icon" onclick="nudgeZoom(-1)" title="Zoom out" aria-label="Zoom out"><i class="fa-solid fa-minus"></i></button>
     <input type="range" id="zoomSlider" min="0" max="1000" step="1" aria-label="Zoom" title="Zoom — drag for any scale between the presets" oninput="onZoomSlider(this.value)" onchange="save()">
@@ -1266,6 +1289,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
     <div class="modal-header"><h2 id="taskModalTitle">Task<span id="taskModalIdBadge" class="id-badge"></span></h2><button onclick="requestCloseTaskModal()" aria-label="Close">&times;</button></div>
     <div class="modal-tabs" role="tablist">
       <button type="button" class="modal-tab active" id="taskTabBtnGeneral" role="tab" aria-selected="true" onclick="setTaskModalTab('general')">General</button>
+      <button type="button" class="modal-tab" id="taskTabBtnNotes" role="tab" aria-selected="false" onclick="setTaskModalTab('notes')">Notes<span class="tab-dot hidden" id="taskNotesDot"></span></button>
       <button type="button" class="modal-tab" id="taskTabBtnCustom" role="tab" aria-selected="false" onclick="setTaskModalTab('custom')">Custom fields<span class="tab-badge hidden" id="taskCustomBadge"></span></button>
     </div>
     <div class="modal-body">
@@ -1304,10 +1328,11 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
           <label for="taskConstraintTypeInput">Constraint</label>
           <select id="taskConstraintTypeInput" onchange="onConstraintTypeChange()"></select>
         </div>
-        <div class="field span2" id="taskConstraintDateField">
+        <div class="field" id="taskConstraintDateField">
           <label id="taskConstraintDateLabel" for="taskConstraintDateInput">Constraint date</label>
           <div class="field-dt"><input type="text" class="dt-date" id="taskConstraintDateInput"><input type="text" id="taskConstraintTimeInput" class="task-time-input hidden dt-time" aria-label="Constraint time"></div>
         </div>
+        <div class="field" id="taskDeadlineField" title="A target date: it doesn't move the task — the task is flagged when it finishes later (MS Project's Deadline)"><label for="taskDeadlineInput">Deadline<span class="deadline-note" id="taskDeadlineNote"></span></label><input type="text" class="dt-date" id="taskDeadlineInput" onchange="updateDeadlineNote()"></div>
       </div>
       <div class="field">
         <label title="Colours the task's row in the list (and its stripe in the chart)">Row colour</label>
@@ -1318,6 +1343,9 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <div id="predecessorRows"></div>
         <button class="btn" type="button" onclick="addPredecessorRow()" style="align-self:flex-start"><i class="fa-solid fa-plus"></i>Add predecessor</button>
       </div>
+      </div>
+      <div class="tab-pane hidden" id="taskTabNotes">
+        <textarea id="taskNotesInput" class="task-notes" maxlength="10000" placeholder="Notes for this task — background, decisions, links, who to ask…" oninput="document.getElementById('taskNotesDot').classList.toggle('hidden', !this.value.trim())"></textarea>
       </div>
       <div class="tab-pane hidden" id="taskTabCustom">
         <div class="cf-bar"><span class="cf-bar-note">Your own fields for this plan's tasks</span><span class="cf-bar-actions"><button class="btn-link" type="button" onclick="openFieldsModal()">Manage fields…</button><button class="btn btn-sm" type="button" id="cfAddBtn" onclick="toggleCfAddMenu(event)" aria-haspopup="menu"><i class="fa-solid fa-plus"></i>Add field<i class="fa-solid fa-chevron-down cf-caret"></i></button></span></div>
@@ -1933,6 +1961,16 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
           <div class="help-row"><i class="fa-solid fa-check"></i><span>Change several fields, then <strong>OK</strong> (or <kbd>Enter</kbd>) applies them together — one Undo step; <strong>Cancel</strong> (or <kbd>Esc</kbd>) throws them away. <strong>Previous / Next</strong> apply first, then move on. Until you click OK or Cancel the form stays on its task, even if you select another row.</span></div>
         </div>
         <div class="help-section">
+          <div class="help-section-title">Notes, deadlines and slack</div>
+          <div class="help-row"><i class="fa-regular fa-note-sticky"></i><span><strong>Notes</strong>: the task dialog's <strong>Notes</strong> tab. A task with notes shows a note icon by its name — point at it to read them, click to edit. There is also a Notes column.</span></div>
+          <div class="help-row"><i class="fa-solid fa-flag"></i><span>A <strong>Deadline</strong> (task dialog, or the Deadline column) is a target date: it never moves the task. When the task finishes later, the deadline turns red, a flag appears by the name, and the chart's arrow on that day turns red (green while it's kept).</span></div>
+          <div class="help-row"><i class="fa-solid fa-hourglass-half"></i><span><strong>Total Slack</strong> (a column) is how far a task can slip without moving the plan's finish — 0 on the critical path, red when negative. A group shows the least of its tasks.</span></div>
+        </div>
+        <div class="help-section">
+          <div class="help-section-title">Sorting</div>
+          <div class="help-row"><i class="fa-solid fa-arrow-down-short-wide"></i><span><strong>Sort</strong> by any column from the top of its filter panel (the funnel), or right-click its header. Each group's tasks are sorted, the outline stays, and task numbers don't change. The status bar says <em>Sorted by …</em> — its × goes back to the plan's order. While sorted, tasks can't be dragged or indented.</span></div>
+        </div>
+        <div class="help-section">
           <div class="help-section-title">Columns</div>
           <div class="help-row"><i class="fa-solid fa-table-columns"></i><span>Click <strong>Columns</strong> in the toolbar to tick the columns you want and reorder them. The <strong>Tasks view and the Gantt view each remember their own set</strong> on this device; Task Name always stays.</span></div>
           <div class="help-row"><i class="fa-solid fa-plus"></i><span><strong>Add task</strong> under the last row (Tasks view) adds a task at the end of the plan; the toolbar's <strong>Add Task</strong> adds it below the selected one. The Resource Sheet ends with <strong>Add resource</strong>.</span></div>
@@ -1964,6 +2002,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
       <div class="help-pane" id="helpPane-gantt" role="tabpanel" aria-labelledby="helpTab-gantt" hidden>
         <div class="help-section">
           <div class="help-section-title">The view</div>
+          <div class="help-row"><i class="fa-solid fa-crosshairs"></i><span>In the status bar, <strong>Today</strong> scrolls the chart to today and <strong>Scroll to task</strong> to the selected task's bar.</span></div>
           <div class="help-row"><i class="fa-solid fa-table-list"></i><span>The left side is the <strong>same task list</strong> as in the Tasks view — the same filters, editing and buttons — with the chart to its right. Drag the thin strip between them to change how much room the list gets. It scrolls sideways when it has more columns than fit, and its ID … Task Name columns stay in place.</span></div>
           <div class="help-row"><i class="fa-solid fa-calendar"></i><span><strong>Fit</strong> (the standard) spreads the whole plan across the chart's width and follows the window; <strong>Week / Month / Year</strong> are fixed scales — all of them at the right of the <strong>status bar</strong>, next to the <strong>zoom slider</strong> (or its − / +), which gives any scale in between. A bar too short for its name has it written beside it, and a milestone's name sits next to it. Year shows quarters; Week is labelled by calendar week (CW — weeks start on Monday, ISO 8601). Days off are shaded.</span></div>
         </div>
@@ -2131,7 +2170,7 @@ const TASK_COLS = {
   remaining:    { label: 'Remaining Duration', width: '110px',        dflt: false },
   worktype:     { label: 'Task Type',     width: '110px',             dflt: false },   // an icon-with-popup cell, same pattern as Task Mode's own; blank for a milestone/group
   work:         { label: 'Work',          width: '104px',             dflt: false },   // working time, typed the same way Duration is; blank for a milestone/group
-  cost:         { label: 'Cost',          width: '100px',             dflt: false },   // taskCost(t), read-only, computed from the resource pool's own rates (see "Resource Sheet" in CLAUDE.md) — an empty line/unassigned task shows €0.00
+  cost:         { label: 'Cost',          width: '100px',             dflt: false },
   // Baseline columns (all hidden by default): the baseline chosen in the Baseline dialog (project.compareBaseline, "Baseline" unless changed)
   baselineStart:    { label: 'Baseline Start',    width: '104px', dflt: false },   // header: Baseline / Start
   baselineFinish:   { label: 'Baseline Finish',   width: '104px', dflt: false },
@@ -2139,6 +2178,10 @@ const TASK_COLS = {
   startVariance:    { label: 'Start Variance',    width: '104px', dflt: false },   // Start minus Baseline Start, in working days
   finishVariance:   { label: 'Finish Variance',   width: '104px', dflt: false },
   durationVariance: { label: 'Duration Variance', width: '104px', dflt: false },
+  // MS Project's Deadline, Total Slack and Notes — after the baseline group, so the earlier default sequence stays as it was
+  deadline:     { label: 'Deadline',      width: '104px',             dflt: false },   // a target date (t.deadline): red once Finish runs past it
+  totalSlack:   { label: 'Total Slack',   width: '96px',              dflt: false },   // how far a task can slip without moving the plan's finish (taskTotalSlack), read-only
+  notes:        { label: 'Notes',         width: '200px',             dflt: false },   // the first line of t.notes; a click opens the task's Notes tab   // taskCost(t), read-only, computed from the resource pool's own rates (see "Resource Sheet" in CLAUDE.md) — an empty line/unassigned task shows €0.00
 };
 // ---- Custom fields: Text1-5, Number1-5, Date1-5, Flag1-5. A task keeps its values in `task.custom` ({ text1: 'x', number2: 4.5,
 // date3: '2026-09-01', flag4: true } — only fields that have a value are present). The field NAMES live on the plan
@@ -2826,7 +2869,7 @@ function recordHistory() {
 }
 // Which list cells did this edit change? The marks are what the user did NOT type: a cascade moving other tasks, a Duration
 // that moved Finish, a Work figure that was recalculated.
-const CHANGE_COLS = { startDate: 'start', startText: 'start', startTime: 'start', endDate: 'end', endText: 'end', endTime: 'end', durText: 'duration', progress: 'progress', resource: 'resource', work: 'work', taskType: 'worktype', effortDriven: 'worktype', name: 'name', taskMode: 'mode', predecessors: 'preds', actualStart: 'actualStart', actualStartTime: 'actualStart', actualFinish: 'actualFinish', actualFinishTime: 'actualFinish' };
+const CHANGE_COLS = { startDate: 'start', startText: 'start', startTime: 'start', endDate: 'end', endText: 'end', endTime: 'end', durText: 'duration', progress: 'progress', resource: 'resource', work: 'work', taskType: 'worktype', effortDriven: 'worktype', name: 'name', taskMode: 'mode', predecessors: 'preds', actualStart: 'actualStart', actualStartTime: 'actualStart', actualFinish: 'actualFinish', actualFinishTime: 'actualFinish', deadline: 'deadline', notes: 'notes' };
 function markChanges(beforeText, afterText, now) {
   let B, A; try { B = JSON.parse(beforeText); A = JSON.parse(afterText); } catch (e) { return; }
   const bm = new Map(B.tasks.map(t => [t.id, t])), out = now - histLastAt < historyCoalesceMs ? changeMarks : new Map();   // (saves of one gesture add up)
@@ -2843,7 +2886,7 @@ function markChanges(beforeText, afterText, now) {
   changeMarks = out; userEdit = null;
 }
 function taskSig(t) { const c = Object.assign({}, t); delete c.updatedAt; return stableStringify(c); }
-const CHANGE_FIELDS = { name: 'Name', startDate: 'Start', endDate: 'Finish', startText: 'Start', endText: 'Finish', durText: 'Duration', progress: '% complete', predecessors: 'Predecessors', taskMode: 'Task Mode', milestone: 'Milestone', resource: 'Resource', actualStart: 'Actual Start', actualFinish: 'Actual Finish', color: 'Colour', constraintType: 'Constraint', constraintDate: 'Constraint', custom: 'Custom field', baselines: 'Baseline', parentId: 'Position', order: 'Position', work: 'Work', taskType: 'Task Type', effortDriven: 'Task Type' };
+const CHANGE_FIELDS = { name: 'Name', startDate: 'Start', endDate: 'Finish', startText: 'Start', endText: 'Finish', durText: 'Duration', progress: '% complete', predecessors: 'Predecessors', taskMode: 'Task Mode', milestone: 'Milestone', resource: 'Resource', actualStart: 'Actual Start', actualFinish: 'Actual Finish', color: 'Colour', constraintType: 'Constraint', constraintDate: 'Constraint', custom: 'Custom field', baselines: 'Baseline', parentId: 'Position', order: 'Position', work: 'Work', taskType: 'Task Type', effortDriven: 'Task Type', notes: 'Notes', deadline: 'Deadline' };
 // A short description of what changed between two plan texts, e.g. `Start of "Design"` — used in the Undo / Redo toast.
 function describeChange(beforeText, afterText) {
   const B = JSON.parse(beforeText), A = JSON.parse(afterText);
@@ -3004,6 +3047,10 @@ function normalizeData() {
     if (typeof t.collapsed !== 'boolean') t.collapsed = false;
     if (t.color && !TASK_COLORS.some(c => c.id === t.color)) t.color = null;
     t.resource = typeof t.resource === 'string' ? t.resource.slice(0, 200) : '';
+    // Notes (free text, MS Project's Notes) and a Deadline (a target date that never moves the task — it only flags it when it finishes
+    // later, as in MS Project): both absent when empty, the usual convention.
+    if (typeof t.notes === 'string' && t.notes.trim()) t.notes = t.notes.replace(/\s+$/, '').slice(0, 10000); else delete t.notes;
+    if (typeof t.deadline !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(t.deadline)) delete t.deadline;
     // Task Type (MS Project's Fixed Units/Fixed Duration/Fixed Work triangle — see "Task Type / Work" in CLAUDE.md):
     // absent = the default for each, the usual convention — only an explicit non-default value is ever stored.
     if (t.taskType !== 'fixedDuration' && t.taskType !== 'fixedWork') delete t.taskType;
@@ -3034,6 +3081,7 @@ function normalizeData() {
       t.name = ''; t.milestone = false; t.progress = 0; t.predecessors = []; t.color = null; t.resource = ''; delete t.custom; delete t.baselines;
       t.actualStart = t.actualFinish = null; t.constraintType = 'ASAP'; t.constraintDate = null; t.taskMode = 'manual'; t.startText = t.endText = t.durText = null; t.collapsed = false;
       t.startTime = t.endTime = t.actualStartTime = t.actualFinishTime = t.constraintTime = null;
+      delete t.notes; delete t.deadline;
     }
   }
 
@@ -3256,10 +3304,30 @@ function childMap() {   // parent id (null = top level) -> its children in order
   for (const a of m.values()) a.sort((x, y) => x.order - y.order);
   return m;
 }
+/* ---- Sorting the list (MS Project's Sort, "keep outline structure"): each group's tasks are ordered by a column, the outline
+   stays. A view setting like the filters (in memory, not saved with the plan); the IDs don't change, the plan's own order is
+   untouched — Clear sort brings it back. The values and the comparison are the filters' own (filterColValue / filterCompare),
+   so a column sorts exactly as it shows; blanks go last either way. While sorted, moving and indenting tasks is off (the
+   rows aren't in plan order). */
+let sortSpec = null;   // { col, dir: 1 | -1 } or null
+function sortKids(list) {
+  if (!sortSpec || !FILTER_COLS[sortSpec.col]) return list;
+  const { col, dir } = sortSpec, cmp = filterCompare(FILTER_COLS[col].kind, col), val = new Map(list.map(t => [t.id, t.spacer ? null : filterColValue(t, col)]));
+  return [...list].sort((a, b) => {
+    const x = val.get(a.id), y = val.get(b.id);
+    if (x == null || y == null) return x == null && y == null ? a.order - b.order : x == null ? 1 : -1;
+    return (cmp(x, y) * dir) || a.order - b.order;
+  });
+}
+function setSort(col, dir) {
+  sortSpec = dir && col ? { col, dir } : null;
+  closeFilterMenu(); closeColWidthMenu(); render();
+}
+function sortBlocked() { if (!sortSpec) return false; showToast('The list is sorted — clear the sort (status bar) to move or indent tasks'); return true; }
 function visibleTaskList() {
   const out = [], filtering = filtersActive(), kids = childMap();
   (function walk(parentId, depth) {
-    for (const t of kids.get(parentId) || []) {
+    for (const t of sortKids(kids.get(parentId) || [])) {
       if (filtering && !filterShows(t)) continue;
       out.push({ task: t, depth });
       if (!t.collapsed || filtering) walk(t.id, depth + 1);   // while filtering, groups are shown open so the matches inside them are seen
@@ -3391,7 +3459,7 @@ function effectiveDates(id) {
   _effCache.set(id, result);
   return result;
 }
-function resetEffectiveCache() { _effCache.clear(); _actCache.clear(); _baseCache.clear(); _costCache.clear(); _filterShow.clear(); _customActive = null; _zoomCache = null; }
+function resetEffectiveCache() { _slackCache = null; _effCache.clear(); _actCache.clear(); _baseCache.clear(); _costCache.clear(); _filterShow.clear(); _customActive = null; _zoomCache = null; }
 
 /* ======================== Scheduling & critical path ===================== */
 function successorsMap() {
@@ -3899,6 +3967,33 @@ function criticalPathAnalysis() {
   return { critical, float };
 }
 function computeCriticalPath() { return criticalPathAnalysis().critical; }
+/* ---- Total Slack (MS Project's Total Slack): how far a task can slip without moving the plan's finish — the float the
+   critical path already works out, in working days (working minutes in an Hours & minutes plan). A group shows the least
+   slack of its tasks; a manually scheduled, cyclic or empty-line task has none (it isn't in the scheduled network). One
+   analysis per render pass (_slackCache, cleared with the other caches in resetEffectiveCache()). */
+let _slackCache = null;
+function taskTotalSlack(t) {
+  if (!t || t.spacer) return null;
+  if (!_slackCache) {
+    const { float } = criticalPathAnalysis(), m = new Map(float);
+    const groupMin = id => { let best = null; for (const c of childrenOf(id)) { const v = hasChildren(c.id) ? groupMin(c.id) : m.get(c.id); if (v != null && (best === null || v < best)) best = v; } return best; };
+    for (const g of tasks) if (hasChildren(g.id)) m.set(g.id, groupMin(g.id));
+    _slackCache = m;
+  }
+  const v = _slackCache.get(t.id);
+  return v == null ? null : v;
+}
+function fmtSlack(n) {
+  if (n == null) return '';
+  if (minuteModeActive()) return (n < 0 ? '-' : '') + fmtDurationMinutes(Math.abs(n));
+  return `${n} day${Math.abs(n) === 1 ? '' : 's'}`;
+}
+// A deadline is missed when the task finishes later than it (on a later day — the deadline is the whole day).
+function deadlineMissed(t) {
+  if (!t || !t.deadline) return false;
+  const e = effectiveDates(t.id).end;
+  return !!e && dayNumber(e) > dayNumber(t.deadline);
+}
 
 /* ---- Reschedule remaining work from a status date (MS Project's "Update Project…") — an explicit user request: the one
    gap this app's own "Known v1 limitations" had flagged as the kind that actually matters for a plan used throughout a
@@ -3969,6 +4064,7 @@ function planSpan() {
     const s = t.startText == null || t.taskMode !== 'manual', e = t.endText == null || t.taskMode !== 'manual';
     if (s) { start = Math.min(start, dayNumber(t.startDate)); end = Math.max(end, dayNumber(t.startDate)); }
     if (e) { start = Math.min(start, dayNumber(t.endDate)); end = Math.max(end, dayNumber(t.endDate)); }
+    if (t.deadline) { start = Math.min(start, dayNumber(t.deadline)); end = Math.max(end, dayNumber(t.deadline)); }   // (its marker is drawn too)
   }
   if (showBaseline) for (const t of tasks) {   // ...and the baseline drawn under the bars
     const bd = baselineDates(t.id);
@@ -4152,9 +4248,11 @@ const FILTER_COLS = {
   end:          { label: 'Finish',        kind: 'date' },
   actualStart:  { label: 'Actual Start',  kind: 'date' },
   actualFinish: { label: 'Actual Finish', kind: 'date' },
+  deadline:     { label: 'Deadline',      kind: 'date' },
   duration:     { label: 'Duration',      kind: 'number' },
   progress:     { label: '% Complete',    kind: 'number' },
   remaining:    { label: 'Remaining Duration', kind: 'number' },
+  totalSlack:   { label: 'Total Slack',   kind: 'number' },
   status:       { label: 'Status',        kind: 'list' },
   baselineStart:    { label: 'Baseline Start',    kind: 'date' },
   baselineFinish:   { label: 'Baseline Finish',   kind: 'date' },
@@ -4166,7 +4264,8 @@ const FILTER_COLS = {
   resource:     { label: 'Resource',      kind: 'text' },
   worktype:     { label: 'Task Type',     kind: 'list' },
   work:         { label: 'Work',          kind: 'number' },
-  cost:         { label: 'Cost',          kind: 'number' }
+  cost:         { label: 'Cost',          kind: 'number' },
+  notes:        { label: 'Notes',         kind: 'text' }
 };
 for (const f of Object.values(CUSTOM_FIELDS)) FILTER_COLS[f.id] = { get label() { return customFieldName(f.id); }, kind: CUSTOM_KINDS.find(x => x.kind === f.kind).filter };
 function newColFilters() { return Object.fromEntries(Object.keys(FILTER_COLS).map(c => [c, null])); }
@@ -4223,6 +4322,9 @@ function filterColValue(t, col) {
     case 'work': return (t.milestone || hasChildren(t.id) || !Number.isFinite(t.work)) ? null : t.work;
     case 'worktype': return (t.milestone || hasChildren(t.id)) ? null : ((t.taskType === 'fixedDuration' || t.taskType === 'fixedWork') ? t.taskType : 'fixedUnits');
     case 'cost': return t.spacer ? null : taskCost(t);
+    case 'deadline': return t.deadline || null;
+    case 'totalSlack': return taskTotalSlack(t);
+    case 'notes': return t.notes || null;
     default:
       if (isCustomField(col)) {
         const v = customValue(t, col);
@@ -4243,6 +4345,7 @@ function filterValueLabel(col, v) {
     case 'work': return fmtWorkHours(v);
     case 'worktype': return taskTypeInfo(v).label;
     case 'cost': return fmtCurrency(v);
+    case 'totalSlack': return fmtSlack(v);
   }
   return String(v);
 }
@@ -4354,14 +4457,16 @@ function describeSpec(col, spec) {
 function colHeadHtml(label, col, headTitle) {
   const spec = colFilters[col], name = FILTER_COLS[col].label;
   const title = spec ? `Filtered: ${describeSpec(col, spec)}` : `Filter ${name}`;
-  return `<div class="col-head"${headTitle ? ` title="${escapeHtml(headTitle)}"` : label ? '' : ` title="${escapeHtml(name)}"`}><span>${escapeHtml(label).replace(/\n/g, '<br>')}</span><button class="col-filter-btn${spec ? ' active' : ''}" data-col="${col}" onclick="openColumnFilter(event,'${col}')" title="${escapeHtml(title)}"><i class="fa-solid fa-filter"></i></button><div class="col-resizer" data-col="${col}" title="Drag to resize · double-click to fit the content · right-click for more"></div></div>`;
+  const sorted = sortSpec && sortSpec.col === col ? `<i class="fa-solid fa-arrow-${sortSpec.dir > 0 ? 'up' : 'down'}-short-wide sort-ind" title="Sorted ${sortSpec.dir > 0 ? 'ascending' : 'descending'}"></i>` : '';
+  return `<div class="col-head"${headTitle ? ` title="${escapeHtml(headTitle)}"` : label ? '' : ` title="${escapeHtml(name)}"`}><span>${escapeHtml(label).replace(/\n/g, '<br>')}</span>${sorted}<button class="col-filter-btn${spec ? ' active' : ''}" data-col="${col}" onclick="openColumnFilter(event,'${col}')" title="${escapeHtml(title)}"><i class="fa-solid fa-filter"></i></button><div class="col-resizer" data-col="${col}" title="Drag to resize · double-click to fit the content · right-click for more"></div></div>`;
 }
 function renderFilterBar() {
   const el = document.getElementById('filterBar');
-  if (!filtersActive()) { el.classList.add('hidden'); el.innerHTML = ''; return; }
+  const sortChip = sortSpec && FILTER_COLS[sortSpec.col] ? `<span class="filter-chip sort-chip"><i class="fa-solid fa-arrow-${sortSpec.dir > 0 ? 'up' : 'down'}-short-wide"></i>Sorted by ${escapeHtml(FILTER_COLS[sortSpec.col].label)}<button onclick="setSort(null, 0)" title="Clear the sort — back to the plan's order"><i class="fa-solid fa-xmark"></i></button></span>` : '';
+  if (!filtersActive()) { el.classList.toggle('hidden', !sortChip); el.innerHTML = sortChip; return; }
   const chips = Object.keys(FILTER_COLS).filter(c => colFilters[c]).map(c =>
     `<span class="filter-chip"><i class="fa-solid fa-filter"></i>${escapeHtml(FILTER_COLS[c].label)}: ${escapeHtml(describeSpec(c, colFilters[c]))}<button onclick="clearColFilter('${c}')" title="Remove this filter"><i class="fa-solid fa-xmark"></i></button></span>`).join('');
-  el.innerHTML = `${chips}<span class="filter-count">${tasks.filter(t => !t.spacer && filterShows(t)).length} of ${tasks.filter(t => !t.spacer).length} tasks</span><button class="btn-link" onclick="clearAllFilters()">Clear all</button>`;
+  el.innerHTML = `${sortChip}${chips}<span class="filter-count">${tasks.filter(t => !t.spacer && filterShows(t)).length} of ${tasks.filter(t => !t.spacer).length} tasks</span><button class="btn-link" onclick="clearAllFilters()">Clear all</button>`;
   el.classList.remove('hidden');
 }
 function clearColFilter(col) { colFilters[col] = null; filterPinned.clear(); closeFilterMenu(); render(); }
@@ -4403,6 +4508,8 @@ function openColumnFilter(event, col) {
     `</select><div class="filter-rule-inputs" id="filterRuleInputs"></div></div>`;
   menu.innerHTML =
     `<div class="filter-head"><strong>Filter ${escapeHtml(FILTER_COLS[col].label)}</strong><button class="btn-link" id="filterClearBtn" onclick="clearColFilter('${col}')"${spec ? '' : ' disabled'}>Clear filter</button></div>` +
+    (() => { const L = kind === 'date' ? ['Oldest first', 'Newest first'] : kind === 'number' ? ['Smallest first', 'Largest first'] : ['A → Z', 'Z → A'], on = d => sortSpec && sortSpec.col === col && sortSpec.dir === d;
+      return `<div class="filter-sort">${[1, -1].map((d, i) => `<button type="button" class="filter-sort-btn${on(d) ? ' active' : ''}" data-dir="${d}" aria-pressed="${on(d)}" onclick="setSort(${on(d) ? 'null, 0' : `'${col}', ${d}`})"><i class="fa-solid fa-arrow-${d > 0 ? 'up' : 'down'}-short-wide"></i>Sort ${L[i]}</button>`).join('')}</div>`; })() +
     ruleSelect +
     `<div class="filter-section filter-list"><input type="search" id="filterSearch" placeholder="Search" autocomplete="off" oninput="onFilterSearch(this.value)"><div class="filter-tree" id="filterTree"></div></div>` +
     `<div class="filter-actions"><button class="btn" onclick="closeFilterMenu()">Cancel</button><button class="btn btn-primary" id="filterOkBtn" onclick="applyFilterDraft()">OK</button></div>`;
@@ -4903,7 +5010,10 @@ function resetAllColWidths() { colWidths = {}; save(); render(); if (document.ge
 function openColWidthMenu(e, id) {
   e.preventDefault(); e.stopPropagation(); closeToolbarMenus(); closeColumnsMenu();
   const menu = document.getElementById('colWidthMenu'), custom = !!colWidths[id];
-  menu.innerHTML = `<div class="menu-head">${escapeHtml(TASK_COLS[id].label)} column</div>`
+  const sortItems = FILTER_COLS[id] ? `<button class="dropdown-item" role="menuitem" onclick="setSort('${id}', 1)"><i class="fa-solid fa-arrow-up-short-wide"></i>Sort ascending</button>`
+    + `<button class="dropdown-item" role="menuitem" onclick="setSort('${id}', -1)"><i class="fa-solid fa-arrow-down-short-wide"></i>Sort descending</button>`
+    + (sortSpec ? `<button class="dropdown-item" role="menuitem" onclick="setSort(null, 0)"><i class="fa-solid fa-xmark"></i>Clear sort</button>` : '') + '<div class="dropdown-sep"></div>' : '';
+  menu.innerHTML = `<div class="menu-head">${escapeHtml(TASK_COLS[id].label)} column</div>` + sortItems
     + `<button class="dropdown-item" role="menuitem" onclick="closeColWidthMenu(); fitColumn('${id}')"><i class="fa-solid fa-left-right"></i>Fit to content</button>`
     + `<button class="dropdown-item" role="menuitem" onclick="closeColWidthMenu(); fitAllColumns()"><i class="fa-solid fa-arrows-left-right-to-line"></i>Fit all columns</button>`
     + `<button class="dropdown-item" role="menuitem"${custom ? '' : ' disabled'} onclick="closeColWidthMenu(); resetColWidth('${id}')"><i class="fa-solid fa-rotate-left"></i>Default width</button>`
@@ -5008,6 +5118,7 @@ function renderGrid() {
     startVariance: colHeadHtml('Start\nVariance', 'startVariance'), finishVariance: colHeadHtml('Finish\nVariance', 'finishVariance'), durationVariance: colHeadHtml('Duration\nVariance', 'durationVariance'),
     preds: colHeadHtml('Predecessors', 'preds'), resource: colHeadHtml('Resource', 'resource'),
     worktype: colHeadHtml('Task\nType', 'worktype'), work: colHeadHtml('Work', 'work'), cost: colHeadHtml('Cost', 'cost'),
+    deadline: colHeadHtml('Deadline', 'deadline'), totalSlack: colHeadHtml('Total\nSlack', 'totalSlack'), notes: colHeadHtml('Notes', 'notes'),
     ...Object.fromEntries(Object.keys(CUSTOM_FIELDS).map(id => [id, colHeadHtml(customFieldName(id), id)]))
   };
   applyColTemplate(cols);
@@ -5111,6 +5222,8 @@ function renderGrid() {
         ${cyclic.has(t.id) ? '<i class="fa-solid fa-triangle-exclamation cycle-warn" title="Circular dependency — not auto-scheduled"></i>' : ''}
         ${mismatchDate ? `<i class="fa-solid fa-triangle-exclamation mismatch-warn" title="${t.taskMode === 'manual' ? `Manually scheduled and starts before its predecessors allow — Auto Scheduled it would start ${fmtDate(mismatchDate)}` : `Started before its predecessors allow — they say no earlier than ${fmtDate(mismatchDate)}. Tasks that have started or finished are not rescheduled`}"></i>` : ''}
         ${t.constraintType !== 'ASAP' ? `<i class="fa-solid fa-calendar-day constraint-icon${constraintViolated(t) ? ' violated' : ''}" title="${escapeHtml(constraintTypeInfo(t.constraintType).label)}${t.constraintDate ? ' (' + fmtDate(t.constraintDate) + ')' : ''}${manual ? ' — ignored while manually scheduled' : ''}${constraintViolated(t) ? ' — constraint not met' : ''}"></i>` : ''}
+        ${t.notes ? `<i class="fa-regular fa-note-sticky note-ind" title="${escapeHtml(t.notes.length > 400 ? t.notes.slice(0, 400) + '…' : t.notes)}" onclick="event.stopPropagation();openTaskNotes('${t.id}')"></i>` : ''}
+        ${deadlineMissed(t) ? `<i class="fa-solid fa-flag deadline-warn" title="Finishes after its deadline (${fmtDate(t.deadline)})"></i>` : ''}
         ${nameCell}
       </div>`,
       start: startCell, end: finishCell, actualStart: actualCell('actualStart', act.start), actualFinish: actualCell('actualFinish', act.end),
@@ -5122,6 +5235,11 @@ function renderGrid() {
       baselineStart: blCell(bl.start, bl.startTime, false), baselineFinish: blCell(bl.end, bl.endTime, true), baselineDuration: `<div class="grid-cell-dim${summaryCls}" title="${bn}">${fmtBaselineDurationFor(t.id, sv.baseDuration)}</div>`,
       startVariance: varCell(sv.start), finishVariance: varCell(sv.finish), durationVariance: varCell(sv.duration),
       preds: predCell, resource: resourceCell, worktype: worktypeCell, work: workCell, cost: costCell,
+      deadline: editing('deadline')
+        ? `<input type="date" class="inline-edit" value="${t.deadline || ''}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" ${blurAttr('deadline')}>`
+        : `<div class="grid-cell-dim${summaryCls} editable${deadlineMissed(t) ? ' deadline-late' : ''}" onclick="event.stopPropagation();startInlineEdit('${t.id}','deadline')"${deadlineMissed(t) ? ' title="Finishes after its deadline"' : ''}>${t.deadline ? fmtDate(t.deadline) : ''}</div>`,
+      totalSlack: (() => { const v = taskTotalSlack(t); return `<div class="grid-cell-dim${summaryCls}${v != null && v < 0 ? ' var-late' : ''}"${v != null && v <= 0 ? ' title="No slack: a delay here moves the plan\'s finish"' : ''}>${fmtSlack(v)}</div>`; })(),
+      notes: `<div class="grid-cell-dim editable" title="${escapeHtml(t.notes || 'Click to add a note')}" onclick="event.stopPropagation();openTaskNotes('${t.id}')">${escapeHtml((t.notes || '').split('\n')[0])}</div>`,
       ...Object.fromEntries(cols.filter(isCustomField).map(id => [id, customCellHtml(t, id, summaryCls, editing(id), blurAttr(id), (f, iso, time) => dateEditor(f, iso, null, 'dd.mm.yyyy', minuteModeActive() ? time : undefined, true))]))
     };
     if (t.spacer) {   // an empty line: the ID and a blank cell in every column (nothing to edit)
@@ -5194,6 +5312,7 @@ function wireGrabCursor() {
   document.addEventListener('dragstart', clearGrabHold); // once the drag is under way the browser draws its own cursor
 }
 function dragStartTask(event, id) {
+  if (sortSpec) { event.preventDefault(); sortBlocked(); return; }
   draggedTaskId = id;
   event.dataTransfer.effectAllowed = 'move';
   event.dataTransfer.setData('text/plain', id);
@@ -5452,7 +5571,7 @@ function startInlineEdit(id, field) {
   if (!t || t.spacer) return;   // an empty line has nothing to edit
   // Auto summary rows roll their dates up from their children, so only the
   // name is editable there; a manually scheduled summary owns its own dates.
-  if (hasChildren(id) && field !== 'name' && field !== 'resource' && !isCustomField(field) && !(t.taskMode === 'manual' && ['start', 'finish', 'duration'].includes(field))) return;
+  if (hasChildren(id) && field !== 'name' && field !== 'resource' && field !== 'deadline' && !isCustomField(field) && !(t.taskMode === 'manual' && ['start', 'finish', 'duration'].includes(field))) return;
   if ((field === 'duration' || field === 'actualFinish') && t.milestone) return; // milestones are zero-duration by definition
   if (field === 'finish' && t.milestone && t.taskMode !== 'manual') return;   // (a manually scheduled milestone's Finish can be a date or text such as TBD)
   editingCell = { id, field };
@@ -5639,6 +5758,10 @@ function commitInlineEdit(id, field, rawValue) {
       if (!isStarted(t)) snapToWorkDays(t);   // (an actual date on a day off leaves with it)
       cascadeSchedule(id);   // ...and successors are scheduled off them
     }
+  } else if (field === 'deadline') {   // a native date input emits ISO; blank clears it
+    const iso = val ? parseUserDate(val) : null;
+    if (val && !iso) showToast(`"${val}" isn't a date`, true);
+    else if (iso) t.deadline = iso; else delete t.deadline;
   } else if (field === 'predecessors') {
     const parsed = parsePredecessorString(val, id);
     if (parsed !== null) { const cyc0 = taskCycleSet(); t.predecessors = parsed; releaseFromCycles(cyc0); applyConstraints(id); }
@@ -5890,6 +6013,12 @@ function renderGantt() {
     }
   });
   list.slice(win.from, win.to).forEach(({ task: t }, k) => { html += baselineBarHtml(t, win.from + k, px); });   // under the bars
+  // A deadline: MS Project's arrow at the end of that day, on the task's row — green, red once the task finishes later.
+  list.slice(win.from, win.to).forEach(({ task: t }, k) => {
+    if (!t.deadline || t.spacer) return;
+    const x = hourZoomOn() ? ganttXAt(t.deadline, wEnd(t.deadline), true, px) : (dayNumber(t.deadline) + 1 - dateRange.start) * px;
+    html += `<div class="gantt-deadline${deadlineMissed(t) ? ' missed' : ''}" style="left:${x - 6}px;top:${(win.from + k) * ROW_H + 2}px" title="Deadline ${fmtDate(t.deadline)}${deadlineMissed(t) ? ' — finishes later' : ''}"></div>`;
+  });
   document.getElementById('ganttRows').innerHTML = html;
 
   const svg = document.getElementById('ganttDeps');
@@ -6438,6 +6567,7 @@ function indentTask(id) {
   return true;
 }
 function indentSelected() {
+  if (sortBlocked()) return;
   let any = false;
   for (const id of selectionRoots()) if (indentTask(id)) any = true;
   if (any) { save(); render(); }
@@ -6456,6 +6586,7 @@ function outdentTask(id) {
   return true;
 }
 function outdentSelected() {
+  if (sortBlocked()) return;
   let any = false;
   for (const id of selectionRoots()) if (outdentTask(id)) any = true;
   if (any) { save(); render(); }
@@ -6632,6 +6763,10 @@ function openTaskModal(id, isNew) {
   renderPredecessorRows();
   onMilestoneToggle();
   renderCustomFieldsTab(t.custom || {});
+  document.getElementById('taskNotesInput').value = t.notes || '';
+  document.getElementById('taskNotesDot').classList.toggle('hidden', !t.notes);
+  document.getElementById('taskDeadlineInput').value = t.deadline || '';
+  updateDeadlineNote();
   setTaskModalTab('general');   // it always opens on the General tab
   updateModalComputed();
   taskModalSnapshot = taskModalState();
@@ -6673,6 +6808,7 @@ function updateModalComputed() {
   const t = editingTaskId && byId(editingTaskId);
   if (!t) return;
   updateCustomBadge();
+  updateDeadlineNote();
   const $ = id => document.getElementById(id), v = id => $(id).value;
   let remaining, status;
   if (hasChildren(t.id)) { remaining = remainingDays(t.id); status = taskStatus(t.id); }
@@ -7875,10 +8011,12 @@ function removeResourceEverywhere(resourceId, now = Date.now()) {
   }
 }
 function setTaskModalTab(tab) {
-  const custom = tab === 'custom';
-  document.getElementById('taskTabGeneral').classList.toggle('hidden', custom);
+  const custom = tab === 'custom', notes = tab === 'notes';
+  document.getElementById('taskTabGeneral').classList.toggle('hidden', custom || notes);
+  document.getElementById('taskTabNotes').classList.toggle('hidden', !notes);
   document.getElementById('taskTabCustom').classList.toggle('hidden', !custom);
-  for (const [id, on] of [['taskTabBtnGeneral', !custom], ['taskTabBtnCustom', custom]]) {
+  if (notes) setTimeout(() => document.getElementById('taskNotesInput').focus(), 20);
+  for (const [id, on] of [['taskTabBtnGeneral', !custom && !notes], ['taskTabBtnNotes', notes], ['taskTabBtnCustom', custom]]) {
     document.getElementById(id).classList.toggle('active', on); document.getElementById(id).setAttribute('aria-selected', on);
   }
 }
@@ -8083,6 +8221,17 @@ function addPredecessorRow() {
 }
 function removePredecessorRow(i) { editingPredecessors.splice(i, 1); renderPredecessorRows(); }
 
+// Opens the task dialog on its Notes tab (the note icon in the name cell, the Notes column).
+function openTaskNotes(id) { openTaskModal(id); if (editingTaskId === id) setTaskModalTab('notes'); }
+// The line beside the Deadline field: what a deadline is, or — with one set — whether the Finish in the dialog keeps it.
+function updateDeadlineNote() {
+  const el = document.getElementById('taskDeadlineNote'), dl = document.getElementById('taskDeadlineInput').value, fin = document.getElementById('taskEndInput').value;
+  const late = dl && fin && dayNumber(fin) > dayNumber(dl);
+  const n = late ? durationDays(dl, fin) - 1 : 0;
+  el.textContent = !dl ? '' : late ? ` · ${n} day${n === 1 ? '' : 's'} late` : ' · on track';
+  el.title = late ? `Finishes ${fmtDate(fin)}, ${n} working day${n === 1 ? '' : 's'} after the deadline` : '';
+  el.classList.toggle('late', !!late);
+}
 function saveTaskFromModal() {
   const t = byId(editingTaskId); if (!t) return;
   const isGroup = hasChildren(t.id), ms = document.getElementById('taskMilestoneInput').checked, aStart = document.getElementById('taskActualStartInput').value || null;
@@ -8113,6 +8262,8 @@ function saveTaskFromModal() {
     recordActualFinish(t, previousFinish); applyActualDates(t); clampTaskDates(t); if (!isStarted(t)) snapToWorkDays(t);
   }
   { const cv = cleanCustomValues(readCustomInputs()); if (cv) t.custom = cv; else delete t.custom; }
+  { const nt = document.getElementById('taskNotesInput').value; if (nt.trim()) t.notes = nt; else delete t.notes; }
+  { const dl = document.getElementById('taskDeadlineInput').value; if (dl) t.deadline = dl; else delete t.deadline; }
   t.color = document.getElementById('taskColorSwatches').dataset.value || null;
   const cyc0 = taskCycleSet(), prevCType = t.constraintType, prevCDate = t.constraintDate;
   t.predecessors = editingPredecessors.filter(p => p.id);
@@ -8348,7 +8499,7 @@ function replanAfterMerge(touched) {
    A conflict = both sides changed the same field of the same task (or plan setting) since they last agreed. The merge has already
    picked the newer edit; this only makes that visible — and reversible: Review lists them and lets you take the other version. */
 let syncConflictLog = [];   // session only (a heads-up for whoever is at the keyboard, not history)
-const CONFLICT_LABELS = { name: 'Name', startDate: 'Start', endDate: 'Finish', progress: '% Complete', resource: 'Resource', predecessors: 'Predecessors', taskMode: 'Task mode', actualStart: 'Actual Start', actualFinish: 'Actual Finish', parentId: 'Parent', order: 'Position', color: 'Colour', milestone: 'Milestone', constraintType: 'Constraint', constraintDate: 'Constraint date', startTime: 'Start time', endTime: 'Finish time', actualStartTime: 'Actual Start time', actualFinishTime: 'Actual Finish time', constraintTime: 'Constraint time', timeUnit: 'Scheduling precision', workHours: 'Working hours', workHoursByDay: 'Working hours by day', lagUnit: 'Lag unit', startText: 'Start (text)', endText: 'Finish (text)', durText: 'Duration (text)', custom: 'Custom fields', baselines: 'Baselines', workDays: 'Working days', compareBaseline: 'Compared baseline', fieldNames: 'Custom field names', newTaskMode: 'New task mode', honorConstraintDates: 'Honor constraint dates', resources: 'Resource pool', currencyCode: 'Currency' };
+const CONFLICT_LABELS = { name: 'Name', startDate: 'Start', endDate: 'Finish', progress: '% Complete', resource: 'Resource', predecessors: 'Predecessors', taskMode: 'Task mode', actualStart: 'Actual Start', actualFinish: 'Actual Finish', parentId: 'Parent', order: 'Position', color: 'Colour', milestone: 'Milestone', constraintType: 'Constraint', constraintDate: 'Constraint date', startTime: 'Start time', endTime: 'Finish time', actualStartTime: 'Actual Start time', actualFinishTime: 'Actual Finish time', constraintTime: 'Constraint time', timeUnit: 'Scheduling precision', workHours: 'Working hours', workHoursByDay: 'Working hours by day', lagUnit: 'Lag unit', startText: 'Start (text)', endText: 'Finish (text)', durText: 'Duration (text)', custom: 'Custom fields', baselines: 'Baselines', workDays: 'Working days', compareBaseline: 'Compared baseline', fieldNames: 'Custom field names', newTaskMode: 'New task mode', honorConstraintDates: 'Honor constraint dates', resources: 'Resource pool', currencyCode: 'Currency', notes: 'Notes', deadline: 'Deadline' };
 function conflictLabel(key) { return CONFLICT_LABELS[key] || key; }
 function fmtConflictValue(key, v) {
   if (v === undefined || v === null || v === '') return '—';
@@ -8581,7 +8732,8 @@ const IMPORT_HEADERS = {
   milestone: ['milestone', 'meilenstein'],
   actualStart: ['actual start', 'tatsächlicher anfang', 'tatsaechlicher anfang', 'ist-start', 'actual begin'],
   actualFinish: ['actual finish', 'tatsächliches ende', 'tatsaechliches ende', 'ist-ende', 'actual end'],
-  constraintType: ['constraint type', 'einschränkungstyp'], constraintDate: ['constraint date', 'einschränkungsdatum']
+  constraintType: ['constraint type', 'einschränkungstyp'], constraintDate: ['constraint date', 'einschränkungsdatum'],
+  deadline: ['deadline', 'stichtag', 'due date', 'due'], notes: ['notes', 'notizen', 'note', 'comments', 'kommentar', 'description', 'beschreibung']
 };
 function importHeaderField(cell) {
   const h = String(cell || '').replace(/^\uFEFF/, '').trim().toLowerCase().replace(/\s+/g, ' ');
@@ -8671,6 +8823,7 @@ function tasksFromTable(rows, opts = {}) {
       if (as) t.actualStartTime = parseTableTime(cell(x.r, 'actualStart')) || t.startTime;
       if (af) t.actualFinishTime = parseTableTime(cell(x.r, 'actualFinish')) || t.endTime;
     }
+    { const dl = parseTableDate(cell(x.r, 'deadline'), fmt); if (dl) t.deadline = dl; const nt = cell(x.r, 'notes').trim(); if (nt) t.notes = nt.slice(0, 10000); }
     const ct = cell(x.r, 'constraintType').trim().toLowerCase();
     if (ct) { const c = CONSTRAINT_TYPES.find(k => k.id.toLowerCase() === ct || k.label.toLowerCase() === ct); if (c && c.id !== 'ASAP') { t.constraintType = c.id; if (c.hasDate) { t.constraintDate = parseTableDate(cell(x.r, 'constraintDate'), fmt) || t.startDate; if (mo) t.constraintTime = parseTableTime(cell(x.r, 'constraintDate')); } } }
     stack.push(t); made.push({ t, x });
@@ -8831,6 +8984,8 @@ function parseMspdi(xmlText) {
     const ttMap = { 0: 'fixedUnits', 1: 'fixedDuration', 2: 'fixedWork' }, tType = ttMap[parseInt(txt(el, 'Type'), 10)];
     if (tType && tType !== 'fixedUnits') t.taskType = tType;
     if (txt(el, 'EffortDriven') === '1') t.effortDriven = true;
+    { const dl = /^(\d{4}-\d{2}-\d{2})/.exec(txt(el, 'Deadline')); if (dl) t.deadline = dl[1]; }
+    { const raw = (one(el, 'Notes') || {}).textContent || '', cut = raw.indexOf(MSPDI_NOTES_MARK), nt = (cut >= 0 ? raw.slice(0, cut) : raw).trim(); if (nt) t.notes = nt.slice(0, 10000); }
     const workRaw = txt(el, 'Work');
     if (workRaw) { const wm = /^PT?(?:(\d+)H)?(?:(\d+)M)?/.exec(workRaw); if (wm) { const wMin = parseInt(wm[1] || 0, 10) * 60 + parseInt(wm[2] || 0, 10); if (wMin > 0) t.work = wMin; } }
     const pc = parseInt(txt(el, 'PercentComplete'), 10); if (pc >= 0) t.progress = Math.min(100, pc);
@@ -9278,6 +9433,20 @@ function updateStatusBar() {
     const z = currentZoom(), r = zoomSliderRange();
     document.getElementById('zoomSlider').value = Math.round((Math.log(z.pxPerDay) - r.lo) / (r.hi - r.lo) * 1000);
   }
+  { const b = document.getElementById('sbScrollTaskBtn'); b.classList.toggle('hidden', currentView !== 'gantt'); b.disabled = !(selectedTaskId && byId(selectedTaskId)); }
+}
+// The status bar's Today: the chart (Gantt or Resource Plan) scrolled so today sits a third in from the left.
+function goToToday() {
+  const today = dayNumber(todayStr());
+  if (today < dateRange.start || today > dateRange.end) { showToast(`Today (${fmtDate(todayStr())}) is outside the plan's dates`); return; }
+  const px = currentZoom().pxPerDay, x = (today - dateRange.start) * px, sc = viewScroller(), visible = sc.clientWidth - (currentView === 'resources' ? RESOURCE_NAME_W : 0);
+  sc.scrollLeft = Math.max(0, x - visible / 3);
+}
+// ...and Scroll to task (MS Project's own): the selected task's bar, in view.
+function scrollToSelectedTask() {
+  const id = selectedTaskId && byId(selectedTaskId) && !byId(selectedTaskId).spacer ? selectedTaskId : null;
+  if (!id) { showToast('Select a task first'); return; }
+  jumpToTask(id);
 }
 // The zoom slider: px per day on a log scale between the coarsest and finest scale this plan offers.
 function zoomSliderRange() { return { lo: Math.log(0.5), hi: Math.log(minuteModeActive() ? 480 : 60) }; }
@@ -9533,6 +9702,9 @@ function clipCell(t, c, depth) {
     case 'status': return taskStatus(t.id) || '';
     case 'preds': return predecessorLabel(t) || '';
     case 'resource': return (t.resource || '').trim();
+    case 'deadline': return t.deadline ? fmtDate(t.deadline) : '';
+    case 'totalSlack': return fmtSlack(taskTotalSlack(t));
+    case 'notes': return (t.notes || '').replace(/\s*\n\s*/g, ' ');
     case 'baselineStart': { const b = baselineDates(t.id); return b.start ? baselineDateText(t.id, b.start, b.startTime, false) : ''; }
     case 'baselineFinish': { const b = baselineDates(t.id); return b.end ? baselineDateText(t.id, b.end, b.endTime, true) : ''; }
     case 'baselineDuration': { const v = scheduleVariance(t.id).baseDuration; return v == null ? '' : varianceIsMinutes(t.id) ? fmtDurationMinutes(v) : String(v); }
@@ -9947,6 +10119,7 @@ function buildXlsx(opts) {
     id: ['ID', 6], mode: ['Mode', 10], wbs: ['WBS', 15], name: ['Task Name', 46], start: ['Start', 13], end: ['Finish', 13], actualStart: ['Actual Start', 13],
     actualFinish: ['Actual Finish', 13], baselineStart: ['Baseline Start', 13], baselineFinish: ['Baseline Finish', 13], baselineDuration: ['Baseline Duration', 13], startVariance: ['Start Variance', 13], finishVariance: ['Finish Variance', 13], durationVariance: ['Duration Variance', 13], duration: ['Duration', 12], progress: ['% Complete', 13], remaining: ['Remaining Duration', 13], status: ['Status', 13], preds: ['Predecessors', 18], resource: ['Resource', 22], worktype: ['Task Type', 14], work: ['Work', 12], cost: ['Cost', 13]
   };
+  Object.assign(XCOLS, { deadline: ['Deadline', 13], totalSlack: ['Total Slack', 12], notes: ['Notes', 40] });
   for (const id of Object.keys(CUSTOM_FIELDS)) XCOLS[id] = [customFieldName(id), { text: 22, number: 13, date: 13, flag: 9 }[CUSTOM_FIELDS[id].kind]];
   // "All columns" adds the custom fields that are in use (renamed, or holding a value somewhere) — not twenty empty columns.
   const customInUse = isCustomActive;
@@ -10026,6 +10199,9 @@ function buildXlsx(opts) {
         case 'work': sheet.cell(r, c, (t.milestone || summary || !Number.isFinite(t.work)) ? null : fmtWorkHours(t.work), S({ h: 'center', italic: true, color: DIM, bold: false })); break;
         // Unlike Work, Cost IS meaningful for a milestone (a Cost/Use assignment) and a group (the rollup of its
         // children) — a real number with a currency format code, sortable/summable in Excel, not pre-formatted text.
+        case 'deadline': if (t.deadline) sheet.cell(r, c, xlsxSerial(t.deadline), S(Object.assign({ h: 'center', num: dateFmt }, deadlineMissed(t) ? { color: 'CF222E', bold: true } : {}))); else sheet.cell(r, c, null, S({})); break;   // red once Finish runs past it
+        case 'totalSlack': { const v = taskTotalSlack(t); if (v == null) sheet.cell(r, c, null, S({})); else if (minuteModeActive()) sheet.cell(r, c, fmtSlack(v), S({ h: 'center', italic: true, color: v < 0 ? 'CF222E' : DIM, bold: false })); else sheet.cell(r, c, v, S({ h: 'center', num: '0" days";-0" days";0" days"', color: v < 0 ? 'CF222E' : undefined })); break; }
+        case 'notes': sheet.cell(r, c, t.notes || null, S({ h: 'left' })); break;
         case 'cost': sheet.cell(r, c, taskCost(t), S({ h: 'center', num: `"${currencySymbol().replace(/"/g, '')}"#,##0.00` })); break;
         default:
           if (isCustomField(k)) {
@@ -10163,6 +10339,9 @@ function downloadBlob(blob, filename) {
    a misordered file). Durations are working days × 8 h (480 min/day), dates are 08:00 (start) / 17:00 (finish), the working week and the holidays go into
    the project's base calendar, resources into Resources + Assignments, baselines 0–10 into each task's Baseline elements. Empty lines are left out; custom
    field values and free-text dates go into the task's Notes (the extended-attribute field ids could not be verified without MS Project). */
+// The Notes of an exported task hold the task's own notes, then — after this line — what MS Project has no field for (free-text
+// dates, a group's resource text, custom fields). An import keeps only what is above it.
+const MSPDI_NOTES_MARK = 'Details from Milestone:';
 function buildMspdi() {
   const list = exportTaskRows('all').filter(r => !r.task.spacer), rows = list.map(r => r.task);
   const uid = new Map(rows.map((t, i) => [t.id, i + 1])), esc = xmlEsc;
@@ -10229,7 +10408,9 @@ function buildMspdi() {
     const ct = CT[t.constraintType] || 0;
     if (!group && ct) { const info = constraintTypeInfo(t.constraintType); x += T('ConstraintType', ct) + (info.hasDate && t.constraintDate ? T('ConstraintDate', dt(t.constraintDate, hhmmss(taskTime(t, 'constraintTime', info.basis === 'finish' ? wEnd(t.constraintDate) : wStart(t.constraintDate))))) : ''); }
     else x += T('ConstraintType', 0);
-    if (notes.length) x += T('Notes', notes.join('\n'));
+    if (t.deadline) x += T('Deadline', dt(t.deadline, hhmmss(wEnd(t.deadline))));   // (schema order: after ConstraintDate, before Notes)
+    const noteText = [t.notes || '', notes.length ? `${MSPDI_NOTES_MARK}\n${notes.join('\n')}` : ''].filter(Boolean).join('\n\n');
+    if (noteText) x += T('Notes', noteText);
     if (!group) for (const p of t.predecessors) if (uid.has(p.id)) x += `<PredecessorLink>${T('PredecessorUID', uid.get(p.id))}${T('Type', LT[p.type] == null ? 1 : LT[p.type])}${T('CrossProject', 0)}${minuteModeActive()
       ? `${T('LinkLag', Math.round((p.lag || 0) * 10))}${T('LagFormat', p.elapsed ? 4 : 3)}`   // p.lag is already real calendar minutes when elapsed — LinkLag (always tenths of a minute) needs the same ×10 either way, only the format code differs
       : `${T('LinkLag', Math.round((p.lag || 0) * (p.elapsed ? 14400 : 4800)))}${T('LagFormat', p.elapsed ? 8 : 7)}`}</PredecessorLink>`;   // elapsed: a full calendar day is always 1440 min (×10 = 14400), never the calendar's own working minutes/day
