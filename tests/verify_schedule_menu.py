@@ -72,6 +72,11 @@ with sync_playwright() as p:
     pg.keyboard.press("Escape"); pg.wait_for_timeout(100)
     check("Escape closes the Schedule menu", pg.locator("#scheduleMenu.open").count() == 0)
 
+    pg.click("#scheduleMenuBtn"); pg.wait_for_selector("#scheduleMenu.open")
+    kids = ev("() => [...document.getElementById('scheduleMenu').children].map(c => c.id || c.className)") if 'ev' in dir() else pg.evaluate("() => [...document.getElementById('scheduleMenu').children].map(c => c.id || c.className)")
+    check("a divider between Baseline (records the plan) and Reschedule / Level (change it)", kids == ["planBaselineItem", "dropdown-sep", "planRescheduleItem", "planLevelItem"], kids)
+    check("Reschedule has its own icon, not the Schedule button's", pg.locator("#planRescheduleItem .fa-forward").count() == 1 and pg.locator("#scheduleMenuBtn .fa-calendar-check").count() == 1 and pg.locator("#planRescheduleItem .fa-calendar-check").count() == 0)
+    pg.keyboard.press("Escape")
     check("no console errors or page errors across the whole run", not errors, errors[:5])
     n_ok, n_all = sum(results), len(results)
     print(f"\n{n_ok}/{n_all} checks passed")

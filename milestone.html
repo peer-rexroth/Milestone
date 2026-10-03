@@ -8223,7 +8223,8 @@ function closeScheduleMenu() { document.getElementById('scheduleMenu').classList
 function renderScheduleMenu() {
   document.getElementById('scheduleMenu').innerHTML =
     `<button class="dropdown-item" id="planBaselineItem" onclick="openBaselineModal()"><i class="fa-solid fa-ruler-horizontal"></i>Baseline…<span class="item-hint">${escapeHtml(baselineMenuHint())}</span></button>` +
-    `<button class="dropdown-item" id="planRescheduleItem" onclick="openRescheduleModal()"><i class="fa-solid fa-calendar-check"></i>Reschedule remaining work…</button>` +
+    `<div class="dropdown-sep"></div>` +   // Baseline records the plan; the two below change it
+    `<button class="dropdown-item" id="planRescheduleItem" onclick="openRescheduleModal()"><i class="fa-solid fa-forward"></i>Reschedule remaining work…</button>` +
     `<button class="dropdown-item" id="planLevelItem" onclick="openLevelModal()"><i class="fa-solid fa-scale-balanced"></i>Level resources…${overallocatedResources().length ? `<span class="item-hint">${overallocatedResources().length} over-allocated</span>` : ''}</button>`;
 }
 
