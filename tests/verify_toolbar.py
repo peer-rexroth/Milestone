@@ -50,7 +50,7 @@ with sync_playwright() as p:
     # ---------------------------------------------------------------- the Add menu
     fresh()
     pg.click("#addMenuBtn"); pg.wait_for_timeout(100)
-    check("the arrow next to Add Task opens a menu: Add empty line, Paste tasks, and how new tasks are scheduled", menu_open("addMenu") and pg.locator("#addMenu .dropdown-item").count() == 4 and "Add empty line" in pg.inner_text("#addSpacerBtn") and "Paste" in pg.inner_text("#pasteBtn"))
+    check("the arrow next to Add Task opens a menu: Add empty line, Recurring task…, Paste tasks, and how new tasks are scheduled", menu_open("addMenu") and pg.locator("#addMenu .dropdown-item").count() == 5 and "Recurring task" in pg.inner_text("#addRecurBtn") and "Add empty line" in pg.inner_text("#addSpacerBtn") and "Paste" in pg.inner_text("#pasteBtn"))
     check("...the current mode is ticked (Auto Scheduled), the other is not", "active" in (pg.get_attribute("#newModeAuto", "class") or "") and "active" not in (pg.get_attribute("#newModeManual", "class") or "") and pg.get_attribute("#newModeAuto", "aria-checked") == "true")
     check("...the paste hint shows the platform's shortcut", "V" in pg.inner_text("#pasteBtn") and ("⌘" in pg.inner_text("#pasteBtn") or "Ctrl" in pg.inner_text("#pasteBtn")))
     pg.click("#newModeManual"); pg.wait_for_timeout(120)

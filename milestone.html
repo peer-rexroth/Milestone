@@ -524,6 +524,7 @@ input.inline-edit { width: 100%; min-width: 0; padding: 3px 6px; border: 1px sol
 .grid-cell-dim { color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-height: 1em; align-self: stretch; display: flex; align-items: center; }
 .grid-cell-dim.summary { font-weight: 600; color: var(--text); }
 .grid-cell-dim.deadline-late { color: var(--danger); font-weight: 600; }
+.recur-ind { font-size: 10.5px; color: var(--accent); margin-right: 5px; cursor: pointer; flex: none; }
 .note-ind { font-size: 11px; color: var(--text-dim); margin-right: 5px; cursor: pointer; flex: none; }
 .note-ind:hover { color: var(--accent); }
 .deadline-warn { font-size: 10px; color: var(--danger); margin-right: 5px; flex: none; }
@@ -623,6 +624,14 @@ input.inline-edit { width: 100%; min-width: 0; padding: 3px 6px; border: 1px sol
 @keyframes jumpFlash { 0% { box-shadow: inset 0 0 0 2px var(--accent); background: color-mix(in srgb, var(--accent) 25%, var(--panel)); } 100% { box-shadow: inset 0 0 0 0 transparent; } }
 .dropdown-item .item-hint { margin-left: auto; padding-left: 14px; color: var(--text-faint); font-size: 11.5px; }
 .cal-days { display: flex; flex-wrap: wrap; gap: 6px; }
+.recur-freq { display: flex; gap: 18px; flex-wrap: wrap; font-size: 13px; }
+.recur-freq label, .recur-line > label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.recur-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 13px; color: var(--text); }
+.recur-line .dt-wrap { width: 150px; }
+.recur-num { width: 64px; padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel); color: var(--text); font-size: 13px; }
+.recur-num:disabled, #recurModalBg .dt-date:disabled { opacity: .5; }
+.recur-preview { font-weight: 600; color: var(--text) !important; }
+.recur-preview.bad { color: var(--danger) !important; }
 .cal-day { position: relative; cursor: pointer; }
 .cal-day input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
 .cal-day span { display: inline-block; min-width: 44px; padding: 6px 0; text-align: center; border: 1px solid var(--border); border-radius: 6px; background: var(--panel); color: var(--text-dim); font-size: 12.5px; font-weight: 600; }
@@ -1214,6 +1223,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
 <div class="dropdown-menu" id="loadMenu" role="menu"></div>
 <div class="dropdown-menu" id="addMenu" role="menu">
   <button class="dropdown-item" id="addSpacerBtn" role="menuitem" onclick="closeAddMenu();addSpacer()"><i class="fa-solid fa-grip-lines"></i>Add empty line<span class="item-hint">a blank row to separate tasks</span></button>
+  <button class="dropdown-item" id="addRecurBtn" role="menuitem" onclick="closeAddMenu();openRecurModal()"><i class="fa-solid fa-repeat"></i>Recurring task…<span class="item-hint">a meeting every week, a report every month</span></button>
   <button class="dropdown-item" id="pasteBtn" role="menuitem" onclick="closeAddMenu();pasteButton()"><i class="fa-regular fa-paste"></i>Paste tasks<span class="item-hint" data-kbd="V"></span></button>
   <div class="dropdown-sep"></div>
   <div class="menu-head">New tasks are</div>
@@ -1751,6 +1761,38 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
   </div>
 </div>
 
+<div class="modal-bg" id="recurModalBg" onclick="if(event.target===this) closeRecurModal()">
+  <div class="modal mid">
+    <div class="modal-header"><h2 id="recurTitle">Recurring task</h2><button onclick="closeRecurModal()" aria-label="Close">&times;</button></div>
+    <div class="modal-body" id="recurBody">
+      <div class="field-grid-4">
+        <div class="field span2"><label for="recurName">Task name</label><input type="text" id="recurName" maxlength="200" placeholder="e.g. Weekly status meeting"></div>
+        <div class="field"><label for="recurDur" id="recurDurLabel">Duration (days)</label><input type="text" id="recurDur" title="0 makes each occurrence a milestone"></div>
+        <div class="field" id="recurTimeField"><label for="recurTime">Starts at</label><input type="text" class="dt-time" id="recurTime"></div>
+      </div>
+      <section class="cal-sec">
+        <div class="cal-sec-title">Recurrence pattern</div>
+        <div class="recur-freq"><label><input type="radio" name="recurFreq" value="daily">Daily</label><label><input type="radio" name="recurFreq" value="weekly">Weekly</label><label><input type="radio" name="recurFreq" value="monthly">Monthly</label><label><input type="radio" name="recurFreq" value="yearly">Yearly</label></div>
+        <div class="recur-line">Every <input type="number" id="recurEvery" min="1" max="99" class="recur-num"> <span id="recurEveryUnit">week(s)</span></div>
+        <div class="recur-line" id="recurDaysRow"><span>on</span><div class="cal-days" id="recurDays"></div></div>
+        <div class="recur-line" id="recurWorkdaysRow"><label class="checkbox-row"><input type="checkbox" id="recurWorkdays"><span>Working days only</span></label></div>
+        <div class="recur-line" id="recurMonthRow">on day <input type="number" id="recurMonthDay" min="1" max="31" class="recur-num"> <span class="cal-sec-note">(the last day in a shorter month)</span></div>
+      </section>
+      <section class="cal-sec">
+        <div class="cal-sec-title">Range</div>
+        <div class="recur-line"><span>Start</span><input type="text" class="dt-date" id="recurStart"></div>
+        <div class="recur-line"><label><input type="radio" name="recurEnd" id="recurEndCount" checked> End after</label><input type="number" id="recurCount" min="1" max="500" class="recur-num"> occurrences</div>
+        <div class="recur-line"><label><input type="radio" name="recurEnd" id="recurEndUntil"> End by</label><input type="text" class="dt-date" id="recurUntil"></div>
+        <p class="cal-hint recur-preview" id="recurPreview" style="margin:0"></p>
+        <p class="cal-hint hidden" id="recurKeepNote" style="margin:0">Occurrences that have started or finished are kept; the others are made again for the new pattern.</p>
+      </section>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeRecurModal()">Cancel</button>
+      <button class="btn btn-primary" id="recurOkBtn" onclick="applyRecurModal()">Create</button>
+    </div>
+  </div>
+</div>
 <div class="modal-bg" id="rescheduleModalBg" onclick="if(event.target===this) closeRescheduleModal()">
   <div class="modal mid">
     <div class="modal-header"><h2>Reschedule remaining work</h2><button onclick="closeRescheduleModal()" aria-label="Close">&times;</button></div>
@@ -2002,6 +2044,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
       <div class="help-pane" id="helpPane-gantt" role="tabpanel" aria-labelledby="helpTab-gantt" hidden>
         <div class="help-section">
           <div class="help-section-title">The view</div>
+          <div class="help-row"><i class="fa-solid fa-repeat"></i><span><strong>Recurring task…</strong> (the arrow beside Add Task) makes a meeting or report that repeats — daily, weekly on chosen days, monthly or yearly, a number of times or until a date. It becomes a group of tasks, each pinned to its date; a date on a day off moves to the next working day. Click the ↻ by its name to change the pattern.</span></div>
           <div class="help-row"><i class="fa-solid fa-crosshairs"></i><span>In the status bar, <strong>Today</strong> scrolls the chart to today and <strong>Scroll to task</strong> to the selected task's bar.</span></div>
           <div class="help-row"><i class="fa-solid fa-table-list"></i><span>The left side is the <strong>same task list</strong> as in the Tasks view — the same filters, editing and buttons — with the chart to its right. Drag the thin strip between them to change how much room the list gets. It scrolls sideways when it has more columns than fit, and its ID … Task Name columns stay in place.</span></div>
           <div class="help-row"><i class="fa-solid fa-calendar"></i><span><strong>Fit</strong> (the standard) spreads the whole plan across the chart's width and follows the window; <strong>Week / Month / Year</strong> are fixed scales — all of them at the right of the <strong>status bar</strong>, next to the <strong>zoom slider</strong> (or its − / +), which gives any scale in between. A bar too short for its name has it written beside it, and a milestone's name sits next to it. Year shows quarters; Week is labelled by calendar week (CW — weeks start on Monday, ISO 8601). Days off are shaded.</span></div>
@@ -2896,7 +2939,7 @@ function markChanges(beforeText, afterText, now) {
   changeMarks = out; userEdit = null;
 }
 function taskSig(t) { const c = Object.assign({}, t); delete c.updatedAt; return stableStringify(c); }
-const CHANGE_FIELDS = { name: 'Name', startDate: 'Start', endDate: 'Finish', startText: 'Start', endText: 'Finish', durText: 'Duration', progress: '% complete', predecessors: 'Predecessors', taskMode: 'Task Mode', milestone: 'Milestone', resource: 'Resource', actualStart: 'Actual Start', actualFinish: 'Actual Finish', color: 'Colour', constraintType: 'Constraint', constraintDate: 'Constraint', custom: 'Custom field', baselines: 'Baseline', parentId: 'Position', order: 'Position', work: 'Work', taskType: 'Task Type', effortDriven: 'Task Type', notes: 'Notes', deadline: 'Deadline' };
+const CHANGE_FIELDS = { name: 'Name', startDate: 'Start', endDate: 'Finish', startText: 'Start', endText: 'Finish', durText: 'Duration', progress: '% complete', predecessors: 'Predecessors', taskMode: 'Task Mode', milestone: 'Milestone', resource: 'Resource', actualStart: 'Actual Start', actualFinish: 'Actual Finish', color: 'Colour', constraintType: 'Constraint', constraintDate: 'Constraint', custom: 'Custom field', baselines: 'Baseline', parentId: 'Position', order: 'Position', work: 'Work', taskType: 'Task Type', effortDriven: 'Task Type', notes: 'Notes', deadline: 'Deadline', recurrence: 'Recurrence' };
 // A short description of what changed between two plan texts, e.g. `Start of "Design"` — used in the Undo / Redo toast.
 function describeChange(beforeText, afterText) {
   const B = JSON.parse(beforeText), A = JSON.parse(afterText);
@@ -3119,6 +3162,7 @@ function normalizeData() {
   }
   const parentIds = new Set(tasks.map(t => t.parentId).filter(pid => pid && byIdN.has(pid)));   // (the tasks that have tasks in them)
   const spacerIds = new Set(tasks.filter(t => t.spacer).map(t => t.id));
+  for (const t of tasks) { if (!('recurrence' in t)) continue; const rc = parentIds.has(t.id) ? cleanRecurrence(t.recurrence) : null; if (rc) t.recurrence = rc; else delete t.recurrence; }   // a recurrence pattern lives only on a summary (see "Recurring tasks")
   for (const t of tasks) {
     // A summary task's dates/progress roll up from its children — it can't
     // also be independently scheduled off predecessors of its own.
@@ -5232,6 +5276,7 @@ function renderGrid() {
         ${cyclic.has(t.id) ? '<i class="fa-solid fa-triangle-exclamation cycle-warn" title="Circular dependency — not auto-scheduled"></i>' : ''}
         ${mismatchDate ? `<i class="fa-solid fa-triangle-exclamation mismatch-warn" title="${t.taskMode === 'manual' ? `Manually scheduled and starts before its predecessors allow — Auto Scheduled it would start ${fmtDate(mismatchDate)}` : `Started before its predecessors allow — they say no earlier than ${fmtDate(mismatchDate)}. Tasks that have started or finished are not rescheduled`}"></i>` : ''}
         ${t.constraintType !== 'ASAP' ? `<i class="fa-solid fa-calendar-day constraint-icon${constraintViolated(t) ? ' violated' : ''}" title="${escapeHtml(constraintTypeInfo(t.constraintType).label)}${t.constraintDate ? ' (' + fmtDate(t.constraintDate) + ')' : ''}${manual ? ' — ignored while manually scheduled' : ''}${constraintViolated(t) ? ' — constraint not met' : ''}"></i>` : ''}
+        ${t.recurrence ? `<i class="fa-solid fa-repeat recur-ind" title="Recurring: ${escapeHtml(recurrenceSummary(t.recurrence))} — click to change" onclick="event.stopPropagation();openRecurModal('${t.id}')"></i>` : ''}
         ${t.notes ? `<i class="fa-regular fa-note-sticky note-ind" title="${escapeHtml(t.notes.length > 400 ? t.notes.slice(0, 400) + '…' : t.notes)}" onclick="event.stopPropagation();openTaskNotes('${t.id}')"></i>` : ''}
         ${deadlineMissed(t) ? `<i class="fa-solid fa-flag deadline-warn" title="Finishes after its deadline (${fmtDate(t.deadline)})"></i>` : ''}
         ${nameCell}
@@ -7950,6 +7995,164 @@ function wireTaskForm() {
   });
   window.addEventListener('resize', () => { if (showTaskForm) applyTaskFormHeight(); });
 }
+/* ============================ Recurring tasks ============================
+   MS Project's Recurring Task: a summary task holding one occurrence per date of a pattern ("Weekly status meeting", every
+   Monday, 12 times). The pattern is stored on the summary (t.recurrence, cleaned in normalizeData(), absent on everything
+   else); the occurrences are ordinary Auto tasks pinned to their date with Start No Earlier Than, so links and the calendar
+   work on them as on any task. An occurrence that falls on a day off moves to the next working day (dates that then
+   coincide become one). Re-opening the summary's recurrence (the ↻ icon, its right-click menu or its task dialog) changes
+   the pattern: the occurrences that haven't started are made again, started or finished ones are kept. */
+const RECUR_FREQS = [{ id: 'daily', label: 'Daily', unit: 'day' }, { id: 'weekly', label: 'Weekly', unit: 'week' }, { id: 'monthly', label: 'Monthly', unit: 'month' }, { id: 'yearly', label: 'Yearly', unit: 'year' }];
+const RECUR_MAX = 500;
+function weekdayOf(dn) { return (((dn + 4) % 7) + 7) % 7; }   // 0 = Sunday … 6 = Saturday
+function cleanRecurrence(r) {
+  if (!r || typeof r !== 'object' || !RECUR_FREQS.some(f => f.id === r.freq) || !/^\d{4}-\d{2}-\d{2}$/.test(r.start || '')) return null;
+  const out = { freq: r.freq, every: Math.max(1, Math.min(99, Math.round(Number(r.every) || 1))), start: r.start };
+  if (r.freq === 'weekly') { const days = [...new Set((Array.isArray(r.days) ? r.days : []).map(Number).filter(d => Number.isInteger(d) && d >= 0 && d <= 6))].sort(); out.days = days.length ? days : [weekdayOf(dayNumber(r.start))]; }
+  if (r.freq === 'daily' && r.workdays === true) out.workdays = true;
+  if (r.freq === 'monthly') out.monthDay = Math.max(1, Math.min(31, Math.round(Number(r.monthDay) || Number(r.start.slice(8, 10)))));
+  if (/^\d{4}-\d{2}-\d{2}$/.test(r.until || '') && r.until >= r.start) out.until = r.until;
+  else out.count = Math.max(1, Math.min(RECUR_MAX, Math.round(Number(r.count) || 1)));
+  out.dur = Math.max(0, Math.round(Number(r.dur) || 0));   // working days, or working minutes in an Hours & minutes plan; 0 = milestones
+  if (hhmmOk(r.time)) out.time = r.time;
+  return out;
+}
+// The dates of a pattern, before days off are taken into account: [{ iso }] in order, at most RECUR_MAX (and 100 years).
+function recurrenceRawDates(r) {
+  const out = [], s = dayNumber(r.start), stopDn = r.until ? dayNumber(r.until) : s + 36600, want = r.until ? RECUR_MAX : r.count;
+  const push = dn => { if (dn >= s && dn <= stopDn && out.length < want) out.push(dn); return out.length >= want || dn > stopDn; };
+  if (r.freq === 'daily') {
+    if (r.workdays) { for (let d = nextWorkNum(s); ; d = addWorkNum(d, r.every)) if (push(d) || d > stopDn) break; }
+    else for (let d = s; ; d += r.every) if (push(d)) break;
+  } else if (r.freq === 'weekly') {
+    const monday = s - ((weekdayOf(s) + 6) % 7), offs = r.days.map(d => (d + 6) % 7).sort((a, b) => a - b);
+    outer: for (let w = monday; w <= stopDn; w += 7 * r.every) for (const o of offs) { const d = w + o; if (d < s) continue; if (push(d)) break outer; }
+  } else {
+    const y0 = parseInt(r.start.slice(0, 4), 10), m0 = parseInt(r.start.slice(5, 7), 10) - 1, day = r.freq === 'monthly' ? r.monthDay : parseInt(r.start.slice(8, 10), 10);
+    for (let k = 0; ; k++) {
+      const mi = r.freq === 'monthly' ? m0 + k * r.every : m0, y = r.freq === 'monthly' ? y0 + Math.floor(mi / 12) : y0 + k * r.every, m = ((mi % 12) + 12) % 12;
+      const len = new Date(Date.UTC(y, m + 1, 0)).getUTCDate(), dn = Math.floor(Date.UTC(y, m, Math.min(day, len)) / DAY_MS);
+      if (dn > stopDn || y > y0 + 100) break;
+      if (push(dn)) break;
+    }
+  }
+  return out;
+}
+// ...and on working days: a date off moves to the next working day; dates that then coincide count once.
+function recurrenceDates(r) {
+  const raw = recurrenceRawDates(r), seen = new Set(), dates = []; let moved = 0, merged = 0;
+  for (const dn of raw) { const w = nextWorkNum(dn); if (w !== dn) moved++; if (seen.has(w)) { merged++; continue; } seen.add(w); dates.push(dayNumberToIso(w)); }
+  return { dates, moved, merged };
+}
+function recurrenceSummary(r) {
+  if (!r) return '';
+  const f = RECUR_FREQS.find(x => x.id === r.freq), every = r.every > 1 ? `every ${r.every} ${f.unit}s` : f.label.toLowerCase();
+  const on = r.freq === 'weekly' ? ` on ${WEEKDAY_ORDER.filter(d => r.days.includes(d)).map(d => WEEKDAY_NAMES[d]).join(', ')}` : r.freq === 'monthly' ? ` on day ${r.monthDay}` : r.freq === 'daily' && r.workdays ? ' (working days)' : '';
+  return `${every[0].toUpperCase()}${every.slice(1)}${on}, ${r.until ? `until ${fmtDate(r.until)}` : `${r.count} time${r.count === 1 ? '' : 's'}`}`;
+}
+
+let recurEditId = null;   // the summary being changed, or null for a new recurring task
+function openRecurModal(summaryId) {
+  closeToolbarMenus();
+  const t = summaryId ? byId(summaryId) : null;
+  recurEditId = t && t.recurrence ? t.id : null;
+  const r = recurEditId ? t.recurrence : { freq: 'weekly', every: 1, days: [weekdayOf(dayNumber(nextWorkDay(todayStr())))], start: nextWorkDay(todayStr()), count: 10, dur: minuteModeActive() ? 60 : 1 };
+  const $ = id => document.getElementById(id), mm = minuteModeActive();
+  $('recurTitle').textContent = recurEditId ? 'Change recurring task' : 'Recurring task';
+  $('recurOkBtn').textContent = recurEditId ? 'Save' : 'Create';
+  $('recurName').value = recurEditId ? t.name : '';
+  $('recurDur').value = mm ? fmtDurationMinutes(r.dur) : String(r.dur);
+  $('recurDurLabel').textContent = mm ? 'Duration' : 'Duration (days)';
+  $('recurTimeField').classList.toggle('hidden', !mm);
+  $('recurTime').value = r.time || wStart(r.start);
+  for (const el of document.querySelectorAll('#recurModalBg input[name=recurFreq]')) el.checked = el.value === r.freq;
+  $('recurEvery').value = r.every;
+  $('recurDays').innerHTML = WEEKDAY_ORDER.map(d => `<label class="cal-day"><input type="checkbox" value="${d}"${(r.days || []).includes(d) ? ' checked' : ''}><span>${WEEKDAY_NAMES[d]}</span></label>`).join('');
+  $('recurWorkdays').checked = !!r.workdays;
+  $('recurMonthDay').value = r.monthDay || Number(r.start.slice(8, 10));
+  $('recurStart').value = r.start;
+  $('recurEndCount').checked = !r.until; $('recurEndUntil').checked = !!r.until;
+  $('recurCount').value = r.count || 10; $('recurUntil').value = r.until || '';
+  $('recurKeepNote').classList.toggle('hidden', !recurEditId);
+  renderRecurModal();
+  $('recurModalBg').classList.add('open');
+  setTimeout(() => $('recurName').focus(), 40);
+}
+function closeRecurModal() { document.getElementById('recurModalBg').classList.remove('open'); recurEditId = null; }
+// What the dialog says now, as a pattern (or a message saying what to fix).
+function readRecurDialog() {
+  const $ = id => document.getElementById(id), mm = minuteModeActive();
+  const freq = (document.querySelector('#recurModalBg input[name=recurFreq]:checked') || {}).value || 'weekly';
+  const dv = $('recurDur').value.trim();
+  const dur = mm ? parseDurationMinutes(dv || '0') : (dv === '' ? 1 : Number(dv.replace(',', '.')));
+  if (dur === null || !Number.isFinite(dur) || dur < 0 || dur > (mm ? MAX_DURATION_MINUTES : MAX_DURATION_DAYS)) return { error: mm ? 'Duration: try 1h, 30m or 1d (0 = a milestone)' : 'Duration must be a number of working days (0 = a milestone)' };
+  const start = $('recurStart').value; if (!start) return { error: 'Choose the first date' };
+  const r = { freq, every: Number($('recurEvery').value) || 1, start, dur: Math.round(dur) };
+  if (freq === 'weekly') { r.days = [...document.querySelectorAll('#recurDays input:checked')].map(i => Number(i.value)); if (!r.days.length) return { error: 'Tick at least one weekday' }; }
+  if (freq === 'daily') r.workdays = $('recurWorkdays').checked;
+  if (freq === 'monthly') r.monthDay = Number($('recurMonthDay').value) || 1;
+  if ($('recurEndUntil').checked) { const u = $('recurUntil').value; if (!u) return { error: 'Choose the end date' }; if (u < start) return { error: 'The end date is before the first date' }; r.until = u; }
+  else { const n = Number($('recurCount').value); if (!Number.isInteger(n) || n < 1 || n > RECUR_MAX) return { error: `Occurrences: 1–${RECUR_MAX}` }; r.count = n; }
+  if (mm) { const tm = $('recurTime').value; if (tm) r.time = tm; }
+  return { rec: cleanRecurrence(r) };
+}
+function renderRecurModal() {
+  const $ = id => document.getElementById(id), freq = (document.querySelector('#recurModalBg input[name=recurFreq]:checked') || {}).value || 'weekly';
+  $('recurEveryUnit').textContent = RECUR_FREQS.find(f => f.id === freq).unit + '(s)';
+  $('recurDaysRow').classList.toggle('hidden', freq !== 'weekly');
+  $('recurWorkdaysRow').classList.toggle('hidden', freq !== 'daily');
+  $('recurMonthRow').classList.toggle('hidden', freq !== 'monthly');
+  $('recurCount').disabled = !$('recurEndCount').checked; $('recurUntil').disabled = !$('recurEndUntil').checked;
+  const res = readRecurDialog(), hint = $('recurPreview');
+  if (res.error) { hint.textContent = res.error; hint.classList.add('bad'); $('recurOkBtn').disabled = true; return; }
+  const { dates, moved, merged } = recurrenceDates(res.rec);
+  hint.classList.toggle('bad', !dates.length);
+  hint.textContent = !dates.length ? 'No dates in that range' : `${dates.length} occurrence${dates.length === 1 ? '' : 's'}: ${fmtDate(dates[0])}${dates.length > 1 ? ` – ${fmtDate(dates[dates.length - 1])}` : ''}`
+    + (moved ? ` · ${moved} on a day off moved to the next working day${merged ? ` (${merged} merged)` : ''}` : '');
+  $('recurOkBtn').disabled = !dates.length;
+}
+// One occurrence: an Auto task on its date (pinned with Start No Earlier Than), or a milestone for a zero duration.
+function makeOccurrence(name, iso, rec, parentId, order) {
+  const mm = minuteModeActive(), now = Date.now(), ms = rec.dur === 0;
+  const t = { id: genId() + Math.random().toString(36).slice(2, 5), name, parentId, order, startDate: iso, endDate: iso, progress: 0, milestone: ms, color: null, predecessors: [], collapsed: false, updatedAt: now,
+    constraintType: 'SNET', constraintDate: iso, taskMode: 'auto', resource: '', actualStart: null, actualFinish: null,
+    startTime: null, endTime: null, actualStartTime: null, actualFinishTime: null, constraintTime: null };
+  if (mm) { const tm = rec.time || wStart(iso); t.startTime = tm; t.constraintTime = tm; if (ms) t.endTime = tm; else setTaskMoment(t, 'end', finishMoment(taskMoment(t, 'start'), rec.dur)); }
+  else if (!ms) t.endDate = finishFor(iso, rec.dur);
+  return t;
+}
+function applyRecurModal() {
+  const res = readRecurDialog(); if (res.error) { showToast(res.error, true); return; }
+  const rec = res.rec, { dates } = recurrenceDates(rec); if (!dates.length) return;
+  const name = document.getElementById('recurName').value.trim() || 'Recurring task';
+  if (!recurEditId) {   // a new summary with its occurrences, below the selected task at its level
+    const now = Date.now(), sum = { id: genId() + Math.random().toString(36).slice(2, 5), name, parentId: null, order: 0, startDate: dates[0], endDate: dates[dates.length - 1], progress: 0, milestone: false, color: null, predecessors: [],
+      collapsed: false, updatedAt: now, constraintType: 'ASAP', constraintDate: null, taskMode: 'auto', resource: '', actualStart: null, actualFinish: null,
+      startTime: null, endTime: null, actualStartTime: null, actualFinishTime: null, constraintTime: null, recurrence: rec };
+    const occ = dates.map((iso, i) => makeOccurrence(`${name} ${i + 1}`, iso, rec, sum.id, i));
+    insertTaskBlock([sum, ...occ]);
+    setSelection([sum.id]);
+    closeRecurModal(); normalizeData(); save(); render();
+    showToast(`${name}: ${occ.length} occurrence${occ.length === 1 ? '' : 's'} added (Ctrl+Z takes them back)`);
+    return;
+  }
+  // Changing one: keep the occurrences that have started or finished, make the rest again for the new pattern.
+  const sum = byId(recurEditId); if (!sum) { closeRecurModal(); return; }
+  const oldName = sum.name, kids = childrenOf(sum.id), keep = kids.filter(k => isStarted(k) || isTaskComplete(k)), drop = kids.filter(k => !keep.includes(k));
+  const dropIds = new Set(drop.map(k => k.id)), keptDates = new Set(keep.map(k => k.startDate)), now = Date.now();
+  for (const t of tasks) if (t.predecessors.some(p => dropIds.has(p.id))) { t.predecessors = t.predecessors.filter(p => !dropIds.has(p.id)); t.updatedAt = now; }
+  tasks = tasks.filter(t => !dropIds.has(t.id));
+  for (const id of dropIds) tombstone(deletedTaskIds, id);
+  const fresh = dates.filter(iso => !keptDates.has(iso)).map(iso => makeOccurrence('', iso, rec, sum.id, 0));
+  tasks.push(...fresh);
+  const all = [...keep, ...fresh].sort((a, b) => a.startDate < b.startDate ? -1 : a.startDate > b.startDate ? 1 : 0);
+  const auto = new RegExp(`^${oldName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} \\d+$`);
+  all.forEach((k, i) => { k.order = i; if (!k.name || auto.test(k.name)) k.name = `${name} ${i + 1}`; k.updatedAt = now; });
+  sum.name = name; sum.recurrence = rec; sum.updatedAt = now;
+  for (const k of fresh) filterPinned.add(k.id);
+  closeRecurModal(); normalizeData(); save(); render();
+  showToast(`${name}: ${all.length} occurrence${all.length === 1 ? '' : 's'}${keep.length ? ` (${keep.length} already started kept)` : ''}`);
+}
 /* ============================ Days off dialog (Resource Sheet → a row's "Days off" link) ============================
    One resource's own days off on top of the plan's working week — the one thing the Resource Sheet doesn't edit inline
    (a multi-entry date list doesn't fit a spreadsheet cell). It used to be a full Resource pool dialog (add/rename/Max
@@ -8509,7 +8712,7 @@ function replanAfterMerge(touched) {
    A conflict = both sides changed the same field of the same task (or plan setting) since they last agreed. The merge has already
    picked the newer edit; this only makes that visible — and reversible: Review lists them and lets you take the other version. */
 let syncConflictLog = [];   // session only (a heads-up for whoever is at the keyboard, not history)
-const CONFLICT_LABELS = { name: 'Name', startDate: 'Start', endDate: 'Finish', progress: '% Complete', resource: 'Resource', predecessors: 'Predecessors', taskMode: 'Task mode', actualStart: 'Actual Start', actualFinish: 'Actual Finish', parentId: 'Parent', order: 'Position', color: 'Colour', milestone: 'Milestone', constraintType: 'Constraint', constraintDate: 'Constraint date', startTime: 'Start time', endTime: 'Finish time', actualStartTime: 'Actual Start time', actualFinishTime: 'Actual Finish time', constraintTime: 'Constraint time', timeUnit: 'Scheduling precision', workHours: 'Working hours', workHoursByDay: 'Working hours by day', lagUnit: 'Lag unit', startText: 'Start (text)', endText: 'Finish (text)', durText: 'Duration (text)', custom: 'Custom fields', baselines: 'Baselines', workDays: 'Working days', compareBaseline: 'Compared baseline', fieldNames: 'Custom field names', newTaskMode: 'New task mode', honorConstraintDates: 'Honor constraint dates', resources: 'Resource pool', currencyCode: 'Currency', notes: 'Notes', deadline: 'Deadline' };
+const CONFLICT_LABELS = { name: 'Name', startDate: 'Start', endDate: 'Finish', progress: '% Complete', resource: 'Resource', predecessors: 'Predecessors', taskMode: 'Task mode', actualStart: 'Actual Start', actualFinish: 'Actual Finish', parentId: 'Parent', order: 'Position', color: 'Colour', milestone: 'Milestone', constraintType: 'Constraint', constraintDate: 'Constraint date', startTime: 'Start time', endTime: 'Finish time', actualStartTime: 'Actual Start time', actualFinishTime: 'Actual Finish time', constraintTime: 'Constraint time', timeUnit: 'Scheduling precision', workHours: 'Working hours', workHoursByDay: 'Working hours by day', lagUnit: 'Lag unit', startText: 'Start (text)', endText: 'Finish (text)', durText: 'Duration (text)', custom: 'Custom fields', baselines: 'Baselines', workDays: 'Working days', compareBaseline: 'Compared baseline', fieldNames: 'Custom field names', newTaskMode: 'New task mode', honorConstraintDates: 'Honor constraint dates', resources: 'Resource pool', currencyCode: 'Currency', notes: 'Notes', deadline: 'Deadline', recurrence: 'Recurrence' };
 function conflictLabel(key) { return CONFLICT_LABELS[key] || key; }
 function fmtConflictValue(key, v) {
   if (v === undefined || v === null || v === '') return '—';
@@ -9560,6 +9763,7 @@ function showRowMenu(x, y, onRow) {
   const item = (icon, label, fn, o = {}) => `<button class="dropdown-item${o.danger ? ' danger' : ''}" role="menuitem"${o.off ? ' disabled' : ''} onclick="closeRowMenu();${fn}"><i class="${icon}"></i>${label}${o.kbd ? `<span class="item-hint">${o.kbd}</span>` : ''}</button>`;
   const sep = '<div class="dropdown-sep"></div>', parts = [];
   if (real) parts.push(item('fa-solid fa-pen-to-square', real === 1 ? 'Edit task…' : `Edit ${real} tasks…`, 'editSelected()'));
+  { const one = ids.length === 1 && byId(ids[0]); if (one && one.recurrence) parts.push(item('fa-solid fa-repeat', 'Change recurrence…', `openRecurModal('${one.id}')`)); }
   parts.push(item('fa-solid fa-plus', n ? 'Add task below' : 'Add task', 'addTask()'), item('fa-solid fa-grip-lines', 'Add empty line', 'addSpacer()'));
   if (n) parts.push(sep, item('fa-regular fa-clone', 'Duplicate', 'cloneSelected()'), item('fa-regular fa-copy', 'Copy', 'copySelectionButton()', { kbd: MOD_KEY + 'C' }), item('fa-solid fa-scissors', 'Cut', 'copySelection(null, true)', { kbd: MOD_KEY + 'X' }));
   parts.push(n ? '' : sep, item('fa-regular fa-paste', 'Paste', 'pasteButton()', { kbd: MOD_KEY + 'V' }));
@@ -11464,7 +11668,7 @@ function wireGlobalEvents() {
     // Escape closes whatever overlay is open first; only when there is none — and
     // the user isn't typing in a field, where Escape already means "cancel this
     // edit" — does it clear the task selection.
-    const modalIds = ['taskModalBg', 'folderFilesModalBg', 'confirmModalBg', 'calendarModalBg', 'precisionModalBg', 'rulesModalBg', 'currencyModalBg', 'baselineModalBg', 'rescheduleModalBg', 'levelModalBg', 'syncConflictsModalBg', 'planModalBg', 'excelModalBg', 'importModalBg', 'foreignImportModalBg', 'bulkModalBg', 'searchModalBg', 'printModalBg', 'backupsModalBg', 'helpModalBg', 'aboutModalBg'];
+    const modalIds = ['recurModalBg', 'taskModalBg', 'folderFilesModalBg', 'confirmModalBg', 'calendarModalBg', 'precisionModalBg', 'rulesModalBg', 'currencyModalBg', 'baselineModalBg', 'rescheduleModalBg', 'levelModalBg', 'syncConflictsModalBg', 'planModalBg', 'excelModalBg', 'importModalBg', 'foreignImportModalBg', 'bulkModalBg', 'searchModalBg', 'printModalBg', 'backupsModalBg', 'helpModalBg', 'aboutModalBg'];
     const overlayOpen = modalIds.some(id => document.getElementById(id).classList.contains('open'))
       || document.getElementById('fileSyncModalBg').classList.contains('open')   // mandatory: Escape can't close it
       || document.getElementById('dataMenu').classList.contains('open')
@@ -11651,6 +11855,8 @@ function wireEnterApplies(bgId, btnId) {
 document.addEventListener('DOMContentLoaded', () => {
   wireEnterApplies('bulkModalBg', 'bulkApplyBtn');
   wireEnterApplies('rescheduleModalBg', 'rescheduleBtn');
+  wireEnterApplies('recurModalBg', 'recurOkBtn');
+  for (const ev of ['input', 'change']) document.getElementById('recurModalBg').addEventListener(ev, renderRecurModal);
   wireEnterApplies('levelModalBg', 'levelBtn');
   wireEnterApplies('baselineModalBg', 'baselineSetBtn');
   enhanceBoxes();
