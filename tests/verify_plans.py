@@ -107,7 +107,7 @@ with sync_playwright() as p:
     B = make(b, FS_INIT); pg = B.pg
     B.boot()
     pg.wait_for_selector("#fileSyncModalBg.open")
-    check("fresh start: the link dialog opens straight away", B.modal_open() and pg.inner_text("#fileSyncModalTitle") == "Choose a folder to continue", pg.inner_text("#fileSyncModalTitle"))
+    check("fresh start: the link dialog opens straight away", B.modal_open() and pg.inner_text("#fileSyncModalTitle") == "Welcome to Milestone", pg.inner_text("#fileSyncModalTitle"))
     check("it has no close button and no 'Not now'", pg.locator("#fileSyncModalBg .modal-header button").count() == 0 and pg.locator("#fileSyncModalBg button:has-text('Not now')").count() == 0)
     pg.keyboard.press("Escape"); pg.wait_for_timeout(150)
     check("Escape does not close it", B.modal_open())

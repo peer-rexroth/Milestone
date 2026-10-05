@@ -26,7 +26,7 @@ with sync_playwright() as p:
     folder_open = lambda: ev("() => document.getElementById('folderFilesModalBg').classList.contains('open')")
 
     # ---------------------------------------------------------------- the link dialog itself
-    check("a fresh plan opens the link dialog: 'Choose a folder to continue' with one main button, 'Choose folder…'", pg.inner_text("#fileSyncModalTitle") == "Choose a folder to continue" and "Choose folder" in pg.inner_text("#linkFolderBtn") and pg.locator("#fileSyncModalBg button:has-text('Create new file')").count() == 0 and not pg.locator("#linkSameFolderBtn").is_visible())
+    check("a fresh install opens the link dialog as a welcome: 'Welcome to Milestone' with one main button, 'Choose folder…'", pg.inner_text("#fileSyncModalTitle") == "Welcome to Milestone" and "Choose folder" in pg.inner_text("#linkFolderBtn") and pg.locator("#fileSyncModalBg button:has-text('Create new file')").count() == 0 and not pg.locator("#linkSameFolderBtn").is_visible())
     check("...it explains the folder and Chrome's limit (Desktop, Documents, Downloads themselves)", "Documents" in pg.inner_text("#fileSyncModalBg .file-sync-help-body") or "Documents" in pg.evaluate("() => document.querySelector('#fileSyncModalBg .file-sync-help-body').textContent"))
     ev("() => window.__mode = 'blocked'"); pg.click("#linkFolderBtn"); pg.wait_for_timeout(300)
     check("a folder the browser refuses gives a message that says what to do, and the dialog stays", "inside Desktop, Documents or Downloads" in toast() and not folder_open() and pg.locator("#fileSyncModalBg.open").count() == 1, toast())

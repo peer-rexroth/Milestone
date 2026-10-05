@@ -21,7 +21,7 @@
 :root {
   --bg: #f6f8fa; --panel: #ffffff; --panel-2: #eaeef2; --border: rgba(31,35,40,0.12);
   --text: #1f2328; --text-dim: #656d76; --text-faint: #8c959f;
-  --accent: #0969da; --danger: #cf222e;
+  --accent: #0969da; --primary: #0969da; --danger: #cf222e;   /* --primary: the fill of a commit button (OK, Save…), the same blue as every active state; white text on it is 5:1 */
   --task-blue: #0969da; --task-teal: #1b7c83; --task-purple: #8250df; --task-amber: #9a6700; --chg-bg: #fdf1c7; --chg-bg-sel: #f8e3a0;
   --task-pink: #ce2c85; --task-green: #1a7f37; --task-red: #cf222e; --task-grey: #656d76;
   --status-not-started: #8c959f; --status-complete: #0969da;
@@ -37,7 +37,7 @@ html[data-theme="dark"] {
   color-scheme: dark;
   --bg: #262c36; --panel: #212830; --panel-2: #2d3640; --border: rgba(209,215,224,0.10);
   --text: #d1d7e0; --text-dim: #9198a1; --text-faint: #6b7280;
-  --accent: #478be6; --danger: #e5534b;
+  --accent: #478be6; --primary: #316dca; --danger: #e5534b;   /* (the dark accent is too light to carry white text: a darker blue for the fill, 5:1) */
   --task-blue: #478be6; --task-teal: #4cb6c4; --task-purple: #986ee2; --task-amber: #c69026; --chg-bg: color-mix(in srgb, #c69026 20%, #22272e); --chg-bg-sel: color-mix(in srgb, #c69026 30%, #22272e);
   --task-pink: #c96b96; --task-green: #57ab5a; --task-red: #e5534b; --task-grey: #9198a1;
   --status-not-started: #6b7280; --status-complete: #478be6;
@@ -110,10 +110,10 @@ button { cursor: pointer; }
 .btn:hover { background: var(--panel-2); }
 .btn:disabled { opacity: .45; cursor: default; }
 .btn:disabled:hover { background: var(--panel); }
-.btn-primary:disabled:hover { background: var(--task-green); filter: none; }   /* (a disabled green button keeps its green on hover — the rule above would leave white text on white) */
+.btn-primary:disabled:hover { background: var(--primary); filter: none; }   /* (a disabled primary button keeps its fill on hover — the rule above would leave white text on white) */
 .btn-primary.btn-danger:disabled:hover { background: var(--danger); }
-.btn-primary { background: var(--task-green); border-color: var(--task-green); color: #fff; }
-.btn-primary:hover { background: var(--task-green); filter: brightness(1.06); }
+.btn-primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+.btn-primary:hover { background: var(--primary); filter: brightness(1.1); }
 .btn-danger { color: var(--danger); }
 /* Filled red button — the confirm dialog's default for destructive actions (Delete task, Delete plan). */
 .btn-primary.btn-danger { background: var(--danger); border-color: var(--danger); color: #fff; }
@@ -10888,9 +10888,11 @@ function fileSyncSupported() { return typeof window.showDirectoryPicker === 'fun
 function fileLinkRequired() { return fileSyncSupported() && (fileSyncStatus === 'unlinked' || fileSyncStatus === 'missing'); }
 function openFileSyncModal() {
   const missing = fileSyncStatus === 'missing', rec = (readPlansIndex() && planRecord(readPlansIndex(), currentPlanId)) || {}, fname = rec.fileName || (syncFileHandle && syncFileHandle.name) || 'The file';
-  document.getElementById('fileSyncModalTitle').textContent = missing ? 'Linked file not found' : 'Choose a folder to continue';
+  const first = !missing && isFirstRun();
+  document.getElementById('fileSyncModalTitle').textContent = missing ? 'Linked file not found' : first ? 'Welcome to Milestone' : 'Choose a folder to continue';
   document.getElementById('fileSyncModalText').innerHTML = missing
     ? `<p style="margin:0">“${escapeHtml(fname)}” was moved, renamed or deleted. Pick the file where it went, or choose a folder and create a new file for “${escapeHtml(project.name)}” (its current tasks are saved into it).</p>`
+    : first ? `<p style="margin:0">Where should your plans live? Milestone keeps each plan as a file in a folder on your disk — no account, no server, and nothing leaves your computer.</p><ul class="fs-points"><li>Choose the folder, then create a new file there or pick a plan file that is already in it.</li><li>Choose a folder that iCloud Drive, OneDrive or Dropbox syncs and your devices stay in step; the conflicted copies a sync service makes are merged for you.</li><li>You can change the folder or add more plans later.</li></ul>`
     : `<p style="margin:0">Milestone keeps “${escapeHtml(project.name)}” as a file in a folder on your disk.</p><ul class="fs-points"><li>Choose the folder, then create a new file there or pick a plan file that is already in it.</li><li>In a folder synced by iCloud Drive, OneDrive or Dropbox, your devices stay in step.</li><li>The conflicted copies a sync service makes are merged for you.</li></ul>`;
   document.getElementById('linkSameFolderBtn').classList.toggle('hidden', !(missing && syncDirHandle));
   document.getElementById('fileSyncModalBg').classList.add('open');
@@ -11408,7 +11410,16 @@ function onFileSyncBtnClick() {
   else if (watchNeedsPermission()) allowWatchAccess();   // the watched folder lost its permission: this click can ask for it again
   else disconnectFile();   // linked: offers to disconnect (with a confirmation)
 }
+// First run: a brand-new install (one empty plan, never linked) gets a welcome in the folder dialog instead of the bare "Choose a folder to continue".
+// The flag is set once any plan is linked, so it never comes back — an existing user who disconnects, or a plan that has tasks, never sees it.
+const WELCOME_KEY = 'milestone-welcomed';
+function isFirstRun() {
+  try { if (localStorage.getItem(WELCOME_KEY)) return false; } catch (e) { return false; }
+  const idx = readPlansIndex();
+  return !!idx && idx.plans.length === 1 && !tasks.length;
+}
 function updateFileSyncUI() {
+  if (fileSyncStatus === 'linked') { try { localStorage.setItem(WELCOME_KEY, '1'); } catch (e) { /* private window */ } }
   updateSyncConflictsUI();
   const btn = document.getElementById('fileSyncBtn');
   if (fileSyncStatus === 'unsupported') { btn.classList.add('hidden'); updateWatchHint(); return; }
