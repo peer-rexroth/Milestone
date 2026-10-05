@@ -92,7 +92,7 @@ with sync_playwright() as p:
     check("...text in a number field is refused (toast, nothing changes)", custom("One")["number1"] == 12.5 and "isn't a number" in pg.inner_text("#toastMsg"), pg.inner_text("#toastMsg"))
     edit("One", "number1", "0"); check("...0 is a value (not empty)", custom("One")["number1"] == 0 and cell("One", "number1").inner_text().strip() == "0")
     cell("One", "date1").click(); pg.wait_for_selector(".inline-edit"); wait_focus()
-    check("Date: opens a native date editor", pg.get_attribute(".inline-edit", "type") == "date")
+    check("Date: opens the typed date editor (calendar button beside it)", pg.get_attribute(".inline-wrap > .inline-edit", "type") == "text" and pg.locator(".inline-wrap .inline-cal").count() == 1)
     pg.fill(".inline-edit", "2026-12-24"); pg.keyboard.press("Enter"); pg.wait_for_timeout(100)
     check("...saved as an ISO date and shown dd.mm.yyyy", custom("One")["date1"] == "2026-12-24" and cell("One", "date1").inner_text().strip() == "24.12.2026")
     cell("One", "flag1").click(); pg.wait_for_timeout(80)

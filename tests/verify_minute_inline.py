@@ -151,7 +151,7 @@ with sync_playwright() as p:
     ev(SEED, [{"name": "A", "s": "2026-09-07", "e": "2026-09-09"}])
     ev("() => { delete project.timeUnit; delete project.workHours; normalizeData(); save(); render(); }")
     cell("A", "start").click(); pg.wait_for_selector(".inline-edit")
-    check("a day-mode plan's Start editor is still the native date input", pg.get_attribute(".inline-edit", "type") == "date")
+    check("a day-mode plan's Start editor is the typed date box (date only, no time)", pg.get_attribute(".inline-wrap > .inline-edit", "type") == "text" and pg.locator(".inline-wrap .inline-cal").count() == 1)
     pg.keyboard.press("Escape")
     cell("A", "duration").click(); pg.wait_for_selector(".inline-edit")
     check("...and its Duration a whole-day number box", pg.get_attribute(".inline-edit", "type") == "number" and pg.input_value(".inline-edit") == "3")

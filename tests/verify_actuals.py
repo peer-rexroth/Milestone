@@ -193,7 +193,7 @@ with sync_playwright() as p:
     # ================================================================= the date editors are the ones Start/Finish use
     make([{"name": "Auto1", "s": "2026-09-07", "e": "2026-09-11"}, {"name": "Man1", "s": "2026-09-07", "e": "2026-09-11", "mode": "manual"}])
     cell("Auto1", "actualStart").click(); pg.wait_for_selector(".inline-edit")
-    check("auto task: Actual Start opens the native date picker input, like its Start", pg.get_attribute(".inline-edit", "type") == "date"); pg.keyboard.press("Escape"); pg.wait_for_timeout(80)
+    check("auto task: Actual Start opens the typed date box with the calendar button, like its Start", pg.get_attribute(".inline-wrap > .inline-edit", "type") == "text" and pg.locator(".inline-wrap .inline-cal").count() == 1); pg.keyboard.press("Escape"); pg.wait_for_timeout(80)
     cell("Man1", "actualStart").click(); pg.wait_for_selector(".inline-wrap"); wait_focus()
     check("manual task: a typed box with a calendar button (the Start/Finish editor), asking for dd.mm.yyyy", pg.locator(".inline-wrap .inline-cal").count() == 1 and pg.get_attribute(".inline-wrap input[type=text]", "placeholder") == "dd.mm.yyyy", pg.get_attribute(".inline-wrap input[type=text]", "placeholder"))
     pg.fill(".inline-wrap input[type=text]", "18.09.2026"); pg.keyboard.press("Enter"); pg.wait_for_timeout(120)
@@ -208,7 +208,7 @@ with sync_playwright() as p:
     check("a blank clears it", pg.evaluate("() => tasks.find(t => t.name === 'Man1').actualFinish") is None)
     # custom date fields: same editors
     cell("Auto1", "date1").click(); pg.wait_for_selector(".inline-edit")
-    check("a custom Date field on an auto task uses the native date input", pg.get_attribute(".inline-edit", "type") == "date"); pg.keyboard.press("Escape"); pg.wait_for_timeout(80)
+    check("a custom Date field on an auto task uses the typed date box (the chosen format) with the calendar button", pg.get_attribute(".inline-wrap > .inline-edit", "type") == "text" and pg.locator(".inline-wrap .inline-cal").count() == 1); pg.keyboard.press("Escape"); pg.wait_for_timeout(80)
     cell("Man1", "date1").click(); pg.wait_for_selector(".inline-wrap"); wait_focus(); pg.fill(".inline-wrap input[type=text]", "24.12.2026"); pg.keyboard.press("Enter"); pg.wait_for_timeout(120)
     check("...and on a manual task the typed box + calendar (24.12.2026 -> 2026-12-24)", pg.evaluate("() => tasks.find(t => t.name === 'Man1').custom.date1") == "2026-12-24" and cell("Man1", "date1").inner_text().strip() == "24.12.2026")
     print("console errors/warnings:", errors); print(f"{sum(results)}/{len(results)} passed"); b.close()

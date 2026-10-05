@@ -92,7 +92,7 @@ with sync_playwright() as p:
     ev("() => startInlineEdit('a', 'start')"); pg.wait_for_timeout(120)
     r = ev("() => { const row = document.querySelector('#gridRows .grid-row[data-id=\"a\"]'), k = visibleTaskCols().indexOf('start') + 1; return [row.children[k].getBoundingClientRect().right, row.children[k + 1].getBoundingClientRect().left]; }")
     check("...so the open date editor stays inside its column (no overlap with Finish)", r[0] <= r[1], r)
-    st = ev("() => { const e = document.querySelector('#gridRows input.inline-edit'), cs = getComputedStyle(e); return [cs.zIndex, cs.boxShadow !== 'none', cs.backgroundColor]; }")
+    st = ev("() => { const e = document.querySelector('#gridRows .inline-wrap, #gridRows input.inline-edit'), cs = getComputedStyle(e); return [cs.zIndex, cs.boxShadow !== 'none', cs.backgroundColor]; }")
     check("an open editor is the top layer: above the neighbours, lifted, opaque", st[0] == "4" and st[1] and st[2] not in ("rgba(0, 0, 0, 0)", "transparent"), st)
     pg.keyboard.press("Escape")
     ev("() => { project.timeUnit = 'minute'; save(); render(); }")

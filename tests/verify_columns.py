@@ -119,7 +119,7 @@ with sync_playwright() as p:
     cell("Grp", "resource").click(); wait_focus(); pg.fill(".inline-edit", "PMO"); pg.keyboard.press("Enter"); pg.wait_for_timeout(100)
     check("a group can have a Resource of its own", T("Grp")["resource"] == "PMO")
     cell("Kid1", "actualStart").click(); pg.wait_for_selector(".inline-edit"); wait_focus()
-    check("Actual Start opens a date editor", pg.locator(".inline-edit").get_attribute("type") == "date")
+    check("Actual Start opens a date editor (the typed box with the calendar button)", pg.locator(".inline-wrap > .inline-edit").get_attribute("type") == "text")
     pg.fill(".inline-edit", d(-2)); pg.keyboard.press("Enter"); pg.wait_for_timeout(120)
     check("...and saves the date, shown as dd.mm.yyyy", T("Kid1")["aS"] == d(-2) and cell("Kid1", "actualStart").inner_text().strip() == fmt(d(-2)), T("Kid1"))
     cell("Kid1", "actualFinish").click(); wait_focus(); pg.fill(".inline-edit", d(-4)); pg.keyboard.press("Enter"); pg.wait_for_timeout(120)

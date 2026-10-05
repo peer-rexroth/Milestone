@@ -117,7 +117,7 @@ with sync_playwright() as p:
     check("switching the plan back to days drops the time and keeps the date", cust("A") == ["2026-09-11", None], cust("A"))
     check("a day-mode plan's cell shows the date only, in a 104px column", cell("A").inner_text() == "11.09.2026" and "138px" not in ev("() => getComputedStyle(document.getElementById('main')).getPropertyValue('--task-cols')"))
     cell("A").click(); pg.wait_for_selector(".inline-edit")
-    check("...and its editor is the native date input, as before", pg.get_attribute(".inline-edit", "type") == "date")
+    check("...and its editor is the same typed date box, without a time", pg.get_attribute(".inline-wrap > .inline-edit", "type") == "text" and pg.locator(".inline-wrap .inline-cal").count() == 1 and ":" not in pg.input_value(".inline-wrap > .inline-edit"))
     pg.keyboard.press("Escape")
     pg.click(f".grid-row[data-id='{tid('A')}'] .icon-btn[title=Edit]"); pg.wait_for_selector("#taskModalBg.open"); pg.click("#taskTabBtnCustom")
     check("...and the dialog has no time input", pg.locator("#cf_date1_time").count() == 0)

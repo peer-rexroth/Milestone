@@ -548,6 +548,15 @@ input.inline-edit { width: 100%; min-width: 0; padding: 3px 6px; border: 1px sol
 .sel-actions { display: flex; align-items: center; gap: 6px 8px; flex-wrap: wrap; }
 .sel-actions.hidden { display: none; }
 .btn-sm { padding: 5px 10px; font-size: 12.5px; }
+/* The 12-hour clock ("12:30 PM") needs more room than "14:30" in every time box (html.time12 is set by the chosen time format) */
+html.time12 input.dt-time { width: 104px; flex: 0 0 104px; }
+html.time12 .field-dt input.dt-time { flex: 0 0 104px; min-width: 104px; }
+html.time12 .cal-sec .wh-break-add input.dt-time, html.time12 .whd-row input.dt-time, html.time12 .wh-day-row input.dt-time { width: 104px; }
+html.time12 .tf-dt input.dt-time { flex: 0 0 84px; width: 84px; }
+html.time12 .tf-top.mm .tf-left { grid-template-columns: auto minmax(230px, 1fr) auto minmax(230px, 1fr); }
+.fmt-opts { display: flex; flex-direction: column; gap: 4px; }
+.fmt-opt { display: flex; align-items: baseline; gap: 10px; padding: 5px 2px; font-size: 13px; cursor: pointer; }
+.fmt-opt .fmt-eg { margin-left: auto; color: var(--text-dim); font-variant-numeric: tabular-nums; }
 .menu-foot { padding: 6px 10px 6px; font-size: 11.5px; color: var(--text-faint); border-top: 1px solid var(--border); margin-top: 4px; max-width: 240px; }
 /* Group by: a header row per value (Tasks view) — a band of its own, bold, the whole row folds on a click */
 .grid-row.group-head { --row-bg: var(--panel-2); font-weight: 600; cursor: pointer; border-top: 1px solid var(--border); }
@@ -623,11 +632,14 @@ input.inline-edit { width: 100%; min-width: 0; padding: 3px 6px; border: 1px sol
 .sr-id { color: var(--text-faint); font-variant-numeric: tabular-nums; }
 .sr-main { min-width: 0; } .sr-name { color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .sr-name mark { background: color-mix(in srgb, var(--accent) 30%, transparent); color: inherit; border-radius: 2px; }
 .sr-path { display: block; margin-top: 1px; color: var(--text-faint); font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sr-note { display: block; margin-top: 1px; color: var(--text-dim); font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sr-note i { margin-right: 5px; font-size: 10.5px; color: var(--text-faint); }
+.sr-note mark { background: color-mix(in srgb, var(--accent) 30%, transparent); color: inherit; border-radius: 2px; }
 .sr-path mark { background: color-mix(in srgb, var(--accent) 30%, transparent); color: inherit; border-radius: 2px; }
 .sr-wbs { color: var(--text-dim); font-variant-numeric: tabular-nums; }
 .sr-side { text-align: right; color: var(--text-dim); font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .sr-side .sr-res { display: block; color: var(--text-faint); font-size: 11.5px; }
-.search-foot { display: flex; gap: 16px; padding: 8px 16px; border-top: 1px solid var(--border); color: var(--text-dim); font-size: 11.5px; background: var(--panel-2); }
+.search-foot { display: flex; gap: 14px; align-items: center; white-space: nowrap; padding: 8px 16px; border-top: 1px solid var(--border); color: var(--text-dim); font-size: 11.5px; background: var(--panel-2); }
 .search-count { margin-left: auto; font-variant-numeric: tabular-nums; }
 .sr-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 7px; background: var(--text-faint); vertical-align: 1px; }
 .sr-dot.st-late { background: var(--danger); } .sr-dot.st-complete { background: var(--status-complete); } .sr-dot.st-on-schedule { background: var(--accent); } .sr-dot.st-future-task { background: var(--status-not-started); }
@@ -1010,9 +1022,9 @@ select.rst-select:disabled { opacity: .5; }
 .modal.wide { width: 620px; }
 .modal.settings-modal { width: 680px; height: min(760px, 94vh); max-height: 94vh; }
 .modal.settings-modal .modal-body { flex: 1; min-height: 0; }
-.settings-tabs { display: flex; gap: 2px; padding: 0 14px; border-bottom: 1px solid var(--border); flex-shrink: 0; overflow-x: auto; }
+.settings-tabs { display: flex; gap: 1px; padding: 0 8px; border-bottom: 1px solid var(--border); flex-shrink: 0; overflow-x: auto; }
 .settings-tabs.hidden { display: none; }
-.settings-tab { border: none; background: none; padding: 10px 12px 9px; font-size: 13px; font-weight: 600; color: var(--text-dim); border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; display: flex; align-items: center; gap: 7px; }
+.settings-tab { border: none; background: none; padding: 10px 9px 9px; font-size: 13px; font-weight: 600; color: var(--text-dim); border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; display: flex; align-items: center; gap: 5px; }
 .settings-tab i { font-size: 12px; opacity: .8; }
 .settings-tab:hover { color: var(--text); }
 .settings-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
@@ -1547,7 +1559,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
   <div class="modal search-modal" role="dialog" aria-label="Find a task">
     <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="searchInput" autocomplete="off" spellcheck="false" placeholder="Find a task by name, WBS, number, resource or status…" oninput="renderSearch()" onkeydown="searchKey(event)" aria-controls="searchResults"><button class="search-x" onclick="closeSearch()" aria-label="Close">Esc</button></div>
     <div class="search-results" id="searchResults" role="listbox"></div>
-    <div class="search-foot" id="searchFoot"><span><kbd>↑</kbd><kbd>↓</kbd> move</span><span><kbd>Enter</kbd> go to the task</span><span data-shift><kbd>Shift</kbd>+<kbd>Enter</kbd> show only the matches</span><span><button type="button" class="btn-link" onclick="openReplaceFromFind()" title="Ctrl+H">Find and replace…</button></span><span class="search-count" id="searchCount"></span></div>
+    <div class="search-foot" id="searchFoot"><span><kbd>↑</kbd><kbd>↓</kbd> move</span><span><kbd>Enter</kbd> go to the task</span><span data-shift><kbd>Shift</kbd>+<kbd>Enter</kbd> show only the matches</span><span><button type="button" class="btn-link" onclick="openReplaceFromFind()" title="Find and replace — Ctrl+H">Replace…</button></span><span class="search-count" id="searchCount"></span></div>
   </div>
 </div>
 
@@ -1779,6 +1791,24 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
     <div class="modal-footer"><span class="foot-note">Changes apply when you save.</span><button class="btn" onclick="closeCurrencyModal()">Cancel</button><button class="btn btn-primary" onclick="saveCurrencyModal()">Save</button></div>
   </div>
 </div>
+<div class="modal-bg" id="formatModalBg" onclick="if(event.target===this) requestCloseFormatModal()">
+  <div class="modal wide settings-modal" role="dialog" aria-labelledby="formatTitle">
+    <div class="modal-header"><h2 id="formatTitle">Plan settings</h2><button onclick="requestCloseFormatModal()" aria-label="Close">&times;</button></div>
+    <div class="settings-tabs" role="tablist" aria-label="Plan settings" data-current="format"></div>
+    <div class="modal-body">
+      <section class="cal-sec">
+        <div class="cal-sec-title">Date format</div>
+        <div class="fmt-opts" id="fmtDateOpts" role="radiogroup" aria-label="Date format"></div>
+      </section>
+      <section class="cal-sec">
+        <div class="cal-sec-title">Time format <span class="cal-sec-note">used in Hours &amp; minutes plans</span></div>
+        <div class="fmt-opts" id="fmtTimeOpts" role="radiogroup" aria-label="Time format"></div>
+      </section>
+      <p class="cal-hint" style="margin:0">Looks like this: <strong id="fmtPreview"></strong>. This is how dates and times are <em>shown and typed on this device</em> — the plan itself isn't changed, and a colleague on another computer chooses their own. Columns, dialogs, the Gantt, Print and Excel all follow it.</p>
+    </div>
+    <div class="modal-footer"><span class="foot-note">Changes apply when you save.</span><button class="btn" onclick="closeFormatModal()">Cancel</button><button class="btn btn-primary" onclick="saveFormatModal()">Save</button></div>
+  </div>
+</div>
 <div class="modal-bg" id="precisionModalBg" onclick="if(event.target===this) requestClosePrecisionModal()">
   <div class="modal wide settings-modal">
     <div class="modal-header"><h2>Plan settings</h2><button onclick="requestClosePrecisionModal()" aria-label="Close">&times;</button></div>
@@ -1976,13 +2006,15 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
           <div class="help-row"><i class="fa-solid fa-table-cells-large"></i><span><strong>Finding your way</strong>: the top bar is the same everywhere — your plan, the views (<strong>Tasks · Gantt</strong> for the schedule, <strong>Resource Plan · Resources</strong> for the people — Resources lists the people: rates, days off), <strong>Schedule</strong> (baselines, rescheduling, levelling), <strong>Data</strong>, and the <strong>gear</strong> for the plan's settings (calendar, precision, rules, currency, custom fields). The toolbar below changes with the view and shows what that view needs; on a narrow window the rest is under <strong>More</strong>.</span></div>
           <div class="help-row"><i class="fa-solid fa-window-minimize"></i><span>The <strong>status bar</strong> along the bottom shows how new tasks are scheduled (click to change), how many tasks there are and are selected, the active filters, and — in the Gantt and Resource Plan — a zoom slider. The Task Form switch is its first button.</span></div>
           <div class="help-row"><i class="fa-solid fa-plus"></i><span><strong>Add Task</strong> inserts a task below the selected one, or at the bottom when nothing is selected. Each task has a start and end date and a % complete, and can be a <strong>milestone</strong> (a one-day diamond).</span></div>
-          <div class="help-row"><i class="fa-solid fa-keyboard"></i><span><strong>Dates and times in dialogs</strong> are typed, in the same format as the list: <strong>24.12.2026</strong> (or 24.12.26, 24.12.), <strong>14:30</strong> (or 1430, 2:30pm) — or pick a date with the calendar button. Something unreadable is refused, marks the box red and puts the old value back; <strong>Enter</strong> settles a box, and in a single-purpose dialog like Reschedule or Baselines it applies the dialog.</span></div>
+          <div class="help-row"><i class="fa-solid fa-keyboard"></i><span><strong>Dates and times in dialogs</strong> are typed in the format of the list — <strong>24.12.2026</strong> (or 24.12.26, 24.12.), <strong>14:30</strong> (or 1430, 2:30pm) — or picked with the calendar button. Something unreadable is refused, marks the box red and puts the old value back; <strong>Enter</strong> settles a box, and in a single-purpose dialog like Reschedule or Baselines it applies the dialog.</span></div>
+          <div class="help-row"><i class="fa-regular fa-calendar"></i><span><strong>Date format</strong>: Plan settings → <strong>Date &amp; time</strong> chooses how dates (dd.mm.yyyy, dd/mm/yyyy, mm/dd/yyyy, yyyy-mm-dd) and times (24-hour or 12-hour AM / PM) are shown and typed on this computer. The plan itself isn't changed, and the list, dialogs, Gantt, Print, Excel and CSV all follow it. A date typed in the other order is still understood when it can only mean one thing.</span></div>
           <div class="help-row"><i class="fa-solid fa-computer-mouse"></i><span><strong>Right-click</strong> a task (in the list, or its row in the chart) for a menu with Edit, Add task, Add empty line, Duplicate, Copy, Cut, Paste, Indent, Outdent and Delete. Right-clicking on the empty part of the list offers Add task, Add empty line and Paste. The buttons for the selected tasks (<strong>Edit, Duplicate, Copy, Delete</strong>) appear in the toolbar while something is selected; with one task <strong>Edit</strong> opens the same dialog as a double-click.</span></div>
           <div class="help-row"><i class="fa-solid fa-palette"></i><span><strong>Row colour</strong> (in the task dialog, or under Edit for several tasks) marks a task in the list with a stripe at its left edge and a light tint of the same colour — also behind its bar in the Gantt chart, and in the printout and the Excel export. The bars themselves keep their <strong>status</strong> colours: green complete, red late, blue in progress, grey not started.</span></div>
           <div class="help-row"><i class="fa-solid fa-grip-lines"></i><span><strong>Add empty line</strong> (in the menu next to Add Task, or on the right-click menu) inserts a blank row below the selected task (below its whole block when it is a group) to separate blocks of tasks. It has an ID but no name, dates or WBS, is never scheduled, charted or linked, and can be moved, indented, copied and deleted like any row.</span></div>
           <div class="help-row"><i class="fa-solid fa-indent"></i><span><strong>Indent</strong> and <strong>Outdent</strong> build the work breakdown structure. A parent task's own dates and progress roll up from its sub-tasks, and its <strong>WBS</strong> code (such as <code>2.1.3</code>) follows the outline.</span></div>
           <div class="help-row"><i class="fa-solid fa-grip-lines"></i><span><strong>Drag</strong> a task's line up or down to reorder it — a parent brings its sub-tasks along.</span></div>
           <div class="help-row"><i class="fa-solid fa-clone"></i><span><strong>Duplicate</strong> (on a task's line, in the toolbar once a task is selected, or on the right-click menu) makes an exact copy right below it, including all its sub-tasks and their sub-tasks. Undo takes it back.</span></div>
+          <div class="help-row"><i class="fa-regular fa-circle-check"></i><span><strong>Mark complete</strong> on the right-click menu sets the selected tasks to 100% in one click (groups and finished tasks are skipped). Undo takes it back.</span></div>
           <div class="help-row"><i class="fa-solid fa-angles-up"></i><span>The <strong>double arrow above the ID numbers</strong> steps through the outline: collapse every group, then open the first level, then the next level, and so on until everything is open — then it starts over.</span></div>
         </div>
         <div class="help-divider"></div>
@@ -2002,7 +2034,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <div class="help-section">
           <div class="help-section-title">Find a task</div>
           <div class="help-row"><i class="fa-regular fa-keyboard"></i><span>Press <strong>?</strong> anywhere (or use <strong>Keyboard shortcuts</strong> at the top of this window) for the list of keyboard shortcuts.</span></div>
-          <div class="help-row"><i class="fa-solid fa-magnifying-glass"></i><span><strong>Ctrl/Cmd+K</strong>, <code>/</code> or the <strong>Find</strong> button opens a search: part of a name (every word must match), a WBS code such as <code>2.1</code>, <code>#12</code> for the task with that ID, or <code>@anna</code> for a resource, and <code>status:late</code> for the late tasks (also <code>complete</code>, <code>future</code>, <code>on</code> for on schedule — combine it with words). <strong>Enter</strong> goes to the task — folded groups open, a filter that would hide it steps aside, the row (and in the Gantt view the bar) scrolls into view and flashes. <strong>Shift+Enter</strong> shows only the matches.</span></div>
+          <div class="help-row"><i class="fa-solid fa-magnifying-glass"></i><span><strong>Ctrl/Cmd+K</strong>, <code>/</code> or the <strong>Find</strong> button opens a search: part of a name or a note (every word must match), a WBS code such as <code>2.1</code>, <code>#12</code> for the task with that ID, or <code>@anna</code> for a resource, and <code>status:late</code> for the late tasks (also <code>complete</code>, <code>future</code>, <code>on</code> for on schedule — combine it with words). <strong>Enter</strong> goes to the task — folded groups open, a filter that would hide it steps aside, the row (and in the Gantt view the bar) scrolls into view and flashes. <strong>Shift+Enter</strong> shows only the matches.</span></div>
           <div class="help-row"><i class="fa-solid fa-right-left"></i><span><strong>Find and replace</strong> (<kbd>Ctrl</kbd>+<kbd>H</kbd>, or the link in the Find window) changes text in one field of many tasks at once — <strong>Task Name</strong>, <strong>Resource</strong>, <strong>Notes</strong> or a custom text field — for all tasks, the filtered ones or the selected ones. The preview shows every change first; one Undo takes it all back.</span></div>
         </div>
         <div class="help-divider"></div>
@@ -2489,6 +2521,13 @@ const GANTT_DEFAULT_ORDER = [...DEFAULT_COL_ORDER];   // the same sequence as th
 const COL_MIN_W = 36, COL_MAX_W = 700;
 let colWidths = {};
 let cwMode = null;
+/* ---- Date and time FORMAT (a per-device preference — how dates and times are SHOWN and TYPED here; the plan always stores ISO dates and 24-hour
+   'HH:MM'). Four numeric date styles that all have the same length (10 characters, so every date column keeps its width) and a 24- or 12-hour
+   clock. The default (dd.mm.yyyy, 24-hour) is what the app always showed: an absent preference means it. ---- */
+const DATE_FORMATS = [
+  { id: 'dd.mm.yyyy', order: 'dmy', sep: '.' }, { id: 'dd/mm/yyyy', order: 'dmy', sep: '/' },
+  { id: 'mm/dd/yyyy', order: 'mdy', sep: '/' }, { id: 'yyyy-mm-dd', order: 'ymd', sep: '-' }];
+let dateFormat = 'dd.mm.yyyy', timeFormat = '24h';
 let rsColWidths = {};   // Resource Sheet columns you resized: key -> px (absent = its default width)
 let rsColShow = {};   // Resource Sheet columns you showed/hid (key -> bool); absent = its default (see rsColVisible())   // the precision ('day' | 'minute') the saved date-column widths were made for — see syncDateColWidths()   // columns the user resized: id -> px (absent = the column's default width); one set for both views, per device
 let showChanges = true;   // shade the cells the last edit changed
@@ -2781,11 +2820,31 @@ function calendarLabel(days = currentWorkDays()) {
   return WEEKDAY_ORDER.filter(d => days.includes(d)).map(d => WEEKDAY_NAMES[d]).join(', ');
 }
 function fmtDuration(n) { return `${n} day${n === 1 ? '' : 's'}`; }
-function fmtDate(iso) { if (!iso) return ''; const d = parseLocalDate(iso); return `${pad2(d.getDate())}.${pad2(d.getMonth() + 1)}.${d.getFullYear()}`; }
+function dateFmtInfo() { return DATE_FORMATS.find(f => f.id === dateFormat) || DATE_FORMATS[0]; }
+function isoParts(iso) { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso); if (m) return { y: m[1], m: m[2], d: m[3] }; const d = parseLocalDate(iso); return { y: String(d.getFullYear()), m: pad2(d.getMonth() + 1), d: pad2(d.getDate()) }; }
+function fmtDate(iso) {
+  if (!iso) return '';
+  const { y, m, d } = isoParts(iso), f = dateFmtInfo();
+  return f.order === 'mdy' ? `${m}${f.sep}${d}${f.sep}${y}` : f.order === 'ymd' ? `${y}${f.sep}${m}${f.sep}${d}` : `${d}${f.sep}${m}${f.sep}${y}`;
+}
+function fmtDateShort(iso) {   // day and month without the year, in the chosen order: "07.09." / "07/09" / "09/07" / "09-07" (a week tick, a yearly holiday)
+  const { m, d } = isoParts(iso), f = dateFmtInfo();
+  return f.order === 'dmy' ? `${d}${f.sep}${m}${f.sep === '.' ? '.' : ''}` : `${m}${f.sep}${d}`;
+}
+function fmtTime(hhmm) {   // 'HH:MM' (how a time is stored) as shown: 14:30, or 2:30 PM
+  if (!hhmm || timeFormat !== '12h') return hhmm || '';
+  const h = +hhmm.slice(0, 2), mi = hhmm.slice(3, 5);
+  return `${h % 12 || 12}:${mi} ${h < 12 ? 'AM' : 'PM'}`;
+}
+function fmtHourLabel(h) { return timeFormat === '12h' ? (h === 0 ? '12a' : h === 12 ? '12p' : String(h % 12)) : pad2(h); }   // a column header of the Hours scale (20px wide): 12a, 1, 2 … 11, 12p, 1 …
+function dateHint() { return dateFormat; }
+function timeHint() { return timeFormat === '12h' ? 'h:mm AM/PM' : 'hh:mm'; }
+function dateExample() { return fmtDate('2026-12-24'); }
+function timeExample() { return fmtTime('14:30'); }
 function fmtDateY(iso) { if (!iso) return ''; return parseLocalDate(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }); }
 // The grid's date(+time) display: in a minute-mode plan an absent time field shows the working day's own open/close (the
 // same default taskMoment() uses), so the cell reflects exactly what the scheduler treats the task as, not a blank.
-function gridDateTimeText(iso, time, showTime, isEnd) { if (!iso) return ''; return showTime ? `${fmtDate(iso)} ${time || (isEnd ? wEnd(iso) : wStart(iso))}` : fmtDate(iso); }   // (an absent time is that day's own open — or close for a finish)
+function gridDateTimeText(iso, time, showTime, isEnd) { if (!iso) return ''; return showTime ? `${fmtDate(iso)} ${fmtTime(time || (isEnd ? wEnd(iso) : wStart(iso)))}` : fmtDate(iso); }   // (an absent time is that day's own open — or close for a finish)
 
 function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
 function isSafeId(id) { return typeof id === 'string' && /^[a-z0-9]+$/i.test(id) && id.length <= 40; }
@@ -2793,7 +2852,7 @@ function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c
 function byId(id) { return tasks.find(t => t.id === id); }
 
 /* ============================ Persistence =============================== */
-function prefsPayload() { return { theme, zoom, zoomRev: ZOOM_DEFAULT_REV, view: currentView, gridPaneWidth, gridPaneRev: GRID_PANE_REV, showBaseline, showProgressLine, showTaskForm, taskFormHeight, showChanges, cw: colWidths, cwMode, rsCols: rsColShow, rsCw: rsColWidths, cols: { order: colOrder, hidden: [...colHidden], rev: COLS_REV, orev: COLS_ORDER_REV }, gcols: { order: gColOrder, hidden: [...gColHidden] } }; }
+function prefsPayload() { return { df: dateFormat, tf: timeFormat, theme, zoom, zoomRev: ZOOM_DEFAULT_REV, view: currentView, gridPaneWidth, gridPaneRev: GRID_PANE_REV, showBaseline, showProgressLine, showTaskForm, taskFormHeight, showChanges, cw: colWidths, cwMode, rsCols: rsColShow, rsCw: rsColWidths, cols: { order: colOrder, hidden: [...colHidden], rev: COLS_REV, orev: COLS_ORDER_REV }, gcols: { order: gColOrder, hidden: [...gColHidden] } }; }
 function syncPayload() { return { version: APP_VERSION, project, tasks, deletedTaskIds }; }
 
 function planDataKey(id) { return PLAN_DATA_PREFIX + id; }
@@ -2851,6 +2910,8 @@ function loadPrefs() {
   let d = {};
   try { d = JSON.parse(localStorage.getItem(PREFS_KEY) || '{}') || {}; } catch (e) { d = {}; }
   theme = d.theme === 'dark' ? 'dark' : 'light';
+  dateFormat = DATE_FORMATS.some(f => f.id === d.df) ? d.df : 'dd.mm.yyyy'; timeFormat = d.tf === '12h' ? '12h' : '24h';   // (absent = what the app always showed)
+  document.documentElement.classList.toggle('time12', timeFormat === '12h');
   // A saved scale only counts if it was chosen under the current default: every install had the old default (Week)
   // saved by the very first save(), so without the revision check nobody would ever see a changed default.
   zoom = (d.zoomRev === ZOOM_DEFAULT_REV && (d.zoom === 'fit' || /^px:[\d.]+$/.test(d.zoom || '') || ZOOMS.some(z => z.id === d.zoom))) ? d.zoom : DEFAULT_ZOOM;
@@ -2860,7 +2921,7 @@ function loadPrefs() {
   showTaskForm = d.showTaskForm === true;
   showChanges = d.showChanges !== false;
   colWidths = {};
-  cwMode = d.cwMode === 'day' || d.cwMode === 'minute' ? d.cwMode : null;
+  cwMode = d.cwMode === 'day' || d.cwMode === 'minute' || d.cwMode === 'minute12' ? d.cwMode : null;
   rsColShow = {}; rsColWidths = {};
   if (d.rsCw && typeof d.rsCw === 'object') for (const [k, v] of Object.entries(d.rsCw)) if (RS_COLS.some(c => c.key === k && k !== 'id' && k !== 'remove') && Number.isFinite(v)) rsColWidths[k] = Math.round(v);
   if (d.rsCols && typeof d.rsCols === 'object') for (const [k, v] of Object.entries(d.rsCols)) if (RS_COLS.some(c => c.key === k && !c.fixed) && typeof v === 'boolean') rsColShow[k] = v;
@@ -3139,7 +3200,7 @@ function cleanCustomValues(src) {
 }
 function customValue(t, id) { return t.custom ? t.custom[id] : undefined; }
 function customTime(t, id) { return minuteModeActive() && t.custom && hhmmOk(t.custom[id + 'Time']) ? t.custom[id + 'Time'] : ''; }   // a date field's time of day ('' = none)
-function customDateText(t, id) { const v = customValue(t, id); return v === undefined ? '' : fmtDate(v) + (customTime(t, id) ? ' ' + customTime(t, id) : ''); }
+function customDateText(t, id) { const v = customValue(t, id); return v === undefined ? '' : fmtDate(v) + (customTime(t, id) ? ' ' + fmtTime(customTime(t, id)) : ''); }
 function setCustomValue(t, id, value) {           // null/''/false clears
   const c = Object.assign({}, t.custom);
   if (value === null || value === undefined || value === '' || value === false) delete c[id]; else c[id] = value;
@@ -5358,14 +5419,15 @@ const MINUTE_WIDE_COLS = new Set(['start', 'end', 'actualStart', 'actualFinish',
 // next column and the date itself is never cut. Clamped where the width is used, so it follows a switch of precision.
 // A minute-mode date column: the typed date-and-time editor needs ~135px ("28.09.2026 08:00" 103px + padding, calendar button,
 // border, margins) and the shown value 106px + the 8px inset each side — 138px leaves the same ~16px of air a day-mode date column has.
-const MINUTE_DATE_W = 138;
+const MINUTE_DATE_W = 138, MINUTE_DATE_W_12H = 160;   // (the 12-hour clock adds " PM": "12/30/2026 12:30 PM" is three characters longer than "30.12.2026 12:30")
+function minuteDateW() { return timeFormat === '12h' ? MINUTE_DATE_W_12H : MINUTE_DATE_W; }
 const DATE_EDIT_COLS = new Set(['start', 'end', 'actualStart', 'actualFinish']);
 function colMinW(id) {
   const dateEdit = DATE_EDIT_COLS.has(id) || (isCustomField(id) && CUSTOM_FIELDS[id].kind === 'date');
-  return dateEdit ? (minuteModeActive() ? MINUTE_DATE_W : 100) : COL_MIN_W;
+  return dateEdit ? (minuteModeActive() ? minuteDateW() : 100) : COL_MIN_W;
 }
 function colWidth(id) { if (colWidths[id]) return Math.max(colMinW(id), Math.min(COL_MAX_W, colWidths[id])) + 'px';   // (a resized Task Name stops filling the pane: it keeps the width you gave it)
-   return minuteModeActive() && (MINUTE_WIDE_COLS.has(id) || (isCustomField(id) && CUSTOM_FIELDS[id].kind === 'date')) ? MINUTE_DATE_W + 'px' : TASK_COLS[id].width; }   // (a custom Date column too: it can carry a time)
+   return minuteModeActive() && (MINUTE_WIDE_COLS.has(id) || (isCustomField(id) && CUSTOM_FIELDS[id].kind === 'date')) ? minuteDateW() + 'px' : TASK_COLS[id].width; }   // (a custom Date column too: it can carry a time)
 function applyColTemplate(cols = visibleTaskCols()) {
   document.getElementById('main').style.setProperty('--task-cols', ['34px', ...cols.map(colWidth)].join(' '));
   // the narrowest the row can get (Task Name at its minimum) + the row's 10px padding on each side: below this width the list scrolls sideways
@@ -5380,11 +5442,11 @@ function resourceCellHtml(t, summary) {
   return asg.map((a, i) => `${i ? '<span class="res-sep">,</span>' : ''}<span class="res-a"><span class="res-n">${escapeHtml(a.name)}</span>${a.units !== 100 ? `<span class="res-p">${a.units}%</span>` : ''}</span>`).join('');
 }
 // Switching precision (day <-> hours & minutes) resizes the date columns: a date column's width is made for one precision
-// (104px for a date, MINUTE_DATE_W for a date and time), so a width you gave it under the other one is dropped and the column
+// (104px for a date, minuteDateW() for a date and time), so a width you gave it under the other one is dropped and the column
 // takes its default for the new one. Checked on every render, so it also covers Undo, a sync and opening a plan of the
 // other precision. The other columns keep their widths.
 function syncDateColWidths() {
-  const mode = minuteModeActive() ? 'minute' : 'day';
+  const mode = minuteModeActive() ? (timeFormat === '12h' ? 'minute12' : 'minute') : 'day';   // (the 12-hour clock needs wider date columns, so it is a mode of its own)
   if (cwMode === mode) return;
   const had = cwMode !== null; cwMode = mode;
   let dropped = false;
@@ -5445,11 +5507,11 @@ function renderGrid() {
     const blurAttr = (field) => `onblur="inlineBlur(event,'${t.id}','${field}')"`;
     // `time` (a task's own Start/Finish/Actual field in a minute-mode plan, '' when the field is empty) turns the editor into the typed
     // "dd.mm.yyyy hh:mm" box with the calendar button — the same box a Manually Scheduled task always had — since a native date input has no time.
+    // Every date cell edits in the typed box with the calendar button (the chosen date format; the native date input followed the system's
+    // region instead, and has no time). Only a Manually Scheduled task may keep free text such as TBD.
     const dateEditor = (field, iso, text, ph, time, noDefault) => time !== undefined
-      ? inlineTextDateHtml(t.id, field, text != null ? text : (iso ? `${fmtDate(iso)}${time || !noDefault ? ' ' + (time || (field === 'finish' || field === 'actualFinish' ? wEnd(iso) : wStart(iso))) : ''}` : ''), 'dd.mm.yyyy hh:mm')
-      : manual
-      ? inlineTextDateHtml(t.id, field, text != null ? text : fmtDate(iso), ph)
-      : `<input type="date" class="inline-edit" value="${iso || ''}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" ${blurAttr(field)}>`;
+      ? inlineTextDateHtml(t.id, field, text != null ? text : (iso ? `${fmtDate(iso)}${time || !noDefault ? ' ' + fmtTime(time || (field === 'finish' || field === 'actualFinish' ? wEnd(iso) : wStart(iso))) : ''}` : ''), `${dateHint()} ${timeHint()}`)
+      : inlineTextDateHtml(t.id, field, text != null ? text : fmtDate(iso), manual ? ph : dateHint());
     const nameCell = editing('name')
       ? `<input type="text" class="inline-edit" value="${escapeHtml(t.name)}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" ${blurAttr('name')}>`
       : `<span class="name-text${summary ? ' summary' : ''}${full ? ' editable' : ''}" title="${escapeHtml(t.name)}"${full ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','name')"` : ''}>${escapeHtml(t.name)}</span>`;
@@ -5494,7 +5556,7 @@ function renderGrid() {
     const mismatchDate = scheduleMismatch(t);
     const act = actualDates(t.id), canEditActual = full && !summary;   // a group's actual dates are rolled up, so not editable (a milestone's Actual Finish follows its Actual Start)
     const actualCell = (field, iso) => editing(field)
-      ? dateEditor(field, iso, null, 'dd.mm.yyyy', minuteModeActive() && !summary ? ((field === 'actualStart' ? t.actualStartTime : t.actualFinishTime) || '') : undefined)   // exactly the Start/Finish editor: a manual task gets the typed box + calendar, an auto task the native picker (a minute-mode plan: the typed date-and-time box)
+      ? dateEditor(field, iso, null, dateHint(), minuteModeActive() && !summary ? ((field === 'actualStart' ? t.actualStartTime : t.actualFinishTime) || '') : undefined)   // exactly the Start/Finish editor: a manual task gets the typed box + calendar, an auto task the native picker (a minute-mode plan: the typed date-and-time box)
       : `<div class="grid-cell-dim${summaryCls}${canEditActual && !(t.milestone && field === 'actualFinish') ? ' editable' : ''}"${canEditActual && !(t.milestone && field === 'actualFinish') ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','${field}')"` : ''}>${gridDateTimeText(iso, field === 'actualStart' ? t.actualStartTime : t.actualFinishTime, minuteModeActive() && !summary, field === 'actualFinish')}</div>`;
     const resourceCell = editing('resource')
       ? `<input type="text" class="inline-edit" maxlength="200" value="${escapeHtml(t.resource)}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" ${blurAttr('resource')}>`
@@ -5532,11 +5594,11 @@ function renderGrid() {
       startVariance: varCell(sv.start), finishVariance: varCell(sv.finish), durationVariance: varCell(sv.duration),
       preds: predCell, resource: resourceCell, worktype: worktypeCell, work: workCell, cost: costCell,
       deadline: editing('deadline')
-        ? `<input type="date" class="inline-edit" value="${t.deadline || ''}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" ${blurAttr('deadline')}>`
+        ? inlineTextDateHtml(t.id, 'deadline', t.deadline ? fmtDate(t.deadline) : '', dateHint())
         : `<div class="grid-cell-dim${summaryCls} editable${deadlineMissed(t) ? ' deadline-late' : ''}" onclick="event.stopPropagation();startInlineEdit('${t.id}','deadline')"${deadlineMissed(t) ? ' title="Finishes after its deadline"' : ''}>${t.deadline ? fmtDate(t.deadline) : ''}</div>`,
       totalSlack: (() => { const v = taskTotalSlack(t); return `<div class="grid-cell-dim${summaryCls}${v != null && v < 0 ? ' var-late' : ''}"${v != null && v <= 0 ? ' title="No slack: a delay here moves the plan\'s finish"' : ''}>${fmtSlack(v)}</div>`; })(),
       notes: `<div class="grid-cell-dim editable" title="${escapeHtml(t.notes || 'Click to add a note')}" onclick="event.stopPropagation();openTaskNotes('${t.id}')">${escapeHtml((t.notes || '').split('\n')[0])}</div>`,
-      ...Object.fromEntries(cols.filter(isCustomField).map(id => [id, customCellHtml(t, id, summaryCls, editing(id), blurAttr(id), (f, iso, time) => dateEditor(f, iso, null, 'dd.mm.yyyy', minuteModeActive() ? time : undefined, true))]))
+      ...Object.fromEntries(cols.filter(isCustomField).map(id => [id, customCellHtml(t, id, summaryCls, editing(id), blurAttr(id), (f, iso, time) => dateEditor(f, iso, null, dateHint(), minuteModeActive() ? time : undefined, true))]))
     };
     if (t.spacer) {   // an empty line: the ID and a blank cell in every column (nothing to edit)
       for (const c of cols) cells[c] = '<div class="grid-cell-dim"></div>';
@@ -5881,40 +5943,42 @@ function onInlineEditKeydown(e) {
   else if (e.key === 'Escape') { e.preventDefault(); cancelInlineEdit(); }
 }
 
-// Accepts DD.MM.YYYY / D-M-YYYY (what the grid displays) and ISO YYYY-MM-DD
-// (what a native date input emits); returns an ISO string or null.
+// A typed date -> ISO, or null. ISO (2026-09-07, a native picker's output) always works; a day-and-month date with a 4-digit year is read in the
+// order of the chosen format (07.09.2026 → 7 September, 09/07/2026 in the US format → 7 September), separators . / - are all fine, and when the
+// chosen order cannot be (a month of 24) the other one is tried — so what is typed in the habit of another country still lands right.
+function isoOrNull(y, m, d) { const dt = new Date(Date.UTC(y, m - 1, d)); return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d ? `${y}-${pad2(m)}-${pad2(d)}` : null; }
 function parseUserDate(str) {
   str = (str || '').trim();
-  let y, m, d, mt;
-  if ((mt = str.match(/^(\d{1,2})[.\-](\d{1,2})[.\-](\d{4})$/))) { d = +mt[1]; m = +mt[2]; y = +mt[3]; }
-  else if ((mt = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/))) { y = +mt[1]; m = +mt[2]; d = +mt[3]; }
-  else return null;
-  const dt = new Date(Date.UTC(y, m - 1, d));
-  if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== m - 1 || dt.getUTCDate() !== d) return null;
-  return `${y}-${pad2(m)}-${pad2(d)}`;
+  let m = /^(\d{4})[.\-/](\d{1,2})[.\-/](\d{1,2})$/.exec(str);
+  if (m) return isoOrNull(+m[1], +m[2], +m[3]);
+  if (!(m = /^(\d{1,2})[.\-/](\d{1,2})[.\-/](\d{4})$/.exec(str))) return null;
+  const a = +m[1], b = +m[2], y = +m[3];
+  return dateFmtInfo().order === 'mdy' ? (isoOrNull(y, a, b) || isoOrNull(y, b, a)) : (isoOrNull(y, b, a) || isoOrNull(y, a, b));
 }
 
-// The minute-mode list cell's typed value: a date, a time, or both — "07.09.2026 14:30", "2026-09-07T14:30", "07.09.2026" (the time
-// is kept), "14:30" (the date is kept). Returns { iso, time } (either may be null) or null when it isn't one of these.
+// The minute-mode list cell's typed value: a date, a time, or both — "07.09.2026 14:30", "09/07/2026 2:30 PM", "2026-09-07T14:30", a date alone
+// (the time is kept), a time alone (the date is kept). Returns { iso, time } (either may be null; time is 24-hour 'HH:MM') or null.
 function parseUserDateTime(str) {
-  str = (str || '').trim();
-  let m = /^(.*?)[\sT]+(\d{1,2})[:.](\d{2})$/.exec(str), datePart = str, time = null;
-  if (m && parseUserDate(m[1])) { datePart = m[1]; time = `${pad2(+m[2])}:${m[3]}`; }
-  else if ((m = /^(\d{1,2})[:.](\d{2})$/.exec(str))) { datePart = ''; time = `${pad2(+m[1])}:${m[2]}`; }
-  if (time !== null && !hhmmOk(time)) return null;
-  const iso = datePart ? parseUserDate(datePart) : null;
-  if (datePart && !iso) return null;
-  return iso || time ? { iso, time } : null;
+  str = (str || '').trim(); if (!str) return null;
+  const isTime = r => /[:.]/.test(r) || /[ap]m?\s*$/i.test(r);   // (a bare "2026" is a year, not 20:26)
+  const whole = parseUserDate(str); if (whole) return { iso: whole, time: null };
+  if (isTime(str)) { const t = parseBoxTime(str); if (t) return { iso: null, time: t }; }
+  for (const sp of str.matchAll(/[\sT]+/g)) {
+    const left = str.slice(0, sp.index), right = str.slice(sp.index + sp[0].length);
+    const d = parseUserDate(left), t = isTime(right) ? parseBoxTime(right) : null;
+    if (d && t) return { iso: d, time: t };
+  }
+  return null;
 }
 // The calendar button of that box: the picked date replaces the date part and the typed time stays.
 function commitInlineDatePick(el, id, field) {
-  const typed = el.closest('.inline-wrap').querySelector('input[type=text]').value.trim(), m = /\s(\d{1,2}[:.]\d{2})$/.exec(typed);
+  const typed = el.closest('.inline-wrap').querySelector('input[type=text]').value.trim(), m = /\s(\d{1,2}[:.]\d{2}(?:\s*[AaPp][Mm]?)?)$/.exec(typed);
   commitInlineEdit(id, field, el.value + (minuteModeActive() && m ? ' ' + m[1] : ''));
 }
 // A manually scheduled task's Start/Finish is a free-text box (a date, or
 // anything like "TBD"), with a calendar button that borrows a hidden native
 // date input for its picker.
-function inlineTextDateHtml(id, field, value, placeholder = 'dd.mm.yyyy or text') {
+function inlineTextDateHtml(id, field, value, placeholder = `${dateHint()} or text`) {
   return `<div class="inline-wrap"><input type="text" class="inline-edit" value="${escapeHtml(value)}" placeholder="${escapeHtml(placeholder)}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" onblur="inlineBlur(event,'${id}','${field}')"><button type="button" class="inline-cal" tabindex="-1" title="Pick a date" onmousedown="event.preventDefault()" onclick="event.stopPropagation();openInlineDatePicker(this)"><i class="fa-regular fa-calendar"></i></button><input type="date" class="inline-date-hidden" tabindex="-1" onkeydown="onInlineEditKeydown(event)" onchange="commitInlineDatePick(this,'${id}','${field}')" onblur="inlineBlur(event,'${id}','${field}')"></div>`;
 }
 function openInlineDatePicker(btn) {
@@ -5955,7 +6019,8 @@ function commitInlineEdit(id, field, rawValue) {
     // A minute-mode plan types "date time" (see parseUserDateTime): a date alone keeps the task's time, a time alone its date.
     const pdt = minuteModeActive() && !hasChildren(id) || minuteModeActive() && manual ? parseUserDateTime(val) : null;
     const keepIso = isStart ? (t.startText == null ? t.startDate : null) : (t.endText == null ? t.endDate : null);
-    const iso = pdt ? (pdt.iso || keepIso) : manual ? parseUserDate(val) : (/^\d{4}-\d{2}-\d{2}$/.test(val) ? val : null);
+    const iso = pdt ? (pdt.iso || keepIso) : parseUserDate(val);
+    if (!iso && val && !manual && !(pdt && pdt.time)) showToast(`“${val}” isn't a date — write it like ${dateExample()}`, true);
     if (iso) {
       if (isStart) { t.startDate = iso; t.startText = null; if (t.milestone) { t.endDate = iso; t.endText = null; } if (t.actualStart) { t.actualStart = iso; if (t.milestone) t.actualFinish = iso; } }   // (a started task's Start IS its Actual Start)
       else if (!t.milestone) { t.endDate = iso; t.endText = null; if (t.actualFinish) t.actualFinish = iso; }
@@ -6018,7 +6083,7 @@ function commitInlineEdit(id, field, rawValue) {
       const iso = pdt ? (pdt.iso || customValue(t, field) || null) : (val ? parseUserDate(val) : null);
       if (!val) { setCustomValue(t, field, null); setCustomValue(t, field + 'Time', null); }
       else if (iso) { setCustomValue(t, field, iso); setCustomValue(t, field + 'Time', pdt && pdt.time ? pdt.time : null); }
-      else showToast(`"${val}" isn't a date`, true);
+      else showToast(`"${val}" isn't a date — write it like ${dateExample()}`, true);
     }
   } else if (field === 'resource') {
     t.resource = val.slice(0, 200);
@@ -6038,7 +6103,7 @@ function commitInlineEdit(id, field, rawValue) {
     const aS = field === 'actualStart' ? iso : t.actualStart, aF = t.milestone ? aS : (field === 'actualFinish' ? iso : t.actualFinish);
     const M = dtMoment;
     const finishBefore = aS && aF && (mo ? M(aF, t.milestone ? aTime('actualStart') : aTime('actualFinish'), true) < M(aS, aTime('actualStart'), false) : dayNumber(aF) < dayNumber(aS));
-    if (val && !iso) showToast(`"${val}" isn't a date`, true);
+    if (val && !iso) showToast(`"${val}" isn't a date — write it like ${dateExample()}`, true);
     else if (finishBefore) showToast("Actual Finish can't be before Actual Start", true);
     else {
       const previousFinish = t.actualFinish;
@@ -6052,7 +6117,7 @@ function commitInlineEdit(id, field, rawValue) {
     }
   } else if (field === 'deadline') {   // a native date input emits ISO; blank clears it
     const iso = val ? parseUserDate(val) : null;
-    if (val && !iso) showToast(`"${val}" isn't a date`, true);
+    if (val && !iso) showToast(`"${val}" isn't a date — write it like ${dateExample()}`, true);
     else if (iso) t.deadline = iso; else delete t.deadline;
   } else if (field === 'predecessors') {
     const parsed = parsePredecessorString(val, id);
@@ -6133,7 +6198,7 @@ function renderGanttHeaderTicks(range, px) {
     for (let d = range.start; d < range.end; d++) {
       const iso = dayNumberToIso(d), x0 = (d - range.start) * px;
       ticks.push({ left: x0, width: px, cls: 'zoom-hour-day' + (isWorkNum(d) ? '' : ' dayoff'), html: `<b>${WEEKDAY_NAMES[(((d + 4) % 7) + 7) % 7]} ${fmtDate(iso)}</b>`, title: `${WEEKDAY_NAMES[(((d + 4) % 7) + 7) % 7]} ${fmtDate(iso)}` });
-      for (let h = 0; h < 24; h++) ticks.push({ left: x0 + h * px / 24, width: px / 24, cls: 'zoom-hour-h', label: pad2(h), title: `${pad2(h)}:00` });
+      for (let h = 0; h < 24; h++) ticks.push({ left: x0 + h * px / 24, width: px / 24, cls: 'zoom-hour-h', label: fmtHourLabel(h), title: fmtTime(`${pad2(h)}:00`) });
     }
   } else if (z.id === 'week') {
     // One tick per calendar week, from the Monday on/before the range start. Shown: "CW 37" over the Monday's date
@@ -6143,7 +6208,7 @@ function renderGanttHeaderTicks(range, px) {
       const { week } = isoWeekOf(mon);
       const iso = dayNumberToIso(mon);
       const year = iso.slice(0, 4);
-      const dateText = (prevYear === null || year !== prevYear) ? fmtDate(iso) : fmtDate(iso).slice(0, 6);   // "07.09." / "04.01.2027"
+      const dateText = (prevYear === null || year !== prevYear) ? fmtDate(iso) : fmtDateShort(iso);   // "07.09." / "04.01.2027"
       prevYear = year;
       ticks.push({ left: (mon - range.start) * px, width: 7 * px, html: `<b>${CAL_WEEK_LABEL} ${week}</b>${dateText}`, title: `${CAL_WEEK_LABEL} ${week}: ${fmtDate(iso)} – ${fmtDate(dayNumberToIso(mon + 6))}` });
     }
@@ -6179,7 +6244,7 @@ function renderGanttHeaderTicks(range, px) {
 // hollow diamond. A group shows the rollup of its tasks' baselines. Which baseline: project.compareBaseline; hidden with the ruler button.
 function barTimeNote(eff) {   // a minute-mode bar's tooltip also says when it starts and finishes
   if (!minuteModeActive() || !eff.start) return '';
-  return ` — ${fmtDate(eff.start)} ${eff.startTime || wStart(eff.start)}${eff.end === eff.start && !eff.endTime ? '' : ` – ${eff.end === eff.start ? '' : fmtDate(eff.end) + ' '}${eff.endTime || wEnd(eff.end)}`}`;
+  return ` — ${fmtDate(eff.start)} ${fmtTime(eff.startTime || wStart(eff.start))}${eff.end === eff.start && !eff.endTime ? '' : ` – ${eff.end === eff.start ? '' : fmtDate(eff.end) + ' '}${fmtTime(eff.endTime || wEnd(eff.end))}`}`;
 }
 function baselineNote(t) {   // appended to the bar's tooltip
   const b = baselineDates(t.id); if (!showBaseline || !b.start || !b.end) return '';
@@ -6729,7 +6794,7 @@ function hourDragMoments(t, mode, deltaPx, px, origSM, origEM) {
   else { sM = nextWorkMinuteNum(sM); if (sM >= eM) sM = startMomentFor(eM, 1); }
   return { sM, eM };
 }
-function momentLabel(mn) { const d = Math.floor(mn / 1440); return `${fmtDate(dayNumberToIso(d))} ${hhmmOf(mn - d * 1440)}`; }
+function momentLabel(mn) { const d = Math.floor(mn / 1440); return `${fmtDate(dayNumberToIso(d))} ${fmtTime(hhmmOf(mn - d * 1440))}`; }
 function showDragTip(event, text) {
   let tip = document.getElementById('ganttDragTip');
   if (!tip) { tip = document.createElement('div'); tip.id = 'ganttDragTip'; tip.className = 'gantt-drag-tip'; document.body.appendChild(tip); }
@@ -7359,7 +7424,7 @@ function runReschedule() {
   closeRescheduleModal();
   if (!touched.length) { showToast('Nothing needed to move'); return; }
   normalizeData(); save(); render();
-  showToast(`Rescheduled ${touched.length} task${touched.length === 1 ? '' : 's'} from ${fmtDate(iso)}${time ? ' ' + time : ''}`, false, () => {
+  showToast(`Rescheduled ${touched.length} task${touched.length === 1 ? '' : 's'} from ${fmtDate(iso)}${time ? ' ' + fmtTime(time) : ''}`, false, () => {
     for (const x of before) { x.t.startDate = x.s; x.t.endDate = x.e; x.t.startTime = x.st; x.t.endTime = x.et; x.t.updatedAt = x.u; }
     normalizeData(); save(); render();
   });
@@ -7544,6 +7609,7 @@ const SETTINGS_TABS = [
   { id: 'precision', label: 'Precision', icon: 'fa-regular fa-clock', bg: 'precisionModalBg', open: () => openPrecisionModal(), close: () => closePrecisionModal(), dirty: () => precisionDirty(), what: 'the scheduling precision' },
   { id: 'rules', label: 'Scheduling rules', icon: 'fa-solid fa-scale-balanced', bg: 'rulesModalBg', open: () => openRulesModal(), close: () => closeRulesModal(), dirty: () => rulesDirty(), what: 'the scheduling rules' },
   { id: 'currency', label: 'Currency', icon: 'fa-solid fa-coins', bg: 'currencyModalBg', open: () => openCurrencyModal(), close: () => closeCurrencyModal(), dirty: () => currencyDirty(), what: 'the currency' },
+  { id: 'format', label: 'Date & time', icon: 'fa-regular fa-calendar', bg: 'formatModalBg', open: () => openFormatModal(), close: () => closeFormatModal(), dirty: () => formatDirty(), what: 'the date and time format' },
   { id: 'fields', label: 'Custom fields', icon: 'fa-solid fa-table-list', bg: 'fieldsModalBg', open: () => openFieldsModal(), close: () => closeFieldsModal(), dirty: () => fieldsDirty(), what: 'the custom fields' },
 ];
 let settingsTab = 'calendar';
@@ -7616,6 +7682,43 @@ function saveCurrencyModal() {
   closeCurrencyModal();
   if (changed) { setCurrencyCode(code); showToast(`Currency: ${code}`); }
 }
+/* ---- Plan settings → Date & time: the per-device display format (see DATE_FORMATS). A draft with a live preview, applied on Save. ---- */
+let formatSnapshot = null, formatDraft = null;
+function applyDisplayFormat(df, tf) {
+  const boxes = [...document.querySelectorAll('input[data-dt]')], vals = boxes.map(el => el.value);   // (read while the old format is still the one they are written in)
+  dateFormat = df; timeFormat = tf;
+  document.documentElement.classList.toggle('time12', tf === '12h');
+  boxes.forEach((el, i) => { const isDate = el.classList.contains('dt-date'); if (el.dataset.phAuto) el.placeholder = isDate ? dateHint() : timeHint(); const t = vals[i] ? (isDate ? fmtDate(vals[i]) : fmtTime(vals[i])) : ''; el._setRaw(t); el._last = t; });
+  try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefsPayload())); } catch (e) { /* prefs are a convenience */ }
+  closeFilterMenu(); resetEffectiveCache(); render();
+  if (document.getElementById('printModalBg').classList.contains('open')) refreshPrintPreview();
+}
+function formatDirty() { return formatSnapshot !== null && document.getElementById('formatModalBg').classList.contains('open') && `${formatDraft.df}|${formatDraft.tf}` !== formatSnapshot; }
+function renderFormatModal() {
+  const today = '2026-12-24', od = dateFormat, ot = timeFormat;
+  const eg = (df, tf, withTime) => { dateFormat = df; timeFormat = tf; const out = withTime ? fmtTime('14:30') : fmtDate(today); dateFormat = od; timeFormat = ot; return out; };
+  document.getElementById('fmtDateOpts').innerHTML = DATE_FORMATS.map(f => `<label class="fmt-opt"><input type="radio" name="fmtDate" value="${f.id}"${f.id === formatDraft.df ? ' checked' : ''} onchange="formatDraft.df = this.value; renderFormatModal()"><span>${f.id}</span><span class="fmt-eg">${eg(f.id, formatDraft.tf, false)}</span></label>`).join('');
+  document.getElementById('fmtTimeOpts').innerHTML = [['24h', '24-hour'], ['12h', '12-hour (AM / PM)']].map(([id, label]) => `<label class="fmt-opt"><input type="radio" name="fmtTime" value="${id}"${id === formatDraft.tf ? ' checked' : ''} onchange="formatDraft.tf = this.value; renderFormatModal()"><span>${label}</span><span class="fmt-eg">${eg(formatDraft.df, id, true)}</span></label>`).join('');
+  dateFormat = formatDraft.df; timeFormat = formatDraft.tf;
+  document.getElementById('fmtPreview').textContent = `${fmtDate('2026-12-24')} ${fmtTime('14:30')}`;
+  dateFormat = od; timeFormat = ot;
+}
+function openFormatModal() {
+  closeScheduleMenu();
+  formatDraft = { df: dateFormat, tf: timeFormat }; formatSnapshot = `${dateFormat}|${timeFormat}`;
+  renderFormatModal();
+  document.getElementById('formatModalBg').classList.add('open');
+}
+function closeFormatModal() { document.getElementById('formatModalBg').classList.remove('open'); formatSnapshot = null; formatDraft = null; }
+function requestCloseFormatModal() {
+  if (!formatDirty()) { closeFormatModal(); return; }
+  openConfirmModal({ title: 'Discard your changes?', body: 'You changed the date or time format but did not save it.', confirmLabel: 'Discard changes', cancelLabel: 'Keep editing', action() { closeFormatModal(); } });
+}
+function saveFormatModal() {
+  const d = formatDraft, changed = d.df !== dateFormat || d.tf !== timeFormat;
+  closeFormatModal();
+  if (changed) { applyDisplayFormat(d.df, d.tf); showToast(`Dates now read ${fmtDate('2026-12-24')}, times ${fmtTime('14:30')}`); }
+}
 function openCalendarModal() {
   closeScheduleMenu();
   document.getElementById('calendarPlanName').textContent = project.name;
@@ -7649,7 +7752,7 @@ function updateCalendarSummary() {   // the chip in the header: what the calenda
 }
 function clearHolidays() { if (!calHolidays.length) return; calHolidays = []; renderHolidayList(); }
 function fmtHolidayWhen(h) {
-  if (h.yearly) return fmtDate(h.date).slice(0, 6);   // 25.12.
+  if (h.yearly) return fmtDateShort(h.date);   // 25.12.
   return h.to ? `${fmtDate(h.date)} – ${fmtDate(h.to)}` : fmtDate(h.date);
 }
 function renderHolidayList() {
@@ -7748,14 +7851,14 @@ function precisionDraftState() {
 // ---- the per-weekday rows: only the weekdays with their own hours are shown, added one at a time from the working weekdays that
 // don't have a row yet (whDayList, the dialog's own order — not tied to a checkbox per weekday, which listed every working day every
 // time whether or not it differed). Breaks are typed as "12:00-13:00, 15:00-15:15".
-function breaksText(breaks) { return (breaks || []).map(b => `${b.start}-${b.end}`).join(', '); }
+function breaksText(breaks) { return (breaks || []).map(b => `${fmtTime(b.start)}-${fmtTime(b.end)}`).join(', '); }
 function parseBreaksText(str) {   // -> [{start,end}] or null when something in it isn't a break
   const out = [];
   for (const part of String(str || '').split(/[;,]/).map(x => x.trim()).filter(Boolean)) {
-    const m = /^(\d{1,2}):(\d{2})\s*[-–—]\s*(\d{1,2}):(\d{2})$/.exec(part);
-    if (!m) return null;
-    const a = `${pad2(+m[1])}:${m[2]}`, b = `${pad2(+m[3])}:${m[4]}`;
-    if (!hhmmOk(a) || !hhmmOk(b) || b <= a) return null;
+    const ends = part.split(/\s*[-–—]\s*/);   // "12:00-13:00", or in the 12-hour clock "12:00 PM-1:00 PM"
+    if (ends.length !== 2 || !/[:.]/.test(ends[0]) || !/[:.]/.test(ends[1])) return null;
+    const a = parseBoxTime(ends[0]), b = parseBoxTime(ends[1]);
+    if (!a || !b || !hhmmOk(a) || !hhmmOk(b) || b <= a) return null;
     out.push({ start: a, end: b });
   }
   return out;
@@ -7828,7 +7931,7 @@ function removeWorkBreak(i) { calWorkHours.breaks.splice(i, 1); renderWorkBreaks
 function precisionSummary() {
   if (!(project && project.timeUnit === 'minute')) return 'Days';
   const n = project.workHoursByDay ? Object.keys(project.workHoursByDay).length : 0;
-  return `Hours & minutes · ${workHours().start}–${workHours().end}${n ? ` · ${n} day${n === 1 ? '' : 's'} differ${n === 1 ? 's' : ''}` : ''}`;
+  return `Hours & minutes · ${fmtTime(workHours().start)}–${fmtTime(workHours().end)}${n ? ` · ${n} day${n === 1 ? '' : 's'} differ${n === 1 ? 's' : ''}` : ''}`;
 }
 // How much switching back to Days would throw away: every task with a time of day (its own, or a custom Date field's), and
 // every predecessor lag that isn't a whole number of days (it would round). An estimate for the confirmation below —
@@ -9116,7 +9219,7 @@ function parseTableDate(str, fmt = 'auto') {
   if ((m = /^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/.exec(s))) return ok(+m[1], +m[2], +m[3]);
   if ((m = /^(\d{1,2})([./-])(\d{1,2})\2(\d{2}|\d{4})$/.exec(s))) {
     const a = +m[1], b = +m[3], y = y4(m[4]);
-    let mdy = fmt === 'mdy'; if (fmt === 'auto') mdy = m[2] === '/' && a <= 12 && b > 12;
+    let mdy = fmt === 'mdy'; if (fmt === 'auto') mdy = m[2] === '/' && a <= 12 && (b > 12 || dateFmtInfo().order === 'mdy');   // (month first with slashes when it can only be — or, where both would do, when that is the format chosen here)
     if (fmt === 'ymd') return null;
     return mdy ? ok(y, a, b) : ok(y, b, a);
   }
@@ -9596,15 +9699,22 @@ function searchTasksBase(q) {
     if (t.spacer) continue;
     const name = t.name.toLowerCase(), r = (t.resource || '').toLowerCase();
     const extra = res ? '' : [wbsCode(t.id), ...Object.entries(t.custom || {}).filter(([k, v]) => typeof v === 'string').map(([k, v]) => v.toLowerCase())].join(' ');
-    let score = 0, ok = true;
+    const notes = res ? '' : (t.notes || '').toLowerCase();   // (a note is the last place looked: a task whose name, resource or fields match ranks above one only its notes mention)
+    let score = 0, ok = true, viaNote = null;
     for (const w of terms) {
       if (res) { if (!r.includes(w)) { ok = false; break; } score += r.split(/[\s,;]+/).some(x => x.startsWith(w)) ? 4 : 2; continue; }
       if (name.startsWith(w)) score += 6; else if (new RegExp('(^|[^a-z0-9äöüß])' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).test(name)) score += 4; else if (name.includes(w)) score += 3;
-      else if (r.includes(w)) score += 2; else if (extra.includes(w)) score += 1; else { ok = false; break; }
+      else if (r.includes(w)) score += 2; else if (extra.includes(w)) score += 1; else if (notes.includes(w)) { score += 0.5; if (!viaNote) viaNote = w; } else { ok = false; break; }
     }
-    if (ok) out.push({ t, score });
+    if (ok) out.push(viaNote ? { t, score, note: noteSnippet(t.notes, viaNote) } : { t, score });
   }
   return out.sort((a, b) => b.score - a.score || taskDisplayId(a.t.id) - taskDisplayId(b.t.id));
+}
+function noteSnippet(text, word) {   // the stretch of a note around the first hit, on one line (shown under a result that only its notes matched)
+  const flat = String(text || '').replace(/\s+/g, ' ').trim(), at = flat.toLowerCase().indexOf(word);
+  if (at < 0) return flat.slice(0, 90);
+  const from = Math.max(0, at - 30), to = Math.min(flat.length, at + word.length + 60);
+  return (from > 0 ? '… ' : '') + flat.slice(from, to) + (to < flat.length ? ' …' : '');
 }
 function hilite(text, q) {
   const terms = q.replace(/^@/, '').trim().toLowerCase().split(/\s+/).filter(w => w && !/^#\d+$/.test(w));
@@ -9623,11 +9733,11 @@ function closeSearch() { document.getElementById('searchModalBg').classList.remo
 function renderSearch() {
   const q = document.getElementById('searchInput').value, box = document.getElementById('searchResults');
   const all = searchTasks(q); searchHits = all.slice(0, 50); searchIdx = 0;
-  if (!q.trim()) box.innerHTML = `<div class="search-empty"><div class="search-lead">Search by task name, WBS code, task number, resource, status or a text field of your own.</div><div class="search-how">Every word must match. Put <b>#</b> before a task number, <b>@</b> before a resource and <b>status:</b> before a status (late, complete, future or on).</div><div class="search-total">${tasks.filter(t => !t.spacer).length} task${tasks.filter(t => !t.spacer).length === 1 ? '' : 's'} in this plan</div></div>`;
+  if (!q.trim()) box.innerHTML = `<div class="search-empty"><div class="search-lead">Search by task name, WBS code, task number, resource, status, a note or a text field of your own.</div><div class="search-how">Every word must match. Put <b>#</b> before a task number, <b>@</b> before a resource and <b>status:</b> before a status (late, complete, future or on).</div><div class="search-total">${tasks.filter(t => !t.spacer).length} task${tasks.filter(t => !t.spacer).length === 1 ? '' : 's'} in this plan</div></div>`;
   else if (!searchHits.length) box.innerHTML = `<div class="search-empty">No task matches “${escapeHtml(q.trim())}”.</div>`;
-  else box.innerHTML = searchHits.map(({ t }, i) => {
+  else box.innerHTML = searchHits.map(({ t, note }, i) => {
     const eff = effectiveDates(t.id), parts = taskPathParts(t), dates = t.startText != null && !hasChildren(t.id) ? t.startText : eff.start ? (t.milestone ? fmtDate(eff.start) : `${fmtDate(eff.start)} – ${fmtDate(eff.end)}`) : '';
-    return `<div class="sr${i === 0 ? ' active' : ''}" role="option" data-i="${i}" onmousemove="searchSetActive(${i})" onclick="searchGo(${i})"><span class="sr-id">#${taskDisplayId(t.id)}</span><span class="sr-main"><span class="sr-name" title="${escapeHtml(t.name)}">${(st => st ? `<i class="sr-dot st-${st.toLowerCase().replace(' ', '-')}" title="${st}"></i>` : '')(taskStatus(t.id))}${t.milestone ? '◆ ' : ''}${hilite(nameAroundMatch(t.name, q), q)}</span><span class="sr-path" title="${escapeHtml('WBS ' + wbsCode(t.id) + (parts.length ? ' · ' + parts.join(' › ') : ''))}"><span class="sr-wbs">${hilite(wbsCode(t.id), q)}</span>${parts.length ? ' · ' + escapeHtml(shortPathText(parts)) : ''}</span></span><span class="sr-side">${escapeHtml(dates)}${t.resource ? `<span class="sr-res">${hilite(t.resource, q)}</span>` : ''}</span></div>`;
+    return `<div class="sr${i === 0 ? ' active' : ''}" role="option" data-i="${i}" onmousemove="searchSetActive(${i})" onclick="searchGo(${i})"><span class="sr-id">#${taskDisplayId(t.id)}</span><span class="sr-main"><span class="sr-name" title="${escapeHtml(t.name)}">${(st => st ? `<i class="sr-dot st-${st.toLowerCase().replace(' ', '-')}" title="${st}"></i>` : '')(taskStatus(t.id))}${t.milestone ? '◆ ' : ''}${hilite(nameAroundMatch(t.name, q), q)}</span><span class="sr-path" title="${escapeHtml('WBS ' + wbsCode(t.id) + (parts.length ? ' · ' + parts.join(' › ') : ''))}"><span class="sr-wbs">${hilite(wbsCode(t.id), q)}</span>${parts.length ? ' · ' + escapeHtml(shortPathText(parts)) : ''}</span>${note ? `<span class="sr-note" title="${escapeHtml(t.notes)}"><i class="fa-regular fa-note-sticky"></i>${hilite(note, q)}</span>` : ''}</span><span class="sr-side">${escapeHtml(dates)}${t.resource ? `<span class="sr-res">${hilite(t.resource, q)}</span>` : ''}</span></div>`;
   }).join('');
   const foot = document.querySelector('#searchFoot [data-shift]');
   if (foot) foot.style.visibility = searchHits.length > 1 ? 'visible' : 'hidden';
@@ -9775,7 +9885,7 @@ const PAPER_MM = { A4: [210, 297], A3: [297, 420], Letter: [215.9, 279.4], Legal
 const PRINT_MARGIN_MM = 8;
 const PRINT_COLS = { id: ['ID', 24, 'c'], wbs: ['WBS', 66, 'l'], name: ['Task Name', 220, 'l'], start: ['Start', 58, 'c'], end: ['Finish', 58, 'c'], duration: ['Days', 34, 'c'], progress: ['%', 32, 'c'], resource: ['Resource', 92, 'l'], preds: ['Predecessors', 74, 'l'] };
 // A minute-mode plan prints the time of day (Start/Finish) and the duration in working time, so those columns are wider.
-function printColW(c) { return minuteModeActive() ? ({ start: 88, end: 88, duration: 54 }[c] || PRINT_COLS[c][1]) : PRINT_COLS[c][1]; }
+function printColW(c) { const w = timeFormat === '12h' ? 108 : 88; return minuteModeActive() ? ({ start: w, end: w, duration: 54 }[c] || PRINT_COLS[c][1]) : PRINT_COLS[c][1]; }
 function printColLabel(c) { return c === 'duration' && minuteModeActive() ? 'Duration' : PRINT_COLS[c][0]; }
 const PRINT_FONT = '-apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
 let printPageNo = 0, printBuilt = null, printTimer = null;
@@ -10193,12 +10303,22 @@ function toggleAddMenu(event) {
   placeMenu(menu, r.left, r.bottom + 4);
 }
 // The right-click menu: on a task row (the row joins the selection first unless it is in it already) or on the empty part of the list.
+// Quick action of the right-click menu: the one edit most often made without the dialog (one history step).
+function markSelectedComplete() {
+  const ids = selectedIds().filter(id => { const t = byId(id); return t && !t.spacer && !hasChildren(id) && t.progress < 100; });   // (a group's % is worked out from its tasks)
+  if (!ids.length) return;
+  const now = Date.now();
+  for (const id of ids) { const t = byId(id); t.progress = 100; t.updatedAt = now; filterPinned.add(id); }
+  normalizeData(); save(); render();
+  showToast(`Marked ${ids.length === 1 ? taskLabel(byId(ids[0])) : ids.length + ' tasks'} 100% complete — Ctrl/Cmd+Z undoes it`);
+}
 function showRowMenu(x, y, onRow) {
   const ids = onRow ? selectedIds() : [], n = ids.length, real = ids.filter(id => !byId(id).spacer).length, menu = document.getElementById('rowMenu');
   const item = (icon, label, fn, o = {}) => `<button class="dropdown-item${o.danger ? ' danger' : ''}" role="menuitem"${o.off ? ' disabled' : ''} onclick="closeRowMenu();${fn}"><i class="${icon}"></i>${label}${o.kbd ? `<span class="item-hint">${o.kbd}</span>` : ''}</button>`;
   const sep = '<div class="dropdown-sep"></div>', parts = [];
   if (real) parts.push(item('fa-solid fa-pen-to-square', real === 1 ? 'Edit task…' : `Edit ${real} tasks…`, 'editSelected()'));
   { const one = ids.length === 1 && byId(ids[0]); if (one && one.recurrence) parts.push(item('fa-solid fa-repeat', 'Change recurrence…', `openRecurModal('${one.id}')`)); }
+  if (real) parts.push(item('fa-regular fa-circle-check', 'Mark complete', 'markSelectedComplete()', { off: !ids.some(id => { const t = byId(id); return !t.spacer && !hasChildren(id) && t.progress < 100; }) }));   // (with Edit: both change the task you clicked)
   if (parts.length) parts.push(sep);   // (what you can do to this task, then what you can add)
   const addLabel = !n ? 'Add task' : ids.length === 1 && hasChildren(ids[0]) ? 'Add sub-task' : 'Add task below';   // (under a group the new task becomes its first sub-task)
   parts.push(item('fa-solid fa-plus', addLabel, 'addTask()'), item('fa-solid fa-grip-lines', 'Add empty line', 'addSpacer()'));
@@ -10528,7 +10648,7 @@ function renderForeignImport() {
   if (project.timeUnit === 'minute') bits.push('times of day (Hours & minutes)');
   const unscheduled = r.tasks.filter(t => t.startText != null).length; if (unscheduled) bits.push(`${unscheduled} without dates (kept as “TBD”)`);
   const depth = t => { let d = 0, p = t.parentId; while (p) { d++; p = (r.tasks.find(x => x.id === p) || {}).parentId; } return d; };
-  const dtText = (iso, time) => fmtDate(iso) + (time ? ' ' + time : '');   // (a task read with a time of day shows it)
+  const dtText = (iso, time) => fmtDate(iso) + (time ? ' ' + fmtTime(time) : '');   // (a task read with a time of day shows it)
   const preview = r.tasks.slice(0, 8).map(t => `<div class="fi-row" style="padding-left:${depth(t) * 14}px"><span class="fi-name">${t.milestone ? '◆ ' : ''}${escapeHtml(t.name)}</span><span class="fi-dates">${t.startText != null ? escapeHtml(t.startText) : t.milestone ? dtText(t.startDate, t.startTime) : `${dtText(t.startDate, t.startTime)} – ${dtText(t.endDate, t.endTime)}`}</span></div>`).join('');
   document.getElementById('foreignImportSummary').innerHTML = `<div>${bits.join(' · ')}</div><div class="fi-preview">${preview}${r.tasks.length > 8 ? `<div class="fi-more">… and ${r.tasks.length - 8} more</div>` : ''}</div>`;
   const w = document.getElementById('foreignImportWarn');
@@ -10768,7 +10888,7 @@ function buildXlsx(opts) {
   const GRID = 'D8DEE4', HEAD = '24292F', SUM = 'F6F8FA', DIM = '656D76';
   const HEAD_FILL = '00205B';   // Midnight Blue, PANTONE 281 C — the colour of every header cell (task sheet columns, Gantt month band and week/day columns); HEAD stays the dark grey of the summary bars
   const box = { left: ['thin', GRID], right: ['thin', GRID], top: ['thin', GRID], bottom: ['thin', GRID] };
-  const dateFmt = 'dd\\.mm\\.yyyy', dateTimeFmt = 'dd\\.mm\\.yyyy hh:mm', durFmt = '[=1]0" day";0" days"';
+  const dateFmt = dateFmtInfo().id.replace(/[.\/-]/g, c => '\\' + c), dateTimeFmt = dateFmt + (timeFormat === '12h' ? ' h:mm AM/PM' : ' hh:mm'), durFmt = '[=1]0" day";0" days"';
   const nReal = rowsIn.filter(r => !r.task.spacer).length, nAll = tasks.filter(t => !t.spacer).length;
   const scopeText = opts.scope === 'filtered' && filtersActive() ? `${nReal} of ${nAll} tasks (filtered)` : `${nReal} task${nReal === 1 ? '' : 's'}`;
   const titleStyle = book.style({ bold: true, size: 16 }), subStyle = book.style({ size: 10, color: DIM });
@@ -10781,7 +10901,8 @@ function buildXlsx(opts) {
     actualFinish: ['Actual Finish', 13], baselineStart: ['Baseline Start', 13], baselineFinish: ['Baseline Finish', 13], baselineDuration: ['Baseline Duration', 13], startVariance: ['Start Variance', 13], finishVariance: ['Finish Variance', 13], durationVariance: ['Duration Variance', 13], duration: ['Duration', 12], progress: ['% Complete', 13], remaining: ['Remaining Duration', 13], status: ['Status', 13], preds: ['Predecessors', 18], resource: ['Resource', 22], worktype: ['Task Type', 14], work: ['Work', 12], cost: ['Cost', 13]
   };
   Object.assign(XCOLS, { deadline: ['Deadline', 13], totalSlack: ['Total Slack', 12], notes: ['Notes', 40] });
-  for (const id of Object.keys(CUSTOM_FIELDS)) XCOLS[id] = [customFieldName(id), { text: 22, number: 13, date: 13, flag: 9 }[CUSTOM_FIELDS[id].kind]];
+  if (minuteModeActive()) for (const k of ['start', 'end', 'actualStart', 'actualFinish', 'baselineStart', 'baselineFinish']) XCOLS[k][1] = timeFormat === '12h' ? 24 : 19;   // (a date with a time of day: Excel shows ##### in a column too narrow for it)
+  for (const id of Object.keys(CUSTOM_FIELDS)) XCOLS[id] = [customFieldName(id), { text: 22, number: 13, date: minuteModeActive() ? (timeFormat === '12h' ? 24 : 19) : 13, flag: 9 }[CUSTOM_FIELDS[id].kind]];
   // "All columns" adds the custom fields that are in use (renamed, or holding a value somewhere) — not twenty empty columns.
   const customInUse = isCustomActive;
   const keys = opts.columns === 'all' ? ['id', ...DEFAULT_COL_ORDER.filter(id => !isCustomField(id) || customInUse(id))] : ['id', ...visibleTaskCols('tasks')];   // the Tasks sheet = the Tasks view's own choice, wherever the export is started from
@@ -12195,17 +12316,18 @@ function wireGlobalEvents() {
     if (document.getElementById('cfAddMenu').classList.contains('open')) { closeCfAddMenu(); return; }
     if (document.getElementById('fieldsModalBg').classList.contains('open')) { if (document.getElementById('confirmModalBg').classList.contains('open')) closeConfirmModal(); else requestCloseFieldsModal(); return; }   // only the topmost dialog: the task dialog underneath keeps its unsaved edits
     if (document.getElementById('resourceDaysModalBg').classList.contains('open')) { if (document.getElementById('confirmModalBg').classList.contains('open')) closeConfirmModal(); else requestCloseResourceDaysModal(); return; }
-    if (document.getElementById('confirmModalBg').classList.contains('open') && (taskModalDirty() || calendarDirty() || precisionDirty() || rulesDirty() || currencyDirty() || bulkDirty())) { closeConfirmModal(); return; }   // the "discard your changes?" question: Escape = keep editing
+    if (document.getElementById('confirmModalBg').classList.contains('open') && (taskModalDirty() || calendarDirty() || precisionDirty() || rulesDirty() || currencyDirty() || formatDirty() || bulkDirty())) { closeConfirmModal(); return; }   // the "discard your changes?" question: Escape = keep editing
     if (taskModalDirty()) { requestCloseTaskModal(); return; }
     if (calendarDirty()) { requestCloseCalendarModal(); return; }
     if (precisionDirty()) { requestClosePrecisionModal(); return; }
     if (rulesDirty()) { requestCloseRulesModal(); return; }
     if (currencyDirty()) { requestCloseCurrencyModal(); return; }
+    if (formatDirty()) { requestCloseFormatModal(); return; }
     if (bulkDirty()) { requestCloseBulkModal(); return; }
     // Escape closes whatever overlay is open first; only when there is none — and
     // the user isn't typing in a field, where Escape already means "cancel this
     // edit" — does it clear the task selection.
-    const modalIds = ['recurModalBg', 'taskModalBg', 'folderFilesModalBg', 'confirmModalBg', 'calendarModalBg', 'precisionModalBg', 'rulesModalBg', 'currencyModalBg', 'baselineModalBg', 'rescheduleModalBg', 'levelModalBg', 'syncConflictsModalBg', 'planModalBg', 'excelModalBg', 'importModalBg', 'foreignImportModalBg', 'bulkModalBg', 'searchModalBg', 'printModalBg', 'backupsModalBg', 'helpModalBg', 'aboutModalBg', 'shortcutsModalBg', 'csvModalBg', 'replaceModalBg'];
+    const modalIds = ['recurModalBg', 'taskModalBg', 'folderFilesModalBg', 'confirmModalBg', 'calendarModalBg', 'precisionModalBg', 'rulesModalBg', 'currencyModalBg', 'formatModalBg', 'baselineModalBg', 'rescheduleModalBg', 'levelModalBg', 'syncConflictsModalBg', 'planModalBg', 'excelModalBg', 'importModalBg', 'foreignImportModalBg', 'bulkModalBg', 'searchModalBg', 'printModalBg', 'backupsModalBg', 'helpModalBg', 'aboutModalBg', 'shortcutsModalBg', 'csvModalBg', 'replaceModalBg'];
     const overlayOpen = modalIds.some(id => document.getElementById(id).classList.contains('open'))
       || document.getElementById('fileSyncModalBg').classList.contains('open')   // mandatory: Escape can't close it
       || document.getElementById('dataMenu').classList.contains('open')
@@ -12262,7 +12384,7 @@ function parseBoxTime(str) {
 function parseBoxDate(str) {
   const s = String(str == null ? '' : str).trim();
   if (!s) return '';
-  let m = /^(\d{1,2})[.\-/](\d{1,2})[.\-/](\d{2})$/.exec(s);   // 24.12.26
+  let m = /^(\d{1,2})[.\-/](\d{1,2})[.\-/](\d{2})$/.exec(s);   // 24.12.26 (parseUserDate applies the chosen order)
   if (m) return parseUserDate(`${m[1]}.${m[2]}.20${m[3]}`);
   m = /^(\d{1,2})[.\-/](\d{1,2})\.?$/.exec(s);   // 24.12. — this year
   if (m) return parseUserDate(`${m[1]}.${m[2]}.${todayStr().slice(0, 4)}`);
@@ -12272,10 +12394,10 @@ function attachBox(el, isDate) {
   if (el.dataset.dt) return;
   el.dataset.dt = '1'; el.type = 'text'; el.autocomplete = 'off'; el.spellcheck = false;
   el.setAttribute('inputmode', isDate ? 'numeric' : 'numeric');
-  if (!el.placeholder) el.placeholder = isDate ? 'dd.mm.yyyy' : 'hh:mm';
+  if (!el.placeholder) { el.placeholder = isDate ? dateHint() : timeHint(); el.dataset.phAuto = '1'; }   // (a box with its own placeholder, such as "Today", keeps it; the others follow the chosen format: see applyDisplayFormat())
   el.maxLength = isDate ? 10 : 8;
   const d = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value'), dis = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'disabled');
-  const show = v => isDate ? (v ? fmtDate(v) : '') : (v || '');
+  const show = v => isDate ? (v ? fmtDate(v) : '') : (v ? fmtTime(v) : '');
   el._setRaw = t => d.set.call(el, t);
   el._getRaw = () => d.get.call(el);
   Object.defineProperty(el, 'value', { configurable: true,
@@ -12328,14 +12450,14 @@ document.addEventListener('change', e => {
   if (!v) {   // unreadable: stop it here, put the last good text back
     e.stopImmediatePropagation();
     el._setRaw(el._last || '');
-    const msg = isDate ? `“${raw.trim()}” isn't a date — write it like 24.12.2026` : `“${raw.trim()}” isn't a time — write it like 14:30`;
+    const msg = isDate ? `“${raw.trim()}” isn't a date — write it like ${dateExample()}` : `“${raw.trim()}” isn't a time — write it like ${timeExample()}`;
     showToast(msg, true);
-    showDtError(el, isDate ? 'Write it like 24.12.2026' : 'Write it like 14:30');
+    showDtError(el, isDate ? `Write it like ${dateExample()}` : `Write it like ${timeExample()}`);
     el.focus();
     return;
   }
   clearDtError(el);
-  const t = isDate ? fmtDate(v) : v; el._setRaw(t); el._last = t;
+  const t = isDate ? fmtDate(v) : fmtTime(v); el._setRaw(t); el._last = t;
 }, true);
 for (const evName of ['scroll', 'resize']) window.addEventListener(evName, () => { if (dtErrBubble && dtErrBubble._for) showDtError(dtErrBubble._for, dtErrBubble.textContent); }, true);   // keep the bubble under its box across a scroll or a window resize
 document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target && e.target.dataset && e.target.dataset.dt) e.target.dispatchEvent(new Event('change', { bubbles: true })); });   // (Enter settles what is typed, like leaving the box)
