@@ -89,7 +89,7 @@ with sync_playwright() as p:
     now = ev("() => { const n = new Date(); return [n.getHours() * 60 + n.getMinutes()]; }")[0]
     tv = ev("() => document.getElementById('rescheduleTimeInput').value"); tm = int(tv[:2]) * 60 + int(tv[3:])
     check("a minute-mode plan's Reschedule has a time box, defaulting to the time now (today)", pg.is_visible("#rescheduleTimeInput") and abs(tm - now) <= 2, (tv, now))
-    pg.fill("#rescheduleDateInput", "2026-10-05"); pg.dispatch_event("#rescheduleDateInput", "change")
+    pg.fill("#rescheduleDateInput", "2030-03-04"); pg.dispatch_event("#rescheduleDateInput", "change")   # (a fixed date in the future — a date that is "today" gets the time now)
     check("...another date defaults to that day's own opening (08:00)", ev("() => document.getElementById('rescheduleTimeInput').value") == "08:00", ev("() => document.getElementById('rescheduleTimeInput').value"))
     pg.fill("#rescheduleTimeInput", "13:30"); pg.dispatch_event("#rescheduleTimeInput", "change")
     pg.fill("#rescheduleDateInput", "2026-10-06"); pg.dispatch_event("#rescheduleDateInput", "change")

@@ -776,7 +776,13 @@ input.inline-edit[type=date]::-webkit-calendar-picker-indicator { margin: 0 0 0 
 .gantt-milestone.mismatch { box-shadow: 0 0 0 2px var(--task-amber); }
 .gantt-link-preview { position: absolute; z-index: 6; pointer-events: none; }
 svg.gantt-deps { position: absolute; top: var(--head-h); left: 0;   /* its y-axis starts at the first row, i.e. below the header (it used to sit at 0, drawing every arrow a row too high) */ overflow: visible; pointer-events: none; z-index: 2; }
-svg.gantt-deps path { fill: none; stroke: var(--text-faint); stroke-width: 1.5; }
+svg.gantt-deps path { fill: none; stroke: var(--text-faint); stroke-width: 1.25; stroke-linejoin: round; stroke-linecap: round; }
+svg.gantt-deps marker path { fill: var(--text-faint); stroke: none; }   /* (the head is a small FILLED triangle — it used to inherit the line's fill:none and showed as an open, outlined V) */
+svg.gantt-deps marker.crit path { fill: var(--danger); }
+svg.gantt-deps marker.hl path { fill: var(--text); }
+svg.gantt-deps.has-hl path[data-from]:not(.hl) { opacity: .2; }   /* hovering or selecting a task: its own links stand out, the rest step back */
+svg.gantt-deps path.hl { stroke: var(--text); stroke-width: 1.75; }
+svg.gantt-deps path.hl.critical { stroke: var(--danger); }
 /* Resources view: one scroll container (no separate synced pane the way the task list/Gantt chart need — a flat list, no
    hierarchy), a sticky header row and a sticky-left name column standing in for the frozen-column/synced-scroll machinery
    the Gantt view needs for its own, taller job. Reuses ganttXAt()/ganttSpan()/renderGanttHeaderTicks()/ZOOMS/rowWindow()
@@ -804,6 +810,9 @@ svg.gantt-deps path { fill: none; stroke: var(--text-faint); stroke-width: 1.5; 
 .main.view-resources .grid-pane, .main.view-resources .gantt-pane-outer { display: none; }
 .main:not(.view-resources) .resource-pane-outer { display: none; }
 svg.gantt-deps path.critical { stroke: var(--danger); }
+svg.gantt-deps polyline.progress-line { fill: none; stroke: var(--task-purple); stroke-width: 1.75; stroke-linejoin: round; stroke-linecap: round; }   /* the progress line (a status date's line through every task's progress point) */
+svg.gantt-deps line.status-line { stroke: var(--task-purple); stroke-width: 1; stroke-dasharray: 4 3; opacity: .8; }
+svg.gantt-deps text.status-label { fill: var(--task-purple); font-size: 10px; font-weight: 600; }
 
 /* Resource Sheet: MS Project's own spreadsheet view of the resource pool (see "Resource Sheet" in CLAUDE.md) — a flat,
    deliberately NOT virtualized grid (resource counts are realistically small, unlike the task list/Resources view),
@@ -1197,11 +1206,12 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
   </div>
   <span class="subbar-spacer"></span>
   <div class="tb-group" data-views="resourceSheet">
-    <button class="btn" id="rsColumnsBtn" onclick="toggleRsColumnsMenu()" aria-haspopup="menu" title="Choose the columns of the Resource Sheet"><i class="fa-solid fa-table-columns"></i>Columns</button>
+    <button class="btn" id="rsColumnsBtn" onclick="toggleRsColumnsMenu()" aria-haspopup="menu" title="Choose the columns shown on the Resources tab"><i class="fa-solid fa-table-columns"></i>Columns</button>
   </div>
   <div class="tb-group" data-views="gantt">
     <span class="tb-sep"></span>
     <button class="btn btn-sm tb-toggle" id="baselineBtn" data-more="4" onclick="toggleBaseline()" aria-pressed="false" title="Show the baseline under the bars"><i class="fa-solid fa-ruler-horizontal"></i>Baseline</button>
+    <button class="btn btn-sm tb-toggle" id="progressLineBtn" data-more="6" onclick="toggleProgressLine()" aria-pressed="false" title="Show the progress line"><i class="fa-solid fa-chart-line"></i>Progress line</button>
     <button class="btn btn-sm tb-toggle" id="criticalPathBtn" data-more="5" onclick="toggleCriticalPath()" aria-pressed="false" title="Highlight critical path"><i class="fa-solid fa-route"></i>Critical path</button>
   </div>
   <div class="tb-group" data-views="resources">
@@ -1656,6 +1666,11 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <p class="cal-hint" style="margin:0">On (the standard): a task's own constraint date always overrides what its links would otherwise schedule. Off: its links win when they disagree with the constraint — the constraint still shows as unmet (see the warning icon), it just no longer forces the date.</p>
       </section>
       <section class="cal-sec">
+        <div class="cal-sec-title">Status date</div>
+        <div class="field-dt"><input type="text" class="dt-date" id="rulesStatusDateInput" aria-label="Status date" placeholder="Today"></div>
+        <p class="cal-hint" style="margin:0">The date the Gantt's <strong>Progress line</strong> measures progress against: tasks whose progress point is left of it are behind, right of it ahead. Leave it empty to use today.</p>
+      </section>
+      <section class="cal-sec">
         <div class="cal-sec-title">New tasks</div>
         <div class="precision-row">
           <label class="precision-opt"><input type="radio" name="rulesNewMode" id="rulesNewAuto" value="auto"><span>Auto Scheduled<span class="cal-sec-note">placed by their links and constraints, and moved when those change</span></span></label>
@@ -1675,7 +1690,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
       <section class="cal-sec">
         <div class="cal-sec-title">Currency</div>
         <select id="planCurrencyInput" aria-label="Currency" onchange="updateCurrencyPreview()"></select>
-        <p class="cal-hint" style="margin:0">Every money figure in this plan — the Resource Sheet's rates, the Cost column, Excel — is shown in it, e.g. <strong id="planCurrencyPreview"></strong>. Nothing is converted; only the symbol and format change. Also in the Resource Sheet's toolbar.</p>
+        <p class="cal-hint" style="margin:0">Every money figure in this plan — the Resources tab's rates, the Cost column, Excel — is shown in it, e.g. <strong id="planCurrencyPreview"></strong>. Nothing is converted; only the symbol and format change.</p>
       </section>
     </div>
     <div class="modal-footer"><span class="foot-note">Changes apply when you save.</span><button class="btn" onclick="closeCurrencyModal()">Cancel</button><button class="btn btn-primary" onclick="saveCurrencyModal()">Save</button></div>
@@ -1875,7 +1890,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
       <div class="help-pane" id="helpPane-start" role="tabpanel" aria-labelledby="helpTab-start">
         <div class="help-section">
           <div class="help-section-title">Building a plan</div>
-          <div class="help-row"><i class="fa-solid fa-table-cells-large"></i><span><strong>Finding your way</strong>: the top bar is the same everywhere — your plan, the views (<strong>Tasks · Gantt</strong> for the schedule, <strong>Resource Plan · Resources</strong> for the people — Resources is the Resource Sheet: people, rates, days off), <strong>Schedule</strong> (baselines, rescheduling, levelling), <strong>Data</strong>, and the <strong>gear</strong> for the plan's settings (calendar, precision, rules, currency, custom fields). The toolbar below changes with the view and shows what that view needs; on a narrow window the rest is under <strong>More</strong>.</span></div>
+          <div class="help-row"><i class="fa-solid fa-table-cells-large"></i><span><strong>Finding your way</strong>: the top bar is the same everywhere — your plan, the views (<strong>Tasks · Gantt</strong> for the schedule, <strong>Resource Plan · Resources</strong> for the people — Resources lists the people: rates, days off), <strong>Schedule</strong> (baselines, rescheduling, levelling), <strong>Data</strong>, and the <strong>gear</strong> for the plan's settings (calendar, precision, rules, currency, custom fields). The toolbar below changes with the view and shows what that view needs; on a narrow window the rest is under <strong>More</strong>.</span></div>
           <div class="help-row"><i class="fa-solid fa-window-minimize"></i><span>The <strong>status bar</strong> along the bottom shows how new tasks are scheduled (click to change), how many tasks there are and are selected, the active filters, and — in the Gantt and Resource Plan — a zoom slider. The Task Form switch is its first button.</span></div>
           <div class="help-row"><i class="fa-solid fa-plus"></i><span><strong>Add Task</strong> inserts a task below the selected one, or at the bottom when nothing is selected. Each task has a start and end date and a % complete, and can be a <strong>milestone</strong> (a one-day diamond).</span></div>
           <div class="help-row"><i class="fa-solid fa-keyboard"></i><span><strong>Dates and times in dialogs</strong> are typed, in the same format as the list: <strong>24.12.2026</strong> (or 24.12.26, 24.12.), <strong>14:30</strong> (or 1430, 2:30pm) — or pick a date with the calendar button. Something unreadable is refused, marks the box red and puts the old value back; <strong>Enter</strong> settles a box, and in a single-purpose dialog like Reschedule or Baselines it applies the dialog.</span></div>
@@ -2020,7 +2035,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
           <div class="help-row"><i class="fa-solid fa-highlighter"></i><span>After an edit the cells it <strong>changed</strong> are shaded pale yellow (blue is the selection) — a later task that moved, a Finish or Work that was recalculated — as in MS Project. What you typed yourself is not shaded; the next edit, Undo or Redo clears it. Switch it off with <em>Highlight what the last edit changed</em> in the Columns menu.</span></div>
           <div class="help-row"><i class="fa-solid fa-eye-slash"></i><span>The list starts with Task Name, Start, Finish, Duration, % Complete, Predecessors, Resource and Status; Task Mode, WBS, the Actual dates, Remaining Duration, Task Type, Work, Cost, the baseline and variance columns and your custom fields start hidden (<strong>Columns</strong> shows them). The Gantt's list starts with just Name, Start, Finish, Duration and % Complete. Click a <strong>Resource</strong> or actual-date cell to edit it, or use the task dialog.</span></div>
           <div class="help-row"><i class="fa-solid fa-users"></i><span><strong>Resource</strong> takes names separated by commas or semicolons ("Anna, Ben") — typing a new name adds it to the plan's resource pool automatically, the same way MS Project does. Give a share other than full time with <code>Name[NN%]</code> ("Anna[50%], Ben"), as in MS Project — a bare name is 100%. In the list a share other than 100% shows as a small <strong>%</strong> chip next to the name, so it stays visible however narrow the column is.</span></div>
-          <div class="help-row"><i class="fa-solid fa-people-group"></i><span>The <strong>Resources</strong> tab (the Resource Sheet) lists everyone: type, Max Units (how much of a resource is available: 100% is one full-time person, 300% three people pooled into one; only Work resources have it), rates and cost per use. Renaming or removing someone there updates every task that names them; <strong>Days off</strong> on a row opens that person's own days off, on top of the plan's working week.</span></div>
+          <div class="help-row"><i class="fa-solid fa-people-group"></i><span>The <strong>Resources</strong> tab lists everyone: type, Max Units (how much of a resource is available: 100% is one full-time person, 300% three people pooled into one; only Work resources have it), rates and cost per use. Renaming or removing someone there updates every task that names them; <strong>Days off</strong> on a row opens that person's own days off, on top of the plan's working week.</span></div>
           <div class="help-row"><i class="fa-solid fa-table-columns"></i><span>Its <strong>Columns</strong> button shows or hides columns — Material Label, Ovt Rate and Code start hidden and appear by themselves once a resource uses them. Resize the columns like the task list's: drag a header's edge, double-click it to fit, right-click for more.</span></div>
           <div class="help-row"><i class="fa-solid fa-chart-simple"></i><span>The <strong>Resource Plan</strong> tab shows each person's load as bars with the % written in (of their Max Units), red where they're over capacity — <strong>click a red bar</strong> to see the tasks behind it and jump to one. Its toolbar has a legend, <strong>Level…</strong> and <strong>Over-allocated only</strong>; the people themselves are edited in the <strong>Resources</strong> tab next to it.</span></div>
           <div class="help-row"><i class="fa-solid fa-scale-balanced"></i><span><strong>Schedule → Level resources…</strong> delays an over-allocated task to the next span with room, never earlier than its own dependencies allow and, by default, never past its own slack (so the plan's finish doesn't move) — turn that off, or scope it to a date on, then Apply. Undo brings it back.</span></div>
@@ -2055,6 +2070,8 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
           <div class="help-row"><i class="fa-solid fa-arrows-left-right"></i><span><strong>Drag</strong> a bar to reschedule it and drag its edges to resize it. Click a bar or a row to edit it.</span></div>
           <div class="help-row"><i class="fa-solid fa-link"></i><span>Drag the <strong>small circle on a bar's right edge</strong> onto another task to create a dependency.</span></div>
           <div class="help-row"><i class="fa-solid fa-ruler-horizontal"></i><span>The <strong>ruler</strong> button shows or hides the baseline line under the bars.</span></div>
+          <div class="help-row"><i class="fa-solid fa-arrow-right-long"></i><span><strong>Dependency arrows</strong>: point the mouse at a bar or milestone (or select its row) and its own links stand out while the others fade — handy in a busy chart. Red arrows are on the critical path.</span></div>
+          <div class="help-row"><i class="fa-solid fa-chart-line"></i><span><strong>Progress line</strong> (toolbar) draws a purple line from the <strong>status date</strong> through every task's progress point: it bends <strong>left</strong> through tasks that are behind and <strong>right</strong> through those ahead. The status date is today unless you set one in Plan settings → Scheduling rules.</span></div>
         </div>
         <div class="help-divider"></div>
         <div class="help-section">
@@ -2385,6 +2402,7 @@ let currentView = 'tasks';
 let gridPaneWidth = 640;
 const GRID_PANE_MIN_WIDTH = 320, GRID_PANE_MAX_WIDTH = 1800, GRID_PANE_DEFAULT = 640, GRID_PANE_REV = 1;   // (REV: the list used to be a 400px sidebar; a width saved back then isn't kept)
 let showCriticalPath = false;
+let showProgressLine = false;   // the Gantt's progress line (per device, like showBaseline)
 let showBaseline = true;
 let showTaskForm = false, taskFormHeight = 340;   // the Task Form pane (per device, like the other display prefs)   // the compared baseline as thin bars under the Gantt bars
 let selectedTaskId = null;
@@ -2679,7 +2697,7 @@ function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c
 function byId(id) { return tasks.find(t => t.id === id); }
 
 /* ============================ Persistence =============================== */
-function prefsPayload() { return { theme, zoom, zoomRev: ZOOM_DEFAULT_REV, view: currentView, gridPaneWidth, gridPaneRev: GRID_PANE_REV, showBaseline, showTaskForm, taskFormHeight, showChanges, cw: colWidths, cwMode, rsCols: rsColShow, rsCw: rsColWidths, cols: { order: colOrder, hidden: [...colHidden], rev: COLS_REV, orev: COLS_ORDER_REV }, gcols: { order: gColOrder, hidden: [...gColHidden] } }; }
+function prefsPayload() { return { theme, zoom, zoomRev: ZOOM_DEFAULT_REV, view: currentView, gridPaneWidth, gridPaneRev: GRID_PANE_REV, showBaseline, showProgressLine, showTaskForm, taskFormHeight, showChanges, cw: colWidths, cwMode, rsCols: rsColShow, rsCw: rsColWidths, cols: { order: colOrder, hidden: [...colHidden], rev: COLS_REV, orev: COLS_ORDER_REV }, gcols: { order: gColOrder, hidden: [...gColHidden] } }; }
 function syncPayload() { return { version: APP_VERSION, project, tasks, deletedTaskIds }; }
 
 function planDataKey(id) { return PLAN_DATA_PREFIX + id; }
@@ -2742,6 +2760,7 @@ function loadPrefs() {
   zoom = (d.zoomRev === ZOOM_DEFAULT_REV && (d.zoom === 'fit' || /^px:[\d.]+$/.test(d.zoom || '') || ZOOMS.some(z => z.id === d.zoom))) ? d.zoom : DEFAULT_ZOOM;
   currentView = ALL_VIEWS.includes(d.view) ? d.view : 'tasks';
   showBaseline = d.showBaseline !== false;
+  showProgressLine = d.showProgressLine === true;
   showTaskForm = d.showTaskForm === true;
   showChanges = d.showChanges !== false;
   colWidths = {};
@@ -3267,6 +3286,7 @@ function normalizeData() {
     // whether a task's own constraint always overrides its links (MS Project's "Tasks will always honor their constraint
     // dates") — absent = true, the standard, unchanged since before this existed; only an explicit false is ever stored.
     if (project.honorConstraintDates === false) { /* keep it */ } else delete project.honorConstraintDates;
+    if (typeof project.statusDate !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(project.statusDate) || dayNumberToIso(dayNumber(project.statusDate)) !== project.statusDate) delete project.statusDate;   // the progress line's status date (absent = today)
   }
   {   // scheduling precision: 'minute' opts a plan into time-of-day scheduling; absent/anything else = the standard, whole-day 'day' mode
     if (project.timeUnit === 'minute') {
@@ -4245,11 +4265,15 @@ function setZoom(id) { zoom = id; save(); render(); }
 function updateCriticalPathUI() {
   document.getElementById('criticalPathBtn').setAttribute('aria-pressed', String(showCriticalPath));
   document.getElementById('baselineBtn').setAttribute('aria-pressed', String(showBaseline));
+  document.getElementById('progressLineBtn').setAttribute('aria-pressed', String(showProgressLine));
+  document.getElementById('progressLineBtn').title = `${showProgressLine ? 'Hide' : 'Show'} the progress line — status date ${project.statusDate ? fmtDate(project.statusDate) : 'today'} (change it in Plan settings → Scheduling rules)`;
   document.getElementById('overOnlyBtn').setAttribute('aria-pressed', String(resOverOnly));
   document.getElementById('fitZoomBtn').setAttribute('aria-pressed', String(zoom === 'fit'));
   document.getElementById('baselineBtn').title = `${showBaseline ? 'Hide' : 'Show'} ${baselineName(compareBaseline())} under the bars`;
 }
 function toggleBaseline() { showBaseline = !showBaseline; save(); render(); }
+function toggleProgressLine() { showProgressLine = !showProgressLine; save(); render(); }
+function statusDay() { return project.statusDate || todayStr(); }   // the date the progress line measures against
 function toggleCriticalPath() { showCriticalPath = !showCriticalPath; render(); }
 // Resource Plan: only the resources that are over-allocated somewhere (view state, like a filter — not saved).
 let resOverOnly = false;
@@ -6052,7 +6076,7 @@ function renderGantt() {
       const cx = left; const cy = idx * ROW_H + ROW_H / 2;
       barGeom[t.id] = { left: cx - 8, width: 16, top: cy - 8, right: cx + 8, midY: cy, milestone: true };
       html += `<div class="gantt-out-label" style="left:${cx + 12}px;top:${cy - 10}px">${escapeHtml(t.name)}</div>`;   // a milestone's name beside it, as in MS Project
-      html += `<div class="gantt-milestone${cls}" style="left:${cx - 8}px;top:${cy - 8}px;--bar-color:${color}" title="${escapeHtml(t.name)}${escapeHtml(barTimeNote(eff))}${modeNote}${escapeHtml(baselineNote(t))}" onmousedown="onBarMouseDown(event,'${t.id}','move')"></div>`;
+      html += `<div class="gantt-milestone${cls}" data-id="${t.id}" style="left:${cx - 8}px;top:${cy - 8}px;--bar-color:${color}" title="${escapeHtml(t.name)}${escapeHtml(barTimeNote(eff))}${modeNote}${escapeHtml(baselineNote(t))}" onmousedown="onBarMouseDown(event,'${t.id}','move')"></div>`;
     } else {
       const width = span.width;
       const midY = top + 10;
@@ -6085,15 +6109,72 @@ function renderGantt() {
       if (!from || !to) continue;
       if (win.virtual && (Math.max(from.midY, to.midY) < win.from * ROW_H - ROW_H || Math.min(from.midY, to.midY) > win.to * ROW_H + ROW_H)) continue;   // an arrow that does not reach the built rows
       const isCritical = critical.has(t.id) && critical.has(p.id);
-      const x1 = from.right, y1 = from.midY, x2 = to.left, y2 = to.midY;
+      // a diamond's tips reach 4px past its box; the head stops 2px short of whatever it points at
+      const x1 = from.right + (from.milestone ? 4 : 0), y1 = from.midY, x2 = to.left - (to.milestone ? 4 : 0) - 2, y2 = to.midY, dy = y2 > y1 ? 14 : -14;
       const midX = x1 + Math.max(14, (x2 - x1) / 2);
-      const d = x2 >= x1 + 6
-        ? `M${x1},${y1} L${midX},${y1} L${midX},${y2} L${x2},${y2}`
-        : `M${x1},${y1} L${x1 + 14},${y1} L${x1 + 14},${y1 + (y2 > y1 ? 14 : -14)} L${x2 - 14},${y1 + (y2 > y1 ? 14 : -14)} L${x2 - 14},${y2} L${x2},${y2}`;
-      paths += `<path class="${isCritical ? 'critical' : ''}" d="${d}" marker-end="url(#arrowhead)"></path>`;
+      const pts = x2 >= x1 + 6 ? [[x1, y1], [midX, y1], [midX, y2], [x2, y2]] : [[x1, y1], [x1 + 14, y1], [x1 + 14, y1 + dy], [x2 - 14, y1 + dy], [x2 - 14, y2], [x2, y2]];
+      paths += `<path class="${isCritical ? 'critical' : ''}" data-from="${p.id}" data-to="${t.id}" d="${roundedElbow(pts, 4)}" marker-end="url(#${isCritical ? 'arrowhead-crit' : 'arrowhead'})"></path>`;
     }
   }
-  svg.innerHTML = `<defs><marker id="arrowhead" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--text-faint)"></path></marker></defs>${paths}`;
+  const head = (id, cls) => `<marker id="${id}" class="${cls}" markerUnits="userSpaceOnUse" markerWidth="7" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z"></path></marker>`;
+  svg.innerHTML = `<defs>${head('arrowhead', '')}${head('arrowhead-crit', 'crit')}${head('arrowhead-hl', 'hl')}</defs>${paths}${showProgressLine ? progressLineSvg(list, totalH, px) : ''}`;
+  setLinkHighlight(selectedTaskId);
+}
+// An elbow path through the points with its corners rounded (radius r, never more than half of a segment).
+function roundedElbow(pts, r) {
+  let d = `M${pts[0][0]},${pts[0][1]}`;
+  for (let i = 1; i < pts.length - 1; i++) {
+    const [px0, py0] = pts[i - 1], [x, y] = pts[i], [nx, ny] = pts[i + 1];
+    const l1 = Math.hypot(x - px0, y - py0), l2 = Math.hypot(nx - x, ny - y), k = Math.min(r, l1 / 2, l2 / 2);
+    if (k < 0.5) { d += ` L${x},${y}`; continue; }
+    d += ` L${x + (px0 - x) / l1 * k},${y + (py0 - y) / l1 * k} Q${x},${y} ${x + (nx - x) / l2 * k},${y + (ny - y) / l2 * k}`;
+  }
+  return d + ` L${pts[pts.length - 1][0]},${pts[pts.length - 1][1]}`;
+}
+// A task's own links stand out and the others step back: while the pointer is over its bar, else while it is the selected task.
+function setLinkHighlight(id) {
+  const svg = document.getElementById('ganttDeps'); let any = false;
+  for (const p of svg.querySelectorAll('path[data-from]')) {
+    const on = !!id && (p.dataset.from === id || p.dataset.to === id); if (on) any = true;
+    p.classList.toggle('hl', on);
+    p.setAttribute('marker-end', `url(#${p.classList.contains('critical') ? 'arrowhead-crit' : on ? 'arrowhead-hl' : 'arrowhead'})`);
+  }
+  svg.classList.toggle('has-hl', any);
+}
+{
+  const rows = document.getElementById('ganttRows');
+  rows.addEventListener('mouseover', e => { const el = e.target.closest('.gantt-bar, .gantt-milestone'); if (el && el.dataset.id) setLinkHighlight(el.dataset.id); });
+  rows.addEventListener('mouseout', e => { if (e.target.closest('.gantt-bar, .gantt-milestone') && !(e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest('.gantt-bar, .gantt-milestone'))) setLinkHighlight(selectedTaskId); });
+}
+// The progress line (MS Project's "Progress Lines"): a vertical line at the status date, bent to the right through every task that is
+// ahead of it and to the left through every one that is behind. Each row's point: a task in progress → the end of its progress fill;
+// not started but due (its start is before the status date) → its start (behind); complete → the line itself (ahead of it, at its end,
+// when it was finished before its time); a milestone → its date when it is due and not done; anything else → on the line. Groups, empty
+// lines and tasks without dates give no point — the line runs straight between their neighbours.
+function progressPoints(list, statusX) {
+  const pts = [];
+  list.forEach(({ task: t }, idx) => {
+    const g = barGeom[t.id]; if (!g || t.spacer || hasChildren(t.id) || isUnscheduled(t)) return;
+    const y = idx * ROW_H + ROW_H / 2, done = isTaskComplete(t);
+    let x = statusX;
+    if (t.milestone) { const mx = g.left + g.width / 2; if (done) x = mx > statusX ? mx : statusX; else if (mx < statusX) x = mx; }
+    else if (done) { if (g.left > statusX) x = g.right; }
+    else if ((t.progress || 0) > 0) x = g.left + g.width * Math.min(100, t.progress) / 100;
+    else if (g.left < statusX) x = g.left;
+    pts.push({ x, y, id: t.id });
+  });
+  return pts;
+}
+function progressLineSvg(list, totalH, px) {
+  const status = statusDay(), sd = dayNumber(status);
+  if (sd < dateRange.start || sd > dateRange.end) return '';   // outside the chart: nothing to measure against
+  const statusX = hourZoomOn() && status === todayStr() ? ganttXAt(status, `${pad2(new Date().getHours())}:${pad2(new Date().getMinutes())}`, false, px) : (sd - dateRange.start) * px;
+  const pts = progressPoints(list, statusX);
+  if (!pts.length) return '';
+  const round = v => Math.round(v * 10) / 10, line = [`${round(statusX)},0`, ...pts.map(p => `${round(p.x)},${round(p.y)}`), `${round(statusX)},${totalH}`].join(' ');
+  const own = status !== todayStr();   // (the red today line already marks today's status; a different status date gets its own dashed line and label)
+  return (own ? `<line class="status-line" x1="${statusX}" y1="0" x2="${statusX}" y2="${totalH}"></line><text class="status-label" x="${statusX + 4}" y="11">Status ${fmtDate(status)}</text>` : '')
+    + `<polyline class="progress-line" points="${line}"><title>Progress line — status date ${fmtDate(status)}</title></polyline>`;
 }
 // The Resources view: one row per pool resource, a day-by-day load bar at whatever zoom the Gantt chart is on (the same
 // shared dateRange/ZOOMS/px — reuses ganttXAt()/ganttSpan()/renderGanttHeaderTicks() verbatim, no Resources-specific
@@ -6129,7 +6210,7 @@ function renderResourceUsage() {
     return;
   }
   if (!resources.length) {
-    document.getElementById('resourceBody').innerHTML = `<div class="empty-state" style="position:static;width:${RESOURCE_NAME_W + totalW}px"><i class="fa-solid fa-users"></i>No resources yet — type a name in a task's Resource field, or add one in the <strong>Resource Sheet</strong></div>`;
+    document.getElementById('resourceBody').innerHTML = `<div class="empty-state" style="position:static;width:${RESOURCE_NAME_W + totalW}px"><i class="fa-solid fa-users"></i>No resources yet — type a name in a task's Resource field, or add one on the <strong>Resources</strong> tab</div>`;
     resourceRenderedWin = { from: 0, to: 0, n: 0, virtual: false };
     return;
   }
@@ -7094,7 +7175,7 @@ function renderLevelModal() {
   const dry = hasPool ? levelDryRun(levelOpts()) : { rows: [], unresolved: [] };
   const rows = dry.rows.slice().sort((a, b) => taskDisplayId(a.id) - taskDisplayId(b.id));
   const n = rows.length, u = dry.unresolved.length;
-  document.getElementById('levelHint').textContent = !hasPool ? 'No resources yet — type a name in a task’s Resource field, or add one in the Resource Sheet, then come back here.'
+  document.getElementById('levelHint').textContent = !hasPool ? 'No resources yet — type a name in a task’s Resource field, or add one on the Resources tab, then come back here.'
     : (!n && !u) ? 'Nothing to level — no resource is over-allocated within this scope.'
     : `${n} task${n === 1 ? '' : 's'} would move to resolve ${n === 1 ? 'a' : 'the'} conflict${u ? `; ${u} more resource-day conflict${u === 1 ? '' : 's'} could not be resolved within slack` : ''}.`;
   document.getElementById('levelBtn').disabled = !n;
@@ -7270,11 +7351,12 @@ function updatePlanSettingsBtn() { const b = document.getElementById('planSettin
 function planSettingsHint() { return calendarSummary() + (minuteModeActive() ? ' · Hours & minutes' : ''); }
 // Scheduling rules: whether a constraint date always wins over the links, and the default mode for new tasks.
 let rulesSnapshot = null;
-function rulesState() { return JSON.stringify([document.getElementById('honorConstraintDatesInput').checked, document.getElementById('rulesNewManual').checked]); }
+function rulesState() { return JSON.stringify([document.getElementById('honorConstraintDatesInput').checked, document.getElementById('rulesNewManual').checked, document.getElementById('rulesStatusDateInput').value || '']); }
 function openRulesModal() {
   closeScheduleMenu();
   document.getElementById('honorConstraintDatesInput').checked = project.honorConstraintDates !== false;
   document.getElementById(project.newTaskMode === 'manual' ? 'rulesNewManual' : 'rulesNewAuto').checked = true;
+  document.getElementById('rulesStatusDateInput').value = project.statusDate || '';
   rulesSnapshot = rulesState();
   document.getElementById('rulesModalBg').classList.add('open');
 }
@@ -7286,8 +7368,10 @@ function requestCloseRulesModal() {
 }
 function saveRulesModal() {
   const honor = document.getElementById('honorConstraintDatesInput').checked, mode = document.getElementById('rulesNewManual').checked ? 'manual' : 'auto';
-  if (honor === (project.honorConstraintDates !== false) && mode === (project.newTaskMode === 'manual' ? 'manual' : 'auto')) { closeRulesModal(); return; }
+  const status = document.getElementById('rulesStatusDateInput').value || '';
+  if (honor === (project.honorConstraintDates !== false) && mode === (project.newTaskMode === 'manual' ? 'manual' : 'auto') && status === (project.statusDate || '')) { closeRulesModal(); return; }
   if (honor) delete project.honorConstraintDates; else project.honorConstraintDates = false;
+  if (status) project.statusDate = status; else delete project.statusDate;
   project.newTaskMode = mode;
   project.updatedAt = Date.now();
   normalizeData(); save(); render(); closeRulesModal();
@@ -7768,7 +7852,7 @@ function renderTaskForm(force) {
     ${textNote.length ? `<div class="tf-hint">Free text on this task — ${escapeHtml(textNote.join(', '))}. Changing that date replaces it.</div>` : ''}
     ${group ? '<div class="tf-hint">A group rolls up its tasks: its dates, % complete, resources and links belong to the tasks in it.</div>'
       : `<div class="tf-tables">
-           <div class="tf-table tf-res"><div class="tf-row tf-row-head"><span class="r">ID</span><span>Resource Name</span><span class="r">Units</span><span class="r">Work</span><button type="button" class="tf-head-btn" id="tfEditResourcesBtn" title="Edit resources… — open the Resource Sheet (the plan's people, rates and days off)" aria-label="Edit resources"><i class="fa-solid fa-user-pen"></i></button></div>
+           <div class="tf-table tf-res"><div class="tf-row tf-row-head"><span class="r">ID</span><span>Resource Name</span><span class="r">Units</span><span class="r">Work</span><button type="button" class="tf-head-btn" id="tfEditResourcesBtn" title="Edit resources… — open the Resources tab (the plan's people, rates and days off)" aria-label="Edit resources"><i class="fa-solid fa-user-pen"></i></button></div>
              <div class="tf-scroll"><div class="tf-grid" id="tfResRows"></div><div class="tf-fill" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div></div></div>
            <div class="tf-table tf-pred"><div class="tf-row tf-row-head"><span class="r">ID</span><span>Predecessor Name</span><span>Type</span><span class="r">Lag</span><span></span></div>
              <div class="tf-scroll"><div class="tf-grid" id="tfPredRows"></div><div class="tf-fill" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div></div></div>
@@ -8712,7 +8796,7 @@ function replanAfterMerge(touched) {
    A conflict = both sides changed the same field of the same task (or plan setting) since they last agreed. The merge has already
    picked the newer edit; this only makes that visible — and reversible: Review lists them and lets you take the other version. */
 let syncConflictLog = [];   // session only (a heads-up for whoever is at the keyboard, not history)
-const CONFLICT_LABELS = { name: 'Name', startDate: 'Start', endDate: 'Finish', progress: '% Complete', resource: 'Resource', predecessors: 'Predecessors', taskMode: 'Task mode', actualStart: 'Actual Start', actualFinish: 'Actual Finish', parentId: 'Parent', order: 'Position', color: 'Colour', milestone: 'Milestone', constraintType: 'Constraint', constraintDate: 'Constraint date', startTime: 'Start time', endTime: 'Finish time', actualStartTime: 'Actual Start time', actualFinishTime: 'Actual Finish time', constraintTime: 'Constraint time', timeUnit: 'Scheduling precision', workHours: 'Working hours', workHoursByDay: 'Working hours by day', lagUnit: 'Lag unit', startText: 'Start (text)', endText: 'Finish (text)', durText: 'Duration (text)', custom: 'Custom fields', baselines: 'Baselines', workDays: 'Working days', compareBaseline: 'Compared baseline', fieldNames: 'Custom field names', newTaskMode: 'New task mode', honorConstraintDates: 'Honor constraint dates', resources: 'Resource pool', currencyCode: 'Currency', notes: 'Notes', deadline: 'Deadline', recurrence: 'Recurrence' };
+const CONFLICT_LABELS = { name: 'Name', startDate: 'Start', endDate: 'Finish', progress: '% Complete', resource: 'Resource', predecessors: 'Predecessors', taskMode: 'Task mode', actualStart: 'Actual Start', actualFinish: 'Actual Finish', parentId: 'Parent', order: 'Position', color: 'Colour', milestone: 'Milestone', constraintType: 'Constraint', constraintDate: 'Constraint date', startTime: 'Start time', endTime: 'Finish time', actualStartTime: 'Actual Start time', actualFinishTime: 'Actual Finish time', constraintTime: 'Constraint time', timeUnit: 'Scheduling precision', workHours: 'Working hours', workHoursByDay: 'Working hours by day', lagUnit: 'Lag unit', startText: 'Start (text)', endText: 'Finish (text)', durText: 'Duration (text)', custom: 'Custom fields', baselines: 'Baselines', workDays: 'Working days', compareBaseline: 'Compared baseline', statusDate: 'Status date', fieldNames: 'Custom field names', newTaskMode: 'New task mode', honorConstraintDates: 'Honor constraint dates', resources: 'Resource pool', currencyCode: 'Currency', notes: 'Notes', deadline: 'Deadline', recurrence: 'Recurrence' };
 function conflictLabel(key) { return CONFLICT_LABELS[key] || key; }
 function fmtConflictValue(key, v) {
   if (v === undefined || v === null || v === '') return '—';

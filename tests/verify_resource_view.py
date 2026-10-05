@@ -54,7 +54,7 @@ with sync_playwright() as p:
     seed([{"name": "A", "s": "2026-09-07", "e": "2026-09-08"}])
     ev("() => { delete project.resources; save(); render(); }")
     check("no pool -> the empty state, not a crash", pg.locator("#resourceBody .empty-state").count() == 1 and pg.locator("#resourceBody .resource-row").count() == 0)
-    check("the empty state names where to add one", "Resource Sheet" in pg.inner_text("#resourceBody .empty-state"))
+    check("the empty state names where to add one", "Resources tab" in pg.inner_text("#resourceBody .empty-state"))
 
     # ---------------------------------------------------------------- zoom switching within the Resources view
     seed([{"name": "A", "s": "2026-09-07", "e": "2026-09-09", "r": "Anna"}])
