@@ -548,6 +548,14 @@ input.inline-edit { width: 100%; min-width: 0; padding: 3px 6px; border: 1px sol
 .sel-actions { display: flex; align-items: center; gap: 6px 8px; flex-wrap: wrap; }
 .sel-actions.hidden { display: none; }
 .btn-sm { padding: 5px 10px; font-size: 12.5px; }
+.menu-foot { padding: 6px 10px 6px; font-size: 11.5px; color: var(--text-faint); border-top: 1px solid var(--border); margin-top: 4px; max-width: 240px; }
+/* Group by: a header row per value (Tasks view) — a band of its own, bold, the whole row folds on a click */
+.grid-row.group-head { --row-bg: var(--panel-2); font-weight: 600; cursor: pointer; border-top: 1px solid var(--border); }
+.grid-row.group-head:hover { --row-bg: color-mix(in srgb, var(--accent) 10%, var(--panel-2)); }
+.grid-row.group-head:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.grid-row.group-head .grid-cell-dim { font-weight: 600; color: var(--text-dim); }
+.grid-name.group-head-name .name-text { font-weight: 700; color: var(--text); }
+.group-count { margin-left: 8px; font-weight: 400; font-size: 11.5px; color: var(--text-faint); flex-shrink: 0; }
 .menu-head { padding: 6px 10px 3px; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-faint); }
 .dropdown-item.danger, .dropdown-item.danger i { color: var(--danger); }
 #rowMenu { min-width: 230px; margin-top: 0; }
@@ -584,7 +592,9 @@ input.inline-edit { width: 100%; min-width: 0; padding: 3px 6px; border: 1px sol
 .print-sheet svg { display: block; width: 100%; height: 100%; }
 .print-nav { display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-top: 1px solid var(--border); font-size: 12.5px; color: var(--text-dim); }
 .print-summary { margin-left: auto; text-align: right; }
-.print-tip { margin-right: auto; font-size: 12px; color: var(--text-dim); }
+.print-img { display: flex; align-items: center; gap: 6px; }
+.print-img-label { font-size: 12px; color: var(--text-dim); margin-right: 2px; }
+.print-tip { margin-left: 8px; margin-right: auto; font-size: 12px; color: var(--text-dim); }
 #printRoot { display: none; }
 @media print {
   body > *:not(#printRoot) { display: none !important; }
@@ -948,6 +958,13 @@ select.rst-select:disabled { opacity: .5; }
 .rs-details { margin-top: 2px; }
 .rs-details > summary { cursor: pointer; font-size: 12.5px; font-weight: 600; color: var(--accent); list-style-position: inside; }
 .rs-list { max-height: 160px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; margin-top: 6px; font-size: 12.5px; }
+.fr-list { max-height: 220px; }
+.fr-list .rs-row { align-items: flex-start; }
+.fr-list .fr-id { flex: 0 0 34px; color: var(--text-faint); }
+.fr-list .fr-text { flex: 1; min-width: 0; overflow-wrap: anywhere; line-height: 1.4; }
+.fr-list .fr-text mark { background: color-mix(in srgb, var(--danger) 18%, var(--panel)); color: var(--text); border-radius: 2px; padding: 0 1px; text-decoration: line-through; }
+.fr-list .fr-text ins { background: color-mix(in srgb, var(--task-green) 20%, var(--panel)); color: var(--text); text-decoration: none; border-radius: 2px; padding: 0 1px; }
+.fr-list .fr-skip { color: var(--text-faint); font-style: italic; }
 .rs-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 2px 0; }
 .rs-row .rs-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
 .rs-row .rs-dates { flex-shrink: 0; color: var(--text-dim); }
@@ -1181,6 +1198,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
       <button class="dropdown-item" id="foreignImportItem" onclick="triggerForeignImport()"><i class="fa-solid fa-diagram-project"></i>Import MS Project XML / CSV…</button>
       <button class="dropdown-item" id="mspdiExportItem" onclick="exportMspdi()"><i class="fa-solid fa-file-code"></i>Export MS Project XML</button>
       <button class="dropdown-item" id="excelExportItem" onclick="openExcelExport()"><i class="fa-solid fa-file-excel"></i>Export to Excel…</button>
+      <button class="dropdown-item" id="csvExportItem" onclick="openCsvExport()"><i class="fa-solid fa-file-csv"></i>Export to CSV…</button>
       <button class="dropdown-item" id="printItem" onclick="openPrintModal()"><i class="fa-solid fa-print"></i>Print / PDF…</button>
       <div class="dropdown-sep"></div>
       <button class="dropdown-item" onclick="openBackupsModal()"><i class="fa-solid fa-clock-rotate-left"></i>Local Backups</button>
@@ -1241,11 +1259,13 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
   <div class="tb-group" data-views="tasks gantt">
     <span class="tb-sep"></span>
     <button class="btn" id="searchBtn" data-more="2" onclick="openSearch()" title="Find a task by name, WBS, number (#12), resource (@anna) or status (status:late) — Ctrl/Cmd+K, or /"><i class="fa-solid fa-magnifying-glass"></i>Find</button>
+    <button class="btn btn-sm tb-toggle" id="groupBtn" data-views="tasks" data-more="6" onclick="toggleGroupMenu(event)" aria-pressed="false" aria-haspopup="menu" title="Group the list by Status, Resource, a month … (Tasks view)"><i class="fa-solid fa-layer-group"></i>Group</button>
     <button class="btn" id="columnsBtn" data-more="7" onclick="toggleColumnsMenu()" title="Choose which columns the task list shows"><i class="fa-solid fa-table-columns"></i>Columns</button>
   </div>
   <div class="dropdown-wrap hidden" id="moreWrap"><button class="btn" id="moreBtn" onclick="toggleMoreMenu(event)" aria-haspopup="menu" title="More — the toolbar buttons that don't fit this window"><i class="fa-solid fa-ellipsis"></i>More</button></div>
 </div>
 <div class="dropdown-menu" id="moreMenu" role="menu"></div>
+<div class="dropdown-menu" id="groupMenu" role="menu"></div>
 <div class="dropdown-menu" id="loadMenu" role="menu"></div>
 <div class="dropdown-menu" id="addMenu" role="menu">
   <button class="dropdown-item" id="addSpacerBtn" role="menuitem" onclick="closeAddMenu();addSpacer()"><i class="fa-solid fa-grip-lines"></i>Add empty line<span class="item-hint">a blank row to separate tasks</span></button>
@@ -1443,6 +1463,27 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
   </div>
 </div>
 
+<div class="modal-bg" id="csvModalBg" onclick="if(event.target===this) closeCsvExport()">
+  <div class="modal narrow" role="dialog" aria-labelledby="csvTitle">
+    <div class="modal-header"><h2 id="csvTitle">Export to CSV</h2><button onclick="closeCsvExport()" aria-label="Close">&times;</button></div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text-dim);margin:0;line-height:1.5">Saves the task list as a plain text table (.csv) with a header row — the dates, durations and percentages as the list shows them, sub-tasks indented. Opens in Excel and most other tools, and Milestone's own CSV import reads it back.</p>
+      <div class="field" id="csvScopeBlock"><label>Which tasks</label>
+        <label class="checkbox-row"><input type="radio" name="csvScope" value="all" checked><span id="csvScopeAll"></span></label>
+        <label class="checkbox-row"><input type="radio" name="csvScope" value="filtered"><span id="csvScopeFiltered"></span></label>
+      </div>
+      <div class="field"><label>Columns</label>
+        <label class="checkbox-row"><input type="radio" name="csvCols" value="shown" checked><span>As shown in the Tasks view</span></label>
+        <label class="checkbox-row"><input type="radio" name="csvCols" value="all"><span>All columns (also WBS, Actual Start/Finish, Resource, baselines and the custom fields in use)</span></label>
+      </div>
+      <div class="field"><label for="csvSep">Separator</label>
+        <select id="csvSep"><option value=",">Comma ( , )</option><option value=";">Semicolon ( ; ) — Excel in many countries</option><option value="&#9;">Tab</option></select>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn" onclick="closeCsvExport()">Cancel</button><button class="btn btn-primary" id="csvExportBtn" onclick="runCsvExport()"><i class="fa-solid fa-file-csv"></i>Export</button></div>
+  </div>
+</div>
+
 <!-- Import modal -->
 <div class="modal-bg" id="importModalBg" onclick="if(event.target===this) closeImportModal()">
   <div class="modal narrow">
@@ -1504,7 +1545,31 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
   <div class="modal search-modal" role="dialog" aria-label="Find a task">
     <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="searchInput" autocomplete="off" spellcheck="false" placeholder="Find a task by name, WBS, number, resource or status…" oninput="renderSearch()" onkeydown="searchKey(event)" aria-controls="searchResults"><button class="search-x" onclick="closeSearch()" aria-label="Close">Esc</button></div>
     <div class="search-results" id="searchResults" role="listbox"></div>
-    <div class="search-foot" id="searchFoot"><span><kbd>↑</kbd><kbd>↓</kbd> move</span><span><kbd>Enter</kbd> go to the task</span><span data-shift><kbd>Shift</kbd>+<kbd>Enter</kbd> show only the matches</span><span class="search-count" id="searchCount"></span></div>
+    <div class="search-foot" id="searchFoot"><span><kbd>↑</kbd><kbd>↓</kbd> move</span><span><kbd>Enter</kbd> go to the task</span><span data-shift><kbd>Shift</kbd>+<kbd>Enter</kbd> show only the matches</span><span><button type="button" class="btn-link" onclick="openReplaceFromFind()" title="Ctrl+H">Find and replace…</button></span><span class="search-count" id="searchCount"></span></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="replaceModalBg" onclick="if(event.target===this) closeReplace()">
+  <div class="modal mid" role="dialog" aria-labelledby="replaceTitle">
+    <div class="modal-header"><h2 id="replaceTitle">Find and replace</h2><button onclick="closeReplace()" aria-label="Close">&times;</button></div>
+    <div class="modal-body">
+      <div class="field"><label for="frFind">Find</label><input type="text" id="frFind" autocomplete="off" spellcheck="false" oninput="renderReplace()"></div>
+      <div class="field"><label for="frWith">Replace with</label><input type="text" id="frWith" autocomplete="off" spellcheck="false" oninput="renderReplace()"></div>
+      <div class="field"><label for="frField">In</label><select id="frField" onchange="renderReplace()"></select></div>
+      <div class="field" id="frScopeBlock"><label>Which tasks</label>
+        <label class="checkbox-row"><input type="radio" name="frScope" value="all" checked onchange="renderReplace()"><span id="frScopeAll"></span></label>
+        <label class="checkbox-row" id="frScopeFilteredRow"><input type="radio" name="frScope" value="filtered" onchange="renderReplace()"><span id="frScopeFiltered"></span></label>
+        <label class="checkbox-row" id="frScopeSelectedRow"><input type="radio" name="frScope" value="selected" onchange="renderReplace()"><span id="frScopeSelected"></span></label>
+      </div>
+      <label class="checkbox-row"><input type="checkbox" id="frCase" onchange="renderReplace()">Match case</label>
+      <label class="checkbox-row"><input type="checkbox" id="frWhole" onchange="renderReplace()">Match the whole cell, not a part of it</label>
+      <p class="cal-hint" id="frHint" style="margin:0" aria-live="polite"></p>
+      <details class="rs-details hidden" id="frDetails" open>
+        <summary>Which tasks <span id="frDetailsCount"></span></summary>
+        <div class="rs-list fr-list" id="frList"></div>
+      </details>
+    </div>
+    <div class="modal-footer"><span class="foot-note">One Undo step.</span><button class="btn" onclick="closeReplace()">Cancel</button><button class="btn btn-primary" id="frBtn" onclick="runReplace()">Replace all</button></div>
   </div>
 </div>
 
@@ -1537,7 +1602,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <div class="print-nav"><button class="btn" id="printPrev" onclick="printPage(-1)" aria-label="Previous page"><i class="fa-solid fa-chevron-left"></i></button><span id="printPageInfo"></span><button class="btn" id="printNext" onclick="printPage(1)" aria-label="Next page"><i class="fa-solid fa-chevron-right"></i></button><span class="print-summary" id="printSummary"></span></div>
       </div>
     </div>
-    <div class="modal-footer"><span class="print-tip">Your browser's print dialog has “Save as PDF”.</span><button class="btn" onclick="closePrintModal()">Cancel</button><button class="btn btn-primary" id="printGo" onclick="doPrint()"><i class="fa-solid fa-print"></i>Print / Save as PDF…</button></div>
+    <div class="modal-footer"><span class="print-img" role="group" aria-label="Picture of the whole chart"><span class="print-img-label" title="One picture with every row, whatever the paper — for slides and documents">Picture:</span><button class="btn" id="printCopyImg" onclick="exportPrintImage('copy')" title="Copy the chart as a PNG picture"><i class="fa-regular fa-copy"></i>Copy</button><button class="btn" id="printPng" onclick="exportPrintImage('png')" title="Download the chart as a PNG picture"><i class="fa-regular fa-image"></i>PNG</button><button class="btn" id="printSvg" onclick="exportPrintImage('svg')" title="Download the chart as an SVG drawing (editable in PowerPoint, Illustrator, Inkscape)"><i class="fa-solid fa-bezier-curve"></i>SVG</button></span><span class="print-tip" title="Your browser's print dialog has “Save as PDF”.">Pictures show every row on one image.</span><button class="btn" onclick="closePrintModal()">Cancel</button><button class="btn btn-primary" id="printGo" onclick="doPrint()"><i class="fa-solid fa-print"></i>Print / Save as PDF…</button></div>
   </div>
 </div>
 
@@ -1936,6 +2001,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
           <div class="help-section-title">Find a task</div>
           <div class="help-row"><i class="fa-regular fa-keyboard"></i><span>Press <strong>?</strong> anywhere (or use <strong>Keyboard shortcuts</strong> at the top of this window) for the list of keyboard shortcuts.</span></div>
           <div class="help-row"><i class="fa-solid fa-magnifying-glass"></i><span><strong>Ctrl/Cmd+K</strong>, <code>/</code> or the <strong>Find</strong> button opens a search: part of a name (every word must match), a WBS code such as <code>2.1</code>, <code>#12</code> for the task with that ID, or <code>@anna</code> for a resource, and <code>status:late</code> for the late tasks (also <code>complete</code>, <code>future</code>, <code>on</code> for on schedule — combine it with words). <strong>Enter</strong> goes to the task — folded groups open, a filter that would hide it steps aside, the row (and in the Gantt view the bar) scrolls into view and flashes. <strong>Shift+Enter</strong> shows only the matches.</span></div>
+          <div class="help-row"><i class="fa-solid fa-right-left"></i><span><strong>Find and replace</strong> (<kbd>Ctrl</kbd>+<kbd>H</kbd>, or the link in the Find window) changes text in one field of many tasks at once — <strong>Task Name</strong>, <strong>Resource</strong>, <strong>Notes</strong> or a custom text field — for all tasks, the filtered ones or the selected ones. The preview shows every change first; one Undo takes it all back.</span></div>
         </div>
         <div class="help-divider"></div>
         <div class="help-section">
@@ -2043,6 +2109,8 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <div class="help-section">
           <div class="help-section-title">Sorting</div>
           <div class="help-row"><i class="fa-solid fa-arrow-down-short-wide"></i><span><strong>Sort</strong> by any column from the top of its filter panel (the funnel), or right-click its header. Each group's tasks are sorted, the outline stays, and task numbers don't change. The status bar says <em>Sorted by …</em> — its × goes back to the plan's order. While sorted, tasks can't be dragged or indented.</span></div>
+          <div class="help-row"><i class="fa-solid fa-layer-group"></i><span><strong>Group</strong> (toolbar, Tasks view) gathers the tasks under a header per value of a column: <strong>Status</strong>, <strong>Resource</strong>, <strong>Task Mode</strong>, <strong>Task Type</strong>, a <strong>month</strong> of Start / Finish / Deadline, <strong>% Complete</strong> in bands or a custom field. Click a header to fold its group; it shows the count, span, % and cost of its tasks.</span></div>
+          <div class="help-row"><i class="fa-solid fa-layer-group"></i><span>While grouped, only tasks without sub-tasks are listed and moving or indenting is off; the Gantt view keeps the outline. Right-click a column header for <strong>Group by …</strong>. Nothing in the plan changes.</span></div>
         </div>
         <div class="help-section">
           <div class="help-section-title">Columns</div>
@@ -2094,6 +2162,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <div class="help-section">
           <div class="help-section-title">Printing</div>
           <div class="help-row"><i class="fa-solid fa-print"></i><span><strong>Print / PDF…</strong> (the Data menu, or Ctrl/Cmd+P) lays the list and the chart out on pages of the paper you choose — A4, A3, Letter, Legal or Tabloid, landscape or portrait. The whole timeline is fitted to the page width, long plans continue on the next page with the heading repeated, and a live preview shows every page.</span></div>
+          <div class="help-row"><i class="fa-regular fa-image"></i><span>In the Print window, <strong>Picture: Copy / PNG / SVG</strong> makes the chart as <em>one</em> picture with every row, with the same columns and options — for a slide or a document. <strong>SVG</strong> keeps the text as text, so PowerPoint, Illustrator or Inkscape can edit it; <strong>PNG</strong> is 2× sharp; <strong>Copy</strong> puts the PNG on the clipboard.</span></div>
           <div class="help-row"><i class="fa-solid fa-sliders"></i><span>Choose the list columns, the time range, the timescale (weeks, months or quarters — automatic by default), and whether to show the baseline, the critical path, dependency arrows, the today line and days off. Tasks print as the list shows them (folded groups and filters apply) unless you expand every group. In your browser's print dialog choose <strong>Save as PDF</strong> for a file.</span></div>
         </div>
         <div class="help-divider"></div>
@@ -2125,6 +2194,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <div class="help-section">
           <div class="help-section-title">Import, export and backups</div>
           <div class="help-row"><i class="fa-solid fa-file-export"></i><span><strong>Data → Export / Import</strong> moves a full JSON snapshot of the current plan out or in.</span></div>
+          <div class="help-row"><i class="fa-solid fa-file-csv"></i><span><strong>Export to CSV</strong> saves the task list as a plain text table: the columns you choose, dates and durations as the list shows them, sub-tasks indented. Pick the separator your Excel expects (comma or semicolon). Import it again with <strong>Import MS Project XML / CSV</strong>.</span></div>
           <div class="help-row"><i class="fa-solid fa-file-excel"></i><span><strong>Export to Excel</strong> saves a formatted .xlsx workbook: a task list plus an optional Gantt chart sheet, each sheet using the columns you chose in its own view.</span></div>
           <div class="help-row"><i class="fa-solid fa-diagram-project"></i><span><strong>Import MS Project XML / CSV…</strong> reads a plan saved from MS Project as XML (File → Save As → XML Format): tasks and their outline, dates, % complete, actual dates, links with lags, manual mode, constraints, resources, baselines, the working week and the holidays. A file with real times of day switches the plan to <strong>Hours &amp; minutes</strong> scheduling too (when "Import working calendar" is ticked), recovering the working hours and breaks from it.</span></div>
           <div class="help-row"><i class="fa-solid fa-file-code"></i><span><strong>Export MS Project XML</strong> (Data menu) saves the whole plan as a <code>.xml</code> file that MS Project opens: <em>File → Open</em>, file type “XML Format”. Outline, dates, durations, links with lag, constraints, actual dates, baselines, resources, the working week and holidays go along, each task's real time of day included for an Hours &amp; minutes plan; empty lines are left out, and custom-field values and TBD dates go into the task’s Notes.</span></div>
@@ -3421,7 +3491,115 @@ function setSort(col, dir) {
   sortSpec = dir && col ? { col, dir } : null;
   closeFilterMenu(); closeColWidthMenu(); render();
 }
-function sortBlocked() { if (!sortSpec) return false; showToast('The list is sorted — clear the sort (status bar) to move or indent tasks'); return true; }
+function sortBlocked() {
+  if (groupingOn()) { showToast('The list is grouped — clear the grouping (status bar) to move or indent tasks'); return true; }
+  if (!sortSpec) return false; showToast('The list is sorted — clear the sort (status bar) to move or indent tasks'); return true;
+}
+/* ---- Group by (MS Project's Group by, Tasks view): the list shows the tasks gathered under a header per value of one column — Status, Resource,
+   Task Mode, Task Type, a month of Start / Finish / Deadline, % Complete in bands, or a custom field. A view setting like Sort and the filters (in
+   memory, cleared when you switch plan); nothing in the plan changes. Only tasks without sub-tasks are listed (a summary task's own row would be
+   meaningless under a header); the outline is flattened, so the IDs and WBS codes stay what they are. A header shows the count and the span, % and Cost
+   of its tasks, and folds with a click. The Gantt view keeps the outline (its rows have to line up with the chart). Moving and indenting are off
+   while it is on, like while sorted. The values and their order are the filters' own (filterColValue / filterCompare). ---- */
+let groupSpec = null;                 // { col } or null
+const groupCollapsed = new Set();     // `${col}|${key}` of the folded groups
+const GROUP_BASE = ['status', 'resource', 'mode', 'worktype', 'start', 'end', 'deadline', 'progress'];
+function groupColumns() { return GROUP_BASE.concat(Object.keys(CUSTOM_FIELDS).filter(isCustomActive)).filter(c => FILTER_COLS[c]).map(id => ({ id, label: FILTER_COLS[id].label })); }
+function groupingOn() { return !!groupSpec && currentView === 'tasks' && groupColumns().some(c => c.id === groupSpec.col); }
+const PROGRESS_BANDS = ['Not started (0%)', 'Started (1–49%)', 'Half way or more (50–99%)', 'Complete (100%)'];
+function groupInfo(t, col) {
+  const v = filterColValue(t, col), kind = FILTER_COLS[col].kind;
+  if (v == null || v === '') return { key: '\u0000', label: '(none)', blank: true };
+  if (col === 'progress') { const b = v >= 100 ? 3 : v >= 50 ? 2 : v > 0 ? 1 : 0; return { key: 'p' + b, label: PROGRESS_BANDS[b], sort: b }; }
+  if (kind === 'date') { const k = String(v).slice(0, 7); return { key: k, label: `${monthNameOf(v)} ${v.slice(0, 4)}`, sort: k }; }
+  let sort = v;
+  if (col === 'status') sort = STATUS_ORDER.indexOf(v); else if (col === 'worktype') sort = TASK_TYPES.findIndex(m => m.id === v);
+  else if (isCustomField(col) && CUSTOM_FIELDS[col].kind === 'flag') sort = v === 'Yes' ? 0 : 1;
+  return { key: String(v), label: filterValueLabel(col, v), sort };
+}
+function groupedRows() {
+  const col = groupSpec.col, filtering = filtersActive(), kids = childMap(), leaves = [];
+  (function walk(pid) {
+    for (const t of sortKids(kids.get(pid) || [])) {
+      if (t.spacer) continue;
+      if (hasChildren(t.id)) { walk(t.id); continue; }
+      if (!filtering || filterShows(t)) leaves.push(t);
+    }
+  })(null);
+  const groups = new Map();
+  for (const t of leaves) {
+    const i = groupInfo(t, col); let g = groups.get(i.key);
+    if (!g) groups.set(i.key, g = { id: col + '|' + i.key, label: i.label, sort: i.sort, blank: !!i.blank, tasks: [] });
+    g.tasks.push(t);
+  }
+  const cmp = (a, b) => typeof a.sort === 'number' && typeof b.sort === 'number' ? a.sort - b.sort : String(a.sort).localeCompare(String(b.sort), undefined, { sensitivity: 'base', numeric: true });
+  const out = [];
+  for (const g of [...groups.values()].sort((a, b) => a.blank ? 1 : b.blank ? -1 : cmp(a, b))) {
+    const collapsed = groupCollapsed.has(g.id) && !g.tasks.some(t => filterPinned.has(t.id));   // (a task just added or jumped to keeps its group open)
+    out.push({ header: true, id: g.id, label: g.label, count: g.tasks.length, collapsed, tasks: g.tasks });
+    if (!collapsed) for (const t of g.tasks) out.push({ task: t, depth: 0 });
+  }
+  return out;
+}
+function displayRows() { return groupingOn() ? groupedRows() : visibleTaskList(); }   // what the Tasks view's list shows, top to bottom (group headers included)
+function displayedTaskIds() { return displayRows().filter(r => !r.header).map(r => r.task.id); }
+function setGroup(col) {
+  if (col && !groupColumns().some(c => c.id === col)) return;
+  groupSpec = col ? { col } : null; groupCollapsed.clear();
+  closeGroupMenu(); closeColWidthMenu(); closeFilterMenu(); render();
+}
+function groupToggle(enc) {
+  const id = decodeURIComponent(enc), h = displayRows().find(r => r.header && r.id === id);
+  if (h) for (const t of h.tasks) filterPinned.delete(t.id);   // (a pin would keep it open)
+  if (groupCollapsed.has(id)) groupCollapsed.delete(id); else groupCollapsed.add(id);
+  render();
+}
+function groupFoldAll(fold) {
+  closeGroupMenu();
+  if (fold) { for (const r of displayRows()) if (r.header) { groupCollapsed.add(r.id); for (const t of r.tasks) filterPinned.delete(t.id); } } else groupCollapsed.clear();
+  render();
+}
+function groupHeaderRowHtml(h, cols) {
+  let start = null, end = null, w = 0, wp = 0, cost = 0;
+  for (const t of h.tasks) {
+    const e = effectiveDates(t.id); cost += taskCost(t) || 0;
+    if (!e.start || isUnscheduled(t)) continue;
+    if (!start || e.start < start) start = e.start; if (!end || e.end > end) end = e.end;
+    const d = Math.max(1, durationDays(e.start, e.end)); w += d; wp += d * e.progress;
+  }
+  const cell = c => c === 'name'
+    ? `<div class="grid-name group-head-name"><button class="chevron" tabindex="-1" aria-hidden="true"><i class="fa-solid fa-chevron-${h.collapsed ? 'right' : 'down'}"></i></button><span class="name-text summary" title="${escapeHtml(h.label)}">${escapeHtml(h.label)}</span><span class="group-count">${h.count} task${h.count === 1 ? '' : 's'}</span></div>`
+    : c === 'start' ? `<div class="grid-cell-dim summary">${start ? fmtDate(start) : ''}</div>`
+    : c === 'end' ? `<div class="grid-cell-dim summary">${end ? fmtDate(end) : ''}</div>`
+    : c === 'progress' ? `<div class="grid-cell-dim summary">${w ? Math.round(wp / w) + '%' : ''}</div>`
+    : c === 'cost' ? `<div class="grid-cell-dim summary">${cost ? fmtCurrency(cost) : ''}</div>`
+    : '<div class="grid-cell-dim"></div>';
+  return `<div class="grid-row group-head" role="button" tabindex="0" aria-expanded="${!h.collapsed}" data-gkey="${escapeHtml(encodeURIComponent(h.id))}" onclick="groupToggle(this.dataset.gkey)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();groupToggle(this.dataset.gkey)}" title="${h.collapsed ? 'Show' : 'Hide'} the ${h.count} task${h.count === 1 ? '' : 's'} in “${escapeHtml(h.label)}”">`
+    + `<div class="grid-cell-dim"></div>${cols.map(cell).join('')}</div>`;
+}
+function renderGroupMenu() {
+  const menu = document.getElementById('groupMenu'), cur = groupingOn() ? groupSpec.col : null;
+  menu.innerHTML = '<div class="menu-head">Group the list by</div>'
+    + `<button class="dropdown-item" role="menuitemradio" aria-checked="${!cur}" onclick="setGroup(null)"><i class="fa-solid fa-ban"></i>None — the outline${!cur ? '<i class="fa-solid fa-check mode-check"></i>' : ''}</button>`
+    + groupColumns().map(c => `<button class="dropdown-item" role="menuitemradio" aria-checked="${cur === c.id}" onclick="setGroup('${c.id}')"><i class="fa-solid fa-circle" style="visibility:hidden"></i>${escapeHtml(c.label)}${cur === c.id ? '<i class="fa-solid fa-check mode-check"></i>' : ''}</button>`).join('')
+    + (cur ? '<div class="dropdown-sep"></div><button class="dropdown-item" onclick="groupFoldAll(true)"><i class="fa-solid fa-angles-up"></i>Collapse all groups</button><button class="dropdown-item" onclick="groupFoldAll(false)"><i class="fa-solid fa-angles-down"></i>Expand all groups</button>' : '')
+    + '<div class="menu-foot">Tasks view only. Nothing in the plan changes.</div>';
+}
+function toggleGroupMenu(event) {
+  if (event) event.stopPropagation();
+  const menu = document.getElementById('groupMenu');
+  if (menu.classList.contains('open')) { closeGroupMenu(); return; }
+  closeDataMenu(); closePlanMenu(); closeScheduleMenu(); closeColumnsMenu(); closeFilterMenu(); closeToolbarMenus();
+  renderGroupMenu();
+  const btn = document.getElementById('groupBtn'), r = (btn.classList.contains('tb-over') ? document.getElementById('moreBtn') : btn).getBoundingClientRect();
+  placeMenu(menu, Math.max(8, r.left), r.bottom + 4);
+}
+function closeGroupMenu() { const m = document.getElementById('groupMenu'); if (m) m.classList.remove('open'); }
+function updateGroupUI() {
+  const btn = document.getElementById('groupBtn'); if (!btn) return;
+  const on = groupingOn(); btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+  btn.title = on ? `Grouped by ${FILTER_COLS[groupSpec.col].label} — click to change` : 'Group the list by Status, Resource, a month … (Tasks view)';
+}
 function visibleTaskList() {
   const out = [], filtering = filtersActive(), kids = childMap();
   (function walk(parentId, depth) {
@@ -4241,6 +4419,7 @@ function renderPass() {
   else if (currentView === 'resourceSheet') renderResourceSheet();
   renderFilterBar();
   updateCollapseButtons();
+  updateGroupUI();
   updateFileSyncUI();
   updateThemeToggleUI();
   updateNewTaskModeUI();
@@ -4565,10 +4744,11 @@ function colHeadHtml(label, col, headTitle) {
 function renderFilterBar() {
   const el = document.getElementById('filterBar');
   const sortChip = sortSpec && FILTER_COLS[sortSpec.col] ? `<span class="filter-chip sort-chip"><i class="fa-solid fa-arrow-${sortSpec.dir > 0 ? 'up' : 'down'}-short-wide"></i>Sorted by ${escapeHtml(FILTER_COLS[sortSpec.col].label)}<button onclick="setSort(null, 0)" title="Clear the sort — back to the plan's order"><i class="fa-solid fa-xmark"></i></button></span>` : '';
-  if (!filtersActive()) { el.classList.toggle('hidden', !sortChip); el.innerHTML = sortChip; return; }
+  const groupChip = groupingOn() ? `<span class="filter-chip sort-chip"><i class="fa-solid fa-layer-group"></i>Grouped by ${escapeHtml(FILTER_COLS[groupSpec.col].label)}<button onclick="setGroup(null)" title="Clear the grouping — back to the outline"><i class="fa-solid fa-xmark"></i></button></span>` : '';
+  if (!filtersActive()) { el.classList.toggle('hidden', !sortChip && !groupChip); el.innerHTML = groupChip + sortChip; return; }
   const chips = Object.keys(FILTER_COLS).filter(c => colFilters[c]).map(c =>
     `<span class="filter-chip"><i class="fa-solid fa-filter"></i>${escapeHtml(FILTER_COLS[c].label)}: ${escapeHtml(describeSpec(c, colFilters[c]))}<button onclick="clearColFilter('${c}')" title="Remove this filter"><i class="fa-solid fa-xmark"></i></button></span>`).join('');
-  el.innerHTML = `${sortChip}${chips}<span class="filter-count">${tasks.filter(t => !t.spacer && filterShows(t)).length} of ${tasks.filter(t => !t.spacer).length} tasks</span><button class="btn-link" onclick="clearAllFilters()">Clear all</button>`;
+  el.innerHTML = `${groupChip}${sortChip}${chips}<span class="filter-count">${tasks.filter(t => !t.spacer && filterShows(t)).length} of ${tasks.filter(t => !t.spacer).length} tasks</span><button class="btn-link" onclick="clearAllFilters()">Clear all</button>`;
   el.classList.remove('hidden');
 }
 function clearColFilter(col) { colFilters[col] = null; filterPinned.clear(); closeFilterMenu(); render(); }
@@ -5116,7 +5296,9 @@ function openColWidthMenu(e, id) {
   const sortItems = FILTER_COLS[id] ? `<button class="dropdown-item" role="menuitem" onclick="setSort('${id}', 1)"><i class="fa-solid fa-arrow-up-short-wide"></i>Sort ascending</button>`
     + `<button class="dropdown-item" role="menuitem" onclick="setSort('${id}', -1)"><i class="fa-solid fa-arrow-down-short-wide"></i>Sort descending</button>`
     + (sortSpec ? `<button class="dropdown-item" role="menuitem" onclick="setSort(null, 0)"><i class="fa-solid fa-xmark"></i>Clear sort</button>` : '') + '<div class="dropdown-sep"></div>' : '';
-  menu.innerHTML = `<div class="menu-head">${escapeHtml(TASK_COLS[id].label)} column</div>` + sortItems
+  const grouping = currentView === 'tasks' && groupColumns().some(c => c.id === id)
+    ? `<button class="dropdown-item" role="menuitem" onclick="setGroup('${id}')"><i class="fa-solid fa-layer-group"></i>Group by ${escapeHtml(TASK_COLS[id].label)}</button>` + (groupSpec ? `<button class="dropdown-item" role="menuitem" onclick="setGroup(null)"><i class="fa-solid fa-xmark"></i>Clear grouping</button>` : '') + '<div class="dropdown-sep"></div>' : '';
+  menu.innerHTML = `<div class="menu-head">${escapeHtml(TASK_COLS[id].label)} column</div>` + sortItems + grouping
     + `<button class="dropdown-item" role="menuitem" onclick="closeColWidthMenu(); fitColumn('${id}')"><i class="fa-solid fa-left-right"></i>Fit to content</button>`
     + `<button class="dropdown-item" role="menuitem" onclick="closeColWidthMenu(); fitAllColumns()"><i class="fa-solid fa-arrows-left-right-to-line"></i>Fit all columns</button>`
     + `<button class="dropdown-item" role="menuitem"${custom ? '' : ' disabled'} onclick="closeColWidthMenu(); resetColWidth('${id}')"><i class="fa-solid fa-rotate-left"></i>Default width</button>`
@@ -5226,7 +5408,7 @@ function renderGrid() {
   };
   applyColTemplate(cols);
   document.getElementById('gridHeader').innerHTML = `<div class="id-head"><button class="id-toggle" id="collapseToggleBtn" onclick="toggleAllCollapsed()"><i class="fa-solid fa-angles-up"></i></button></div>${cols.map(c => HEAD[c]).join('')}`;
-  const list = visibleTaskList();
+  const list = displayRows();   // (the outline, or — grouped — the tasks under a header per value)
   const el = document.getElementById('gridRows');
   if (list.length === 0 && filtersActive() && tasks.length) { el.innerHTML = filterEmptyHtml(); return; }
   if (list.length === 0) {
@@ -5237,7 +5419,9 @@ function renderGrid() {
   if (list.length > VIRTUAL_THRESHOLD && currentView === 'gantt') { const outer = document.getElementById('ganttPaneOuter'); if (outer) el.scrollTop = outer.scrollTop; }   // (the chart drives the list)
   const win = rowWindow(list.length); renderedWin = { from: win.from, to: win.to, n: list.length, virtual: win.virtual };
   const spacer = px => px > 0 ? `<div class="virt-spacer" style="height:${px}px"></div>` : '';
-  el.innerHTML = (win.virtual ? spacer(win.from * ROW_H) : '') + list.slice(win.from, win.to).map(({ task: t, depth }) => {
+  el.innerHTML = (win.virtual ? spacer(win.from * ROW_H) : '') + list.slice(win.from, win.to).map((item) => {
+    if (item.header) return groupHeaderRowHtml(item, cols);
+    const t = item.task, depth = item.depth;
     const eff = effectiveDates(t.id);
     const summary = hasChildren(t.id);
     const marks = showChanges ? changeMarks.get(t.id) : null;
@@ -5356,7 +5540,7 @@ function renderGrid() {
       for (const c of cols) cells[c] = '<div class="grid-cell-dim"></div>';
       cells.name = `<div class="grid-name" style="--depth:${depth}"><button class="chevron empty" tabindex="-1"><i class="fa-solid fa-chevron-down"></i></button><span class="name-text spacer-label" title="Empty line — it only separates tasks"></span>${actionsHtml}</div>`;
     }
-    return `<div class="grid-row${isSelected(t.id) ? ' selected' : ''}${t.spacer ? ' spacer-row' : ''}${t.color ? ' colored' : ''}"${t.color ? ` style="--row-accent:var(--task-${t.color})"` : ''} data-id="${t.id}" onclick="selectTask('${t.id}', event)" ondblclick="rowDblClick(event, '${t.id}')" draggable="${editingCell && editingCell.id === t.id ? 'false' : 'true'}" ondragstart="dragStartTask(event,'${t.id}')" ondragend="dragEndTask()" ondragover="dragOverTask(event,'${t.id}')" ondrop="dropOnTask(event,'${t.id}')">
+    return `<div class="grid-row${isSelected(t.id) ? ' selected' : ''}${t.spacer ? ' spacer-row' : ''}${t.color ? ' colored' : ''}"${t.color ? ` style="--row-accent:var(--task-${t.color})"` : ''} data-id="${t.id}" onclick="selectTask('${t.id}', event)" ondblclick="rowDblClick(event, '${t.id}')" draggable="${(editingCell && editingCell.id === t.id) || groupingOn() ? 'false' : 'true'}" ondragstart="dragStartTask(event,'${t.id}')" ondragend="dragEndTask()" ondragover="dragOverTask(event,'${t.id}')" ondrop="dropOnTask(event,'${t.id}')">
       <div class="grid-cell-dim" style="text-align:center">${taskDisplayId(t.id)}</div>
       ${cols.map(c => marks && marks.has(c) ? cells[c].replace(/^(\s*<div class=")/, '$1chg ') : cells[c]).join('')}
     </div>`;
@@ -5379,7 +5563,7 @@ function selectTask(id, ev) {
     setSelection([...set], set.has(id) ? id : (set.size ? [...set].pop() : null));
   } else if (ev && ev.shiftKey && selectedTaskId) {
     window.getSelection && window.getSelection().removeAllRanges();   // (no text selection under the rows)
-    const list = visibleTaskList().map(v => v.task.id), a = list.indexOf(selectedTaskId), b = list.indexOf(id);
+    const list = displayedTaskIds(), a = list.indexOf(selectedTaskId), b = list.indexOf(id);
     if (a >= 0 && b >= 0) setSelection(list.slice(Math.min(a, b), Math.max(a, b) + 1), selectedTaskId); else setSelection([id]);
   } else setSelection([id]);
   render();
@@ -5417,7 +5601,7 @@ function wireGrabCursor() {
   document.addEventListener('dragstart', clearGrabHold); // once the drag is under way the browser draws its own cursor
 }
 function dragStartTask(event, id) {
-  if (sortSpec) { event.preventDefault(); sortBlocked(); return; }
+  if (sortSpec || groupingOn()) { event.preventDefault(); sortBlocked(); return; }
   draggedTaskId = id;
   event.dataTransfer.effectAllowed = 'move';
   event.dataTransfer.setData('text/plain', id);
@@ -5566,11 +5750,12 @@ function updateCollapseButtons() {
   const btn = document.getElementById('collapseToggleBtn');
   if (!btn) return;
   const { groups, levels, next } = collapseState(), filtering = filtersActive();
-  btn.disabled = filtering || !groups.length;
+  const grouped = groupingOn();
+  btn.disabled = filtering || grouped || !groups.length;
   btn.dataset.next = next === null ? '' : next;
   btn.firstElementChild.className = `fa-solid fa-angles-${next === 0 ? 'up' : 'down'}`;   // up arrows: the next click collapses; down arrows: it opens more
   const what = next === 0 ? 'Collapse all groups' : next >= levels ? 'Expand all groups' : `Expand to level ${next}`;
-  btn.title = what + (filtering ? ' — not while a filter is on' : '');
+  btn.title = what + (filtering ? ' — not while a filter is on' : grouped ? ' — not while the list is grouped (use Group → Collapse all groups)' : '');
   btn.setAttribute('aria-label', btn.title);
 }
 // Switching a task to Auto Scheduled re-plans it the way MS Project does:
@@ -7836,7 +8021,7 @@ function tfHeader() {
   $('tfPrevBtn').disabled = !t || i <= 0;
   $('tfNextBtn').disabled = !t || i < 0 || i >= list.length - 1;
 }
-function tfStepList() { return visibleTaskList().map(v => v.task).filter(t => !t.spacer).map(t => t.id); }
+function tfStepList() { return displayedTaskIds().filter(id => { const t = byId(id); return t && !t.spacer; }); }
 function renderTaskForm(force) {
   const avail = currentView === 'tasks' || currentView === 'gantt', on = showTaskForm && avail;
   const btn = document.getElementById('taskFormBtn');
@@ -9466,11 +9651,11 @@ function searchFilter() {
 function jumpToTask(id) {
   const t = byId(id); if (!t) return;
   for (let p = t.parentId; p;) { const a = byId(p); if (!a) break; if (a.collapsed) a.collapsed = false; p = a.parentId; }   // (a fold is view state: not stamped, not synced)
-  filterPinned.add(id);
+  filterPinned.add(id);   // (also what keeps a folded group open when grouped)
   setSelection([id]);
   render();
   requestAnimationFrame(() => {
-    const idx = visibleTaskList().findIndex(v => v.task.id === id);
+    const idx = displayRows().findIndex(v => !v.header && v.task.id === id);
     if (currentView === 'gantt') {
       const outer = document.getElementById('ganttPaneOuter'), g = barGeom[id], top = idx * ROW_H;
       outer.scrollTop = Math.max(0, top - outer.clientHeight / 2 + ROW_H);
@@ -9481,6 +9666,101 @@ function jumpToTask(id) {
     if (currentView !== 'gantt' && row) row.scrollIntoView({ block: 'center' });
     for (const el of document.querySelectorAll(`.grid-row[data-id="${id}"], .gantt-row-bg[data-row-id="${id}"]`)) { el.classList.add('jump-flash'); setTimeout(() => el.classList.remove('jump-flash'), 1500); }
   });
+}
+
+/* ---- Find and replace (Ctrl+H, or "Find and replace…" in the Find palette): changes text in one field of many tasks at once — Task Name,
+   Resource, Notes or a custom Text field. Live preview (what each match turns into, struck-out / inserted), then one history step. The field's own
+   rules still apply afterwards (normalizeData()): a name can't be left empty (that task is skipped and said so), a Resource that gains or loses
+   a share goes through the Task Type triangle like a typed edit, a pool resource appears for any new name. ---- */
+function frFields() {
+  return [{ id: 'name', label: 'Task Name' }, { id: 'resource', label: 'Resource' }, { id: 'notes', label: 'Notes' }]
+    .concat(Object.keys(CUSTOM_FIELDS).filter(id => CUSTOM_FIELDS[id].kind === 'text' && isCustomActive(id)).map(id => ({ id, label: customFieldName(id) })));
+}
+function frRead(t, f) { return f === 'name' ? (t.name || '') : f === 'resource' ? (t.resource || '') : f === 'notes' ? (t.notes || '') : (customValue(t, f) || ''); }
+function frWrite(t, f, v) {
+  if (f === 'name') t.name = v.trim();
+  else if (f === 'resource') { const u0 = taskUnitsPercent(t); t.resource = v.trim().slice(0, 200); if (taskUnitsPercent(t) !== u0) recalcTaskType(t, 'units'); }
+  else if (f === 'notes') { if (v.trim()) t.notes = v.slice(0, 10000); else delete t.notes; }
+  else setCustomValue(t, f, v.trim().slice(0, 255) || null);
+  t.updatedAt = Date.now();
+}
+function frCompute() {
+  const find = document.getElementById('frFind').value, withText = document.getElementById('frWith').value, f = document.getElementById('frField').value;
+  const matchCase = document.getElementById('frCase').checked, whole = document.getElementById('frWhole').checked;
+  const scope = (document.querySelector('input[name="frScope"]:checked') || {}).value || 'all';
+  const out = { rows: [], skipped: [], matches: 0, find, field: f };
+  if (!find) return out;
+  const re = new RegExp(find.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), matchCase ? 'g' : 'gi');
+  const sel = new Set(selectedIds()), filtered = filtersActive();
+  for (const t of tasks) {
+    if (t.spacer) continue;
+    if (scope === 'selected' && !sel.has(t.id)) continue;
+    if (scope === 'filtered' && filtered && !filterShows(t)) continue;
+    const before = frRead(t, f); if (!before) continue;
+    let after, n;
+    if (whole) { if ((matchCase ? before : before.toLowerCase()) !== (matchCase ? find : find.toLowerCase())) continue; after = withText; n = 1; }
+    else { n = (before.match(re) || []).length; if (!n) continue; after = before.replace(re, () => withText); }
+    if (after === before) continue;
+    if (f === 'name' && !after.trim()) { out.skipped.push({ t, before }); continue; }
+    out.rows.push({ t, before, after, n }); out.matches += n;
+  }
+  out.re = re; out.whole = whole;
+  return out;
+}
+function frSnippet(text, re, whole) {   // [before, after] as HTML: the matches struck out / the replacement inserted in the same places; a long text is cut around the first match
+  const rep = document.getElementById('frWith').value;
+  let start = 0, end = text.length, cut0 = false, cut1 = false;
+  if (text.length > 160) { re.lastIndex = 0; const m = re.exec(text), at = m ? m.index : 0; start = Math.max(0, at - 50); end = Math.min(text.length, at + 110); cut0 = start > 0; cut1 = end < text.length; }
+  const piece = text.slice(start, end), parts = whole ? [{ i: 0, len: piece.length }] : [...piece.matchAll(new RegExp(re.source, re.flags))].map(m => ({ i: m.index, len: m[0].length }));
+  let a = '', b = '', last = 0;
+  for (const p of parts) { const keep = escapeHtml(piece.slice(last, p.i)); a += keep + `<mark>${escapeHtml(piece.slice(p.i, p.i + p.len))}</mark>`; b += keep + (rep ? `<ins>${escapeHtml(rep)}</ins>` : ''); last = p.i + p.len; }
+  const tail = escapeHtml(piece.slice(last)); a += tail; b += tail;
+  const pre = cut0 ? '… ' : '', post = cut1 ? ' …' : '';
+  return [pre + a + post, pre + b + post];
+}
+function renderReplace() {
+  const r = frCompute(), n = r.rows.length, sk = r.skipped.length, fieldLabel = (frFields().find(x => x.id === r.field) || {}).label || '';
+  document.getElementById('frHint').textContent = !r.find ? 'Type the text to find. The preview shows what would change before anything does.'
+    : !n && !sk ? `Nothing to replace — “${r.find}” isn’t in ${fieldLabel} of these tasks.`
+    : `${r.matches} match${r.matches === 1 ? '' : 'es'} in ${n} task${n === 1 ? '' : 's'}${sk ? `; ${sk} task${sk === 1 ? '' : 's'} would be left with an empty name and ${sk === 1 ? 'is' : 'are'} skipped` : ''}.`;
+  document.getElementById('frBtn').disabled = !n;
+  document.getElementById('frBtn').textContent = n ? `Replace ${r.matches === 1 ? '1 match' : `${r.matches} matches`}` : 'Replace all';
+  const det = document.getElementById('frDetails'); det.classList.toggle('hidden', !n && !sk);
+  document.getElementById('frDetailsCount').textContent = n ? `(${n})` : '';
+  const shown = r.rows.slice().sort((a, b) => taskDisplayId(a.t.id) - taskDisplayId(b.t.id));
+  document.getElementById('frList').innerHTML = shown.slice(0, 60).map(x => `<div class="rs-row"><span class="fr-id">#${taskDisplayId(x.t.id)}</span><span class="fr-text">${(sn => `${sn[0]} → ${sn[1]}`)(frSnippet(x.before, r.re, r.whole))}</span></div>`).join('')
+    + (shown.length > 60 ? `<div class="rs-row fr-skip">…and ${shown.length - 60} more</div>` : '')
+    + r.skipped.slice(0, 5).map(x => `<div class="rs-row fr-skip"><span class="fr-id">#${taskDisplayId(x.t.id)}</span><span class="fr-text">${escapeHtml(x.before)} — skipped: the name would be empty</span></div>`).join('');
+}
+function openReplace(find) {
+  closeDataMenu(); closeScheduleMenu(); closePlanMenu(); closeToolbarMenus();
+  if (!tasks.some(t => !t.spacer)) { showToast('Nothing to replace yet — add a task first', true); return; }
+  document.getElementById('searchModalBg').classList.remove('open');
+  const fields = frFields(), cur = document.getElementById('frField').value;
+  document.getElementById('frField').innerHTML = fields.map(x => `<option value="${x.id}">${escapeHtml(x.label)}</option>`).join('');
+  document.getElementById('frField').value = fields.some(x => x.id === cur) ? cur : 'name';
+  const nSel = selectedIds().length, filtered = filtersActive();
+  document.getElementById('frScopeAll').textContent = `All ${tasks.filter(t => !t.spacer).length} tasks`;
+  document.getElementById('frScopeFilteredRow').classList.toggle('hidden', !filtered);
+  document.getElementById('frScopeFiltered').textContent = `Only the ${tasks.filter(t => !t.spacer && filterShows(t)).length} tasks matching the current filter`;
+  document.getElementById('frScopeSelectedRow').classList.toggle('hidden', nSel < 2);
+  document.getElementById('frScopeSelected').textContent = `Only the ${nSel} selected tasks`;
+  document.getElementById('frScopeBlock').classList.toggle('hidden', !filtered && nSel < 2);
+  document.querySelector(`input[name="frScope"][value="${nSel >= 2 ? 'selected' : 'all'}"]`).checked = true;
+  if (typeof find === 'string') document.getElementById('frFind').value = find;
+  renderReplace();
+  document.getElementById('replaceModalBg').classList.add('open');
+  setTimeout(() => { const i = document.getElementById('frFind'); i.focus(); i.select(); }, 40);
+}
+function openReplaceFromFind() { const q = document.getElementById('searchInput').value.trim(); openReplace(q && !/^[#@]|^status:/i.test(q) ? q : undefined); }
+function closeReplace() { document.getElementById('replaceModalBg').classList.remove('open'); }
+function runReplace() {
+  const r = frCompute(); if (!r.rows.length) return;
+  closeReplace();
+  for (const x of r.rows) { frWrite(x.t, r.field, x.after); filterPinned.add(x.t.id); }
+  normalizeData(); save(); render();
+  const n = r.rows.length;
+  showToast(`Replaced ${r.matches} match${r.matches === 1 ? '' : 'es'} in ${n} task${n === 1 ? '' : 's'}${r.skipped.length ? ` (${r.skipped.length} skipped: the name would be empty)` : ''} — Ctrl/Cmd+Z undoes it`);
 }
 
 /* ============================== Print / PDF ================================
@@ -9551,7 +9831,8 @@ function printScaleSegments(unit, d0, d1, pxd) {
 function buildPrintPages(o) {
   const [pa, pb] = PAPER_MM[o.paper] || PAPER_MM.A4, land = o.orient !== 'portrait';
   const pageW = (land ? pb : pa) - 2 * PRINT_MARGIN_MM, pageH = (land ? pa : pb) - 2 * PRINT_MARGIN_MM;
-  const W = land ? 1100 : 780, H = Math.round(W * pageH / pageW);
+  const single = !!o.single;   // a picture (SVG / PNG): every row on ONE image of its own height, whatever the paper
+  const W = single ? 1400 : land ? 1100 : 780; let H = Math.round(W * pageH / pageW);
   const rows = printRows(o), esc = escapeHtml;
   // ---- the time range
   let d0 = Infinity, d1 = -Infinity;
@@ -9572,9 +9853,10 @@ function buildPrintPages(o) {
   if (nameAt >= 0 && W - listW < 380) { const cut = Math.min(widths[nameAt] - 110, 380 - (W - listW)); widths[nameAt] -= cut; listW -= cut; }   // a wide list leaves the chart less than 380 units: the name column gives way
   const chartW = Math.max(200, W - listW - 6), cx0 = listW + 6, pxd = chartW / days;
   const headerH = 30, tierH = 15, headH = tierH * 2, footH = 16, top0 = headerH + headH;
-  let rowH = 15;
-  const perPage = Math.max(5, Math.floor((H - top0 - footH) / rowH)), nPages = Math.max(1, Math.ceil(rows.length / perPage));
-  if (rows.length && rows.length <= perPage) rowH = Math.min(22, Math.floor((H - top0 - footH) / rows.length));   // a short plan uses the page: taller rows
+  let rowH = single ? 18 : 15;
+  if (single) H = top0 + Math.max(1, rows.length) * rowH + footH;
+  const perPage = single ? Math.max(1, rows.length) : Math.max(5, Math.floor((H - top0 - footH) / rowH)), nPages = single ? 1 : Math.max(1, Math.ceil(rows.length / perPage));
+  if (!single && rows.length && rows.length <= perPage) rowH = Math.min(22, Math.floor((H - top0 - footH) / rows.length));   // a short plan uses the page: taller rows
   const seg = printScaleSegments(unit, d0, d1, pxd), xOf = d => cx0 + (d - d0) * pxd;
   const mX = mn => xOf(mn / 1440);   // (the Hours scale places an instant, in minutes since 1970, on the chart)
   const crit = o.critical ? computeCriticalPath() : new Set(), today = dayNumber(todayStr());
@@ -9717,6 +9999,47 @@ function mountPrintRoot(built) {
   document.head.appendChild(st);
 }
 function unmountPrintRoot() { for (const id of ['printRoot', 'printPageStyle']) { const el = document.getElementById(id); if (el) el.remove(); } }
+/* ---- The chart as a picture (UX: "Download SVG/PNG", "Copy picture"): the Print dialog's own drawing and options, but all rows on ONE image
+   (buildPrintPages({ single: true }) — 1400 units wide, 18 units a row) instead of paper-shaped pages. SVG = the drawing itself, standalone, text as
+   text (editable in PowerPoint / Illustrator / Inkscape); PNG = that SVG rasterised at 2x (less when the plan is very tall — a canvas has a size
+   limit — and refused when even 0.5x would not fit); Copy = the PNG on the clipboard. ---- */
+function printImageSvg() {
+  const built = buildPrintPages(Object.assign(readPrintOptions(), { single: true }));
+  const svg = built.pages[0].replace('width="100%" height="100%" preserveAspectRatio="xMidYMin meet"', `width="${built.W}" height="${built.H}"`);
+  return { svg: '<?xml version="1.0" encoding="UTF-8"?>\n' + svg, W: built.W, H: built.H, rows: built.rows };
+}
+function svgToPng(svg, W, H, scale) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' })), img = new Image();
+    img.onload = () => {
+      try {
+        const c = document.createElement('canvas'); c.width = Math.round(W * scale); c.height = Math.round(H * scale);
+        const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
+        c.toBlob(b => b ? resolve(b) : reject(new Error('no PNG')), 'image/png');
+      } catch (e) { reject(e); } finally { URL.revokeObjectURL(url); }
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('the drawing could not be read')); };
+    img.src = url;
+  });
+}
+const PNG_MAX_SIDE = 16000;   // px: a canvas past about 16,384 on a side is refused by the browser
+async function exportPrintImage(kind) {
+  let im; try { im = printImageSvg(); } catch (e) { console.error('Milestone: picture failed', e); showToast('The picture could not be made', true); return; }
+  const base = `${fileBase(project.name)}-${todayStr()}`;
+  if (kind === 'svg') { downloadBlob(new Blob([im.svg], { type: 'image/svg+xml' }), `${base}.svg`); showToast(`Saved ${base}.svg — ${im.rows} task${im.rows === 1 ? '' : 's'}`); return; }
+  const scale = Math.min(2, PNG_MAX_SIDE / im.H, PNG_MAX_SIDE / im.W);
+  if (scale < 0.5) { showToast('This plan is too tall for one PNG — use SVG, or print a range', true); return; }
+  try {
+    if (kind === 'copy') {
+      if (!(navigator.clipboard && window.ClipboardItem)) { showToast('This browser can’t copy a picture — use PNG', true); return; }
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': svgToPng(im.svg, im.W, im.H, scale) })]);
+      showToast(`Copied the chart as a picture (${Math.round(im.W * scale)} × ${Math.round(im.H * scale)} px) — paste it into a slide`);
+    } else {
+      const png = await svgToPng(im.svg, im.W, im.H, scale);
+      downloadBlob(png, `${base}.png`); showToast(`Saved ${base}.png (${Math.round(im.W * scale)} × ${Math.round(im.H * scale)} px)`);
+    }
+  } catch (e) { console.error('Milestone: picture failed', e); showToast(kind === 'copy' ? 'Copying the picture was refused — use PNG' : 'The PNG could not be made — use SVG', true); }
+}
 function doPrint() {
   const built = printBuilt || buildPrintPages(readPrintOptions());
   closePrintModal();
@@ -9743,7 +10066,7 @@ function placeMenu(menu, x, y, alignRightOf) {   // a fixed menu at (x, y) kept 
 }
 function closeAddMenu() { document.getElementById('addMenu').classList.remove('open'); }
 function closeRowMenu() { document.getElementById('rowMenu').classList.remove('open'); }
-function closeToolbarMenus() { closeAddMenu(); closeRowMenu(); closeMoreMenu(); closeSbModeMenu(); closeColWidthMenu(); closeRsColumnsMenu(); }
+function closeToolbarMenus() { closeGroupMenu(); closeAddMenu(); closeRowMenu(); closeMoreMenu(); closeSbModeMenu(); closeColWidthMenu(); closeRsColumnsMenu(); }
 /* ---- the status bar ---- */
 function updateStatusBar() {
   const auto = project.newTaskMode !== 'manual', mode = document.getElementById('sbMode');
@@ -10789,6 +11112,46 @@ function openExcelExport() {
   document.getElementById('excelModalBg').classList.add('open');
 }
 function closeExcelModal() { document.getElementById('excelModalBg').classList.remove('open'); }
+/* ---- Export to CSV: the task list as a text table. The cells are exactly what copying rows gives (clipCell(): dates dd.mm.yyyy, durations,
+   percentages, names indented two spaces per level with a ◆ for a milestone) so Milestone's own CSV import reads the file back. UTF-8 with a BOM
+   (Excel then reads umlauts and the like), CRLF line ends, a field is quoted when it holds the separator, a quote or a line break. A text that
+   Excel would take for a formula (starts with = or @, or + / - followed by a letter) gets a leading apostrophe. ---- */
+function csvField(v, sep) {
+  let x = String(v == null ? '' : v);
+  if (/^[=@]/.test(x) || /^[+\-][A-Za-z(]/.test(x)) x = "'" + x;
+  return x.includes(sep) || /["\r\n]/.test(x) ? '"' + x.replace(/"/g, '""') + '"' : x;
+}
+function csvColumns(mode) { return mode === 'all' ? ['id', ...DEFAULT_COL_ORDER.filter(columnListed)] : ['id', ...visibleTaskCols('tasks')]; }
+function buildCsv(opts) {
+  const sep = opts.sep || ',', rows = exportTaskRows(opts.scope), cols = csvColumns(opts.columns);
+  const head = cols.map(c => c === 'id' ? 'ID' : TASK_COLS[c].label.replace(/\s+/g, ' ')).map(v => csvField(v, sep)).join(sep);
+  const lines = [head].concat(rows.map(({ task: t, depth }) => cols.map(c => csvField(clipCell(t, c, depth), sep)).join(sep)));
+  return '\uFEFF' + lines.join('\r\n') + '\r\n';
+}
+function openCsvExport() {
+  closeDataMenu();
+  if (!tasks.length) { showToast('Nothing to export yet — add a task first', true); return; }
+  const filtered = filtersActive(), shown = tasks.filter(t => !t.spacer && filterShows(t)).length;
+  document.getElementById('csvScopeBlock').classList.toggle('hidden', !filtered);
+  document.getElementById('csvScopeAll').textContent = `All ${tasks.filter(t => !t.spacer).length} tasks`;
+  document.getElementById('csvScopeFiltered').textContent = `Only the ${shown} task${shown === 1 ? '' : 's'} matching the current filter`;
+  document.querySelector('input[name="csvScope"][value="all"]').checked = true;
+  document.querySelector('input[name="csvCols"][value="shown"]').checked = true;
+  document.getElementById('csvSep').value = (1.5).toLocaleString().includes(',') ? ';' : ',';   // the separator Excel expects in this region
+  document.getElementById('csvModalBg').classList.add('open');
+}
+function closeCsvExport() { document.getElementById('csvModalBg').classList.remove('open'); }
+function runCsvExport() {
+  const scope = (document.querySelector('input[name="csvScope"]:checked') || {}).value === 'filtered' ? 'filtered' : 'all';
+  const columns = (document.querySelector('input[name="csvCols"]:checked') || {}).value === 'all' ? 'all' : 'shown', sep = document.getElementById('csvSep').value || ',';
+  closeCsvExport();
+  try {
+    resetEffectiveCache(); resetIdCache();
+    const text = buildCsv({ scope, columns, sep }), n = exportTaskRows(scope).length;
+    downloadBlob(new Blob([text], { type: 'text/csv;charset=utf-8' }), `${fileBase(project.name)}-${todayStr()}.csv`);
+    showToast(`Exported ${n} task${n === 1 ? '' : 's'} to CSV`);
+  } catch (e) { console.error('Milestone: CSV export failed', e); showToast('CSV export failed', true); }
+}
 function runExcelExport() {
   const scope = (document.querySelector('input[name="excelScope"]:checked') || {}).value === 'filtered' ? 'filtered' : 'all';
   const gantt = document.getElementById('excelGantt').checked, columns = (document.querySelector('input[name="excelCols"]:checked') || {}).value === 'all' ? 'all' : 'shown';
@@ -11458,6 +11821,7 @@ function createPlanRecord(name, data) {
 function resetTransientUI() {
   setSelection([]); editingCell = null; editingPredecessors = []; tfTaskId = null; tfSnapshot = null;
   colFilters = newColFilters(); filterPinned.clear(); closeFilterMenu();   // filters belong to the plan you were looking at
+  groupSpec = null; groupCollapsed.clear();   // ...and so does a grouping
   closeTaskModal(); closeFieldsModal(); closeImportModal(); closeDataMenu(); closeScheduleMenu(); closeColumnsMenu(); closeTaskModeMenu(); closeTaskTypeMenu(); closeToolbarMenus();
   clearTimeout(toastTimer); toastUndoAction = null;
   document.getElementById('toast').classList.remove('show');   // an Undo for the old plan must not act on the new one
@@ -11650,6 +12014,7 @@ const SHORTCUTS = [
   ['Anywhere', [
     [['?'], 'Show this sheet'],
     [['Mod+K', '/'], 'Find a task'],
+    [['Ctrl+H'], 'Find and replace in many tasks'],
     [['Mod+P'], 'Print'],
     [['Esc'], 'Close the open dialog or menu; otherwise clear the selection'],
     [['Mod+Z'], 'Undo'], [['Mod+Shift+Z', 'Mod+Y'], 'Redo']]],
@@ -11790,6 +12155,7 @@ function wireGlobalEvents() {
     if (!e.target.closest('#colWidthMenu')) closeColWidthMenu();
     if (!e.target.closest('#rsColumnsMenu') && !e.target.closest('#rsColumnsBtn')) closeRsColumnsMenu();
     if (!e.target.closest('#rowMenu')) closeRowMenu();
+    if (!e.target.closest('#groupMenu') && !e.target.closest('#groupBtn')) closeGroupMenu();
     if (!e.target.closest('#cfAddMenu') && !e.target.closest('#cfAddBtn') && !e.target.closest('#fieldsAddBtn')) closeCfAddMenu();
   });
   for (const id of ['gridRows', 'ganttRows']) document.getElementById(id).addEventListener('contextmenu', onListContextMenu);
@@ -11804,9 +12170,10 @@ function wireGlobalEvents() {
       return;
     }
     const typingNow = /^(INPUT|TEXTAREA|SELECT)$/.test((e.target || {}).tagName || '') || (e.target || {}).isContentEditable, modalOpen = !!document.querySelector('.modal-bg.open');
-    if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'a' && !typingNow && !modalOpen) { e.preventDefault(); setSelection(visibleTaskList().map(v => v.task.id)); render(); return; }   // select every visible task
+    if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'a' && !typingNow && !modalOpen) { e.preventDefault(); setSelection(displayedTaskIds()); render(); return; }   // select every visible task
     if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'k' && !document.querySelector('.modal-bg.open:not(#searchModalBg)')) { e.preventDefault(); if (document.getElementById('searchModalBg').classList.contains('open')) closeSearch(); else openSearch(); return; }
     if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'p' && !document.querySelector('.modal-bg.open:not(#printModalBg)')) { e.preventDefault(); if (!document.getElementById('printModalBg').classList.contains('open')) openPrintModal(); return; }   // Ctrl/Cmd+P opens our print dialog instead of printing the screen
+    if (e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'h' && !document.querySelector('.modal-bg.open:not(#searchModalBg):not(#replaceModalBg)')) { e.preventDefault(); if (document.getElementById('replaceModalBg').classList.contains('open')) closeReplace(); else openReplaceFromFind(); return; }   // Ctrl+H on every platform (Cmd+H hides the browser on a Mac)
     if (e.key === '?' && !typingNow && !modalOpen && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); openShortcuts(); return; }
     if (e.key === '/' && !typingNow && !modalOpen && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); openSearch(); return; }
     if ((e.key === 'Delete' || e.key === 'Backspace') && !typingNow && !modalOpen && !editingCell && selectedIds().length) { e.preventDefault(); deleteSelected(); return; }
@@ -11824,7 +12191,7 @@ function wireGlobalEvents() {
     // Escape closes whatever overlay is open first; only when there is none — and
     // the user isn't typing in a field, where Escape already means "cancel this
     // edit" — does it clear the task selection.
-    const modalIds = ['recurModalBg', 'taskModalBg', 'folderFilesModalBg', 'confirmModalBg', 'calendarModalBg', 'precisionModalBg', 'rulesModalBg', 'currencyModalBg', 'baselineModalBg', 'rescheduleModalBg', 'levelModalBg', 'syncConflictsModalBg', 'planModalBg', 'excelModalBg', 'importModalBg', 'foreignImportModalBg', 'bulkModalBg', 'searchModalBg', 'printModalBg', 'backupsModalBg', 'helpModalBg', 'aboutModalBg', 'shortcutsModalBg'];
+    const modalIds = ['recurModalBg', 'taskModalBg', 'folderFilesModalBg', 'confirmModalBg', 'calendarModalBg', 'precisionModalBg', 'rulesModalBg', 'currencyModalBg', 'baselineModalBg', 'rescheduleModalBg', 'levelModalBg', 'syncConflictsModalBg', 'planModalBg', 'excelModalBg', 'importModalBg', 'foreignImportModalBg', 'bulkModalBg', 'searchModalBg', 'printModalBg', 'backupsModalBg', 'helpModalBg', 'aboutModalBg', 'shortcutsModalBg', 'csvModalBg', 'replaceModalBg'];
     const overlayOpen = modalIds.some(id => document.getElementById(id).classList.contains('open'))
       || document.getElementById('fileSyncModalBg').classList.contains('open')   // mandatory: Escape can't close it
       || document.getElementById('dataMenu').classList.contains('open')
@@ -11837,6 +12204,7 @@ function wireGlobalEvents() {
       || document.getElementById('addMenu').classList.contains('open')
       || document.getElementById('rowMenu').classList.contains('open')
       || document.getElementById('moreMenu').classList.contains('open')
+      || document.getElementById('groupMenu').classList.contains('open')
       || document.getElementById('loadMenu').classList.contains('open')
       || document.getElementById('sbModeMenu').classList.contains('open');
     // e.target, not document.activeElement: an inline editor's own Escape handler re-renders and destroys the
@@ -12010,6 +12378,8 @@ function wireEnterApplies(bgId, btnId) {
 }
 document.addEventListener('DOMContentLoaded', () => {
   wireEnterApplies('bulkModalBg', 'bulkApplyBtn');
+  wireEnterApplies('csvModalBg', 'csvExportBtn');
+  wireEnterApplies('replaceModalBg', 'frBtn');
   wireEnterApplies('rescheduleModalBg', 'rescheduleBtn');
   wireEnterApplies('recurModalBg', 'recurOkBtn');
   for (const ev of ['input', 'change']) document.getElementById('recurModalBg').addEventListener(ev, renderRecurModal);
