@@ -155,8 +155,8 @@ with sync_playwright() as p:
     check("a fresh dialog with the new field closes with × without a question", not modal_open("taskModalBg") and not modal_open("confirmModalBg"))
     # the Manage dialog itself
     open_dialog("Other"); pg.click("#taskTabBtnCustom"); pg.click("#taskTabCustom .btn-link"); pg.wait_for_selector("#fieldsModalBg.open"); pg.wait_for_timeout(150)
-    pg.click("#fieldsAddBtn"); pg.click("#cfAddMenu .dropdown-item:has-text('Yes / No')"); pg.wait_for_timeout(120); pg.keyboard.type("Approved")
-    pg.click("#fieldsAddBtn"); pg.click("#cfAddMenu .dropdown-item:has-text('Date')"); pg.wait_for_timeout(120); pg.keyboard.type("Due")
+    pg.click("#fieldsAdd [data-kind='flag']"); pg.wait_for_timeout(120); pg.keyboard.type("Approved")
+    pg.click("#fieldsAdd [data-kind='date']"); pg.wait_for_timeout(120); pg.keyboard.type("Due")
     pg.keyboard.press("Enter"); pg.wait_for_timeout(200)
     check("the Manage dialog adds several fields in one go (Approved as a flag, Due as a date)", ev("() => project.fieldNames") == {"number1": "Budget", "flag1": "Approved", "date1": "Due"}, ev("() => project.fieldNames"))
     pg.click("#taskTabBtnCustom"); labels = ev("() => [...document.querySelectorAll('#taskCustomFields .cf-label > span, #taskCustomFields .cf-flag label span')].map(e => e.innerText.trim())")
@@ -188,11 +188,11 @@ with sync_playwright() as p:
     # five per type
     make([{"name": "Cap"}]); ev("() => { delete project.fieldNames; normalizeData(); }")
     ev("() => openFieldsModal()"); pg.wait_for_selector("#fieldsModalBg.open")
-    for i in range(5): pg.click("#fieldsAddBtn"); pg.click("#cfAddMenu .dropdown-item:has-text('Text')"); pg.wait_for_timeout(60); pg.keyboard.type(f"T{i}")
-    pg.click("#fieldsAddBtn")
-    check("at most five fields per type: the Text entry of the menu is disabled ('all 5 in use'), the others are not", pg.locator("#cfAddMenu .dropdown-item").first.is_disabled() and "all 5 in use" in pg.locator("#cfAddMenu .dropdown-item").first.inner_text() and not pg.locator("#cfAddMenu .dropdown-item").nth(1).is_disabled())
-    pg.keyboard.press("Escape"); pg.wait_for_timeout(100)
-    check("Escape closes the menu first (and only the menu)", modal_open("fieldsModalBg") and not ev("() => document.getElementById('cfAddMenu').classList.contains('open')"))
+    for i in range(5): pg.click("#fieldsAdd [data-kind='text']"); pg.wait_for_timeout(60); pg.keyboard.type(f"T{i}")
+    check("at most five fields per type: the Text button is disabled ('all used') while the others are not", pg.locator("#fieldsAdd [data-kind='text']").is_disabled() and "all used" in pg.locator("#fieldsAdd [data-kind='text']").inner_text() and not pg.locator("#fieldsAdd [data-kind='number']").is_disabled() and "5 left" in pg.locator("#fieldsAdd [data-kind='number']").inner_text())
+    ev("() => document.activeElement && document.activeElement.blur()")
+    pg.keyboard.press("Escape"); pg.wait_for_timeout(150)
+    check("Escape in the Manage dialog with unsaved fields asks to discard (the add buttons are not a menu any more, so there is no menu to close first)", modal_open("confirmModalBg")); pg.click("#confirmModalBg button:has-text('Keep editing')"); pg.wait_for_timeout(100)
     pg.click("#fieldsModalBg .modal-footer .btn:has-text('Cancel')"); pg.wait_for_timeout(200)
     # names are user text: escaped
     ev("() => { project.fieldNames = { text1: '<img src=x onerror=window.__pwned=1>' }; normalizeData(); colHidden.delete('text1'); save(); render(); }"); pg.wait_for_timeout(100)

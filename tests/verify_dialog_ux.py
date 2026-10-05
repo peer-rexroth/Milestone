@@ -75,7 +75,7 @@ with sync_playwright() as p:
     pg.click("#taskModalBg .modal-footer button.btn-primary"); pg.wait_for_timeout(200)
     check("saving with no actual date stores no actual time", ev("() => { const t = tasks.find(x => x.name === 'A'); return [t.actualStart, t.actualStartTime, t.actualFinish, t.actualFinishTime]; }") == [None, None, None, None])
     ev("() => openTaskModal(tasks.find(t => t.name === 'A').id)"); pg.wait_for_timeout(250)
-    check("the dialog says what an actual date does", "Recording an Actual" in pg.inner_text("#taskActualsNote") and pg.is_visible("#taskActualsNote"))
+    check("the dialog says what an actual date does (a hint on the Actual Start label's ⓘ, no longer a line of text)", "Recording an Actual" in pg.get_attribute("#taskActualsNote", "title") and pg.is_visible("#taskActualsNote"))
     pg.keyboard.press("Escape"); close_all()
     plan([{"name": "G", "s": "2026-09-07", "e": "2026-09-08"}, dict(A, parent="G")])
     ev("() => openTaskModal(tasks.find(t => t.name === 'G').id)"); pg.wait_for_timeout(250)
