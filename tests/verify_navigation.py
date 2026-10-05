@@ -101,7 +101,7 @@ with sync_playwright() as p:
     open_bg = lambda: ev("() => [...document.querySelectorAll('.modal-bg.open')].map(e => e.id)")
     check("Plan settings opens on its Calendar tab, titled 'Plan settings', the six tabs across the top",
           open_bg() == ["calendarModalBg"] and pg.inner_text("#calendarModalBg h2") == "Plan settings"
-          and [t.strip() for t in pg.locator("#calendarModalBg .settings-tab").all_inner_texts()] == ["Calendar", "Precision", "Scheduling rules", "Currency", "Date & time", "Custom fields"], open_bg())
+          and [t.strip() for t in pg.locator("#calendarModalBg .settings-tab").all_inner_texts()] == ["Calendar", "Precision", "Scheduling rules", "Currency", "Custom fields", "Date & time"], open_bg())
     size = lambda bg: ev("bg => { const r = document.querySelector('#' + bg + ' .modal').getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)]; }", bg)
     s_cal = size("calendarModalBg")
     sizes = {}

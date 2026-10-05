@@ -554,9 +554,30 @@ html.time12 .field-dt input.dt-time { flex: 0 0 104px; min-width: 104px; }
 html.time12 .cal-sec .wh-break-add input.dt-time, html.time12 .whd-row input.dt-time, html.time12 .wh-day-row input.dt-time { width: 104px; }
 html.time12 .tf-dt input.dt-time { flex: 0 0 84px; width: 84px; }
 html.time12 .tf-top.mm .tf-left { grid-template-columns: auto minmax(230px, 1fr) auto minmax(230px, 1fr); }
-.fmt-opts { display: flex; flex-direction: column; gap: 4px; }
-.fmt-opt { display: flex; align-items: baseline; gap: 10px; padding: 5px 2px; font-size: 13px; cursor: pointer; }
-.fmt-opt .fmt-eg { margin-left: auto; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.fmt-top { display: flex; align-items: center; gap: 12px; }
+.device-badge { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 999px; background: var(--panel-2); color: var(--text-dim); font-size: 11.5px; font-weight: 600; cursor: help; }
+.fmt-cols { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 0; }
+.fmt-cols > section:first-child { padding-right: 22px; }
+.fmt-cols > section + section { padding-left: 22px; border-left: 1px solid var(--border); }   /* date and time are two different choices: a line between them */
+.fmt-cols .cal-sec-title { margin-bottom: 12px; }
+.fmt-cap { margin-top: 8px; font-size: 11.5px; color: var(--text-faint); line-height: 1.35; }
+.fmt-tiles { display: grid; gap: 8px; }
+.fmt-tiles-date { grid-template-columns: 1fr 1fr; }
+.fmt-tiles-time { grid-template-columns: 1fr; }
+.fmt-tile { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 9px; background: var(--panel); color: var(--text); text-align: left; cursor: pointer; min-width: 0; }
+.fmt-tile b { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.fmt-tile small { font-size: 11.5px; color: var(--text-faint); white-space: nowrap; }
+.fmt-tile:hover { background: var(--panel-2); }
+.fmt-tile:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.fmt-tile[aria-checked="true"] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--panel)); box-shadow: 0 0 0 1px var(--accent); }
+.fmt-tile[aria-checked="true"] small { color: var(--text-dim); }
+.fmt-preview { border: 1px dashed var(--border); border-radius: 9px; padding: 10px 12px; background: var(--panel-2); }
+.fmt-preview-label { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 6px; }
+.fmt-preview-label span { text-transform: none; letter-spacing: 0; font-weight: 400; }
+.fmt-preview-row { display: flex; gap: 18px; align-items: baseline; font-size: 13px; flex-wrap: wrap; }
+.fmt-preview-row b { font-weight: 600; }
+.fmt-preview-row .fmt-k { color: var(--text-dim); margin-right: 5px; }
+.fmt-preview-hint { margin-top: 6px; font-size: 12px; color: var(--text-dim); }
 .menu-foot { padding: 6px 10px 6px; font-size: 11.5px; color: var(--text-faint); border-top: 1px solid var(--border); margin-top: 4px; max-width: 240px; }
 /* Group by: a header row per value (Tasks view) — a band of its own, bold, the whole row folds on a click */
 .grid-row.group-head { --row-bg: var(--panel-2); font-weight: 600; cursor: pointer; border-top: 1px solid var(--border); }
@@ -1026,6 +1047,7 @@ select.rst-select:disabled { opacity: .5; }
 .settings-tabs.hidden { display: none; }
 .settings-tab { border: none; background: none; padding: 10px 9px 9px; font-size: 13px; font-weight: 600; color: var(--text-dim); border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; display: flex; align-items: center; gap: 5px; }
 .settings-tab i { font-size: 12px; opacity: .8; }
+.settings-tab-sep { width: 1px; align-self: stretch; margin: 9px 2px; background: var(--border); flex-shrink: 0; }
 .settings-tab:hover { color: var(--text); }
 .settings-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 .minute-mode #taskDatesBlock { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
@@ -1791,22 +1813,33 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
     <div class="modal-footer"><span class="foot-note">Changes apply when you save.</span><button class="btn" onclick="closeCurrencyModal()">Cancel</button><button class="btn btn-primary" onclick="saveCurrencyModal()">Save</button></div>
   </div>
 </div>
-<div class="modal-bg" id="formatModalBg" onclick="if(event.target===this) requestCloseFormatModal()">
+<div class="modal-bg" id="formatModalBg" onclick="if(event.target===this) closeFormatModal()">
   <div class="modal wide settings-modal" role="dialog" aria-labelledby="formatTitle">
-    <div class="modal-header"><h2 id="formatTitle">Plan settings</h2><button onclick="requestCloseFormatModal()" aria-label="Close">&times;</button></div>
+    <div class="modal-header"><h2 id="formatTitle">Plan settings</h2><button onclick="closeFormatModal()" aria-label="Close">&times;</button></div>
     <div class="settings-tabs" role="tablist" aria-label="Plan settings" data-current="format"></div>
     <div class="modal-body">
-      <section class="cal-sec">
-        <div class="cal-sec-title">Date format</div>
-        <div class="fmt-opts" id="fmtDateOpts" role="radiogroup" aria-label="Date format"></div>
-      </section>
-      <section class="cal-sec">
-        <div class="cal-sec-title">Time format <span class="cal-sec-note">used in Hours &amp; minutes plans</span></div>
-        <div class="fmt-opts" id="fmtTimeOpts" role="radiogroup" aria-label="Time format"></div>
-      </section>
-      <p class="cal-hint" style="margin:0">Looks like this: <strong id="fmtPreview"></strong>. This is how dates and times are <em>shown and typed on this device</em> — the plan itself isn't changed, and a colleague on another computer chooses their own. Columns, dialogs, the Gantt, Print and Excel all follow it.</p>
+      <div class="fmt-top">
+        <button type="button" class="btn" id="fmtSystemBtn" onclick="useSystemFormat()"></button>
+        <span class="device-badge" title="Saved in this browser, not in the plan: every device — and every plan on it — shows dates the way you choose here, and a colleague chooses their own."><i class="fa-solid fa-laptop"></i>This device</span>
+      </div>
+      <div class="fmt-cols">
+        <section>
+          <div class="cal-sec-title">Date format</div>
+          <div class="fmt-tiles fmt-tiles-date" id="fmtDateOpts" role="radiogroup" aria-label="Date format"></div>
+        </section>
+        <section>
+          <div class="cal-sec-title">Time format</div>
+          <div class="fmt-tiles fmt-tiles-time" id="fmtTimeOpts" role="radiogroup" aria-label="Time format"></div>
+          <div class="fmt-cap">Shown in plans whose precision is “Hours &amp; minutes”.</div>
+        </section>
+      </div>
+      <div class="fmt-preview" aria-live="polite">
+        <div class="fmt-preview-label">Preview <span id="fmtPreviewSrc"></span></div>
+        <div class="fmt-preview-row" id="fmtPreview"></div>
+        <div class="fmt-preview-hint" id="fmtPreviewHint"></div>
+      </div>
     </div>
-    <div class="modal-footer"><span class="foot-note">Changes apply when you save.</span><button class="btn" onclick="closeFormatModal()">Cancel</button><button class="btn btn-primary" onclick="saveFormatModal()">Save</button></div>
+    <div class="modal-footer"><span class="foot-note">Changes apply as you click.</span><button class="btn btn-primary" onclick="closeFormatModal()">Done</button></div>
   </div>
 </div>
 <div class="modal-bg" id="precisionModalBg" onclick="if(event.target===this) requestClosePrecisionModal()">
@@ -2007,7 +2040,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
           <div class="help-row"><i class="fa-solid fa-window-minimize"></i><span>The <strong>status bar</strong> along the bottom shows how new tasks are scheduled (click to change), how many tasks there are and are selected, the active filters, and — in the Gantt and Resource Plan — a zoom slider. The Task Form switch is its first button.</span></div>
           <div class="help-row"><i class="fa-solid fa-plus"></i><span><strong>Add Task</strong> inserts a task below the selected one, or at the bottom when nothing is selected. Each task has a start and end date and a % complete, and can be a <strong>milestone</strong> (a one-day diamond).</span></div>
           <div class="help-row"><i class="fa-solid fa-keyboard"></i><span><strong>Dates and times in dialogs</strong> are typed in the format of the list — <strong>24.12.2026</strong> (or 24.12.26, 24.12.), <strong>14:30</strong> (or 1430, 2:30pm) — or picked with the calendar button. Something unreadable is refused, marks the box red and puts the old value back; <strong>Enter</strong> settles a box, and in a single-purpose dialog like Reschedule or Baselines it applies the dialog.</span></div>
-          <div class="help-row"><i class="fa-regular fa-calendar"></i><span><strong>Date format</strong>: Plan settings → <strong>Date &amp; time</strong> chooses how dates (dd.mm.yyyy, dd/mm/yyyy, mm/dd/yyyy, yyyy-mm-dd) and times (24-hour or 12-hour AM / PM) are shown and typed on this computer. The plan itself isn't changed, and the list, dialogs, Gantt, Print, Excel and CSV all follow it. A date typed in the other order is still understood when it can only mean one thing.</span></div>
+          <div class="help-row"><i class="fa-regular fa-calendar"></i><span><strong>Date format</strong>: Plan settings → <strong>Date &amp; time</strong> chooses how dates (dd.mm.yyyy, dd/mm/yyyy, mm/dd/yyyy, yyyy-mm-dd) and times (24-hour or 12-hour AM / PM) are shown and typed on this computer — click a tile, or <strong>Use my browser's format</strong>. The plan itself isn't changed, and the list, dialogs, Gantt, Print, Excel and CSV all follow it. A date typed in the other order is still understood when it can only mean one thing.</span></div>
           <div class="help-row"><i class="fa-solid fa-computer-mouse"></i><span><strong>Right-click</strong> a task (in the list, or its row in the chart) for a menu with Edit, Add task, Add empty line, Duplicate, Copy, Cut, Paste, Indent, Outdent and Delete. Right-clicking on the empty part of the list offers Add task, Add empty line and Paste. The buttons for the selected tasks (<strong>Edit, Duplicate, Copy, Delete</strong>) appear in the toolbar while something is selected; with one task <strong>Edit</strong> opens the same dialog as a double-click.</span></div>
           <div class="help-row"><i class="fa-solid fa-palette"></i><span><strong>Row colour</strong> (in the task dialog, or under Edit for several tasks) marks a task in the list with a stripe at its left edge and a light tint of the same colour — also behind its bar in the Gantt chart, and in the printout and the Excel export. The bars themselves keep their <strong>status</strong> colours: green complete, red late, blue in progress, grey not started.</span></div>
           <div class="help-row"><i class="fa-solid fa-grip-lines"></i><span><strong>Add empty line</strong> (in the menu next to Add Task, or on the right-click menu) inserts a blank row below the selected task (below its whole block when it is a group) to separate blocks of tasks. It has an ID but no name, dates or WBS, is never scheduled, charted or linked, and can be moved, indented, copied and deleted like any row.</span></div>
@@ -7609,13 +7642,13 @@ const SETTINGS_TABS = [
   { id: 'precision', label: 'Precision', icon: 'fa-regular fa-clock', bg: 'precisionModalBg', open: () => openPrecisionModal(), close: () => closePrecisionModal(), dirty: () => precisionDirty(), what: 'the scheduling precision' },
   { id: 'rules', label: 'Scheduling rules', icon: 'fa-solid fa-scale-balanced', bg: 'rulesModalBg', open: () => openRulesModal(), close: () => closeRulesModal(), dirty: () => rulesDirty(), what: 'the scheduling rules' },
   { id: 'currency', label: 'Currency', icon: 'fa-solid fa-coins', bg: 'currencyModalBg', open: () => openCurrencyModal(), close: () => closeCurrencyModal(), dirty: () => currencyDirty(), what: 'the currency' },
-  { id: 'format', label: 'Date & time', icon: 'fa-regular fa-calendar', bg: 'formatModalBg', open: () => openFormatModal(), close: () => closeFormatModal(), dirty: () => formatDirty(), what: 'the date and time format' },
   { id: 'fields', label: 'Custom fields', icon: 'fa-solid fa-table-list', bg: 'fieldsModalBg', open: () => openFieldsModal(), close: () => closeFieldsModal(), dirty: () => fieldsDirty(), what: 'the custom fields' },
+  { id: 'format', label: 'Date & time', icon: 'fa-regular fa-calendar', bg: 'formatModalBg', open: () => openFormatModal(), close: () => closeFormatModal(), dirty: () => false, what: 'the date and time format', device: true },
 ];
 let settingsTab = 'calendar';
 function renderSettingsTabs() {
   for (const el of document.querySelectorAll('.settings-tabs')) el.innerHTML = SETTINGS_TABS.map(t =>
-    `<button type="button" class="settings-tab${t.id === el.dataset.current ? ' active' : ''}" role="tab" aria-selected="${t.id === el.dataset.current}" data-settings-tab="${t.id}" onclick="openSettingsTab('${t.id}')"><i class="${t.icon}"></i>${t.label}</button>`).join('');
+    `${t.device ? '<span class="settings-tab-sep" aria-hidden="true" title="The tabs before this one are settings of the plan; the next is a setting of this device"></span>' : ''}<button type="button" class="settings-tab${t.id === el.dataset.current ? ' active' : ''}" role="tab" aria-selected="${t.id === el.dataset.current}" data-settings-tab="${t.id}" onclick="openSettingsTab('${t.id}')"><i class="${t.icon}"></i>${t.label}</button>`).join('');
 }
 function currentSettingsTab() { const t = SETTINGS_TABS.find(t => document.getElementById(t.bg).classList.contains('open')); return t ? t.id : null; }
 function openSettingsTab(id) {
@@ -7683,7 +7716,6 @@ function saveCurrencyModal() {
   if (changed) { setCurrencyCode(code); showToast(`Currency: ${code}`); }
 }
 /* ---- Plan settings → Date & time: the per-device display format (see DATE_FORMATS). A draft with a live preview, applied on Save. ---- */
-let formatSnapshot = null, formatDraft = null;
 function applyDisplayFormat(df, tf) {
   const boxes = [...document.querySelectorAll('input[data-dt]')], vals = boxes.map(el => el.value);   // (read while the old format is still the one they are written in)
   dateFormat = df; timeFormat = tf;
@@ -7693,32 +7725,38 @@ function applyDisplayFormat(df, tf) {
   closeFilterMenu(); resetEffectiveCache(); render();
   if (document.getElementById('printModalBg').classList.contains('open')) refreshPrintPreview();
 }
-function formatDirty() { return formatSnapshot !== null && document.getElementById('formatModalBg').classList.contains('open') && `${formatDraft.df}|${formatDraft.tf}` !== formatSnapshot; }
+// The format of this browser's own region: the order and separator of its numeric date and whether its clock is 12-hour, mapped to the nearest of ours.
+function detectSystemFormat() {
+  let df = 'dd.mm.yyyy', tf = '24h';
+  try {
+    const parts = new Intl.DateTimeFormat(undefined, { year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date(2026, 11, 24));
+    const order = parts.filter(p => p.type !== 'literal').map(p => p.type[0]).join(''), sep = (parts.find(p => p.type === 'literal') || { value: '/' }).value.trim().charAt(0) || '/';
+    df = order === 'ymd' ? 'yyyy-mm-dd' : order === 'mdy' ? 'mm/dd/yyyy' : sep === '.' ? 'dd.mm.yyyy' : 'dd/mm/yyyy';
+    const hc = new Intl.DateTimeFormat(undefined, { hour: 'numeric' }).resolvedOptions();
+    tf = hc.hour12 === true || hc.hourCycle === 'h12' || hc.hourCycle === 'h11' ? '12h' : '24h';
+  } catch (e) { /* the defaults */ }
+  return { df, tf };
+}
+function useSystemFormat() { const s = detectSystemFormat(); applyDisplayFormat(s.df, s.tf); renderFormatModal(); }
 function renderFormatModal() {
-  const today = '2026-12-24', od = dateFormat, ot = timeFormat;
-  const eg = (df, tf, withTime) => { dateFormat = df; timeFormat = tf; const out = withTime ? fmtTime('14:30') : fmtDate(today); dateFormat = od; timeFormat = ot; return out; };
-  document.getElementById('fmtDateOpts').innerHTML = DATE_FORMATS.map(f => `<label class="fmt-opt"><input type="radio" name="fmtDate" value="${f.id}"${f.id === formatDraft.df ? ' checked' : ''} onchange="formatDraft.df = this.value; renderFormatModal()"><span>${f.id}</span><span class="fmt-eg">${eg(f.id, formatDraft.tf, false)}</span></label>`).join('');
-  document.getElementById('fmtTimeOpts').innerHTML = [['24h', '24-hour'], ['12h', '12-hour (AM / PM)']].map(([id, label]) => `<label class="fmt-opt"><input type="radio" name="fmtTime" value="${id}"${id === formatDraft.tf ? ' checked' : ''} onchange="formatDraft.tf = this.value; renderFormatModal()"><span>${label}</span><span class="fmt-eg">${eg(formatDraft.df, id, true)}</span></label>`).join('');
-  dateFormat = formatDraft.df; timeFormat = formatDraft.tf;
-  document.getElementById('fmtPreview').textContent = `${fmtDate('2026-12-24')} ${fmtTime('14:30')}`;
-  dateFormat = od; timeFormat = ot;
+  const eg = (df, tf, kind) => { const od = dateFormat, ot = timeFormat; dateFormat = df; timeFormat = tf; const out = kind === 'time' ? fmtTime('14:30') : fmtDate('2026-12-24'); dateFormat = od; timeFormat = ot; return out; };
+  const tile = (group, value, big, small, on) => `<button type="button" class="fmt-tile" role="radio" aria-checked="${on}" data-${group}="${value}" onclick="${group === 'df' ? `applyDisplayFormat('${value}', timeFormat)` : `applyDisplayFormat(dateFormat, '${value}')`}; renderFormatModal()"><b>${big}</b><small>${small}</small></button>`;
+  document.getElementById('fmtDateOpts').innerHTML = DATE_FORMATS.map(f => tile('df', f.id, eg(f.id, timeFormat, 'date'), f.id, f.id === dateFormat)).join('');
+  document.getElementById('fmtTimeOpts').innerHTML = [['24h', '24-hour'], ['12h', '12-hour (AM / PM)']].map(([id, label]) => tile('tf', id, eg(dateFormat, id, 'time'), label, id === timeFormat)).join('');
+  // the system button: one click to what this browser's region uses (or a quiet note that it already is)
+  const sys = detectSystemFormat(), same = sys.df === dateFormat && sys.tf === timeFormat, btn = document.getElementById('fmtSystemBtn');
+  btn.innerHTML = same ? '<i class="fa-solid fa-check"></i>Same as your browser' : `<i class="fa-solid fa-wand-magic-sparkles"></i>Use my browser's format <span class="fmt-sys-eg">${eg(sys.df, sys.tf, 'date')} · ${sys.tf === '12h' ? '12-hour' : '24-hour'}</span>`;
+  btn.disabled = same;
+  // a real sample: the plan's own first task (or a made-up one in an empty plan), in the format as chosen
+  const t = tasks.find(x => !x.spacer && !hasChildren(x.id) && effectiveDates(x.id).start), mm = minuteModeActive();
+  let name, s, e;
+  if (t) { const eff = effectiveDates(t.id); name = t.name; s = gridDateTimeText(eff.start, eff.startTime, mm); e = t.milestone ? '' : gridDateTimeText(eff.end, eff.endTime, mm, true); document.getElementById('fmtPreviewSrc').textContent = '— a task of this plan'; }
+  else { name = 'Sample task'; s = fmtDate('2026-12-24') + (mm ? ' ' + fmtTime('09:00') : ''); e = fmtDate('2026-12-30') + (mm ? ' ' + fmtTime('17:00') : ''); document.getElementById('fmtPreviewSrc').textContent = '— a sample'; }
+  document.getElementById('fmtPreview').innerHTML = `<span><b>${escapeHtml(name)}</b></span><span><span class="fmt-k">Start</span>${escapeHtml(s)}</span>${e ? `<span><span class="fmt-k">Finish</span>${escapeHtml(e)}</span>` : ''}`;
+  document.getElementById('fmtPreviewHint').textContent = `You type dates like ${fmtDate('2026-12-24')}${mm ? ` and times like ${fmtTime('14:30')}` : ''}.`;
 }
-function openFormatModal() {
-  closeScheduleMenu();
-  formatDraft = { df: dateFormat, tf: timeFormat }; formatSnapshot = `${dateFormat}|${timeFormat}`;
-  renderFormatModal();
-  document.getElementById('formatModalBg').classList.add('open');
-}
-function closeFormatModal() { document.getElementById('formatModalBg').classList.remove('open'); formatSnapshot = null; formatDraft = null; }
-function requestCloseFormatModal() {
-  if (!formatDirty()) { closeFormatModal(); return; }
-  openConfirmModal({ title: 'Discard your changes?', body: 'You changed the date or time format but did not save it.', confirmLabel: 'Discard changes', cancelLabel: 'Keep editing', action() { closeFormatModal(); } });
-}
-function saveFormatModal() {
-  const d = formatDraft, changed = d.df !== dateFormat || d.tf !== timeFormat;
-  closeFormatModal();
-  if (changed) { applyDisplayFormat(d.df, d.tf); showToast(`Dates now read ${fmtDate('2026-12-24')}, times ${fmtTime('14:30')}`); }
-}
+function openFormatModal() { closeScheduleMenu(); renderFormatModal(); document.getElementById('formatModalBg').classList.add('open'); }
+function closeFormatModal() { document.getElementById('formatModalBg').classList.remove('open'); }
 function openCalendarModal() {
   closeScheduleMenu();
   document.getElementById('calendarPlanName').textContent = project.name;
@@ -12316,13 +12354,12 @@ function wireGlobalEvents() {
     if (document.getElementById('cfAddMenu').classList.contains('open')) { closeCfAddMenu(); return; }
     if (document.getElementById('fieldsModalBg').classList.contains('open')) { if (document.getElementById('confirmModalBg').classList.contains('open')) closeConfirmModal(); else requestCloseFieldsModal(); return; }   // only the topmost dialog: the task dialog underneath keeps its unsaved edits
     if (document.getElementById('resourceDaysModalBg').classList.contains('open')) { if (document.getElementById('confirmModalBg').classList.contains('open')) closeConfirmModal(); else requestCloseResourceDaysModal(); return; }
-    if (document.getElementById('confirmModalBg').classList.contains('open') && (taskModalDirty() || calendarDirty() || precisionDirty() || rulesDirty() || currencyDirty() || formatDirty() || bulkDirty())) { closeConfirmModal(); return; }   // the "discard your changes?" question: Escape = keep editing
+    if (document.getElementById('confirmModalBg').classList.contains('open') && (taskModalDirty() || calendarDirty() || precisionDirty() || rulesDirty() || currencyDirty() || bulkDirty())) { closeConfirmModal(); return; }   // the "discard your changes?" question: Escape = keep editing
     if (taskModalDirty()) { requestCloseTaskModal(); return; }
     if (calendarDirty()) { requestCloseCalendarModal(); return; }
     if (precisionDirty()) { requestClosePrecisionModal(); return; }
     if (rulesDirty()) { requestCloseRulesModal(); return; }
     if (currencyDirty()) { requestCloseCurrencyModal(); return; }
-    if (formatDirty()) { requestCloseFormatModal(); return; }
     if (bulkDirty()) { requestCloseBulkModal(); return; }
     // Escape closes whatever overlay is open first; only when there is none — and
     // the user isn't typing in a field, where Escape already means "cancel this
