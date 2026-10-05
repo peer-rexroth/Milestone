@@ -100,7 +100,7 @@ with sync_playwright() as p:
     ev("() => { tasks.length = 0; deletedTaskIds.length = 0; project.name = 'My Project'; delete project.workDays; delete project.holidays; delete project.baselines; save(); render(); resetHistory(); }")
     ev("() => { const a = newImportedTask('Existing A', null, 0), b = newImportedTask('Existing B', null, 1); tasks.push(a, b); save(); render(); resetHistory(); }")
     csvtext = "ID,Task Name,Start,Finish,Predecessors,Outline Level\n1,Group,07.09.2026,11.09.2026,,1\n2,Child 1,07.09.2026,08.09.2026,,2\n3,Child 2,09.09.2026,11.09.2026,2,2\n"
-    pg.click("#dataMenuBtn"); check("the Data menu has 'Import MS Project XML / CSV…'", "MS Project" in pg.inner_text("#foreignImportItem"))
+    pg.click("#dataMenuBtn"); check("the Data menu has 'Import tasks (MS Project XML, CSV)…'", "MS Project" in pg.inner_text("#foreignImportItem"))
     pg.keyboard.press("Escape")
     pg.set_input_files("#foreignFileInput", files=[{"name": "plan.csv", "mimeType": "text/csv", "buffer": csvtext.encode("utf-8")}]); pg.wait_for_selector("#foreignImportModalBg.open"); pg.wait_for_timeout(200)
     sm = pg.inner_text("#foreignImportSummary")

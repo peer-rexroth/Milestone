@@ -1193,15 +1193,17 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
   <div class="dropdown-wrap">
     <button class="btn" id="dataMenuBtn" onclick="toggleDataMenu()" title="Data: import, export, print, backups"><i class="fa-solid fa-database"></i><span class="btn-label">Data</span></button>
     <div class="dropdown-menu" id="dataMenu">
-      <button class="dropdown-item" onclick="exportProject()"><i class="fa-solid fa-file-export"></i>Export JSON</button>
-      <button class="dropdown-item" onclick="triggerImport()"><i class="fa-solid fa-file-import"></i>Import JSON</button>
-      <button class="dropdown-item" id="foreignImportItem" onclick="triggerForeignImport()"><i class="fa-solid fa-diagram-project"></i>Import MS Project XML / CSV…</button>
-      <button class="dropdown-item" id="mspdiExportItem" onclick="exportMspdi()"><i class="fa-solid fa-file-code"></i>Export MS Project XML</button>
+      <button class="dropdown-item" onclick="triggerImport()"><i class="fa-solid fa-file-import"></i>Import plan (JSON)…</button>
+      <button class="dropdown-item" id="foreignImportItem" onclick="triggerForeignImport()" title="Adds tasks from an MS Project XML file or a CSV table to this plan. For an Excel file, save it as CSV first."><i class="fa-solid fa-file-import"></i>Import tasks (MS Project XML, CSV)…</button>
+      <div class="dropdown-sep"></div>
+      <button class="dropdown-item" onclick="exportProject()"><i class="fa-solid fa-file-export"></i>Export plan (JSON)</button>
       <button class="dropdown-item" id="excelExportItem" onclick="openExcelExport()"><i class="fa-solid fa-file-excel"></i>Export to Excel…</button>
       <button class="dropdown-item" id="csvExportItem" onclick="openCsvExport()"><i class="fa-solid fa-file-csv"></i>Export to CSV…</button>
-      <button class="dropdown-item" id="printItem" onclick="openPrintModal()"><i class="fa-solid fa-print"></i>Print / PDF…</button>
+      <button class="dropdown-item" id="mspdiExportItem" onclick="exportMspdi()"><i class="fa-solid fa-file-code"></i>Export MS Project XML</button>
       <div class="dropdown-sep"></div>
-      <button class="dropdown-item" onclick="openBackupsModal()"><i class="fa-solid fa-clock-rotate-left"></i>Local Backups</button>
+      <button class="dropdown-item" id="printItem" onclick="openPrintModal()"><i class="fa-solid fa-print"></i>Print / PDF / picture…</button>
+      <div class="dropdown-sep"></div>
+      <button class="dropdown-item" onclick="openBackupsModal()"><i class="fa-solid fa-clock-rotate-left"></i>Local Backups…</button>
     </div>
   </div>
   <input type="file" id="fileInput" accept="application/json" class="hidden" onchange="handleFileImport(event)">
@@ -1602,7 +1604,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <div class="print-nav"><button class="btn" id="printPrev" onclick="printPage(-1)" aria-label="Previous page"><i class="fa-solid fa-chevron-left"></i></button><span id="printPageInfo"></span><button class="btn" id="printNext" onclick="printPage(1)" aria-label="Next page"><i class="fa-solid fa-chevron-right"></i></button><span class="print-summary" id="printSummary"></span></div>
       </div>
     </div>
-    <div class="modal-footer"><span class="print-img" role="group" aria-label="Picture of the whole chart"><span class="print-img-label" title="One picture with every row, whatever the paper — for slides and documents">Picture:</span><button class="btn" id="printCopyImg" onclick="exportPrintImage('copy')" title="Copy the chart as a PNG picture"><i class="fa-regular fa-copy"></i>Copy</button><button class="btn" id="printPng" onclick="exportPrintImage('png')" title="Download the chart as a PNG picture"><i class="fa-regular fa-image"></i>PNG</button><button class="btn" id="printSvg" onclick="exportPrintImage('svg')" title="Download the chart as an SVG drawing (editable in PowerPoint, Illustrator, Inkscape)"><i class="fa-solid fa-bezier-curve"></i>SVG</button></span><span class="print-tip" title="Your browser's print dialog has “Save as PDF”.">Pictures show every row on one image.</span><button class="btn" onclick="closePrintModal()">Cancel</button><button class="btn btn-primary" id="printGo" onclick="doPrint()"><i class="fa-solid fa-print"></i>Print / Save as PDF…</button></div>
+    <div class="modal-footer"><span class="print-img" role="group" aria-label="Picture of the whole chart"><span class="print-img-label" title="One picture with every row, whatever the paper — for slides and documents">Picture:</span><button class="btn" id="printCopyImg" onclick="exportPrintImage('copy')" title="Copy the chart as a PNG picture"><i class="fa-regular fa-copy"></i>Copy</button><button class="btn" id="printPng" onclick="exportPrintImage('png')" title="Download the chart as a PNG picture"><i class="fa-regular fa-image"></i>PNG</button><button class="btn" id="printSvg" onclick="exportPrintImage('svg')" title="Download the chart as an SVG drawing (editable in PowerPoint, Illustrator, Inkscape)"><i class="fa-solid fa-vector-square"></i>SVG</button></span><span class="print-tip" title="Your browser's print dialog has “Save as PDF”.">Pictures show every row on one image.</span><button class="btn" onclick="closePrintModal()">Cancel</button><button class="btn btn-primary" id="printGo" onclick="doPrint()"><i class="fa-solid fa-print"></i>Print / Save as PDF…</button></div>
   </div>
 </div>
 
@@ -2194,9 +2196,9 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <div class="help-section">
           <div class="help-section-title">Import, export and backups</div>
           <div class="help-row"><i class="fa-solid fa-file-export"></i><span><strong>Data → Export / Import</strong> moves a full JSON snapshot of the current plan out or in.</span></div>
-          <div class="help-row"><i class="fa-solid fa-file-csv"></i><span><strong>Export to CSV</strong> saves the task list as a plain text table: the columns you choose, dates and durations as the list shows them, sub-tasks indented. Pick the separator your Excel expects (comma or semicolon). Import it again with <strong>Import MS Project XML / CSV</strong>.</span></div>
+          <div class="help-row"><i class="fa-solid fa-file-csv"></i><span><strong>Export to CSV</strong> saves the task list as a plain text table: the columns you choose, dates and durations as the list shows them, sub-tasks indented. Pick the separator your Excel expects (comma or semicolon). Import it again with <strong>Import tasks (MS Project XML, CSV)…</strong>.</span></div>
           <div class="help-row"><i class="fa-solid fa-file-excel"></i><span><strong>Export to Excel</strong> saves a formatted .xlsx workbook: a task list plus an optional Gantt chart sheet, each sheet using the columns you chose in its own view.</span></div>
-          <div class="help-row"><i class="fa-solid fa-diagram-project"></i><span><strong>Import MS Project XML / CSV…</strong> reads a plan saved from MS Project as XML (File → Save As → XML Format): tasks and their outline, dates, % complete, actual dates, links with lags, manual mode, constraints, resources, baselines, the working week and the holidays. A file with real times of day switches the plan to <strong>Hours &amp; minutes</strong> scheduling too (when "Import working calendar" is ticked), recovering the working hours and breaks from it.</span></div>
+          <div class="help-row"><i class="fa-solid fa-diagram-project"></i><span><strong>Import tasks (MS Project XML, CSV)…</strong> reads a plan saved from MS Project as XML (File → Save As → XML Format): tasks and their outline, dates, % complete, actual dates, links with lags, manual mode, constraints, resources, baselines, the working week and the holidays. A file with real times of day switches the plan to <strong>Hours &amp; minutes</strong> scheduling too (when "Import working calendar" is ticked), recovering the working hours and breaks from it.</span></div>
           <div class="help-row"><i class="fa-solid fa-file-code"></i><span><strong>Export MS Project XML</strong> (Data menu) saves the whole plan as a <code>.xml</code> file that MS Project opens: <em>File → Open</em>, file type “XML Format”. Outline, dates, durations, links with lag, constraints, actual dates, baselines, resources, the working week and holidays go along, each task's real time of day included for an Hours &amp; minutes plan; empty lines are left out, and custom-field values and TBD dates go into the task’s Notes.</span></div>
           <div class="help-row"><i class="fa-solid fa-file-csv"></i><span>It also reads a <strong>CSV</strong> with a header row — English or German column names such as Task Name, Start, Finish, Duration, Predecessors, Outline Level. A preview shows what was found; you add the tasks to this plan or replace its tasks (a backup file is downloaded first).</span></div>
           <div class="help-row"><i class="fa-solid fa-print"></i><span><strong>Print / PDF…</strong> is under Data as well — see the Gantt chart topic.</span></div>
@@ -11881,7 +11883,7 @@ function renderPlanMenu() {
     `<div class="dropdown-sep"></div>` +
     `<button class="dropdown-item" id="planRenameItem" onclick="openPlanModal('rename')"><i class="fa-solid fa-pen"></i>Rename plan…</button>` +
     `<button class="dropdown-item" id="planMenuSettingsItem" onclick="openPlanSettings()"><i class="fa-solid fa-gear"></i>Plan settings…<span class="item-hint">${escapeHtml(planSettingsHint())}</span></button>` +
-    `<button class="dropdown-item" id="planDuplicateItem" onclick="duplicatePlan()"><i class="fa-regular fa-copy"></i>Duplicate plan</button>` +
+    `<button class="dropdown-item" id="planDuplicateItem" onclick="duplicatePlan()"><i class="fa-regular fa-copy"></i>Duplicate plan…</button>` +
     (fileSyncSupported() ? `<button class="dropdown-item" id="planDisconnectItem" onclick="disconnectFile()"${syncFileHandle ? '' : ' disabled title="This plan isn’t linked to a file"'}><i class="fa-solid fa-link-slash"></i>Disconnect folder…</button>` : '') +
     `<button class="dropdown-item" id="planDeleteItem" onclick="deleteCurrentPlan()"${idx.plans.length < 2 ? ' disabled title="You need at least one plan"' : ''}><i class="fa-solid fa-trash"></i>Delete plan…</button>`;
 }
