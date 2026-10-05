@@ -23,9 +23,9 @@ with sync_playwright() as p:
         for col, label in cols:
             open_editor(name, col)
             m = pg.evaluate("""() => { const w = document.querySelector('.inline-wrap'); const i = document.querySelector('.inline-edit');
-              const box = (w || i).getBoundingClientRect(), row = (w || i).parentElement.getBoundingClientRect();
+              const box = (w || i).getBoundingClientRect(), row = (w || i).parentElement.getBoundingClientRect(); const nx = (w || i).nextElementSibling || { getBoundingClientRect: () => ({ left: row.right - 10 }) };   /* (the last column has nothing after it now: the row's 10px padding stands in) */
               const cal = document.querySelector('.inline-cal'); const cr = cal && cal.getBoundingClientRect();
-              return {type: i.type, wrapped: !!w, width: box.width, clipped: i.scrollWidth > i.clientWidth + 1, insideRow: box.right <= row.right + 0.5, intoNeighbour: box.right - ((w || i).nextElementSibling.getBoundingClientRect().left), gapL: box.left - (w || i).previousElementSibling.getBoundingClientRect().right, gapR: (w || i).nextElementSibling.getBoundingClientRect().left - box.right, h: box.height, outline: getComputedStyle(i).outlineStyle,
+              return {type: i.type, wrapped: !!w, width: box.width, clipped: i.scrollWidth > i.clientWidth + 1, insideRow: box.right <= row.right + 0.5, intoNeighbour: box.right - (nx.getBoundingClientRect().left), gapL: box.left - (w || i).previousElementSibling.getBoundingClientRect().right, gapR: nx.getBoundingClientRect().left - box.right, h: box.height, outline: getComputedStyle(i).outlineStyle,
                       calInside: cal ? cr.right <= box.right + 0.5 && cr.left >= box.left : true, topmost: document.elementFromPoint(box.right - 8, box.top + box.height / 2) !== null && (w || i).contains(document.elementFromPoint(box.right - 8, box.top + box.height / 2))}; }""")
             check(f"{name}: {label} editor is a {'typed box + calendar button' if name == 'Man' else 'native date input'}", (m["type"] == "text" and m["wrapped"]) if name == "Man" else m["type"] == "date", m)
             check(f"{name}: {label} editor is compact (about 100px, one 21px-ish row) yet holds a date and its picker icon", 95 <= m["width"] <= 101 and m["h"] <= 24 and m["calInside"], m)

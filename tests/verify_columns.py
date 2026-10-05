@@ -61,8 +61,8 @@ with sync_playwright() as p:
     set_col("actualStart", True)
     check("ticking Actual Start puts it at its default place (after Finish)", head_cols() == ["wbs", "name", "start", "end", "actualStart", "duration", "progress", "preds", "resource", "status"], head_cols())
     cols_now = head_cols(); ncells = pg.locator(".grid-row").first.locator(":scope > div").count()
-    check("every row has exactly one cell per visible column (+ ID and actions)", ncells == len(cols_now) + 2 and pg.locator("#gridHeader > div").count() == len(cols_now) + 2, (ncells, len(cols_now)))
-    check("the grid template has a track for each", len(pg.evaluate("() => getComputedStyle(document.querySelector('.grid-row')).gridTemplateColumns.split(' ')")) == len(cols_now) + 2)
+    check("every row has exactly one cell per visible column (+ ID)", ncells == len(cols_now) + 1 and pg.locator("#gridHeader > div").count() == len(cols_now) + 1, (ncells, len(cols_now)))
+    check("the grid template has a track for each", len(pg.evaluate("() => getComputedStyle(document.querySelector('.grid-row')).gridTemplateColumns.split(' ')")) == len(cols_now) + 1)
     set_col("resource", False)
     check("unticking hides it again", "resource" not in head_cols())
     # reorder

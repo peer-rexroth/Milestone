@@ -31,9 +31,8 @@ with sync_playwright() as p:
     check("header and rows agree (same track layout)", near(h, r, 1.5), (h, r))
     check("each row and the header paint the lines on a pseudo-element that ignores the mouse", pg.evaluate("() => getComputedStyle(document.querySelector('.grid-row'), '::before').pointerEvents") == "none" and pg.evaluate("() => getComputedStyle(document.getElementById('gridHeader'), '::before').pointerEvents") == "none")
     check("the lines use the theme's border colour (the same one as the Gantt divider)", "var(--border)" in var("--col-lines-r") or "linear-gradient" in var("--col-lines-r"))
-    check("the header has an 'Actions' label for the row-actions column (no filter funnel), and a line to the left of it", pg.evaluate("() => { const h = document.querySelector('#gridHeader .actions-head'); return !!h && h.textContent.trim() === 'Actions' && !h.querySelector('button'); }") and len(h) == len(pg.evaluate("() => [...document.getElementById('gridHeader').children]")) - 1)
-    check("the row-action buttons start under the label (same left edge, so header and buttons line up)", pg.evaluate("() => { const h = document.querySelector('#gridHeader .actions-head'); const r = document.createRange(); r.selectNodeContents(h); const b = document.querySelector('#gridRows .grid-actions .icon-btn i'); return Math.abs(r.getBoundingClientRect().left - b.getBoundingClientRect().left) <= 1.5; }"))
-    check("the actions column is 88px", pg.evaluate("() => document.querySelector('#gridHeader .actions-head').getBoundingClientRect().width") == 88)
+    check("there is no Actions column any more: no header cell for it, and the row buttons live inside the Task Name cell", pg.evaluate("() => !document.querySelector('#gridHeader .actions-head') && !!document.querySelector('#gridRows .grid-row > .grid-name > .grid-actions') && !document.querySelector('#gridRows .grid-row > .grid-actions')"))
+    check("...so the last header cell is the last data column and carries a funnel", pg.evaluate("() => { const l = document.getElementById('gridHeader').lastElementChild; return !!l.querySelector('.col-filter-btn'); }"))
     # pixels
     if Image:
         shot = {}

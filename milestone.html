@@ -251,8 +251,10 @@ body.col-resizing, body.col-resizing * { cursor: col-resize !important; user-sel
 .main .grid-header { height: var(--head-h); }
 .main .grid-header > .col-head { white-space: normal; align-self: stretch; }   /* (the whole header height is the resize handle's) */
 .sort-ind { flex: none; font-size: 10px; color: var(--accent); }
-.col-filter-btn { flex-shrink: 0; width: 18px; height: 18px; padding: 0; border: none; border-radius: 4px; background: transparent; color: var(--text-faint); font-size: 9px; opacity: .55; }
-.col-filter-btn:hover { background: var(--panel-2); color: var(--text); opacity: 1; }
+.col-filter-btn { flex-shrink: 0; width: 18px; height: 18px; padding: 0; border: none; border-radius: 4px; background: transparent; color: var(--text-faint); font-size: 9px; opacity: 0; }   /* quiet until it is needed: the header is hovered or focused, the menu is open, or a filter is active (below) — it keeps its space, so nothing shifts */
+.col-head:hover .col-filter-btn, .col-head:focus-within .col-filter-btn, .col-filter-btn.menu-open { opacity: .55; }
+@media (hover: none) { .col-filter-btn { opacity: .55; } }   /* a touch screen has no hover */
+.col-head .col-filter-btn:hover { background: var(--panel-2); color: var(--text); opacity: 1; }
 .col-filter-btn.active { color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--panel)); opacity: 1; }
 .filter-bar { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-dim); min-width: 0; overflow: hidden; }
 /* ── Status bar ── */
@@ -444,10 +446,10 @@ input.tf-cell[type=number] { -moz-appearance: textfield; }
 .main .grid-header::before { background-image: var(--col-lines-h, none); background-position: var(--col-pos-h, 0 0); }
 .main .grid-row::before { background-image: var(--col-lines-r, none); background-position: var(--col-pos-r, 0 0); }
 /* One spacing rule for every column: no gap between tracks (the column line is the track boundary) and every cell keeps the same
-   8px inset from the line on both sides. The ID cell (first) and the row-actions cell (last) keep their own spacing; the inline
+   8px inset from the line on both sides. The ID cell (first) keeps its own spacing; the inline
    editors, which are grid items themselves, get the same inset as a margin. */
 .main .grid-header, .main .grid-row { column-gap: 0; }
-.main .grid-header > div:not(:first-child):not(:last-child), .main .grid-row > div:not(:first-child):not(:last-child):not(.inline-wrap):not(.grid-name) { padding-inline: 8px; }
+.main .grid-header > div:not(:first-child), .main .grid-row > div:not(:first-child):not(.inline-wrap):not(.grid-name) { padding-inline: 8px; }
 /* The Name column keeps its original indent (names start ~3px from the line, sub-tasks step in 16px per level) — only its right end gets the inset */
 .main .grid-row > .grid-name { padding-left: calc(3px + var(--depth, 0) * 16px); padding-right: 8px; }
 .main .grid-row > input.inline-edit { width: calc(100% - 4px); margin-inline: 2px; padding-inline: 5px; }   /* the typed text starts exactly where the cell's text does (2 + 1 border + 5 = 8px) */
@@ -508,7 +510,7 @@ input.tf-cell[type=number] { -moz-appearance: textfield; }
 .grid-row.drop-after::after, .grid-row.drop-into::after { bottom: 0; }
 .grid-row.drop-into { --row-bg: color-mix(in srgb, var(--accent) 12%, var(--panel)); }
 .grid-rows.drop-end { box-shadow: inset 0 -2px 0 var(--accent); }
-.grid-name { display: flex; align-items: center; gap: 4px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding-left: calc(var(--depth, 0) * 16px); }   /* outline indent; the Tasks view adds 3px, the distance the name has always had from the column line */
+.grid-name { position: relative; display: flex; align-items: center; gap: 4px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding-left: calc(var(--depth, 0) * 16px); }   /* outline indent; the Tasks view adds 3px, the distance the name has always had from the column line */
 .name-text.editable, .grid-cell-dim.editable { cursor: text; }
 .name-text.editable:hover, .grid-cell-dim.editable:hover { background: var(--panel-2); border-radius: 4px; }
 input.inline-edit { width: 100%; min-width: 0; padding: 3px 6px; border: 1px solid var(--accent); outline: none; border-radius: 4px; background: var(--panel); color: var(--text); font-size: 12.5px; font-family: inherit; }
@@ -703,11 +705,24 @@ input.inline-edit[type=date]::-webkit-calendar-picker-indicator { margin: 0 0 0 
 .inline-cal { position: absolute; right: 1px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-dim); padding: 2px 4px; font-size: 11px; }
 .inline-cal:hover { color: var(--accent); }
 .inline-date-hidden { position: absolute; right: 0; bottom: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
-.grid-actions { display: flex; gap: 2px; justify-content: flex-end; }
-.grid-actions .icon-btn { width: 24px; height: 24px; font-size: 12px; opacity: 0; }
-.main .grid-actions { justify-content: flex-start; padding-left: 2px; }   /* the first icon's glyph starts at 2 + 6 = 8px, under the header label */
-.main .grid-header > .actions-head { padding-left: 8px; }
-.grid-row:hover .grid-actions .icon-btn { opacity: 1; }
+/* Row actions (Edit / Clone / Delete) are an overlay on the right end of the Task Name cell, shown (opacity) while the row is hovered or has focus — invisible, not removed, so they are always in the layout and a script can reach them: they take no
+   column of their own (it was 88px of mostly empty space) and, because Task Name is a frozen column, they stay in view when the list scrolls sideways.
+   The fade on their left lets a long name run underneath without a hard cut. */
+.modal.shortcuts-modal { width: 700px; max-width: 94vw; }
+.sc-cols { columns: 2 280px; column-gap: 32px; }
+.sc-group { break-inside: avoid; margin: 0 0 14px; }
+.sc-group h3 { margin: 0 0 6px; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--text-dim); }
+.sc-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 4px 0; font-size: 12.5px; border-bottom: 1px solid var(--border); }
+.sc-row:last-child { border-bottom: none; }
+.sc-keys { flex-shrink: 0; white-space: nowrap; }
+.sc-keys kbd { display: inline-block; min-width: 20px; padding: 1px 6px; margin-left: 3px; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 4px; background: var(--panel-2); color: var(--text); font-family: inherit; font-weight: 600; font-size: 11px; line-height: 1.5; text-align: center; }
+.sc-keys .sc-or { margin: 0 2px 0 5px; color: var(--text-faint); font-size: 11px; }
+.grid-actions { position: absolute; right: 0; top: 0; bottom: 0; display: flex; opacity: 0; align-items: center; gap: 2px; padding: 0 10px 0 24px; background: linear-gradient(90deg, transparent, var(--row-bg) 20px); }
+.grid-actions { pointer-events: none; }   /* the fade and the gaps let clicks through to the name; only the buttons themselves take them */
+.grid-actions .icon-btn { width: 24px; height: 24px; font-size: 12px; pointer-events: auto; }
+.grid-row:hover .grid-actions, .grid-row:focus-within .grid-actions { opacity: 1; }
+@media (hover: none) { .grid-actions .icon-btn { pointer-events: none; } }   /* touch: an invisible Delete under a tap on the name would be a trap — the toolbar's selection buttons and the row menu do the same */
+.grid-name:has(input.inline-edit) > .grid-actions { display: none; }   /* while the name is being edited the editor owns the whole cell */
 
 .empty-state { padding: 60px 24px; text-align: center; color: var(--text-dim); }
 .empty-state i { font-size: 30px; color: var(--text-faint); margin-bottom: 12px; display: block; }
@@ -998,6 +1013,7 @@ select.rst-select:disabled { opacity: .5; }
 .modal-header h2 { margin: 0; font-size: 16px; }
 .modal-header button { border: none; background: none; font-size: 18px; color: var(--text-dim); width: 28px; height: 28px; border-radius: 6px; }
 .modal-header button:hover { background: var(--panel-2); }
+.modal-header .hdr-link { width: auto; height: auto; margin: 0 8px 0 auto; padding: 4px 8px; font-size: 12.5px; color: var(--accent); }
 .modal-body { padding: 16px 18px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
 .modal-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 18px; border-top: 1px solid var(--border); }
 .field { display: flex; flex-direction: column; gap: 5px; }
@@ -1873,7 +1889,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
 <!-- Help modal -->
 <div class="modal-bg" id="helpModalBg" onclick="if(event.target===this) closeHelpModal()">
   <div class="modal help-modal" role="dialog" aria-labelledby="helpTitle">
-    <div class="modal-header"><h2 id="helpTitle">Help</h2><button onclick="closeHelpModal()" aria-label="Close">&times;</button></div>
+    <div class="modal-header"><h2 id="helpTitle">Help</h2><button type="button" class="btn-link hdr-link" onclick="closeHelpModal();openShortcuts()" title="Press ? anywhere"><i class="fa-regular fa-keyboard"></i> Keyboard shortcuts</button><button onclick="closeHelpModal()" aria-label="Close">&times;</button></div>
     <div class="help-layout">
       <div class="help-nav" role="tablist" aria-orientation="vertical" onkeydown="helpTabKey(event)">
         <button type="button" role="tab" id="helpTab-start" class="active" aria-selected="true" aria-controls="helpPane-start" tabindex="0" onclick="setHelpTab('start')"><i class="fa-solid fa-compass"></i><span>Getting started</span></button>
@@ -1918,6 +1934,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <div class="help-divider"></div>
         <div class="help-section">
           <div class="help-section-title">Find a task</div>
+          <div class="help-row"><i class="fa-regular fa-keyboard"></i><span>Press <strong>?</strong> anywhere (or use <strong>Keyboard shortcuts</strong> at the top of this window) for the list of keyboard shortcuts.</span></div>
           <div class="help-row"><i class="fa-solid fa-magnifying-glass"></i><span><strong>Ctrl/Cmd+K</strong>, <code>/</code> or the <strong>Find</strong> button opens a search: part of a name (every word must match), a WBS code such as <code>2.1</code>, <code>#12</code> for the task with that ID, or <code>@anna</code> for a resource, and <code>status:late</code> for the late tasks (also <code>complete</code>, <code>future</code>, <code>on</code> for on schedule — combine it with words). <strong>Enter</strong> goes to the task — folded groups open, a filter that would hide it steps aside, the row (and in the Gantt view the bar) scrolls into view and flashes. <strong>Shift+Enter</strong> shows only the matches.</span></div>
         </div>
         <div class="help-divider"></div>
@@ -2124,6 +2141,13 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
 </div>
 
 <!-- About modal -->
+<div class="modal-bg" id="shortcutsModalBg" onclick="if(event.target===this) closeShortcuts()">
+  <div class="modal shortcuts-modal" role="dialog" aria-labelledby="shortcutsTitle">
+    <div class="modal-header"><h2 id="shortcutsTitle">Keyboard shortcuts</h2><button onclick="closeShortcuts()" aria-label="Close">&times;</button></div>
+    <div class="modal-body" id="shortcutsBody"></div>
+  </div>
+</div>
+
 <div class="modal-bg" id="aboutModalBg" onclick="if(event.target===this) closeAboutModal()">
   <div class="modal narrow">
     <div class="modal-header"><h2>About</h2><button onclick="closeAboutModal()">&times;</button></div>
@@ -4598,8 +4622,9 @@ function openColumnFilter(event, col) {
   menu.style.left = Math.max(8, Math.min(rect.left - 8, window.innerWidth - 316)) + 'px';
   menu.style.maxHeight = Math.max(260, window.innerHeight - rect.bottom - 16) + 'px';
   menu.classList.add('open');
+  event.currentTarget.classList.add('menu-open');   // the funnel stays visible while its menu is open
 }
-function closeFilterMenu() { document.getElementById('filterMenu').classList.remove('open'); filterDraft = null; }
+function closeFilterMenu() { document.getElementById('filterMenu').classList.remove('open'); filterDraft = null; for (const b of document.querySelectorAll('.col-filter-btn.menu-open')) b.classList.remove('menu-open'); }
 function filterDateText(iso) { return `${fmtDate(iso)} ${monthNameOf(iso)} ${iso.slice(0, 4)}`.toLowerCase(); }
 function monthNameOf(iso) { return new Date(Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, 1)).toLocaleDateString(undefined, { month: 'long', timeZone: 'UTC' }); }
 function filterSearchText(v) { return filterDraft.kind === 'date' ? filterDateText(v) : filterValueLabel(filterDraft.col, v).toLowerCase(); }
@@ -5158,10 +5183,10 @@ function colMinW(id) {
 function colWidth(id) { if (colWidths[id]) return Math.max(colMinW(id), Math.min(COL_MAX_W, colWidths[id])) + 'px';   // (a resized Task Name stops filling the pane: it keeps the width you gave it)
    return minuteModeActive() && (MINUTE_WIDE_COLS.has(id) || (isCustomField(id) && CUSTOM_FIELDS[id].kind === 'date')) ? MINUTE_DATE_W + 'px' : TASK_COLS[id].width; }   // (a custom Date column too: it can carry a time)
 function applyColTemplate(cols = visibleTaskCols()) {
-  document.getElementById('main').style.setProperty('--task-cols', ['34px', ...cols.map(colWidth), '88px'].join(' '));
+  document.getElementById('main').style.setProperty('--task-cols', ['34px', ...cols.map(colWidth)].join(' '));
   // the narrowest the row can get (Task Name at its minimum) + the row's 10px padding on each side: below this width the list scrolls sideways
   const px = w => { const m = /^(\d+(?:\.\d+)?)px$/.exec(w) || /^minmax\((\d+(?:\.\d+)?)px/.exec(w); return m ? parseFloat(m[1]) : 0; };
-  document.getElementById('main').style.setProperty('--grid-min-w', (34 + cols.reduce((a, c) => a + px(colWidth(c)), 0) + 88 + 20) + 'px');
+  document.getElementById('main').style.setProperty('--grid-min-w', (34 + cols.reduce((a, c) => a + px(colWidth(c)), 0) + 20) + 'px');
 }
 // The Resource cell: the text as typed — except that once any share is not 100% each name gets its percentage as a chip
 // (so a long list is cut at the names, never at the numbers). A group's Resource text is free-form notes: shown as is.
@@ -5200,7 +5225,7 @@ function renderGrid() {
     ...Object.fromEntries(Object.keys(CUSTOM_FIELDS).map(id => [id, colHeadHtml(customFieldName(id), id)]))
   };
   applyColTemplate(cols);
-  document.getElementById('gridHeader').innerHTML = `<div class="id-head"><button class="id-toggle" id="collapseToggleBtn" onclick="toggleAllCollapsed()"><i class="fa-solid fa-angles-up"></i></button></div>${cols.map(c => HEAD[c]).join('')}${full ? '<div class="actions-head">Actions</div>' : ''}`;
+  document.getElementById('gridHeader').innerHTML = `<div class="id-head"><button class="id-toggle" id="collapseToggleBtn" onclick="toggleAllCollapsed()"><i class="fa-solid fa-angles-up"></i></button></div>${cols.map(c => HEAD[c]).join('')}`;
   const list = visibleTaskList();
   const el = document.getElementById('gridRows');
   if (list.length === 0 && filtersActive() && tasks.length) { el.innerHTML = filterEmptyHtml(); return; }
@@ -5291,6 +5316,11 @@ function renderGrid() {
     const bl = baselineDates(t.id), sv = scheduleVariance(t.id), bn = baselineName(compareBaseline());
     const blCell = (iso, time, isEnd) => `<div class="grid-cell-dim${summaryCls}" title="${bn}">${baselineDateText(t.id, iso, time, isEnd)}</div>`;
     const varCell = n => `<div class="grid-cell-dim${summaryCls}${n > 0 ? ' var-late' : n < 0 ? ' var-early' : ''}" title="${bn}">${fmtVarianceFor(t.id, n)}</div>`;
+    const actionsHtml = `<div class="grid-actions">
+        ${t.spacer ? '' : `<button class="icon-btn" onclick="event.stopPropagation();openTaskModal('${t.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>`}
+        <button class="icon-btn" onclick="event.stopPropagation();cloneTask('${t.id}')" title="Clone${hasChildren(t.id) ? ' (with all its sub-tasks)' : ''}"><i class="fa-regular fa-clone"></i></button>
+        <button class="icon-btn btn-danger" onclick="event.stopPropagation();deleteTaskFlow('${t.id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
+      </div>`;
     const cells = {
       mode: modeCell,
       wbs: `<div class="grid-cell-dim${summaryCls}">${escapeHtml(wbsCode(t.id))}</div>`,
@@ -5304,6 +5334,7 @@ function renderGrid() {
         ${t.notes ? `<i class="fa-regular fa-note-sticky note-ind" title="${escapeHtml(t.notes.length > 400 ? t.notes.slice(0, 400) + '…' : t.notes)}" onclick="event.stopPropagation();openTaskNotes('${t.id}')"></i>` : ''}
         ${deadlineMissed(t) ? `<i class="fa-solid fa-flag deadline-warn" title="Finishes after its deadline (${fmtDate(t.deadline)})"></i>` : ''}
         ${nameCell}
+        ${actionsHtml}
       </div>`,
       start: startCell, end: finishCell, actualStart: actualCell('actualStart', act.start), actualFinish: actualCell('actualFinish', act.end),
       duration: durationCell, progress: editing('progress')
@@ -5323,16 +5354,11 @@ function renderGrid() {
     };
     if (t.spacer) {   // an empty line: the ID and a blank cell in every column (nothing to edit)
       for (const c of cols) cells[c] = '<div class="grid-cell-dim"></div>';
-      cells.name = `<div class="grid-name" style="--depth:${depth}"><button class="chevron empty" tabindex="-1"><i class="fa-solid fa-chevron-down"></i></button><span class="name-text spacer-label" title="Empty line — it only separates tasks"></span></div>`;
+      cells.name = `<div class="grid-name" style="--depth:${depth}"><button class="chevron empty" tabindex="-1"><i class="fa-solid fa-chevron-down"></i></button><span class="name-text spacer-label" title="Empty line — it only separates tasks"></span>${actionsHtml}</div>`;
     }
     return `<div class="grid-row${isSelected(t.id) ? ' selected' : ''}${t.spacer ? ' spacer-row' : ''}${t.color ? ' colored' : ''}"${t.color ? ` style="--row-accent:var(--task-${t.color})"` : ''} data-id="${t.id}" onclick="selectTask('${t.id}', event)" ondblclick="rowDblClick(event, '${t.id}')" draggable="${editingCell && editingCell.id === t.id ? 'false' : 'true'}" ondragstart="dragStartTask(event,'${t.id}')" ondragend="dragEndTask()" ondragover="dragOverTask(event,'${t.id}')" ondrop="dropOnTask(event,'${t.id}')">
       <div class="grid-cell-dim" style="text-align:center">${taskDisplayId(t.id)}</div>
       ${cols.map(c => marks && marks.has(c) ? cells[c].replace(/^(\s*<div class=")/, '$1chg ') : cells[c]).join('')}
-      ${full ? `<div class="grid-actions">
-        ${t.spacer ? '' : `<button class="icon-btn" onclick="event.stopPropagation();openTaskModal('${t.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>`}
-        <button class="icon-btn" onclick="event.stopPropagation();cloneTask('${t.id}')" title="Clone${hasChildren(t.id) ? ' (with all its sub-tasks)' : ''}"><i class="fa-regular fa-clone"></i></button>
-        <button class="icon-btn btn-danger" onclick="event.stopPropagation();deleteTaskFlow('${t.id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
-      </div>` : ''}
     </div>`;
   }).join('') + (win.virtual ? spacer((list.length - win.to) * ROW_H) : '')
     + (currentView === 'tasks' ? '<button type="button" class="grid-add-row" onclick="addTaskAtEnd()" title="Add a task at the end of the plan"><i class="fa-solid fa-plus"></i>Add task</button>' : '');
@@ -11607,6 +11633,40 @@ async function undoDeletePlan(saved) {
 const HELP_TABS = ['start', 'scheduling', 'progress', 'hours', 'list', 'gantt', 'data'];
 const HELP_TAB_LABELS = { start: 'Getting started', scheduling: 'Scheduling', progress: 'Calendar & progress', hours: 'Hours & minutes', list: 'Task list', gantt: 'Gantt chart', data: 'Plans & data' };
 let helpTab = 'start';   // the topic last read (this session): the dialog reopens where you left it
+/* ---- the keyboard shortcuts sheet (press ?): one table, SHORTCUTS, so the sheet is the only place the list is kept. Each row is
+   [keys, what it does]; a key is a string, an array means "either" (shown with "or"), and 'Mod' is Ctrl or ⌘ for the platform. ---- */
+const SHORTCUTS = [
+  ['Anywhere', [
+    [['?'], 'Show this sheet'],
+    [['Mod+K', '/'], 'Find a task'],
+    [['Mod+P'], 'Print'],
+    [['Esc'], 'Close the open dialog or menu; otherwise clear the selection'],
+    [['Mod+Z'], 'Undo'], [['Mod+Shift+Z', 'Mod+Y'], 'Redo']]],
+  ['Tasks', [
+    [['Click'], 'Select a task'], [['Mod+Click'], 'Add or remove one task from the selection'], [['Shift+Click'], 'Select a range'],
+    [['Mod+A'], 'Select every visible task'],
+    [['Double-click'], 'Open the task'], [['Right-click'], 'Row menu'],
+    [['Mod+C', 'Mod+X', 'Mod+V'], 'Copy / cut / paste tasks'],
+    [['Delete', 'Backspace'], 'Delete the selected tasks']]],
+  ['Editing a cell', [
+    [['Enter'], 'Save'], [['Esc'], 'Cancel the edit']]],
+  ['Find', [
+    [['↑', '↓'], 'Move through the results'], [['Enter'], 'Go to the task'],
+    [['Shift+Enter'], 'Filter the list to all the results'], [['Esc'], 'Close']]],
+  ['Dialogs and the Task Form', [
+    [['Enter'], 'Apply (OK / Save)'], [['Esc'], 'Close; asks first when there are unsaved changes'], [['Tab'], 'Next field, staying inside the dialog']]]
+];
+function shortcutKeysHtml(keys) {
+  const mac = /Mac|iPhone|iPad/.test(navigator.platform || '');
+  const one = k => k.split('+').map(x => `<kbd>${x === 'Mod' ? (mac ? '⌘' : 'Ctrl') : x === 'Shift' && mac ? '⇧' : x}</kbd>`).join('');
+  return keys.map(one).join('<span class="sc-or">or</span>');
+}
+function openShortcuts() {
+  document.getElementById('shortcutsBody').innerHTML = '<div class="sc-cols">' + SHORTCUTS.map(([title, rows]) =>
+    `<div class="sc-group"><h3>${escapeHtml(title)}</h3>${rows.map(([k, what]) => `<div class="sc-row"><span>${escapeHtml(what)}</span><span class="sc-keys">${shortcutKeysHtml(k)}</span></div>`).join('')}</div>`).join('') + '</div>';
+  document.getElementById('shortcutsModalBg').classList.add('open');
+}
+function closeShortcuts() { document.getElementById('shortcutsModalBg').classList.remove('open'); }
 function openHelpModal(tab) { clearHelpSearch(); setHelpTab(tab || helpTab); document.getElementById('helpModalBg').classList.add('open'); }
 // Search: every Help row that contains all the words, grouped by topic, with the words marked; a topic name jumps to that topic.
 let helpSearching = false;
@@ -11736,6 +11796,7 @@ function wireGlobalEvents() {
     if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'a' && !typingNow && !modalOpen) { e.preventDefault(); setSelection(visibleTaskList().map(v => v.task.id)); render(); return; }   // select every visible task
     if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'k' && !document.querySelector('.modal-bg.open:not(#searchModalBg)')) { e.preventDefault(); if (document.getElementById('searchModalBg').classList.contains('open')) closeSearch(); else openSearch(); return; }
     if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'p' && !document.querySelector('.modal-bg.open:not(#printModalBg)')) { e.preventDefault(); if (!document.getElementById('printModalBg').classList.contains('open')) openPrintModal(); return; }   // Ctrl/Cmd+P opens our print dialog instead of printing the screen
+    if (e.key === '?' && !typingNow && !modalOpen && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); openShortcuts(); return; }
     if (e.key === '/' && !typingNow && !modalOpen && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); openSearch(); return; }
     if ((e.key === 'Delete' || e.key === 'Backspace') && !typingNow && !modalOpen && !editingCell && selectedIds().length) { e.preventDefault(); deleteSelected(); return; }
     if (e.key !== 'Escape') return;
@@ -11752,7 +11813,7 @@ function wireGlobalEvents() {
     // Escape closes whatever overlay is open first; only when there is none — and
     // the user isn't typing in a field, where Escape already means "cancel this
     // edit" — does it clear the task selection.
-    const modalIds = ['recurModalBg', 'taskModalBg', 'folderFilesModalBg', 'confirmModalBg', 'calendarModalBg', 'precisionModalBg', 'rulesModalBg', 'currencyModalBg', 'baselineModalBg', 'rescheduleModalBg', 'levelModalBg', 'syncConflictsModalBg', 'planModalBg', 'excelModalBg', 'importModalBg', 'foreignImportModalBg', 'bulkModalBg', 'searchModalBg', 'printModalBg', 'backupsModalBg', 'helpModalBg', 'aboutModalBg'];
+    const modalIds = ['recurModalBg', 'taskModalBg', 'folderFilesModalBg', 'confirmModalBg', 'calendarModalBg', 'precisionModalBg', 'rulesModalBg', 'currencyModalBg', 'baselineModalBg', 'rescheduleModalBg', 'levelModalBg', 'syncConflictsModalBg', 'planModalBg', 'excelModalBg', 'importModalBg', 'foreignImportModalBg', 'bulkModalBg', 'searchModalBg', 'printModalBg', 'backupsModalBg', 'helpModalBg', 'aboutModalBg', 'shortcutsModalBg'];
     const overlayOpen = modalIds.some(id => document.getElementById(id).classList.contains('open'))
       || document.getElementById('fileSyncModalBg').classList.contains('open')   // mandatory: Escape can't close it
       || document.getElementById('dataMenu').classList.contains('open')

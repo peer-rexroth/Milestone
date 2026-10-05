@@ -13,13 +13,13 @@ with sync_playwright() as p:
     op = lambda col: float(pg.evaluate("c => getComputedStyle(document.querySelector(`#gridHeader .col-filter-btn[data-col='${c}']`)).opacity", col))
     pg.mouse.move(5, 5); pg.wait_for_timeout(150)
     rest = {c: op(c) for c in ("name", "start", "duration")}
-    check("at rest the funnels are dimmed (55%)", all(abs(v - .55) < .02 for v in rest.values()), rest)
+    check("at rest the funnels are invisible (UX review #13: they show only on hover, focus, an open menu or an active filter)", all(v == 0 for v in rest.values()), rest)
     # hover the header bar but not any funnel: an empty spot in the "Task Name" header, right of its label
     box = pg.evaluate("() => { const h = document.querySelector('#gridHeader .col-head:has(.col-filter-btn[data-col=\"name\"])').getBoundingClientRect(); return {x: h.left + h.width - 30, y: h.top + h.height / 2}; }")
     pg.mouse.move(box["x"], box["y"]); pg.wait_for_timeout(300)
-    check("hovering the header bar (not a funnel) does NOT change any funnel", pg.evaluate("() => document.querySelector('#gridHeader').matches(':hover')") and all(abs(op(c) - .55) < .02 for c in ("name", "start", "duration")), {c: op(c) for c in ("name", "start", "duration")})
+    check("hovering a header (not its funnel) shows that column's funnel dimmed (55%) and no other", pg.evaluate("() => document.querySelector('#gridHeader').matches(':hover')") and abs(op("name") - .55) < .02 and op("start") == 0 and op("duration") == 0, {c: op(c) for c in ("name", "start", "duration")})
     pg.hover("#gridHeader .col-filter-btn[data-col='start']"); pg.wait_for_timeout(300)
-    check("hovering one funnel highlights just that one", op("start") == 1 and abs(op("duration") - .55) < .02 and abs(op("name") - .55) < .02, {c: op(c) for c in ("name", "start", "duration")})
+    check("hovering one funnel highlights just that one (full opacity) and the neighbours stay invisible", op("start") == 1 and op("duration") == 0 and op("name") == 0, {c: op(c) for c in ("name", "start", "duration")})
     pg.mouse.move(5, 5)
     pg.evaluate("() => { colFilters.duration = {}; }") if False else None
     pg.click("#gridHeader .col-filter-btn[data-col='duration']"); pg.wait_for_timeout(200)

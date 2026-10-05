@@ -37,7 +37,7 @@ with sync_playwright() as p:
 
     seed()
     check("Tasks view: a filter button on every data column (mode, name, start, finish, duration, %, predecessors)", pg.evaluate("() => [...document.querySelectorAll('.col-filter-btn')].map(b => b.dataset.col)") == ["mode", "name", "start", "end", "duration", "progress", "preds"])
-    check("...and none on the ID column or the row actions", pg.locator(".grid-header > div").count() == 9 and pg.locator(".grid-header > div:first-child .col-filter-btn, .grid-header > div:last-child .col-filter-btn").count() == 0)
+    check("...and none on the ID column (there is no actions column any more)", pg.locator(".grid-header > div").count() == 8 and pg.locator(".grid-header > div:first-child .col-filter-btn").count() == 0)
     check("no header label is cut off by its filter button", pg.evaluate("() => [...document.querySelectorAll('.grid-header .col-head > span')].every(e => e.scrollWidth <= e.clientWidth)"))
     pg.evaluate("() => { currentView = 'gantt'; render(); }")
     check("Gantt view: the list has a funnel for every visible column, exactly like the Tasks view", pg.evaluate("() => [...document.querySelectorAll('.col-filter-btn')].map(b => b.dataset.col)") == pg.evaluate("() => visibleTaskCols()"))

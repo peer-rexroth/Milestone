@@ -23,7 +23,7 @@ with sync_playwright() as p:
     # ================================================================ the same list
     tasks_cols = pg.evaluate("() => visibleTaskCols('tasks')")
     check("the Gantt view's list can show the same columns as the Tasks view (each with its funnel)", cols() == tasks_cols and len(tasks_cols) >= 7, (cols(), tasks_cols))
-    check("...with the Actions header and the row buttons (Edit, Clone, Delete), the collapse toggle, WBS, %, Predecessors …", pg.locator("#gridHeader .actions-head").count() == 1 and pg.locator("#gridRows .grid-row .grid-actions button").count() == 12 and pg.locator("#collapseToggleBtn").count() == 1)
+    check("...with the row buttons (Edit, Clone, Delete — a hover overlay in the Task Name cell, no column of their own), the collapse toggle, WBS, %, Predecessors …", pg.locator("#gridHeader .actions-head").count() == 0 and pg.locator("#gridRows .grid-row .grid-actions button").count() == 12 and pg.locator("#collapseToggleBtn").count() == 1)
     check("the Columns button is available in the Gantt view too", pg.locator("#columnsBtn:not(.hidden)").count() == 1)
     check("the list is 640px wide by default (it was a 400px sidebar)", abs(pg.evaluate("() => document.getElementById('gridPane').getBoundingClientRect().width") - 640) < 1.5)
     # ================================================================ aligned with the chart
