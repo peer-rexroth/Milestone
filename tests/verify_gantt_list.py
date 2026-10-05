@@ -61,7 +61,7 @@ with sync_playwright() as p:
     check("...editing a date in the list moves the bar in the chart (Sketch starts 08.09)", pg.evaluate("() => tasks.find(t => t.name === 'Sketch').startDate") == "2026-09-08")
     pg.locator("#gridRows .grid-row").nth(3).click(position={"x": 25, "y": 10}); pg.wait_for_timeout(150)   # (the ID cell: the centre of the row would land on an editable cell)
     check("selecting a task in the list highlights its row in the chart", pg.locator(".gantt-row-bg.selected").count() == 1 and pg.locator("#gridRows .grid-row.selected").count() == 1)
-    n0 = pg.evaluate("() => tasks.length"); pg.locator("#gridRows .grid-row").nth(3).hover(); pg.locator("#gridRows .grid-row").nth(3).locator("button[title^='Clone']").click(); pg.wait_for_timeout(300)
+    n0 = pg.evaluate("() => tasks.length"); pg.locator("#gridRows .grid-row").nth(3).hover(); pg.locator("#gridRows .grid-row").nth(3).locator("button[title^='Duplicate']").click(); pg.wait_for_timeout(300)
     check("the Clone button in a row works from the Gantt view (a copy appears in the list and as a bar)", pg.evaluate("() => tasks.length") == n0 + 1 and pg.locator("#gridRows .grid-row").count() == n0 + 1 and pg.locator(".gantt-bar").count() >= n0)
     pg.click("#toastUndoBtn"); pg.wait_for_timeout(200)
     # ================================================================ picking columns changes both views

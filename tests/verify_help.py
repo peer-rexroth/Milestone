@@ -55,7 +55,7 @@ with sync_playwright() as p:
 
     # ---------------------------------------------------------------- content
     txt = {t: ev(f"() => document.getElementById('helpPane-{t}').textContent") for t in TABS}
-    need = {"start": ["Add Task", "Clone", "Undo and redo", "Ctrl/Cmd", "milestone", "Selecting several tasks", "Copy and paste", "Find a task", "Edit tasks"], "scheduling": ["Auto Scheduled", "Manually Scheduled", "Start No Earlier Than", "circular dependency", "3FS+2"],
+    need = {"start": ["Add Task", "Duplicate", "Undo and redo", "Ctrl/Cmd", "milestone", "Selecting several tasks", "Copy and paste", "Find a task", "Edit tasks"], "scheduling": ["Auto Scheduled", "Manually Scheduled", "Start No Earlier Than", "circular dependency", "3FS+2"],
             "progress": ["holidays", "Working calendar", "Actual Finish", "baseline", "Variance", "Remaining Duration", "Public holidays"], "hours": ["Hours & minutes", "Scheduling precision", "Different hours", "Lags are working time", "Paste and CSV import", "Hours scale"], "list": ["Columns", "Custom fields", "funnel", "(Blanks)"],
             "gantt": ["critical path", "Week / Month / Year", "dependency", "Printing", "Save as PDF"], "data": ["JSON file", "conflicts", "Export to Excel", "Local Backups", "Nothing here ever leaves your machine", "Import tasks (MS Project XML, CSV)", "CSV"]}
     missing = {t: [w for w in ws if w not in txt[t]] for t, ws in need.items()}

@@ -99,7 +99,7 @@ with sync_playwright() as p:
     pg.click(".view-tab:has-text('Tasks')"); pg.wait_for_timeout(200)
     # ============================================================ 10. row actions: clone, delete, undo
     n0 = pg.evaluate("() => tasks.length")
-    rowbtn("Design", "Clone"); check("Clone copies a group with all its sub-tasks (Design + 2 tasks = 3 new tasks)", pg.evaluate("() => tasks.length") == n0 + 3 and T("Design (copy)") is not None)
+    rowbtn("Design", "Duplicate"); check("Clone copies a group with all its sub-tasks (Design + 2 tasks = 3 new tasks)", pg.evaluate("() => tasks.length") == n0 + 3 and T("Design (copy)") is not None)
     pg.click("#toastUndoBtn"); pg.wait_for_timeout(200); check("Undo removes the clone completely", pg.evaluate("() => tasks.length") == n0)
     rowbtn("Test", "Delete"); pg.wait_for_selector("#confirmModalBg.open"); pg.click("#confirmModalActionBtn"); pg.wait_for_timeout(200)
     check("Delete asks for confirmation, then removes the task and offers Undo", T("Test") is None and "deleted" in toast().lower())

@@ -89,7 +89,7 @@ with sync_playwright() as p:
     seed(FIVE)
     click("B"); click("D", ["Meta"]); pg.click("#cloneTaskBtn"); pg.wait_for_timeout(150)
     check("Clone with two selected clones both, each right below its original", names() == ["A", "B", "B (copy)", "C", "D", "D (copy)", "E"], names())
-    check("...the copies are the selection and the toast says two tasks", sel() == ["B (copy)", "D (copy)"] and "Cloned 2 tasks" in pg.inner_text("#toastMsg"), (sel(), pg.inner_text("#toastMsg")))
+    check("...the copies are the selection and the toast says two tasks", sel() == ["B (copy)", "D (copy)"] and "Duplicated 2 tasks" in pg.inner_text("#toastMsg"), (sel(), pg.inner_text("#toastMsg")))
     pg.click("#toastUndoBtn"); pg.wait_for_timeout(150)
     check("...and its Undo removes both", names() == ["A", "B", "C", "D", "E"] and sel() == ["B", "D"], (names(), sel()))
     seed(FIVE)

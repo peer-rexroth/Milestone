@@ -24,14 +24,14 @@ with sync_playwright() as p:
     tid = lambda n: pg.evaluate("n => (tasks.find(t => t.name === n) || {}).id", n)
     names = lambda: pg.evaluate("() => visibleTaskList().map(v => v.task ? v.task.name : v.name)") 
     order_of = lambda parent: pg.evaluate("p => childrenOf(p).map(t => t.name)", parent)
-    clone_btn = lambda n: pg.locator(f".grid-row[data-id='{tid(n)}'] .grid-actions button[title^='Clone']")
+    clone_btn = lambda n: pg.locator(f".grid-row[data-id='{tid(n)}'] .grid-actions button[title^='Duplicate']")
     def click_clone(n):
         pg.locator(f".grid-row[data-id='{tid(n)}']").hover(); clone_btn(n).click(); pg.wait_for_timeout(150)
 
     # ---------------------------------------------------------- a single task
     seed([{"name": "A", "s": "2026-09-07", "e": "2026-09-11", "extra": {"progress": 40, "resource": "Ann", "color": "blue", "actualStart": "2026-09-08", "constraintType": "SNET", "constraintDate": "2026-09-07", "custom": {"text1": "hello", "num1": 5}}},
           {"name": "B", "s": "2026-09-12", "e": "2026-09-14"}])
-    check("the row has a Clone button next to Edit and Delete", pg.locator(f".grid-row[data-id='{tid('A')}'] .grid-actions button").count() == 3)
+    check("the row has a Duplicate button next to Edit and Delete", pg.locator(f".grid-row[data-id='{tid('A')}'] .grid-actions button").count() == 3)
     check("...and the actions column is wide enough for all three (nothing clipped)", pg.evaluate("() => { const r = document.querySelector('.grid-row .grid-actions'); const row = r.parentElement.getBoundingClientRect(); return r.getBoundingClientRect().right <= row.right + 0.5 && r.scrollWidth <= r.clientWidth + 1; }"))
     click_clone("A")
     check("cloning A adds exactly one task, placed directly below A (before B)", pg.evaluate("() => tasks.length") == 3 and order_of(None) == ["A", "A (copy)", "B"], order_of(None))
@@ -41,7 +41,7 @@ with sync_playwright() as p:
     check("...it has its own id and becomes the selected task", c["newId"] and c["sel"])
     pg.evaluate("() => { tasks.find(x => x.name === 'A (copy)').custom.text1 = 'changed'; }")
     check("custom values are deep-copied (editing the copy leaves the original alone)", pg.evaluate("() => tasks.find(x => x.name === 'A').custom.text1") == "hello")
-    check("a toast confirms it, with Undo", "Cloned" in pg.inner_text("#toastMsg") and pg.locator("#toastUndoBtn").is_visible())
+    check("a toast confirms it, with Undo", "Duplicated" in pg.inner_text("#toastMsg") and pg.locator("#toastUndoBtn").is_visible())
     check("the moved sibling B got a fresh updatedAt (so a sync sees the reorder); the original A did not", pg.evaluate("() => tasks.find(x => x.name === 'B').updatedAt") > 1 and pg.evaluate("() => tasks.find(x => x.name === 'A').updatedAt") == 1)
     pg.click("#toastUndoBtn"); pg.wait_for_timeout(150)
     check("Undo removes the copy and restores the order", order_of(None) == ["A", "B"] and pg.evaluate("() => tasks.length") == 2 and pg.evaluate("() => tasks.find(x => x.name === 'B').order") == 1, order_of(None))
@@ -121,9 +121,9 @@ with sync_playwright() as p:
     check("...and enabled once a task is selected", not pg.is_disabled("#cloneTaskBtn"))
     pg.click("#cloneTaskBtn"); pg.wait_for_timeout(150)
     check("the toolbar button clones the selected task with its sub-task", order_of(None) == ["T", "T (copy)"] and pg.evaluate("() => descendantIds(tasks.find(t => t.name === 'T (copy)').id).length") == 1, order_of(None))
-    check("the row button's tooltip says sub-tasks come along for a group, not for a leaf", "sub-tasks" in pg.get_attribute(f".grid-row[data-id='{tid('T')}'] .grid-actions button[title^='Clone']", "title") and "sub-tasks" not in pg.get_attribute(f".grid-row[data-id='{tid('T1')}'] .grid-actions button[title^='Clone']", "title"))
+    check("the row button's tooltip says sub-tasks come along for a group, not for a leaf", "sub-tasks" in pg.get_attribute(f".grid-row[data-id='{tid('T')}'] .grid-actions button[title^='Duplicate']", "title") and "sub-tasks" not in pg.get_attribute(f".grid-row[data-id='{tid('T1')}'] .grid-actions button[title^='Duplicate']", "title"))
     # clicking the button must not open the dialog or start an edit
-    check("clicking Clone doesn't open the task dialog", not pg.evaluate("() => document.getElementById('taskModalBg').classList.contains('open')"))
+    check("clicking Duplicate doesn't open the task dialog", not pg.evaluate("() => document.getElementById('taskModalBg').classList.contains('open')"))
     # dark theme visible / light? gantt view: no crash
     pg.evaluate("() => { currentView = 'gantt'; render(); }"); pg.wait_for_timeout(100)
     check("the Gantt view still renders with clones", pg.locator(".gantt-bar").count() > 0)

@@ -715,7 +715,7 @@ input.inline-edit[type=date]::-webkit-calendar-picker-indicator { margin: 0 0 0 
 .inline-cal { position: absolute; right: 1px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-dim); padding: 2px 4px; font-size: 11px; }
 .inline-cal:hover { color: var(--accent); }
 .inline-date-hidden { position: absolute; right: 0; bottom: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
-/* Row actions (Edit / Clone / Delete) are an overlay on the right end of the Task Name cell, shown (opacity) while the row is hovered or has focus — invisible, not removed, so they are always in the layout and a script can reach them: they take no
+/* Row actions (Edit / Duplicate / Delete) are an overlay on the right end of the Task Name cell, shown (opacity) while the row is hovered or has focus — invisible, not removed, so they are always in the layout and a script can reach them: they take no
    column of their own (it was 88px of mostly empty space) and, because Task Name is a frozen column, they stay in view when the list scrolls sideways.
    The fade on their left lets a long name run underneath without a hard cut. */
 .modal.shortcuts-modal { width: 700px; max-width: 94vw; }
@@ -1989,7 +1989,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <div class="help-section">
           <div class="help-section-title">Selecting several tasks</div>
           <div class="help-row"><i class="fa-solid fa-object-group"></i><span><strong>Ctrl/Cmd+click</strong> adds a task to the selection or takes it out; <strong>Shift+click</strong> selects every visible row from the last one you clicked; <strong>Ctrl/Cmd+A</strong> selects all visible tasks; <strong>Esc</strong> (or the “N selected” chip in the toolbar) clears it.</span></div>
-          <div class="help-row"><i class="fa-solid fa-layer-group"></i><span>Indent, Outdent, Clone, Copy and Delete then act on all of them (a group brings its sub-tasks). The <strong>Edit button</strong> in the toolbar opens the full task dialog for one selected task (the same as a double-click) and, with several selected, <strong>Edit tasks</strong>: tick the fields to change — % complete, Resource, Task Mode, Row colour, <em>Move dates by</em> a number of working days, <em>Add predecessor</em>, and any custom field you show — and Apply (or Enter). It is one Undo step.</span></div>
+          <div class="help-row"><i class="fa-solid fa-layer-group"></i><span>Indent, Outdent, Duplicate, Copy and Delete then act on all of them (a group brings its sub-tasks). The <strong>Edit button</strong> in the toolbar opens the full task dialog for one selected task (the same as a double-click) and, with several selected, <strong>Edit tasks</strong>: tick the fields to change — % complete, Resource, Task Mode, Row colour, <em>Move dates by</em> a number of working days, <em>Add predecessor</em>, and any custom field you show — and Apply (or Enter). It is one Undo step.</span></div>
         </div>
         <div class="help-divider"></div>
         <div class="help-section">
@@ -5504,7 +5504,7 @@ function renderGrid() {
     const varCell = n => `<div class="grid-cell-dim${summaryCls}${n > 0 ? ' var-late' : n < 0 ? ' var-early' : ''}" title="${bn}">${fmtVarianceFor(t.id, n)}</div>`;
     const actionsHtml = `<div class="grid-actions">
         ${t.spacer ? '' : `<button class="icon-btn" onclick="event.stopPropagation();openTaskModal('${t.id}')" title="Edit"><i class="fa-solid fa-pen"></i></button>`}
-        <button class="icon-btn" onclick="event.stopPropagation();cloneTask('${t.id}')" title="Clone${hasChildren(t.id) ? ' (with all its sub-tasks)' : ''}"><i class="fa-regular fa-clone"></i></button>
+        <button class="icon-btn" onclick="event.stopPropagation();cloneTask('${t.id}')" title="Duplicate${hasChildren(t.id) ? ' (with all its sub-tasks)' : ''}"><i class="fa-regular fa-clone"></i></button>
         <button class="icon-btn btn-danger" onclick="event.stopPropagation();deleteTaskFlow('${t.id}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
       </div>`;
     const cells = {
@@ -6956,7 +6956,7 @@ function cloneTasks(ids) {
   for (const x of parts) for (const c of x.copies) if (x.inCycle.has(x.cycleSrc.get(c.id))) applyConstraints(c.id);   // a copy is exact (even a task the user placed ahead of its links), except that the copy of a dependency-cycle member — which the scheduler never placed — is not in the cycle and is placed by its links now
   save(); render();
   const sub = parts.reduce((n, x) => n + x.copies.length - 1, 0), src0 = parts[0].src;
-  const msg = parts.length === 1 ? (parts[0].copies.length > 1 ? `Cloned ${taskLabel(src0)} with ${parts[0].copies.length - 1} sub-task${parts[0].copies.length === 2 ? '' : 's'}` : `Cloned ${taskLabel(src0)}`) : `Cloned ${parts.length} tasks${sub ? ` with ${sub} sub-task${sub === 1 ? '' : 's'}` : ''}`;
+  const msg = parts.length === 1 ? (parts[0].copies.length > 1 ? `Duplicated ${taskLabel(src0)} with ${parts[0].copies.length - 1} sub-task${parts[0].copies.length === 2 ? '' : 's'}` : `Duplicated ${taskLabel(src0)}`) : `Duplicated ${parts.length} tasks${sub ? ` with ${sub} sub-task${sub === 1 ? '' : 's'}` : ''}`;
   showToast(msg, false, () => {
     for (const x of [...parts].reverse()) x.undo();
     setSelection(prevSelected.filter(id => byId(id)));
@@ -10040,7 +10040,7 @@ async function exportPrintImage(kind) {
       const png = await svgToPng(im.svg, im.W, im.H, scale);
       downloadBlob(png, `${base}.png`); showToast(`Saved ${base}.png (${Math.round(im.W * scale)} × ${Math.round(im.H * scale)} px)`);
     }
-  } catch (e) { console.error('Milestone: picture failed', e); showToast(kind === 'copy' ? 'Copying the picture was refused — use PNG' : 'The PNG could not be made — use SVG', true); }
+  } catch (e) { if (e && e.name !== 'NotAllowedError') console.error('Milestone: picture failed', e); showToast(kind === 'copy' ? 'Copying the picture was refused — use PNG' : 'The PNG could not be made — use SVG', true); }   // (a refused clipboard write is the browser's permission, not a fault: the toast says so)
 }
 function doPrint() {
   const built = printBuilt || buildPrintPages(readPrintOptions());
@@ -10199,11 +10199,22 @@ function showRowMenu(x, y, onRow) {
   const sep = '<div class="dropdown-sep"></div>', parts = [];
   if (real) parts.push(item('fa-solid fa-pen-to-square', real === 1 ? 'Edit task…' : `Edit ${real} tasks…`, 'editSelected()'));
   { const one = ids.length === 1 && byId(ids[0]); if (one && one.recurrence) parts.push(item('fa-solid fa-repeat', 'Change recurrence…', `openRecurModal('${one.id}')`)); }
-  parts.push(item('fa-solid fa-plus', n ? 'Add task below' : 'Add task', 'addTask()'), item('fa-solid fa-grip-lines', 'Add empty line', 'addSpacer()'));
+  if (parts.length) parts.push(sep);   // (what you can do to this task, then what you can add)
+  const addLabel = !n ? 'Add task' : ids.length === 1 && hasChildren(ids[0]) ? 'Add sub-task' : 'Add task below';   // (under a group the new task becomes its first sub-task)
+  parts.push(item('fa-solid fa-plus', addLabel, 'addTask()'), item('fa-solid fa-grip-lines', 'Add empty line', 'addSpacer()'));
   if (n) parts.push(sep, item('fa-regular fa-clone', 'Duplicate', 'cloneSelected()'), item('fa-regular fa-copy', 'Copy', 'copySelectionButton()', { kbd: MOD_KEY + 'C' }), item('fa-solid fa-scissors', 'Cut', 'copySelection(null, true)', { kbd: MOD_KEY + 'X' }));
   parts.push(n ? '' : sep, item('fa-regular fa-paste', 'Paste', 'pasteButton()', { kbd: MOD_KEY + 'V' }));
   if (n) parts.push(sep, item('fa-solid fa-indent', 'Indent', 'indentSelected()'), item('fa-solid fa-outdent', 'Outdent', 'outdentSelected()', { off: !ids.some(id => byId(id).parentId) }), sep, item('fa-solid fa-trash', n > 1 ? `Delete ${n} tasks` : 'Delete', 'deleteSelected()', { danger: true, kbd: 'Del' }));
   menu.innerHTML = parts.join('');
+  closeDataMenu(); closePlanMenu(); closeColumnsMenu(); closeFilterMenu(); closeTaskModeMenu(); closeTaskTypeMenu(); closeAddMenu();
+  placeMenu(menu, x, y);
+}
+function showGroupHeaderMenu(x, y, enc) {   // right-click on a group header (Group by): fold it, fold or open them all, or clear the grouping
+  const h = displayRows().find(r => r.header && r.id === decodeURIComponent(enc)), menu = document.getElementById('rowMenu');
+  const item = (icon, label, fn) => `<button class="dropdown-item" role="menuitem" onclick="closeRowMenu();${fn}"><i class="${icon}"></i>${label}</button>`, sep = '<div class="dropdown-sep"></div>';
+  menu.innerHTML = [h ? item(h.collapsed ? 'fa-solid fa-chevron-down' : 'fa-solid fa-chevron-right', h.collapsed ? 'Expand this group' : 'Collapse this group', `groupToggle('${enc}')`) : '',
+    item('fa-solid fa-angles-up', 'Collapse all groups', 'groupFoldAll(true)'), item('fa-solid fa-angles-down', 'Expand all groups', 'groupFoldAll(false)'), sep,
+    item('fa-solid fa-xmark', 'Clear grouping', 'setGroup(null)')].join('');
   closeDataMenu(); closePlanMenu(); closeColumnsMenu(); closeFilterMenu(); closeTaskModeMenu(); closeTaskTypeMenu(); closeAddMenu();
   placeMenu(menu, x, y);
 }
@@ -10212,6 +10223,7 @@ function onListContextMenu(e) {
   if (e.target.closest && e.target.closest('.inline-edit, .inline-wrap, input, textarea, select')) return;   // a text box keeps the browser's own menu (cut / copy / paste text)
   let id = null;
   const rowEl = e.target.closest && e.target.closest('.grid-row');
+  if (rowEl && rowEl.classList.contains('group-head')) { e.preventDefault(); showGroupHeaderMenu(e.clientX, e.clientY, rowEl.dataset.gkey); return; }
   if (rowEl) id = rowEl.dataset.id;
   else if (e.currentTarget && e.currentTarget.id === 'ganttRows') { const list = visibleTaskList(), top = e.currentTarget.getBoundingClientRect().top, hit = list[Math.floor((e.clientY - top) / ROW_H)]; if (hit) id = hit.task.id; }
   e.preventDefault();

@@ -31,7 +31,7 @@ with sync_playwright() as p:
     check("hover a row: Edit, Clone and Delete appear at the right end of the Task Name cell, inside it, as tall as the row", g["op"] == "1" and g["n"] == 3 and g["inside"] and g["right"] <= 1 and abs(g["h"] - g["rh"]) <= 2, g)
     check("only the hovered row shows them", ev("() => [...document.querySelectorAll('#gridRows .grid-row .grid-actions')].filter(a => getComputedStyle(a).opacity === '1').length") == 1)
     check("they cost no width: a long name is still cut only by the cell, not by a reserved gap (name text keeps the whole cell width)", ev("() => { const r = document.querySelectorAll('#gridRows .grid-row')[1]; const n = r.querySelector('.grid-name'), t = r.querySelector('.name-text'); return t.getBoundingClientRect().right <= n.getBoundingClientRect().right + 0.5 && t.getBoundingClientRect().width > 200; }"))
-    row(2).hover(); pg.locator("#gridRows .grid-row").nth(2).locator(".grid-actions button[title='Clone']").click(); pg.wait_for_timeout(200)
+    row(2).hover(); pg.locator("#gridRows .grid-row").nth(2).locator(".grid-actions button[title='Duplicate']").click(); pg.wait_for_timeout(200)
     check("clicking Clone on the overlay clones that task (and does not select or open anything else)", ev("() => tasks.filter(t => t.name.startsWith('Beta')).length") == 2 and not ev("() => document.getElementById('taskModalBg').classList.contains('open')"))
     row(2).hover(); pg.locator("#gridRows .grid-row").nth(2).locator(".grid-actions button[title='Edit']").click(); pg.wait_for_timeout(200)
     check("clicking Edit opens the task dialog", ev("() => document.getElementById('taskModalBg').classList.contains('open')"))
