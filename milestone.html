@@ -1003,13 +1003,17 @@ select.rst-select:disabled { opacity: .5; }
 .cal-sec .hol-add .hol-field-name { flex: 1 1 200px; min-width: 110px; }
 .cal-sec .hol-add input[type=text] { width: 100%; }
 .cal-sec .wh-break-add input.dt-time { width: 84px; }
-.precision-row { display: flex; flex-direction: column; gap: 8px; }
+.precision-row { display: flex; flex-direction: column; gap: 12px; }
 .precision-opt { display: flex; align-items: flex-start; gap: 8px; cursor: pointer; font-size: 13px; }
 .precision-opt input { margin-top: 3px; flex-shrink: 0; }
-.precision-opt .cal-sec-note { display: block; font-size: 12px; }
-.workhours-editor { display: flex; flex-direction: column; gap: 10px; padding: 10px 12px; margin-top: 2px; background: var(--panel-2); border-radius: 8px; }
+.precision-opt .cal-sec-note { display: block; font-size: 12px; margin-top: 2px; }
+.workhours-editor { display: flex; flex-direction: column; gap: 14px; padding: 14px; margin-top: 6px; background: var(--panel-2); border-radius: 8px; }
+.wh-cap { font-size: 12px; font-weight: 600; color: var(--text-dim); }   /* the editor's captions: the same small semibold grey as a field label elsewhere */
+.wh-cap .cal-sec-note { font-weight: 500; color: var(--text-faint); margin-left: 4px; }
+.wh-breaks { display: flex; flex-direction: column; gap: 8px; }   /* caption, the list, the add row: 8px apart (they used to touch) */
 .wh-day-row { display: flex; align-items: center; gap: 8px; }
-.whd-list { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+.whd-list { display: flex; flex-direction: column; gap: 8px; margin-top: 0; }
+.whd-details > .cal-sec-note { display: block; font-size: 12px; color: var(--text-faint); margin: 0 0 10px; }
 .whd-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .whd-row .whd-name { width: 40px; flex-shrink: 0; font-size: 13px; font-weight: 600; color: var(--text); }
 .whd-row input.dt-time { width: 84px; }
@@ -1017,9 +1021,9 @@ select.rst-select:disabled { opacity: .5; }
 .whd-remove { border: none; background: none; color: var(--text-faint); width: 24px; height: 24px; border-radius: 5px; flex-shrink: 0; }
 .whd-remove:hover { background: var(--panel-2); color: var(--danger); }
 .wh-day-row input.dt-time { width: 84px; }
-.whd-details { border-top: 1px solid var(--border); padding-top: 8px; }
+.whd-details { border-top: 1px solid var(--border); padding-top: 12px; }
 .whd-details > summary { cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text-dim); list-style-position: inside; }
-.whd-details[open] > summary { margin-bottom: 4px; }
+.whd-details[open] > summary { margin-bottom: 8px; }
 .rs-details { margin-top: 2px; }
 .rs-details > summary { cursor: pointer; font-size: 12.5px; font-weight: 600; color: var(--accent); list-style-position: inside; }
 .rs-list { max-height: 160px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; margin-top: 6px; font-size: 12.5px; }
@@ -1034,7 +1038,7 @@ select.rst-select:disabled { opacity: .5; }
 .rs-row .rs-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
 .rs-row .rs-dates { flex-shrink: 0; color: var(--text-dim); }
 .whd-count { font-weight: 500; font-size: 12px; color: var(--accent); margin-left: 4px; }
-.whd-add { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+.whd-add { display: flex; align-items: center; gap: 6px; margin-top: 10px; }
 .whd-add select { padding: 7px 9px; border: 1px solid var(--border); border-radius: 7px; background: var(--panel); color: var(--text); }
 .hol-break { flex-basis: 100%; height: 0; }
 /* A day-off add row (Working calendar, Days off): each box has its own small label above it, so "Last day" reads as
@@ -1890,13 +1894,13 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         </div>
         <div class="workhours-editor hidden" id="workHoursEditor">
           <div class="wh-day-row">
-            <span class="cal-sec-note">Working day</span>
+            <span class="wh-cap">Working day</span>
             <input type="text" id="whStart" class="dt-time" aria-label="Working day starts">
             <span class="hol-to">to</span>
             <input type="text" id="whEnd" class="dt-time" aria-label="Working day ends">
           </div>
-          <div>
-            <div class="cal-sec-note">Breaks (lunch, etc.) — not counted as working time</div>
+          <div class="wh-breaks">
+            <div class="wh-cap">Breaks <span class="cal-sec-note">lunch, etc. — not counted as working time</span></div>
             <div class="hol-list" id="whBreakList"></div>
             <div class="wh-break-add">
               <input type="text" id="whBreakFrom" class="dt-time" aria-label="Break starts" onkeydown="if(event.key==='Enter'){event.preventDefault();addWorkBreak();}">
