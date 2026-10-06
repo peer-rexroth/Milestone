@@ -99,16 +99,16 @@ with sync_playwright() as p:
     pg.keyboard.press("Escape")
     pg.click("#planSettingsBtn"); pg.wait_for_timeout(150)
     open_bg = lambda: ev("() => [...document.querySelectorAll('.modal-bg.open')].map(e => e.id)")
-    check("Plan settings opens on its Calendar tab, titled 'Plan settings', the six tabs across the top",
+    check("Plan settings opens on its Calendar tab, titled 'Plan settings', the five tabs across the top",
           open_bg() == ["calendarModalBg"] and pg.inner_text("#calendarModalBg h2") == "Plan settings"
-          and [t.strip() for t in pg.locator("#calendarModalBg .settings-tab").all_inner_texts()] == ["Calendar", "Precision", "Scheduling rules", "Currency", "Custom fields", "Date & time"], open_bg())
+          and [t.strip() for t in pg.locator("#calendarModalBg .settings-tab").all_inner_texts()] == ["Calendar", "Precision", "Scheduling rules", "Custom fields", "Formats"], open_bg())
     size = lambda bg: ev("bg => { const r = document.querySelector('#' + bg + ' .modal').getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)]; }", bg)
     s_cal = size("calendarModalBg")
     sizes = {}
-    for tab, bg in [("precision", "precisionModalBg"), ("rules", "rulesModalBg"), ("currency", "currencyModalBg"), ("fields", "fieldsModalBg"), ("calendar", "calendarModalBg")]:
+    for tab, bg in [("precision", "precisionModalBg"), ("rules", "rulesModalBg"), ("format", "formatModalBg"), ("fields", "fieldsModalBg"), ("calendar", "calendarModalBg")]:
         pg.click(f".modal-bg.open [data-settings-tab='{tab}']"); pg.wait_for_timeout(120)
         sizes[tab] = (open_bg(), size(bg))
-    check("each tab switches the window to that setting — one window at a time", all(v[0] == [bg] for (k, v), bg in zip(sizes.items(), ["precisionModalBg", "rulesModalBg", "currencyModalBg", "fieldsModalBg", "calendarModalBg"])), sizes)
+    check("each tab switches the window to that setting — one window at a time", all(v[0] == [bg] for (k, v), bg in zip(sizes.items(), ["precisionModalBg", "rulesModalBg", "formatModalBg", "fieldsModalBg", "calendarModalBg"])), sizes)
     check("...and every tab is the same size, so switching never makes the window jump", len({tuple(v[1]) for v in sizes.values()} | {tuple(s_cal)}) == 1, sizes)
     check("the active tab is marked (aria-selected)", pg.get_attribute("#calendarModalBg .settings-tab[data-settings-tab='calendar']", "aria-selected") == "true")
     pg.locator("#calendarDays .cal-day", has_text="Sat").click()
@@ -119,22 +119,23 @@ with sync_playwright() as p:
     pg.click(".modal-bg.open [data-settings-tab='rules']"); pg.wait_for_timeout(100); pg.click("#confirmModalActionBtn"); pg.wait_for_timeout(150)
     check("'Discard changes' moves on to the tab, the calendar untouched", open_bg() == ["rulesModalBg"] and ev("() => project.workDays === undefined"))
     # scheduling rules
-    check("Scheduling rules shows the plan's settings (constraints honored, new tasks Auto)", pg.is_checked("#honorConstraintDatesInput") and pg.is_checked("#rulesNewAuto"))
-    pg.uncheck("#honorConstraintDatesInput"); pg.check("#rulesNewManual")
+    pg.click("#rulesAdv summary"); pg.wait_for_timeout(80)
+    check("Scheduling rules shows the plan's settings (a Status date box, and under Advanced: constraints honored); the new-task mode is NOT here (it lives in the Add menu)", pg.is_checked("#honorConstraintDatesInput") and pg.is_visible("#rulesStatusDateInput") and pg.locator("#rulesNewManual").count() == 0)
+    pg.uncheck("#honorConstraintDatesInput")
     pg.click("#rulesModalBg .modal-footer .btn-primary"); pg.wait_for_timeout(150)
-    check("saving them sets both on the plan", ev("() => [project.honorConstraintDates, project.newTaskMode]") == [False, "manual"] and open_bg() == [])
-    ev("() => { delete project.honorConstraintDates; project.newTaskMode = 'auto'; save(); render(); }")
+    check("saving sets it on the plan", ev("() => project.honorConstraintDates") == False and open_bg() == [])
+    ev("() => { delete project.honorConstraintDates; save(); render(); }")
     # currency
     pg.click("#planMenuBtn"); pg.wait_for_selector("#planMenu.open")
     check("the plan menu has Plan settings… too", pg.locator("#planMenuSettingsItem").count() == 1)
     pg.click("#planMenuSettingsItem"); pg.wait_for_timeout(150)
     check("...which reopens it on the tab last used (Scheduling rules)", open_bg() == ["rulesModalBg"])
-    pg.click(".modal-bg.open [data-settings-tab='currency']"); pg.wait_for_timeout(120)
-    check("Currency shows the plan's currency (EUR) with a preview", pg.input_value("#planCurrencyInput") == "EUR" and "€" in pg.inner_text("#planCurrencyPreview"))
-    pg.select_option("#planCurrencyInput", "GBP")
-    check("...the preview follows the choice", "£" in pg.inner_text("#planCurrencyPreview"), pg.inner_text("#planCurrencyPreview"))
-    pg.click("#currencyModalBg .modal-footer .btn-primary"); pg.wait_for_timeout(150)
-    check("saving sets the plan's currency (the same setting as the Resource Sheet's picker)", ev("() => project.currencyCode") == "GBP")
+    pg.click(".modal-bg.open [data-settings-tab='format']"); pg.wait_for_timeout(150)
+    check("Formats shows the plan's currency (EUR) with a preview, next to the date and time tiles", pg.input_value("#planCurrencyInput") == "EUR" and "€" in pg.inner_text("#planCurrencyPreview") and pg.locator("#fmtDateOpts .fmt-tile").count() == 4)
+    pg.select_option("#planCurrencyInput", "GBP"); pg.wait_for_timeout(200)
+    check("choosing a currency applies it at once (no Save): the plan's currency, the preview, the Cost column's format", ev("() => project.currencyCode") == "GBP" and "£" in pg.inner_text("#planCurrencyPreview") and "£" in ev("() => fmtCurrency(5)"), pg.inner_text("#planCurrencyPreview"))
+    pg.select_option("#planCurrencyInput", "EUR"); pg.wait_for_timeout(150)
+    check("...choosing EUR again removes the key (the default is not stored)", "currencyCode" not in ev("() => Object.keys(project)"))
     ev("() => { delete project.currencyCode; save(); render(); }")
     # custom fields from the task dialog: stands alone, no tabs
     ev("() => openTaskModal('a')"); pg.wait_for_timeout(120)

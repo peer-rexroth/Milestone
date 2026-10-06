@@ -121,7 +121,7 @@ with sync_playwright() as p:
     check("the gear (Plan settings) has the current calendar in its tooltip", "Mon–Fri" in pg.get_attribute("#planSettingsBtn", "title") and "Plan settings" in pg.get_attribute("#planSettingsBtn", "title"), pg.get_attribute("#planSettingsBtn", "title"))
     pg.click("#planSettingsBtn"); pg.click(".modal-bg.open [data-settings-tab='calendar']"); pg.wait_for_selector("#calendarModalBg.open"); pg.wait_for_timeout(100)
     checked = lambda: pg.evaluate("() => [...document.querySelectorAll('#calendarDays input:checked')].map(i => Number(i.value)).sort()")
-    check("the dialog shows Mon-Sun as chips, Mon-Fri ticked, named after the plan", checked() == [1, 2, 3, 4, 5] and pg.locator("#calendarDays .cal-day").count() == 7 and pg.inner_text("#calendarPlanName") == "My Project" and [t.strip() for t in pg.locator("#calendarDays .cal-day").all_inner_texts()] == ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"])
+    check("the dialog shows Mon-Sun as chips, Mon-Fri ticked, named after the plan", checked() == [1, 2, 3, 4, 5] and pg.locator("#calendarDays .cal-day").count() == 7 and pg.inner_text("#calendarModalBg [data-ps-plan]") == "— My Project" and [t.strip() for t in pg.locator("#calendarDays .cal-day").all_inner_texts()] == ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"])
     pg.locator("#calendarDays .cal-day", has_text="Sat").click()
     pg.click("#calendarModalBg .btn-primary"); pg.wait_for_timeout(200)
     check("adding Saturday and saving: the plan works Mon-Sat, stored with the plan, toast", pg.evaluate("() => project.workDays.join()") == "1,2,3,4,5,6" and "Mon–Sat" in pg.inner_text("#toastMsg") and pg.evaluate("() => calendarLabel()") == "Mon–Sat")

@@ -74,7 +74,7 @@ with sync_playwright() as p:
     check("garbage in a stored pattern is cleaned (every clamped, a count default)", ev("() => { const r = cleanRecurrence({ freq: 'weekly', every: 500, days: [9, 1, 'x'], start: '2026-10-05' }); return r.every === 99 && JSON.stringify(r.days) === '[1]' && r.count === 1; }"))
     ev("() => { project.timeUnit = 'minute'; save(); render(); setSelection([]); openRecurModal(); }")
     pg.fill("#recurName", "Sync"); pg.fill("#recurDur", "30m")
-    ev("() => { const s = document.getElementById('recurStart'); s.value = '2026-10-05'; document.getElementById('recurTime').value = '14:00'; }")
+    ev("() => { document.querySelector('input[name=recurFreq][value=daily]').checked = true; document.querySelector('input[name=recurFreq][value=daily]').dispatchEvent(new Event('change', { bubbles: true })); const s = document.getElementById('recurStart'); s.value = '2026-10-05'; document.getElementById('recurTime').value = '14:00'; }")   # (daily: the weekly pattern's default weekday is today's, so a fixed Monday only matched on a Monday)
     pg.fill("#recurCount", "2"); pg.locator("#recurCount").dispatch_event("input"); pg.click("#recurOkBtn"); pg.wait_for_timeout(150)
     mt = ev("() => { const s = tasks.find(t => t.name === 'Sync'); return childrenOf(s.id).map(t => [t.startDate, t.startTime, t.endTime]); }")
     check("in an Hours & minutes plan: a time of day and a minute duration", mt[0] == ["2026-10-05", "14:00", "14:30"], mt)

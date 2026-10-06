@@ -25,6 +25,8 @@ with sync_playwright() as p:
 
     # ---------------------------------------------------------------- the dialog: default, toggling, save, dirty-check
     pg.click("#planSettingsBtn"); pg.click(".modal-bg.open [data-settings-tab='rules']"); pg.wait_for_selector("#rulesModalBg.open")
+    check("the setting is under 'Advanced', folded away while it is the standard", ev("() => !document.getElementById('rulesAdv').open"))
+    pg.click("#rulesAdv summary"); pg.wait_for_timeout(100)
     check("defaults checked (the standard: constraints always win)", pg.is_checked("#honorConstraintDatesInput"))
     pg.uncheck("#honorConstraintDatesInput")
     pg.click("#rulesModalBg .modal-header button")
@@ -33,7 +35,7 @@ with sync_playwright() as p:
     pg.click("#rulesModalBg .modal-footer button.btn-primary"); pg.wait_for_timeout(150)
     check("saved: project.honorConstraintDates is false", ev("() => project.honorConstraintDates") == False)
     pg.click("#planSettingsBtn"); pg.click(".modal-bg.open [data-settings-tab='rules']"); pg.wait_for_selector("#rulesModalBg.open")
-    check("reopening shows it unchecked", not pg.is_checked("#honorConstraintDatesInput"))
+    check("reopening shows it unchecked, and 'Advanced' opens by itself because it is not the standard", ev("() => document.getElementById('rulesAdv').open") and not pg.is_checked("#honorConstraintDatesInput"))
     pg.check("#honorConstraintDatesInput")
     pg.click("#rulesModalBg .modal-footer button.btn-primary"); pg.wait_for_timeout(150)
     check("checking it again saves absent (the standard), not a stored true", "honorConstraintDates" not in ev("() => Object.keys(project)"))
