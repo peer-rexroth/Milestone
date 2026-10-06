@@ -18,7 +18,7 @@ with sync_playwright() as p:
     bg = lambda: ev("() => [...document.querySelectorAll('.modal-bg.open')].map(m => m.id)")
     pg.click("#planSettingsBtn"); pg.wait_for_selector(".modal-bg.open"); pg.wait_for_timeout(150)
     tabs = [t.strip() for t in pg.locator(".modal-bg.open .settings-tab").all_inner_texts()]
-    check("five tabs: Calendar, Precision, Scheduling rules, Custom fields, Formats (Currency is part of Formats now)", tabs == ["Calendar", "Precision", "Scheduling rules", "Custom fields", "Formats"], tabs)
+    check("five tabs: Calendar, Days or hours, Scheduling rules, Custom fields, Formats (Currency is part of Formats now)", tabs == ["Calendar", "Days or hours", "Scheduling rules", "Custom fields", "Formats"], tabs)
     check("the five tabs fit the 680px dialog without scrolling sideways", ev("() => { const t = document.querySelector('.modal-bg.open .settings-tabs'); return t.scrollWidth <= t.clientWidth; }"))
     # ================================================== plan name in every header
     names = {}

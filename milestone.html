@@ -986,6 +986,7 @@ select.rst-select:disabled { opacity: .5; }
 #confirmModalBg { z-index: 110; }   /* a question ("discard your changes?", "delete?") always sits above whatever dialog asked it, wherever that dialog is in the page */
 .modal { background: var(--panel); border-radius: var(--radius); box-shadow: var(--shadow); width: 480px; max-width: 92vw; max-height: 86vh; display: flex; flex-direction: column; }
 .modal.narrow { width: 380px; }
+#confirmModalBg .modal.three-way { width: 460px; }   /* three buttons in the footer need the room */
 .modal.roomy { width: 540px; max-height: 94vh; }
 /* dialog sizes: narrow 380 (questions), 480 (default), mid 520 (Baselines), wide 620 (Edit Task, Working calendar, imports — many fields side by side) */
 .modal.mid { width: 560px; max-height: 94vh; }
@@ -1502,12 +1503,13 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
 
 <!-- Confirm modal -->
 <div class="modal-bg" id="confirmModalBg" onclick="if(event.target===this) closeConfirmModal()">
-  <div class="modal narrow">
+  <div class="modal narrow" id="confirmModalBox">
     <div class="modal-header"><h2 id="confirmModalTitle">Confirm</h2><button onclick="closeConfirmModal()">&times;</button></div>
     <div class="modal-body"><div id="confirmModalBody" style="font-size:13.5px;line-height:1.5"></div></div>
     <div class="modal-footer">
       <button class="btn" id="confirmModalCancelBtn" onclick="closeConfirmModal()">Cancel</button>
       <button class="btn btn-primary btn-danger" id="confirmModalActionBtn" onclick="confirmModalAction()">Delete</button>
+      <button class="btn btn-primary hidden" id="confirmModalAltBtn" onclick="confirmModalAlt()">Save</button>
     </div>
   </div>
 </div>
@@ -2186,8 +2188,8 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <div class="help-section">
           <div class="help-section-title">Hours &amp; minutes planning</div>
           <div class="help-row"><i class="fa-solid fa-hourglass-half"></i><span>A plan counts <strong>whole days</strong> by default. Switch it to <strong>Hours &amp; minutes</strong> when tasks last hours rather than days — a setting of that plan alone, so your other plans stay in days. Times of day then appear everywhere: the list, the dialogs, the chart, Remaining and baselines, Excel, MS Project XML and print.</span></div>
-          <div class="help-row"><i class="fa-solid fa-clock"></i><span><strong>Scheduling precision</strong> (Schedule → <strong>Plan settings…</strong> → Precision): the standard is whole days, but a plan can switch to <strong>Hours &amp; minutes</strong> so tasks can start and finish at a time of day. Set the working day's start/end and its breaks there too; date fields, Duration and the columns adapt once it's on. Switching in keeps a task's whole day; switching back drops every time and warns first if that would lose something.</span></div>
-          <div class="help-row"><i class="fa-solid fa-business-time"></i><span><strong>Different hours on some days</strong> (Plan settings → Precision): add a weekday — a short Friday, say — and give it its own start, end and breaks. A task with no time of its own then starts and finishes at its day's own open and close, and the chart, print-out, Excel and MS Project export follow each day's hours.</span></div>
+          <div class="help-row"><i class="fa-solid fa-clock"></i><span><strong>Scheduling precision</strong> (Schedule → <strong>Plan settings…</strong> → Days or hours): the standard is whole days, but a plan can switch to <strong>Hours &amp; minutes</strong> so tasks can start and finish at a time of day. Set the working day's start/end and its breaks there too; date fields, Duration and the columns adapt once it's on. Switching in keeps a task's whole day; switching back drops every time and warns first if that would lose something.</span></div>
+          <div class="help-row"><i class="fa-solid fa-business-time"></i><span><strong>Different hours on some days</strong> (Plan settings → Days or hours): add a weekday — a short Friday, say — and give it its own start, end and breaks. A task with no time of its own then starts and finishes at its day's own open and close, and the chart, print-out, Excel and MS Project export follow each day's hours.</span></div>
           <div class="help-row"><i class="fa-solid fa-link"></i><span><strong>Lags are working time</strong> in an Hours &amp; minutes plan: type <strong>3FS+2h</strong>, <strong>5SS-30m</strong> or <strong>1FS+1d</strong> in the Predecessors cell (d is a working day, w five of them; a bare number is hours), or the same in the task dialog and Edit tasks. Switching a plan to Hours &amp; minutes converts its lags (2 days become 16 hours).</span></div>
           <div class="help-row"><i class="fa-solid fa-chart-gantt"></i><span><strong>In an Hours &amp; minutes plan</strong> the chart gets an <strong>Hours</strong> scale (20&nbsp;px an hour, the day over its 24 hours; nights, the lunch break and days off are shaded). Drag a bar, or its edges, in 15-minute steps: an Auto task lands on working time (a move into the lunch break comes out after it), a Manual task goes exactly where you drop it, and linked tasks follow.</span></div>
           <div class="help-row"><i class="fa-solid fa-pen"></i><span>In the list, click a Start, Finish or Actual cell and type <strong>date and time</strong> (<strong>07.09.2026 14:30</strong>) — a date alone keeps the time, a time alone (<strong>14:30</strong>) keeps the date. The Duration cell takes <strong>4h</strong>, <strong>90m</strong>, <strong>2d</strong> or <strong>1w</strong>. The Excel Gantt sheet gets one column per working hour.</span></div>
@@ -7666,16 +7668,16 @@ function addHolidayPreset() {
 }
 let calHolidays = [];   // the dialog's working copy of project.holidays
 /* ============================ Plan settings (one window, five tabs) ============================
-   Everything that is a setting of the plan, in one place: Calendar (working week, holidays), Precision (days or hours &
+   Everything that is a setting of the plan, in one place: Calendar (working week, holidays), Days or hours (the scheduling precision, days or hours &
    minutes), Scheduling rules (honor constraint dates, the new-task default), Currency and Custom fields. Each tab is
    its own dialog underneath (its own draft, Save and dirty check — they already existed and keep working exactly as
    they did), sharing one tab strip and one size so switching tab never jumps; switching away from a tab with unsaved
    edits asks first. */
 const SETTINGS_TABS = [
-  { id: 'calendar', label: 'Calendar', icon: 'fa-regular fa-calendar-days', bg: 'calendarModalBg', open: () => openCalendarModal(), close: () => closeCalendarModal(), dirty: () => calendarDirty(), what: 'the working calendar' },
-  { id: 'precision', label: 'Precision', icon: 'fa-regular fa-clock', bg: 'precisionModalBg', open: () => openPrecisionModal(), close: () => closePrecisionModal(), dirty: () => precisionDirty(), what: 'the scheduling precision' },
-  { id: 'rules', label: 'Scheduling rules', icon: 'fa-solid fa-scale-balanced', bg: 'rulesModalBg', open: () => openRulesModal(), close: () => closeRulesModal(), dirty: () => rulesDirty(), what: 'the scheduling rules' },
-  { id: 'fields', label: 'Custom fields', icon: 'fa-solid fa-table-list', bg: 'fieldsModalBg', open: () => openFieldsModal(), close: () => closeFieldsModal(), dirty: () => fieldsDirty(), what: 'the custom fields' },
+  { id: 'calendar', label: 'Calendar', icon: 'fa-regular fa-calendar-days', bg: 'calendarModalBg', open: () => openCalendarModal(), close: () => closeCalendarModal(), dirty: () => calendarDirty(), save: () => saveCalendar(), what: 'the working calendar' },
+  { id: 'precision', label: 'Days or hours', icon: 'fa-regular fa-clock', bg: 'precisionModalBg', open: () => openPrecisionModal(), close: () => closePrecisionModal(), dirty: () => precisionDirty(), save: () => savePrecision(), what: 'the scheduling precision' },
+  { id: 'rules', label: 'Scheduling rules', icon: 'fa-solid fa-scale-balanced', bg: 'rulesModalBg', open: () => openRulesModal(), close: () => closeRulesModal(), dirty: () => rulesDirty(), save: () => saveRulesModal(), what: 'the scheduling rules' },
+  { id: 'fields', label: 'Custom fields', icon: 'fa-solid fa-table-list', bg: 'fieldsModalBg', open: () => openFieldsModal(), close: () => closeFieldsModal(), dirty: () => fieldsDirty(), save: () => saveFieldsModal(), what: 'the custom fields' },
   { id: 'format', label: 'Formats', icon: 'fa-solid fa-globe', bg: 'formatModalBg', open: () => openFormatModal(), close: () => closeFormatModal(), dirty: () => false, what: 'the formats' },
 ];
 let settingsTab = 'calendar';
@@ -7688,7 +7690,9 @@ function openSettingsTab(id) {
   const cur = currentSettingsTab(), target = SETTINGS_TABS.find(t => t.id === id); if (!target || cur === id) return;
   const from = SETTINGS_TABS.find(t => t.id === cur);
   const go = () => { if (from) from.close(); settingsTab = id; target.open(); };
-  if (from && from.dirty()) openConfirmModal({ title: 'Discard your changes?', body: `You changed ${from.what} but did not save it.`, confirmLabel: 'Discard changes', cancelLabel: 'Keep editing', action: go });
+  // Three ways out: keep editing, throw the edits away, or save them and carry on (stays put when the save is refused or asks its own question).
+  const saveAndGo = () => { from.save(); if (!document.getElementById(from.bg).classList.contains('open')) { settingsTab = id; target.open(); } };
+  if (from && from.dirty()) openConfirmModal({ title: 'Save your changes?', body: `You changed ${from.what} but did not save it.`, confirmLabel: 'Discard changes', confirmClass: 'btn', cancelLabel: 'Keep editing', action: go, altLabel: 'Save and continue', altAction: saveAndGo });
   else go();
 }
 function openPlanSettings(tab) { closeScheduleMenu(); closePlanMenu(); openSettingsTab(tab || settingsTab || 'calendar'); }
@@ -9006,8 +9010,9 @@ function showToast(msg, isError, undoAction, actionLabel) {
 }
 function triggerToastUndo() { if (toastUndoAction) { toastUndoAction(); toastUndoAction = null; } document.getElementById('toast').classList.remove('show'); }
 
-function openConfirmModal({ title, body, action, confirmLabel, confirmClass, cancelLabel }) {
-  modalTarget = { action };
+function openConfirmModal({ title, body, action, confirmLabel, confirmClass, cancelLabel, altLabel, altAction }) {
+  modalTarget = { action, alt: altAction || null };
+  const altBtn = document.getElementById('confirmModalAltBtn'); altBtn.classList.toggle('hidden', !altAction); document.getElementById('confirmModalBox').classList.toggle('three-way', !!altAction); if (altAction) altBtn.textContent = altLabel || 'Save';   // (an optional third button: the primary way out when there is one)
   document.getElementById('confirmModalTitle').textContent = title || 'Confirm';
   document.getElementById('confirmModalBody').innerHTML = body || '';
   document.getElementById('confirmModalActionBtn').textContent = confirmLabel || 'Delete';
@@ -9016,6 +9021,7 @@ function openConfirmModal({ title, body, action, confirmLabel, confirmClass, can
   document.getElementById('confirmModalBg').classList.add('open');
 }
 function closeConfirmModal() { document.getElementById('confirmModalBg').classList.remove('open'); modalTarget = null; }
+function confirmModalAlt() { const a = modalTarget && modalTarget.alt; closeConfirmModal(); if (a) a(); }   // (closed first: the action may open a question of its own)
 function confirmModalAction() { if (modalTarget && modalTarget.action) modalTarget.action(); closeConfirmModal(); }
 
 /* ================================= Theme ==================================== */

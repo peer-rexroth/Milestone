@@ -101,7 +101,7 @@ with sync_playwright() as p:
     open_bg = lambda: ev("() => [...document.querySelectorAll('.modal-bg.open')].map(e => e.id)")
     check("Plan settings opens on its Calendar tab, titled 'Plan settings', the five tabs across the top",
           open_bg() == ["calendarModalBg"] and pg.inner_text("#calendarModalBg h2") == "Plan settings"
-          and [t.strip() for t in pg.locator("#calendarModalBg .settings-tab").all_inner_texts()] == ["Calendar", "Precision", "Scheduling rules", "Custom fields", "Formats"], open_bg())
+          and [t.strip() for t in pg.locator("#calendarModalBg .settings-tab").all_inner_texts()] == ["Calendar", "Days or hours", "Scheduling rules", "Custom fields", "Formats"], open_bg())
     size = lambda bg: ev("bg => { const r = document.querySelector('#' + bg + ' .modal').getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)]; }", bg)
     s_cal = size("calendarModalBg")
     sizes = {}
@@ -118,6 +118,15 @@ with sync_playwright() as p:
     check("'Keep editing' stays on Calendar with the change still there", open_bg() == ["calendarModalBg"] and ev("() => [...document.querySelectorAll('#calendarDays input:checked')].length") == 6)
     pg.click(".modal-bg.open [data-settings-tab='rules']"); pg.wait_for_timeout(100); pg.click("#confirmModalActionBtn"); pg.wait_for_timeout(150)
     check("'Discard changes' moves on to the tab, the calendar untouched", open_bg() == ["rulesModalBg"] and ev("() => project.workDays === undefined"))
+    # the third way out of the unsaved-changes question: save, then carry on
+    pg.click(".modal-bg.open [data-settings-tab='calendar']"); pg.wait_for_timeout(120)
+    pg.locator("#calendarDays .cal-day", has_text="Sat").click()
+    pg.click(".modal-bg.open [data-settings-tab='rules']"); pg.wait_for_timeout(120)
+    check("the question offers Keep editing / Discard changes / Save and continue", ev("() => ['confirmModalCancelBtn','confirmModalActionBtn','confirmModalAltBtn'].map(i => document.getElementById(i).textContent.trim() + ':' + !document.getElementById(i).classList.contains('hidden'))") == ["Keep editing:true", "Discard changes:true", "Save and continue:true"])
+    pg.click("#confirmModalAltBtn"); pg.wait_for_timeout(200)
+    check("'Save and continue' saves the calendar and moves on to the tab", open_bg() == ["rulesModalBg"] and ev("() => currentWorkDays().length") == 6, ev("() => project.workDays"))
+    check("an ordinary yes/no question has no third button", ev("() => { openConfirmModal({title:'x', body:'y', action(){}}); const hid = document.getElementById('confirmModalAltBtn').classList.contains('hidden'); closeConfirmModal(); return hid; }"))
+    ev("() => { delete project.workDays; normalizeData(); resetEffectiveCache(); render(); }")   # back to the standard week for the checks below
     # scheduling rules
     pg.click("#rulesAdv summary"); pg.wait_for_timeout(80)
     check("Scheduling rules shows the plan's settings (a Status date box, and under Advanced: constraints honored); the new-task mode is NOT here (it lives in the Add menu)", pg.is_checked("#honorConstraintDatesInput") and pg.is_visible("#rulesStatusDateInput") and pg.locator("#rulesNewManual").count() == 0)

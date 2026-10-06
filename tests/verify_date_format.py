@@ -207,7 +207,7 @@ with sync_playwright() as p:
     ev(SEED, False); ev("() => applyDisplayFormat('dd.mm.yyyy', '24h')")
     pg.click("#planSettingsBtn"); pg.wait_for_selector(".modal-bg.open")
     tabs = [t.strip() for t in pg.locator(".modal-bg.open .settings-tab").all_inner_texts()]
-    check("Plan settings: five tabs — Calendar, Precision, Scheduling rules, Custom fields, Formats (currency and the date and time format share the last one)", tabs == ["Calendar", "Precision", "Scheduling rules", "Custom fields", "Formats"] and pg.locator(".modal-bg.open .settings-tab-sep").count() == 0, tabs)
+    check("Plan settings: five tabs — Calendar, Days or hours, Scheduling rules, Custom fields, Formats (currency and the date and time format share the last one)", tabs == ["Calendar", "Days or hours", "Scheduling rules", "Custom fields", "Formats"] and pg.locator(".modal-bg.open .settings-tab-sep").count() == 0, tabs)
     check("...and the tabs fit the 680px dialog (nothing scrolls sideways)", ev("() => { const t = document.querySelector('.modal-bg.open .settings-tabs'); return t.scrollWidth <= t.clientWidth; }"))
     pg.click(".modal-bg.open [data-settings-tab='format']"); pg.wait_for_selector("#formatModalBg.open"); pg.wait_for_timeout(200)
     check("the dates are the tile labels (24.12.2026 big, dd.mm.yyyy small), four tiles, the current one selected", [x.split("\n")[0] for x in pg.locator("#fmtDateOpts .fmt-tile").all_inner_texts()] == ["24.12.2026", "24/12/2026", "12/24/2026", "2026-12-24"] and [x.split("\n")[1] for x in pg.locator("#fmtDateOpts .fmt-tile").all_inner_texts()] == DATES and pg.locator("#fmtDateOpts .fmt-tile[aria-checked=true]").get_attribute("data-df") == "dd.mm.yyyy")
