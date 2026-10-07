@@ -45,14 +45,14 @@ with sync_playwright() as p:
     ev("() => { delete project.lagUnit; tasks.find(t => t.name === 'B').predecessors[0].lag = 3; normalizeData(); }")
     check("a minute-mode plan saved before lags were minutes (no marker, lag 3) is read as 3 days = 1440 min", lag("B") == 1440, lag("B"))
     ev("() => { project.lagUnit = 'minute'; tasks.find(t => t.name === 'B').predecessors[0].lag = 90; normalizeData(); }")
-    pg.click("#planSettingsBtn"); pg.click(".modal-bg.open [data-settings-tab='precision']"); pg.wait_for_selector("#precisionModalBg.open"); pg.click("#precisionDay"); pg.click("#precisionModalBg .modal-footer button.btn-primary"); pg.wait_for_timeout(200)
+    pg.click("#planSettingsBtn"); pg.click(".modal-bg.open [data-settings-tab='calendar']"); pg.wait_for_selector("#calendarModalBg.open"); pg.click("#precisionDay"); pg.click("#calendarModalBg .modal-footer button.btn-primary"); pg.wait_for_timeout(200)
     check("a lag that won't round evenly (90 min) warns before switching to days", pg.locator("#confirmModalBg.open").count() == 1 and "round to whole working days" in pg.inner_text("#confirmModalBody"), pg.inner_text("#confirmModalBody") if pg.locator("#confirmModalBg.open").count() else None)
     pg.click("#confirmModalActionBtn"); pg.wait_for_timeout(200)
     check("switching back to days converts minutes to days, rounded (90 min of an 8h day = 0), and drops the marker", lag("B") == 0 and ev("() => project.lagUnit") is None, (lag("B"), ev("() => project.lagUnit")))
     ev("() => { tasks.find(t => t.name === 'B').predecessors[0].lag = 2; save(); }")
-    pg.click("#planSettingsBtn"); pg.click(".modal-bg.open [data-settings-tab='precision']"); pg.wait_for_selector("#precisionModalBg.open"); pg.click("#precisionMinute"); pg.click("#precisionModalBg .modal-footer button.btn-primary"); pg.wait_for_timeout(200)
+    pg.click("#planSettingsBtn"); pg.click(".modal-bg.open [data-settings-tab='calendar']"); pg.wait_for_selector("#calendarModalBg.open"); pg.click("#precisionMinute"); pg.click("#calendarModalBg .modal-footer button.btn-primary"); pg.wait_for_timeout(200)
     check("...and days -> minutes -> days round-trips whole-day lags (2 -> 960 -> 2)", lag("B") == 960)
-    pg.click("#planSettingsBtn"); pg.click(".modal-bg.open [data-settings-tab='precision']"); pg.wait_for_selector("#precisionModalBg.open"); pg.click("#precisionDay"); pg.click("#precisionModalBg .modal-footer button.btn-primary"); pg.wait_for_timeout(200)
+    pg.click("#planSettingsBtn"); pg.click(".modal-bg.open [data-settings-tab='calendar']"); pg.wait_for_selector("#calendarModalBg.open"); pg.click("#precisionDay"); pg.click("#calendarModalBg .modal-footer button.btn-primary"); pg.wait_for_timeout(200)
     check("(the day-mode lag is back to 2)", lag("B") == 2, lag("B"))
 
     # ---------------------------------------------------------------- the Predecessors cell

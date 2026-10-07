@@ -91,7 +91,7 @@ with sync_playwright() as p:
     check("...and recovers the real working hours (start/end/break) from the calendar's own <WorkingTimes>, not just the defaults", r["project"].get("workHours") == {"start": "09:00", "end": "18:00", "breaks": [{"start": "12:30", "end": "13:15"}]}, r["project"].get("workHours"))
     check("...the task's own time round-trips exactly", r["task"]["startTime"] == "10:00" and r["task"]["endTime"] == "12:00", r["task"])
     check("...the baseline's time round-trips too, separately from the task's current time", r["task"]["baselines"]["0"] == ["2026-09-07", "2026-09-07", "09:00", "11:00"], r["task"]["baselines"])
-    check("...and a warning explains the switch", any("Hours & minutes" in w for w in r["warnings"]), r["warnings"])
+    check("...and a warning explains the switch", any("hours & minutes" in w for w in r["warnings"]), r["warnings"])
 
     # ---------------------------------------------------------------- an ORDINARY MS Project file (every time at the calendar's own boundary) stays day-mode
     xml_day = ev("""() => {

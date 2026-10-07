@@ -18,11 +18,11 @@ with sync_playwright() as p:
     bg = lambda: ev("() => [...document.querySelectorAll('.modal-bg.open')].map(m => m.id)")
     pg.click("#planSettingsBtn"); pg.wait_for_selector(".modal-bg.open"); pg.wait_for_timeout(150)
     tabs = [t.strip() for t in pg.locator(".modal-bg.open .settings-tab").all_inner_texts()]
-    check("five tabs: Calendar, Days or hours, Scheduling rules, Custom fields, Formats (Currency is part of Formats now)", tabs == ["Calendar", "Days or hours", "Scheduling rules", "Custom fields", "Formats"], tabs)
+    check("four tabs: Calendar, Scheduling rules, Custom fields, Formats (Currency is part of Formats now)", tabs == ["Calendar", "Scheduling rules", "Custom fields", "Formats"], tabs)
     check("the five tabs fit the 680px dialog without scrolling sideways", ev("() => { const t = document.querySelector('.modal-bg.open .settings-tabs'); return t.scrollWidth <= t.clientWidth; }"))
     # ================================================== plan name in every header
     names = {}
-    for t, mid in (("calendar", "calendarModalBg"), ("precision", "precisionModalBg"), ("rules", "rulesModalBg"), ("fields", "fieldsModalBg"), ("format", "formatModalBg")):
+    for t, mid in (("calendar", "calendarModalBg"), ("rules", "rulesModalBg"), ("fields", "fieldsModalBg"), ("format", "formatModalBg")):
         pg.click(f".modal-bg.open [data-settings-tab='{t}']"); pg.wait_for_timeout(150)
         names[t] = pg.inner_text(f"#{mid} .modal-header")
     check("every tab's header names the plan: 'Plan settings — Website relaunch'", all("Plan settings" in v and "— Website relaunch" in v for v in names.values()), names)
@@ -35,7 +35,7 @@ with sync_playwright() as p:
     # ================================================== Calendar
     check("Calendar: the working week no longer repeats the plan's name (it is in the header now)", "of “" not in pg.inner_text("#calendarModalBg .cal-sec"))
     titles = [t.strip() for t in pg.locator("#calendarModalBg .cal-sec-title").all_inner_texts()]
-    check("Calendar order: Working week, Days off in this plan (the list comes first), Public holidays, Another day off", [t.split("\n")[0] for t in titles][:4] == ["WORKING WEEK", "DAYS OFF IN THIS PLAN", "PUBLIC HOLIDAYS", "ANOTHER DAY OFF"] or [t.upper().split("\n")[0] for t in titles][:4] == ["WORKING WEEK", "DAYS OFF IN THIS PLAN", "PUBLIC HOLIDAYS", "ANOTHER DAY OFF"], titles)
+    check("Calendar order: Working week, Days or hours, Days off in this plan (the list comes first), Public holidays", [t.split("\n")[0] for t in titles][:4] == ["WORKING WEEK", "DAYS OR HOURS", "DAYS OFF IN THIS PLAN", "PUBLIC HOLIDAYS"] or [t.upper().split("\n")[0] for t in titles][:4] == ["WORKING WEEK", "DAYS OR HOURS", "DAYS OFF IN THIS PLAN", "PUBLIC HOLIDAYS"], titles)
     check("...the two holidays are listed before the forms (Christmas yearly, Boxing Day)", pg.locator("#holList .hol-row").count() == 2)
     ly = ev("() => [document.getElementById('holList').getBoundingClientRect().top, document.getElementById('holRegion').getBoundingClientRect().top, document.getElementById('holFrom').getBoundingClientRect().top]")
     check("...by position: list above the public-holiday form above the single-day form", ly[0] < ly[1] < ly[2], ly)

@@ -133,12 +133,12 @@ with sync_playwright() as p:
 
     # ================================================================ 2. the Scheduling precision dialog
     plan([A])
-    pg.click("#planSettingsBtn"); pg.click(".modal-bg.open [data-settings-tab='precision']"); pg.wait_for_selector("#precisionModalBg.open"); pg.wait_for_timeout(200)
-    check("it needs no scrolling at 1400x860 with the per-weekday section folded away", ev("() => { const b = document.querySelector('#precisionModalBg .modal-body'); return b.scrollHeight <= b.clientHeight + 1; }"))
+    pg.click("#planSettingsBtn"); pg.click(".modal-bg.open [data-settings-tab='calendar']"); pg.wait_for_selector("#calendarModalBg.open"); pg.wait_for_timeout(200)
+    check("it fits the window at 1400x860 with the per-weekday section folded away (it shares the Calendar page, so it may scroll down, not sideways)", ev("() => { const b = document.querySelector('#calendarModalBg .modal-body'); return b.scrollWidth <= b.clientWidth + 1 && b.closest('.modal').getBoundingClientRect().bottom <= innerHeight; }"))
     check("...and that section is a folded 'Different hours on some days' with no overrides yet", not ev("() => document.getElementById('whDayDetails').open") and "Different hours" in pg.inner_text("#whDayDetails summary"))
-    w = ev("() => [...document.querySelectorAll('#precisionModalBg input.dt-time')].map(e => Math.round(e.getBoundingClientRect().width))")
+    w = ev("() => [...document.querySelectorAll('#calendarModalBg input.dt-time')].map(e => Math.round(e.getBoundingClientRect().width))")
     check("every time box (typed 24-hour, no AM/PM to fit) is at least 80px", all(x >= 80 for x in w[:2]), w)
-    check("the dialog is the Plan settings size (680px, the same for every settings tab)", ev("() => Math.round(document.querySelector('#precisionModalBg .modal').getBoundingClientRect().width)") == 680)
+    check("the dialog is the Plan settings size (680px, the same for every settings tab)", ev("() => Math.round(document.querySelector('#calendarModalBg .modal').getBoundingClientRect().width)") == 680)
     check("the breaks list and the day rows write a break the same way ('12:00-13:00')", "12:00-13:00" in pg.inner_text("#whBreakList") and ev("() => breaksText([{start:'12:00',end:'13:00'}])") == "12:00-13:00")
     check("with no different days yet, only 'Add a different day' is offered — no rows to open the section for", pg.locator("#whDayRows .whd-row").count() == 0 and pg.locator("#whDayAddSelect option").count() == 5)
     pg.click("#whDayDetails summary"); pg.wait_for_timeout(100)
@@ -149,7 +149,7 @@ with sync_playwright() as p:
     check("adding a day updates the summary count ('1 day differs')", "1 day differs" in pg.inner_text("#whDayDetails summary"), pg.inner_text("#whDayDetails summary"))
     pg.keyboard.press("Escape"); pg.click("#confirmModalBg button:has-text('Discard')"); pg.wait_for_timeout(150)
     ev("() => { project.workHoursByDay = { 5: { start: '08:00', end: '13:00', breaks: [] } }; normalizeData(); save(); }")
-    pg.click("#planSettingsBtn"); pg.click(".modal-bg.open [data-settings-tab='precision']"); pg.wait_for_selector("#precisionModalBg.open"); pg.wait_for_timeout(200)
+    pg.click("#planSettingsBtn"); pg.click(".modal-bg.open [data-settings-tab='calendar']"); pg.wait_for_selector("#calendarModalBg.open"); pg.wait_for_timeout(200)
     check("with a different day saved the section opens by itself and says so", ev("() => document.getElementById('whDayDetails').open") and "1 day differs" in pg.inner_text("#whDayDetails summary"))
     pg.keyboard.press("Escape")
 

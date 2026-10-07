@@ -154,7 +154,7 @@ with sync_playwright() as p:
         fit = ev("() => [...document.querySelectorAll('#taskModalBg input.dt-date, #taskModalBg input.dt-time')].filter(e => e.offsetParent && e.scrollWidth > e.clientWidth + 1).map(e => e.id)")
         check(f"task dialog boxes fit ({df}, {tf})", not fit, fit); ev("() => document.getElementById('taskModalBg').classList.remove('open')")
     # precision dialog
-    ev("() => applyDisplayFormat('dd.mm.yyyy', '12h')"); pg.click("#planSettingsBtn"); pg.click(".modal-bg.open [data-settings-tab='precision']"); pg.wait_for_selector("#precisionModalBg.open"); pg.wait_for_timeout(250)
+    ev("() => applyDisplayFormat('dd.mm.yyyy', '12h')"); pg.click("#planSettingsBtn"); pg.click(".modal-bg.open [data-settings-tab='calendar']"); pg.wait_for_selector("#calendarModalBg.open"); pg.wait_for_timeout(250)
     check("Scheduling precision shows the working hours in the 12-hour clock ('8:00 AM'–'5:00 PM') and they fit their boxes", ev("() => [whStart._getRaw(), whEnd._getRaw()]") == ["8:00 AM", "5:00 PM"] and ev("() => ['whStart', 'whEnd', 'whBreakFrom', 'whBreakTo'].every(i => { const e = document.getElementById(i); return e.scrollWidth <= e.clientWidth + 1; })"))
     check("...the Schedule-menu style summary reads in the clock too", "8:00 AM–5:00 PM" in ev("() => precisionSummary()"))
     pg.keyboard.press("Escape"); pg.wait_for_timeout(200)
@@ -207,7 +207,7 @@ with sync_playwright() as p:
     ev(SEED, False); ev("() => applyDisplayFormat('dd.mm.yyyy', '24h')")
     pg.click("#planSettingsBtn"); pg.wait_for_selector(".modal-bg.open")
     tabs = [t.strip() for t in pg.locator(".modal-bg.open .settings-tab").all_inner_texts()]
-    check("Plan settings: five tabs — Calendar, Days or hours, Scheduling rules, Custom fields, Formats (currency and the date and time format share the last one)", tabs == ["Calendar", "Days or hours", "Scheduling rules", "Custom fields", "Formats"] and pg.locator(".modal-bg.open .settings-tab-sep").count() == 0, tabs)
+    check("Plan settings: four tabs — Calendar, Scheduling rules, Custom fields, Formats (currency and the date and time format share the last one)", tabs == ["Calendar", "Scheduling rules", "Custom fields", "Formats"] and pg.locator(".modal-bg.open .settings-tab-sep").count() == 0, tabs)
     check("...and the tabs fit the 680px dialog (nothing scrolls sideways)", ev("() => { const t = document.querySelector('.modal-bg.open .settings-tabs'); return t.scrollWidth <= t.clientWidth; }"))
     pg.click(".modal-bg.open [data-settings-tab='format']"); pg.wait_for_selector("#formatModalBg.open"); pg.wait_for_timeout(200)
     check("the dates are the tile labels (24.12.2026 big, dd.mm.yyyy small), four tiles, the current one selected", [x.split("\n")[0] for x in pg.locator("#fmtDateOpts .fmt-tile").all_inner_texts()] == ["24.12.2026", "24/12/2026", "12/24/2026", "2026-12-24"] and [x.split("\n")[1] for x in pg.locator("#fmtDateOpts .fmt-tile").all_inner_texts()] == DATES and pg.locator("#fmtDateOpts .fmt-tile[aria-checked=true]").get_attribute("data-df") == "dd.mm.yyyy")

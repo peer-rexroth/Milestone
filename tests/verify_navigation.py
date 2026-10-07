@@ -99,16 +99,16 @@ with sync_playwright() as p:
     pg.keyboard.press("Escape")
     pg.click("#planSettingsBtn"); pg.wait_for_timeout(150)
     open_bg = lambda: ev("() => [...document.querySelectorAll('.modal-bg.open')].map(e => e.id)")
-    check("Plan settings opens on its Calendar tab, titled 'Plan settings', the five tabs across the top",
+    check("Plan settings opens on its Calendar tab, titled 'Plan settings', the four tabs across the top",
           open_bg() == ["calendarModalBg"] and pg.inner_text("#calendarModalBg h2") == "Plan settings"
-          and [t.strip() for t in pg.locator("#calendarModalBg .settings-tab").all_inner_texts()] == ["Calendar", "Days or hours", "Scheduling rules", "Custom fields", "Formats"], open_bg())
+          and [t.strip() for t in pg.locator("#calendarModalBg .settings-tab").all_inner_texts()] == ["Calendar", "Scheduling rules", "Custom fields", "Formats"], open_bg())
     size = lambda bg: ev("bg => { const r = document.querySelector('#' + bg + ' .modal').getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)]; }", bg)
     s_cal = size("calendarModalBg")
     sizes = {}
-    for tab, bg in [("precision", "precisionModalBg"), ("rules", "rulesModalBg"), ("format", "formatModalBg"), ("fields", "fieldsModalBg"), ("calendar", "calendarModalBg")]:
+    for tab, bg in [("rules", "rulesModalBg"), ("format", "formatModalBg"), ("fields", "fieldsModalBg"), ("calendar", "calendarModalBg")]:
         pg.click(f".modal-bg.open [data-settings-tab='{tab}']"); pg.wait_for_timeout(120)
         sizes[tab] = (open_bg(), size(bg))
-    check("each tab switches the window to that setting — one window at a time", all(v[0] == [bg] for (k, v), bg in zip(sizes.items(), ["precisionModalBg", "rulesModalBg", "formatModalBg", "fieldsModalBg", "calendarModalBg"])), sizes)
+    check("each tab switches the window to that setting — one window at a time", all(v[0] == [bg] for (k, v), bg in zip(sizes.items(), ["rulesModalBg", "formatModalBg", "fieldsModalBg", "calendarModalBg"])), sizes)
     check("...and every tab is the same size, so switching never makes the window jump", len({tuple(v[1]) for v in sizes.values()} | {tuple(s_cal)}) == 1, sizes)
     check("the active tab is marked (aria-selected)", pg.get_attribute("#calendarModalBg .settings-tab[data-settings-tab='calendar']", "aria-selected") == "true")
     pg.locator("#calendarDays .cal-day", has_text="Sat").click()

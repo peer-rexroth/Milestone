@@ -111,7 +111,7 @@ with sync_playwright() as p:
 
     # ---------------------------------------------------------------- back to days
     ev("() => { tasks.find(t => t.name === 'A').custom = { date1: '2026-09-11', date1Time: '17:45' }; normalizeData(); }")
-    pg.click("#planSettingsBtn"); pg.click(".modal-bg.open [data-settings-tab='precision']"); pg.wait_for_selector("#precisionModalBg.open"); pg.click("#precisionDay"); pg.click("#precisionModalBg .modal-footer button.btn-primary"); pg.wait_for_timeout(200)
+    pg.click("#planSettingsBtn"); pg.click(".modal-bg.open [data-settings-tab='calendar']"); pg.wait_for_selector("#calendarModalBg.open"); pg.click("#precisionDay"); pg.click("#calendarModalBg .modal-footer button.btn-primary"); pg.wait_for_timeout(200)
     check("switching to days with a time still set warns first", pg.locator("#confirmModalBg.open").count() == 1 and "lose its time of day" in pg.inner_text("#confirmModalBody"), pg.inner_text("#confirmModalBody") if pg.locator("#confirmModalBg.open").count() else None)
     pg.click("#confirmModalActionBtn"); pg.wait_for_timeout(200)
     check("switching the plan back to days drops the time and keeps the date", cust("A") == ["2026-09-11", None], cust("A"))

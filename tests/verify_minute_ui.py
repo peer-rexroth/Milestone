@@ -26,7 +26,7 @@ with sync_playwright() as p:
     tid = lambda n: ev("n => tasks.find(t => t.name === n).id", n)
 
     # ---------------------------------------------------------------- Scheduling precision dialog: the precision toggle
-    pg.click("#planSettingsBtn"); pg.click(".modal-bg.open [data-settings-tab='precision']"); pg.wait_for_selector("#precisionModalBg.open")
+    pg.click("#planSettingsBtn"); pg.click(".modal-bg.open [data-settings-tab='calendar']"); pg.wait_for_selector("#calendarModalBg.open")
     check("opens on Days, the standard", pg.is_checked("#precisionDay") and not pg.is_checked("#precisionMinute"))
     check("the working-hours editor starts hidden", "hidden" in (pg.get_attribute("#workHoursEditor", "class") or ""))
     pg.check("#precisionMinute")
@@ -35,33 +35,33 @@ with sync_playwright() as p:
     pg.click("#precisionDay")
     check("switching back to Days hides the editor again", "hidden" in (pg.get_attribute("#workHoursEditor", "class") or ""))
     pg.keyboard.press("Escape")   # no dirty change yet (still on the default), closes without asking
-    check("Escape with nothing changed just closes", pg.locator("#precisionModalBg.open").count() == 0)
+    check("Escape with nothing changed just closes", pg.locator("#calendarModalBg.open").count() == 0)
 
     # ---------------------------------------------------------------- saving a custom precision + working hours
-    pg.click("#planSettingsBtn"); pg.click(".modal-bg.open [data-settings-tab='precision']"); pg.wait_for_selector("#precisionModalBg.open")
+    pg.click("#planSettingsBtn"); pg.click(".modal-bg.open [data-settings-tab='calendar']"); pg.wait_for_selector("#calendarModalBg.open")
     pg.check("#precisionMinute")
     pg.fill("#whStart", "09:00"); pg.fill("#whEnd", "18:00")
     pg.click("#whBreakList .hol-row button")   # remove the default 12:00-13:00 break first — an overlapping add would be deduped, not replace it
-    pg.fill("#whBreakFrom", "12:30"); pg.fill("#whBreakTo", "13:15"); pg.click("#precisionModalBg .wh-break-add button")
+    pg.fill("#whBreakFrom", "12:30"); pg.fill("#whBreakTo", "13:15"); pg.click("#calendarModalBg .wh-break-add button")
     check("the added break appears in its list", "12:30" in pg.inner_text("#whBreakList") and "13:15" in pg.inner_text("#whBreakList"))
-    pg.click("#precisionModalBg .modal-footer button.btn-primary"); pg.wait_for_timeout(150)
+    pg.click("#calendarModalBg .modal-footer button.btn-primary"); pg.wait_for_timeout(150)
     wh = ev("() => ({ timeUnit: project.timeUnit, workHours: project.workHours })")
     check("saved: timeUnit is 'minute' and workHours holds the custom start/end/break", wh["timeUnit"] == "minute" and wh["workHours"] == {"start": "09:00", "end": "18:00", "breaks": [{"start": "12:30", "end": "13:15"}]}, wh)
     check("the Schedule menu's Scheduling precision hint mentions the hours", "09:00" in ev("() => precisionSummary()"))
 
     # ---------------------------------------------------------------- reopening shows the saved state; discard-confirmation catches a precision change
-    pg.click("#planSettingsBtn"); pg.click(".modal-bg.open [data-settings-tab='precision']"); pg.wait_for_selector("#precisionModalBg.open")
+    pg.click("#planSettingsBtn"); pg.click(".modal-bg.open [data-settings-tab='calendar']"); pg.wait_for_selector("#calendarModalBg.open")
     check("reopening shows Hours & minutes checked with the saved values", pg.is_checked("#precisionMinute") and ev("() => document.getElementById('whStart').value") == "09:00" and ev("() => document.getElementById('whEnd').value") == "18:00")
     pg.click("#precisionDay")
-    pg.click("#precisionModalBg .modal-header button")   # the × close button
+    pg.click("#calendarModalBg .modal-header button")   # the × close button
     check("switching precision without saving triggers the discard-changes confirmation", pg.locator("#confirmModalBg.open").count() == 1)
     pg.click("#confirmModalBg button:has-text('Keep editing')")
     pg.check("#precisionMinute"); pg.keyboard.press("Escape")   # back to the saved state -> no longer dirty
-    check("returning to the saved state before closing asks nothing", pg.locator("#precisionModalBg.open").count() == 0 and pg.locator("#confirmModalBg.open").count() == 0)
+    check("returning to the saved state before closing asks nothing", pg.locator("#calendarModalBg.open").count() == 0 and pg.locator("#confirmModalBg.open").count() == 0)
 
     # ---------------------------------------------------------------- an invalid break is refused with a message, not silently dropped
-    pg.click("#planSettingsBtn"); pg.click(".modal-bg.open [data-settings-tab='precision']"); pg.wait_for_selector("#precisionModalBg.open")
-    pg.fill("#whBreakFrom", "14:00"); pg.fill("#whBreakTo", "13:00"); pg.click("#precisionModalBg .wh-break-add button")
+    pg.click("#planSettingsBtn"); pg.click(".modal-bg.open [data-settings-tab='calendar']"); pg.wait_for_selector("#calendarModalBg.open")
+    pg.fill("#whBreakFrom", "14:00"); pg.fill("#whBreakTo", "13:00"); pg.click("#calendarModalBg .wh-break-add button")
     check("a break ending before it starts is refused with a toast, not added", "end after it starts" in pg.inner_text("#toastMsg"))
     pg.keyboard.press("Escape")
 

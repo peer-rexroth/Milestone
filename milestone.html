@@ -1101,7 +1101,7 @@ select.rst-select:disabled { opacity: .5; }
 .minute-mode #taskDatesBlock { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
 .minute-mode #taskDatesBlock > .field-grid-4 { display: contents; }   /* (the two rows of fields become one grid, so they can be ordered together) */
 .minute-mode #taskDatesBlock #taskTextDatesNote { grid-column: 1 / -1; order: 9; }
-/* A date + a time need ~230px: in an Hours & minutes plan the four date fields take two of the four columns each; the numbers (Duration, %, Remaining, Status) share one row between the planned and the actual dates.
+/* A date + a time need ~230px: in an hours & minutes plan the four date fields take two of the four columns each; the numbers (Duration, %, Remaining, Status) share one row between the planned and the actual dates.
    The two Actual fields pin an explicit column-start (not just `span 2`, which is relative to wherever the auto-placement cursor happens to be): a
    milestone hides Finish/Duration/Actual Finish, and without the pin the cursor's gap-filling shifted Actual Start out from under Start by a column
    ("dates are not aligned under each other" — a real layout bug, not a rounding/pixel one). Start/Finish need no pin — nothing is ever hidden before them. */
@@ -1789,6 +1789,37 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
         <div class="cal-sec-title">Working week</div>
         <div class="cal-days" id="calendarDays"></div>
       </section>
+      <section class="cal-sec" id="precisionSec">
+        <div class="cal-sec-title">Days or hours <span class="cal-sec-note">how finely start and finish are planned</span></div>
+        <div class="precision-row" id="precisionRow">
+          <label class="precision-opt"><input type="radio" name="timeUnit" value="day" id="precisionDay"><span>Days <span class="cal-sec-note">the standard — Start and Finish are whole days</span></span></label>
+          <label class="precision-opt"><input type="radio" name="timeUnit" value="minute" id="precisionMinute"><span>Hours &amp; minutes <span class="cal-sec-note">Start and Finish have a time of day, so several tasks can share a day</span></span></label>
+        </div>
+        <div class="workhours-editor hidden" id="workHoursEditor">
+          <div class="wh-day-row">
+            <span class="wh-cap">Working day</span>
+            <input type="text" id="whStart" class="dt-time" aria-label="Working day starts">
+            <span class="hol-to">to</span>
+            <input type="text" id="whEnd" class="dt-time" aria-label="Working day ends">
+          </div>
+          <div class="wh-breaks">
+            <div class="wh-cap">Breaks <span class="cal-sec-note">lunch, etc. — not counted as working time</span></div>
+            <div class="hol-list" id="whBreakList"></div>
+            <div class="wh-break-add">
+              <input type="text" id="whBreakFrom" class="dt-time" aria-label="Break starts" onkeydown="if(event.key==='Enter'){event.preventDefault();addWorkBreak();}">
+              <span class="hol-to">to</span>
+              <input type="text" id="whBreakTo" class="dt-time" aria-label="Break ends" onkeydown="if(event.key==='Enter'){event.preventDefault();addWorkBreak();}">
+              <button class="btn" type="button" onclick="addWorkBreak()"><i class="fa-solid fa-plus"></i>Add break</button>
+            </div>
+          </div>
+          <details class="whd-details" id="whDayDetails">
+            <summary>Different hours on some days <span class="whd-count" id="whDayCount"></span></summary>
+            <div class="cal-sec-note">A short Friday, say — its own start, end and breaks (like 12:00-13:00, 15:00-15:15).</div>
+            <div class="whd-list" id="whDayRows"></div>
+            <div class="whd-add" id="whDayAddRow"><select id="whDayAddSelect" aria-label="Weekday to add"></select><button class="btn" type="button" onclick="addHoursDay()"><i class="fa-solid fa-plus"></i>Add a different day</button></div>
+          </details>
+        </div>
+      </section>
       <section class="cal-sec">
         <div class="cal-sec-title">Days off in this plan <span class="cal-sec-note" id="holCount"></span><button class="btn-link danger" type="button" id="holClearBtn" onclick="clearHolidays()">Clear all</button></div>
         <div class="hol-list" id="holList"></div>
@@ -1877,48 +1908,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
     <div class="modal-footer"><span class="foot-note">Changes apply as you click.</span><button class="btn btn-primary" onclick="closeFormatModal()">Done</button></div>
   </div>
 </div>
-<div class="modal-bg" id="precisionModalBg" onclick="if(event.target===this) requestClosePrecisionModal()">
-  <div class="modal wide settings-modal">
-    <div class="modal-header"><div class="mh-title"><h2>Plan settings</h2><span class="ps-plan" data-ps-plan></span></div><button onclick="requestClosePrecisionModal()" aria-label="Close">&times;</button></div>
-    <div class="settings-tabs" role="tablist" aria-label="Plan settings" data-current="precision"></div>
-    <div class="modal-body">
-      <section class="cal-sec">
-        <div class="precision-row" id="precisionRow">
-          <label class="precision-opt"><input type="radio" name="timeUnit" value="day" id="precisionDay"><span>Days <span class="cal-sec-note">the standard — Start and Finish are whole days</span></span></label>
-          <label class="precision-opt"><input type="radio" name="timeUnit" value="minute" id="precisionMinute"><span>Hours &amp; minutes <span class="cal-sec-note">Start and Finish have a time of day, so several tasks can share a day</span></span></label>
-        </div>
-        <div class="workhours-editor hidden" id="workHoursEditor">
-          <div class="wh-day-row">
-            <span class="wh-cap">Working day</span>
-            <input type="text" id="whStart" class="dt-time" aria-label="Working day starts">
-            <span class="hol-to">to</span>
-            <input type="text" id="whEnd" class="dt-time" aria-label="Working day ends">
-          </div>
-          <div class="wh-breaks">
-            <div class="wh-cap">Breaks <span class="cal-sec-note">lunch, etc. — not counted as working time</span></div>
-            <div class="hol-list" id="whBreakList"></div>
-            <div class="wh-break-add">
-              <input type="text" id="whBreakFrom" class="dt-time" aria-label="Break starts" onkeydown="if(event.key==='Enter'){event.preventDefault();addWorkBreak();}">
-              <span class="hol-to">to</span>
-              <input type="text" id="whBreakTo" class="dt-time" aria-label="Break ends" onkeydown="if(event.key==='Enter'){event.preventDefault();addWorkBreak();}">
-              <button class="btn" type="button" onclick="addWorkBreak()"><i class="fa-solid fa-plus"></i>Add break</button>
-            </div>
-          </div>
-          <details class="whd-details" id="whDayDetails">
-            <summary>Different hours on some days <span class="whd-count" id="whDayCount"></span></summary>
-            <div class="cal-sec-note">A short Friday, say — its own start, end and breaks (like 12:00-13:00, 15:00-15:15).</div>
-            <div class="whd-list" id="whDayRows"></div>
-            <div class="whd-add" id="whDayAddRow"><select id="whDayAddSelect" aria-label="Weekday to add"></select><button class="btn" type="button" onclick="addHoursDay()"><i class="fa-solid fa-plus"></i>Add a different day</button></div>
-          </details>
-        </div>
-      </section>
-    </div>
-    <div class="modal-footer">
-      <span class="foot-note">Changes apply when you save.</span>
-      <button class="btn" onclick="closePrecisionModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="savePrecision()">Save</button>
-    </div>
-  </div>
+</div>
 </div>
 
 <div class="modal-bg" id="baselineModalBg" onclick="if(event.target===this) closeBaselineModal()">
@@ -2180,18 +2170,18 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
           <div class="help-section-title">Baselines and variance</div>
           <div class="help-row"><i class="fa-solid fa-ruler-horizontal"></i><span>The bar is the <strong>current schedule</strong>. To keep the original plan, set a <strong>baseline</strong> (Schedule menu → <strong>Baseline…</strong>): a frozen copy of every task's Start and Finish, only ever taken when you ask. Keep up to eleven — Baseline and Baseline 1–10 — and choose which one to compare with.</span></div>
           <div class="help-row"><i class="fa-solid fa-minus"></i><span>The baseline shows as a thin grey line under each bar in the Gantt chart (the <strong>Baseline</strong> button in the Gantt toolbar hides it).</span></div>
-          <div class="help-row"><i class="fa-solid fa-plus-minus"></i><span>The <strong>Start Variance</strong>, <strong>Finish Variance</strong>, <strong>Baseline Start/Finish/Duration</strong> and <strong>Duration Variance</strong> columns show how far each task has moved, in working days (working minutes for a leaf task in an Hours &amp; minutes plan) — positive means later than the baseline.</span></div>
-          <div class="help-row"><i class="fa-solid fa-calendar-check"></i><span><strong>Reschedule remaining work…</strong> (Schedule menu) catches the plan up with a status date you choose: an overdue task moves there, an in-progress task keeps its remaining work from that date if it would otherwise finish later. Finished tasks and tasks ahead of schedule are left alone. The dialog says how many would move, with a <strong>Which tasks</strong> list; in an Hours &amp; minutes plan the status date has a time. Undo brings everything back.</span></div>
+          <div class="help-row"><i class="fa-solid fa-plus-minus"></i><span>The <strong>Start Variance</strong>, <strong>Finish Variance</strong>, <strong>Baseline Start/Finish/Duration</strong> and <strong>Duration Variance</strong> columns show how far each task has moved, in working days (working minutes for a leaf task in an hours &amp; minutes plan) — positive means later than the baseline.</span></div>
+          <div class="help-row"><i class="fa-solid fa-calendar-check"></i><span><strong>Reschedule remaining work…</strong> (Schedule menu) catches the plan up with a status date you choose: an overdue task moves there, an in-progress task keeps its remaining work from that date if it would otherwise finish later. Finished tasks and tasks ahead of schedule are left alone. The dialog says how many would move, with a <strong>Which tasks</strong> list; in an hours &amp; minutes plan the status date has a time. Undo brings everything back.</span></div>
         </div>
       </div>
       <div class="help-pane" id="helpPane-hours" role="tabpanel" aria-labelledby="helpTab-hours" hidden>
         <div class="help-section">
           <div class="help-section-title">Hours &amp; minutes planning</div>
           <div class="help-row"><i class="fa-solid fa-hourglass-half"></i><span>A plan counts <strong>whole days</strong> by default. Switch it to <strong>Hours &amp; minutes</strong> when tasks last hours rather than days — a setting of that plan alone, so your other plans stay in days. Times of day then appear everywhere: the list, the dialogs, the chart, Remaining and baselines, Excel, MS Project XML and print.</span></div>
-          <div class="help-row"><i class="fa-solid fa-clock"></i><span><strong>Scheduling precision</strong> (Schedule → <strong>Plan settings…</strong> → Days or hours): the standard is whole days, but a plan can switch to <strong>Hours &amp; minutes</strong> so tasks can start and finish at a time of day. Set the working day's start/end and its breaks there too; date fields, Duration and the columns adapt once it's on. Switching in keeps a task's whole day; switching back drops every time and warns first if that would lose something.</span></div>
-          <div class="help-row"><i class="fa-solid fa-business-time"></i><span><strong>Different hours on some days</strong> (Plan settings → Days or hours): add a weekday — a short Friday, say — and give it its own start, end and breaks. A task with no time of its own then starts and finishes at its day's own open and close, and the chart, print-out, Excel and MS Project export follow each day's hours.</span></div>
-          <div class="help-row"><i class="fa-solid fa-link"></i><span><strong>Lags are working time</strong> in an Hours &amp; minutes plan: type <strong>3FS+2h</strong>, <strong>5SS-30m</strong> or <strong>1FS+1d</strong> in the Predecessors cell (d is a working day, w five of them; a bare number is hours), or the same in the task dialog and Edit tasks. Switching a plan to Hours &amp; minutes converts its lags (2 days become 16 hours).</span></div>
-          <div class="help-row"><i class="fa-solid fa-chart-gantt"></i><span><strong>In an Hours &amp; minutes plan</strong> the chart gets an <strong>Hours</strong> scale (20&nbsp;px an hour, the day over its 24 hours; nights, the lunch break and days off are shaded). Drag a bar, or its edges, in 15-minute steps: an Auto task lands on working time (a move into the lunch break comes out after it), a Manual task goes exactly where you drop it, and linked tasks follow.</span></div>
+          <div class="help-row"><i class="fa-solid fa-clock"></i><span><strong>Scheduling precision</strong> (Schedule → <strong>Plan settings…</strong> → Calendar → Days or hours): the standard is whole days, but a plan can switch to <strong>Hours &amp; minutes</strong> so tasks can start and finish at a time of day. Set the working day's start/end and its breaks there too; date fields, Duration and the columns adapt once it's on. Switching in keeps a task's whole day; switching back drops every time and warns first if that would lose something.</span></div>
+          <div class="help-row"><i class="fa-solid fa-business-time"></i><span><strong>Different hours on some days</strong> (Plan settings → Calendar → Days or hours): add a weekday — a short Friday, say — and give it its own start, end and breaks. A task with no time of its own then starts and finishes at its day's own open and close, and the chart, print-out, Excel and MS Project export follow each day's hours.</span></div>
+          <div class="help-row"><i class="fa-solid fa-link"></i><span><strong>Lags are working time</strong> in an hours &amp; minutes plan: type <strong>3FS+2h</strong>, <strong>5SS-30m</strong> or <strong>1FS+1d</strong> in the Predecessors cell (d is a working day, w five of them; a bare number is hours), or the same in the task dialog and Edit tasks. Switching a plan to <strong>Hours &amp; minutes</strong> converts its lags (2 days become 16 hours).</span></div>
+          <div class="help-row"><i class="fa-solid fa-chart-gantt"></i><span><strong>In an hours &amp; minutes plan</strong> the chart gets an <strong>Hours</strong> scale (20&nbsp;px an hour, the day over its 24 hours; nights, the lunch break and days off are shaded). Drag a bar, or its edges, in 15-minute steps: an Auto task lands on working time (a move into the lunch break comes out after it), a Manual task goes exactly where you drop it, and linked tasks follow.</span></div>
           <div class="help-row"><i class="fa-solid fa-pen"></i><span>In the list, click a Start, Finish or Actual cell and type <strong>date and time</strong> (<strong>07.09.2026 14:30</strong>) — a date alone keeps the time, a time alone (<strong>14:30</strong>) keeps the date. The Duration cell takes <strong>4h</strong>, <strong>90m</strong>, <strong>2d</strong> or <strong>1w</strong>. The Excel Gantt sheet gets one column per working hour.</span></div>
           <div class="help-row"><i class="fa-solid fa-table"></i><span><strong>Paste and CSV import</strong> read a time after a date (<strong>07.09.2026 14:30</strong>, also 2:30 PM), durations like <strong>2.5 hrs</strong> or <strong>90 min</strong>, and minute lags — and copying rows keeps them. A custom <strong>Date</strong> column takes a time too, and <strong>Print / PDF</strong> shows the times and can use an Hours scale.</span></div>
         </div>
@@ -2299,7 +2289,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
           <div class="help-row"><i class="fa-solid fa-file-csv"></i><span><strong>Export to CSV</strong> saves the task list as a plain text table: the columns you choose, dates and durations as the list shows them, sub-tasks indented. Pick the separator your Excel expects (comma or semicolon). Import it again with <strong>Import tasks (MS Project XML, CSV)…</strong>.</span></div>
           <div class="help-row"><i class="fa-solid fa-file-excel"></i><span><strong>Export to Excel</strong> saves a formatted .xlsx workbook: a task list plus an optional Gantt chart sheet, each sheet using the columns you chose in its own view.</span></div>
           <div class="help-row"><i class="fa-solid fa-diagram-project"></i><span><strong>Import tasks (MS Project XML, CSV)…</strong> reads a plan saved from MS Project as XML (File → Save As → XML Format): tasks and their outline, dates, % complete, actual dates, links with lags, manual mode, constraints, resources, baselines, the working week and the holidays. A file with real times of day switches the plan to <strong>Hours &amp; minutes</strong> scheduling too (when "Import working calendar" is ticked), recovering the working hours and breaks from it.</span></div>
-          <div class="help-row"><i class="fa-solid fa-file-code"></i><span><strong>Export MS Project XML</strong> (Data menu) saves the whole plan as a <code>.xml</code> file that MS Project opens: <em>File → Open</em>, file type “XML Format”. Outline, dates, durations, links with lag, constraints, actual dates, baselines, resources, the working week and holidays go along, each task's real time of day included for an Hours &amp; minutes plan; empty lines are left out, and custom-field values and TBD dates go into the task’s Notes.</span></div>
+          <div class="help-row"><i class="fa-solid fa-file-code"></i><span><strong>Export MS Project XML</strong> (Data menu) saves the whole plan as a <code>.xml</code> file that MS Project opens: <em>File → Open</em>, file type “XML Format”. Outline, dates, durations, links with lag, constraints, actual dates, baselines, resources, the working week and holidays go along, each task's real time of day included for an hours &amp; minutes plan; empty lines are left out, and custom-field values and TBD dates go into the task’s Notes.</span></div>
           <div class="help-row"><i class="fa-solid fa-file-csv"></i><span>It also reads a <strong>CSV</strong> with a header row — English or German column names such as Task Name, Start, Finish, Duration, Predecessors, Outline Level. A preview shows what was found; you add the tasks to this plan or replace its tasks (a backup file is downloaded first).</span></div>
           <div class="help-row"><i class="fa-solid fa-print"></i><span><strong>Print / PDF…</strong> is under Data as well — see the Gantt chart topic.</span></div>
           <div class="help-row"><i class="fa-solid fa-clock-rotate-left"></i><span><strong>Local Backups</strong> keeps a rolling daily snapshot of every plan in this browser.</span></div>
@@ -4375,7 +4365,7 @@ function criticalPathAnalysis() {
 }
 function computeCriticalPath() { return criticalPathAnalysis().critical; }
 /* ---- Total Slack (MS Project's Total Slack): how far a task can slip without moving the plan's finish — the float the
-   critical path already works out, in working days (working minutes in an Hours & minutes plan). A group shows the least
+   critical path already works out, in working days (working minutes in an hours & minutes plan). A group shows the least
    slack of its tasks; a manually scheduled, cyclic or empty-line task has none (it isn't in the scheduled network). One
    analysis per render pass (_slackCache, cleared with the other caches in resetEffectiveCache()). */
 let _slackCache = null;
@@ -7668,14 +7658,13 @@ function addHolidayPreset() {
 }
 let calHolidays = [];   // the dialog's working copy of project.holidays
 /* ============================ Plan settings (one window, five tabs) ============================
-   Everything that is a setting of the plan, in one place: Calendar (working week, holidays), Days or hours (the scheduling precision, days or hours &
+   Everything that is a setting of the plan, in one place: Calendar (working week, days or hours with the working hours, holidays), (
    minutes), Scheduling rules (honor constraint dates, the new-task default), Currency and Custom fields. Each tab is
    its own dialog underneath (its own draft, Save and dirty check — they already existed and keep working exactly as
    they did), sharing one tab strip and one size so switching tab never jumps; switching away from a tab with unsaved
    edits asks first. */
 const SETTINGS_TABS = [
   { id: 'calendar', label: 'Calendar', icon: 'fa-regular fa-calendar-days', bg: 'calendarModalBg', open: () => openCalendarModal(), close: () => closeCalendarModal(), dirty: () => calendarDirty(), save: () => saveCalendar(), what: 'the working calendar' },
-  { id: 'precision', label: 'Days or hours', icon: 'fa-regular fa-clock', bg: 'precisionModalBg', open: () => openPrecisionModal(), close: () => closePrecisionModal(), dirty: () => precisionDirty(), save: () => savePrecision(), what: 'the scheduling precision' },
   { id: 'rules', label: 'Scheduling rules', icon: 'fa-solid fa-scale-balanced', bg: 'rulesModalBg', open: () => openRulesModal(), close: () => closeRulesModal(), dirty: () => rulesDirty(), save: () => saveRulesModal(), what: 'the scheduling rules' },
   { id: 'fields', label: 'Custom fields', icon: 'fa-solid fa-table-list', bg: 'fieldsModalBg', open: () => openFieldsModal(), close: () => closeFieldsModal(), dirty: () => fieldsDirty(), save: () => saveFieldsModal(), what: 'the custom fields' },
   { id: 'format', label: 'Formats', icon: 'fa-solid fa-globe', bg: 'formatModalBg', open: () => openFormatModal(), close: () => closeFormatModal(), dirty: () => false, what: 'the formats' },
@@ -7696,7 +7685,7 @@ function openSettingsTab(id) {
   else go();
 }
 function openPlanSettings(tab) { closeScheduleMenu(); closePlanMenu(); openSettingsTab(tab || settingsTab || 'calendar'); }
-function updatePlanSettingsBtn() { const b = document.getElementById('planSettingsBtn'); if (b) b.title = `Plan settings — ${planSettingsHint()}  (calendar, precision, scheduling rules, currency, custom fields)`; }
+function updatePlanSettingsBtn() { const b = document.getElementById('planSettingsBtn'); if (b) b.title = `Plan settings — ${planSettingsHint()}  (calendar and working hours, scheduling rules, custom fields, formats)`; }
 function planSettingsHint() { return calendarSummary() + (minuteModeActive() ? ' · Hours & minutes' : ''); }
 // Scheduling rules: whether a constraint date always wins over the links, and the default mode for new tasks.
 let rulesSnapshot = null;
@@ -7789,6 +7778,7 @@ function openCalendarModal() {
   updateHolAddBtn();
   document.getElementById('calendarDays').onchange = updateCalendarSummary;
   const how = document.querySelector('#calendarModalBg .cal-how'); if (how) how.open = false;
+  initPrecisionSection();
   renderHolidayList();
   calSnapshot = calendarDraftState();
   document.getElementById('calendarModalBg').classList.add('open');
@@ -7797,7 +7787,7 @@ function openCalendarModal() {
 function closeCalendarModal() { document.getElementById('calendarModalBg').classList.remove('open'); }
 // What the dialog holds right now (chips + the list): × / Escape / a click outside ask before throwing edits away.
 let calSnapshot = null;
-function calendarDraftState() { return JSON.stringify([[...document.querySelectorAll('#calendarDays input:checked')].map(i => i.value), calHolidays]); }
+function calendarDraftState() { return JSON.stringify([[...document.querySelectorAll('#calendarDays input:checked')].map(i => i.value), calHolidays, precisionDraftState()]); }
 function calendarDirty() { return calSnapshot !== null && document.getElementById('calendarModalBg').classList.contains('open') && calendarDraftState() !== calSnapshot; }
 function requestCloseCalendarModal() {
   if (!calendarDirty()) { closeCalendarModal(); return; }
@@ -7870,20 +7860,40 @@ function saveCalendar() {
   const days = [...document.querySelectorAll('#calendarDays input:checked')].map(i => Number(i.value)).sort((a, b) => a - b);
   if (!days.length) { showToast('Pick at least one working day', true); return; }
   const hol = cleanHolidays(calHolidays);
-  if (days.join() === currentWorkDays().join() && stableStringify(hol) === stableStringify(project.holidays || null)) { closeCalendarModal(); return; }
-  project.workDays = days;
-  if (hol) project.holidays = hol; else delete project.holidays;
-  project.updatedAt = Date.now();
-  normalizeData();   // drops workDays again if it is the default
-  save(); render(); closeCalendarModal();
-  showToast(`Working calendar: ${calendarSummary()}`);
+  const minute = document.getElementById('precisionMinute').checked;
+  const wh = minute ? { start: document.getElementById('whStart').value || DEFAULT_WORK_HOURS.start, end: document.getElementById('whEnd').value || DEFAULT_WORK_HOURS.end, breaks: calWorkHours.breaks } : null;
+  const rawBy = minute ? readHoursByDay() : null;
+  if (minute && rawBy === null) return;
+  const by = minute ? cleanHoursByDay(rawBy, wh) : null;   // (a ticked day whose hours equal the standard day is just the standard day)
+  const curMinute = project.timeUnit === 'minute';
+  const calSame = days.join() === currentWorkDays().join() && stableStringify(hol) === stableStringify(project.holidays || null);
+  const precSame = minute === curMinute && stableStringify(wh) === (curMinute ? stableStringify(project.workHours || DEFAULT_WORK_HOURS) : null) && stableStringify(by) === (curMinute ? stableStringify(project.workHoursByDay || null) : stableStringify(null));
+  if (calSame && precSame) { closeCalendarModal(); return; }
+  const apply = () => {
+    if (!calSame) { project.workDays = days; if (hol) project.holidays = hol; else delete project.holidays; }
+    if (!precSame) applyPrecisionFields(minute, wh, by);
+    project.updatedAt = Date.now();
+    normalizeData();   // drops workDays again if it is the default; nulls every task's time fields when leaving minute mode; converts a day-mode plan's lags to minutes when entering it
+    save(); render(); closeCalendarModal();
+    showToast(precSame ? `Working calendar: ${calendarSummary()}` : calSame ? `Scheduling precision: ${precisionSummary()}` : `Working calendar: ${calendarSummary()} · ${precisionSummary()}`);
+  };
+  if (curMinute && !minute) {
+    const impact = precisionLeaveImpact();
+    if (impact.times || impact.lags) {
+      const bits = [];
+      if (impact.times) bits.push(`${impact.times} task${impact.times === 1 ? ' will lose its' : 's will lose their'} time of day`);
+      if (impact.lags) bits.push(`${impact.lags} lag${impact.lags === 1 ? '' : 's'} will round to whole working days`);
+      openConfirmModal({ title: 'Switch to Days?', body: `${bits.join(' and ')} — switching back to “Hours &amp; minutes” won't bring them back.`, confirmLabel: 'Switch to Days', confirmClass: 'btn btn-primary', action: apply });
+      return;
+    }
+  }
+  apply();
 }
 // Scheduling precision (Day / Hours & minutes) and, only while the latter is picked, the working-day start/end and its
 // breaks — an explicit user request ("like in MS Project... switch to hour/minutes planning"). Its own dialog off the
 // Schedule menu, next to Working calendar rather than folded into it.
-let calWorkHours = null, precisionSnapshot = null, whDayList = [];
-function openPrecisionModal() {
-  closeScheduleMenu();
+let calWorkHours = null, whDayList = [];
+function initPrecisionSection() {   // the Days or hours section of the Calendar tab: its draft is part of the calendar's
   document.getElementById(project.timeUnit === 'minute' ? 'precisionMinute' : 'precisionDay').checked = true;
   const wh = workHours();
   calWorkHours = { start: wh.start, end: wh.end, breaks: (wh.breaks || []).map(b => Object.assign({}, b)) };
@@ -7896,11 +7906,7 @@ function openPrecisionModal() {
   renderHoursByDay();
   for (const r of document.querySelectorAll('#precisionRow input')) r.onchange = onPrecisionChange;
   onPrecisionChange();
-  precisionSnapshot = precisionDraftState();
-  document.getElementById('precisionModalBg').classList.add('open');
-  setTimeout(() => { const i = document.getElementById(project.timeUnit === 'minute' ? 'precisionMinute' : 'precisionDay'); if (i) i.focus(); }, 40);
 }
-function closePrecisionModal() { document.getElementById('precisionModalBg').classList.remove('open'); }
 function precisionDraftState() {
   const minute = document.getElementById('precisionMinute').checked;
   return JSON.stringify([minute, minute ? [document.getElementById('whStart').value, document.getElementById('whEnd').value, calWorkHours.breaks, hoursByDayRaw()] : null]);
@@ -7960,11 +7966,6 @@ function readHoursByDay() {
   }
   return by;
 }
-function precisionDirty() { return precisionSnapshot !== null && document.getElementById('precisionModalBg').classList.contains('open') && precisionDraftState() !== precisionSnapshot; }
-function requestClosePrecisionModal() {
-  if (!precisionDirty()) { closePrecisionModal(); return; }
-  openConfirmModal({ title: 'Discard your changes?', body: 'You changed the scheduling precision but did not save it.', confirmLabel: 'Discard changes', cancelLabel: 'Keep editing', action() { closePrecisionModal(); } });
-}
 function onPrecisionChange() {
   const minute = document.getElementById('precisionMinute').checked;
   document.getElementById('workHoursEditor').classList.toggle('hidden', !minute);
@@ -8003,34 +8004,10 @@ function precisionLeaveImpact() {
   }
   return { times, lags };
 }
-function applyPrecisionChange(minute, wh, by) {
+function applyPrecisionFields(minute, wh, by) {   // the project fields only — the caller normalizes, saves and renders
   const curMinute = project.timeUnit === 'minute';
   if (curMinute && !minute) { const per = workMinutesPerDay(); for (const t of tasks) for (const p of t.predecessors) if (p.lag) p.lag = Math.round(p.lag / per); }   // lags go back from working minutes to working days (rounded — like the times, lossy on the way out)
   if (minute) { project.timeUnit = 'minute'; project.workHours = wh; if (by) project.workHoursByDay = by; else delete project.workHoursByDay; } else { delete project.timeUnit; delete project.workHours; delete project.workHoursByDay; delete project.lagUnit; }
-  project.updatedAt = Date.now();
-  normalizeData();   // nulls every task's time fields when leaving minute mode; converts a day-mode plan's lags to minutes when entering it
-  save(); render(); closePrecisionModal();
-  showToast(`Scheduling precision: ${precisionSummary()}`);
-}
-function savePrecision() {
-  const minute = document.getElementById('precisionMinute').checked;
-  const wh = minute ? { start: document.getElementById('whStart').value || DEFAULT_WORK_HOURS.start, end: document.getElementById('whEnd').value || DEFAULT_WORK_HOURS.end, breaks: calWorkHours.breaks } : null;
-  const rawBy = minute ? readHoursByDay() : null;
-  if (minute && rawBy === null) return;
-  const by = minute ? cleanHoursByDay(rawBy, wh) : null;   // (a ticked day whose hours equal the standard day is just the standard day)
-  const curMinute = project.timeUnit === 'minute';
-  if (minute === curMinute && stableStringify(wh) === (curMinute ? stableStringify(project.workHours || DEFAULT_WORK_HOURS) : null) && stableStringify(by) === (curMinute ? stableStringify(project.workHoursByDay || null) : stableStringify(null))) { closePrecisionModal(); return; }
-  if (curMinute && !minute) {
-    const impact = precisionLeaveImpact();
-    if (impact.times || impact.lags) {
-      const bits = [];
-      if (impact.times) bits.push(`${impact.times} task${impact.times === 1 ? ' will lose its' : 's will lose their'} time of day`);
-      if (impact.lags) bits.push(`${impact.lags} lag${impact.lags === 1 ? '' : 's'} will round to whole working days`);
-      openConfirmModal({ title: 'Switch to Days?', body: `${bits.join(' and ')} — switching back to Hours &amp; minutes won't bring them back.`, confirmLabel: 'Switch to Days', confirmClass: 'btn btn-primary', action() { applyPrecisionChange(minute, wh, by); } });
-      return;
-    }
-  }
-  applyPrecisionChange(minute, wh, by);
 }
 /* ---- Custom fields: the Add-field menu and the Manage dialog (names, adding, removing). A field is in use when it has a name or a value (see activeCustomSet). ---- */
 const FIELD_KIND_INFO = {
@@ -8483,7 +8460,7 @@ function cleanRecurrence(r) {
   if (r.freq === 'monthly') out.monthDay = Math.max(1, Math.min(31, Math.round(Number(r.monthDay) || Number(r.start.slice(8, 10)))));
   if (/^\d{4}-\d{2}-\d{2}$/.test(r.until || '') && r.until >= r.start) out.until = r.until;
   else out.count = Math.max(1, Math.min(RECUR_MAX, Math.round(Number(r.count) || 1)));
-  out.dur = Math.max(0, Math.round(Number(r.dur) || 0));   // working days, or working minutes in an Hours & minutes plan; 0 = milestones
+  out.dur = Math.max(0, Math.round(Number(r.dur) || 0));   // working days, or working minutes in an hours & minutes plan; 0 = milestones
   if (hhmmOk(r.time)) out.time = r.time;
   return out;
 }
@@ -9726,7 +9703,7 @@ function parseMspdi(xmlText) {
     const wh = calWorkHours || { start: calStart, end: calFinish, breaks: [] };
     if (wh.start !== '08:00' || wh.end !== '17:00' || wh.breaks.length !== 1 || wh.breaks[0].start !== '12:00' || wh.breaks[0].end !== '13:00') project.workHours = wh;
     if (calByDay) project.workHoursByDay = calByDay;
-    warnings.push('Times of day were found in this file — the plan was switched to Hours & minutes scheduling');
+    warnings.push('Times of day were found in this file — the plan was switched to hours & minutes scheduling');
   }
   return { tasks: made, project, warnings, lagMinutes, resourceMaxUnits, resourceFields, info: { header: true, links, levels: maxLevel, baselines: baselineSlots.size } };
 }
@@ -10717,7 +10694,7 @@ function renderForeignImport() {
   if (project.workDays) bits.push(`working week ${calendarLabel(project.workDays)}`);
   if (project.holidays) bits.push(`${project.holidays.length} holiday${project.holidays.length === 1 ? '' : 's'}`);
   if (r.info.baselines) bits.push(`${r.info.baselines} baseline${r.info.baselines === 1 ? '' : 's'}`);
-  if (project.timeUnit === 'minute') bits.push('times of day (Hours & minutes)');
+  if (project.timeUnit === 'minute') bits.push('times of day (hours & minutes)');
   const unscheduled = r.tasks.filter(t => t.startText != null).length; if (unscheduled) bits.push(`${unscheduled} without dates (kept as “TBD”)`);
   const depth = t => { let d = 0, p = t.parentId; while (p) { d++; p = (r.tasks.find(x => x.id === p) || {}).parentId; } return d; };
   const dtText = (iso, time) => fmtDate(iso) + (time ? ' ' + fmtTime(time) : '');   // (a task read with a time of day shows it)
@@ -12388,16 +12365,15 @@ function wireGlobalEvents() {
     if (document.getElementById('cfAddMenu').classList.contains('open')) { closeCfAddMenu(); return; }
     if (document.getElementById('fieldsModalBg').classList.contains('open')) { if (document.getElementById('confirmModalBg').classList.contains('open')) closeConfirmModal(); else requestCloseFieldsModal(); return; }   // only the topmost dialog: the task dialog underneath keeps its unsaved edits
     if (document.getElementById('resourceDaysModalBg').classList.contains('open')) { if (document.getElementById('confirmModalBg').classList.contains('open')) closeConfirmModal(); else requestCloseResourceDaysModal(); return; }
-    if (document.getElementById('confirmModalBg').classList.contains('open') && (taskModalDirty() || calendarDirty() || precisionDirty() || rulesDirty() || bulkDirty())) { closeConfirmModal(); return; }   // the "discard your changes?" question: Escape = keep editing
+    if (document.getElementById('confirmModalBg').classList.contains('open') && (taskModalDirty() || calendarDirty() || rulesDirty() || bulkDirty())) { closeConfirmModal(); return; }   // the "discard your changes?" question: Escape = keep editing
     if (taskModalDirty()) { requestCloseTaskModal(); return; }
     if (calendarDirty()) { requestCloseCalendarModal(); return; }
-    if (precisionDirty()) { requestClosePrecisionModal(); return; }
     if (rulesDirty()) { requestCloseRulesModal(); return; }
     if (bulkDirty()) { requestCloseBulkModal(); return; }
     // Escape closes whatever overlay is open first; only when there is none — and
     // the user isn't typing in a field, where Escape already means "cancel this
     // edit" — does it clear the task selection.
-    const modalIds = ['recurModalBg', 'taskModalBg', 'folderFilesModalBg', 'confirmModalBg', 'calendarModalBg', 'precisionModalBg', 'rulesModalBg', 'formatModalBg', 'baselineModalBg', 'rescheduleModalBg', 'levelModalBg', 'syncConflictsModalBg', 'planModalBg', 'excelModalBg', 'importModalBg', 'foreignImportModalBg', 'bulkModalBg', 'searchModalBg', 'printModalBg', 'backupsModalBg', 'helpModalBg', 'aboutModalBg', 'shortcutsModalBg', 'csvModalBg', 'replaceModalBg'];
+    const modalIds = ['recurModalBg', 'taskModalBg', 'folderFilesModalBg', 'confirmModalBg', 'calendarModalBg', 'rulesModalBg', 'formatModalBg', 'baselineModalBg', 'rescheduleModalBg', 'levelModalBg', 'syncConflictsModalBg', 'planModalBg', 'excelModalBg', 'importModalBg', 'foreignImportModalBg', 'bulkModalBg', 'searchModalBg', 'printModalBg', 'backupsModalBg', 'helpModalBg', 'aboutModalBg', 'shortcutsModalBg', 'csvModalBg', 'replaceModalBg'];
     const overlayOpen = modalIds.some(id => document.getElementById(id).classList.contains('open'))
       || document.getElementById('fileSyncModalBg').classList.contains('open')   // mandatory: Escape can't close it
       || document.getElementById('dataMenu').classList.contains('open')

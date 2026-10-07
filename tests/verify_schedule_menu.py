@@ -50,10 +50,10 @@ with sync_playwright() as p:
     pg.keyboard.press("Escape")
 
     pg.click("#scheduleMenuBtn"); pg.wait_for_selector("#scheduleMenu.open")
-    pg.click("#planSettingsBtn"); pg.click(".modal-bg.open [data-settings-tab='precision']"); pg.wait_for_selector("#precisionModalBg.open")
+    pg.click("#planSettingsBtn"); pg.click(".modal-bg.open [data-settings-tab='calendar']"); pg.wait_for_selector("#calendarModalBg.open")
     check("...and so does opening it on the Precision tab", pg.locator("#scheduleMenu.open").count() == 0)
     pg.keyboard.press("Escape"); pg.wait_for_timeout(100)
-    check("Escape closes the precision dialog too", pg.locator("#precisionModalBg.open").count() == 0)
+    check("Escape closes the precision dialog too", pg.locator("#calendarModalBg.open").count() == 0)
 
     # ---------------------------------------------------------------- mutual exclusivity, click-outside, Escape
     pg.click("#scheduleMenuBtn"); pg.wait_for_selector("#scheduleMenu.open")
