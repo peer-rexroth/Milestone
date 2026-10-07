@@ -39,7 +39,11 @@ with sync_playwright() as p:
     # ------------------------------------------------------------ resizing
     w0 = cellw("resource")
     box = pg.locator('#gridHeader .col-resizer[data-col="resource"]').bounding_box()
-    pg.mouse.move(box["x"] + 3, box["y"] + box["height"] / 2); pg.mouse.down(); pg.mouse.move(box["x"] + 63, box["y"] + 5, steps=4)
+    rt0 = ev("() => { const row = document.querySelector('#gridRows .grid-row'), k = visibleTaskCols().indexOf('resource') + 1; return row.children[k].getBoundingClientRect().right; }")
+    pg.mouse.move(box["x"] + 3, box["y"] + box["height"] / 2); pg.mouse.down(); pg.mouse.move(box["x"] - 57, box["y"] + 5, steps=4)
+    rt1 = ev("() => { const row = document.querySelector('#gridRows .grid-row'), k = visibleTaskCols().indexOf('resource') + 1; return row.children[k].getBoundingClientRect().right; }")
+    lf1 = ev("() => { const row = document.querySelector('#gridRows .grid-row'), k = visibleTaskCols().indexOf('resource') + 1; return row.children[k].getBoundingClientRect().left; }")
+    check("Resource is right of the stretching Task Name: its handle is on its LEFT edge, its right edge stays put while its left edge follows the mouse", abs(rt1 - rt0) <= 1 and abs(lf1 - (box["x"] + 3 - 60)) <= 4, (rt0, rt1, lf1, box["x"]))
     check("while dragging the column follows the mouse", abs(cellw("resource") - (w0 + 60)) <= 2, (w0, cellw("resource")))
     pg.mouse.up(); pg.wait_for_timeout(150)
     check("after the drag the width is stored", abs(ev("() => colWidths.resource") - (w0 + 60)) <= 2, ev("() => colWidths"))
@@ -53,6 +57,19 @@ with sync_playwright() as p:
     check("widths of unknown columns in saved prefs are ignored", ev("() => { localStorage.setItem('milestone-prefs', JSON.stringify(Object.assign(JSON.parse(localStorage.getItem('milestone-prefs')), { cw: { nope: 200, start: 'x', resource: 99999 } }))); loadPrefs(); return JSON.stringify(colWidths); }") == '{"resource":700}')
     seed()
 
+    # ------------------------------------------------------------ which edge is the handle on
+    seed()
+    edges = ev("() => Object.fromEntries(visibleTaskCols().map(c => [c, resizeEdge(c)]))")
+    cols_ = list(edges); k_ = cols_.index("name")
+    check("Task Name stretches, so: columns after it resize by their left edge, the ones before it by their right edge, Task Name itself has no handle", all(edges[c] == "left" for c in cols_[k_ + 1:]) and all(edges[c] == "right" for c in cols_[:k_]) and edges["name"] == "none" and pg.locator('#gridHeader .col-head.rz-none .col-resizer').is_hidden(), edges)
+    check("...every header still has its handle element (the right-click width menu finds it)", pg.locator('#gridHeader .col-resizer').count() == len(cols_))
+    if k_ > 0:
+        bc = cols_[k_ - 1]; hb = pg.locator(f'#gridHeader .col-resizer[data-col="{bc}"]').bounding_box(); wb = cellw(bc)
+        pg.mouse.move(hb["x"] + 3, hb["y"] + 10); pg.mouse.down(); pg.mouse.move(hb["x"] + 33, hb["y"] + 10, steps=3); pg.mouse.up(); pg.wait_for_timeout(150)
+        check("a column before Task Name: dragging its right edge to the right widens it", abs(ev("() => colWidths." + bc) - (wb + 30)) <= 2, (wb, ev("() => colWidths")))
+    ev("() => { colWidths = { name: 300 }; save(); render(); }")
+    check("once Task Name has a width of its own every column is fixed: handles are on the right edges, Task Name has one too", ev("() => visibleTaskCols().every(c => resizeEdge(c) === 'right')") and pg.locator('#gridHeader .col-head.rz-none').count() == 0)
+    seed()
     # ------------------------------------------------------------ fit / default
     pg.mouse.click(box["x"] + 3, box["y"] + 20); pg.mouse.click(box["x"] + 3, box["y"] + 20); pg.wait_for_timeout(200)
     fit = ev("() => colWidths.resource")
@@ -87,7 +104,7 @@ with sync_playwright() as p:
     seed(); ev("() => { colWidths = { start: 60, end: 60, progress: 40 }; save(); render(); }")
     check("a date column can't get narrower than its editor needs (100px), other columns can", abs(cellw("start") - 100) <= 1 and abs(cellw("end") - 100) <= 1 and cellw("progress") < 50, (cellw("start"), cellw("progress")))
     box2 = pg.locator('#gridHeader .col-resizer[data-col="start"]').bounding_box()
-    pg.mouse.move(box2["x"] + 3, box2["y"] + 20); pg.mouse.down(); pg.mouse.move(box2["x"] - 80, box2["y"] + 20, steps=4); pg.mouse.up(); pg.wait_for_timeout(150)
+    pg.mouse.move(box2["x"] + 3, box2["y"] + 20); pg.mouse.down(); pg.mouse.move(box2["x"] + 83, box2["y"] + 20, steps=4); pg.mouse.up(); pg.wait_for_timeout(150)
     check("...dragging stops there too", ev("() => colWidths.start") == 100 and abs(cellw("start") - 100) <= 1, ev("() => colWidths.start"))
     ev("() => startInlineEdit('a', 'start')"); pg.wait_for_timeout(120)
     r = ev("() => { const row = document.querySelector('#gridRows .grid-row[data-id=\"a\"]'), k = visibleTaskCols().indexOf('start') + 1; return [row.children[k].getBoundingClientRect().right, row.children[k + 1].getBoundingClientRect().left]; }")

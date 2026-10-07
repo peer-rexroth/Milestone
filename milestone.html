@@ -265,6 +265,9 @@ button:focus:not(:focus-visible) { outline: none; }
 /* ---- column filters ---- */
 .col-head { display: flex; align-items: center; gap: 3px; min-width: 0; position: relative; }
 .col-resizer { position: absolute; top: 0; right: 0; bottom: 0; width: 7px; cursor: col-resize; z-index: 2; }
+.col-head.rz-left .col-resizer { left: 0; right: auto; }   /* a column right of the stretching Task Name: its left edge is the one that moves */
+.col-head.rz-none .col-resizer { display: none; }   /* Task Name while it stretches: its right edge is the next column's left edge */
+.col-head.rz-left .col-resizer:hover, body.col-resizing .col-head.rz-left .col-resizer.active { background: linear-gradient(90deg, var(--accent) 0, var(--accent) 2px, transparent 2px); }
 .col-resizer:hover, body.col-resizing .col-resizer.active { background: linear-gradient(90deg, transparent 3px, var(--accent) 3px, var(--accent) 5px, transparent 5px); }
 body.col-resizing, body.col-resizing * { cursor: col-resize !important; user-select: none !important; }
 /* the cells the last edit changed (MS Project's change highlighting) */
@@ -2208,7 +2211,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
           <div class="help-section-title">Columns</div>
           <div class="help-row"><i class="fa-solid fa-table-columns"></i><span>Click <strong>Columns</strong> in the toolbar to tick the columns you want and reorder them. The <strong>Tasks view and the Gantt view each remember their own set</strong> on this device; Task Name always stays.</span></div>
           <div class="help-row"><i class="fa-solid fa-plus"></i><span><strong>Add task</strong> under the last row (Tasks view) adds a task at the end of the plan; the toolbar's <strong>Add Task</strong> adds it below the selected one. The Resource Sheet ends with <strong>Add resource</strong>.</span></div>
-          <div class="help-row"><i class="fa-solid fa-left-right"></i><span><strong>Resize a column</strong> by dragging the edge of its header; <strong>double-click the edge</strong> to fit it to its content. <strong>Right-click a header</strong> for <em>Fit to content</em>, <em>Fit all columns</em>, <em>Default width</em> and <em>Reset all column widths</em> (also in the Columns menu). Widths are remembered on this device and shared by the Tasks and Gantt lists; a resized Task Name keeps its width instead of filling the pane.</span></div>
+          <div class="help-row"><i class="fa-solid fa-left-right"></i><span><strong>Resize a column</strong> by dragging the edge of its header (the left edge for columns right of Task Name, the right edge for the others); <strong>double-click the edge</strong> to fit it to its content. <strong>Right-click a header</strong> for <em>Fit to content</em>, <em>Fit all columns</em>, <em>Default width</em> and <em>Reset all column widths</em> (also in the Columns menu). Widths are remembered on this device and shared by the Tasks and Gantt lists; a resized Task Name keeps its width instead of filling the pane.</span></div>
           <div class="help-row"><i class="fa-solid fa-highlighter"></i><span>After an edit the cells it <strong>changed</strong> are shaded pale yellow (blue is the selection) — a later task that moved, a Finish or Work that was recalculated — as in MS Project. What you typed yourself is not shaded; the next edit, Undo or Redo clears it. Switch it off with <em>Highlight what the last edit changed</em> in the Columns menu.</span></div>
           <div class="help-row"><i class="fa-solid fa-eye-slash"></i><span>The list starts with Task Name, Start, Finish, Duration, % Complete, Predecessors, Resource and Status; Task Mode, WBS, the Actual dates, Remaining Duration, Task Type, Work, Cost, the baseline and variance columns and your custom fields start hidden (<strong>Columns</strong> shows them). The Gantt's list starts with just Name, Start, Finish, Duration and % Complete. Click a <strong>Resource</strong> or actual-date cell to edit it, or use the task dialog.</span></div>
           <div class="help-row"><i class="fa-solid fa-users"></i><span><strong>Resource</strong> takes names separated by commas or semicolons ("Anna, Ben") — typing a new name adds it to the plan's resource pool automatically, the same way MS Project does. Give a share other than full time with <code>Name[NN%]</code> ("Anna[50%], Ben"), as in MS Project — a bare name is 100%. In the list a share other than 100% shows as a small <strong>%</strong> chip next to the name, so it stays visible however narrow the column is.</span></div>
@@ -4857,11 +4860,21 @@ function describeSpec(col, spec) {
   if (spec.blanks) parts.push('(Blanks)');
   return parts.join(' + ') || 'nothing';
 }
+// Which edge of a column moves when it is resized. Task Name stretches to fill the pane, so the columns to its right are pinned to the
+// pane's right side: widening one takes the room from Task Name and its LEFT edge moves — that is the edge to grab. Everywhere else (the
+// columns before Task Name, or any column once Task Name has a width of its own) the RIGHT edge moves. Task Name itself, while it
+// stretches, has no handle: its right edge is the next column's left edge.
+function resizeEdge(col) {
+  if (colWidths.name) return 'right';
+  const cols = visibleTaskCols(), k = cols.indexOf('name'), i = cols.indexOf(col);
+  if (k < 0 || i < 0 || i < k) return 'right';
+  return i === k ? 'none' : 'left';
+}
 function colHeadHtml(label, col, headTitle) {
   const spec = colFilters[col], name = FILTER_COLS[col].label;
   const title = spec ? `Filtered: ${describeSpec(col, spec)}` : `Filter ${name}`;
   const sorted = sortSpec && sortSpec.col === col ? `<i class="fa-solid fa-arrow-${sortSpec.dir > 0 ? 'up' : 'down'}-short-wide sort-ind" title="Sorted ${sortSpec.dir > 0 ? 'ascending' : 'descending'}"></i>` : '';
-  return `<div class="col-head"${headTitle ? ` title="${escapeHtml(headTitle)}"` : label ? '' : ` title="${escapeHtml(name)}"`}><span>${escapeHtml(label).replace(/\n/g, '<br>')}</span>${sorted}<button class="col-filter-btn${spec ? ' active' : ''}" data-col="${col}" onclick="openColumnFilter(event,'${col}')" title="${escapeHtml(title)}"><i class="fa-solid fa-filter"></i></button><div class="col-resizer" data-col="${col}" title="Drag to resize · double-click to fit the content · right-click for more"></div></div>`;
+  return `<div class="col-head rz-${resizeEdge(col)}"${headTitle ? ` title="${escapeHtml(headTitle)}"` : label ? '' : ` title="${escapeHtml(name)}"`}><span>${escapeHtml(label).replace(/\n/g, '<br>')}</span>${sorted}<button class="col-filter-btn${spec ? ' active' : ''}" data-col="${col}" onclick="openColumnFilter(event,'${col}')" title="${escapeHtml(title)}"><i class="fa-solid fa-filter"></i></button><div class="col-resizer" data-col="${col}" title="Drag to resize · double-click to fit the content · right-click for more"></div></div>`;
 }
 function renderFilterBar() {
   const el = document.getElementById('filterBar');
@@ -5383,9 +5396,9 @@ function startColResize(e, id) {
   const now = Date.now();
   if (lastResizeDown.id === id && now - lastResizeDown.at < 450) { lastResizeDown = { id: null, at: 0 }; fitColumn(id); return; }   // a double-click (the header is rebuilt after a drag, so the browser's own dblclick would miss)
   lastResizeDown = { id, at: now };
-  const head = e.target.closest('.col-head'), x0 = e.clientX, w0 = head.getBoundingClientRect().width; let moved = false;
+  const head = e.target.closest('.col-head'), x0 = e.clientX, w0 = head.getBoundingClientRect().width, dir = resizeEdge(id) === 'left' ? -1 : 1; let moved = false;
   e.target.classList.add('active'); document.body.classList.add('col-resizing');
-  const move = ev => { moved = true; colWidths[id] = Math.max(colMinW(id), Math.min(COL_MAX_W, Math.round(w0 + ev.clientX - x0))); applyColTemplate(); updateColumnLines(); };
+  const move = ev => { moved = true; colWidths[id] = Math.max(colMinW(id), Math.min(COL_MAX_W, Math.round(w0 + dir * (ev.clientX - x0)))); applyColTemplate(); updateColumnLines(); };
   const up = () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); document.body.classList.remove('col-resizing'); if (moved) { save(); render(); } else e.target.classList.remove('active'); };
   document.addEventListener('mousemove', move); document.addEventListener('mouseup', up);
 }
