@@ -265,9 +265,9 @@ button:focus:not(:focus-visible) { outline: none; }
 /* ---- column filters ---- */
 .col-head { display: flex; align-items: center; gap: 3px; min-width: 0; position: relative; }
 .col-resizer { position: absolute; top: 0; right: 0; bottom: 0; width: 7px; cursor: col-resize; z-index: 2; }
-.col-head.rz-left .col-resizer { left: 0; right: auto; }   /* a column right of the stretching Task Name: its left edge is the one that moves */
-.col-head.rz-none .col-resizer { display: none; }   /* Task Name while it stretches: its right edge is the next column's left edge */
-.col-head.rz-left .col-resizer:hover, body.col-resizing .col-head.rz-left .col-resizer.active { background: linear-gradient(90deg, var(--accent) 0, var(--accent) 2px, transparent 2px); }
+.rz-left > .col-resizer { left: 0; right: auto; }   /* a column right of the stretching Task Name: its left edge is the one that moves */
+.rz-none > .col-resizer { display: none; }   /* Task Name while it stretches: its right edge is the next column's left edge */
+.rz-left > .col-resizer:hover, body.col-resizing .rz-left > .col-resizer.active { background: linear-gradient(90deg, var(--accent) 0, var(--accent) 2px, transparent 2px); }
 .col-resizer:hover, body.col-resizing .col-resizer.active { background: linear-gradient(90deg, transparent 3px, var(--accent) 3px, var(--accent) 5px, transparent 5px); }
 body.col-resizing, body.col-resizing * { cursor: col-resize !important; user-select: none !important; }
 /* the cells the last edit changed (MS Project's change highlighting) */
@@ -6672,14 +6672,20 @@ function rsColMinW(key) { return RS_MIN_W[key] || 56; }
 function rsColWidth(c) { return rsColWidths[c.key] ? Math.max(rsColMinW(c.key), Math.min(COL_MAX_W, rsColWidths[c.key])) + 'px' : c.w; }
 function applyRsColTemplate() { document.getElementById('resourceSheetPaneOuter').style.setProperty('--rs-cols', rsVisibleCols().map(rsColWidth).join(' ')); }
 let lastRsResizeDown = { key: null, at: 0 };
+function rsResizeEdge(key) {   // the same rule as resizeEdge(): the stretching Name column's right-hand neighbours resize by their left edge
+  if (rsColWidths.name) return 'right';
+  const keys = rsVisibleCols().map(c => c.key), k = keys.indexOf('name'), i = keys.indexOf(key);
+  if (k < 0 || i < 0 || i < k) return 'right';
+  return i === k ? 'none' : 'left';
+}
 function startRsColResize(e, key) {
   e.preventDefault(); e.stopPropagation(); closeColWidthMenu();
   const now = Date.now();
   if (lastRsResizeDown.key === key && now - lastRsResizeDown.at < 450) { lastRsResizeDown = { key: null, at: 0 }; fitRsColumn(key); return; }   // a double-click (see startColResize)
   lastRsResizeDown = { key, at: now };
-  const head = e.target.parentElement, x0 = e.clientX, w0 = head.getBoundingClientRect().width; let moved = false;
+  const head = e.target.parentElement, x0 = e.clientX, w0 = head.getBoundingClientRect().width, dir = rsResizeEdge(key) === 'left' ? -1 : 1; let moved = false;
   e.target.classList.add('active'); document.body.classList.add('col-resizing');
-  const move = ev => { moved = true; rsColWidths[key] = Math.max(rsColMinW(key), Math.min(COL_MAX_W, Math.round(w0 + ev.clientX - x0))); applyRsColTemplate(); updateResourceSheetColumnLines(); };
+  const move = ev => { moved = true; rsColWidths[key] = Math.max(rsColMinW(key), Math.min(COL_MAX_W, Math.round(w0 + dir * (ev.clientX - x0)))); applyRsColTemplate(); updateResourceSheetColumnLines(); };
   const up = () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); document.body.classList.remove('col-resizing'); if (moved) { save(); render(); } else e.target.classList.remove('active'); };
   document.addEventListener('mousemove', move); document.addEventListener('mouseup', up);
 }
@@ -6731,7 +6737,7 @@ function renderResourceSheet() {
   const cur = `<button type="button" class="rst-cur" onclick="openSettingsTab('format')" title="Currency: ${currencyCode()} — click to change it in Plan settings">(${escapeHtml(currencySymbol())})</button>`;
   const cols = rsVisibleCols();
   applyRsColTemplate();
-  document.getElementById('resourceSheetHeader').innerHTML = cols.map(c => `<div data-rskey="${c.key}">${c.label}${c.money ? cur : ''}${c.key === 'id' || c.key === 'remove' ? '' : `<div class="col-resizer" data-rscol="${c.key}" title="Drag to resize · double-click to fit the content · right-click for more"></div>`}</div>`).join('');
+  document.getElementById('resourceSheetHeader').innerHTML = cols.map(c => `<div data-rskey="${c.key}" class="rz-${rsResizeEdge(c.key)}">${c.label}${c.money ? cur : ''}${c.key === 'id' || c.key === 'remove' ? '' : `<div class="col-resizer" data-rscol="${c.key}" title="Drag to resize · double-click to fit the content · right-click for more"></div>`}</div>`).join('');
   const pool = project.resources || [];
   document.getElementById('resourceSheetBody').innerHTML = pool.length ? pool.map((r, i) => resourceSheetRowHtml(r, i)).join('') + '<button type="button" class="rst-add-row" onclick="addResourceSheetRow()"><i class="fa-solid fa-plus"></i>Add resource</button>'
     : '<div class="rst-empty">No resources yet — type a name in a task’s Resource field, or “Add Resource” above.</div>';
