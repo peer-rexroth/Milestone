@@ -263,6 +263,7 @@ button:focus:not(:focus-visible) { outline: none; }
 .cols-move button:hover:not(:disabled) { background: var(--panel-2); color: var(--text); }
 .cols-move button:disabled { opacity: .3; cursor: default; }
 /* ---- column filters ---- */
+.grid-row > .cell-active { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 3px; }   /* the keyboard's cell cursor (Tasks view) */
 .col-head { display: flex; align-items: center; gap: 3px; min-width: 0; position: relative; }
 .col-resizer { position: absolute; top: 0; right: 0; bottom: 0; width: 7px; cursor: col-resize; z-index: 2; }
 .rz-left > .col-resizer { left: 0; right: auto; }   /* a column right of the stretching Task Name: its left edge is the one that moves */
@@ -2211,6 +2212,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
           <div class="help-section-title">Columns</div>
           <div class="help-row"><i class="fa-solid fa-table-columns"></i><span>Click <strong>Columns</strong> in the toolbar to tick the columns you want and reorder them. The <strong>Tasks view and the Gantt view each remember their own set</strong> on this device; Task Name always stays.</span></div>
           <div class="help-row"><i class="fa-solid fa-plus"></i><span><strong>Add task</strong> under the last row (Tasks view) adds a task at the end of the plan; the toolbar's <strong>Add Task</strong> adds it below the selected one. The Resource Sheet ends with <strong>Add resource</strong>.</span></div>
+          <div class="help-row"><i class="fa-solid fa-keyboard"></i><span><strong>Use the keyboard in the list</strong>: the <strong>arrow keys</strong> move from cell to cell (the row becomes the selection; <strong>Shift+↑/↓</strong> extends it), <strong>Enter</strong> or <strong>F2</strong> edits the cell, typing replaces its content, and <strong>Tab</strong> / <strong>Enter</strong> save and move on. <strong>Esc</strong> puts the cursor away. Press <strong>?</strong> for every shortcut.</span></div>
           <div class="help-row"><i class="fa-solid fa-left-right"></i><span><strong>Resize a column</strong> by dragging the edge of its header (the left edge for columns right of Task Name, the right edge for the others); <strong>double-click the edge</strong> to fit it to its content. <strong>Right-click a header</strong> for <em>Fit to content</em>, <em>Fit all columns</em>, <em>Default width</em> and <em>Reset all column widths</em> (also in the Columns menu). Widths are remembered on this device and shared by the Tasks and Gantt lists; a resized Task Name keeps its width instead of filling the pane.</span></div>
           <div class="help-row"><i class="fa-solid fa-highlighter"></i><span>After an edit the cells it <strong>changed</strong> are shaded pale yellow (blue is the selection) — a later task that moved, a Finish or Work that was recalculated — as in MS Project. What you typed yourself is not shaded; the next edit, Undo or Redo clears it. Switch it off with <em>Highlight what the last edit changed</em> in the Columns menu.</span></div>
           <div class="help-row"><i class="fa-solid fa-eye-slash"></i><span>The list starts with Task Name, Start, Finish, Duration, % Complete, Predecessors, Resource and Status; Task Mode, WBS, the Actual dates, Remaining Duration, Task Type, Work, Cost, the baseline and variance columns and your custom fields start hidden (<strong>Columns</strong> shows them). The Gantt's list starts with just Name, Start, Finish, Duration and % Complete. Click a <strong>Resource</strong> or actual-date cell to edit it, or use the task dialog.</span></div>
@@ -4571,7 +4573,7 @@ function renderMainViewTabs() {
   document.getElementById('main').classList.toggle('view-resources', currentView === 'resources');
   document.getElementById('main').classList.toggle('view-resourceSheet', currentView === 'resourceSheet');
 }
-function setView(id) { currentView = id; editingCell = null; closeColumnsMenu(); save(); render(); }
+function setView(id) { currentView = id; editingCell = null; activeCell = null; closeColumnsMenu(); save(); render(); }
 
 function updateProjectNameUI() {
   document.getElementById('planBtnName').textContent = project.name;
@@ -5682,6 +5684,89 @@ function renderGrid() {
     </div>`;
   }).join('') + (win.virtual ? spacer((list.length - win.to) * ROW_H) : '')
     + (currentView === 'tasks' ? '<button type="button" class="grid-add-row" onclick="addTaskAtEnd()" title="Add a task at the end of the plan"><i class="fa-solid fa-plus"></i>Add task</button>' : '');
+  paintActiveCell();
+}
+/* ---- Keyboard navigation in the task list (Tasks view): a cell cursor. Arrow keys move it (the row becomes the selection), Enter or F2 edits the cell,
+   typing replaces it, Tab / Enter save and move on, Esc puts the cursor away. `activeCell` is transient view state ({ id, col, shown }): never saved, never
+   synced. A mouse click only REMEMBERS the cell (shown: false) so the first arrow key moves from it; the ring is drawn once the keyboard is used. ---- */
+let activeCell = null;
+const NAV_INLINE = { name: 'name', start: 'start', end: 'finish', duration: 'duration', progress: 'progress', preds: 'predecessors', resource: 'resource', work: 'work', actualStart: 'actualStart', actualFinish: 'actualFinish', deadline: 'deadline' };
+function navInlineField(col) { return NAV_INLINE[col] || (isCustomField(col) && CUSTOM_FIELDS[col].kind !== 'flag' ? col : null); }
+function navColOfField(field) { return Object.keys(NAV_INLINE).find(c => NAV_INLINE[c] === field) || field; }
+function navCanEdit(id, col) { const f = navInlineField(col); return !!f && inlineEditAllowed(byId(id), f); }
+function noteClickedCell(id, ev) {
+  const row = ev.target && ev.target.closest ? ev.target.closest('#gridRows .grid-row') : null, cols = visibleTaskCols();
+  let cell = ev.target.closest('#gridRows .grid-row > *'); const k = row && cell ? [...row.children].indexOf(cell) - 1 : -1;
+  if (k >= 0 && k < cols.length) activeCell = { id, col: cols[k], shown: !!(activeCell && activeCell.shown) };
+  else activeCell = { id, col: activeCell ? activeCell.col : 'name', shown: !!(activeCell && activeCell.shown) };   // (the ID cell: the row, in the column the cursor was in)
+}
+function paintActiveCell() {
+  for (const old of document.querySelectorAll('#gridRows .cell-active')) old.classList.remove('cell-active');
+  if (!activeCell || currentView !== 'tasks') return;
+  if (!byId(activeCell.id)) { activeCell = null; return; }
+  if (!activeCell.shown || (editingCell && editingCell.id === activeCell.id)) return;
+  const k = visibleTaskCols().indexOf(activeCell.col); if (k < 0) return;
+  const row = document.querySelector(`#gridRows .grid-row[data-id="${activeCell.id}"]`), cell = row && row.children[k + 1];
+  if (cell) cell.classList.add('cell-active');
+}
+// Move the cursor by whole rows / columns (clamped, or — Tab — running on into the next / previous row); `extend` (Shift) grows the row selection.
+function navStep(dr, dc, o) {
+  o = o || {};
+  const rows = displayedTaskIds(), cols = visibleTaskCols(); if (!rows.length || !cols.length) return;
+  let ri = rows.indexOf(activeCell && activeCell.id), ci = Math.max(0, cols.indexOf(activeCell && activeCell.col));
+  if (ri < 0) ri = 0;
+  if (o.toRow != null) ri = o.toRow; else ri += dr;
+  if (o.toCol != null) ci = o.toCol; else ci += dc;
+  if (o.wrap) { if (ci >= cols.length) { ci = 0; ri++; } else if (ci < 0) { ci = cols.length - 1; ri--; } }
+  ri = Math.max(0, Math.min(rows.length - 1, ri)); ci = Math.max(0, Math.min(cols.length - 1, ci));
+  const id = rows[ri];
+  activeCell = { id, col: cols[ci], shown: true };
+  if (o.extend && selectedTaskId && rows.includes(selectedTaskId)) { const a = rows.indexOf(selectedTaskId); setSelection(rows.slice(Math.min(a, ri), Math.max(a, ri) + 1), selectedTaskId); }
+  else setSelection([id]);
+  render();
+  requestAnimationFrame(() => {
+    const gr = document.getElementById('gridRows'); if (!gr || !activeCell) return;
+    if (renderedWin.virtual) {   // (a large plan: the row may not be built yet — bring it into the scrolled window first)
+      const top = displayRows().findIndex(v => !v.header && v.task.id === activeCell.id) * ROW_H;
+      if (top < gr.scrollTop) gr.scrollTop = top; else if (top + ROW_H > gr.scrollTop + gr.clientHeight) gr.scrollTop = top + ROW_H - gr.clientHeight;
+      refreshWindowIfNeeded(true);
+    }
+    const cell = document.querySelector('#gridRows .cell-active'); if (cell) cell.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  });
+}
+const NAV_MENUS = ['dataMenu', 'scheduleMenu', 'planMenu', 'filterMenu', 'columnsMenu', 'taskModeMenu', 'taskTypeMenu', 'addMenu', 'rowMenu', 'moreMenu', 'groupMenu', 'loadMenu', 'sbModeMenu', 'colWidthMenu', 'cfAddMenu'];
+function handleCellNavKey(e) {   // true when the key was used
+  if (currentView !== 'tasks' || e.altKey || editingCell) return false;
+  const tg = e.target || {};
+  if (tg !== document.body && !(tg.closest && tg.closest('#gridRows'))) return false;   // a focused button, box or menu keeps its own keys
+  if (document.querySelector('.modal-bg.open') || NAV_MENUS.some(id => { const m = document.getElementById(id); return m && m.classList.contains('open'); })) return false;
+  const k = e.key, mod = e.ctrlKey || e.metaKey, rows = displayedTaskIds(); if (!rows.length) return false;
+  const arrow = { ArrowUp: [-1, 0], ArrowDown: [1, 0], ArrowLeft: [0, -1], ArrowRight: [0, 1] }[k];
+  if (!activeCell) {   // the first navigation key puts the cursor on the selected task's name (or the first task's) — it does not move yet
+    if (mod || !(arrow || k === 'Home' || k === 'End' || k === 'PageUp' || k === 'PageDown')) return false;
+    pruneSelection();
+    const id = selectedTaskId && rows.includes(selectedTaskId) ? selectedTaskId : rows[0];
+    activeCell = { id, col: 'name', shown: true }; setSelection([id]); render(); e.preventDefault(); return true;
+  }
+  if (!rows.includes(activeCell.id)) { activeCell = null; return false; }
+  const page = Math.max(1, Math.floor(document.getElementById('gridRows').clientHeight / ROW_H) - 1), last = visibleTaskCols().length - 1;
+  if (arrow && !mod) { e.preventDefault(); navStep(arrow[0], arrow[1], { extend: e.shiftKey && arrow[1] === 0 }); return true; }
+  if (k === 'PageDown' || k === 'PageUp') { e.preventDefault(); navStep(k === 'PageDown' ? page : -page, 0, { extend: e.shiftKey }); return true; }
+  if (k === 'Home' || k === 'End') { e.preventDefault(); navStep(0, 0, mod ? { toRow: k === 'Home' ? 0 : rows.length - 1, toCol: k === 'Home' ? 0 : last } : { toCol: k === 'Home' ? 0 : last }); return true; }
+  if (k === 'Tab' && !mod) { e.preventDefault(); navStep(0, e.shiftKey ? -1 : 1, { wrap: true }); return true; }
+  if (mod) return false;
+  if (k === 'Escape') { activeCell = null; paintActiveCell(); return false; }   // (the general Escape then clears the selection)
+  const id = activeCell.id, col = activeCell.col, f = navInlineField(col);
+  if (k === 'Enter' || k === 'F2' || k === ' ') {
+    if (f && navCanEdit(id, col)) { if (k === ' ') return false; e.preventDefault(); startInlineEdit(id, f); return true; }
+    const cellEl = document.querySelector('#gridRows .grid-row[data-id="' + id + '"]'), el = cellEl && cellEl.children[visibleTaskCols().indexOf(col) + 1];
+    if (col === 'mode' && el) { e.preventDefault(); openTaskModeMenu({ stopPropagation() {}, currentTarget: el }, id); return true; }
+    if (col === 'worktype' && el && !byId(id).milestone && !hasChildren(id)) { e.preventDefault(); openTaskTypeMenu({ stopPropagation() {}, currentTarget: el }, id); return true; }
+    if (isCustomField(col) && CUSTOM_FIELDS[col].kind === 'flag' && !hasChildren(id)) { e.preventDefault(); toggleCustomFlag(id, col); return true; }
+    return false;
+  }
+  if (k.length === 1 && f && navCanEdit(id, col)) { e.preventDefault(); startInlineEdit(id, f, { seed: k }); return true; }   // typing over the cell
+  return false;
 }
 // The "Add task" row under the last task: a new top-level task at the very end, whatever is selected.
 function addTaskAtEnd() { setSelection([]); addTask(); }
@@ -5694,6 +5779,7 @@ function rowDblClick(ev, id) { if (ev && ev.target && ev.target.closest && ev.ta
 function selectTask(id, ev) {
   if (mouseDownInEditor && editingCell) { mouseDownInEditor = false; return; }
   pruneSelection();
+  if (ev && currentView === 'tasks') noteClickedCell(id, ev);
   if (ev && (ev.ctrlKey || ev.metaKey)) {
     const set = new Set(selectedTaskIds); if (set.has(id)) set.delete(id); else set.add(id);
     setSelection([...set], set.has(id) ? id : (set.size ? [...set].pop() : null));
@@ -5992,26 +6078,49 @@ function setNewTaskMode(mode) {
 // rather than on the task itself since it's pure UI state, never persisted.
 let editingCell = null; // { id, field }
 
-function startInlineEdit(id, field) {
-  const t = byId(id);
-  if (!t || t.spacer) return;   // an empty line has nothing to edit
+// May this cell of this task be typed into? (the one rule for a click, Enter / F2 and typing over a selected cell)
+function inlineEditAllowed(t, field) {
+  if (!t || t.spacer) return false;   // an empty line has nothing to edit
   // Auto summary rows roll their dates up from their children, so only the
   // name is editable there; a manually scheduled summary owns its own dates.
-  if (hasChildren(id) && field !== 'name' && field !== 'resource' && field !== 'deadline' && !isCustomField(field) && !(t.taskMode === 'manual' && ['start', 'finish', 'duration'].includes(field))) return;
-  if ((field === 'duration' || field === 'actualFinish') && t.milestone) return; // milestones are zero-duration by definition
-  if (field === 'finish' && t.milestone && t.taskMode !== 'manual') return;   // (a manually scheduled milestone's Finish can be a date or text such as TBD)
+  if (hasChildren(t.id) && field !== 'name' && field !== 'resource' && field !== 'deadline' && !isCustomField(field) && !(t.taskMode === 'manual' && ['start', 'finish', 'duration'].includes(field))) return false;
+  if ((field === 'duration' || field === 'actualFinish') && t.milestone) return false; // milestones are zero-duration by definition
+  if (field === 'finish' && t.milestone && t.taskMode !== 'manual') return false;   // (a manually scheduled milestone's Finish can be a date or text such as TBD)
+  if (field === 'work' && t.milestone) return false;
+  return true;
+}
+function startInlineEdit(id, field, opts) {
+  const t = byId(id);
+  if (!inlineEditAllowed(t, field)) return;
+  const col = navColOfField(field);
+  if (currentView === 'tasks') activeCell = { id, col, shown: !!(activeCell && activeCell.shown) };   // (the cell cursor sits on the cell being edited)
   editingCell = { id, field };
   render();
   requestAnimationFrame(() => {
     const input = document.querySelector('.inline-edit');
-    if (input) { input.focus(); if (input.select) input.select(); }
+    if (!input) return;
+    input.focus();
+    if (opts && opts.seed != null) {   // typing over a selected cell: the typed character replaces the old content
+      if (input._setRaw) input._setRaw(opts.seed); else input.value = opts.seed;
+      try { const n = (input.value || '').length; input.setSelectionRange(n, n); } catch (e) { /* a number box has no caret to place */ }
+    } else if (input.select) input.select();
   });
 }
 
 function cancelInlineEdit() { editingCell = null; render(); }
 
 function onInlineEditKeydown(e) {
-  if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); }
+  if (e.key === 'Enter' || e.key === 'Tab') {
+    e.preventDefault();
+    const cur = editingCell && { id: editingCell.id, col: navColOfField(editingCell.field) }, cursor = !!(activeCell && activeCell.shown);
+    e.target.blur();   // saves (inlineBlur → commitInlineEdit)
+    // Like a spreadsheet: Tab saves and moves to the next cell (Shift+Tab: the previous); Enter saves and moves down (Shift+Enter: up) — Enter only
+    // once the keyboard cursor is in use, so a click-and-Enter edit leaves the selection where it was.
+    if (cur && !editingCell && byId(cur.id) && currentView === 'tasks') {
+      if (e.key === 'Tab') { activeCell = { id: cur.id, col: cur.col, shown: true }; navStep(0, e.shiftKey ? -1 : 1, { wrap: true }); }
+      else if (cursor) { activeCell = { id: cur.id, col: cur.col, shown: true }; navStep(e.shiftKey ? -1 : 1, 0, {}); }
+    }
+  }
   else if (e.key === 'Escape') { e.preventDefault(); cancelInlineEdit(); }
 }
 
@@ -12227,8 +12336,13 @@ const SHORTCUTS = [
     [['Double-click'], 'Open the task'], [['Right-click'], 'Row menu'],
     [['Mod+C', 'Mod+X', 'Mod+V'], 'Copy / cut / paste tasks'],
     [['Delete', 'Backspace'], 'Delete the selected tasks']]],
+  ['Moving around the task list', [
+    [['↑', '↓', '←', '→'], 'Move from cell to cell (the row becomes the selection)'], [['Shift+↑', 'Shift+↓'], 'Extend the selection'],
+    [['Home', 'End'], 'First / last column'], [['Mod+Home', 'Mod+End'], 'First / last cell of the list'], [['PageUp', 'PageDown'], 'A page up / down'],
+    [['Enter', 'F2'], 'Edit the cell (or open its menu)'], [['Type'], 'Start typing over the cell'], [['Tab', 'Shift+Tab'], 'Next / previous cell'],
+    [['Esc'], 'Put the cursor away']]],
   ['Editing a cell', [
-    [['Enter'], 'Save'], [['Esc'], 'Cancel the edit']]],
+    [['Enter'], 'Save (and move down, once you are using the keyboard)'], [['Tab', 'Shift+Tab'], 'Save and move to the next / previous cell'], [['Esc'], 'Cancel the edit']]],
   ['Find', [
     [['↑', '↓'], 'Move through the results'], [['Enter'], 'Go to the task'],
     [['Shift+Enter'], 'Filter the list to all the results'], [['Esc'], 'Close']]],
@@ -12380,6 +12494,7 @@ function wireGlobalEvents() {
     if (e.key === '?' && !typingNow && !modalOpen && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); openShortcuts(); return; }
     if (e.key === '/' && !typingNow && !modalOpen && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); openSearch(); return; }
     if ((e.key === 'Delete' || e.key === 'Backspace') && !typingNow && !modalOpen && !editingCell && selectedIds().length) { e.preventDefault(); deleteSelected(); return; }
+    if (handleCellNavKey(e)) return;
     if (e.key !== 'Escape') return;
     if (document.getElementById('cfAddMenu').classList.contains('open')) { closeCfAddMenu(); return; }
     if (document.getElementById('fieldsModalBg').classList.contains('open')) { if (document.getElementById('confirmModalBg').classList.contains('open')) closeConfirmModal(); else requestCloseFieldsModal(); return; }   // only the topmost dialog: the task dialog underneath keeps its unsaved edits
