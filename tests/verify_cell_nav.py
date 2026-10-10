@@ -158,6 +158,42 @@ with sync_playwright() as p:
     check("a dropdown keeps ↑ / ↓ for its value (the focus stays on it)", ev("() => document.activeElement.tagName") == "SELECT" and focused()[0] == 0, focused())
     pg.keyboard.press("Enter"); pg.wait_for_timeout(150)
     check("...and Enter on it moves down", focused() and focused()[0] == 1 and ev("() => document.activeElement.tagName") == "SELECT", focused())
+    # the row you are in is tinted like a selected task row
+    tint = lambda i: ev("(i) => getComputedStyle(document.querySelectorAll('#resourceSheetBody .rst-row')[i]).backgroundColor", i)
+    pg.locator('#resourceSheetBody .rst-row').nth(1).locator('input.inline-edit').first.click(); pg.wait_for_timeout(100)
+    sel_bg = ev("() => { const d = document.createElement('div'); d.className = 'grid-row selected'; d.style.background = 'var(--row-bg)'; document.body.appendChild(d); const c = getComputedStyle(d).backgroundColor; d.remove(); return c; }")
+    check("the resource row you are in is highlighted like a selected task row, the others are not", tint(1) == sel_bg and tint(0) != sel_bg and tint(2) != sel_bg, (tint(0), tint(1), sel_bg))
+    ev("() => document.activeElement.blur()"); pg.wait_for_timeout(80)
+    check("...and the tint goes when the focus leaves", tint(1) != sel_bg)
+    # nothing focused: ↓ / ↑ jump into the list; Esc lets go
+    ev("() => { document.activeElement && document.activeElement.blur(); }"); pg.wait_for_timeout(80)
+    check("with nothing focused, ↓ jumps into the sheet: the first resource's name", (pg.keyboard.press("ArrowDown"), pg.wait_for_timeout(100), focused() and focused()[0] == 0)[2], focused())
+    pg.keyboard.press("Escape"); pg.wait_for_timeout(100)
+    check("Esc (nothing typed) lets go of the cell — focus is back on the page", ev("() => document.activeElement === document.body"), ev("() => document.activeElement.tagName"))
+    pg.keyboard.press("ArrowUp"); pg.wait_for_timeout(100)
+    check("...and ↑ jumps in at the last resource", focused() and focused()[0] == 2, focused())
+    pg.keyboard.press("Escape"); pg.wait_for_timeout(80)
+    # Esc puts a typed value back; ← / → move across cells
+    nm = pg.locator('#resourceSheetBody .rst-row').nth(1).locator('input.inline-edit').first
+    nm.click(); nm.fill("Changed"); pg.keyboard.press("Escape"); pg.wait_for_timeout(120)
+    check("Esc puts the typed value back (nothing saved, focus stays in the box)", nm.input_value() == "Bob" and names()[1] == "Bob" and ev("() => document.activeElement === document.querySelectorAll('#resourceSheetBody .rst-row')[1].querySelector('input.inline-edit')"), (nm.input_value(), names()))
+    pg.keyboard.press("Escape"); pg.wait_for_timeout(100)
+    check("...a second Esc with nothing to undo does nothing to the sheet", names()[1] == "Bob")
+    nm.focus()
+    ci0 = ev("() => [...document.activeElement.closest('.rst-row').children].indexOf(document.activeElement.closest('.rst-row > *'))")
+    pg.keyboard.press("ArrowRight"); pg.wait_for_timeout(100)
+    ci1 = ev("() => [...document.activeElement.closest('.rst-row').children].indexOf(document.activeElement.closest('.rst-row > *'))")
+    check("→ in a box just entered (its text selected) moves to the next cell of the row", ci1 > ci0 and focused()[0] == 1, (ci0, ci1))
+    pg.keyboard.press("ArrowLeft"); pg.wait_for_timeout(100)
+    check("← moves back", ev("() => [...document.activeElement.closest('.rst-row').children].indexOf(document.activeElement.closest('.rst-row > *'))") == ci0)
+    nm.click(); nm.press("Home"); pg.keyboard.press("ArrowRight"); pg.wait_for_timeout(100)
+    check("in a box you clicked into, → moves the caret first (the focus stays) — and leaves only from the end", ev("() => document.activeElement === document.querySelectorAll('#resourceSheetBody .rst-row')[1].querySelector('input.inline-edit')"))
+    nm.press("End"); pg.keyboard.press("ArrowRight"); pg.wait_for_timeout(100)
+    check("...from the end of the text → leaves for the next cell", ev("() => document.activeElement !== document.querySelectorAll('#resourceSheetBody .rst-row')[1].querySelector('input.inline-edit')"))
+    sel2 = pg.locator('#resourceSheetBody .rst-row').nth(0).locator('select').first
+    sel2.focus(); v0 = sel2.input_value(); pg.keyboard.press("ArrowRight"); pg.wait_for_timeout(100)
+    check("on a dropdown ← / → move across to the next control", ev("() => document.activeElement.tagName") != "SELECT" or ev("() => document.activeElement.getAttribute('aria-label')") != "Type", ev("() => document.activeElement.getAttribute('aria-label')"))
+    check("...(its value is unchanged)", sel2.input_value() == v0)
     ev("() => setView('tasks')")
 
     # large plan: the cursor row scrolls into view

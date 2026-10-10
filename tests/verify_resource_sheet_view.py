@@ -132,7 +132,7 @@ with sync_playwright() as p:
     check("the Type dropdown has the dialog-field look: 7px rounded corners, a real 1px border, its own .rst-select class (not .inline-edit)",
           select_style[0] == "7px" and select_style[1] == "1px" and "rst-select" in select_style[2] and "inline-edit" not in select_style[2], select_style)
     type_select.evaluate("el => el.focus()")
-    check("...and the native focus ring actually shows on a dropdown when focused (not suppressed)", type_select.evaluate("el => getComputedStyle(el).outlineStyle") != "none")
+    check("...and a focus ring actually shows on a dropdown when focused: its cell's 2px accent ring, the same as the task list's cursor (never no indicator at all)", type_select.evaluate("el => { const c = getComputedStyle(el.closest('.rst-cell')); return getComputedStyle(el).outlineStyle !== 'none' || (c.outlineStyle !== 'none' && parseFloat(c.outlineWidth) >= 2); }"))
     type_select.evaluate("el => el.blur()")
     name_style = ev("""() => { const el = document.querySelector('.rst-row input[aria-label="Resource name"]'); return el.className; }""")
     check("...while a text cell (Resource Name) is deliberately UNCHANGED — still the task grid's own .inline-edit, not .rst-select/.rst-field", "inline-edit" in name_style and "rst-select" not in name_style and "rst-field" not in name_style, name_style)

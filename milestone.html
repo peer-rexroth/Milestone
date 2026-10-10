@@ -931,6 +931,7 @@ svg.gantt-deps text.status-label { fill: var(--task-purple); font-size: 10px; fo
 .rst-header { position: sticky; top: 0; z-index: 3; height: var(--head-h); font-size: 11.5px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: .03em; border-bottom: 1px solid var(--border); --row-bg: var(--panel); background: var(--row-bg); }
 .rst-row { height: var(--row-h); border-bottom: 1px solid var(--border); font-size: 12.5px; --row-bg: var(--panel); background: var(--row-bg); }
 .rst-row:hover { --row-bg: var(--panel-2); }
+.rst-row:focus-within { --row-bg: color-mix(in srgb, var(--accent) 10%, var(--panel)); }   /* the row you are in: the same tint as a selected row in the task list */
 /* The column lines: not cell borders (see the comment above) — a gradient painted on a pseudo-element from the
    resolved track positions, the identical mechanism the task list itself uses, so the header and every row agree
    pixel-for-pixel even though the tracks are a px/fr mix. */
@@ -971,7 +972,10 @@ select.rst-select:disabled { opacity: .5; }
    point at, or the one you are in), the remove button only on that row, an empty rate a faint 0.00. (The more specific
    selectors beat the global select rule, which comes last in the sheet.) */
 .rst-row .rst-cell select.rst-select { border-color: transparent; background-color: transparent; background-size: 0 0; }
+.rst-row > .rst-cell:focus-within { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 3px; }   /* the cell you are in: the same 2px ring as the task list's cursor */
+
 .rst-row:hover .rst-cell select.rst-select, .rst-row .rst-cell select.rst-select:focus { border-color: var(--border); background-color: var(--panel); background-size: 11px 7px; }
+.rst-row .rst-cell:focus-within input.inline-edit:focus, .rst-row .rst-cell:focus-within select.rst-select:focus { border-color: transparent; background-color: transparent; outline: none; }   /* the ring is the focus mark: no second, thinner border or white box inside it */
 .rst-row .rst-remove { opacity: 0; }
 .rst-row:hover .rst-remove, .rst-row:focus-within .rst-remove { opacity: 1; }
 .rst-cell input.inline-edit::placeholder { color: var(--text-faint); opacity: .7; }
@@ -2212,7 +2216,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
           <div class="help-section-title">Columns</div>
           <div class="help-row"><i class="fa-solid fa-table-columns"></i><span>Click <strong>Columns</strong> in the toolbar to tick the columns you want and reorder them. The <strong>Tasks view and the Gantt view each remember their own set</strong> on this device; Task Name always stays.</span></div>
           <div class="help-row"><i class="fa-solid fa-plus"></i><span><strong>Add task</strong> under the last row (Tasks view) adds a task at the end of the plan; the toolbar's <strong>Add Task</strong> adds it below the selected one. The Resource Sheet ends with <strong>Add resource</strong>.</span></div>
-          <div class="help-row"><i class="fa-solid fa-keyboard"></i><span><strong>Use the keyboard in the list</strong>: the <strong>arrow keys</strong> move from cell to cell (the row becomes the selection; <strong>Shift+↑/↓</strong> extends it), <strong>Enter</strong> or <strong>F2</strong> edits the cell, typing replaces its content, and <strong>Tab</strong> / <strong>Enter</strong> save and move on. <strong>Esc</strong> puts the cursor away. The same in the Gantt view's list; the Resource Sheet moves down a column with <strong>Enter</strong> or <strong>↓</strong>. Press <strong>?</strong> for every shortcut.</span></div>
+          <div class="help-row"><i class="fa-solid fa-keyboard"></i><span><strong>Use the keyboard in the list</strong>: the <strong>arrow keys</strong> move from cell to cell (the row becomes the selection; <strong>Shift+↑/↓</strong> extends it), <strong>Enter</strong> or <strong>F2</strong> edits the cell, typing replaces its content, and <strong>Tab</strong> / <strong>Enter</strong> save and move on. <strong>Esc</strong> puts the cursor away. The same in the Gantt view's list; in the Resource Sheet <strong>Enter</strong> or <strong>↓</strong> moves down a column, <strong>←/→</strong> across, and <strong>Esc</strong> puts back what you typed. Press <strong>?</strong> for every shortcut.</span></div>
           <div class="help-row"><i class="fa-solid fa-left-right"></i><span><strong>Resize a column</strong> by dragging the edge of its header (the left edge for columns right of Task Name, the right edge for the others); <strong>double-click the edge</strong> to fit it to its content. <strong>Right-click a header</strong> for <em>Fit to content</em>, <em>Fit all columns</em>, <em>Default width</em> and <em>Reset all column widths</em> (also in the Columns menu). Widths are remembered on this device and shared by the Tasks and Gantt lists; a resized Task Name keeps its width instead of filling the pane.</span></div>
           <div class="help-row"><i class="fa-solid fa-highlighter"></i><span>After an edit the cells it <strong>changed</strong> are shaded pale yellow (blue is the selection) — a later task that moved, a Finish or Work that was recalculated — as in MS Project. What you typed yourself is not shaded; the next edit, Undo or Redo clears it. Switch it off with <em>Highlight what the last edit changed</em> in the Columns menu.</span></div>
           <div class="help-row"><i class="fa-solid fa-eye-slash"></i><span>The list starts with Task Name, Start, Finish, Duration, % Complete, Predecessors, Resource and Status; Task Mode, WBS, the Actual dates, Remaining Duration, Task Type, Work, Cost, the baseline and variance columns and your custom fields start hidden (<strong>Columns</strong> shows them). The Gantt's list starts with just Name, Start, Finish, Duration and % Complete. Click a <strong>Resource</strong> or actual-date cell to edit it, or use the task dialog.</span></div>
@@ -6909,11 +6913,52 @@ function resourceSheetRowHtml(r, i) {
    between rows in the same column: Enter saves and moves down (Shift+Enter: up), and ↑ / ↓ in a text box do the same without saving anything
    twice. A dropdown keeps ↑ / ↓ for choosing its value (Enter on it still moves on). A disabled cell (Overtime Rate of a Material resource, say)
    is passed over to the next row that has one. ---- */
+// Esc puts a typed value back (a dropdown has already saved its choice — Undo is the way back for that); ← / → leave a box that is "fresh" (just
+// entered, so its whole content is selected) or whose caret is at that end, and move to the neighbouring cell's control; on a dropdown they always do.
+function rsFocusIn(e) { const el = e.target; if (el && el.tagName === 'INPUT' && el.closest && el.closest('.rst-row')) { el._rsOrig = el.value; el._rsFresh = true; } }
+function rsSideCell(row, ci, step) {
+  for (let c = ci + step; c >= 0 && c < row.children.length; c += step) {
+    const t = row.children[c].querySelector('input:not([disabled]), select:not([disabled]), button:not([disabled])');
+    if (t) return t;
+  }
+  return null;
+}
+// With nothing focused in the Resource Sheet, ↓ (or ↑) jumps into the list: the first (last) resource's name.
+function sheetEntryKey(e) {
+  if (currentView !== 'resourceSheet' || e.target !== document.body || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return false;
+  if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return false;
+  if (document.querySelector('.modal-bg.open') || NAV_MENUS.some(id => { const m = document.getElementById(id); return m && m.classList.contains('open'); })) return false;
+  const rows = [...document.querySelectorAll('#resourceSheetBody .rst-row')]; if (!rows.length) return false;
+  const t = (e.key === 'ArrowDown' ? rows[0] : rows[rows.length - 1]).querySelector('input:not([disabled]), select:not([disabled])');
+  if (!t) return false;
+  e.preventDefault(); t.focus(); if (t.select && t.tagName === 'INPUT') t.select();
+  return true;
+}
 function rsNavKey(e) {
   const el = e.target;
   if (!el || !el.closest || e.ctrlKey || e.metaKey || e.altKey) return;
   const cell = el.closest('.rst-row > *'), row = el.closest('.rst-row'); if (!cell || !row) return;
   const isInput = el.tagName === 'INPUT', isSelect = el.tagName === 'SELECT';
+  if (e.key === 'Escape' && (isInput || isSelect)) {
+    e.preventDefault(); e.stopPropagation();
+    if (isInput && el._rsOrig != null && el.value !== el._rsOrig) { el.value = el._rsOrig; el._rsFresh = true; el.select && el.select(); }   // (nothing was committed: the change event only comes with a different value on leaving)
+    else el.blur();   // nothing to put back: Esc lets go of the cell, like the task list's
+    return;
+  }
+  if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && (isInput || isSelect) && !e.shiftKey) {
+    const step = e.key === 'ArrowRight' ? 1 : -1;
+    let leave = isSelect || el._rsFresh;
+    if (!leave && isInput && el.type === 'text') { const a = el.selectionStart, b = el.selectionEnd; leave = a === b && a === (step > 0 ? el.value.length : 0); }
+    if (leave) {
+      const t = rsSideCell(row, [...row.children].indexOf(cell), step);
+      e.preventDefault(); e.stopPropagation();
+      if (t) { t.focus(); if (t.select && t.tagName === 'INPUT') t.select(); }
+      return;
+    }
+    el._rsFresh = false;   // (a caret moved inside the box: no longer "fresh")
+    return;
+  }
+  if (isInput && el._rsFresh && e.key.length === 1) el._rsFresh = false;   // typing — the box is being edited now
   let dir = 0;
   if (e.key === 'Enter' && (isInput || isSelect) && !e.isComposing) dir = e.shiftKey ? -1 : 1;
   else if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && isInput && !e.shiftKey) dir = e.key === 'ArrowDown' ? 1 : -1;
@@ -6930,6 +6975,8 @@ function rsNavKey(e) {
   if (same) same.focus();
 }
 document.getElementById('resourceSheetBody').addEventListener('keydown', rsNavKey, true);
+document.getElementById('resourceSheetBody').addEventListener('focusin', rsFocusIn);
+document.getElementById('resourceSheetBody').addEventListener('mousedown', e => { if (e.target && e.target._rsFresh) e.target._rsFresh = false; }, true);   // (a click places a caret: not "fresh")
 function commitResourceCell(id, field, value) {
   const pool = project.resources || [], r = pool.find(x => x.id === id); if (!r) return;
   if (field === 'name') {
@@ -12371,7 +12418,8 @@ const SHORTCUTS = [
     [['Enter', 'F2'], 'Edit the cell (or open its menu)'], [['Type'], 'Start typing over the cell'], [['Tab', 'Shift+Tab'], 'Next / previous cell'],
     [['Esc'], 'Put the cursor away']]],
   ['Resource Sheet', [
-    [['Tab', 'Shift+Tab'], 'Next / previous cell'], [['Enter', 'Shift+Enter'], 'Save and move down / up the column'], [['↑', '↓'], 'Move up / down from a text box (a dropdown keeps them for its choices)']]],
+    [['Tab', 'Shift+Tab'], 'Next / previous cell'], [['Enter', 'Shift+Enter'], 'Save and move down / up the column'], [['↑', '↓'], 'Move up / down from a text box (a dropdown keeps them for its choices)'],
+    [['←', '→'], 'Move to the next cell (from the edge of a text box, or from a dropdown)'], [['Esc'], 'Put back what you typed; then let go of the cell'], [['↓', '↑'], 'With nothing focused: jump into the list']]],
   ['Editing a cell', [
     [['Enter'], 'Save (and move down, once you are using the keyboard)'], [['Tab', 'Shift+Tab'], 'Save and move to the next / previous cell'], [['Esc'], 'Cancel the edit']]],
   ['Find', [
@@ -12525,7 +12573,7 @@ function wireGlobalEvents() {
     if (e.key === '?' && !typingNow && !modalOpen && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); openShortcuts(); return; }
     if (e.key === '/' && !typingNow && !modalOpen && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); openSearch(); return; }
     if ((e.key === 'Delete' || e.key === 'Backspace') && !typingNow && !modalOpen && !editingCell && selectedIds().length) { e.preventDefault(); deleteSelected(); return; }
-    if (handleCellNavKey(e)) return;
+    if (handleCellNavKey(e) || sheetEntryKey(e)) return;
     if (e.key !== 'Escape') return;
     if (document.getElementById('cfAddMenu').classList.contains('open')) { closeCfAddMenu(); return; }
     if (document.getElementById('fieldsModalBg').classList.contains('open')) { if (document.getElementById('confirmModalBg').classList.contains('open')) closeConfirmModal(); else requestCloseFieldsModal(); return; }   // only the topmost dialog: the task dialog underneath keeps its unsaved edits
