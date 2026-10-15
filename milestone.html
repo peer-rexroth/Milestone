@@ -271,6 +271,10 @@ button:focus:not(:focus-visible) { outline: none; }
 .rz-left > .col-resizer:hover, body.col-resizing .rz-left > .col-resizer.active { background: linear-gradient(90deg, var(--accent) 0, var(--accent) 2px, transparent 2px); }
 .col-resizer:hover, body.col-resizing .col-resizer.active { background: linear-gradient(90deg, transparent 3px, var(--accent) 3px, var(--accent) 5px, transparent 5px); }
 body.col-resizing, body.col-resizing * { cursor: col-resize !important; user-select: none !important; }
+body.col-moving, body.col-moving * { cursor: grabbing !important; user-select: none !important; }
+.col-head.moving, .rst-header > div.moving { opacity: .4; }
+.col-ghost { position: fixed; z-index: 9999; pointer-events: none; padding: 4px 10px; background: var(--panel); border: 1px solid var(--accent); border-radius: 6px; box-shadow: var(--shadow); font-size: 12px; font-weight: 600; color: var(--text); white-space: nowrap; }
+.col-drop-line { position: fixed; z-index: 9998; width: 2px; background: var(--accent); pointer-events: none; }
 /* the cells the last edit changed (MS Project's change highlighting) */
 .main .grid-row > .chg { background-color: var(--chg-bg); }
 .main .grid-row.selected > .chg { background-color: var(--chg-bg-sel); }   /* (over the panel, not the selection tint: amber mixed into lavender turns grey) */   /* amber, never the accent: blue is selection */
@@ -1284,7 +1288,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
     <button class="btn" id="dataMenuBtn" onclick="toggleDataMenu()" title="Data: import, export, print, backups"><i class="fa-solid fa-database"></i><span class="btn-label">Data</span></button>
     <div class="dropdown-menu" id="dataMenu">
       <button class="dropdown-item" onclick="triggerImport()"><i class="fa-solid fa-file-import"></i>Import plan (JSON)…</button>
-      <button class="dropdown-item" id="foreignImportItem" onclick="triggerForeignImport()" title="Adds tasks from an MS Project XML file or a CSV table to this plan. For an Excel file, save it as CSV first."><i class="fa-solid fa-file-import"></i>Import tasks (MS Project XML, CSV)…</button>
+      <button class="dropdown-item" id="foreignImportItem" onclick="triggerForeignImport()" title="Adds tasks from an MS Project XML file or a CSV table to this plan. Excel (.xlsx) files and CSV tables are read too — the sheet needs a header row such as Task Name, Start, Finish."><i class="fa-solid fa-file-import"></i>Import tasks (MS Project XML, Excel, CSV)…</button>
       <div class="dropdown-sep"></div>
       <button class="dropdown-item" onclick="exportProject()"><i class="fa-solid fa-file-export"></i>Export plan (JSON)</button>
       <button class="dropdown-item" id="excelExportItem" onclick="openExcelExport()"><i class="fa-solid fa-file-excel"></i>Export to Excel…</button>
@@ -2217,6 +2221,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
           <div class="help-row"><i class="fa-solid fa-table-columns"></i><span>Click <strong>Columns</strong> in the toolbar to tick the columns you want and reorder them. The <strong>Tasks view and the Gantt view each remember their own set</strong> on this device; Task Name always stays.</span></div>
           <div class="help-row"><i class="fa-solid fa-plus"></i><span><strong>Add task</strong> under the last row (Tasks view) adds a task at the end of the plan; the toolbar's <strong>Add Task</strong> adds it below the selected one. The Resource Sheet ends with <strong>Add resource</strong>.</span></div>
           <div class="help-row"><i class="fa-solid fa-keyboard"></i><span><strong>Use the keyboard in the list</strong>: the <strong>arrow keys</strong> move from cell to cell (the row becomes the selection; <strong>Shift+↑/↓</strong> extends it), <strong>Enter</strong> or <strong>F2</strong> edits the cell, typing replaces its content, and <strong>Tab</strong> / <strong>Enter</strong> save and move on. <strong>Esc</strong> puts the cursor away. The same in the Gantt view's list; in the Resource Sheet <strong>Enter</strong> or <strong>↓</strong> moves down a column, <strong>←/→</strong> across, and <strong>Esc</strong> puts back what you typed. Press <strong>?</strong> for every shortcut.</span></div>
+          <div class="help-row"><i class="fa-solid fa-grip-lines-vertical"></i><span><strong>Move a column</strong> by dragging its header sideways; a blue line shows where it lands. The arrows in the Columns menu do the same, and Reset there restores the standard order. Tasks and Gantt keep their own order; the Resource Sheet’s columns move the same way.</span></div>
           <div class="help-row"><i class="fa-solid fa-left-right"></i><span><strong>Resize a column</strong> by dragging the edge of its header (the left edge for columns right of Task Name, the right edge for the others); <strong>double-click the edge</strong> to fit it to its content. <strong>Right-click a header</strong> for <em>Fit to content</em>, <em>Fit all columns</em>, <em>Default width</em> and <em>Reset all column widths</em> (also in the Columns menu). Widths are remembered on this device and shared by the Tasks and Gantt lists; a resized Task Name keeps its width instead of filling the pane.</span></div>
           <div class="help-row"><i class="fa-solid fa-highlighter"></i><span>After an edit the cells it <strong>changed</strong> are shaded pale yellow (blue is the selection) — a later task that moved, a Finish or Work that was recalculated — as in MS Project. What you typed yourself is not shaded; the next edit, Undo or Redo clears it. Switch it off with <em>Highlight what the last edit changed</em> in the Columns menu.</span></div>
           <div class="help-row"><i class="fa-solid fa-eye-slash"></i><span>The list starts with Task Name, Start, Finish, Duration, % Complete, Predecessors, Resource and Status; Task Mode, WBS, the Actual dates, Remaining Duration, Task Type, Work, Cost, the baseline and variance columns and your custom fields start hidden (<strong>Columns</strong> shows them). The Gantt's list starts with just Name, Start, Finish, Duration and % Complete. Click a <strong>Resource</strong> or actual-date cell to edit it, or use the task dialog.</span></div>
@@ -2297,7 +2302,8 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
           <div class="help-row"><i class="fa-solid fa-file-export"></i><span><strong>Data → Export / Import</strong> moves a full JSON snapshot of the current plan out or in.</span></div>
           <div class="help-row"><i class="fa-solid fa-file-csv"></i><span><strong>Export to CSV</strong> saves the task list as a plain text table: the columns you choose, dates and durations as the list shows them, sub-tasks indented. Pick the separator your Excel expects (comma or semicolon). Import it again with <strong>Import tasks (MS Project XML, CSV)…</strong>.</span></div>
           <div class="help-row"><i class="fa-solid fa-file-excel"></i><span><strong>Export to Excel</strong> saves a formatted .xlsx workbook: a task list plus an optional Gantt chart sheet, each sheet using the columns you chose in its own view.</span></div>
-          <div class="help-row"><i class="fa-solid fa-diagram-project"></i><span><strong>Import tasks (MS Project XML, CSV)…</strong> reads a plan saved from MS Project as XML (File → Save As → XML Format): tasks and their outline, dates, % complete, actual dates, links with lags, manual mode, constraints, resources, baselines, the working week and the holidays. A file with real times of day switches the plan to <strong>Hours &amp; minutes</strong> scheduling too (when "Import working calendar" is ticked), recovering the working hours and breaks from it.</span></div>
+          <div class="help-row"><i class="fa-solid fa-diagram-project"></i><span><strong>Import tasks (MS Project XML, Excel, CSV)…</strong> reads a plan saved from MS Project as XML (File → Save As → XML Format): tasks and their outline, dates, % complete, actual dates, links with lags, manual mode, constraints, resources, baselines, the working week and the holidays. A file with real times of day switches the plan to <strong>Hours &amp; minutes</strong> scheduling too (when "Import working calendar" is ticked), recovering the working hours and breaks from it.</span></div>
+          <div class="help-row"><i class="fa-solid fa-file-excel"></i><span><strong>An Excel (.xlsx) sheet</strong> is read like a CSV table: a header row with Task Name, Start, Finish, Duration, % Complete, Predecessors, Resource, Notes (English or German names; lines above it are skipped). Dates and percentages arrive as real values, an indented name or Excel’s own row grouping becomes the outline, and only the first sheet with data is read. An old .xls must be saved as .xlsx first.</span></div>
           <div class="help-row"><i class="fa-solid fa-file-code"></i><span><strong>Export MS Project XML</strong> (Data menu) saves the whole plan as a <code>.xml</code> file that MS Project opens: <em>File → Open</em>, file type “XML Format”. Outline, dates, durations, links with lag, constraints, actual dates, baselines, resources, the working week and holidays go along, each task's real time of day included for an hours &amp; minutes plan; empty lines are left out, and custom-field values and TBD dates go into the task’s Notes.</span></div>
           <div class="help-row"><i class="fa-solid fa-file-csv"></i><span>It also reads a <strong>CSV</strong> with a header row — English or German column names such as Task Name, Start, Finish, Duration, Predecessors, Outline Level. A preview shows what was found; you add the tasks to this plan or replace its tasks (a backup file is downloaded first).</span></div>
           <div class="help-row"><i class="fa-solid fa-print"></i><span><strong>Print / PDF…</strong> is under Data as well — see the Gantt chart topic.</span></div>
@@ -2596,6 +2602,7 @@ const DATE_FORMATS = [
   { id: 'mm/dd/yyyy', order: 'mdy', sep: '/' }, { id: 'yyyy-mm-dd', order: 'ymd', sep: '-' }];
 let dateFormat = 'dd.mm.yyyy', timeFormat = '24h';
 let rsColWidths = {};   // Resource Sheet columns you resized: key -> px (absent = its default width)
+let rsColOrder = [];   // Resource Sheet column keys in the order you dragged them (absent / partial = the standard order; # and the remove column never move)
 let rsColShow = {};   // Resource Sheet columns you showed/hid (key -> bool); absent = its default (see rsColVisible())   // the precision ('day' | 'minute') the saved date-column widths were made for — see syncDateColWidths()   // columns the user resized: id -> px (absent = the column's default width); one set for both views, per device
 let showChanges = true;   // shade the cells the last edit changed
 let gColOrder = [...GANTT_DEFAULT_ORDER];
@@ -2919,7 +2926,7 @@ function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c
 function byId(id) { return tasks.find(t => t.id === id); }
 
 /* ============================ Persistence =============================== */
-function prefsPayload() { return { df: dateFormat, tf: timeFormat, theme, zoom, zoomRev: ZOOM_DEFAULT_REV, view: currentView, gridPaneWidth, gridPaneRev: GRID_PANE_REV, showBaseline, showProgressLine, showTaskForm, taskFormHeight, showChanges, cw: colWidths, cwMode, rsCols: rsColShow, rsCw: rsColWidths, cols: { order: colOrder, hidden: [...colHidden], rev: COLS_REV, orev: COLS_ORDER_REV }, gcols: { order: gColOrder, hidden: [...gColHidden] } }; }
+function prefsPayload() { return { df: dateFormat, tf: timeFormat, theme, zoom, zoomRev: ZOOM_DEFAULT_REV, view: currentView, gridPaneWidth, gridPaneRev: GRID_PANE_REV, showBaseline, showProgressLine, showTaskForm, taskFormHeight, showChanges, cw: colWidths, cwMode, rsCols: rsColShow, rsCw: rsColWidths, rsOrder: rsColOrder, cols: { order: colOrder, hidden: [...colHidden], rev: COLS_REV, orev: COLS_ORDER_REV }, gcols: { order: gColOrder, hidden: [...gColHidden] } }; }
 function syncPayload() { return { version: APP_VERSION, project, tasks, deletedTaskIds }; }
 
 function planDataKey(id) { return PLAN_DATA_PREFIX + id; }
@@ -2989,7 +2996,8 @@ function loadPrefs() {
   showChanges = d.showChanges !== false;
   colWidths = {};
   cwMode = d.cwMode === 'day' || d.cwMode === 'minute' || d.cwMode === 'minute12' ? d.cwMode : null;
-  rsColShow = {}; rsColWidths = {};
+  rsColShow = {}; rsColWidths = {}; rsColOrder = [];
+  if (Array.isArray(d.rsOrder)) rsColOrder = [...new Set(d.rsOrder)].filter(k => RS_COLS.some(c => c.key === k && k !== 'id' && k !== 'remove'));
   if (d.rsCw && typeof d.rsCw === 'object') for (const [k, v] of Object.entries(d.rsCw)) if (RS_COLS.some(c => c.key === k && k !== 'id' && k !== 'remove') && Number.isFinite(v)) rsColWidths[k] = Math.round(v);
   if (d.rsCols && typeof d.rsCols === 'object') for (const [k, v] of Object.entries(d.rsCols)) if (RS_COLS.some(c => c.key === k && !c.fixed) && typeof v === 'boolean') rsColShow[k] = v;
   if (d.cw && typeof d.cw === 'object') for (const [id, w] of Object.entries(d.cw)) if (TASK_COLS[id] && Number.isFinite(w)) colWidths[id] = Math.max(COL_MIN_W, Math.min(COL_MAX_W, Math.round(w)));
@@ -5409,6 +5417,46 @@ function startColResize(e, id) {
   const up = () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); document.body.classList.remove('col-resizing'); if (moved) { save(); render(); } else e.target.classList.remove('active'); };
   document.addEventListener('mousemove', move); document.addEventListener('mouseup', up);
 }
+// Move a column by dragging its header sideways (a click does nothing; the funnel and the edge handle keep their own jobs). A ghost of the name follows
+// the pointer and a blue line shows where it will land: before the column whose middle the pointer has not passed. The order is a device
+// preference of the view's own list (Tasks and Gantt keep separate ones, like the Columns menu's arrows, which do the same job).
+function startColDrag(e, id, head) {
+  const x0 = e.clientX; let dragging = false, ghost = null, line = null, target = null;
+  const move = ev => {
+    if (!dragging) {
+      if (Math.abs(ev.clientX - x0) < 5) return;
+      dragging = true; document.body.classList.add('col-moving'); head.classList.add('moving');
+      ghost = document.createElement('div'); ghost.className = 'col-ghost'; ghost.textContent = (head.querySelector('span') ? head.querySelector('span').textContent : id).replace(/\s+/g, ' ');
+      line = document.createElement('div'); line.className = 'col-drop-line';
+      document.body.append(ghost, line);
+      if (window.getSelection) window.getSelection().removeAllRanges();
+    }
+    ghost.style.left = (ev.clientX + 12) + 'px'; ghost.style.top = (ev.clientY + 12) + 'px';
+    const heads = [...document.querySelectorAll('#gridHeader .col-head')]; target = null;
+    for (const h of heads) { const r = h.getBoundingClientRect(); if (ev.clientX < r.left + r.width / 2) { target = { before: h.querySelector('.col-resizer').dataset.col, x: r.left }; break; } }
+    if (!target && heads.length) target = { before: null, x: heads[heads.length - 1].getBoundingClientRect().right };
+    const hr = document.getElementById('gridHeader').getBoundingClientRect();
+    if (target) { line.style.left = (target.x - 1) + 'px'; line.style.top = hr.top + 'px'; line.style.height = hr.height + 'px'; }
+  };
+  const up = () => {
+    document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up);
+    if (!dragging) return;
+    document.body.classList.remove('col-moving'); head.classList.remove('moving'); ghost.remove(); line.remove();
+    if (target) reorderColumn(id, target.before);
+  };
+  document.addEventListener('mousemove', move); document.addEventListener('mouseup', up);
+}
+// Put column `id` just before column `beforeId` (null: after the last shown one). Hidden columns keep their place relative to the others.
+function reorderColumn(id, beforeId) {
+  const order = viewColOrder(), i = order.indexOf(id); if (i < 0 || id === beforeId) return;
+  const shown = visibleTaskCols().filter(c => c !== id);
+  order.splice(i, 1);
+  let at = beforeId ? order.indexOf(beforeId) : (shown.length ? order.indexOf(shown[shown.length - 1]) + 1 : order.length);
+  if (at < 0) at = i;
+  order.splice(at, 0, id);
+  save(); render();
+  if (document.getElementById('columnsMenu').classList.contains('open')) renderColumnsMenu();
+}
 // The width a column needs to show everything in it: the widest rendered cell, or its header, whichever is wider.
 function measureFit(id) {
   const k = visibleTaskCols().indexOf(id); if (k < 0) return 0;
@@ -5450,7 +5498,13 @@ function openColWidthMenu(e, id) {
 function closeColWidthMenu() { const m = document.getElementById('colWidthMenu'); if (m) m.classList.remove('open'); }
 {
   const hdr = document.getElementById('gridHeader');
-  hdr.addEventListener('mousedown', e => { const r = e.target.closest('.col-resizer'); if (r && e.button === 0) startColResize(e, r.dataset.col); });
+  hdr.addEventListener('mousedown', e => {
+    if (e.button !== 0) return;
+    const r = e.target.closest('.col-resizer');
+    if (r) { startColResize(e, r.dataset.col); return; }
+    const h = e.target.closest('.col-head');
+    if (h && !e.target.closest('.col-filter-btn') && h.querySelector('.col-resizer')) startColDrag(e, h.querySelector('.col-resizer').dataset.col, h);
+  });
   hdr.addEventListener('contextmenu', e => { const h = e.target.closest('.col-head'); if (h) openColWidthMenu(e, h.querySelector('.col-resizer').dataset.col); });
 }
 // The ID column and everything up to and including Task Name are frozen (Tasks view): marked with .frz, each given the `left` it
@@ -6763,14 +6817,19 @@ function rsColUsed(key) {
   return key === 'materialLabel' ? pool.some(r => r.type === 'material' || r.materialLabel) : key === 'ovtRate' ? pool.some(r => r.ovtRate) : key === 'code' ? pool.some(r => r.code) : true;
 }
 function rsColVisible(c) { return c.fixed || (c.key in rsColShow ? rsColShow[c.key] : (!c.optional || rsColUsed(c.key))); }
-function rsVisibleCols() { return RS_COLS.filter(rsColVisible); }
+// All columns in the order shown: # first, the movable ones in the dragged order (the ones never dragged keep the standard order after them), the remove column last.
+function rsAllCols() {
+  const mid = RS_COLS.filter(c => c.key !== 'id' && c.key !== 'remove'), rank = k => { const i = rsColOrder.indexOf(k); return i >= 0 ? i : 1000 + RS_COLS.findIndex(c => c.key === k); };
+  return [RS_COLS[0], ...mid.sort((a, b) => rank(a.key) - rank(b.key)), RS_COLS[RS_COLS.length - 1]];
+}
+function rsVisibleCols() { return rsAllCols().filter(rsColVisible); }
 function toggleRsColumn(key, show) { rsColShow[key] = show; save(); render(); renderRsColumnsMenu(); }
-function resetRsColumns() { rsColShow = {}; save(); render(); renderRsColumnsMenu(); }
+function resetRsColumns() { rsColShow = {}; rsColOrder = []; save(); render(); renderRsColumnsMenu(); }
 function renderRsColumnsMenu() {
   const menu = document.getElementById('rsColumnsMenu'); if (!menu) return;
   menu.innerHTML = `<div class="cols-head"><strong>Columns · Resources</strong><button class="btn-link" onclick="resetRsColumns()">Reset to default</button></div>`
     + `<div class="cols-hint">Material Label, Ovt Rate and Code start hidden, and show by themselves once a resource uses them.</div>`
-    + RS_COLS.filter(c => !c.fixed).map(c => `<div class="cols-row"><label class="cols-check"><input type="checkbox" data-rscol="${c.key}"${rsColVisible(c) ? ' checked' : ''} onchange="toggleRsColumn('${c.key}', this.checked)"><span>${escapeHtml(c.label)}</span></label></div>`).join('')
+    + rsAllCols().filter(c => !c.fixed).map(c => `<div class="cols-row"><label class="cols-check"><input type="checkbox" data-rscol="${c.key}"${rsColVisible(c) ? ' checked' : ''} onchange="toggleRsColumn('${c.key}', this.checked)"><span>${escapeHtml(c.label)}</span></label></div>`).join('')
     + `<div class="cols-opts"><button class="cols-opt" onclick="closeRsColumnsMenu(); fitAllRsColumns()"><i class="fa-solid fa-left-right"></i>Fit all columns to content</button><button class="cols-opt"${Object.keys(rsColWidths).length ? '' : ' disabled'} onclick="resetAllRsColWidths(); renderRsColumnsMenu()"><i class="fa-solid fa-rotate-left"></i>Reset column widths</button></div>`;
 }
 function toggleRsColumnsMenu() {
@@ -6794,6 +6853,46 @@ function rsResizeEdge(key) {   // the same rule as resizeEdge(): the stretching 
   const keys = rsVisibleCols().map(c => c.key), k = keys.indexOf('name'), i = keys.indexOf(key);
   if (k < 0 || i < 0 || i < k) return 'right';
   return i === k ? 'none' : 'left';
+}
+// Move a Resource Sheet column by dragging its header, like the task list's (see startColDrag): # and the remove column stay put; everything
+// else, Resource Name included, can go anywhere between them. The order is a device preference (rsOrder).
+function startRsColDrag(e, key, head) {
+  const x0 = e.clientX; let dragging = false, ghost = null, line = null, target = null;
+  const movable = () => [...document.querySelectorAll('#resourceSheetHeader > div')].filter(h => h.dataset.rskey !== 'id' && h.dataset.rskey !== 'remove');
+  const move = ev => {
+    if (!dragging) {
+      if (Math.abs(ev.clientX - x0) < 5) return;
+      dragging = true; document.body.classList.add('col-moving'); head.classList.add('moving');
+      ghost = document.createElement('div'); ghost.className = 'col-ghost'; ghost.textContent = (head.firstChild && head.firstChild.textContent ? head.firstChild.textContent : key).replace(/\s+/g, ' ').trim();
+      line = document.createElement('div'); line.className = 'col-drop-line';
+      document.body.append(ghost, line);
+      if (window.getSelection) window.getSelection().removeAllRanges();
+    }
+    ghost.style.left = (ev.clientX + 12) + 'px'; ghost.style.top = (ev.clientY + 12) + 'px';
+    const hs = movable(); target = null;
+    for (const h of hs) { const r = h.getBoundingClientRect(); if (ev.clientX < r.left + r.width / 2) { target = { before: h.dataset.rskey, x: r.left }; break; } }
+    if (!target && hs.length) target = { before: null, x: hs[hs.length - 1].getBoundingClientRect().right };
+    const hr = document.getElementById('resourceSheetHeader').getBoundingClientRect();
+    if (target) { line.style.left = (target.x - 1) + 'px'; line.style.top = hr.top + 'px'; line.style.height = hr.height + 'px'; }
+  };
+  const up = () => {
+    document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up);
+    if (!dragging) return;
+    document.body.classList.remove('col-moving'); head.classList.remove('moving'); ghost.remove(); line.remove();
+    if (target) reorderRsColumn(key, target.before);
+  };
+  document.addEventListener('mousemove', move); document.addEventListener('mouseup', up);
+}
+function reorderRsColumn(key, beforeKey) {
+  if (key === 'id' || key === 'remove' || key === beforeKey) return;
+  const all = rsAllCols().map(c => c.key).filter(k => k !== 'id' && k !== 'remove'), shown = rsVisibleCols().map(c => c.key).filter(k => k !== 'id' && k !== 'remove' && k !== key);
+  const order = all.filter(k => k !== key);
+  let at = beforeKey ? order.indexOf(beforeKey) : (shown.length ? order.indexOf(shown[shown.length - 1]) + 1 : order.length);
+  if (at < 0) return;
+  order.splice(at, 0, key);
+  rsColOrder = order;
+  save(); render();
+  if (document.getElementById('rsColumnsMenu').classList.contains('open')) renderRsColumnsMenu();
 }
 function startRsColResize(e, key) {
   e.preventDefault(); e.stopPropagation(); closeColWidthMenu();
@@ -6846,7 +6945,13 @@ function openRsColWidthMenu(e, key) {
 }
 {
   const hdr = document.getElementById('resourceSheetHeader');
-  hdr.addEventListener('mousedown', e => { const r = e.target.closest('.col-resizer'); if (r && e.button === 0) startRsColResize(e, r.dataset.rscol); });
+  hdr.addEventListener('mousedown', e => {
+    if (e.button !== 0) return;
+    const r = e.target.closest('.col-resizer');
+    if (r) { startRsColResize(e, r.dataset.rscol); return; }
+    const h = e.target.closest('[data-rskey]');
+    if (h && !e.target.closest('.rst-cur') && h.dataset.rskey !== 'id' && h.dataset.rskey !== 'remove') startRsColDrag(e, h.dataset.rskey, h);
+  });
   hdr.addEventListener('contextmenu', e => { const h = e.target.closest('[data-rskey]'); if (h) openRsColWidthMenu(e, h.dataset.rskey); });
 }
 function renderResourceSheet() {
@@ -9599,7 +9704,7 @@ const IMPORT_HEADERS = {
   actualStart: ['actual start', 'tatsächlicher anfang', 'tatsaechlicher anfang', 'ist-start', 'actual begin'],
   actualFinish: ['actual finish', 'tatsächliches ende', 'tatsaechliches ende', 'ist-ende', 'actual end'],
   constraintType: ['constraint type', 'einschränkungstyp'], constraintDate: ['constraint date', 'einschränkungsdatum'],
-  deadline: ['deadline', 'stichtag', 'due date', 'due'], notes: ['notes', 'notizen', 'note', 'comments', 'kommentar', 'description', 'beschreibung']
+  deadline: ['deadline', 'stichtag', 'due date', 'due'], notes: ['notes', 'notizen', 'note', 'comments', 'kommentar', 'description', 'beschreibung', 'additional details', 'details', 'status summary', 'additional details / status summary', 'status', 'remarks', 'bemerkungen']
 };
 function importHeaderField(cell) {
   const h = String(cell || '').replace(/^\uFEFF/, '').trim().toLowerCase().replace(/\s+/g, ' ');
@@ -9617,7 +9722,17 @@ function newImportedTask(name, parentId, order) {
 function tasksFromTable(rows, opts = {}) {
   const warnings = [], fmt = opts.dateFormat || 'auto', mo = minuteModeActive();   // (into a minute-mode plan: times of day, minute durations and minute lags)
   if (!rows.length) return { tasks: [], warnings, info: { header: false, links: 0, levels: 0 } };
-  let fields = rows[0].map(importHeaderField), header = fields.filter(Boolean).length >= 2 || (fields.includes('name') && !rows[0].some(c => parseTableDate(c, fmt) || /^\d+$/.test(String(c).trim())));
+  // A sheet often has a title or a few lines above its header row: the first row (within 25) that names the task column and at least two more is the header.
+  const hdrAt = rows.slice(0, 25).findIndex(r => { const f = r.map(importHeaderField); return f.includes('name') && f.filter(Boolean).length >= 3; });
+  if (hdrAt > 0) {
+    const first = String(rows[0].find(c => String(c).trim() !== '') || '').trim().slice(0, 40);
+    warnings.push(`Skipped ${hdrAt} line${hdrAt === 1 ? '' : 's'} above the header row${first ? ` (“${first}${first.length >= 40 ? '…' : ''}”)` : ''}`);
+    rows = rows.slice(hdrAt);
+  }
+  let fields = rows[0].map(importHeaderField);
+  { const pi = fields.map((f, i) => f === 'preds' ? i : -1).filter(i => i >= 0);   // ("Dependencies" and "Predecessors" side by side: the second is the real links)
+    if (pi.length > 1) { const strong = pi.find(i => /^(predecessors?|vorg[aä]nger)$/i.test(String(rows[0][i]).trim())); const keep = strong != null ? strong : pi[0]; for (const i of pi) if (i !== keep) fields[i] = null; } }
+  let header = fields.filter(Boolean).length >= 2 || (fields.includes('name') && !rows[0].some(c => parseTableDate(c, fmt) || /^\d+$/.test(String(c).trim())));
   let data = rows;
   if (header) data = rows.slice(1);
   else {
@@ -10865,31 +10980,144 @@ function handleFileImport(event) {
 /* ---- importing from MS Project XML / CSV: a preview dialog, then applyImportedTasks() */
 let foreignImport = null;   // { kind: 'xml' | 'csv', text, fileName, result, fmt }
 function triggerForeignImport() { closeDataMenu(); document.getElementById('foreignFileInput').click(); }
+/* ---- Excel (.xlsx) reading: a workbook is a zip of XML parts. No library: the zip's central directory is read by hand and each part inflated
+   with the browser's DecompressionStream('deflate-raw'). What comes out is rows of text — dates as ISO, percentages as "50%", an indented name
+   with leading spaces (the importer reads indent as outline level) — fed to the same table importer a CSV uses. ---- */
+async function zipEntries(buf) {
+  const u8 = new Uint8Array(buf), dv = new DataView(buf);
+  let eocd = -1; for (let i = u8.length - 22; i >= Math.max(0, u8.length - 65557); i--) if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+  if (eocd < 0) throw new Error('That does not look like an Excel (.xlsx) file');
+  const n = dv.getUint16(eocd + 10, true); let p = dv.getUint32(eocd + 16, true); const out = new Map(), td = new TextDecoder();
+  for (let k = 0; k < n; k++) {
+    if (dv.getUint32(p, true) !== 0x02014b50) break;
+    const method = dv.getUint16(p + 10, true), csize = dv.getUint32(p + 20, true), nlen = dv.getUint16(p + 28, true), elen = dv.getUint16(p + 30, true), clen = dv.getUint16(p + 32, true), lho = dv.getUint32(p + 42, true);
+    const name = td.decode(u8.subarray(p + 46, p + 46 + nlen));
+    out.set(name, { method, csize, lho });
+    p += 46 + nlen + elen + clen;
+  }
+  const read = async name => {
+    const e = out.get(name); if (!e) return null;
+    const start = e.lho + 30 + dv.getUint16(e.lho + 26, true) + dv.getUint16(e.lho + 28, true), raw = u8.subarray(start, start + e.csize);
+    if (e.method === 0) return td.decode(raw);
+    if (e.method !== 8) throw new Error('That Excel file uses a compression this browser cannot read');
+    const ds = new DecompressionStream('deflate-raw'), w = ds.writable.getWriter(); w.write(raw); w.close();
+    return td.decode(await new Response(ds.readable).arrayBuffer());
+  };
+  return { names: [...out.keys()], read };
+}
+const XLSX_BUILTIN_DATE_FMTS = new Set([14, 15, 16, 17, 18, 19, 20, 21, 22, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 45, 46, 47, 50, 51, 52, 53, 54, 55, 56, 57, 58]);
+function xlsxSerialToText(v, system1904, timeOnly) {
+  const day = Math.floor(v), frac = v - day, mins = Math.round(frac * 1440);
+  const hh = pad2(Math.floor(mins / 60) % 24), mm = pad2(mins % 60), t = `${hh}:${mm}`;
+  if (timeOnly) return t;
+  const base = Date.UTC(system1904 ? 1904 : 1899, system1904 ? 0 : 11, system1904 ? 1 : 30), d = new Date(base + day * 86400000);
+  const iso = `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}`;
+  return mins ? `${iso} ${t}` : iso;
+}
+async function parseXlsx(buf) {
+  if (typeof DecompressionStream === 'undefined') throw new Error('This browser cannot open Excel files — save the sheet as CSV instead');
+  const z = await zipEntries(buf), dom = t => new DOMParser().parseFromString(t, 'application/xml');
+  const wbText = await z.read('xl/workbook.xml'); if (!wbText) throw new Error('That does not look like an Excel (.xlsx) file');
+  const wb = dom(wbText), system1904 = !!(wb.querySelector('workbookPr') && /^(1|true)$/.test(wb.querySelector('workbookPr').getAttribute('date1904') || ''));
+  const relText = await z.read('xl/_rels/workbook.xml.rels'), rels = new Map();
+  if (relText) for (const r of dom(relText).querySelectorAll('Relationship')) rels.set(r.getAttribute('Id'), r.getAttribute('Target'));
+  const sheets = [...wb.querySelectorAll('sheet')].map((sh, i) => {
+    const rid = sh.getAttribute('r:id') || sh.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships', 'id');
+    let target = rels.get(rid) || `worksheets/sheet${i + 1}.xml`; target = target.replace(/^\//, '').replace(/^xl\//, '');
+    return { name: sh.getAttribute('name') || `Sheet${i + 1}`, hidden: (sh.getAttribute('state') || '') !== '' && sh.getAttribute('state') !== 'visible', path: 'xl/' + target };
+  });
+  const shared = [], ssText = await z.read('xl/sharedStrings.xml');
+  if (ssText) for (const si of dom(ssText).querySelectorAll('si')) shared.push([...si.querySelectorAll('t')].map(t => t.textContent).join(''));
+  // number formats: which cell styles are dates / times / percentages, and how far a name is indented
+  const stText = await z.read('xl/styles.xml'), xf = [];
+  if (stText) {
+    const st = dom(stText), custom = new Map();
+    for (const nf of st.querySelectorAll('numFmts > numFmt')) custom.set(Number(nf.getAttribute('numFmtId')), nf.getAttribute('formatCode') || '');
+    for (const x of st.querySelectorAll('cellXfs > xf')) {
+      const id = Number(x.getAttribute('numFmtId') || 0), code = (custom.get(id) || '').replace(/"[^"]*"|\[[^\]]*\]|\\./g, '');
+      const dateish = XLSX_BUILTIN_DATE_FMTS.has(id) || (custom.has(id) && /[dmyhs]/i.test(code) && !/^[#0.,?%\s]*$/.test(code));
+      const al = x.querySelector('alignment');
+      xf.push({ date: dateish, time: dateish && /^(18|19|20|21|45|46|47)$/.test(String(id)) || (custom.has(id) && dateish && !/[dy]/i.test(code)), pct: id === 9 || id === 10 || (custom.has(id) && /%/.test(code)), indent: al ? Number(al.getAttribute('indent') || 0) : 0 });
+    }
+  }
+  const colIndex = ref => { const m = /^([A-Z]+)/.exec(ref); let n = 0; for (const ch of m[1]) n = n * 26 + ch.charCodeAt(0) - 64; return n - 1; };
+  const read = async sh => {
+    const txt = await z.read(sh.path); if (!txt) return { rows: [], grouped: false, indented: false };
+    const rows = []; let grouped = false, indented = false;
+    for (const row of dom(txt).querySelectorAll('sheetData > row')) {
+      const r = Number(row.getAttribute('r')) - 1, arr = rows[r] || []; const ol = Number(row.getAttribute('outlineLevel') || 0);
+      for (const c of row.querySelectorAll(':scope > c')) {
+        const idx = colIndex(c.getAttribute('r') || 'A1'), t = c.getAttribute('t') || '', style = xf[Number(c.getAttribute('s') || 0)] || {};
+        const vEl = c.querySelector(':scope > v'); let v = vEl ? vEl.textContent : '', out = '';
+        if (t === 's') out = shared[Number(v)] || '';
+        else if (t === 'inlineStr') out = [...c.querySelectorAll('is t')].map(x => x.textContent).join('');
+        else if (t === 'str') out = v;
+        else if (t === 'b') out = v === '1' ? 'yes' : 'no';
+        else if (t === 'e') out = '';
+        else if (v !== '' && Number.isFinite(Number(v))) {
+          const num = Number(v);
+          out = style.date ? xlsxSerialToText(num, system1904, style.time && num < 1) : style.pct ? String(Math.round(num * 10000) / 100) + '%' : String(Math.round(num * 1e10) / 1e10);
+        }
+        if (t !== '' && t !== 'n' && out !== '' && style.indent > 0) { out = ' '.repeat(style.indent * 2) + out; indented = true; }
+        if (out !== '' || arr[idx] === undefined) arr[idx] = out;
+      }
+      for (let i = 0; i < arr.length; i++) if (arr[i] === undefined) arr[i] = '';
+      if (ol > 0) { grouped = true; arr._ol = ol; }
+      rows[r] = arr;
+    }
+    for (let i = 0; i < rows.length; i++) if (!rows[i]) rows[i] = [];
+    return { rows, grouped, indented };
+  };
+  const useful = r => r.rows.filter(x => x.some(c => String(c).trim() !== '')).length >= 2;
+  let chosen = null, others = 0;
+  for (const sh of sheets.filter(x => !x.hidden)) { const r = await read(sh); if (!chosen && useful(r)) chosen = Object.assign(r, { name: sh.name }); else if (useful(r)) others++; }
+  if (!chosen) throw new Error('No tasks found in that Excel file');
+  let rows = chosen.rows.slice();   // (blank lines stay, so a row number in a message is the sheet's own row number; the importer skips lines without a name)
+  while (rows.length && !rows[rows.length - 1].some(c => String(c).trim() !== '')) rows.pop();
+  // grouped rows (Excel's outline) with no indent: the outline level becomes a column the importer already understands
+  if (chosen.grouped && !chosen.indented) {
+    let hi = rows.slice(0, 25).findIndex(r => { const f = r.map(importHeaderField); return f.includes('name') && f.filter(Boolean).length >= 3; }); if (hi < 0) hi = rows.findIndex(r => r.some(c => String(c).trim() !== ''));
+    const w = Math.max(...rows.map(r => r.length));
+    rows = rows.map((r, i) => Array.from({ length: w }, (_, k) => r[k] == null ? '' : r[k]).concat([i === hi ? 'Outline Level' : i > hi && r.some(c => String(c).trim() !== '') ? String((r._ol || 0) + 1) : '']));
+  }
+  const width = Math.max(...rows.map(r => r.length));
+  rows = rows.map(r => Array.from({ length: width }, (_, i) => r[i] == null ? '' : r[i]));
+  while (width > 1 && rows.every(r => String(r[rows[0].length - 1]).trim() === '')) rows.forEach(r => r.pop());
+  return { rows, sheet: chosen.name, others, grouped: chosen.grouped && !chosen.indented };
+}
+function rowsToTsv(rows) { return rows.map(r => r.map(c => { c = String(c); return /[\t\n\r"]/.test(c) ? '"' + c.replace(/"/g, '""') + '"' : c; }).join('\t')).join('\n'); }
 async function handleForeignFile(event) {
   const file = event.target.files[0]; event.target.value = '';
   if (!file) return;
   if (/\.(mpp|mpt|mpx)$/i.test(file.name)) { showToast("MS Project's own .mpp format can't be read in a browser — in MS Project use File → Save As → XML Format", true); return; }
-  if (/\.xlsx?$/i.test(file.name)) { showToast('Copy the rows in Excel and paste them here (Ctrl+V), or save the sheet as CSV', true); return; }
+  if (/\.xls$/i.test(file.name)) { showToast('That is the old Excel format (.xls) — open it in Excel and Save As “Excel Workbook (.xlsx)”, or as CSV', true); return; }
   const buf = await file.arrayBuffer();
+  if (/\.xls[xm]$/i.test(file.name)) {
+    let x; try { x = await parseXlsx(buf); } catch (e) { showToast(e.message || 'I could not read that Excel file', true); return; }
+    const note = `Read the sheet “${x.sheet}”${x.others ? ` (${x.others} other sheet${x.others === 1 ? '' : 's'} not imported)` : ''}${x.grouped ? ' — its row grouping became the outline levels' : ''}`;
+    openForeignImport(rowsToTsv(x.rows), file.name, undefined, { delim: '\t', note, label: 'Excel' });
+    return;
+  }
   let text; try { text = new TextDecoder('utf-8', { fatal: true }).decode(buf); } catch (e) { text = new TextDecoder('windows-1252').decode(buf); }   // German Excel writes CSV in Windows-1252
   openForeignImport(text, file.name);
 }
-function openForeignImport(text, fileName, fmt) {
+function openForeignImport(text, fileName, fmt, extra) {
   const kind = /^\s*(<\?xml|<Project\b)/i.test(text.replace(/^﻿/, '')) ? 'xml' : 'csv';
   let result;
-  try { result = kind === 'xml' ? parseMspdi(text) : tasksFromTable(parseDelimited(text), { dateFormat: fmt || 'auto' }); }
+  try { result = kind === 'xml' ? parseMspdi(text) : tasksFromTable(parseDelimited(text, extra && extra.delim), { dateFormat: fmt || 'auto' }); }
   catch (e) { showToast(e.message || 'I could not read that file', true); return false; }
   if (!result.tasks.length) { showToast('No tasks found in that file', true); return false; }
-  foreignImport = { kind, text, fileName, result, fmt: fmt || 'auto' };
+  if (extra && extra.note) result.warnings.unshift(extra.note);
+  foreignImport = { kind, text, fileName, result, fmt: fmt || 'auto', extra: extra || null };
   renderForeignImport();
   document.getElementById('foreignImportModalBg').classList.add('open');
   return true;
 }
 function closeForeignImport() { document.getElementById('foreignImportModalBg').classList.remove('open'); foreignImport = null; }
-function foreignImportFormatChanged() { if (!foreignImport) return; const f = document.getElementById('foreignImportFmt').value; openForeignImport(foreignImport.text, foreignImport.fileName, f); }
+function foreignImportFormatChanged() { if (!foreignImport) return; const f = document.getElementById('foreignImportFmt').value; openForeignImport(foreignImport.text, foreignImport.fileName, f, foreignImport.extra); }
 function renderForeignImport() {
   const fi = foreignImport, r = fi.result, xml = fi.kind === 'xml';
-  document.getElementById('foreignImportTitle').textContent = xml ? 'Import from MS Project' : 'Import from CSV';
+  document.getElementById('foreignImportTitle').textContent = xml ? 'Import from MS Project' : (fi.extra && fi.extra.label ? 'Import from ' + fi.extra.label : 'Import from CSV');
   document.getElementById('foreignImportFile').innerHTML = `<i class="fa-solid ${xml ? 'fa-file-code' : 'fa-file-csv'}"></i> ${escapeHtml(fi.fileName)}`;
   const groups = new Set(r.tasks.map(t => t.parentId).filter(Boolean)).size, bits = [`<strong>${r.tasks.length}</strong> task${r.tasks.length === 1 ? '' : 's'}`];
   if (groups) bits.push(`${groups} group${groups === 1 ? '' : 's'} in ${r.info.levels} level${r.info.levels === 1 ? '' : 's'}`);
