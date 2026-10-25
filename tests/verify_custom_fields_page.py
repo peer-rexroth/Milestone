@@ -15,7 +15,7 @@ SEED = """(withFields) => { historyCoalesceMs = 0; delete project.fieldNames; ta
   normalizeData(); save(); render(); resetHistory(); }"""
 with sync_playwright() as p:
     b = p.chromium.launch()
-    ctx = b.new_context(viewport={"width": 1440, "height": 860}); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
+    ctx = b.new_context(viewport={"width": 1440, "height": 860}); ctx.add_init_script("localStorage.setItem('milestone-sidebar', '0'); delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type == "error" else None)
     pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn")
     ev = pg.evaluate

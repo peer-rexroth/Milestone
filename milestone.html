@@ -57,39 +57,61 @@ button, input, select, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; }
 .hidden { display: none !important; }
 
-/* ── Topbar ─────────────────────────────────────────────────────────── */
-.topbar {
-  display: flex; align-items: center; gap: 14px; height: 54px; padding: 0 16px;
-  background: var(--panel); border-bottom: 1px solid var(--border);
-  flex-shrink: 0; overflow-x: auto;
+/* ── Window: sidebar + content (layout from design-system/DESIGN.md, pattern D) ───────────────────────────
+   The sidebar runs the full window height (plans, views, the app-level menus); the content column to its right
+   is the view's 52px bar, the list / chart, the Task Form and the status bar. */
+.window { flex: 1; min-height: 0; display: flex; }
+.content { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
+.sidebar {
+  flex: 0 0 var(--sidebar-w, 260px); width: var(--sidebar-w, 260px); display: flex; flex-direction: column; min-height: 0;
+  background: var(--panel-2); border-right: 1px solid var(--border);
 }
-.topbar > * { flex-shrink: 0; }
-.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 21px; letter-spacing: -0.02em; color: var(--text); }
-.brand svg { width: 36px; height: 36px; color: var(--accent); }
-/* Plan switcher: the project name, as a button that opens the list of plans. 243px = the old name field's 182px + 1/3. */
+html.sidebar-collapsed .sidebar { display: none; }
+.sb-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; height: 52px; flex: none; padding: 0 12px 0 16px; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 19px; letter-spacing: -0.02em; color: var(--text); min-width: 0; }
+.brand svg { width: 30px; height: 30px; color: var(--accent); flex: none; }
+.sb-plan { flex: none; display: flex; flex-direction: column; gap: 6px; padding: 0 12px 8px; }
+.sb-plan .dropdown-wrap { min-width: 0; }
+/* Plan switcher: the project name, as a button that opens the list of plans. */
 .plan-btn {
-  display: flex; align-items: center; gap: 8px; width: 243px;
+  display: flex; align-items: center; gap: 8px; width: 100%;
   border: 1px solid var(--border); background: var(--panel); font-weight: 600; font-size: 14px; text-align: left;
-  padding: 5px 9px; border-radius: 8px; color: var(--text);   /* a bordered box with a folder and a chevron: plainly a menu, not a title */
+  padding: 6px 10px; border-radius: 8px; color: var(--text);   /* a bordered box with a folder and a chevron: plainly a menu, not a title */
 }
 .plan-btn:hover, .plan-btn.open { background: var(--panel-2); border-color: color-mix(in srgb, var(--accent) 40%, var(--border)); }
 .plan-btn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
 .plan-btn .plan-ico { font-size: 13px; color: var(--text-dim); flex-shrink: 0; }
-.plan-status { display: flex; align-items: center; gap: 6px; margin-left: -6px; }   /* the plan's file status sits right beside its name */
+.plan-status { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }   /* the plan's file status sits right under its name */
 .plan-status #fileSyncBtn { padding: 5px 9px; font-size: 12.5px; }
 .plan-btn i { font-size: 10px; color: var(--text-faint); flex-shrink: 0; }
-.topbar-divider { width: 1px; height: 22px; background: var(--border); }
-.topbar-spacer { flex: 1 1 auto; }
-@media (max-width: 1320px) { .topbar .brand-name { display: none; } .plan-btn { width: 200px; } }
-@media (max-width: 1180px) { .topbar .btn-label { display: none; } .topbar #scheduleMenuBtn .btn-label { display: inline; } .plan-btn { width: 180px; } }   /* Schedule keeps its word longest: its icon alone is the least obvious */
-@media (max-width: 960px) { .topbar #scheduleMenuBtn .btn-label { display: none; } }
-@media (max-width: 1040px) { .plan-btn { width: 150px; } .topbar { gap: 10px; } }
+.sb-scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 4px 12px; }
+.sb-label { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--text-faint); padding: 10px 10px 4px; }
+.sb-tools { flex: none; display: flex; align-items: center; gap: 2px; padding: 8px 12px; border-top: 1px solid var(--border); }
+.sb-tools-sp { flex: 1 1 auto; }
+.sb-tools .dropdown-wrap { display: flex; }
+.sb-tools .btn { width: 32px; height: 32px; padding: 0; justify-content: center; border: none; background: transparent; color: var(--text-dim); font-size: 15px; border-radius: 8px; }
+.sb-tools .btn:hover { background: var(--bg); color: var(--text); }
+.sb-tools .btn .btn-label { display: none; }
+.sb-tools .icon-btn:hover { background: var(--bg); }
+html:not(.sidebar-collapsed) .sb-float { display: none; }   /* (the show button only exists while the sidebar is hidden) */
+.bar-title { flex: 0 1 auto; min-width: 120px; max-width: 280px; margin-right: 6px; line-height: 1.2; }
+.bar-title b { display: block; font-size: 17px; font-weight: 700; letter-spacing: -.01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar-title small { display: block; font-size: 12px; color: var(--text-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* narrow windows: the sidebar floats over the content (and starts hidden, see applySidebarState) */
+@media (max-width: 800px) {
+  .sidebar { position: fixed; z-index: 70; top: 0; bottom: 0; left: 0; box-shadow: var(--shadow); }
+}
 /* view tabs: the task views, a divider, the resource views */
-.view-tab-sep { width: 1px; align-self: stretch; margin: 4px 3px; background: var(--border); }
+.view-tab-sep { height: 1px; align-self: stretch; margin: 6px 8px; background: var(--border); }
+.sidebar .view-tabs { flex-direction: column; background: none; padding: 0; gap: 2px; border-radius: 0; }
+.sidebar .view-tab { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 8px; text-align: left; font-size: 13.5px; font-weight: 500; color: var(--text-dim); }
+.sidebar .view-tab i { width: 16px; text-align: center; font-size: 13px; }
+.sidebar .view-tab:hover { background: var(--hover-bg, color-mix(in srgb, var(--text) 7%, transparent)); color: var(--text); }
+.sidebar .view-tab.active { background: var(--panel); color: var(--text); font-weight: 600; box-shadow: inset 0 0 0 1px var(--border); }
 
 .subbar {
-  display: flex; align-items: center; gap: 6px 10px; min-height: 46px; padding: 5px 14px;
-  background: var(--panel-2); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 6px 10px; height: 52px; min-height: 52px; padding: 0 20px;
+  background: var(--panel); border-bottom: 1px solid var(--border);
   flex-shrink: 0; flex-wrap: nowrap; overflow: hidden;   /* one row always: what doesn't fit goes into the "More" menu (fitToolbar()) instead of wrapping */
 }
 .subbar > * { flex-shrink: 0; }
@@ -125,15 +147,6 @@ button { cursor: pointer; }
 .icon-btn:hover { background: var(--panel-2); color: var(--text); }
 .icon-btn.active { background: color-mix(in srgb, var(--accent) 16%, var(--panel)); color: var(--accent); }
 button:focus:not(:focus-visible) { outline: none; }
-/* Top bar only — Pulse's bordered pill tabs, bordered square icon buttons and
-   semibold buttons at the browser's own 13.33px. Scoped to .topbar on purpose. */
-.topbar .view-tabs { gap: 2px; border: 1px solid var(--border); }
-.topbar .view-tab { padding: 6px 11px; font-size: 13.3333px; font-weight: 600; display: flex; align-items: center; gap: 6px; }   /* trimmed from 14px once a 4th tab (Resource Sheet) arrived — see verify_layout.py's 1100px check */
-.topbar .view-tab.active { color: var(--accent); box-shadow: var(--shadow); }
-.topbar .icon-btn { border: 1px solid var(--border); background: var(--panel); font-size: 13.3333px; }
-.topbar .icon-btn:hover { background: var(--panel-2); }
-.topbar .icon-btn.active { border-color: var(--accent); }
-.topbar .btn { font-size: 13.3333px; font-weight: 600; }
 .tb-title { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; color: var(--text); white-space: nowrap; }
 .tb-title i { color: var(--accent); }
 
@@ -1261,11 +1274,16 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
 </head>
 <body>
 
-<div class="topbar">
-  <div class="brand">
+<div class="window" id="window">
+<aside class="sidebar" id="sidebar" aria-label="Plans and views">
+  <div class="sb-head">
+    <div class="brand">
     <svg viewBox="0 0 120 120" aria-hidden="true"><mask id="logoMaskBar"><rect width="120" height="120" fill="#fff"/><rect x="40" y="34" width="40" height="14" rx="7" fill="#000"/><rect x="26" y="53" width="58" height="14" rx="7" fill="#000"/><rect x="50" y="72" width="34" height="14" rx="7" fill="#000"/></mask><polygon mask="url(#logoMaskBar)" points="60,3 117,60 60,117 3,60" fill="currentColor"/></svg>
     <span class="brand-name">Milestone</span>
   </div>
+    <button class="icon-btn" id="sidebarToggleBtn" onclick="toggleSidebar()" title="Hide sidebar (Alt+Cmd/Ctrl+S)" aria-label="Hide sidebar"><i class="fa-solid fa-table-columns"></i></button>
+  </div>
+  <div class="sb-plan">
   <div class="dropdown-wrap">
     <button class="plan-btn" id="planMenuBtn" onclick="togglePlanMenu()" title="Plans — switch, create, rename, link a folder" aria-haspopup="menu"><i class="fa-regular fa-folder-open plan-ico"></i><span id="planBtnName"></span><i class="fa-solid fa-chevron-down"></i></button>
     <div class="dropdown-menu plan-menu" id="planMenu"></div>
@@ -1275,17 +1293,19 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
     <button class="btn conflict-btn hidden" id="syncConflictBtn" onclick="openSyncConflictsModal()"></button>
     <span class="watch-hint hidden" id="watchHint"><button class="btn watch-btn" id="watchHintBtn" onclick="chooseWatchFolder()" title="This plan is linked to a single file (from before plans were linked by folder). Link the folder it lives in: OneDrive, Dropbox and SharePoint keep a second copy of the file when two devices save at the same time, and Milestone can then merge those copies in."><i class="fa-solid fa-folder-tree"></i>Link folder</button><button class="watch-x" onclick="declineWatch()" title="Don't remind me for this plan (the plan menu still has it)" aria-label="Don't remind me">&times;</button></span>
   </div>
+  </div>
+  <div class="sb-scroll">
+    <div class="sb-label">Views</div>
+    <div class="view-tabs" id="mainViewTabs"></div>
+  </div>
+  <div class="sb-tools">
   <button class="icon-btn" id="planSettingsBtn" onclick="openPlanSettings()" aria-label="Plan settings" title="Plan settings — calendar, precision, scheduling rules, currency, custom fields"><i class="fa-solid fa-gear"></i></button>
-  <div class="topbar-divider"></div>
-  <div class="view-tabs" id="mainViewTabs"></div>
-  <div class="topbar-spacer"></div>
-  <div class="topbar-divider"></div>
   <div class="dropdown-wrap">
-    <button class="btn" id="scheduleMenuBtn" onclick="toggleScheduleMenu()" title="Schedule: baselines, rescheduling, levelling"><i class="fa-solid fa-calendar-check"></i><span class="btn-label">Schedule</span></button>
+    <button class="btn" id="scheduleMenuBtn" aria-label="Schedule" onclick="toggleScheduleMenu()" title="Schedule: baselines, rescheduling, levelling"><i class="fa-solid fa-calendar-check"></i><span class="btn-label">Schedule</span></button>
     <div class="dropdown-menu" id="scheduleMenu"></div>
   </div>
   <div class="dropdown-wrap">
-    <button class="btn" id="dataMenuBtn" onclick="toggleDataMenu()" title="Data: import, export, print, backups"><i class="fa-solid fa-database"></i><span class="btn-label">Data</span></button>
+    <button class="btn" id="dataMenuBtn" aria-label="Data" onclick="toggleDataMenu()" title="Data: import, export, print, backups"><i class="fa-solid fa-database"></i><span class="btn-label">Data</span></button>
     <div class="dropdown-menu" id="dataMenu">
       <button class="dropdown-item" onclick="triggerImport()"><i class="fa-solid fa-file-import"></i>Import plan (JSON)…</button>
       <button class="dropdown-item" id="foreignImportItem" onclick="triggerForeignImport()" title="Adds tasks from an MS Project XML file or a CSV table to this plan. Excel (.xlsx) files and CSV tables are read too — the sheet needs a header row such as Task Name, Start, Finish."><i class="fa-solid fa-file-import"></i>Import tasks (MS Project XML, Excel, CSV)…</button>
@@ -1302,15 +1322,19 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
   </div>
   <input type="file" id="fileInput" accept="application/json" class="hidden" onchange="handleFileImport(event)">
   <input type="file" id="foreignFileInput" accept=".xml,.csv,.tsv,.txt,.mpp,.xlsx,text/csv,text/xml,application/xml,text/plain" class="hidden" onchange="handleForeignFile(event)">
-  <div class="topbar-divider"></div>
+  <span class="sb-tools-sp"></span>
   <button class="icon-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Toggle light/dark"></button>
-  <button class="icon-btn" onclick="openHelpModal()" title="Help"><i class="fa-regular fa-circle-question"></i></button>
-  <button class="icon-btn" onclick="openAboutModal()" title="About"><i class="fa-solid fa-circle-info"></i></button>
-</div>
+  <button class="icon-btn" onclick="openHelpModal()" title="Help" aria-label="Help"><i class="fa-regular fa-circle-question"></i></button>
+  <button class="icon-btn" onclick="openAboutModal()" title="About" aria-label="About"><i class="fa-solid fa-circle-info"></i></button>
+  </div>
+</aside>
+<div class="content" id="content">
 
 <!-- The toolbar belongs to the view you are in: each .tb-group lists the views it shows in (data-views). A button with
      data-more goes into the "More" menu when the toolbar is too narrow for everything (the higher the number, the sooner). -->
 <div class="subbar" id="subbar">
+  <button class="icon-btn sb-float" id="sidebarShowBtn" onclick="toggleSidebar()" title="Show sidebar (Alt+Cmd/Ctrl+S)" aria-label="Show sidebar"><i class="fa-solid fa-table-columns"></i></button>
+  <div class="bar-title" data-more="99"><b id="barTitle"></b><small id="barSub"></small></div>
   <button class="icon-btn" id="undoBtn" onclick="historyUndo()" title="Undo (Ctrl+Z)" disabled><i class="fa-solid fa-rotate-left"></i></button>
   <button class="icon-btn" id="redoBtn" onclick="historyRedo()" title="Redo (Ctrl+Shift+Z)" disabled><i class="fa-solid fa-rotate-right"></i></button>
   <span class="tb-sep"></span>
@@ -1434,6 +1458,8 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
   </span>
 </div>
 <div class="dropdown-menu" id="sbModeMenu" role="menu"></div>
+</div>
+</div>
 
 <!-- Task modal -->
 <div class="modal-bg" id="taskModalBg" onclick="if(event.target===this) requestCloseTaskModal()">
@@ -4572,24 +4598,25 @@ function renderPass() {
 // 'resources') and Resources (the Resource Sheet — MS Project's spreadsheet of the plan's people, rates and costs; id
 // 'resourceSheet'). The sheet was a top-bar button for a while; a tab won (UX review #4) — with nothing active in the tabs
 // you couldn't tell where you were, and a tab says it and is the way back.
-const MAIN_VIEWS = [{ id: 'tasks', label: 'Tasks', group: 'task' }, { id: 'gantt', label: 'Gantt', group: 'task' }, { id: 'resources', label: 'Resource Plan', group: 'resource' }, { id: 'resourceSheet', label: 'Resources', group: 'resource' }];
+const MAIN_VIEWS = [{ id: 'tasks', label: 'Tasks', group: 'task', icon: 'fa-list-check' }, { id: 'gantt', label: 'Gantt', group: 'task', icon: 'fa-chart-gantt' }, { id: 'resources', label: 'Resource Plan', group: 'resource', icon: 'fa-chart-column' }, { id: 'resourceSheet', label: 'Resources', group: 'resource', icon: 'fa-users' }];
 const ALL_VIEWS = MAIN_VIEWS.map(v => v.id);
 function openResourceSheet() { if (currentView !== 'resourceSheet') setView('resourceSheet'); }   // (the Task Form's "Edit resources" icon)
 function renderMainViewTabs() {
   document.getElementById('mainViewTabs').innerHTML = MAIN_VIEWS.map((v, i) =>
     (i && MAIN_VIEWS[i - 1].group !== v.group ? '<span class="view-tab-sep" aria-hidden="true"></span>' : '') +
-    `<button class="view-tab${v.id === currentView ? ' active' : ''}" onclick="setView('${v.id}')">${v.label}</button>`).join('');
+    `<button class="view-tab${v.id === currentView ? ' active' : ''}" onclick="setView('${v.id}')"><i class="fa-solid ${v.icon}"></i>${v.label}</button>`).join('');
   for (const g of document.querySelectorAll('#subbar [data-views]')) g.classList.toggle('hidden', !g.dataset.views.split(' ').includes(currentView));   // the toolbar belongs to the view
   document.getElementById('main').classList.toggle('view-tasks', currentView === 'tasks');
   document.getElementById('main').classList.toggle('view-gantt', currentView === 'gantt');
   document.getElementById('main').classList.toggle('view-resources', currentView === 'resources');
   document.getElementById('main').classList.toggle('view-resourceSheet', currentView === 'resourceSheet');
 }
-function setView(id) { currentView = id; editingCell = null; if (id !== 'tasks' && id !== 'gantt') activeCell = null;   // (Tasks and Gantt share the list, so the cursor stays)
+function setView(id) { closeFloatingSidebar(); currentView = id; editingCell = null; if (id !== 'tasks' && id !== 'gantt') activeCell = null;   // (Tasks and Gantt share the list, so the cursor stays)
   closeColumnsMenu(); save(); render(); }
 
 function updateProjectNameUI() {
   document.getElementById('planBtnName').textContent = project.name;
+  document.getElementById('barTitle').textContent = project.name;
   for (const el of document.querySelectorAll('[data-ps-plan]')) el.textContent = '— ' + project.name;   // (Plan settings says which plan it is for)
   document.title = project.name + ' · Milestone';
 }
@@ -9316,13 +9343,19 @@ function toggleTheme() { theme = theme === 'dark' ? 'light' : 'dark'; applyTheme
 function updateThemeToggleUI() {
   const btn = document.getElementById('themeToggleBtn');
   btn.innerHTML = theme === 'dark' ? '<i class="fa-solid fa-sun"></i>' : '<i class="fa-solid fa-moon"></i>';
-  btn.title = theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+  btn.title = theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'; btn.setAttribute('aria-label', btn.title);
 }
 
 /* ============================== Data dropdown ============================= */
 function positionDropdown(btnId, menuId, align) {
   const btn = document.getElementById(btnId), menu = document.getElementById(menuId);
   const rect = btn.getBoundingClientRect();
+  if (btn.closest('.sb-tools')) {   // the sidebar's tools sit at the bottom edge: its menus open upward
+    menu.style.top = 'auto'; menu.style.bottom = (window.innerHeight - rect.top) + 'px';
+    menu.style.left = Math.max(8, rect.left) + 'px'; menu.style.right = 'auto';
+    return;
+  }
+  menu.style.bottom = 'auto';
   menu.style.top = rect.bottom + 'px';
   if (align === 'left') { menu.style.left = rect.left + 'px'; menu.style.right = 'auto'; }
   else { menu.style.right = (window.innerWidth - rect.right) + 'px'; menu.style.left = 'auto'; }
@@ -10554,6 +10587,8 @@ function updateStatusBar() {
   const all = tasks.filter(t => !t.spacer).length, sel = selectedIds().filter(id => !byId(id).spacer).length, nRes = (project.resources || []).length;
   document.getElementById('sbCount').textContent = currentView === 'tasks' || currentView === 'gantt'
     ? `${all} task${all === 1 ? '' : 's'}${sel ? ` · ${sel} selected` : ''}` : `${nRes} resource${nRes === 1 ? '' : 's'}`;
+  const vlabel = (MAIN_VIEWS.find(v => v.id === currentView) || {}).label || '';
+  document.getElementById('barSub').textContent = vlabel + ' · ' + document.getElementById('sbCount').textContent;
   for (const el of document.querySelectorAll('#statusbar [data-sb-views]')) el.classList.toggle('hidden', !el.dataset.sbViews.split(' ').includes(currentView));
   if (currentView === 'gantt' || currentView === 'resources') {
     const z = currentZoom(), r = zoomSliderRange();
@@ -12716,6 +12751,29 @@ function closeAboutModal() { document.getElementById('aboutModalBg').classList.r
 // and never so wide that the chart is squeezed out.
 function minGridPaneWidth() { return Math.max(GRID_PANE_MIN_WIDTH, frozenMinWidth + 60); }
 function applyGridPaneWidth() { document.documentElement.style.setProperty('--grid-pane-width', Math.max(minGridPaneWidth(), Math.min(gridPaneWidth, window.innerWidth - 240)) + 'px'); }
+/* ---- the sidebar: hide / show (per device, never in the plan) ---- */
+const SIDEBAR_KEY = 'milestone-sidebar';
+let sidebarCollapsed = null;   // null = no choice yet: hidden in a narrow window (where it floats), shown otherwise
+function sidebarNarrow() { return window.matchMedia('(max-width: 800px)').matches; }
+function applySidebarState() {
+  document.documentElement.classList.toggle('sidebar-collapsed', sidebarCollapsed === null ? sidebarNarrow() : sidebarCollapsed);
+  requestAnimationFrame(fitToolbar);
+}
+function toggleSidebar() {
+  sidebarCollapsed = !document.documentElement.classList.contains('sidebar-collapsed');
+  try { localStorage.setItem(SIDEBAR_KEY, sidebarCollapsed ? '1' : '0'); } catch (e) {}
+  applySidebarState();
+}
+function closeFloatingSidebar() {   // picking something in the floating sidebar closes it again, without changing the saved choice
+  if (!sidebarNarrow() || document.documentElement.classList.contains('sidebar-collapsed')) return;
+  sidebarCollapsed = null; applySidebarState();
+}
+try { const v = localStorage.getItem(SIDEBAR_KEY); sidebarCollapsed = v === '1' ? true : v === '0' ? false : null; } catch (e) {}
+applySidebarState();
+window.matchMedia('(max-width: 800px)').addEventListener('change', applySidebarState);
+document.addEventListener('keydown', e => {   // Alt+Cmd+S (Alt+Ctrl+S), the same shortcut as ClearDesk
+  if (e.altKey && (e.metaKey || e.ctrlKey) && e.code === 'KeyS') { e.preventDefault(); toggleSidebar(); }
+});
 window.addEventListener('resize', applyGridPaneWidth);
 window.addEventListener('resize', () => requestAnimationFrame(fitToolbar));
 let fitRaf = 0;

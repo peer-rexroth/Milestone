@@ -1,0 +1,257 @@
+/* ClearDesk design tokens, extracted from cleardesk.html (light + dark, "Glass" look).
+   Use as-is, or copy the values into your own token system. Names are kept so the guide (DESIGN.md) matches.
+   Theme switch: set data-theme="light"|"dark" on <html>; data-scheme="glass" is a styling hook only. */
+
+:root {
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --mono: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+}
+
+html {
+  --submenu-w: 164px;
+  --ink: var(--text);
+  --ink-2: var(--text-2);
+  --ink-3: var(--text-3);
+}
+
+html[data-scheme="glass"] {
+  --bg: rgba(255,255,255,.46);
+  --bg-2: rgba(255,255,255,.30);
+  --bg-3: rgba(255,255,255,.62);
+  --text: #15161b;
+  --text-2: rgba(21,22,27,.74);
+  --text-3: rgba(21,22,27,.62);
+  --border: rgba(40,44,70,.13);
+  --border-2: rgba(40,44,70,.24);
+  --blue-bg: rgba(10,132,255,.16);
+  --blue-text: #0959c8;
+  --blue-border: #7ab4ff;
+  --teal-bg: rgba(48,176,160,.18);
+  --teal-text: #0b6b5f;
+  --amber-bg: rgba(255,159,10,.20);
+  --amber-text: #8a4b00;
+  --red-bg: rgba(255,69,58,.15);
+  --red-text: #c4281f;
+  --green-bg: rgba(52,199,89,.18);
+  --green-text: #1a7a36;
+  --md-dim: var(--text-3);
+  --md-h: #3634a3;
+  --md-li: #d30f45;
+  --md-code: #b02e00;
+  --md-code-bg: rgba(255,149,0,.16);
+  --md-fence: #9f3000;
+  --md-fence-bg: rgba(255,149,0,.10);
+  --md-quote: #5c5c61;
+  --md-link: #0040dd;
+  --md-tag: #8944ab;
+  --md-tag-bg: rgba(175,82,222,.14);
+  --purple-bg: rgba(175,82,222,.16);
+  --purple-text: #7a2fb0;
+  --blue-dot: #0a84ff;
+  --teal-dot: #30b0a0;
+  --purple-dot: #af52de;
+  --glass-strong: rgba(255,255,255,.97);
+  --glass-rim: rgba(255,255,255,.80);
+  --glass-edge: rgba(255,255,255,.60);
+  --glass-sheen: rgba(255,255,255,.26);
+  --glass-sheen-2: rgba(255,255,255,.10);
+  --glass-shadow: 0 10px 40px rgba(40,50,110,.16), 0 2px 8px rgba(40,50,110,.08);
+  --glass-blur: blur(26px);
+  --wall: radial-gradient(55% 45% at 12% 10%, #dfe3ea 0, transparent 70%), radial-gradient(50% 45% at 88% 15%, #f3f4f7 0, transparent 70%), radial-gradient(60% 55% at 75% 95%, #cfd5df 0, transparent 70%), linear-gradient(160deg, #eef0f4, #e3e6ec);
+}
+
+html[data-scheme="glass"][data-theme="dark"] {
+  --bg: rgba(34,36,52,.50);
+  --bg-2: rgba(22,24,36,.40);
+  --bg-3: rgba(255,255,255,.12);
+  --text: #f5f6fa;
+  --text-2: rgba(245,246,250,.74);
+  --text-3: rgba(245,246,250,.62);
+  --border: rgba(255,255,255,.14);
+  --border-2: rgba(255,255,255,.26);
+  --blue-bg: rgba(10,132,255,.26);
+  --blue-text: #8cc2ff;
+  --blue-border: #3a82e0;
+  --teal-bg: rgba(48,176,160,.26);
+  --teal-text: #7fe0d0;
+  --amber-bg: rgba(255,159,10,.26);
+  --amber-text: #ffc566;
+  --red-bg: rgba(255,69,58,.26);
+  --red-text: #ff9a92;
+  --green-bg: rgba(52,199,89,.26);
+  --green-text: #8ee6a4;
+  --md-dim: var(--text-3);
+  --md-h: #9b99ff;
+  --md-li: #ff6482;
+  --md-code: #ffb340;
+  --md-code-bg: rgba(255,159,10,.20);
+  --md-fence: #ffc266;
+  --md-fence-bg: rgba(255,159,10,.12);
+  --md-quote: #aeaeb2;
+  --md-link: #409cff;
+  --md-tag: #da8fff;
+  --md-tag-bg: rgba(191,90,242,.22);
+  --purple-bg: rgba(175,82,222,.28);
+  --purple-text: #d6a6f5;
+  --blue-dot: #0a84ff;
+  --teal-dot: #30b0a0;
+  --purple-dot: #af52de;
+  --glass-strong: rgba(36,38,56,.97);
+  --glass-rim: rgba(255,255,255,.22);
+  --glass-edge: rgba(255,255,255,.16);
+  --glass-sheen: rgba(255,255,255,.10);
+  --glass-sheen-2: rgba(255,255,255,.04);
+  --glass-shadow: 0 12px 44px rgba(0,0,0,.45), 0 2px 10px rgba(0,0,0,.30);
+  --glass-blur: blur(28px);
+  --wall: radial-gradient(55% 45% at 12% 10%, #2a2f3a 0, transparent 70%), radial-gradient(50% 45% at 88% 15%, #1b1f29 0, transparent 70%), radial-gradient(60% 55% at 75% 95%, #343a48 0, transparent 70%), linear-gradient(160deg, #14161c, #1a1d26);
+}
+
+html[data-scheme="glass"] :is(.main, .drawer, .notes-main) {
+  --bg: #ffffff;
+  --bg-2: #f6f6f9;
+  --bg-3: #ececf1;
+  --glass-strong: #ffffff;
+  --glass-edge: rgba(40,44,70,.16);
+  --glass-rim: transparent;
+  --border: rgba(40,44,70,.10);
+  --border-2: rgba(40,44,70,.20);
+  --ink-border: var(--border);
+  --ink-border-2: var(--border-2);
+}
+
+html[data-scheme="glass"][data-theme="dark"] :is(.main, .drawer, .notes-main) {
+  --bg: #1e1f24;
+  --bg-2: #26272d;
+  --bg-3: #31323a;
+  --glass-strong: #26272d;
+  --glass-edge: rgba(255,255,255,.14);
+  --glass-rim: transparent;
+  --border: rgba(255,255,255,.10);
+  --border-2: rgba(255,255,255,.20);
+  --ink-border: var(--border);
+  --ink-border-2: var(--border-2);
+}
+
+html[data-scheme="glass"] {
+  --bg: #ffffff;
+  --bg-2: #f2f3f7;
+  --bg-3: #e8eaf0;
+  --glass-strong: #ffffff;
+  --glass-blur: none;
+  --glass-rim: transparent;
+  --glass-edge: rgba(40,44,70,.18);
+  --glass-sheen: transparent;
+  --glass-sheen-2: transparent;
+  --wall: linear-gradient(160deg, #e9eefc, #f3ebfa);
+}
+
+html[data-scheme="glass"][data-theme="dark"] {
+  --bg: #1d1f2b;
+  --bg-2: #171925;
+  --bg-3: #2a2d3d;
+  --glass-strong: #232636;
+  --glass-blur: none;
+  --glass-rim: transparent;
+  --glass-edge: rgba(255,255,255,.18);
+  --glass-sheen: transparent;
+  --glass-sheen-2: transparent;
+  --wall: linear-gradient(160deg, #10121c, #171326);
+}
+
+:root {
+  --gutter: 20px;
+  --ink-ring: rgba(0,0,0,.12);
+  --search-hit: rgba(255,214,10,.45);
+  --dur-fast: .12s;
+  --dur-base: .2s;
+  --fs-11: 11px;
+  --gl-6: 6px;
+  --gl-7: 7px;
+  --gl-8: 8px;
+  --gl-9: 9px;
+  --gl-10: 10px;
+  --ico-empty: 36px;
+  --ico-empty-s: 30px;
+  --fs-12: 12px;
+  --fs-13: 13px;
+  --fs-14: 14px;
+  --fs-15: 15px;
+  --fs-17: 17px;
+  --fs-22: 22px;
+  --r-xs: 4px;
+  --r-s: 8px;
+  --r-m: 10px;
+  --r-l: 12px;
+  --r-xl: 16px;
+  --ico-k: 1.26;
+  --ico-12: calc(12px / 1.26);
+  --ico-14: calc(14px / 1.26);
+  --ico-16: calc(16px / 1.26);
+  --ico-18: calc(18px / 1.26);
+  --scrim: rgba(0,0,0,.25);
+  --scrim-light: rgba(0,0,0,.2);
+  --scrim-glass: rgba(20,24,50,.22);
+  --elev-1: 0 1px 2px rgba(0,0,0,.12);
+  --elev-2: 0 6px 18px rgba(0,0,0,.14);
+  --elev-3: 0 8px 32px rgba(0,0,0,.18);
+  --shadow-ink: rgba(0,0,0,.16);
+  --shadow-ink-strong: rgba(0,0,0,.25);
+  --glass-lift-1: rgba(40,50,110,.10);
+  --glass-lift-2: rgba(40,50,110,.15);
+  --sel-fill: rgba(255,255,255,.18);
+  --sel-fill-hover: rgba(255,255,255,.45);
+  --sel-line: rgba(255,255,255,.55);
+  --sel-line-strong: rgba(255,255,255,.75);
+  --sel-halo: rgba(255,255,255,.24);
+  --sel-halo-strong: rgba(255,255,255,.4);
+  --sel-text-2: rgba(255,255,255,.9);
+  --sel-text-3: rgba(255,255,255,.85);
+  --hover: color-mix(in srgb, var(--text) 8%, transparent);
+  --pressed: color-mix(in srgb, var(--text) 14%, transparent);
+  --accent: #2a5fcf;
+  --accent-hover: color-mix(in srgb, var(--accent) 88%, #000);
+  --accent-tint: color-mix(in srgb, var(--accent) 24%, transparent);
+  --glass-accent: linear-gradient(180deg, color-mix(in srgb, var(--accent) 90%, #fff), var(--accent));
+  --sel-bg: var(--accent);
+  --sel-inactive: var(--cap-on);
+  --on-accent: #fff;
+  --danger: #d92d20;
+}
+
+html {
+  --nc-red: #d92d20;
+  --nc-orange: #c2570c;
+  --nc-green: #1a7f37;
+  --nc-blue: #2563eb;
+  --nc-purple: #7c3aed;
+  --nc-gray: #6b7280;
+  --nh-yellow: rgba(255,214,10,.42);
+  --nh-green: rgba(52,199,89,.32);
+  --nh-blue: rgba(10,132,255,.30);
+  --nh-pink: rgba(255,55,95,.30);
+  --nh-purple: rgba(175,82,222,.30);
+  --nh-gray: rgba(142,142,147,.34);
+}
+
+html[data-theme="dark"] {
+  --nc-red: #ff7b72;
+  --nc-orange: #ffa657;
+  --nc-green: #56d364;
+  --nc-blue: #79c0ff;
+  --nc-purple: #d2a8ff;
+  --nc-gray: #9ca3af;
+}
+
+html[data-theme="light"] {
+  --cap-fill: rgba(60,60,67,.08);
+  --cap-hover: rgba(60,60,67,.16);
+  --cap-on: rgba(60,60,67,.18);
+  --bar-bg: rgba(244,245,248,.92);
+}
+
+html[data-theme="dark"] {
+  --cap-fill: rgba(255,255,255,.10);
+  --cap-hover: rgba(255,255,255,.19);
+  --cap-on: rgba(255,255,255,.22);
+  --bar-bg: rgba(255,255,255,.04);
+}

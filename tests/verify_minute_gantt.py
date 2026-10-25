@@ -19,7 +19,7 @@ TMP = tempfile.mkdtemp()
 
 with sync_playwright() as p:
     b = p.chromium.launch(headless=True)
-    ctx = b.new_context(viewport={"width": 1500, "height": 900}, accept_downloads=True); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
+    ctx = b.new_context(viewport={"width": 1500, "height": 900}, accept_downloads=True); ctx.add_init_script("localStorage.setItem('milestone-sidebar', '1'); delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
     pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn")
     ev = pg.evaluate
@@ -165,7 +165,7 @@ with sync_playwright() as p:
 
     # ---------------------------------------------------------------- Excel Gantt sheet
     def export_gantt(name):
-        pg.click("#dataMenuBtn"); pg.click("#excelExportItem"); pg.wait_for_selector("#excelModalBg.open")
+        ev("() => openExcelExport()"); pg.wait_for_selector("#excelModalBg.open")
         with pg.expect_download() as d: pg.click("#excelExportBtn")
         path = os.path.join(TMP, name); d.value.save_as(path)
         return openpyxl.load_workbook(path)["Gantt"]

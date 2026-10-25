@@ -23,7 +23,7 @@ with sync_playwright() as p:
     def view(v): ev("v => setView(v)", v); pg.wait_for_timeout(120)
 
     # ---------------------------------------------------------------- A: the top bar holds only app-level things
-    top = ev("() => [...document.querySelectorAll('.topbar button')].filter(e => e.offsetParent).map(e => e.id).filter(Boolean)")
+    top = ev("() => [...document.querySelectorAll('.sidebar button')].filter(e => e.offsetParent).map(e => e.id).filter(Boolean)")
     check("the top bar has the plan switcher, Schedule, Data, theme — and no zoom / baseline / critical path any more",
           all(i in top for i in ["planMenuBtn", "scheduleMenuBtn", "dataMenuBtn", "themeToggleBtn"]) and not any(i in top for i in ["zoomTabs", "baselineBtn", "criticalPathBtn"]), top)
     pos = {}
@@ -71,7 +71,7 @@ with sync_playwright() as p:
         pg.set_viewport_size({"width": w, "height": 800}); pg.wait_for_timeout(150)
         m = ev("""() => { const bar = document.getElementById('subbar'), R = e => e.getBoundingClientRect();
           const vis = [...bar.querySelectorAll('button, .view-tabs')].filter(e => e.offsetParent !== null);
-          return { oneRow: R(bar).height < 60, inside: vis.every(e => R(e).right <= innerWidth + 1), more: !document.getElementById('moreWrap').classList.contains('hidden'), hidden: [...bar.querySelectorAll('.tb-over')].map(e => e.id) }; }""")
+          return { oneRow: R(bar).height < 60, inside: vis.every(e => R(e).right <= innerWidth + 1), more: !document.getElementById('moreWrap').classList.contains('hidden'), hidden: [...bar.querySelectorAll('.tb-over')].map(e => e.id).filter(Boolean) }   /* (the bar's title steps aside first and is not a button) */; }""")
         check(f"{w}px: the toolbar stays one row, every visible button inside the window" + (" — the rest is under More" if m["more"] else ""), m["oneRow"] and m["inside"] and (m["more"] == bool(m["hidden"])), m)
         if w == 900:
             check("...buttons of one priority go together (Indent and Outdent)", ("indentBtn" in m["hidden"]) == ("outdentBtn" in m["hidden"]), m["hidden"])
@@ -95,7 +95,7 @@ with sync_playwright() as p:
     # ---------------------------------------------------------------- C: Plan settings
     pg.click("#scheduleMenuBtn"); pg.wait_for_selector("#scheduleMenu.open")
     items = [t.split("\n")[0].strip() for t in pg.locator("#scheduleMenu .dropdown-item").all_inner_texts()]
-    check("the Schedule menu holds just the three actions (Baseline, Reschedule, Level) — Plan settings is the gear next to the plan switcher", items == ["Baseline…", "Reschedule remaining work…", "Level resources…"] and pg.locator(".topbar #planSettingsBtn").count() == 1, items)
+    check("the Schedule menu holds just the three actions (Baseline, Reschedule, Level) — Plan settings is the gear next to the plan switcher", items == ["Baseline…", "Reschedule remaining work…", "Level resources…"] and pg.locator(".sidebar #planSettingsBtn").count() == 1, items)
     pg.keyboard.press("Escape")
     pg.click("#planSettingsBtn"); pg.wait_for_timeout(150)
     open_bg = lambda: ev("() => [...document.querySelectorAll('.modal-bg.open')].map(e => e.id)")
@@ -184,7 +184,7 @@ with sync_playwright() as p:
     # ---------------------------------------------------------------- D: the status bar
     pg.set_viewport_size({"width": 1440, "height": 800}); ev("() => { zoom = 'fit'; setSelection([]); setView('gantt'); }"); pg.wait_for_timeout(200)
     sb = pg.locator("#statusbar").bounding_box()
-    check("a status bar runs along the bottom of the window", sb is not None and abs(sb["y"] + sb["height"] - 800) <= 1 and sb["width"] >= 1439, sb)
+    check("a status bar runs along the bottom of the window", sb is not None and abs(sb["y"] + sb["height"] - 800) <= 1 and abs(sb["x"] + sb["width"] - 1440) <= 1, sb)   # (it runs under the content column; the sidebar has the full height beside it)
     check("it shows the new-task mode and the task count", "New tasks: Auto Scheduled" in pg.inner_text("#sbMode") and pg.inner_text("#sbCount") == "4 tasks", pg.inner_text("#sbCount"))
     pg.click("#sbMode"); pg.wait_for_timeout(100)
     check("clicking the mode opens a small menu (upwards) with both modes", pg.locator("#sbModeMenu.open .dropdown-item").count() == 2 and pg.locator("#sbModeMenu").bounding_box()["y"] < sb["y"])
@@ -252,9 +252,9 @@ with sync_playwright() as p:
         pg.click("#resourceSheetBody .rst-add-row"); pg.wait_for_timeout(150)
         check("...which adds a resource", ev("() => project.resources.length") == nr + 1); ev("() => historyUndo()")
     ev("() => setView('tasks')")
-    for w, shown in ((1100, True), (961, True), (960, False)):
+    for w in (1100, 961, 960):
         pg.set_viewport_size({"width": w, "height": 800}); pg.wait_for_timeout(120)
-        check(f"#12 at {w}px the Schedule button {'keeps' if shown else 'drops'} its label (the other two are icons)", pg.locator("#scheduleMenuBtn .btn-label").is_visible() == shown and not pg.locator("#dataMenuBtn .btn-label").is_visible() and pg.evaluate("() => document.querySelector('.topbar').scrollWidth <= document.querySelector('.topbar').clientWidth"))
+        check(f"#12 at {w}px the sidebar's tools are icon buttons (no labels), each with an aria-label", not pg.locator(".sidebar .sb-tools .btn-label").first.is_visible() and ev("() => [...document.querySelectorAll('.sb-tools > button, .sb-tools > .dropdown-wrap > button')].every(b => b.getAttribute('aria-label'))"))
     check("#12 Schedule has a calendar icon, not the gauge", pg.locator("#scheduleMenuBtn .fa-calendar-check").count() == 1)
     pg.set_viewport_size({"width": 1440, "height": 900})
     check("no console errors or page errors across the whole run", not errors, errors[:5])

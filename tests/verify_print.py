@@ -144,7 +144,7 @@ with sync_playwright() as p:
     check("mounting adds the print root and an @page rule with the paper and orientation", ev("() => !!document.getElementById('printRoot') && /size: A4 landscape/.test(document.getElementById('printPageStyle').textContent) && /margin: 8mm/.test(document.getElementById('printPageStyle').textContent)"))
     check("...on screen the print root is hidden", ev("() => getComputedStyle(document.getElementById('printRoot')).display") == "none")
     pg.emulate_media(media="print")
-    check("in print media the app is hidden and only the pages show", ev("() => getComputedStyle(document.querySelector('.topbar')).display") == "none" and ev("() => getComputedStyle(document.getElementById('printRoot')).display") == "block" and ev("() => document.querySelectorAll('#printRoot .print-page').length") == ev("() => window.__pages"))
+    check("in print media the app is hidden and only the pages show", ev("() => getComputedStyle(document.querySelector('.window')).display") == "none" and ev("() => getComputedStyle(document.getElementById('printRoot')).display") == "block" and ev("() => document.querySelectorAll('#printRoot .print-page').length") == ev("() => window.__pages"))
     pdf = pg.pdf(prefer_css_page_size=True, print_background=True)
     n_pages = len(re.findall(rb"/Type\s*/Page[^s]", pdf)); mb = re.search(rb"/MediaBox\s*\[\s*0\s+0\s+([\d.]+)\s+([\d.]+)\s*\]", pdf)
     check("the PDF has one sheet per page the dialog counted", n_pages == ev("() => window.__pages") and n_pages > 1, (n_pages, ev("() => window.__pages")))
