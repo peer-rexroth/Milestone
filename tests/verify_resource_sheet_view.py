@@ -62,7 +62,7 @@ with sync_playwright() as p:
     hov = ev("() => { const s = document.querySelector('.rst-row select.rst-select'), cs = getComputedStyle(s), x = getComputedStyle(document.querySelector('.rst-row .rst-remove')); return [cs.borderTopColor, cs.backgroundSize, x.opacity]; }")
     check("...on the row you point at: the box, the chevron and the remove button", hov[0] not in ("rgba(0, 0, 0, 0)", "transparent") and hov[1] == "11px 7px" and hov[2] == "1", hov)
     check("an empty rate shows a faint 0.00, not a blank", ev("() => document.querySelector('.rst-row input[aria-label=\"Cost per use\"]').placeholder") == "0.00")
-    check("Days off is a link (accent colour)", ev("() => getComputedStyle(document.querySelector('.rst-days-link')).color === getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || getComputedStyle(document.querySelector('.rst-days-link')).color.startsWith('rgb(9, 105, 218)')"))
+    check("Days off is a link (accent colour)", ev("() => (() => { const p = document.createElement('span'); p.style.color = 'var(--accent)'; document.body.appendChild(p); const a = getComputedStyle(p).color; p.remove(); return getComputedStyle(document.querySelector('.rst-days-link')).color === a; })()"))
     # ---------------------------------------------------------------- resizable columns (the task list's treatment)
     ev("() => { project.resources[0].group = 'Engineering & Design Services'; project.resources[0].stdRate = 1250.75; save(); render(); }")
     cw = lambda k: ev("k => { const i = rsVisibleCols().findIndex(c => c.key === k); return Math.round(document.querySelector('.rst-row').children[i].getBoundingClientRect().width); }", k)

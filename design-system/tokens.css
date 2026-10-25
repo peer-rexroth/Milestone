@@ -132,30 +132,60 @@ html[data-scheme="glass"][data-theme="dark"] :is(.main, .drawer, .notes-main) {
   --ink-border-2: var(--border-2);
 }
 
-html[data-scheme="glass"] {
-  --bg: #ffffff;
-  --bg-2: #f2f3f7;
-  --bg-3: #e8eaf0;
-  --glass-strong: #ffffff;
-  --glass-blur: none;
-  --glass-rim: transparent;
-  --glass-edge: rgba(40,44,70,.18);
-  --glass-sheen: transparent;
-  --glass-sheen-2: transparent;
-  --wall: linear-gradient(160deg, #e9eefc, #f3ebfa);
-}
+/* solid fallback: reduced transparency / high contrast / no backdrop-filter */
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  html[data-scheme="glass"] {
+    --bg: #ffffff;
+    --bg-2: #f2f3f7;
+    --bg-3: #e8eaf0;
+    --glass-strong: #ffffff;
+    --glass-blur: none;
+    --glass-rim: transparent;
+    --glass-edge: rgba(40,44,70,.18);
+    --glass-sheen: transparent;
+    --glass-sheen-2: transparent;
+    --wall: linear-gradient(160deg, #e9eefc, #f3ebfa);
+  }
 
-html[data-scheme="glass"][data-theme="dark"] {
-  --bg: #1d1f2b;
-  --bg-2: #171925;
-  --bg-3: #2a2d3d;
-  --glass-strong: #232636;
-  --glass-blur: none;
-  --glass-rim: transparent;
-  --glass-edge: rgba(255,255,255,.18);
-  --glass-sheen: transparent;
-  --glass-sheen-2: transparent;
-  --wall: linear-gradient(160deg, #10121c, #171326);
+  html[data-scheme="glass"][data-theme="dark"] {
+    --bg: #1d1f2b;
+    --bg-2: #171925;
+    --bg-3: #2a2d3d;
+    --glass-strong: #232636;
+    --glass-blur: none;
+    --glass-rim: transparent;
+    --glass-edge: rgba(255,255,255,.18);
+    --glass-sheen: transparent;
+    --glass-sheen-2: transparent;
+    --wall: linear-gradient(160deg, #10121c, #171326);
+  }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  html[data-scheme="glass"] {
+    --bg: #ffffff;
+    --bg-2: #f2f3f7;
+    --bg-3: #e8eaf0;
+    --glass-strong: #ffffff;
+    --glass-blur: none;
+    --glass-rim: transparent;
+    --glass-edge: rgba(40,44,70,.18);
+    --glass-sheen: transparent;
+    --glass-sheen-2: transparent;
+    --wall: linear-gradient(160deg, #e9eefc, #f3ebfa);
+  }
+
+  html[data-scheme="glass"][data-theme="dark"] {
+    --bg: #1d1f2b;
+    --bg-2: #171925;
+    --bg-3: #2a2d3d;
+    --glass-strong: #232636;
+    --glass-blur: none;
+    --glass-rim: transparent;
+    --glass-edge: rgba(255,255,255,.18);
+    --glass-sheen: transparent;
+    --glass-sheen-2: transparent;
+    --wall: linear-gradient(160deg, #10121c, #171326);
+  }
 }
 
 :root {

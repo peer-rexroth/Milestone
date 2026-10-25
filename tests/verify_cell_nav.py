@@ -161,7 +161,7 @@ with sync_playwright() as p:
     # the row you are in is tinted like a selected task row
     tint = lambda i: ev("(i) => getComputedStyle(document.querySelectorAll('#resourceSheetBody .rst-row')[i]).backgroundColor", i)
     pg.locator('#resourceSheetBody .rst-row').nth(1).locator('input.inline-edit').first.click(); pg.wait_for_timeout(100)
-    sel_bg = ev("() => { const d = document.createElement('div'); d.className = 'grid-row selected'; d.style.background = 'var(--row-bg)'; document.body.appendChild(d); const c = getComputedStyle(d).backgroundColor; d.remove(); return c; }")
+    sel_bg = ev("() => { const d = document.createElement('div'); d.className = 'grid-row selected'; d.style.background = 'var(--row-bg)'; document.getElementById('main').appendChild(d);   /* (inside .content, where the flat colours are) */ const c = getComputedStyle(d).backgroundColor; d.remove(); return c; }")
     check("the resource row you are in is highlighted like a selected task row, the others are not", tint(1) == sel_bg and tint(0) != sel_bg and tint(2) != sel_bg, (tint(0), tint(1), sel_bg))
     ev("() => document.activeElement.blur()"); pg.wait_for_timeout(80)
     check("...and the tint goes when the focus leaves", tint(1) != sel_bg)

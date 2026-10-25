@@ -72,7 +72,7 @@ with sync_playwright() as p:
     A.boot()
     idx = A.index()
     check("migration: single project becomes plan1 with its tasks, prefs (saved zoom reset to the Fit default), backups", len(idx["plans"]) == 1 and idx["current"] == "plan1" and A.names() == ["Legacy 1", "Legacy 2", "Legacy 3"] and pg.evaluate("() => [theme, zoom, currentView, gridPaneWidth]") == ["dark", "fit", "gantt", 640] and pg.evaluate("() => !!localStorage.getItem('milestone-backups-plan1') && !!localStorage.getItem('milestone-v1')"), idx)
-    pg.evaluate("() => { theme = 'light'; applyTheme(); save(); }")
+    pg.evaluate("() => { themePref = 'light'; theme = 'light'; applyTheme(); save(); }")
     pg.evaluate("() => { localStorage.setItem('milestone-v1', '{\"project\":{\"name\":\"STALE\"},\"tasks\":[]}'); }"); A.boot()
     check("the stale pre-plans copy is never read again", A.pname() == "Legacy Proj")
     A.open_menu(); check("the only plan can't be deleted", pg.locator("#planDeleteItem").is_disabled()); check("no 'Disconnect file' item when files aren't supported", pg.locator("#planDisconnectItem").count() == 0); pg.keyboard.press("Escape")
