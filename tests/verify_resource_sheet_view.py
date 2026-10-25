@@ -129,8 +129,8 @@ with sync_playwright() as p:
     # .inline-edit look (minimal, borderless until interacted with), unchanged.
     select_style = ev("""() => { const el = document.querySelector('.rst-row select[aria-label="Type"]'); const cs = getComputedStyle(el);
       return [cs.borderRadius, cs.borderTopWidth, el.className]; }""")
-    check("the Type dropdown has the dialog-field look: 7px rounded corners, a real 1px border, its own .rst-select class (not .inline-edit)",
-          select_style[0] == "7px" and select_style[1] == "1px" and "rst-select" in select_style[2] and "inline-edit" not in select_style[2], select_style)
+    check("the Type dropdown has the dialog-field look: 8px rounded corners, a real 1px border, its own .rst-select class (not .inline-edit)",
+          select_style[0] == "8px" and select_style[1] == "1px" and "rst-select" in select_style[2] and "inline-edit" not in select_style[2], select_style)
     type_select.evaluate("el => el.focus()")
     check("...and a focus ring actually shows on a dropdown when focused: its cell's 2px accent ring, the same as the task list's cursor (never no indicator at all)", type_select.evaluate("el => { const c = getComputedStyle(el.closest('.rst-cell')); return getComputedStyle(el).outlineStyle !== 'none' || (c.outlineStyle !== 'none' && parseFloat(c.outlineWidth) >= 2); }"))
     type_select.evaluate("el => el.blur()")
