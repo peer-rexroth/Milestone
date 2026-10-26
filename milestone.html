@@ -1876,10 +1876,10 @@ html.sel-inactive .gantt-row-bg.selected { background: var(--cap-fill); }
 .ap-panel { padding: 10px 12px; }
 .ap-head { font-size: var(--fs-13); font-weight: 600; color: var(--text-dim); margin-bottom: 8px; }
 .ap-head.ap-gap { margin-top: 6px; }
-.ap-seg { display: inline-flex; padding: 4px; margin-bottom: 8px; border-radius: var(--r-m); background: var(--bg-2); box-shadow: inset 0 0 0 1px var(--border-2); }
+.ap-seg { display: inline-flex; padding: 4px; margin-bottom: 8px; border-radius: var(--r-m); background: transparent; }   /* no frame, as in ClearDesk: the chosen segment alone is drawn */
 .ap-btn { min-width: 30px; padding: 6px 12px; border: none; border-radius: 7px; background: transparent; color: var(--text-faint); font-weight: 600; font-size: var(--fs-12); text-align: center; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
 .ap-btn:hover:not(:disabled):not(.on) { color: var(--text); }
-.ap-btn.on { background: var(--glass-strong); color: var(--text); box-shadow: 0 1px 2px var(--shadow-ink), 0 0 0 .5px var(--border); }
+.ap-btn.on { background: var(--glass-strong); color: var(--text); box-shadow: 0 2px 8px var(--shadow-ink); }
 .ap-btn i { font-size: var(--ico-16); }
 .ap-two { display: flex; }
 .ap-two .ap-btn { flex: 1; }
