@@ -713,6 +713,7 @@ button:focus:not(:focus-visible) { outline: none; }
 .cf-caret { font-size: var(--fs-11); margin-left: 2px; }
 #cfAddMenu { z-index: 130; min-width: 230px; margin-top: 4px; }
 .fields-rows:not(.tgrp) { display: none; }
+#fieldsAdd .tcap { margin: 0 14px 6px; }
 .fld-row { gap: 12px; }
 .fld-row .fld-name { flex: 1 1 auto; min-width: 0; width: auto; padding: 6px 0; border: 0 !important; background-color: transparent !important; box-shadow: none !important; outline: 0; font: inherit; color: var(--text); }
 .fld-row .fld-name::placeholder { color: var(--text-faint); }
@@ -1627,7 +1628,7 @@ select.rst-select:disabled { opacity: .5; }
 .field-grid-4 input[type=date], .field-grid-4 input[type=number], .field-grid-4 input[type=text], .field-grid-4 select { padding: 8px 8px; }
 .ms-field { align-self: end; padding-bottom: 8px; }   /* the task dialog: a lot of fields, so more room before it scrolls */
 .modal.wide { width: 560px; }
-#taskModalInner { height: min(840px, 94vh); }   /* one height for every tab: the General tab's, so switching tabs never makes the dialog jump */
+#taskModalInner { height: min(1020px, 94vh); }   /* one height for every tab: the General tab's, so switching tabs never makes the dialog jump */
 #taskModalInner .modal-body { flex: 1 1 auto; min-height: 0; }
 #taskModalInner .tab-pane:not(.hidden) { flex: 1 1 auto; min-height: 0; }
 #taskModalInner .task-notes { flex: 1 1 auto; min-height: 240px; resize: none; border: 0; background: color-mix(in srgb, var(--text) 5%, transparent); border-radius: var(--r-m); padding: 12px 14px; }
