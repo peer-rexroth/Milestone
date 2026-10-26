@@ -710,14 +710,9 @@ button:focus:not(:focus-visible) { outline: none; }
 .info-i { margin-left: 4px; color: var(--text-faint); font-size: var(--fs-11); cursor: help; outline: none; }
 .info-i:hover, .info-i:focus-visible { color: var(--accent); }
 .cf-hint { font-size: var(--fs-12); color: var(--text-dim); line-height: 1.5; }
-.cf-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
-.cf-bar-note { font-size: var(--fs-12); color: var(--text-dim); }
-.cf-bar-actions { display: flex; align-items: center; gap: 10px; }
 .cf-caret { font-size: var(--fs-11); margin-left: 2px; }
-.cf-empty { padding: 16px 14px; border: 1px dashed var(--border); border-radius: var(--r-s); color: var(--text-dim); font-size: var(--fs-13); line-height: 1.5; text-align: center; }
 #cfAddMenu { z-index: 130; min-width: 230px; margin-top: 4px; }
 .fields-rows:not(.tgrp) { display: none; }
-#fieldsAdd .empty-state { display: flex; flex-direction: column; align-items: center; padding-top: 80px; }
 .fld-row { gap: 12px; }
 .fld-row .fld-name { flex: 1 1 auto; min-width: 0; width: auto; padding: 6px 0; border: 0 !important; background-color: transparent !important; box-shadow: none !important; outline: 0; font: inherit; color: var(--text); }
 .fld-row .fld-name::placeholder { color: var(--text-faint); }
@@ -729,14 +724,15 @@ button:focus:not(:focus-visible) { outline: none; }
 .fld-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: var(--on-accent); box-shadow: 0 1px 3px var(--shadow-ink); transition: transform var(--dur-fast) ease; }
 .fld-show input:checked + .fld-switch { background: var(--accent); }
 .fld-show input:checked + .fld-switch::after { transform: translateX(16px); }
-.fld-show { align-items: center; gap: 8px; margin-left: 4px; font-size: var(--fs-13); color: var(--text-faint); }
+.fld-show { flex: none; align-items: center; gap: 8px; margin-left: 4px; font-size: var(--fs-13); color: var(--text-faint); }
 .fld-show > span:first-child { white-space: nowrap; }
 .fld-show input:focus-visible + .fld-switch { outline: 2px solid var(--accent); outline-offset: 2px; }
 .fld-row.removed .fld-show { opacity: .4; pointer-events: none; }
 .fld-name:disabled { opacity: .5; text-decoration: line-through; }
 .fld-name.bad { border-color: var(--danger); }
 .fld-uses { flex: none; min-width: 64px; font-size: var(--fs-13); color: var(--text-faint); text-align: right; white-space: nowrap; }
-.fld-remove { width: 26px; height: 26px; border: none; border-radius: var(--r-s); background: transparent; color: var(--text-faint); }
+.fld-uses:empty { display: none; }
+.fld-remove { flex: none; width: 26px; height: 26px; border: none; border-radius: var(--r-s); background: transparent; color: var(--text-faint); }
 .fld-remove:hover { background: var(--panel-2); color: var(--danger); }
 .fld-row.removed .fld-remove:hover { color: var(--accent); }
 .fld-empty { padding: 14px; border: 1px dashed var(--border); border-radius: var(--r-s); color: var(--text-faint); font-size: var(--fs-12); text-align: center; }
@@ -745,12 +741,8 @@ button:focus:not(:focus-visible) { outline: none; }
 .res-days-add .hol-field-date { flex: 0 0 136px; }
 .res-days-add .hol-field-name { flex: 1 1 120px; min-width: 100px; }
 .res-days-add input[type=text] { width: 100%; padding: 6px 8px; border: 1px solid var(--border); border-radius: var(--r-s); background: var(--panel); color: var(--text); }
-.cf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 10px; }   /* rows 14px apart (a label to its box is 4px): the pairs read as pairs */
-.cf-flags { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; margin-top: 14px; }
 .cf-label { display: flex; align-items: center; gap: 4px; }
-.cf-flag { display: flex; align-items: center; gap: 4px; font-size: var(--fs-13); }
-.cf-flag label { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; padding: 4px 0;}   /* (no side padding: the tick starts exactly where the boxes above start) */
-.cf-flag input { width: 14px; height: 15px; margin: 0; }
+#taskCustomFields { display: flex; flex-direction: column; gap: 14px; }
 .custom-flag { justify-content: center; }
 .custom-flag i { color: var(--task-green); }
 /* ---- column chooser: an Apple-style menu (a tick column, no boxes; the reorder arrows appear when you point at a row; reordering is mainly by dragging the heading) ---- */
@@ -1634,9 +1626,15 @@ select.rst-select:disabled { opacity: .5; }
 .field-grid-4 > .span2 { grid-column: span 2; } .field-grid-4 > .span3 { grid-column: span 3; }
 .field-grid-4 input[type=date], .field-grid-4 input[type=number], .field-grid-4 input[type=text], .field-grid-4 select { padding: 8px 8px; }
 .ms-field { align-self: end; padding-bottom: 8px; }   /* the task dialog: a lot of fields, so more room before it scrolls */
-.modal.wide { width: 560px; }   /* (620px before the dialogs got 24px of padding: the fields keep their width) */
+.modal.wide { width: 560px; }
+#taskModalInner { height: min(840px, 94vh); }   /* one height for every tab: the General tab's, so switching tabs never makes the dialog jump */
+#taskModalInner .modal-body { flex: 1 1 auto; min-height: 0; }
+#taskModalInner .tab-pane:not(.hidden) { flex: 1 1 auto; min-height: 0; }
+#taskModalInner .task-notes { flex: 1 1 auto; min-height: 240px; resize: none; border: 0; background: color-mix(in srgb, var(--text) 5%, transparent); border-radius: var(--r-m); padding: 12px 14px; }
+#taskTabCustom .tgrp .trow input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }   /* (620px before the dialogs got 24px of padding: the fields keep their width) */
 .modal.settings-modal { width: 680px; height: min(810px, 94vh); max-height: 94vh; }   /* (760px before the dialogs got ClearDesk's 24px padding; 810 keeps the same room for the content) */
 .modal.settings-modal .modal-body { flex: 1; min-height: 0; }
+.modal.settings-modal.standalone { width: 560px; height: auto; min-height: 320px; }
 .settings-tabs { display: flex; gap: 1px; padding: 0 8px; border-bottom: 1px solid var(--border); flex-shrink: 0; overflow-x: auto; }
 .settings-tabs.hidden { display: none; }
 .settings-tab { border: none; background: none; padding: 10px 8px 8px; font-size: var(--fs-13); font-weight: 600; color: var(--text-dim); border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; display: flex; align-items: center; gap: 4px; }
@@ -1697,10 +1695,11 @@ select.rst-select:disabled { opacity: .5; }
 .trow .swatch.auto { border: 1.5px solid var(--text-faint); background: transparent; }
 .trow .swatch.auto.selected { box-shadow: none; border-color: var(--text); }
 .trow .swatch.auto i { font-size: var(--ico-12); }
-#predecessorRows .pred-row { position: relative; display: grid; grid-template-columns: 56px minmax(0, 1fr) 62px 84px 24px; gap: 8px; align-items: center; min-height: 40px; margin: 0; padding: 4px 14px; font-size: var(--fs-14); }
+#predecessorRows .pred-row { position: relative; display: grid; grid-template-columns: 40px minmax(0, 1fr) 56px 84px 24px; gap: 8px; align-items: center; min-height: 40px; margin: 0; padding: 4px 14px; font-size: var(--fs-14); }
 #predecessorRows .pred-row:first-child::before { display: none; }
 #predecessorRows .pred-row select, #predecessorRows .pred-row input { padding: 6px 0; border: 0; background-color: transparent; font-size: var(--fs-14); color: var(--text); text-align: right; box-shadow: none; }
-#predecessorRows .pred-row select { padding-right: 22px; }
+#predecessorRows .pred-row select { padding-right: 28px; text-align: left; text-align-last: left; color: var(--text-dim); }
+#predecessorRows .pred-row input[type=number]:not(.pred-id-input), #predecessorRows .pred-row .pred-lag-input { color: var(--text-dim); }
 #predecessorRows .pred-row .pred-id-input { text-align: left; }
 #predecessorRows .pred-name { min-height: 0; padding: 0; border: 0; background: none; font-size: var(--fs-14); color: var(--text-dim); }
 #predecessorRows .pred-name.none { color: var(--text-faint); }
@@ -2188,10 +2187,9 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
       <div class="tgrp"><div id="predecessorRows"></div><button class="trow tadd" type="button" onclick="addPredecessorRow()">Add Predecessor…</button></div>
       </div>
       <div class="tab-pane hidden" id="taskTabNotes">
-        <textarea id="taskNotesInput" class="task-notes" maxlength="10000" placeholder="Notes for this task — background, decisions, links, who to ask…" oninput="document.getElementById('taskNotesDot').classList.toggle('hidden', !this.value.trim())"></textarea>
+        <textarea id="taskNotesInput" class="task-notes" maxlength="10000" placeholder="Notes" oninput="document.getElementById('taskNotesDot').classList.toggle('hidden', !this.value.trim())"></textarea>
       </div>
       <div class="tab-pane hidden" id="taskTabCustom">
-        <div class="cf-bar"><span class="cf-bar-note">Your own fields for this plan's tasks</span><span class="cf-bar-actions"><button class="btn-link" type="button" onclick="openFieldsModal()">Manage fields…</button><button class="btn btn-sm" type="button" id="cfAddBtn" onclick="toggleCfAddMenu(event)" aria-haspopup="menu"><i class="fa-solid fa-plus"></i>Add field<i class="fa-solid fa-chevron-down cf-caret"></i></button></span></div>
         <div id="taskCustomFields"></div>
       </div>
     </div>
@@ -9083,6 +9081,7 @@ function openFieldsModal(addKind) {
   {   // over the task dialog it stands alone (switching to another settings tab from there would make no sense)
     const standalone = document.getElementById('taskModalBg').classList.contains('open');
     document.querySelector('#fieldsModalBg .settings-tabs').classList.toggle('hidden', standalone);
+    document.getElementById('fieldsModal').classList.toggle('standalone', standalone);   // over the task dialog: the task dialog's width, as tall as its content
     document.getElementById('fieldsModalTitle').textContent = standalone ? 'Custom fields' : 'Plan settings';
     document.getElementById('fieldsPlanChip').textContent = standalone ? '' : '— ' + project.name;
   }
@@ -9105,11 +9104,11 @@ function renderFieldsRows() {
   box.classList.toggle('tgrp', has);
   box.innerHTML = fieldsDraft.map((r, i) => {
     const info = FIELD_KIND_INFO[r.kind], uses = r.isNew ? '' : r.uses ? `${r.uses} task${r.uses === 1 ? '' : 's'}` : '—';
-    return `<div class="trow fld-row${r.removed ? ' removed' : ''}" data-i="${i}"><input type="text" class="fld-name" maxlength="40" value="${escapeHtml(r.name)}" ${r.removed ? 'disabled ' : ''}placeholder="${escapeHtml(info.eg.split(', ')[0])}" aria-label="Name of the ${info.label.toLowerCase()} field" oninput="fieldsNameInput(${i}, this)" onkeydown="if(event.key==='Enter'){event.preventDefault();saveFieldsModal();}"><span class="fld-kind"><i class="fa-solid ${info.icon}"></i>${info.label}</span><span class="fld-uses">${uses}</span><label class="fld-show" title="Show this field as a column in the Tasks list — on this device; the Gantt view keeps its own columns"><span>In List</span><input type="checkbox" class="fld-show-in"${r.show ? ' checked' : ''} aria-label="Show ${escapeHtml(r.name || info.label)} in the list" onchange="fieldsDraft[${i}].show = this.checked"><span class="fld-switch"></span></label><button type="button" class="fld-remove" onclick="fieldsToggleRemove(${i})" title="${r.removed ? 'Keep this field' : r.isNew ? 'Discard this new field' : 'Remove this field' + (r.uses ? ' and its values' : '')}" aria-label="${r.removed ? 'Keep' : 'Remove'} ${escapeHtml(r.name || info.label)}"><i class="fa-solid ${r.removed ? 'fa-rotate-left' : 'fa-xmark'}"></i></button></div>`;
+    return `<div class="trow fld-row${r.removed ? ' removed' : ''}" data-i="${i}"><input type="text" class="fld-name" maxlength="40" value="${escapeHtml(r.name)}" ${r.removed ? 'disabled ' : ''}placeholder="Name" aria-label="Name of the ${info.label.toLowerCase()} field" oninput="fieldsNameInput(${i}, this)" onkeydown="if(event.key==='Enter'){event.preventDefault();saveFieldsModal();}"><span class="fld-kind"><i class="fa-solid ${info.icon}"></i>${info.label}</span><span class="fld-uses">${uses}</span><label class="fld-show" title="Show this field as a column in the Tasks list — on this device; the Gantt view keeps its own columns"><span>In List</span><input type="checkbox" class="fld-show-in"${r.show ? ' checked' : ''} aria-label="Show ${escapeHtml(r.name || info.label)} in the list" onchange="fieldsDraft[${i}].show = this.checked"><span class="fld-switch"></span></label><button type="button" class="fld-remove" onclick="fieldsToggleRemove(${i})" title="${r.removed ? 'Keep this field' : r.isNew ? 'Discard this new field' : 'Remove this field' + (r.uses ? ' and its values' : '')}" aria-label="${r.removed ? 'Keep' : 'Remove'} ${escapeHtml(r.name || info.label)}"><i class="fa-solid ${r.removed ? 'fa-rotate-left' : 'fa-xmark'}"></i></button></div>`;
   }).join('');
   // adding: one button that opens the type menu (Text, Number, Date, Yes / No; a kind with all five used says so)
   document.getElementById('fieldsAdd').innerHTML = !has
-    ? `<div class="empty-state">${emptyIcon('list')}No Custom Fields<button type="button" class="btn fld-addbtn" onclick="toggleCfAddMenu(event)" aria-haspopup="menu">Add Field</button></div>`
+    ? `<div class="tcap">No Custom Fields</div><div class="tgrp"><button type="button" class="trow tadd fld-addbtn" onclick="toggleCfAddMenu(event)" aria-haspopup="menu">Add Field…</button></div>`
     : `<div class="tgrp"><button type="button" class="trow tadd fld-addbtn" onclick="toggleCfAddMenu(event)" aria-haspopup="menu">Add Field…</button></div>`;
   const removing = fieldsDraft.filter(r => r.removed && !r.isNew).length;
   document.getElementById('fieldsNote').textContent = removing ? `${removing} field${removing === 1 ? '' : 's'} will be removed when you save.` : '';
@@ -9731,16 +9730,16 @@ function renderCustomFieldsTab(values) {
     const f = CUSTOM_FIELDS[id], v = values[id], name = escapeHtml(customFieldName(id));
     const input = f.kind === 'date' ? (minuteModeActive()
         ? `<div class="field-dt"><input type="text" class="dt-date" id="cf_${id}" value="${escapeHtml(v || '')}"><input type="text" id="cf_${id}_time" class="task-time-input dt-time" aria-label="${name} time" value="${escapeHtml(values[id + 'Time'] || '')}"></div>`
-        : `<input type="text" class="dt-date" id="cf_${id}" value="${escapeHtml(v || '')}">`)
-      : f.kind === 'number' ? `<input type="number" step="any" id="cf_${id}" value="${v === undefined || v === '' ? '' : escapeHtml(String(v))}">`
-      : `<input type="text" id="cf_${id}" maxlength="255" value="${escapeHtml(v || '')}">`;
-    return `<div class="field"><label class="cf-label" for="cf_${id}"><span>${name}</span></label>${input}</div>`;
+        : `<div class="field-dt"><input type="text" class="dt-date" id="cf_${id}" value="${escapeHtml(v || '')}"></div>`)
+      : f.kind === 'number' ? `<input type="number" class="tin" step="any" id="cf_${id}" placeholder="None" value="${v === undefined || v === '' ? '' : escapeHtml(String(v))}">`
+      : `<input type="text" class="tin" id="cf_${id}" maxlength="255" placeholder="None" value="${escapeHtml(v || '')}">`;
+    return `<div class="trow"><label class="cf-label" for="cf_${id}"><span>${name}</span></label>${input}</div>`;
   };
-  const flag = id => `<div class="cf-flag"><label><input type="checkbox" id="cf_${id}"${values[id] ? ' checked' : ''}><span>${escapeHtml(customFieldName(id))}</span></label></div>`;
+  const flag = id => `<div class="trow cf-flag"><label class="cf-label" for="cf_${id}"><span>${escapeHtml(customFieldName(id))}</span></label><input type="checkbox" class="tsw" role="switch" id="cf_${id}"${values[id] ? ' checked' : ''}></div>`;
   const act = activeCustomFields(), plain = act.filter(id => CUSTOM_FIELDS[id].kind !== 'flag'), flags = act.filter(id => CUSTOM_FIELDS[id].kind === 'flag');
   document.getElementById('taskCustomFields').innerHTML = act.length
-    ? (plain.length ? `<div class="cf-grid">${plain.map(field).join('')}</div>` : '') + (flags.length ? `<div class="cf-flags">${flags.map(flag).join('')}</div>` : '')
-    : '<div class="cf-empty">No custom fields yet.<br>Use <strong>Add field</strong> for text, a number, a date or a yes/no tick that you want on every task.</div>';
+    ? `<div class="tgrp">${plain.map(field).join('')}${flags.map(flag).join('')}</div><div class="tgrp"><button class="trow tadd" type="button" onclick="openFieldsModal()">Manage Fields…</button></div>`
+    : `<div class="tcap">No Custom Fields</div><div class="tgrp"><button class="trow tadd" type="button" onclick="openFieldsModal()">Manage Fields…</button></div>`;
   enhanceBoxes(document.getElementById('taskCustomFields'));
   updateCustomBadge();
 }
@@ -9892,8 +9891,8 @@ function renderPredecessorRows() {
     const shown = p.id ? taskDisplayId(p.id) : '', pt = p.id ? byId(p.id) : null;
     return `
     <div class="pred-row">
-      <input type="number" class="pred-id-input" min="1" step="1" placeholder="Task #" aria-label="Predecessor task number" value="${shown === '?' ? '' : shown}" onchange="onPredecessorIdChange(${i}, this.value)">
-      <span class="pred-name${pt ? '' : ' none'}" title="${pt ? escapeHtml(pt.name) : ''}">${pt ? escapeHtml(pt.name) : 'Task #'}</span>
+      <input type="number" class="pred-id-input" min="1" step="1" placeholder="#" aria-label="Predecessor task number" value="${shown === '?' ? '' : shown}" onchange="onPredecessorIdChange(${i}, this.value)">
+      <span class="pred-name${pt ? '' : ' none'}" title="${pt ? escapeHtml(pt.name) : ''}">${pt ? escapeHtml(pt.name) : 'No Task'}</span>
       <select aria-label="Link type" title="FS finish-to-start, SS start-to-start, FF finish-to-finish, SF start-to-finish" onchange="editingPredecessors[${i}].type=this.value">
         ${DEP_TYPES.map(dt => `<option value="${dt}"${dt === p.type ? ' selected' : ''}>${dt}</option>`).join('')}
       </select>

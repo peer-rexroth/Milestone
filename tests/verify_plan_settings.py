@@ -65,7 +65,7 @@ with sync_playwright() as p:
     pg.keyboard.press("Escape"); pg.wait_for_timeout(100)
     # custom fields from the task dialog: stands alone, no plan chip
     ev("() => { tasks.push({ id: 'a', name: 'A', parentId: null, order: 0, startDate: '2030-03-04', endDate: '2030-03-08', progress: 0, milestone: false, color: null, predecessors: [], collapsed: false, updatedAt: 1 }); normalizeData(); save(); render(); openTaskModal('a'); }"); pg.wait_for_timeout(300)
-    pg.click("#taskTabBtnCustom"); pg.click("#taskTabCustom .btn-link"); pg.wait_for_selector("#fieldsModalBg.open"); pg.wait_for_timeout(150)
+    pg.click("#taskTabBtnCustom"); pg.click("#taskTabCustom .tadd, #taskTabCustom .empty-state .btn"); pg.wait_for_selector("#fieldsModalBg.open"); pg.wait_for_timeout(150)
     check("Custom fields opened over the task dialog stands alone: titled 'Custom fields', no tabs, no plan chip", pg.inner_text("#fieldsModalTitle") == "Custom fields" and pg.inner_text("#fieldsPlanChip") == "")
     b.close()
 check("no console errors", not errors, errors)
