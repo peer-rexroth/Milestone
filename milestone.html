@@ -555,6 +555,8 @@ html.sidebar-collapsed .sidebar { display: none; }
 .sidebar .view-tab:hover { background: var(--hover); color: var(--text); }
 .sidebar .view-tab.active { background: var(--panel); color: var(--text); font-weight: 600; box-shadow: inset 0 0 0 1px var(--border); }
 .sidebar .view-tab.active i { color: var(--accent); }
+.sidebar .view-tab span { flex: 1; }
+.sidebar .view-tab em { margin-left: auto; font-style: normal; font-size: var(--fs-12); font-weight: 400; color: var(--text-faint); }
 .sidebar .view-tab-sep { display: block; height: 6px; background: none; margin: 0; }
 .sb-rule { height: 1px; background: var(--border); margin: 8px 10px; }
 .sb-row { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border: none; border-radius: var(--r-m); background: transparent; color: var(--text-dim); font-size: var(--fs-14); font-weight: 500; text-align: left; }
@@ -572,13 +574,17 @@ html.sidebar-collapsed .sidebar { display: none; }
 .sb-mini i { font-size: var(--ico-16); }
 .sb-mini:hover { background: var(--cap-hover); color: var(--text); }
 .sb-plans { display: flex; flex-direction: column; gap: 2px; }
-.sb-plan-row { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border: none; background: transparent; border-radius: var(--r-m); text-align: left; font-size: var(--fs-14); font-weight: 500; color: var(--text-dim); }
-.sb-plan-row i { font-size: var(--ico-16); color: var(--text-dim); width: 1em; }
-.sb-plan-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
-.sb-plan-row:hover { background: var(--hover); color: var(--text); }
-.sb-plan-row.active { background: var(--panel); color: var(--text); font-weight: 600; box-shadow: inset 0 0 0 1px var(--border); }
+.sb-plan-row { position: relative; display: flex; align-items: center; border-radius: var(--r-m); }
+.sb-plan-main { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; padding: 8px 10px; border: none; background: transparent; border-radius: var(--r-m); text-align: left; font-size: var(--fs-14); font-weight: 500; color: var(--text-dim); }
+.sb-plan-main i { font-size: var(--ico-16); color: var(--text-dim); width: 1em; }
+.sb-plan-main span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1; }
+.sb-plan-row:hover .sb-plan-main { background: var(--hover); color: var(--text); }
+.sb-plan-row.active { background: var(--panel); box-shadow: inset 0 0 0 1px var(--border); }
+.sb-plan-row.active .sb-plan-main { color: var(--text); font-weight: 600; background: none; }
+.sb-plan-more { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); opacity: 0; }
+.sb-plan-row:hover .sb-plan-more, .sb-plan-row:focus-within .sb-plan-more { opacity: 1; }
+.sb-plan-row.active:hover em, .sb-plan-row.active:focus-within em { visibility: hidden; }   /* the count makes way for the ⋯ */
 .sb-plan-row em { margin-left: auto; font-style: normal; font-size: var(--fs-12); color: var(--text-faint); font-weight: 400; }
-.sb-plan-row span { flex: 1; }
 .sb-scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 4px 12px; }
 .sb-label { font-size: var(--fs-11); font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--text-faint); padding: 10px 10px 4px; }
 .sb-tools { flex: none; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--border); }
@@ -1864,10 +1870,23 @@ html.sel-inactive .gantt-row-bg.selected { background: var(--cap-fill); }
 .subbar .tb-group:has(> .split-btn) > .tb-sep { order: 1; }
 .subbar .tb-group:has(> .split-btn) > .tool-group { order: 2; }   /* Indent / Outdent right after Add Task */
 .subbar > .tool-group[aria-label="History"] { order: 3; }   /* then undo / redo */
-.subbar .tb-group:has(> .split-btn) > .sel-actions { order: 3; }
+.subbar .tb-group:has(> .split-btn) > .sel-actions { order: 4; }
+.subbar .tb-group:has(> .split-btn) > .sel-chip { order: 5; }
 .subbar .tb-group:has(> .split-btn) > * { flex: none; }
 .subbar .sel-actions { flex-wrap: nowrap; }
-.subbar > :not(#sidebarShowBtn):not(.tb-group:has(> .split-btn)):not(.tool-group[aria-label="History"]) { order: 4; }
+.subbar > :not(#sidebarShowBtn):not(.bar-title):not(.tb-group:has(> .split-btn)):not(.tool-group[aria-label="History"]) { order: 6; }
+.bar-title { display: none; order: 0; flex: 0 1 auto; min-width: 0; max-width: 240px; margin-right: 4px; line-height: 1.2; }   /* a quiet title only while the sidebar is hidden (it has no highlighted plan or view to say where you are) */
+html.sidebar-collapsed .bar-title { display: block; }
+.bar-title b { display: block; font-size: var(--fs-14); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar-title small { display: block; font-size: var(--fs-12); color: var(--text-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.subbar .btn.ico { width: 30px; padding: 0; justify-content: center; }
+.subbar .tool-group > .btn.ico { background: transparent; height: 26px; width: 30px; }
+.subbar .tool-group > .btn.ico:hover, .subbar .tool-group > .dropdown-wrap > .btn.ico:hover { background: var(--cap-hover); }
+.subbar .tool-group > .dropdown-wrap { display: flex; }
+.subbar .tool-group > .dropdown-wrap > .btn.ico { background: transparent; height: 26px; width: 30px; }
+.subbar .tool-group .btn-danger { color: var(--danger); }
+.subbar .tool-group > .btn.tb-toggle[aria-pressed="true"] { background: var(--cap-on); }
+.subbar .tool-group > :disabled { opacity: .4; }
 a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every control keeps the arrow */
 </style>
 </head>
@@ -1883,13 +1902,9 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
     <div class="sb-sec"><span class="sb-label">Views</span></div>
     <div class="view-tabs" id="mainViewTabs" role="list" aria-label="Views"></div>
     <div class="sb-sec"><span class="sb-label">Plans</span><span class="sb-sec-sp"></span>
-      <div class="dropdown-wrap"><button class="icon-btn sb-mini" id="planMenuBtn" onclick="togglePlanMenu()" title="Plan menu — new, open, rename, duplicate, link a folder" aria-label="Plan menu" aria-haspopup="menu"><i class="fa-solid fa-ellipsis plan-ico"></i><span id="planBtnName" class="sr-only"></span></button></div>
       <button class="icon-btn sb-mini" id="sbNewPlanBtn" onclick="openPlanModal('new')" title="New plan…" aria-label="New plan"><i class="fa-solid fa-plus"></i></button>
     </div>
     <div class="sb-plans" id="sbPlans" role="list" aria-label="Plans"></div>
-    <div class="sb-rule"></div>
-    <button class="sb-row" id="scheduleMenuBtn" aria-label="Schedule" aria-haspopup="menu" onclick="toggleScheduleMenu()" title="Schedule: baselines, rescheduling, levelling"><i class="fa-solid fa-calendar-check"></i><span>Schedule</span><i class="fa-solid fa-chevron-down sb-row-chev"></i></button>
-    <button class="sb-row" id="planSettingsBtn" onclick="openPlanSettings()" aria-label="Plan settings" title="Plan settings — calendar, precision, scheduling rules, currency, custom fields"><i class="fa-solid fa-gear"></i><span>Plan settings…</span></button>
   </div>
   <div class="sb-tools">
   <div class="plan-status">
@@ -1935,6 +1950,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
      data-more goes into the "More" menu when the toolbar is too narrow for everything (the higher the number, the sooner). -->
 <div class="subbar" id="subbar">
   <button class="icon-btn sb-float" id="sidebarShowBtn" onclick="toggleSidebar()" title="Show sidebar (Alt+Cmd/Ctrl+S)" aria-label="Show sidebar"><i class="fa-solid fa-sidebar"></i></button>
+  <div class="bar-title" data-more="3"><b id="barTitle"></b><small id="barSub"></small></div>
   <div class="tool-group" role="group" aria-label="History">
   <button class="icon-btn" id="undoBtn" onclick="historyUndo()" title="Undo (Ctrl+Z)" aria-label="Undo" disabled><i class="fa-solid fa-undo"></i></button>
   <button class="icon-btn" id="redoBtn" onclick="historyRedo()" title="Redo (Ctrl+Shift+Z)" aria-label="Redo" disabled><i class="fa-solid fa-redo"></i></button>
@@ -1949,14 +1965,13 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
     <button class="icon-btn" id="indentBtn" data-more="6" data-more-label="Indent" onclick="indentSelected()" title="Indent (make sub-task)"><i class="fa-solid fa-indent"></i></button>
     <button class="icon-btn" id="outdentBtn" data-more="6" data-more-label="Outdent" onclick="outdentSelected()" title="Outdent"><i class="fa-solid fa-outdent"></i></button>
     </div>
-    <div class="sel-actions hidden" id="selActions">
-      <span class="tb-sep"></span>
-      <button class="sel-chip" id="selChip" onclick="clearSelection()" title="Clear the selection (Esc)"></button>
-      <button class="btn btn-sm" id="bulkEditBtn" data-more="3" onclick="editSelected()" title="Edit the selected task"><i class="fa-solid fa-pen"></i>Edit</button>
-      <button class="btn btn-sm" id="cloneTaskBtn" data-more="8" onclick="cloneSelected()" title="Duplicate — an exact copy right below, with all its sub-tasks"><i class="fa-regular fa-duplicate"></i>Duplicate</button>
-      <button class="btn btn-sm" id="copyBtn" data-more="9" onclick="copySelectionButton()" title="Copy the selected tasks (Ctrl/Cmd+C) — paste into Milestone or Excel"><i class="fa-regular fa-copy"></i>Copy</button>
-      <button class="btn btn-sm btn-danger" id="deleteTaskBtn" onclick="deleteSelected()" title="Delete the selected tasks (Delete)"><i class="fa-solid fa-trash"></i>Delete</button>
+    <div class="tool-group sel-actions" id="selActions" role="group" aria-label="Selection">
+      <button class="btn btn-sm ico" id="bulkEditBtn" data-more="3" onclick="editSelected()" title="Edit the selected task"><i class="fa-solid fa-pen"></i><span class="sr-only">Edit</span></button>
+      <button class="btn btn-sm ico" id="cloneTaskBtn" data-more="8" onclick="cloneSelected()" title="Duplicate — an exact copy right below, with all its sub-tasks"><i class="fa-regular fa-duplicate"></i><span class="sr-only">Duplicate</span></button>
+      <button class="btn btn-sm ico" id="copyBtn" data-more="9" onclick="copySelectionButton()" title="Copy the selected tasks (Ctrl/Cmd+C) — paste into Milestone or Excel"><i class="fa-regular fa-copy"></i><span class="sr-only">Copy</span></button>
+      <button class="btn btn-sm btn-danger ico" id="deleteTaskBtn" onclick="deleteSelected()" title="Delete the selected tasks (Delete)"><i class="fa-solid fa-trash"></i><span class="sr-only">Delete</span></button>
     </div>
+      <button class="sel-chip hidden" id="selChip" onclick="clearSelection()" title="Clear the selection (Esc)"></button>
   </div>
   <div class="tb-group" data-views="resourceSheet">
     <button class="btn" id="addResourceBtn" type="button" onclick="addResourceSheetRow()"><i class="fa-solid fa-plus"></i>Add Resource</button>
@@ -1967,9 +1982,11 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
   </div>
   <div class="tb-group" data-views="gantt">
     <span class="tb-sep"></span>
-    <button class="btn btn-sm tb-toggle" id="baselineBtn" data-more="4" onclick="toggleBaseline()" aria-pressed="false" title="Show the baseline under the bars"><i class="fa-solid fa-ruler-horizontal"></i>Baseline</button>
-    <button class="btn btn-sm tb-toggle" id="progressLineBtn" data-more="6" onclick="toggleProgressLine()" aria-pressed="false" title="Show the progress line"><i class="fa-solid fa-chart-line"></i>Progress line</button>
-    <button class="btn btn-sm tb-toggle" id="criticalPathBtn" data-more="5" onclick="toggleCriticalPath()" aria-pressed="false" title="Highlight critical path"><i class="fa-solid fa-route"></i>Critical path</button>
+    <div class="tool-group" role="group" aria-label="Gantt">
+    <button class="btn btn-sm tb-toggle ico" id="baselineBtn" data-more="4" onclick="toggleBaseline()" aria-pressed="false" title="Show the baseline under the bars"><i class="fa-solid fa-ruler-horizontal"></i><span class="sr-only">Baseline</span></button>
+    <button class="btn btn-sm tb-toggle ico" id="progressLineBtn" data-more="6" onclick="toggleProgressLine()" aria-pressed="false" title="Show the progress line"><i class="fa-solid fa-chart-line"></i><span class="sr-only">Progress line</span></button>
+    <button class="btn btn-sm tb-toggle ico" id="criticalPathBtn" data-more="5" onclick="toggleCriticalPath()" aria-pressed="false" title="Highlight critical path"><i class="fa-solid fa-route"></i><span class="sr-only">Critical path</span></button>
+    </div>
   </div>
   <div class="tb-group" data-views="resources">
     <span class="tb-sep"></span>
@@ -1981,11 +1998,17 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
   </div>
   <div class="tb-group" data-views="tasks gantt">
     <span class="tb-sep"></span>
-    <button class="btn" id="searchBtn" data-more="2" onclick="openSearch()" title="Find a task by name, WBS, number (#12), resource (@anna) or status (status:late) — Ctrl/Cmd+K, or /"><i class="fa-solid fa-magnifying-glass"></i>Find</button>
-    <button class="btn btn-sm tb-toggle" id="groupBtn" data-views="tasks" data-more="6" onclick="toggleGroupMenu(event)" aria-pressed="false" aria-haspopup="menu" title="Group the list by Status, Resource, a month … (Tasks view)"><i class="fa-solid fa-layer-group"></i>Group</button>
-    <button class="btn" id="columnsBtn" data-more="7" onclick="toggleColumnsMenu()" title="Choose which columns the task list shows"><i class="fa-solid fa-table-columns"></i>Columns</button>
+    <div class="tool-group" role="group" aria-label="View options">
+    <button class="btn ico" id="searchBtn" data-more="2" onclick="openSearch()" title="Find a task by name, WBS, number (#12), resource (@anna) or status (status:late) — Ctrl/Cmd+K, or /"><i class="fa-solid fa-magnifying-glass"></i><span class="sr-only">Find</span></button>
+    <button class="btn btn-sm tb-toggle ico" id="groupBtn" data-views="tasks" data-more="6" onclick="toggleGroupMenu(event)" aria-pressed="false" aria-haspopup="menu" title="Group the list by Status, Resource, a month … (Tasks view)"><i class="fa-solid fa-layer-group"></i><span class="sr-only">Group</span></button>
+    <button class="btn ico" id="columnsBtn" data-more="7" onclick="toggleColumnsMenu()" title="Choose which columns the task list shows"><i class="fa-solid fa-table-columns"></i><span class="sr-only">Columns</span></button>
+    </div>
   </div>
-  <div class="dropdown-wrap hidden" id="moreWrap"><button class="btn" id="moreBtn" onclick="toggleMoreMenu(event)" aria-haspopup="menu" title="More — the toolbar buttons that don't fit this window"><i class="fa-solid fa-ellipsis"></i>More</button></div>
+  <div class="tool-group" role="group" aria-label="Plan">
+    <div class="dropdown-wrap"><button class="btn ico" id="scheduleMenuBtn" data-more="1" data-more-label="Schedule" aria-label="Schedule" aria-haspopup="menu" onclick="toggleScheduleMenu()" title="Schedule: baselines, rescheduling, levelling"><i class="fa-solid fa-calendar-check"></i><span class="sr-only">Schedule</span></button></div>
+    <button class="icon-btn" id="planSettingsBtn" data-more="1" data-more-label="Plan settings" onclick="openPlanSettings()" aria-label="Plan settings" title="Plan settings — calendar, precision, scheduling rules, currency, custom fields (⌘,)"><i class="fa-solid fa-gear"></i></button>
+  </div>
+  <div class="dropdown-wrap hidden" id="moreWrap"><button class="btn ico" id="moreBtn" onclick="toggleMoreMenu(event)" aria-haspopup="menu" title="More — the toolbar buttons that don't fit this window"><i class="fa-solid fa-ellipsis"></i><span class="sr-only">More</span></button></div>
 </div>
 <div class="dropdown-menu" id="moreMenu" role="menu"></div>
 <div class="dropdown-menu" id="groupMenu" role="menu"></div>
@@ -5210,10 +5233,14 @@ function renderPass() {
 const MAIN_VIEWS = [{ id: 'tasks', label: 'Tasks', group: 'task', icon: 'fa-list-check' }, { id: 'gantt', label: 'Gantt', group: 'task', icon: 'fa-chart-gantt' }, { id: 'resources', label: 'Resource Plan', group: 'resource', icon: 'fa-chart-column' }, { id: 'resourceSheet', label: 'Resources', group: 'resource', icon: 'fa-users' }];
 const ALL_VIEWS = MAIN_VIEWS.map(v => v.id);
 function openResourceSheet() { if (currentView !== 'resourceSheet') setView('resourceSheet'); }   // (the Task Form's "Edit resources" icon)
+function viewCount(id) {   // a count at the right of a view row, as the smart lists in Reminders have
+  const n = id === 'tasks' ? tasks.filter(t => !t.spacer).length : id === 'resourceSheet' ? (project.resources || []).length : null;
+  return n === null ? '' : `<em class="n">${n}</em>`;
+}
 function renderMainViewTabs() {
   document.getElementById('mainViewTabs').innerHTML = MAIN_VIEWS.map((v, i) =>
     (i && MAIN_VIEWS[i - 1].group !== v.group ? '<span class="view-tab-sep" aria-hidden="true"></span>' : '') +
-    `<button class="view-tab${v.id === currentView ? ' active' : ''}" onclick="setView('${v.id}')" title="${v.label} (Alt+Cmd/Ctrl+${i + 1})" aria-pressed="${v.id === currentView}"${v.id === currentView ? ' aria-current="page"' : ''}><i class="fa-solid ${v.icon}"></i><span>${v.label}</span></button>`).join('');
+    `<button class="view-tab${v.id === currentView ? ' active' : ''}" onclick="setView('${v.id}')" title="${v.label} (Alt+Cmd/Ctrl+${i + 1})" aria-pressed="${v.id === currentView}"${v.id === currentView ? ' aria-current="page"' : ''}><i class="fa-solid ${v.icon}"></i><span>${v.label}</span>${viewCount(v.id)}</button>`).join('');
   for (const g of document.querySelectorAll('#subbar [data-views]')) g.classList.toggle('hidden', !g.dataset.views.split(' ').includes(currentView));   // the toolbar belongs to the view
   document.getElementById('main').classList.toggle('view-tasks', currentView === 'tasks');
   document.getElementById('main').classList.toggle('view-gantt', currentView === 'gantt');
@@ -5229,12 +5256,14 @@ function renderSidebarPlans() {   // the plans as rows, so switching needs no me
   const count = p => { if (p.id === currentPlanId) return tasks.filter(t => !t.spacer).length; try { return (JSON.parse(localStorage.getItem(planDataKey(p.id))).tasks || []).filter(t => !t.spacer).length; } catch (e) { return ''; } };
   el.innerHTML = list.map(p => {
     const cur = p.id === currentPlanId, name = cur ? project.name : p.name;
-    return `<button class="sb-plan-row${cur ? ' active' : ''}" role="listitem" data-plan-id="${p.id}"${cur ? ' aria-current="true"' : ''} onclick="switchPlan('${p.id}')" title="${escapeHtml(name)}"><i class="fa-regular fa-folder-open"></i><span>${escapeHtml(name)}</span><em>${count(p)}</em></button>`;
+    return `<div class="sb-plan-row${cur ? ' active' : ''}" role="listitem" data-plan-id="${p.id}"><button class="sb-plan-main" type="button"${cur ? ' aria-current="true"' : ''} onclick="switchPlan('${p.id}')" title="${escapeHtml(name)}"><i class="fa-regular fa-folder-open"></i><span>${escapeHtml(name)}</span><em>${count(p)}</em></button>` +
+      (cur ? `<button class="icon-btn sb-mini sb-plan-more" id="planMenuBtn" type="button" onclick="togglePlanMenu()" title="Plan menu — rename, duplicate, link a folder, delete" aria-label="Plan menu" aria-haspopup="menu"><i class="fa-solid fa-ellipsis plan-ico"></i><span id="planBtnName" class="sr-only">${escapeHtml(name)}</span></button>` : '') + `</div>`;
   }).join('');
 }
 function updateProjectNameUI() {
   renderSidebarPlans();
   document.getElementById('planBtnName').textContent = project.name;
+  document.getElementById('barTitle').textContent = project.name;
   for (const el of document.querySelectorAll('[data-ps-plan]')) el.textContent = '— ' + project.name;   // (Plan settings says which plan it is for)
   document.title = project.name + ' · Milestone';
 }
@@ -5275,7 +5304,7 @@ function updateSelectionUI() {
   const ids = selectedIds(), n = ids.length, has = n > 0;
   document.getElementById('indentBtn').disabled = !has;
   document.getElementById('outdentBtn').disabled = !ids.some(id => byId(id).parentId);
-  document.getElementById('selActions').classList.toggle('hidden', !has);   // Edit / Duplicate / Copy / Delete only appear while something is selected
+  for (const id of ['cloneTaskBtn', 'copyBtn', 'deleteTaskBtn']) document.getElementById(id).disabled = !has;   // (the group stays where it is: it is enabled by a selection, it does not appear and shift the bar)
   document.getElementById('bulkEditBtn').disabled = !ids.some(id => !byId(id).spacer);   // an empty line has no fields
   const nEdit = ids.filter(id => !byId(id).spacer).length;
   document.getElementById('bulkEditBtn').title = nEdit > 1 ? `Change a field for all ${nEdit} selected tasks` : 'Edit the selected task (select several with Ctrl/Cmd+click or Shift+click to change a field for all of them)';
@@ -11244,6 +11273,7 @@ function updateStatusBar() {
   document.getElementById('sbCount').textContent = currentView === 'tasks' || currentView === 'gantt'
     ? `${all} task${all === 1 ? '' : 's'}${sel ? ` · ${sel} selected` : ''}` : `${nRes} resource${nRes === 1 ? '' : 's'}`;
   { const real = tasks.filter(t => !t.spacer), done = real.filter(t => t.progress >= 100).length, ft = document.getElementById('sbFoot'); if (ft) ft.textContent = `${real.length} task${real.length === 1 ? '' : 's'} · ${done} done`; }
+  { const vl = (MAIN_VIEWS.find(v => v.id === currentView) || {}).label || '', bs = document.getElementById('barSub'); if (bs) bs.textContent = vl; }
   for (const el of document.querySelectorAll('#statusbar [data-sb-views]')) el.classList.toggle('hidden', !el.dataset.sbViews.split(' ').includes(currentView));
   if (currentView === 'gantt' || currentView === 'resources') {
     const z = currentZoom(), r = zoomSliderRange();
