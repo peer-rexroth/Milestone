@@ -595,6 +595,7 @@ html.sidebar-collapsed .sidebar { display: none; }
 .sb-label { font-size: var(--fs-11); font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--text-faint); padding: 10px 10px 4px; }
 .sb-tools { flex: none; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--border); }
 .sb-tools .sb-cap { margin-left: auto; }
+.sb-foot { flex: none; padding: 10px 12px; border-top: 1px solid var(--border); text-align: center; font-size: var(--fs-12); color: var(--text-faint); }   /* ClearDesk's counts footer */
 .aa { display: inline-flex; align-items: baseline; gap: 1px; font-weight: 600; font-size: var(--fs-17); line-height: 1; letter-spacing: -0.02em; }   /* ClearDesk's aA: a small A (11px) beside a large A (17px), semibold */
 .aa small { font-size: var(--fs-11); font-weight: 600; }
 .sb-tools .plan-status { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; min-width: 0; }
@@ -1970,6 +1971,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
     <button class="dropdown-item" role="menuitem" onclick="closeHelpMenu();openAboutModal()"><i class="fa-solid fa-circle-info"></i>About Milestone</button></div></div>
   </div>
   </div>
+  <div class="sb-foot" id="sbFoot"></div>
 </aside>
 <div class="dropdown-menu plan-menu" id="planMenu"></div>
 <div class="dropdown-menu" id="scheduleMenu"></div>   <!-- (outside the sidebar: its scroll area would clip a menu that is wider than the sidebar) -->
@@ -11350,6 +11352,7 @@ function updateStatusBar() {
   const all = tasks.filter(t => !t.spacer).length, sel = selectedIds().filter(id => !byId(id).spacer).length, nRes = (project.resources || []).length;
   document.getElementById('sbCount').textContent = currentView === 'tasks' || currentView === 'gantt'
     ? `${all} task${all === 1 ? '' : 's'}${sel ? ` · ${sel} selected` : ''}` : `${nRes} resource${nRes === 1 ? '' : 's'}`;
+  { const real = tasks.filter(t => !t.spacer), done = real.filter(t => t.progress >= 100).length, ft = document.getElementById('sbFoot'); if (ft) ft.textContent = `${real.length} task${real.length === 1 ? '' : 's'} · ${done} done`; }
   { const vl = (MAIN_VIEWS.find(v => v.id === currentView) || {}).label || '', bs = document.getElementById('barSub'); if (bs) bs.textContent = vl; }
   for (const el of document.querySelectorAll('#statusbar [data-sb-views]')) el.classList.toggle('hidden', !el.dataset.sbViews.split(' ').includes(currentView));
   if (currentView === 'gantt' || currentView === 'resources') {
