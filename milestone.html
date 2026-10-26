@@ -1876,23 +1876,23 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='11' height='7' viewBox='0 0 11 7'><path d='M1 1l4.5 4.5L10 1' fill='none' stroke='%236a6b73' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
 }
 /* ── Components (design-system 5.1 / 5.2): toolbar capsules, joined groups ───────────────────────────────── */
-.subbar .btn, .subbar .icon-btn { border: none; background: var(--cap-fill); border-radius: 999px; height: 30px; color: var(--text); }
+.subbar .btn, .subbar .icon-btn { border: none; background: var(--cap-fill); border-radius: 999px; height: 36px; color: var(--text); }
 .subbar .btn { padding: 0 12px; font-weight: 500; }
-.subbar .icon-btn { width: 30px; padding: 0; color: var(--text-dim); }
+.subbar .icon-btn { width: 36px; padding: 0; color: var(--text-dim); }
 .subbar .btn:hover, .subbar .icon-btn:hover { background: var(--cap-hover); color: var(--text); }
 .subbar .btn:disabled:hover, .subbar .icon-btn:disabled:hover { background: var(--cap-fill); }
 .subbar .tb-toggle[aria-pressed="true"] { background: var(--cap-on); color: var(--text); }
 .subbar .btn-danger { color: var(--danger); }
 .subbar .sb-float { background: var(--cap-fill); }
 .tool-group:not(:has(> :not(.tb-over))) { display: none; }   /* (every button of the group is under More: no empty capsule left behind) */
-.tool-group { display: inline-flex; gap: 2px; padding: 3px; border-radius: 999px; background: var(--cap-fill); flex: none; }
-.subbar .tool-group > .icon-btn, .subbar .tool-group > .btn { background: transparent; height: 26px; width: 30px; }
+.tool-group { display: inline-flex; gap: 2px; padding: 4px; border-radius: 999px; background: var(--cap-fill); flex: none; }
+.subbar .tool-group > .icon-btn, .subbar .tool-group > .btn { background: transparent; height: 28px; width: 34px; }
 .subbar .tool-group > .icon-btn:hover { background: var(--cap-hover); }
-.subbar .split-btn { gap: 2px; padding: 3px; border-radius: 999px; background: var(--cap-fill); }
-.subbar .split-btn .btn { background: transparent; height: 26px; border-radius: 999px; }
+.subbar .split-btn { gap: 2px; padding: 4px; border-radius: 999px; background: var(--cap-fill); }
+.subbar .split-btn .btn { background: transparent; height: 28px; border-radius: 999px; }
 .subbar .split-btn .btn:hover { background: var(--cap-hover); }
 .subbar .split-btn .split-caret { padding: 0 8px; border-radius: 999px; }
-.subbar .sel-chip { border: none; background: var(--accent-tint); color: var(--text); height: 30px; border-radius: 999px; }
+.subbar .sel-chip { border: none; background: var(--accent-tint); color: var(--text); height: 36px; border-radius: 999px; }
 .subbar .tb-sep { background: transparent; width: 4px; }
 .sidebar .sb-tools { gap: 2px; }
 /* ── Selection (design-system 3) ─────────────────────────────────────────────────────────────────────────
@@ -1949,8 +1949,8 @@ html.sel-inactive .gantt-row-bg.selected { background: var(--cap-fill); }
 html.sidebar-collapsed .bar-title { display: block; }
 .bar-title b { display: block; font-size: var(--fs-14); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bar-title small { display: block; font-size: var(--fs-12); color: var(--text-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.subbar .btn.ico { width: 30px; padding: 0; justify-content: center; }
-.subbar .tool-group > .btn.ico { background: transparent; height: 26px; width: 30px; }
+.subbar .btn.ico { width: 36px; padding: 0; justify-content: center; }
+.subbar .tool-group > .btn.ico { background: transparent; height: 28px; width: 34px; }
 .subbar .tool-group > .btn.ico:hover, .subbar .tool-group > .dropdown-wrap > .btn.ico:hover { background: var(--cap-hover); }
 .subbar .tool-group > .dropdown-wrap { display: flex; }
 .subbar .tool-group > .dropdown-wrap > .btn.ico { background: transparent; height: 26px; width: 30px; }
