@@ -556,7 +556,7 @@ html.sidebar-collapsed .sidebar { display: none; }
 .sidebar .view-tab.active { background: var(--panel); color: var(--text); font-weight: 600; box-shadow: inset 0 0 0 1px var(--border); }
 .sidebar .view-tab.active i { color: var(--accent); }
 .sidebar .view-tab span { flex: 1; }
-.sidebar .view-tab em { margin-left: auto; font-style: normal; font-size: var(--fs-12); font-weight: 400; color: var(--text-faint); }
+.sidebar .view-tab[data-count]::after { content: attr(data-count); margin-left: auto; font-size: var(--fs-12); font-weight: 400; color: var(--text-faint); }
 .sidebar .view-tab-sep { display: block; height: 6px; background: none; margin: 0; }
 .sb-rule { height: 1px; background: var(--border); margin: 8px 10px; }
 .sb-row { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border: none; border-radius: var(--r-m); background: transparent; color: var(--text-dim); font-size: var(--fs-14); font-weight: 500; text-align: left; }
@@ -755,12 +755,6 @@ button:focus:not(:focus-visible) { outline: none; }
 .res-days-add .hol-field-date { flex: 0 0 136px; }
 .res-days-add .hol-field-name { flex: 1 1 120px; min-width: 100px; }
 .res-days-add input[type=text] { width: 100%; padding: 6px 8px; border: 1px solid var(--border); border-radius: var(--r-s); background: var(--panel); color: var(--text); }
-.cols-opts { padding: 6px 6px 2px; border-top: 1px solid var(--border); margin-top: 4px; display: flex; flex-direction: column; }
-.cols-opt { display: flex; align-items: center; gap: 8px; border: none; background: transparent; color: var(--text); font-size: var(--fs-12); padding: 4px 8px; border-radius: var(--r-s); text-align: left;}
-.cols-opt i { width: 14px; color: var(--text-dim); }
-.cols-opt:hover:not(:disabled) { background: var(--panel-2); }
-.cols-opt:disabled { opacity: .45; cursor: default; }
-.cols-foot { padding: 8px 12px 4px; border-top: 1px solid var(--border); margin-top: 4px; }
 .cf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 10px; }   /* rows 14px apart (a label to its box is 4px): the pairs read as pairs */
 .cf-flags { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; margin-top: 14px; }
 .cf-label { display: flex; align-items: center; gap: 4px; }
@@ -769,20 +763,40 @@ button:focus:not(:focus-visible) { outline: none; }
 .cf-flag input { width: 14px; height: 15px; margin: 0; }
 .custom-flag { justify-content: center; }
 .custom-flag i { color: var(--task-green); }
-/* ---- column chooser ---- */
-.cols-menu { width: 300px; padding: 6px; z-index: 90; overflow-y: auto; }   /* 31 columns: it scrolls (maxHeight is set when it opens) */
-.cols-head { display: flex; align-items: center; justify-content: space-between; padding: 4px 6px 2px; font-size: var(--fs-13); }
-.cols-hint { padding: 0 6px 6px; font-size: var(--fs-12); color: var(--text-faint); }
-.cols-row { display: flex; align-items: center; gap: 4px; }
-.cols-check { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; padding: 4px 6px; border-radius: var(--r-s); font-size: var(--fs-13);}
-.cols-check:hover { background: var(--panel-2); }
-.cols-check input { width: 14px; height: 14px; margin: 0; flex-shrink: 0; }
+/* ---- column chooser: an Apple-style menu (a tick column, no boxes; the reorder arrows appear when you point at a row; reordering is mainly by dragging the heading) ---- */
+.cols-menu { width: 316px; padding: 6px; z-index: 90; overflow-y: auto; }
+.cols-head, .cols-head *, .cols-opt, .cols-foot .btn-link { white-space: nowrap; }   /* 31 columns: it scrolls (maxHeight is set when it opens) */
+.cols-head { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px 6px; font-size: var(--fs-11); letter-spacing: .08em; text-transform: uppercase; color: var(--text-faint); }
+.cols-head strong { font-weight: 600; text-transform: none; letter-spacing: 0; font-size: var(--fs-12); color: var(--text-dim); }
+.cols-head .btn-link { text-transform: none; letter-spacing: 0; font-size: var(--fs-12); font-weight: 500; }
+.cols-hint { padding: 8px 10px 6px; font-size: var(--fs-11); line-height: 1.5; color: var(--text-faint); }
+.cols-row { display: flex; align-items: center; gap: 2px; border-radius: var(--r-s); }
+.cols-row.dragging { opacity: .4; }
+.cols-row.drop-before { box-shadow: 0 -2px 0 var(--accent); }
+.cols-row.drop-after { box-shadow: 0 2px 0 var(--accent); }
+.cols-check { position: relative; display: flex; align-items: center; gap: 4px; flex: 1; min-width: 0; padding: 6px 8px; border-radius: var(--r-s); font-size: var(--fs-14); color: var(--text); }
+.cols-check input { position: absolute; opacity: 0; width: 100%; height: 100%; inset: 0; margin: 0; }   /* (still the real control: the label, the keyboard and the tests use it) */
+.cols-tick { width: 18px; font-size: var(--ico-14); visibility: hidden; color: var(--text); }
+.cols-check input:checked ~ .cols-tick { visibility: visible; }
+.cols-row:hover:not(:has(input:disabled)), .cols-row:focus-within { background: var(--accent); color: var(--on-accent); }
+.cols-row:hover:not(:has(input:disabled)) .cols-check, .cols-row:focus-within .cols-check, .cols-row:hover:not(:has(input:disabled)) .cols-tick, .cols-row:focus-within .cols-tick { color: var(--on-accent); }
 .cols-check.locked { color: var(--text-dim); cursor: default; }
+.cols-check.locked .cols-tick { color: var(--text-faint); }
 .cols-tag { margin-left: auto; font-size: var(--fs-11); color: var(--text-faint); }
-.cols-move { display: flex; gap: 2px; }
-.cols-move button { width: 22px; height: 22px; padding: 0; border: none; border-radius: var(--r-xs); background: transparent; color: var(--text-dim); font-size: var(--fs-11); }
-.cols-move button:hover:not(:disabled) { background: var(--panel-2); color: var(--text); }
-.cols-move button:disabled { opacity: .3; cursor: default; }
+.cols-move { display: flex; gap: 0; padding-right: 4px; opacity: 0; }
+.cols-row:hover .cols-move, .cols-row:focus-within .cols-move { opacity: 1; }
+.cols-move button { width: 22px; height: 22px; padding: 0; border: none; border-radius: var(--r-xs); background: transparent; color: inherit; font-size: var(--fs-11); }
+.cols-row:hover .cols-move, .cols-row:focus-within .cols-move { color: var(--on-accent); }
+.cols-move button:hover:not(:disabled) { background: rgba(255,255,255,.25); }
+.cols-move button:disabled { opacity: .35; cursor: default; }
+.cols-opts { padding: 6px 0 2px; border-top: 1px solid var(--border); margin-top: 6px; display: flex; flex-direction: column; gap: 0; }
+.cols-opt { display: flex; align-items: center; gap: 4px; border: none; background: transparent; color: var(--text); font-size: var(--fs-14); padding: 6px 8px; border-radius: var(--r-s); text-align: left; }
+.cols-opt i { width: 18px; font-size: var(--ico-14); color: var(--text); }
+.cols-opt:hover:not(:disabled) { background: var(--accent); color: var(--on-accent); }
+.cols-opt:hover:not(:disabled) i { color: var(--on-accent); }
+.cols-opt:disabled { opacity: .45; cursor: default; }
+.cols-foot { padding: 2px 8px 0; margin-top: 0; }
+.cols-foot .btn-link { font-size: var(--fs-14); padding: 6px 26px; }
 /* ---- column filters ---- */
 .grid-row > .cell-active { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: var(--r-xs); }   /* the keyboard's cell cursor (Tasks view) */
 .col-head { display: flex; align-items: center; gap: 2px; min-width: 0; position: relative; }
@@ -3697,6 +3711,31 @@ function moveColumn(id, dir) {
   [order[i], order[j]] = [order[j], order[i]];
   save(); render(); renderColumnsMenu();
 }
+/* ---- drag a row in the Columns menu to move the column (the insertion line shows where it lands); the arrows and the heading drag do the same ---- */
+let colDrag = null;   // { id, kind: 'task' | 'rs' }
+function colDragStart(e, id, kind) { colDrag = { id, kind: kind || 'task' }; e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('application/x-milestone-col', id); } catch (x) {} e.currentTarget.classList.add('dragging'); }
+function colDragClear() { for (const r of document.querySelectorAll('.cols-row.drop-before, .cols-row.drop-after')) r.classList.remove('drop-before', 'drop-after'); }
+function colDragOver(e, id) {
+  if (!colDrag || colDrag.id === id) return;
+  e.preventDefault(); e.dataTransfer.dropEffect = 'move';
+  const r = e.currentTarget.getBoundingClientRect(), after = e.clientY > r.top + r.height / 2;
+  colDragClear(); e.currentTarget.classList.add(after ? 'drop-after' : 'drop-before');
+}
+function colDrop(e, id) {
+  if (!colDrag) return; e.preventDefault();
+  const r = e.currentTarget.getBoundingClientRect(), after = e.clientY > r.top + r.height / 2, d = colDrag; colDrag = null; colDragClear();
+  if (d.kind === 'rs') moveRsColumnTo(d.id, id, after); else moveColumnTo(d.id, id, after);
+}
+function colDragEnd() { colDrag = null; colDragClear(); for (const r of document.querySelectorAll('.cols-row.dragging')) r.classList.remove('dragging'); }
+function moveColumnTo(id, targetId, after) {
+  const order = viewColOrder(), from = order.indexOf(id);
+  if (from < 0 || id === targetId) return;
+  order.splice(from, 1);
+  const to = order.indexOf(targetId);
+  if (to < 0) { order.splice(from, 0, id); return; }
+  order.splice(after ? to + 1 : to, 0, id);
+  save(); render(); renderColumnsMenu();
+}
 function resetColumns() {   // resets the view you are in; the other view keeps its choice
   if (currentView === 'gantt') { gColOrder = [...GANTT_DEFAULT_ORDER]; gColHidden = new Set(DEFAULT_COL_ORDER.filter(c => !GANTT_DEFAULT_SHOWN.includes(c))); }
   else { colOrder = [...DEFAULT_COL_ORDER]; colHidden = new Set(DEFAULT_COL_ORDER.filter(c => !TASK_COLS[c].dflt)); }
@@ -3715,16 +3754,16 @@ function renderColumnsMenu() {
   const shown = new Set(visibleTaskCols()), menu = document.getElementById('columnsMenu'), scroll = menu.scrollTop, order = viewColOrder().filter(columnListed), vname = currentView === 'gantt' ? 'Gantt view' : 'Tasks view';
   menu.innerHTML =
     `<div class="cols-head"><strong>Columns · ${vname}</strong><button class="btn-link" onclick="resetColumns()">Reset to default</button></div>` +
-    `<div class="cols-hint">Tick the columns the list shows in the ${vname}; use the arrows to reorder them. The ${currentView === 'gantt' ? 'Tasks' : 'Gantt'} view keeps its own choice.</div>` +
     order.map((id, i) => {
       const c = TASK_COLS[id], lab = escapeHtml(c.label);
-      return `<div class="cols-row"><label class="cols-check${c.locked ? ' locked' : ''}"><input type="checkbox" data-col="${id}"${shown.has(id) ? ' checked' : ''}${c.locked ? ' disabled' : ''} onchange="toggleColumn('${id}', this.checked)"><span>${lab}</span>${c.locked ? '<span class="cols-tag">always shown</span>' : ''}</label>` +
+      return `<div class="cols-row" draggable="true" data-col-row="${id}" ondragstart="colDragStart(event, '${id}')" ondragover="colDragOver(event, '${id}')" ondragleave="colDragClear()" ondrop="colDrop(event, '${id}')" ondragend="colDragEnd()"><label class="cols-check${c.locked ? ' locked' : ''}"><input type="checkbox" data-col="${id}"${shown.has(id) ? ' checked' : ''}${c.locked ? ' disabled' : ''} onchange="toggleColumn('${id}', this.checked)"><i class="fa-solid fa-check cols-tick"></i><span>${lab}</span>${c.locked ? '<span class="cols-tag">always shown</span>' : ''}</label>` +
         `<span class="cols-move"><button aria-label="Move ${lab} up" onclick="moveColumn('${id}',-1)"${i === 0 ? ' disabled' : ''}><i class="fa-solid fa-chevron-up"></i></button><button aria-label="Move ${lab} down" onclick="moveColumn('${id}',1)"${i === order.length - 1 ? ' disabled' : ''}><i class="fa-solid fa-chevron-down"></i></button></span></div>`;
     }).join('') +
-    `<div class="cols-opts"><button class="cols-opt" onclick="showChanges = !showChanges; save(); render(); renderColumnsMenu()" aria-pressed="${showChanges}"><i class="fa-solid ${showChanges ? 'fa-square-check' : 'fa-square'}"></i>Highlight what the last edit changed</button>` +
-    `<button class="cols-opt" onclick="closeColumnsMenu(); fitAllColumns()"><i class="fa-solid fa-left-right"></i>Fit all columns to content</button>` +
-    `<button class="cols-opt"${Object.keys(colWidths).length ? '' : ' disabled'} onclick="resetAllColWidths()"><i class="fa-solid fa-rotate-left"></i>Reset column widths</button></div>` +
-    `<div class="cols-foot"><button class="btn-link" onclick="closeColumnsMenu();openFieldsModal()"><i class="fa-solid fa-sliders"></i> ${activeCustomFields().length ? 'Manage custom fields…' : 'Add a custom field…'}</button></div>`;
+    `<div class="cols-opts"><button class="cols-opt" onclick="showChanges = !showChanges; save(); render(); renderColumnsMenu()" aria-pressed="${showChanges}"><i class="fa-solid fa-check" style="visibility:${showChanges ? 'visible' : 'hidden'}"></i>Highlight what the last edit changed</button>` +
+    `<button class="cols-opt" onclick="closeColumnsMenu(); fitAllColumns()"><i></i>Fit all columns to content</button>` +
+    `<button class="cols-opt"${Object.keys(colWidths).length ? '' : ' disabled'} onclick="resetAllColWidths()"><i></i>Reset column widths</button></div>` +
+    `<div class="cols-foot"><button class="btn-link" onclick="closeColumnsMenu();openFieldsModal()">${activeCustomFields().length ? 'Manage custom fields…' : 'Add a custom field…'}</button></div>` +
+    `<div class="cols-hint">Drag a row (or a column heading) to reorder, or use the arrows beside a name. The ${currentView === 'gantt' ? 'Tasks' : 'Gantt'} view keeps its own choice.</div>`;
   menu.scrollTop = scroll;   // the rows: re-rendering after a tick or a move must not jump back to the top
 }
 function loadPlanData(id) {
@@ -5233,14 +5272,14 @@ function renderPass() {
 const MAIN_VIEWS = [{ id: 'tasks', label: 'Tasks', group: 'task', icon: 'fa-list-check' }, { id: 'gantt', label: 'Gantt', group: 'task', icon: 'fa-chart-gantt' }, { id: 'resources', label: 'Resource Plan', group: 'resource', icon: 'fa-chart-column' }, { id: 'resourceSheet', label: 'Resources', group: 'resource', icon: 'fa-users' }];
 const ALL_VIEWS = MAIN_VIEWS.map(v => v.id);
 function openResourceSheet() { if (currentView !== 'resourceSheet') setView('resourceSheet'); }   // (the Task Form's "Edit resources" icon)
-function viewCount(id) {   // a count at the right of a view row, as the smart lists in Reminders have
+function viewCount(id) {   // a count at the right of a view row, as the smart lists in Reminders have (drawn by CSS from data-count, so it is not part of the row's text)
   const n = id === 'tasks' ? tasks.filter(t => !t.spacer).length : id === 'resourceSheet' ? (project.resources || []).length : null;
-  return n === null ? '' : `<em class="n">${n}</em>`;
+  return n === null ? '' : ` data-count="${n}"`;
 }
 function renderMainViewTabs() {
   document.getElementById('mainViewTabs').innerHTML = MAIN_VIEWS.map((v, i) =>
     (i && MAIN_VIEWS[i - 1].group !== v.group ? '<span class="view-tab-sep" aria-hidden="true"></span>' : '') +
-    `<button class="view-tab${v.id === currentView ? ' active' : ''}" onclick="setView('${v.id}')" title="${v.label} (Alt+Cmd/Ctrl+${i + 1})" aria-pressed="${v.id === currentView}"${v.id === currentView ? ' aria-current="page"' : ''}><i class="fa-solid ${v.icon}"></i><span>${v.label}</span>${viewCount(v.id)}</button>`).join('');
+    `<button class="view-tab${v.id === currentView ? ' active' : ''}" onclick="setView('${v.id}')" title="${v.label} (Alt+Cmd/Ctrl+${i + 1})" aria-pressed="${v.id === currentView}"${v.id === currentView ? ' aria-current="page"' : ''}${viewCount(v.id)}><i class="fa-solid ${v.icon}"></i><span>${v.label}</span></button>`).join('');
   for (const g of document.querySelectorAll('#subbar [data-views]')) g.classList.toggle('hidden', !g.dataset.views.split(' ').includes(currentView));   // the toolbar belongs to the view
   document.getElementById('main').classList.toggle('view-tasks', currentView === 'tasks');
   document.getElementById('main').classList.toggle('view-gantt', currentView === 'gantt');
@@ -7498,13 +7537,22 @@ function rsAllCols() {
 }
 function rsVisibleCols() { return rsAllCols().filter(rsColVisible); }
 function toggleRsColumn(key, show) { rsColShow[key] = show; save(); render(); renderRsColumnsMenu(); }
+function moveRsColumnTo(key, targetKey, after) {
+  const keys = rsAllCols().filter(c => !c.fixed).map(c => c.key), from = keys.indexOf(key);
+  if (from < 0 || key === targetKey) return;
+  keys.splice(from, 1);
+  const to = keys.indexOf(targetKey);
+  if (to < 0) return;
+  keys.splice(after ? to + 1 : to, 0, key);
+  rsColOrder = keys; save(); render(); renderRsColumnsMenu();
+}
 function resetRsColumns() { rsColShow = {}; rsColOrder = []; save(); render(); renderRsColumnsMenu(); }
 function renderRsColumnsMenu() {
   const menu = document.getElementById('rsColumnsMenu'); if (!menu) return;
   menu.innerHTML = `<div class="cols-head"><strong>Columns · Resources</strong><button class="btn-link" onclick="resetRsColumns()">Reset to default</button></div>`
     + `<div class="cols-hint">Material Label, Ovt Rate and Code start hidden, and show by themselves once a resource uses them.</div>`
-    + rsAllCols().filter(c => !c.fixed).map(c => `<div class="cols-row"><label class="cols-check"><input type="checkbox" data-rscol="${c.key}"${rsColVisible(c) ? ' checked' : ''} onchange="toggleRsColumn('${c.key}', this.checked)"><span>${escapeHtml(c.label)}</span></label></div>`).join('')
-    + `<div class="cols-opts"><button class="cols-opt" onclick="closeRsColumnsMenu(); fitAllRsColumns()"><i class="fa-solid fa-left-right"></i>Fit all columns to content</button><button class="cols-opt"${Object.keys(rsColWidths).length ? '' : ' disabled'} onclick="resetAllRsColWidths(); renderRsColumnsMenu()"><i class="fa-solid fa-rotate-left"></i>Reset column widths</button></div>`;
+    + rsAllCols().filter(c => !c.fixed).map(c => `<div class="cols-row" draggable="true" data-col-row="${c.key}" ondragstart="colDragStart(event, '${c.key}', 'rs')" ondragover="colDragOver(event, '${c.key}')" ondragleave="colDragClear()" ondrop="colDrop(event, '${c.key}')" ondragend="colDragEnd()"><label class="cols-check"><input type="checkbox" data-rscol="${c.key}"${rsColVisible(c) ? ' checked' : ''} onchange="toggleRsColumn('${c.key}', this.checked)"><i class="fa-solid fa-check cols-tick"></i><span>${escapeHtml(c.label)}</span></label></div>`).join('')
+    + `<div class="cols-opts"><button class="cols-opt" onclick="closeRsColumnsMenu(); fitAllRsColumns()"><i></i>Fit all columns to content</button><button class="cols-opt"${Object.keys(rsColWidths).length ? '' : ' disabled'} onclick="resetAllRsColWidths(); renderRsColumnsMenu()"><i class="fa-solid fa-rotate-left"></i>Reset column widths</button></div>`;
 }
 function toggleRsColumnsMenu() {
   const menu = document.getElementById('rsColumnsMenu');
@@ -13192,12 +13240,17 @@ async function switchPlan(id) {
   return true;
 }
 
+function keepMenuInWindow(menu) {
+  const r = menu.getBoundingClientRect();
+  if (r.bottom > window.innerHeight - 8) menu.style.top = Math.max(8, window.innerHeight - r.height - 8) + 'px';
+}
 function togglePlanMenu() {
   const menu = document.getElementById('planMenu');
   if (menu.classList.contains('open')) { closePlanMenu(); return; }
   renderPlanMenu();
   positionDropdown('planMenuBtn', 'planMenu', 'left');
   menu.classList.add('open');
+  keepMenuInWindow(menu);   // (the plan row is low in the sidebar: a tall menu must not run off the bottom of the window)
   document.getElementById('planMenuBtn').classList.add('open');
 }
 function closePlanMenu() {

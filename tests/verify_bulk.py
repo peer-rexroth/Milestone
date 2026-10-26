@@ -51,7 +51,7 @@ with sync_playwright() as p:
     click("E")
     check("a plain click goes back to one task", sel() == ["E"])
     click("A"); click("C", ["Meta"]); pg.click("#selChip"); pg.wait_for_timeout(80)
-    check("clicking the chip clears the selection and the selection buttons disappear", sel() == [] and ev("() => document.getElementById('selActions').classList.contains('hidden')"))
+    check("clicking the chip clears the selection and the selection buttons are disabled again (they stay where they are)", sel() == [] and pg.is_disabled("#deleteTaskBtn") and pg.is_disabled("#cloneTaskBtn"))
     click("A"); click("C", ["Meta"]); pg.keyboard.press("Escape"); pg.wait_for_timeout(80)
     check("Escape clears a multi-selection", sel() == [])
     pg.locator("#gridRows").click(position={"x": 5, "y": 5}) if False else None
@@ -72,7 +72,7 @@ with sync_playwright() as p:
 
     # ------------------------------------------------------------ buttons follow the selection
     seed(FIVE)
-    check("nothing selected: Indent and Outdent are disabled and Edit / Duplicate / Copy / Delete are not shown at all", ev("() => document.getElementById('indentBtn').disabled && document.getElementById('outdentBtn').disabled") and ev("() => document.getElementById('selActions').classList.contains('hidden')") and not pg.locator("#bulkEditBtn").is_visible())
+    check("nothing selected: Indent, Outdent, Edit, Duplicate, Copy and Delete are all there but disabled (the toolbar does not shift)", ev("() => document.getElementById('indentBtn').disabled && document.getElementById('outdentBtn').disabled") and pg.locator("#selActions").is_visible() and pg.is_disabled("#bulkEditBtn") and pg.is_disabled("#cloneTaskBtn") and pg.is_disabled("#copyBtn") and pg.is_disabled("#deleteTaskBtn"))
     click("B"); click("C", ["Meta"])
     check("with a selection they appear (with text labels) and are enabled", ev("() => ['indentBtn', 'cloneTaskBtn', 'copyBtn', 'bulkEditBtn', 'deleteTaskBtn'].every(i => !document.getElementById(i).disabled)") and all(pg.locator("#" + i).is_visible() for i in ["bulkEditBtn", "cloneTaskBtn", "copyBtn", "deleteTaskBtn"]) and [pg.inner_text("#" + i).strip() for i in ["bulkEditBtn", "cloneTaskBtn", "copyBtn", "deleteTaskBtn"]] == ["Edit", "Duplicate", "Copy", "Delete"])
     check("...the Edit button's tooltip names the count", "2 selected" in ev("() => document.getElementById('bulkEditBtn').title") or "all 2" in ev("() => document.getElementById('bulkEditBtn').title"), ev("() => document.getElementById('bulkEditBtn').title"))

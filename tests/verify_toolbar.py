@@ -32,7 +32,7 @@ with sync_playwright() as p:
     # ---------------------------------------------------------------- the bar
     fresh()
     check("the Print button is not in the toolbar any more (it is in the Data menu, and Ctrl/Cmd+P)", pg.locator("#printBtn").count() == 0 and pg.locator("#newTaskModeBtn").count() == 0)
-    check("nothing selected: Indent / Outdent are disabled, and Edit / Duplicate / Copy / Delete are not shown", pg.is_disabled("#indentBtn") and all(not pg.locator("#" + i).is_visible() for i in ["bulkEditBtn", "cloneTaskBtn", "copyBtn", "deleteTaskBtn", "selChip"]))
+    check("nothing selected: Indent / Outdent, Edit / Duplicate / Copy / Delete are there but disabled, and the count chip is not shown", pg.is_disabled("#indentBtn") and all(pg.is_disabled("#" + i) for i in ["bulkEditBtn", "cloneTaskBtn", "copyBtn", "deleteTaskBtn"]) and not pg.locator("#selChip").is_visible())
     check("the visible toolbar: Undo, Redo, Add Task + arrow, Indent, Outdent … Find, Columns", all(pg.locator("#" + i).is_visible() for i in ["undoBtn", "redoBtn", "addTaskBtn", "addMenuBtn", "indentBtn", "outdentBtn", "searchBtn", "columnsBtn"]))
     check("...separators divide the groups", pg.locator(".subbar .tb-sep").count() >= 2)
     pick("Gamma")
@@ -40,7 +40,7 @@ with sync_playwright() as p:
     pick("Alpha"); pick("Beta", ["Meta"])
     check("...two selected: '2 selected'", pg.inner_text("#selChip").strip() == "2 selected")
     pg.click("#selChip"); pg.wait_for_timeout(80)
-    check("the chip clears the selection and the buttons disappear again", sel() == [] and not pg.locator("#bulkEditBtn").is_visible())
+    check("the chip clears the selection and the buttons are disabled again", sel() == [] and pg.is_disabled("#bulkEditBtn") and not pg.locator("#selChip").is_visible())
     pick("Gamma"); pg.click("#bulkEditBtn"); pg.wait_for_timeout(250)
     check("Edit (one task) opens the task dialog", modal()); pg.keyboard.press("Escape"); pg.wait_for_timeout(250)
     pg.click("#cloneTaskBtn"); pg.wait_for_timeout(200)

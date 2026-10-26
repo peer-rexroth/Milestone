@@ -24,8 +24,8 @@ with sync_playwright() as p:
 
     # ---------------------------------------------------------------- A: the top bar holds only app-level things
     top = ev("() => [...document.querySelectorAll('.sidebar button')].filter(e => e.offsetParent).map(e => e.id).filter(Boolean)")
-    check("the sidebar has the plan menu, Schedule, Data, Appearance and Help — and no zoom / baseline / critical path in the sidebar",
-          all(i in top for i in ["planMenuBtn", "scheduleMenuBtn", "dataMenuBtn", "themeToggleBtn", "helpMenuBtn"]) and not any(i in top for i in ["zoomTabs", "baselineBtn", "criticalPathBtn"]), top)
+    check("the sidebar has the plan menu, Data, Appearance and Help; Schedule and Plan settings are toolbar icons — and no zoom / baseline / critical path in the sidebar",
+          all(i in top for i in ["planMenuBtn", "dataMenuBtn", "themeToggleBtn", "helpMenuBtn"]) and "scheduleMenuBtn" not in top and ev("() => !!document.querySelector('#subbar #scheduleMenuBtn') && !!document.querySelector('#subbar #planSettingsBtn')") and not any(i in top for i in ["zoomTabs", "baselineBtn", "criticalPathBtn"]), top)
     pos = {}
     for v in ["tasks", "gantt", "resourceSheet", "resources"]:
         view(v); pos[v] = ev("() => ['scheduleMenuBtn', 'dataMenuBtn', 'themeToggleBtn'].map(i => Math.round(document.getElementById(i).getBoundingClientRect().left))")
@@ -95,7 +95,7 @@ with sync_playwright() as p:
     # ---------------------------------------------------------------- C: Plan settings
     pg.click("#scheduleMenuBtn"); pg.wait_for_selector("#scheduleMenu.open")
     items = [t.split("\n")[0].strip() for t in pg.locator("#scheduleMenu .dropdown-item").all_inner_texts()]
-    check("the Schedule menu holds just the three actions (Baseline, Reschedule, Level) — Plan settings is the gear next to the plan switcher", items == ["Baseline…", "Reschedule remaining work…", "Level resources…"] and pg.locator(".sidebar #planSettingsBtn").count() == 1, items)
+    check("the Schedule menu holds just the three actions (Baseline, Reschedule, Level) — Plan settings is the gear next to the plan switcher", items == ["Baseline…", "Reschedule remaining work…", "Level resources…"] and pg.locator("#subbar #planSettingsBtn").count() == 1, items)
     pg.keyboard.press("Escape")
     pg.click("#planSettingsBtn"); pg.wait_for_timeout(150)
     open_bg = lambda: ev("() => [...document.querySelectorAll('.modal-bg.open')].map(e => e.id)")
