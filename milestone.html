@@ -545,16 +545,23 @@ button { cursor: default; }
 }
 html.sidebar-collapsed .sidebar { display: none; }
 .sidebar { position: relative; z-index: 60; }   /* above the content, so the tools bar's menus (wider than the sidebar) are not painted over by it */
-.sb-head { display: flex; align-items: center; gap: 8px; height: 52px; flex: none; padding: 0 12px 0 14px; }
+.sb-head { display: flex; align-items: center; gap: 8px; height: 52px; flex: none; padding: 0 12px 0 14px; }   /* just the round hide button (the views are rows below) */
 .sb-head #sidebarToggleBtn, .sb-float { background: var(--cap-fill); border-radius: 50%; width: 36px; height: 36px; flex: none; box-shadow: var(--elev-1); }   /* ClearDesk's round hide / show button */
 .sb-head #sidebarToggleBtn i, .sb-float i { font-size: var(--ico-16); }
 .sb-head #sidebarToggleBtn:hover { background: var(--cap-hover); }
-.sidebar .view-tabs { display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: var(--cap-fill); }
-.sidebar .view-tab { display: grid; place-items: center; width: 40px; height: 28px; padding: 0; border: none; border-radius: 999px; background: transparent; color: var(--text-dim); }
-.sidebar .view-tab i { font-size: var(--ico-18); }
-.sidebar .view-tab:hover { background: var(--cap-hover); color: var(--text); }
-.sidebar .view-tab.active { background: var(--cap-on); color: var(--text); box-shadow: none; }
-.sidebar .view-tab-sep { display: none; }
+.sidebar .view-tabs { display: flex; flex-direction: column; gap: 2px; padding: 0; background: none; border-radius: 0; }
+.sidebar .view-tab { display: flex; align-items: center; gap: 10px; width: 100%; height: auto; padding: 8px 10px; border: none; border-radius: var(--r-m); background: transparent; color: var(--text-dim); font-size: var(--fs-14); font-weight: 500; text-align: left; }
+.sidebar .view-tab i { font-size: var(--ico-16); width: 1em; color: var(--text-dim); }
+.sidebar .view-tab:hover { background: var(--hover); color: var(--text); }
+.sidebar .view-tab.active { background: var(--panel); color: var(--text); font-weight: 600; box-shadow: inset 0 0 0 1px var(--border); }
+.sidebar .view-tab.active i { color: var(--accent); }
+.sidebar .view-tab-sep { display: block; height: 6px; background: none; margin: 0; }
+.sb-rule { height: 1px; background: var(--border); margin: 8px 10px; }
+.sb-row { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border: none; border-radius: var(--r-m); background: transparent; color: var(--text-dim); font-size: var(--fs-14); font-weight: 500; text-align: left; }
+.sb-row:hover { background: var(--hover); color: var(--text); }
+.sb-row i { font-size: var(--ico-16); width: 1em; }
+.sb-row span { flex: 1; }
+.sb-row .sb-row-chev { font-size: var(--ico-12); color: var(--text-faint); }
 .sb-search { display: flex; align-items: center; gap: 8px; margin: 0 12px 4px; height: 36px; padding: 0 14px; border: none; border-radius: 999px; background: var(--cap-fill); color: var(--text-faint); font-size: var(--fs-14); text-align: left; }
 .sb-search:hover { background: var(--cap-hover); }
 .sb-search i { font-size: var(--ico-16); }
@@ -1862,17 +1869,19 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 <aside class="sidebar" id="sidebar" aria-label="Plans and views">
   <div class="sb-head">
     <button class="icon-btn" id="sidebarToggleBtn" onclick="toggleSidebar()" title="Hide sidebar (Alt+Cmd/Ctrl+S)" aria-label="Hide sidebar"><i class="fa-solid fa-sidebar"></i></button>
-    <div class="view-tabs" id="mainViewTabs" role="group" aria-label="View"></div>
   </div>
   <button class="sb-search" id="sbSearchBtn" onclick="openSearch()" aria-label="Find a task" title="Find a task by name, WBS, number (#12), resource (@anna) or status (status:late)"><i class="fa-solid fa-magnifying-glass"></i><span>Find a task…</span></button>
   <div class="sb-scroll">
+    <div class="sb-sec"><span class="sb-label">Views</span></div>
+    <div class="view-tabs" id="mainViewTabs" role="list" aria-label="Views"></div>
     <div class="sb-sec"><span class="sb-label">Plans</span><span class="sb-sec-sp"></span>
-      <div class="dropdown-wrap"><button class="icon-btn sb-mini" id="planMenuBtn" onclick="togglePlanMenu()" title="Plan menu — new, open, rename, duplicate, link a folder" aria-label="Plan menu" aria-haspopup="menu"><i class="fa-solid fa-sliders plan-ico"></i><span id="planBtnName" class="sr-only"></span></button></div>
-      <button class="icon-btn sb-mini" id="planSettingsBtn" onclick="openPlanSettings()" aria-label="Plan settings" title="Plan settings — calendar, precision, scheduling rules, currency, custom fields"><i class="fa-solid fa-gear"></i></button>
-      <button class="icon-btn sb-mini" id="scheduleMenuBtn" aria-label="Schedule" aria-haspopup="menu" onclick="toggleScheduleMenu()" title="Schedule: baselines, rescheduling, levelling"><i class="fa-solid fa-calendar-check"></i></button>
+      <div class="dropdown-wrap"><button class="icon-btn sb-mini" id="planMenuBtn" onclick="togglePlanMenu()" title="Plan menu — new, open, rename, duplicate, link a folder" aria-label="Plan menu" aria-haspopup="menu"><i class="fa-solid fa-ellipsis plan-ico"></i><span id="planBtnName" class="sr-only"></span></button></div>
       <button class="icon-btn sb-mini" id="sbNewPlanBtn" onclick="openPlanModal('new')" title="New plan…" aria-label="New plan"><i class="fa-solid fa-plus"></i></button>
     </div>
     <div class="sb-plans" id="sbPlans" role="list" aria-label="Plans"></div>
+    <div class="sb-rule"></div>
+    <button class="sb-row" id="scheduleMenuBtn" aria-label="Schedule" aria-haspopup="menu" onclick="toggleScheduleMenu()" title="Schedule: baselines, rescheduling, levelling"><i class="fa-solid fa-calendar-check"></i><span>Schedule</span><i class="fa-solid fa-chevron-down sb-row-chev"></i></button>
+    <button class="sb-row" id="planSettingsBtn" onclick="openPlanSettings()" aria-label="Plan settings" title="Plan settings — calendar, precision, scheduling rules, currency, custom fields"><i class="fa-solid fa-gear"></i><span>Plan settings…</span></button>
   </div>
   <div class="sb-tools">
   <div class="plan-status">
@@ -5198,7 +5207,7 @@ function openResourceSheet() { if (currentView !== 'resourceSheet') setView('res
 function renderMainViewTabs() {
   document.getElementById('mainViewTabs').innerHTML = MAIN_VIEWS.map((v, i) =>
     (i && MAIN_VIEWS[i - 1].group !== v.group ? '<span class="view-tab-sep" aria-hidden="true"></span>' : '') +
-    `<button class="view-tab${v.id === currentView ? ' active' : ''}" onclick="setView('${v.id}')" title="${v.label} (Alt+Cmd/Ctrl+${i + 1})" aria-label="${v.label}" aria-pressed="${v.id === currentView}"><i class="fa-solid ${v.icon}"></i><span class="sr-only">${v.label}</span></button>`).join('');
+    `<button class="view-tab${v.id === currentView ? ' active' : ''}" onclick="setView('${v.id}')" title="${v.label} (Alt+Cmd/Ctrl+${i + 1})" aria-pressed="${v.id === currentView}"${v.id === currentView ? ' aria-current="page"' : ''}><i class="fa-solid ${v.icon}"></i><span>${v.label}</span></button>`).join('');
   for (const g of document.querySelectorAll('#subbar [data-views]')) g.classList.toggle('hidden', !g.dataset.views.split(' ').includes(currentView));   // the toolbar belongs to the view
   document.getElementById('main').classList.toggle('view-tasks', currentView === 'tasks');
   document.getElementById('main').classList.toggle('view-gantt', currentView === 'gantt');
