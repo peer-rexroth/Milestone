@@ -24,8 +24,8 @@ with sync_playwright() as p:
 
     # ---------------------------------------------------------------- A: the top bar holds only app-level things
     top = ev("() => [...document.querySelectorAll('.sidebar button')].filter(e => e.offsetParent).map(e => e.id).filter(Boolean)")
-    check("the top bar has the plan switcher, Schedule, Data, theme — and no zoom / baseline / critical path any more",
-          all(i in top for i in ["planMenuBtn", "scheduleMenuBtn", "dataMenuBtn", "themeToggleBtn"]) and not any(i in top for i in ["zoomTabs", "baselineBtn", "criticalPathBtn"]), top)
+    check("the sidebar has the plan menu, Schedule, Data, Appearance and Help — and no zoom / baseline / critical path in the sidebar",
+          all(i in top for i in ["planMenuBtn", "scheduleMenuBtn", "dataMenuBtn", "themeToggleBtn", "helpMenuBtn"]) and not any(i in top for i in ["zoomTabs", "baselineBtn", "criticalPathBtn"]), top)
     pos = {}
     for v in ["tasks", "gantt", "resourceSheet", "resources"]:
         view(v); pos[v] = ev("() => ['scheduleMenuBtn', 'dataMenuBtn', 'themeToggleBtn'].map(i => Math.round(document.getElementById(i).getBoundingClientRect().left))")

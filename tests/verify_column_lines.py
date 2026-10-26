@@ -74,6 +74,6 @@ with sync_playwright() as p:
     pg.evaluate("() => { currentView = 'tasks'; render(); }"); pg.wait_for_timeout(150)
     check("...and they are back in the Tasks view", len(pos("--col-pos-r")) > 5)
     # dark
-    pg.click("#themeToggleBtn"); pg.wait_for_timeout(200)
+    pg.evaluate("() => toggleTheme()"); pg.wait_for_timeout(200)
     check("dark theme: lines still there", len(pos("--col-pos-r")) > 5 and (not Image or True))
     print("console errors/warnings:", errors); print(f"{sum(results)}/{len(results)} passed"); b.close()

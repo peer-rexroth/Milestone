@@ -116,7 +116,7 @@ with sync_playwright() as p:
         ev("() => { document.getElementById('taskModalBg').classList.remove('open'); }")
     # Help link
     ev("() => { closeShortcuts(); document.activeElement && document.activeElement.blur(); }")
-    pg.locator("button[title='Help']").click(); pg.wait_for_timeout(250)
+    pg.click("#helpMenuBtn"); pg.click("#helpMenu .dropdown-item >> nth=0"); pg.wait_for_timeout(250)
     check("Help has a 'Keyboard shortcuts' link at its top", pg.locator("#helpModalBg .hdr-link").count() == 1)
     pg.locator("#helpModalBg .hdr-link").click(); pg.wait_for_timeout(250)
     check("...it closes Help and opens the sheet", isopen() and not ev("() => document.getElementById('helpModalBg').classList.contains('open')"))

@@ -72,7 +72,7 @@ with sync_playwright() as p:
     pg.wait_for_timeout(60)   # openTaskModal() focuses Task Name 30ms after opening; a fill racing that timer can be interrupted (was intermittently flaky here)
     check("in a minute-mode plan the task dialog shows Start/Finish time inputs", pg.is_visible("#taskStartTimeInput") and pg.is_visible("#taskEndTimeInput"))
     check("the Duration label drops '(days)' and its tooltip explains hour/minute entry", pg.inner_text("#taskDurationLabel") == "Duration" and "bare number is hours" in (pg.get_attribute("#taskDurationLabel", "title") or ""))
-    check("the dialog keeps its width (620px, no jump between modes): each date+time field takes two of the four columns", pg.eval_on_selector("#taskModalInner", "e => e.classList.contains('minute-mode')") and round(pg.locator("#taskModalInner").bounding_box()["width"]) == 620)
+    check("the dialog keeps its width (660px, no jump between modes): each date+time field takes two of the four columns", pg.eval_on_selector("#taskModalInner", "e => e.classList.contains('minute-mode')") and round(pg.locator("#taskModalInner").bounding_box()["width"]) == 660)
     date_box = pg.locator("#taskStartInput").bounding_box(); time_box = pg.locator("#taskStartTimeInput").bounding_box()
     check("...so the Start date shows its whole text (>= 140px, not squeezed to the icon), on the same row as its time", date_box["width"] >= 140 and abs(date_box["y"] - time_box["y"]) < 2, (date_box, time_box))
     pg.fill("#taskStartTimeInput", "09:00"); pg.dispatch_event("#taskStartTimeInput", "change")
@@ -125,7 +125,7 @@ with sync_playwright() as p:
     pg.click(f".grid-row[data-id='{tid('A')}'] .icon-btn[title=Edit]"); pg.wait_for_selector("#taskModalBg.open")
     check("the task dialog hides the time inputs again in day mode", not pg.is_visible("#taskStartTimeInput"))
     check("the Duration label is back to '(days)'", pg.inner_text("#taskDurationLabel") == "Duration (days)")
-    check("...and the modal narrows back to its standard width", not pg.eval_on_selector("#taskModalInner", "e => e.classList.contains('minute-mode')") and pg.locator("#taskModalInner").bounding_box()["width"] == 620)
+    check("...and the modal narrows back to its standard width", not pg.eval_on_selector("#taskModalInner", "e => e.classList.contains('minute-mode')") and pg.locator("#taskModalInner").bounding_box()["width"] == 660)
     pg.keyboard.press("Escape")
 
     check("no console errors or page errors across the whole run", not errors, errors[:5])

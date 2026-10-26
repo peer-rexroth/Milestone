@@ -12,7 +12,7 @@ with sync_playwright() as p:
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
     pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn")
     ev = pg.evaluate
-    open_help = lambda: (pg.click("button[title='Help']"), pg.wait_for_selector("#helpModalBg.open"), pg.wait_for_timeout(250))
+    open_help = lambda: (pg.click("#helpMenuBtn"), pg.click("#helpMenu .dropdown-item >> nth=0"), pg.wait_for_selector("#helpModalBg.open"), pg.wait_for_timeout(250))
     visible = lambda: ev("() => [...document.querySelectorAll('#helpModalBg .help-pane')].filter(p => !p.hidden).map(p => p.id.replace('helpPane-', ''))")
     open_help()
 
@@ -50,7 +50,7 @@ with sync_playwright() as p:
     check("reopening it returns to the topic you were reading (Gantt chart)", visible() == ["gantt"], visible())
     pg.mouse.click(10, 400); pg.wait_for_timeout(200)
     check("a click on the backdrop closes it too", not ev("() => document.getElementById('helpModalBg').classList.contains('open')"))
-    open_help(); pg.click("#helpModalBg .modal-footer .btn"); pg.wait_for_timeout(200)
+    open_help(); pg.click("#helpModalBg .modal-header button:not(.hdr-link)[aria-label=Close]"); pg.wait_for_timeout(200)
     check("the Close button closes it", not ev("() => document.getElementById('helpModalBg').classList.contains('open')"))
 
     # ---------------------------------------------------------------- content

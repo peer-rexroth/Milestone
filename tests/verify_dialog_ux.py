@@ -193,7 +193,7 @@ with sync_playwright() as p:
     check("a confirmation above the task dialog keeps Tab inside itself", ev("() => !!document.activeElement.closest('#confirmModalBg')"))
     close_all()
     ev("() => document.querySelector('.icon-btn[title=Help]').focus()")
-    pg.click(".icon-btn[title=Help]"); pg.wait_for_selector("#helpModalBg.open"); pg.wait_for_timeout(150)
+    ev("() => openHelpModal()"); pg.wait_for_selector("#helpModalBg.open"); pg.wait_for_timeout(150)
     pg.keyboard.press("Escape"); pg.wait_for_timeout(200)
     check("closing a dialog puts focus back on the button that opened it", ev("() => document.activeElement.getAttribute('title')") == "Help", ev("() => document.activeElement.outerHTML.slice(0, 60)"))
 

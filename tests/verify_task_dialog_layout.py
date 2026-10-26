@@ -22,7 +22,7 @@ with sync_playwright() as p:
     Y = lambda sel: ev("(s) => document.querySelector(s).getBoundingClientRect().top", sel)
     open_task("b")
     seps = ev("() => [...document.querySelectorAll('#taskTabGeneral > .task-sep')].map(e => { const r = e.getBoundingClientRect(), b = document.querySelector('#taskModalBg .modal-body').getBoundingClientRect(); return { h: Math.round(r.height), w: Math.round(r.width), bodyW: Math.round(b.width), top: r.top }; })")
-    check("three thin dividers (1px) cross the General tab, as wide as the page", len(seps) == 3 and all(x["h"] == 1 and x["w"] >= x["bodyW"] - 40 for x in seps), seps)
+    check("three thin dividers (1px) cross the General tab, as wide as the page", len(seps) == 3 and all(x["h"] == 1 and x["w"] >= x["bodyW"] - 48 for x in seps), seps)
     order = [Y("#taskNameInput"), seps[0]["top"], Y("#taskStartInput"), seps[1]["top"], Y("#taskConstraintTypeInput"), seps[2]["top"], Y("#predecessorRows")]
     check("they divide the four sections in order: Task (name, mode, resource, type, work) | Schedule (dates, actuals) | Rules and look (constraint, deadline, row colour) | Predecessors", order == sorted(order), order)
     check("Task Type / Work are in the first section (above the first divider); Row colour in the third (below the second, above the last)", Y("#taskTypeInput") < seps[0]["top"] and seps[1]["top"] < Y("#taskColorSwatches") < seps[2]["top"])

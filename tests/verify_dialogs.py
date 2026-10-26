@@ -66,8 +66,10 @@ with sync_playwright() as p:
     check("...a (destructive) confirmation shows 'Cancel' and 'Delete' again, and no button has the focus", pg.inner_text("#confirmModalCancelBtn") == "Cancel" and pg.inner_text("#confirmModalActionBtn") == "Delete" and ev("() => document.activeElement.id") == "confirmModalBox"); pg.keyboard.press("Escape"); pg.wait_for_timeout(100)
 
     # ------------------------------------------------------------------ Working calendar
+    pg.set_viewport_size({"width": 1440, "height": 900})   # (the dialog has ClearDesk's 24px padding now: it fits from about 860px of window height; shorter windows scroll its body)
     fresh(); ev("() => openCalendarModal()"); pg.wait_for_timeout(300)
     check("the calendar dialog fits without scrolling and has a summary chip in its header ('Mon–Fri')", fits("#calendarModalBg") and pg.inner_text("#calendarSummaryLive") == "Mon–Fri", pg.inner_text("#calendarSummaryLive"))
+    pg.set_viewport_size({"width": 1440, "height": 800})
     check("...sections: Working week, Public holidays, Another day off, Days off in this plan (constraint dates moved to Plan settings → Scheduling rules)", [t.strip().split("\n")[0].strip().upper() for t in pg.locator("#calendarModalBg .cal-sec-title").all_inner_texts()] == ["WORKING WEEK OF “MY PROJECT”", "PUBLIC HOLIDAYS", "ANOTHER DAY OFF A SINGLE DAY, A BREAK, OR A DAY THAT COMES BACK EVERY YEAR", "DAYS OFF IN THIS PLAN"] or len(pg.locator("#calendarModalBg .cal-sec-title").all()) == 5)
     check("...the region, both years and the Add button are on ONE row (they used to stack)", max(abs(mid(x) - mid("#holRegion")) for x in ["#holYearFrom", "#holYearTo", "#calendarModalBg .hol-preset .btn"]) <= 3)
     check("...the two dates of a break are side by side, the name and Add on the row below", abs(top("#holFrom") - top("#holTo")) <= 1 and top("#holName") > top("#holFrom") and abs(top("#holName") - top("#calendarModalBg .hol-add .btn")) <= 2)
