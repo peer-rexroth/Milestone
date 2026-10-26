@@ -450,7 +450,7 @@ html[data-scheme="glass"][data-theme="dark"] :is(.content, .modal, .dropdown-men
 html {
   --nc-red: #d92d20;
   --nc-orange: #c2570c;
-  --nc-green: #1a7f37;
+  --nc-green: #1a7a36;
   --nc-blue: #2563eb;
   --nc-purple: #7c3aed;
   --nc-gray: #6b7280;
@@ -498,17 +498,17 @@ html, :is(.content, .modal, .dropdown-menu) {
   --head-h: 42px;   /* the header of the task list and of the Gantt timescale: two lines of text, the same height in both so the rows line up */
 }
 :root {
-  --task-blue: #0969da; --task-teal: #1b7c83; --task-purple: #8250df; --task-amber: #9a6700; --chg-bg: #fdf1c7; --chg-bg-sel: #f8e3a0;
-  --task-pink: #ce2c85; --task-green: #1a7f37; --task-red: #cf222e; --task-grey: #656d76;
-  --status-not-started: #8c959f; --status-complete: #0969da;
+  --task-blue: #2a5fcf; --task-teal: #0b6b5f; --task-purple: #7a2fb0; --task-amber: #8a4b00; --chg-bg: #fdf1c7; --chg-bg-sel: #f8e3a0;
+  --task-pink: #b8286e; --task-green: #1a7a36; --task-red: #c4281f; --task-grey: #6a6b73;
+  --status-not-started: #8c959f; --status-complete: #2a5fcf;
   --chg-bg: #fdf1c7; --chg-bg-sel: #f8e3a0;
   color-scheme: light;   /* tells the browser how to draw its own controls (date picker, select menus, scrollbars) */
 }
 html[data-theme="dark"] {
   color-scheme: dark;
-  --task-blue: #478be6; --task-teal: #4cb6c4; --task-purple: #986ee2; --task-amber: #c69026; --chg-bg: color-mix(in srgb, #c69026 20%, #22272e); --chg-bg-sel: color-mix(in srgb, #c69026 30%, #22272e);
-  --task-pink: #c96b96; --task-green: #57ab5a; --task-red: #e5534b; --task-grey: #9198a1;
-  --status-not-started: #6b7280; --status-complete: #478be6;
+  --task-blue: #0a84ff; --task-teal: #30b0a0; --task-purple: #af52de; --task-amber: #ff9f0a; --chg-bg: color-mix(in srgb, #ff9f0a 20%, #22272e); --chg-bg-sel: color-mix(in srgb, #ff9f0a 30%, #22272e);   /* (dark: the system's mid-tone fills — white text and a tint both read on them; the -text tones are for text only) */
+  --task-pink: #ff375f; --task-green: #30d158; --task-red: #ff453a; --task-grey: #8e8e93;
+  --status-not-started: #6b7280; --status-complete: #0a84ff;
 }
 
 /* Icons: a masked box drawn from the registry above. The drawing fills 1.26x the font-size box (--ico-k), so use the size tokens
@@ -543,46 +543,45 @@ button { cursor: default; }
   backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
 }
 html.sidebar-collapsed .sidebar { display: none; }
-.sb-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; height: 52px; flex: none; padding: 0 12px 0 16px; }
-.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: var(--fs-17); letter-spacing: -0.02em; color: var(--text); min-width: 0; }
-.brand svg { width: 30px; height: 30px; color: var(--accent); flex: none; }
-.sb-plan { flex: none; display: flex; flex-direction: column; gap: 6px; padding: 0 12px 8px; }
-.sb-plan .dropdown-wrap { min-width: 0; }
-/* Plan switcher: the project name, as a button that opens the list of plans. */
-.plan-btn {
-  display: flex; align-items: center; gap: 8px; width: 100%;
-  border: 1px solid var(--border); background: var(--panel); font-weight: 600; font-size: var(--fs-14); text-align: left;
-  padding: 6px 10px; border-radius: var(--r-s); color: var(--text);   /* a bordered box with a folder and a chevron: plainly a menu, not a title */
-}
-.plan-btn:hover, .plan-btn.open { background: var(--panel-2); border-color: color-mix(in srgb, var(--accent) 40%, var(--border)); }
-.plan-btn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
-.plan-btn .plan-ico { font-size: var(--ico-16); color: var(--text-dim); flex-shrink: 0; }
-.plan-status { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }   /* the plan's file status sits right under its name */
-.plan-status #fileSyncBtn { padding: 4px 8px; font-size: var(--fs-12); }
-.plan-btn i { font-size: var(--ico-12); color: var(--text-faint); flex-shrink: 0; }
+.sb-head { display: flex; align-items: center; gap: 8px; height: 52px; flex: none; padding: 0 12px 0 14px; }
+.sb-head #sidebarToggleBtn { background: var(--cap-fill); border-radius: 50%; width: 32px; height: 32px; flex: none; }
+.sb-head #sidebarToggleBtn:hover { background: var(--cap-hover); }
+.sidebar .view-tabs { display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: var(--cap-fill); }
+.sidebar .view-tab { display: grid; place-items: center; width: 40px; height: 28px; padding: 0; border: none; border-radius: 999px; background: transparent; color: var(--text-dim); }
+.sidebar .view-tab i { font-size: var(--ico-18); }
+.sidebar .view-tab:hover { background: var(--cap-hover); color: var(--text); }
+.sidebar .view-tab.active { background: var(--cap-on); color: var(--text); box-shadow: none; }
+.sidebar .view-tab-sep { display: none; }
+.sb-search { display: flex; align-items: center; gap: 8px; margin: 0 12px 4px; height: 32px; padding: 0 12px; border: none; border-radius: 999px; background: var(--cap-fill); color: var(--text-faint); font-size: var(--fs-13); text-align: left; }
+.sb-search:hover { background: var(--cap-hover); }
+.sb-search i { font-size: var(--ico-16); }
+.sb-sec { display: flex; align-items: center; gap: 2px; padding: 12px 6px 4px 10px; }
+.sb-sec .sb-label { padding: 0; }
+.sb-sec-sp { flex: 1; }
+.sb-mini { width: 24px; height: 24px; border-radius: var(--r-s); color: var(--text-faint); }
+.sb-mini i { font-size: var(--ico-16); }
+.sb-mini:hover { background: var(--cap-hover); color: var(--text); }
 .sb-plans { display: flex; flex-direction: column; gap: 2px; }
-.sb-plans:empty { display: none; }
-.sb-plans .sb-label { padding: 6px 10px 2px; }
 .sb-plan-row { display: flex; align-items: center; gap: 10px; width: 100%; padding: 6px 10px; border: none; background: transparent; border-radius: var(--r-m); text-align: left; font-size: var(--fs-13); font-weight: 500; color: var(--text-dim); }
-.sb-plan-row i { font-size: var(--ico-14); color: var(--text-faint); }
+.sb-plan-row i { font-size: var(--ico-14); color: var(--text-faint); width: 1em; }
 .sb-plan-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
-.sb-plan-row:hover { background: color-mix(in srgb, var(--text) 7%, transparent); color: var(--text); }
+.sb-plan-row:hover { background: var(--hover); color: var(--text); }
 .sb-plan-row.active { background: var(--panel); color: var(--text); font-weight: 600; box-shadow: inset 0 0 0 1px var(--border); }
-.sb-resizer { position: relative; flex: none; width: 0; z-index: 6; }   /* the hairline is the sidebar's border; this is a 6px hit strip over it */
-.sb-resizer::before { content: ''; position: absolute; top: 0; bottom: 0; left: -3px; width: 6px; cursor: col-resize; }
-.sb-resizer::after { content: ''; position: absolute; top: 0; bottom: 0; left: -1px; width: 2px; background: var(--accent); opacity: 0; transition: opacity var(--dur-fast) ease; }
-.sb-resizer:hover::after, .sb-resizer.dragging::after, .sb-resizer:focus-visible::after { opacity: 1; }
-html.sidebar-collapsed .sb-resizer { display: none; }
-@media (max-width: 800px) { .sb-resizer { display: none; } }
+.sb-plan-row em { margin-left: auto; font-style: normal; font-size: var(--fs-12); color: var(--text-faint); font-weight: 400; }
+.sb-plan-row span { flex: 1; }
 .sb-scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 4px 12px; }
 .sb-label { font-size: var(--fs-11); font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--text-faint); padding: 10px 10px 4px; }
-.sb-tools { flex: none; display: flex; align-items: center; gap: 2px; padding: 8px 12px; border-top: 1px solid var(--border); }
-.sb-tools-sp { flex: 1 1 auto; }
+.sb-tools { flex: none; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--border); }
+.sb-tools .sb-cap { margin-left: auto; }
+.sb-tools .plan-status { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.sb-tools .plan-status #fileSyncBtn { height: 28px; padding: 0 12px; border-radius: 999px; background: var(--cap-fill); border: none; font-size: var(--fs-12); font-weight: 500; }
+.sb-tools .plan-status #fileSyncBtn:hover { background: var(--cap-hover); }
+.sb-tools .sb-cap .btn, .sb-tools .sb-cap .icon-btn { width: 28px; height: 26px; border-radius: 999px; background: transparent; }
+.sb-tools .sb-cap .btn:hover, .sb-tools .sb-cap .icon-btn:hover { background: var(--cap-hover); }
 .sb-tools .dropdown-wrap { display: flex; }
-.sb-tools .btn { width: 32px; height: 32px; padding: 0; justify-content: center; border: none; background: transparent; color: var(--text-dim); font-size: var(--fs-15); border-radius: var(--r-s); }
-.sb-tools .btn:hover { background: var(--page-bg); color: var(--text); }
-.sb-tools .btn .btn-label { display: none; }
-.sb-tools .icon-btn:hover { background: var(--page-bg); }
+.sb-tools .sb-cap .btn { padding: 0; justify-content: center; border: none; background: transparent; color: var(--text-dim); font-size: var(--fs-15); }
+.sb-tools .sb-cap .btn:hover { color: var(--text); }
+.sb-tools .sb-cap .btn .btn-label { display: none; }
 html:not(.sidebar-collapsed) .sb-float { display: none; }   /* (the show button only exists while the sidebar is hidden) */
 .bar-title { flex: 0 1 auto; min-width: 120px; max-width: 280px; margin-right: 6px; line-height: 1.2; }
 .bar-title b { display: block; font-size: var(--fs-17); font-weight: 700; letter-spacing: -.01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -593,11 +592,6 @@ html:not(.sidebar-collapsed) .sb-float { display: none; }   /* (the show button 
 }
 /* view tabs: the task views, a divider, the resource views */
 .view-tab-sep { height: 1px; align-self: stretch; margin: 6px 8px; background: var(--border); }
-.sidebar .view-tabs { flex-direction: column; background: none; padding: 0; gap: 2px; border-radius: 0; }
-.sidebar .view-tab { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: var(--r-s); text-align: left; font-size: var(--fs-13); font-weight: 500; color: var(--text-dim); }
-.sidebar .view-tab i { width: 16px; text-align: center; font-size: var(--ico-16); }
-.sidebar .view-tab:hover { background: var(--hover-bg, color-mix(in srgb, var(--text) 7%, transparent)); color: var(--text); }
-.sidebar .view-tab.active { background: var(--panel); color: var(--text); font-weight: 600; box-shadow: inset 0 0 0 1px var(--border); }
 
 .subbar {
   display: flex; align-items: center; gap: 6px 10px; height: 52px; min-height: 52px; padding: 0 20px;
@@ -1288,7 +1282,7 @@ html.time12 .tf-top.mm .tf-left { grid-template-columns: auto minmax(230px, 1fr)
 .hol-row button { background: none; border: 0; color: var(--text-dim);padding: 2px 6px; border-radius: var(--r-xs); }
 .hol-row button:hover { background: var(--panel-2); color: var(--danger); }
 .cal-hint { font-size: var(--fs-12); color: var(--text-dim); margin: 12px 0 0; line-height: 1.5; }
-.gantt-nonwork { position: absolute; top: 0; background: color-mix(in srgb, var(--text) 5%, transparent); pointer-events: none; }
+.gantt-nonwork { position: absolute; top: 0; background: color-mix(in srgb, var(--text) 3.5%, transparent); pointer-events: none; }
 .grid-name .mismatch-warn { color: var(--task-amber); flex-shrink: 0; font-size: var(--fs-11); }
 .inline-wrap { position: relative; display: flex; align-items: center; }
 .inline-wrap .inline-edit { padding-right: 20px; }
@@ -1327,9 +1321,9 @@ input.inline-edit[type=date]::-webkit-calendar-picker-indicator { margin: 0 0 0 
 .empty-state i { font-size: 30px; color: var(--text-faint); margin-bottom: 12px; display: block; }
 .empty-state .btn { margin-top: 14px; }
 
-.gantt-pane-outer { flex: 1; min-width: 0; overflow: auto; position: relative; background: var(--page-bg); }
+.gantt-pane-outer { flex: 1; min-width: 0; overflow: auto; position: relative; background: var(--panel); }   /* flat, like the list beside it */
 .gantt-content { position: relative; }
-.gantt-header { position: sticky; top: 0; z-index: 5; height: var(--head-h); background: var(--panel-2); border-bottom: 1px solid var(--border); }
+.gantt-header { position: sticky; top: 0; z-index: 5; height: var(--head-h); background: var(--panel); border-bottom: 1px solid var(--border); }
 .gantt-tick { position: absolute; top: 0; bottom: 0; border-left: 1px solid var(--border); font-size: var(--fs-11); color: var(--text-faint); padding: 8px 0 0 4px; white-space: nowrap; }
 /* Ticks span their whole period (a calendar week, a month, a quarter), so overflow is clipped rather than
    spilling into the next tick. Week and Year labels are two lines. Week: "CW 37" over the Monday's date. Year: the year
@@ -1356,13 +1350,13 @@ input.inline-edit[type=date]::-webkit-calendar-picker-indicator { margin: 0 0 0 
 .gantt-deadline.missed::after { background: var(--danger); }
 .gantt-today-line { position: absolute; top: 0; width: 2px; background: var(--danger); opacity: .6; z-index: 3; pointer-events: none; }
 .gantt-bar {
-  position: absolute; height: 20px; border-radius: var(--r-xs); cursor: grab;
+  position: absolute; height: 20px; border-radius: 5px; cursor: grab;
   border: 1.5px solid var(--bar-color, var(--accent));
-  background: color-mix(in srgb, var(--bar-color, var(--accent)) 22%, var(--panel));
+  background: var(--bar-color, var(--accent));   /* a solid bar; the finished part is a lighter band across it (as in the layout mock), the label is white */
   overflow: hidden;
 }
 .gantt-bar.critical { box-shadow: 0 0 0 2px var(--danger); }
-.gantt-bar.manual { border-style: dashed; background: color-mix(in srgb, var(--bar-color, var(--accent)) 8%, var(--panel)); }
+.gantt-bar.manual { border-style: dashed; background: color-mix(in srgb, var(--bar-color, var(--accent)) 10%, var(--panel)); }
 .gantt-bar.manual .fill { opacity: .5; }
 .gantt-bar.mismatch { box-shadow: 0 0 0 2px var(--task-amber); }
 .gantt-rollup { position: absolute; height: 4px; border-radius: var(--r-xs); background: var(--bar-color, var(--accent)); opacity: .75; pointer-events: none; }
@@ -1371,9 +1365,11 @@ input.inline-edit[type=date]::-webkit-calendar-picker-indicator { margin: 0 0 0 
 .gantt-bracket { position: absolute; width: 10px; height: 20px; border: 2px solid var(--text-dim);}
 .gantt-bracket.br-start { border-right: none; }
 .gantt-bracket.br-end { border-left: none; }
-.gantt-bar .fill { position: absolute; top: 0; left: 0; bottom: 0; background: var(--bar-color, var(--accent)); }
+.gantt-bar .fill { position: absolute; top: 0; left: 0; bottom: 0; background: rgba(255,255,255,.3); }
+.gantt-bar.manual .fill { background: var(--bar-color, var(--accent)); }
 .gantt-out-label { position: absolute; height: 20px; line-height: 20px; font-size: var(--fs-11); color: var(--text-dim); white-space: nowrap; pointer-events: none; z-index: 1; }
-.gantt-bar .bar-label { position: absolute; left: 6px; top: 0; line-height: 20px; font-size: var(--fs-11); color: var(--text); white-space: nowrap; pointer-events: none; mix-blend-mode: normal; }
+.gantt-bar .bar-label { position: absolute; left: 6px; top: 0; line-height: 20px; font-size: var(--fs-11); font-weight: 500; color: var(--on-accent); white-space: nowrap; pointer-events: none; mix-blend-mode: normal; }
+.gantt-bar.manual .bar-label { color: var(--text); }
 .resize-handle { position: absolute; top: 0; bottom: 0; width: 7px; cursor: ew-resize; }
 .resize-handle.left { left: 0; } .resize-handle.right { right: 0; }
 .link-handle {
@@ -1769,10 +1765,10 @@ input.dt-time { width: 84px; flex: 0 0 84px; text-align: center; }
 select:not([multiple]):not([size]) {
   -webkit-appearance: none; appearance: none; padding-right: 32px;
   background-repeat: no-repeat; background-position: right 12px center; background-size: 11px 7px;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='11' height='7' viewBox='0 0 11 7'><path d='M1 1l4.5 4.5L10 1' fill='none' stroke='%239198a1' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='11' height='7' viewBox='0 0 11 7'><path d='M1 1l4.5 4.5L10 1' fill='none' stroke='%239b9ca4' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
 }
 html[data-theme="light"] select:not([multiple]):not([size]) {
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='11' height='7' viewBox='0 0 11 7'><path d='M1 1l4.5 4.5L10 1' fill='none' stroke='%23656d76' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='11' height='7' viewBox='0 0 11 7'><path d='M1 1l4.5 4.5L10 1' fill='none' stroke='%236a6b73' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
 }
 /* ── Components (design-system 5.1 / 5.2): toolbar capsules, joined groups ───────────────────────────────── */
 .subbar .btn, .subbar .icon-btn { border: none; background: var(--cap-fill); border-radius: 999px; height: 30px; color: var(--text); }
@@ -1819,29 +1815,24 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 <div class="window" id="window">
 <aside class="sidebar" id="sidebar" aria-label="Plans and views">
   <div class="sb-head">
-    <div class="brand">
-    <svg viewBox="0 0 120 120" aria-hidden="true"><mask id="logoMaskBar"><rect width="120" height="120" fill="#fff"/><rect x="40" y="34" width="40" height="14" rx="7" fill="#000"/><rect x="26" y="53" width="58" height="14" rx="7" fill="#000"/><rect x="50" y="72" width="34" height="14" rx="7" fill="#000"/></mask><polygon mask="url(#logoMaskBar)" points="60,3 117,60 60,117 3,60" fill="currentColor"/></svg>
-    <span class="brand-name">Milestone</span>
-  </div>
     <button class="icon-btn" id="sidebarToggleBtn" onclick="toggleSidebar()" title="Hide sidebar (Alt+Cmd/Ctrl+S)" aria-label="Hide sidebar"><i class="fa-solid fa-table-columns"></i></button>
+    <div class="view-tabs" id="mainViewTabs" role="group" aria-label="View"></div>
   </div>
-  <div class="sb-plan">
-  <div class="dropdown-wrap">
-    <button class="plan-btn" id="planMenuBtn" onclick="togglePlanMenu()" title="Plans — switch, create, rename, link a folder" aria-haspopup="menu"><i class="fa-regular fa-folder-open plan-ico"></i><span id="planBtnName"></span><i class="fa-solid fa-chevron-down"></i></button>
-    <div class="dropdown-menu plan-menu" id="planMenu"></div>
+  <button class="sb-search" id="sbSearchBtn" onclick="openSearch()" aria-label="Find a task" title="Find a task by name, WBS, number (#12), resource (@anna) or status (status:late)"><i class="fa-solid fa-magnifying-glass"></i><span>Find a task…</span></button>
+  <div class="sb-scroll">
+    <div class="sb-sec"><span class="sb-label">Plans</span><span class="sb-sec-sp"></span>
+      <div class="dropdown-wrap"><button class="icon-btn sb-mini" id="planMenuBtn" onclick="togglePlanMenu()" title="Plan menu — new, open, rename, duplicate, link a folder" aria-label="Plan menu" aria-haspopup="menu"><i class="fa-solid fa-sliders plan-ico"></i><span id="planBtnName" class="sr-only"></span></button></div>
+      <button class="icon-btn sb-mini" id="sbNewPlanBtn" onclick="openPlanModal('new')" title="New plan…" aria-label="New plan"><i class="fa-solid fa-plus"></i></button>
+    </div>
+    <div class="sb-plans" id="sbPlans" role="list" aria-label="Plans"></div>
   </div>
-  <div class="dropdown-wrap plan-status">
+  <div class="sb-tools">
+  <div class="plan-status">
     <button class="btn" id="fileSyncBtn" onclick="onFileSyncBtnClick()"></button>
     <button class="btn conflict-btn hidden" id="syncConflictBtn" onclick="openSyncConflictsModal()"></button>
     <span class="watch-hint hidden" id="watchHint"><button class="btn watch-btn" id="watchHintBtn" onclick="chooseWatchFolder()" title="This plan is linked to a single file (from before plans were linked by folder). Link the folder it lives in: OneDrive, Dropbox and SharePoint keep a second copy of the file when two devices save at the same time, and Milestone can then merge those copies in."><i class="fa-solid fa-folder-tree"></i>Link folder</button><button class="watch-x" onclick="declineWatch()" title="Don't remind me for this plan (the plan menu still has it)" aria-label="Don't remind me">&times;</button></span>
   </div>
-  <div class="sb-plans" id="sbPlans" role="list" aria-label="Plans"></div>
-  </div>
-  <div class="sb-scroll">
-    <div class="sb-label">Views</div>
-    <div class="view-tabs" id="mainViewTabs"></div>
-  </div>
-  <div class="sb-tools">
+  <div class="tool-group sb-cap" role="group" aria-label="Tools">
   <button class="icon-btn" id="planSettingsBtn" onclick="openPlanSettings()" aria-label="Plan settings" title="Plan settings — calendar, precision, scheduling rules, currency, custom fields"><i class="fa-solid fa-gear"></i></button>
   <div class="dropdown-wrap">
     <button class="btn" id="scheduleMenuBtn" aria-label="Schedule" onclick="toggleScheduleMenu()" title="Schedule: baselines, rescheduling, levelling"><i class="fa-solid fa-calendar-check"></i><span class="btn-label">Schedule</span></button>
@@ -1865,12 +1856,13 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
   </div>
   <input type="file" id="fileInput" accept="application/json" class="hidden" onchange="handleFileImport(event)">
   <input type="file" id="foreignFileInput" accept=".xml,.csv,.tsv,.txt,.mpp,.xlsx,text/csv,text/xml,application/xml,text/plain" class="hidden" onchange="handleForeignFile(event)">
-  <span class="sb-tools-sp"></span>
   <button class="icon-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Toggle light/dark"></button>
   <button class="icon-btn" onclick="openHelpModal()" title="Help" aria-label="Help"><i class="fa-regular fa-circle-question"></i></button>
   <button class="icon-btn" onclick="openAboutModal()" title="About" aria-label="About"><i class="fa-solid fa-circle-info"></i></button>
   </div>
+  </div>
 </aside>
+<div class="dropdown-menu plan-menu" id="planMenu"></div>   <!-- (outside the sidebar: its scroll area would clip a menu that is wider than the sidebar) -->
 <div class="sb-resizer" id="sidebarResizer" role="separator" aria-orientation="vertical" aria-label="Resize the sidebar" tabindex="0" title="Drag to resize · double-click to reset"></div>
 <div class="content" id="content">
 
@@ -5154,7 +5146,7 @@ function openResourceSheet() { if (currentView !== 'resourceSheet') setView('res
 function renderMainViewTabs() {
   document.getElementById('mainViewTabs').innerHTML = MAIN_VIEWS.map((v, i) =>
     (i && MAIN_VIEWS[i - 1].group !== v.group ? '<span class="view-tab-sep" aria-hidden="true"></span>' : '') +
-    `<button class="view-tab${v.id === currentView ? ' active' : ''}" onclick="setView('${v.id}')"><i class="fa-solid ${v.icon}"></i>${v.label}</button>`).join('');
+    `<button class="view-tab${v.id === currentView ? ' active' : ''}" onclick="setView('${v.id}')" title="${v.label} (Alt+Cmd/Ctrl+${i + 1})" aria-label="${v.label}" aria-pressed="${v.id === currentView}"><i class="fa-solid ${v.icon}"></i><span class="sr-only">${v.label}</span></button>`).join('');
   for (const g of document.querySelectorAll('#subbar [data-views]')) g.classList.toggle('hidden', !g.dataset.views.split(' ').includes(currentView));   // the toolbar belongs to the view
   document.getElementById('main').classList.toggle('view-tasks', currentView === 'tasks');
   document.getElementById('main').classList.toggle('view-gantt', currentView === 'gantt');
@@ -5167,9 +5159,10 @@ function setView(id) { closeFloatingSidebar(); selZone = 'list'; currentView = i
 function renderSidebarPlans() {   // the plans as rows, so switching needs no menu (shown from two plans on; the plan button's menu still creates / links / renames)
   const el = document.getElementById('sbPlans'); if (!el) return;
   const idx = readPlansIndex() || { plans: [] }, list = idx.plans.filter(p => isSafeId(p.id));
-  el.innerHTML = list.length < 2 ? '' : '<div class="sb-label">Plans</div>' + list.map(p => {
+  const count = p => { if (p.id === currentPlanId) return tasks.filter(t => !t.spacer).length; try { return (JSON.parse(localStorage.getItem(planDataKey(p.id))).tasks || []).filter(t => !t.spacer).length; } catch (e) { return ''; } };
+  el.innerHTML = list.map(p => {
     const cur = p.id === currentPlanId, name = cur ? project.name : p.name;
-    return `<button class="sb-plan-row${cur ? ' active' : ''}" role="listitem" data-plan-id="${p.id}"${cur ? ' aria-current="true"' : ''} onclick="switchPlan('${p.id}')" title="${escapeHtml(name)}"><i class="fa-regular fa-folder-open"></i><span>${escapeHtml(name)}</span></button>`;
+    return `<button class="sb-plan-row${cur ? ' active' : ''}" role="listitem" data-plan-id="${p.id}"${cur ? ' aria-current="true"' : ''} onclick="switchPlan('${p.id}')" title="${escapeHtml(name)}"><i class="fa-regular fa-folder-open"></i><span>${escapeHtml(name)}</span><em>${count(p)}</em></button>`;
   }).join('');
 }
 function updateProjectNameUI() {
@@ -10949,7 +10942,7 @@ function buildPrintPages(o) {
   for (let pg = 0; pg < nPages; pg++) {
     const slice = rows.slice(pg * perPage, (pg + 1) * perPage), geom = {}, out = [];
     out.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="100%" height="100%" preserveAspectRatio="xMidYMin meet" font-family='${PRINT_FONT}' font-size="9">`);
-    out.push(`<defs><marker id="pa${pg}" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#8C959F"/></marker><marker id="pc${pg}" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#CF222E"/></marker></defs>`);
+    out.push(`<defs><marker id="pa${pg}" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#8C959F"/></marker><marker id="pc${pg}" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#C4281F"/></marker></defs>`);
     out.push(`<rect width="${W}" height="${H}" fill="#fff"/>`);
     // title
     out.push(`<text x="0" y="14" font-size="14" font-weight="700" fill="${INK}">${esc(printFit(o.title || project.name, W - 260, 14, true))}</text>`);
@@ -11003,11 +10996,11 @@ function buildPrintPages(o) {
       const sM0 = unit === 'hour' ? dtMoment(eff.start, eff.startTime, false) : 0, eM0 = unit === 'hour' ? dtMoment(eff.end, eff.endTime, true) : 0;
       const L = unit === 'hour' ? mX(sM0) : xOf(s), R = unit === 'hour' ? mX(eM0) : xOf(e + 1);   // (the day scales cover whole days, the Hours scale the real start and finish)
       const color = '#' + statusColorHex(t), critical = crit.has(t.id);
-      if (t.milestone) { const cxm = unit === 'hour' ? mX(sM0) : xOf(s) + pxd / 2, r = Math.round(hh * 0.62); out.push(`<polygon points="${cxm},${mid - r - 1} ${cxm + r},${mid - 1} ${cxm},${mid + r - 1} ${cxm - r},${mid - 1}" fill="${manual ? '#fff' : color}" stroke="${critical ? '#CF222E' : color}" stroke-width="${critical ? 1.4 : 0.8}"/>`); geom[t.id] = { left: cxm - r, right: cxm + r, y: mid - 1, row: i }; }
+      if (t.milestone) { const cxm = unit === 'hour' ? mX(sM0) : xOf(s) + pxd / 2, r = Math.round(hh * 0.62); out.push(`<polygon points="${cxm},${mid - r - 1} ${cxm + r},${mid - 1} ${cxm},${mid + r - 1} ${cxm - r},${mid - 1}" fill="${manual ? '#fff' : color}" stroke="${critical ? '#C4281F' : color}" stroke-width="${critical ? 1.4 : 0.8}"/>`); geom[t.id] = { left: cxm - r, right: cxm + r, y: mid - 1, row: i }; }
       else if (group) { const w = Math.max(3, R - L); out.push(`<rect x="${L}" y="${mid - 4}" width="${w}" height="4" fill="#24292F"/><polygon points="${L},${mid} ${L + 4},${mid} ${L},${mid + 4}" fill="#24292F"/><polygon points="${L + w},${mid} ${L + w - 4},${mid} ${L + w},${mid + 4}" fill="#24292F"/>`); geom[t.id] = { left: L, right: L + w, y: mid - 2, row: i }; }
       else {
         const w = Math.max(2, R - L), done = w * Math.max(0, Math.min(100, t.progress)) / 100, dash = manual ? ' stroke-dasharray="2 1.5"' : '';
-        out.push(`<rect x="${L}" y="${by}" width="${w}" height="${hh}" rx="1.5" fill="${tint(color, manual ? 0.12 : 0.28)}" stroke="${critical ? '#CF222E' : color}" stroke-width="${critical ? 1.4 : 0.7}"${dash}/>`);
+        out.push(`<rect x="${L}" y="${by}" width="${w}" height="${hh}" rx="1.5" fill="${tint(color, manual ? 0.12 : 0.28)}" stroke="${critical ? '#C4281F' : color}" stroke-width="${critical ? 1.4 : 0.7}"${dash}/>`);
         if (done > 0) out.push(`<rect x="${L}" y="${by}" width="${done}" height="${hh}" rx="1.5" fill="${color}"/>`);
         geom[t.id] = { left: L, right: L + w, y: mid - 1, row: i };
       }
@@ -11024,14 +11017,14 @@ function buildPrintPages(o) {
       const a = geom[p.id], b = geom[t.id]; if (!a || !b) continue;
       const isCrit = crit.has(t.id) && crit.has(p.id), x1 = a.right, y1 = a.y, x2 = b.left, y2 = b.y, mx = x1 + Math.max(6, (x2 - x1) / 2), dir = y2 > y1 ? 1 : -1;
       const d = x2 >= x1 + 5 ? `M${x1},${y1} H${mx} V${y2} H${x2}` : `M${x1},${y1} H${x1 + 5} V${y1 + dir * rowH / 2} H${x2 - 5} V${y2} H${x2}`;
-      out.push(`<path d="${d}" fill="none" stroke="${isCrit ? '#CF222E' : '#8C959F'}" stroke-width="0.6" marker-end="url(#${isCrit ? 'pc' : 'pa'}${pg})"/>`);
+      out.push(`<path d="${d}" fill="none" stroke="${isCrit ? '#C4281F' : '#8C959F'}" stroke-width="0.6" marker-end="url(#${isCrit ? 'pc' : 'pa'}${pg})"/>`);
     }
     const nowFrac = unit === 'hour' ? (new Date().getHours() * 60 + new Date().getMinutes()) / 1440 : null, todayX = unit === 'hour' ? xOf(today + nowFrac) : xOf(today) + pxd / 2;
-    if (o.today && today >= d0 && today <= d1) out.push(`<line x1="${todayX}" y1="${headerH + tierH}" x2="${todayX}" y2="${bodyTop + bodyH}" stroke="#CF222E" stroke-width="0.8" stroke-dasharray="3 2"/>`);
+    if (o.today && today >= d0 && today <= d1) out.push(`<line x1="${todayX}" y1="${headerH + tierH}" x2="${todayX}" y2="${bodyTop + bodyH}" stroke="#C4281F" stroke-width="0.8" stroke-dasharray="3 2"/>`);
     out.push(`<rect x="0" y="${bodyTop + bodyH}" width="${W}" height="0.6" fill="${GRID}"/>`);
     // footer: a small legend and the page number
     const fy = H - 4;
-    out.push(`<g font-size="7.5" fill="${DIM}"><rect x="0" y="${fy - 6}" width="12" height="6" rx="1" fill="#0969DA"/><text x="15" y="${fy - 0.5}">done</text><rect x="42" y="${fy - 6}" width="12" height="6" rx="1" fill="${tint('#0969DA', 0.28)}" stroke="#0969DA" stroke-width="0.5"/><text x="57" y="${fy - 0.5}">still to do</text><polygon points="110,${fy - 3} 114,${fy - 7} 118,${fy - 3} 114,${fy + 1}" fill="#24292F"/><text x="121" y="${fy - 0.5}">milestone</text><rect x="160" y="${fy - 4}" width="12" height="2.2" fill="#8C959F"/><text x="175" y="${fy - 0.5}">baseline</text><text x="${W}" y="${fy - 0.5}" text-anchor="end" font-size="8">Page ${pg + 1} of ${nPages}</text></g>`);
+    out.push(`<g font-size="7.5" fill="${DIM}"><rect x="0" y="${fy - 6}" width="12" height="6" rx="1" fill="#2A5FCF"/><text x="15" y="${fy - 0.5}">done</text><rect x="42" y="${fy - 6}" width="12" height="6" rx="1" fill="${tint('#2A5FCF', 0.28)}" stroke="#2A5FCF" stroke-width="0.5"/><text x="57" y="${fy - 0.5}">still to do</text><polygon points="110,${fy - 3} 114,${fy - 7} 118,${fy - 3} 114,${fy + 1}" fill="#24292F"/><text x="121" y="${fy - 0.5}">milestone</text><rect x="160" y="${fy - 4}" width="12" height="2.2" fill="#8C959F"/><text x="175" y="${fy - 0.5}">baseline</text><text x="${W}" y="${fy - 0.5}" text-anchor="end" font-size="8">Page ${pg + 1} of ${nPages}</text></g>`);
     out.push('</svg>');
     pages.push(out.join(''));
   }
@@ -11966,7 +11959,7 @@ function xlsxSheet(sst, opts) {
 }
 
 // Bar colours: the light theme's fixed palette (the app's own bar colours), as hex.
-const XLSX_COLORS = { blue: '0969DA', teal: '1B7C83', purple: '8250DF', amber: '9A6700', pink: 'CE2C85', green: '1A7F37', red: 'CF222E', grey: '656D76', complete: '0969DA', danger: 'CF222E', accent: '0969DA', 'not-started': '8C959F' };
+const XLSX_COLORS = { blue: '2A5FCF', teal: '0B6B5F', purple: '7A2FB0', amber: '8A4B00', pink: 'B8286E', green: '1A7A36', red: 'C4281F', grey: '6A6B73', complete: '2A5FCF', danger: 'C4281F', accent: '2A5FCF', 'not-started': '8C959F' };
 // statusColorVar() gives var(--task-purple) / var(--status-complete) / var(--danger) ...; this maps that to the hex of the same colour.
 function statusColorHex(t) { const m = statusColorVar(t).match(/--(?:task-|status-)?([a-z-]+)\)/); return XLSX_COLORS[m ? m[1] : 'not-started'] || '8C959F'; }
 function xlsxTint(hex, k) { const ch = i => Math.round(parseInt(hex.substr(i, 2), 16) * k + 255 * (1 - k)).toString(16).padStart(2, '0'); return (ch(0) + ch(2) + ch(4)).toUpperCase(); }
@@ -11980,7 +11973,7 @@ function exportTaskRows(scope) {                 // [{ task, depth }] in outline
 
 function buildXlsx(opts) {
   const rowsIn = exportTaskRows(opts.scope), sst = xlsxSharedStrings(), book = xlsxStyleBook();
-  const GRID = 'D8DEE4', HEAD = '24292F', SUM = 'F6F8FA', DIM = '656D76';
+  const GRID = 'D8DEE4', HEAD = '24292F', SUM = 'F6F8FA', DIM = '6A6B73';
   const HEAD_FILL = '00205B';   // Midnight Blue, PANTONE 281 C — the colour of every header cell (task sheet columns, Gantt month band and week/day columns); HEAD stays the dark grey of the summary bars
   const box = { left: ['thin', GRID], right: ['thin', GRID], top: ['thin', GRID], bottom: ['thin', GRID] };
   const dateFmt = dateFmtInfo().id.replace(/[.\/-]/g, c => '\\' + c), dateTimeFmt = dateFmt + (timeFormat === '12h' ? ' h:mm AM/PM' : ' hh:mm'), durFmt = '[=1]0" day";0" days"';
@@ -11988,7 +11981,7 @@ function buildXlsx(opts) {
   const scopeText = opts.scope === 'filtered' && filtersActive() ? `${nReal} of ${nAll} tasks (filtered)` : `${nReal} task${nReal === 1 ? '' : 's'}`;
   const titleStyle = book.style({ bold: true, size: 16 }), subStyle = book.style({ size: 10, color: DIM });
   const headStyle = book.style({ bold: true, color: 'FFFFFF', fill: HEAD_FILL, h: 'center', wrap: true, border: box });
-  const tasksSheet = xlsxSheet(sst, { tab: '0969DA', grid: false, selected: true, freeze: null, fitWidth: 1, fitHeight: 0 });
+  const tasksSheet = xlsxSheet(sst, { tab: '2A5FCF', grid: false, selected: true, freeze: null, fitWidth: 1, fitHeight: 0 });
 
   // ---------------- Tasks sheet: ID, then the task list's own visible columns in the user's order (or all of them)
   const XCOLS = {
@@ -12023,7 +12016,7 @@ function buildXlsx(opts) {
       const c = colFn(k);
       switch (k) {
         case 'id': sheet.cell(r, c, taskDisplayId(t.id), S({ h: 'center', color: DIM, bold: false })); break;
-        case 'mode': sheet.cell(r, c, manual ? 'Manual' : 'Auto', S({ h: 'center', color: manual ? '9A6700' : DIM, bold: false })); break;
+        case 'mode': sheet.cell(r, c, manual ? 'Manual' : 'Auto', S({ h: 'center', color: manual ? '8A4B00' : DIM, bold: false })); break;
         case 'wbs': sheet.cell(r, c, wbsCode(t.id), S({ h: 'left' })); break;
         case 'name': sheet.cell(r, c, (t.milestone ? '◆ ' : '') + t.name, S({ h: 'left', indent: depth })); break;
         case 'start': dateCell(c, t.startText, startIso, minuteModeActive() && ownDates ? (t.startTime || wStart(startIso)) : null); break;
@@ -12046,8 +12039,8 @@ function buildXlsx(opts) {
         case 'startVariance': case 'finishVariance': case 'durationVariance': {
           const sv = scheduleVariance(t.id), n = { startVariance: sv.start, finishVariance: sv.finish, durationVariance: sv.duration }[k];
           if (n == null) sheet.cell(r, c, null, S({}));
-          else if (varianceIsMinutes(t.id)) sheet.cell(r, c, fmtVarianceMinutes(n), S({ h: 'center', italic: true, color: n > 0 ? 'CF222E' : n < 0 ? '1A7F37' : DIM, bold: false }));
-          else sheet.cell(r, c, n, S({ h: 'center', num: '+0" days";-0" days";0" days"', color: n > 0 ? 'CF222E' : n < 0 ? '1A7F37' : DIM, bold: false }));
+          else if (varianceIsMinutes(t.id)) sheet.cell(r, c, fmtVarianceMinutes(n), S({ h: 'center', italic: true, color: n > 0 ? 'C4281F' : n < 0 ? '1A7A36' : DIM, bold: false }));
+          else sheet.cell(r, c, n, S({ h: 'center', num: '+0" days";-0" days";0" days"', color: n > 0 ? 'C4281F' : n < 0 ? '1A7A36' : DIM, bold: false }));
           break;
         }
         case 'duration': {
@@ -12066,7 +12059,7 @@ function buildXlsx(opts) {
           else sheet.cell(r, c, rem, S({ h: 'center', num: Number.isInteger(rem) ? durFmt : '0.0" days"' }));
           break;
         }
-        case 'status': { const st = taskStatus(t.id); sheet.cell(r, c, st, S({ h: 'center', bold: true, color: { 'Complete': '1A7F37', 'On Schedule': '0969DA', 'Late': 'CF222E', 'Future Task': DIM }[st] || DIM })); break; }
+        case 'status': { const st = taskStatus(t.id); sheet.cell(r, c, st, S({ h: 'center', bold: true, color: { 'Complete': '1A7A36', 'On Schedule': '2A5FCF', 'Late': 'C4281F', 'Future Task': DIM }[st] || DIM })); break; }
         case 'preds': sheet.cell(r, c, predecessorLabel(t) || null, S({ h: 'left' })); break;
         case 'resource': sheet.cell(r, c, (t.resource || '').trim() || null, S({ h: 'left' })); break;
         // Blank for a milestone/group (no Duration/Work of their own — see "Task Type / Work" in CLAUDE.md). Work is
@@ -12076,8 +12069,8 @@ function buildXlsx(opts) {
         case 'work': sheet.cell(r, c, (t.milestone || summary || !Number.isFinite(t.work)) ? null : fmtWorkHours(t.work), S({ h: 'center', italic: true, color: DIM, bold: false })); break;
         // Unlike Work, Cost IS meaningful for a milestone (a Cost/Use assignment) and a group (the rollup of its
         // children) — a real number with a currency format code, sortable/summable in Excel, not pre-formatted text.
-        case 'deadline': if (t.deadline) sheet.cell(r, c, xlsxSerial(t.deadline), S(Object.assign({ h: 'center', num: dateFmt }, deadlineMissed(t) ? { color: 'CF222E', bold: true } : {}))); else sheet.cell(r, c, null, S({})); break;   // red once Finish runs past it
-        case 'totalSlack': { const v = taskTotalSlack(t); if (v == null) sheet.cell(r, c, null, S({})); else if (minuteModeActive()) sheet.cell(r, c, fmtSlack(v), S({ h: 'center', italic: true, color: v < 0 ? 'CF222E' : DIM, bold: false })); else sheet.cell(r, c, v, S({ h: 'center', num: '0" days";-0" days";0" days"', color: v < 0 ? 'CF222E' : undefined })); break; }
+        case 'deadline': if (t.deadline) sheet.cell(r, c, xlsxSerial(t.deadline), S(Object.assign({ h: 'center', num: dateFmt }, deadlineMissed(t) ? { color: 'C4281F', bold: true } : {}))); else sheet.cell(r, c, null, S({})); break;   // red once Finish runs past it
+        case 'totalSlack': { const v = taskTotalSlack(t); if (v == null) sheet.cell(r, c, null, S({})); else if (minuteModeActive()) sheet.cell(r, c, fmtSlack(v), S({ h: 'center', italic: true, color: v < 0 ? 'C4281F' : DIM, bold: false })); else sheet.cell(r, c, v, S({ h: 'center', num: '0" days";-0" days";0" days"', color: v < 0 ? 'C4281F' : undefined })); break; }
         case 'notes': sheet.cell(r, c, t.notes || null, S({ h: 'left' })); break;
         case 'cost': sheet.cell(r, c, taskCost(t), S({ h: 'center', num: `"${currencySymbol().replace(/"/g, '')}"#,##0.00` })); break;
         default:
@@ -12103,7 +12096,7 @@ function buildXlsx(opts) {
   const scheduled = rowsIn.filter(({ task: t }) => effectiveDates(t.id).start);
   if (opts.gantt && scheduled.length) {
     const gkeys = ['id', ...visibleTaskCols('gantt')], gcolOf = k => gkeys.indexOf(k) + 1, gn = gkeys.length;
-    const g = xlsxSheet(sst, { tab: '1A7F37', grid: false, freeze: { cols: gcolOf('name'), rows: 4 }, fitWidth: 0, fitHeight: 1 });
+    const g = xlsxSheet(sst, { tab: '1A7A36', grid: false, freeze: { cols: gcolOf('name'), rows: 4 }, fitWidth: 0, fitHeight: 1 });
     let minD = Infinity, maxD = -Infinity;
     for (const { task: t } of scheduled) { const e = effectiveDates(t.id); minD = Math.min(minD, dayNumber(e.start)); maxD = Math.max(maxD, dayNumber(e.end)); }
     const monday = d => d - (((d + 3) % 7) + 7) % 7, periods = [];
@@ -13394,6 +13387,8 @@ applySidebarState();
 window.matchMedia('(max-width: 800px)').addEventListener('change', applySidebarState);
 document.addEventListener('keydown', e => {   // Alt+Cmd+S (Alt+Ctrl+S), the same shortcut as ClearDesk
   if (e.altKey && (e.metaKey || e.ctrlKey) && e.code === 'KeyS') { e.preventDefault(); toggleSidebar(); }
+  const dv = e.altKey && (e.metaKey || e.ctrlKey) && /^Digit[1-4]$/.test(e.code) ? MAIN_VIEWS[Number(e.code.slice(5)) - 1] : null;   // Alt+Cmd/Ctrl+1-4: the four views
+  if (dv) { e.preventDefault(); setView(dv.id); }
 });
 window.addEventListener('resize', applyGridPaneWidth);
 window.addEventListener('resize', () => requestAnimationFrame(fitToolbar));

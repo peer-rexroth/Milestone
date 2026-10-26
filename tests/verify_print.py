@@ -55,7 +55,7 @@ with sync_playwright() as p:
     check("the baseline is drawn as a grey line under the bar when ticked (and not when unticked)", 'height="2.2" fill="#8C959F"' in build({"baseline": True})["svg"][0] and 'height="2.2" fill="#8C959F"' not in build({"baseline": False})["svg"][0].replace('<rect x="0" y="', '<rect x="0" y="').split("Page")[0].replace('rx="1" fill', '') or True)
     bl_on = build({"baseline": True})["svg"][0].count('fill="#8C959F"'); bl_off = build({"baseline": False})["svg"][0].count('fill="#8C959F"')
     check("...(counted: more grey marks with it on)", bl_on > bl_off, (bl_on, bl_off))
-    crit_on = build({"critical": True})["svg"][0].count('stroke="#CF222E"'); crit_off = build({"critical": False})["svg"][0].count('stroke="#CF222E"')
+    crit_on = build({"critical": True})["svg"][0].count('stroke="#C4281F"'); crit_off = build({"critical": False})["svg"][0].count('stroke="#C4281F"')
     check("the critical path outlines its bars in red when ticked", crit_on > crit_off, (crit_on, crit_off))
     check("the defaults follow the chart's own toggles (baseline on when the ruler is on, critical path when the route button is on)", ev("() => { showBaseline = true; showCriticalPath = true; const d = printDefaults(); showBaseline = false; showCriticalPath = false; return d.baseline && d.critical; }"))
     check("days off are shaded at week scale; not when switched off", 'opacity="0.55"' in build({"shade": True})["svg"][0] and 'opacity="0.55"' not in build({"shade": False})["svg"][0])

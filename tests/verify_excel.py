@@ -126,7 +126,7 @@ with sync_playwright() as p:
     check("print: landscape, A4, fit to one page wide, header row repeated, page footer", ws.page_setup.orientation == "landscape" and ws.page_setup.paperSize == 9 and ws.sheet_properties.pageSetUpPr.fitToPage and ws.page_setup.fitToWidth == 1 and ws.page_setup.fitToHeight == 0 and ws.print_title_rows in ("4:4", "$4:$4") and "Page" in ws.oddFooter.center.text, (ws.print_title_rows,))
     cf = ws.conditional_formatting; rules = [r for c in cf for r in c.rules]
     check("% Complete has a data bar", len(rules) == 1 and rules[0].type == "dataBar" and str(list(cf)[0].sqref) == "G5:G15", [str(c.sqref) for c in cf])
-    check("borders on every data cell; the tab is coloured", ws["C5"].border.left.style == "thin" and ws["H15"].border.bottom.style == "thin" and ws.sheet_properties.tabColor.rgb == "FF0969DA")
+    check("borders on every data cell; the tab is coloured", ws["C5"].border.left.style == "thin" and ws["H15"].border.bottom.style == "thin" and ws.sheet_properties.tabColor.rgb == "FF2A5FCF")
 
     # ---------- the Gantt sheet
     gs = wb["Gantt"]
@@ -150,7 +150,7 @@ with sync_playwright() as p:
     today = datetime.date.today()
     hl = [i for i in range(len(weeks)) if gs.cell(4, 5 + i).fill.fgColor.rgb == "FFFFD33D"]
     check("Gantt: this week's header is highlighted (or nothing if today is outside the chart)", (wk(today) in weeks and hl == [weeks.index(wk(today))]) or (wk(today) not in weeks and hl == []), hl)
-    PAL = {"blue": "0969DA", "teal": "1B7C83", "purple": "8250DF", "amber": "9A6700", "pink": "CE2C85", "green": "1A7F37", "red": "CF222E", "grey": "656D76"}
+    PAL = {"blue": "2A5FCF", "teal": "0B6B5F", "purple": "7A2FB0", "amber": "8A4B00", "pink": "B8286E", "green": "1A7A36", "red": "C4281F", "grey": "6A6B73"}
     def tint(hexc, k=.28): return "".join(f"{round(int(hexc[i:i + 2], 16) * k + 255 * (1 - k)):02X}" for i in (0, 2, 4))
     bad = []; nbar = 0
     for i, d in enumerate(sched):
@@ -158,7 +158,7 @@ with sync_playwright() as p:
         done_end = s0 + datetime.timedelta(days=int(dur * d["progress"] / 100 + 0.5) - 1)   # JS Math.round: halves round up
         if d["summary"]: solid, light = "24292F", "AEB6BF"
         else:
-            col = ("0969DA" if d["progress"] >= 100 else "CF222E" if (e0 < today and d["progress"] < 100) else "0969DA" if d["progress"] > 0 else "8C959F")
+            col = ("2A5FCF" if d["progress"] >= 100 else "C4281F" if (e0 < today and d["progress"] < 100) else "2A5FCF" if d["progress"] > 0 else "8C959F")
             solid, light = col, tint(col)
         for j, w_ in enumerate(weeks):
             c = gs.cell(5 + i, 5 + j); wend = w_ + datetime.timedelta(days=6)

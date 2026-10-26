@@ -147,6 +147,6 @@ with sync_playwright() as p:
     light = ev("() => getComputedStyle(document.getElementById('taskModeInput')).backgroundImage")
     ev("() => { theme = 'dark'; applyTheme(); }")
     dark = ev("() => getComputedStyle(document.getElementById('taskModeInput')).backgroundImage")
-    check("...in both themes, in the colour of the theme (grey-blue on light, lighter on dark)", "656d76" in light and "9198a1" in dark, (light[:80], dark[:80]))
+    check("...in both themes, in the colour of the theme (grey-blue on light, lighter on dark)", "6a6b73" in light and "9b9ca4" in dark, (light[:80], dark[:80]))
     check("no console errors", not errors, errors[:5])
     print("console errors/warnings:", errors[:5]); print(f"{sum(results)}/{len(results)} passed"); b.close()

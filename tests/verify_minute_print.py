@@ -72,7 +72,7 @@ with sync_playwright() as p:
     plan([dict(A, s="2026-09-25", e="2026-09-25")])
     ev("() => { const t = tasks[0]; t.startDate = t.endDate = todayStr(); save(); }")
     r = build(); ch = r["chart"]; svg = r["svg"][0]
-    line = re.search(r'<line x1="([\d.]+)" y1="[\d.]+" x2="[\d.]+" y2="[\d.]+" stroke="#CF222E" stroke-width="0.8" stroke-dasharray="3 2"/>', svg)
+    line = re.search(r'<line x1="([\d.]+)" y1="[\d.]+" x2="[\d.]+" y2="[\d.]+" stroke="#C4281F" stroke-width="0.8" stroke-dasharray="3 2"/>', svg)
     exp = ev("(c) => { const n = new Date(); return c.cx0 + (dayNumber(todayStr()) - c.d0 + (n.getHours() * 60 + n.getMinutes()) / 1440) * c.pxd; }", ch)
     check("today's line is at the current time of day on the Hours scale", line and abs(float(line.group(1)) - exp) < 0.6, (line.group(1) if line else None, exp))
 
