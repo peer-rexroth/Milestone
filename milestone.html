@@ -566,6 +566,10 @@ html.sidebar-collapsed .sidebar { display: none; }
 .sb-row .sb-row-chev { font-size: var(--ico-12); color: var(--text-faint); }
 .sb-search { display: flex; align-items: center; gap: 8px; margin: 0 12px 4px; height: 36px; padding: 0 14px; border: none; border-radius: 999px; background: var(--cap-fill); color: var(--text-faint); font-size: var(--fs-14); text-align: left; }
 .sb-search:hover { background: var(--cap-hover); }
+.sb-search input { flex: 1; min-width: 0; border: 0; outline: none; box-shadow: none !important; background: transparent; color: var(--text); font: inherit; padding: 0; }
+.sb-search input::placeholder { color: var(--text-faint); }
+.sb-search input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; cursor: default; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='8' fill='%23a1a2aa'/%3E%3Cpath d='M5.2 5.2l5.6 5.6M10.8 5.2l-5.6 5.6' stroke='white' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat; }
+.sb-search:focus-within { background: var(--bg); box-shadow: 0 0 0 3px var(--focus-ring); }
 .sb-search i { font-size: var(--ico-16); }
 .sb-sec { display: flex; align-items: center; gap: 2px; padding: 12px 6px 4px 10px; }
 .sb-sec .sb-label { padding: 0; }
@@ -1218,13 +1222,9 @@ html.time12 .tf-top.mm .tf-left { grid-template-columns: auto minmax(230px, 1fr)
   .print-page svg { display: block; width: 100%; height: 100%; }
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
-.modal-bg.search-bg { align-items: flex-start; padding-top: 12vh; }   /* (.modal-bg centres; the palette must stay put at the top while its content grows and shrinks) */
-.modal.search-modal { width: 640px; max-width: 94vw; max-height: 47vh; overflow: hidden; }   /* 640px wide and 47vh high (a third smaller than it was): two-line results — name, WBS and path, dates and resource */
-.search-box { display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-bottom: 0; }
-.modal.search-modal { border: 0; box-shadow: var(--glass-shadow), 0 0 0 1px color-mix(in srgb, var(--text) 8%, transparent); }   /* no border drawn inside a shadow: one soft edge */
-.search-modal:has(.search-results:not(:empty)) .search-box { border-bottom: 1px solid var(--border); }   /* the rule appears only when there are results under it */
-.search-box > i { color: var(--text-faint); }
-.search-box input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; color: var(--text); font-size: var(--fs-15); }
+.search-pop { display: none; position: fixed; z-index: 95; flex-direction: column; max-height: min(60vh, 520px); background: var(--glass-strong); border-radius: var(--r-xl); box-shadow: var(--glass-shadow), 0 0 0 1px color-mix(in srgb, var(--text) 8%, transparent); overflow: hidden; }   /* the results under the sidebar's field: one soft edge, no border */
+.search-pop.open { display: flex; }
+.search-pop.open:has(.search-results:empty) { display: none; }   /* an empty field has nothing to list */
 .search-x { border: 1px solid var(--border); background: var(--panel-2); color: var(--text-dim); border-radius: var(--r-xs); font-size: var(--fs-11); padding: 2px 6px;}
 .search-results { overflow-y: auto; padding: 6px; flex: 1; min-height: 0; }
 .search-results:empty { display: none; }
@@ -1917,7 +1917,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
   <div class="sb-head">
     <button class="icon-btn" id="sidebarToggleBtn" onclick="toggleSidebar()" title="Hide sidebar (Alt+Cmd/Ctrl+S)" aria-label="Hide sidebar"><i class="fa-solid fa-sidebar"></i></button>
   </div>
-  <button class="sb-search" id="sbSearchBtn" onclick="openSearch()" aria-label="Find a task" title="Find a task by name, WBS, number (#12), resource (@anna) or status (status:late)"><i class="fa-solid fa-magnifying-glass"></i><span>Find a task…</span></button>
+  <div class="sb-search" id="sbSearch"><i class="fa-solid fa-magnifying-glass"></i><input type="search" id="searchInput" role="combobox" aria-label="Find a task" aria-expanded="false" aria-controls="searchResults" autocomplete="off" spellcheck="false" placeholder="Find a Task" title="Words match task names, WBS codes, notes and your own fields. #12 finds a task number, @anna a resource, status:late a status. Ctrl+H opens Find and Replace." oninput="renderSearch()" onfocus="searchFocus()" onblur="searchBlur()" onkeydown="searchKey(event)"></div>
   <div class="sb-scroll">
     <div class="sb-sec"><span class="sb-label">Views</span></div>
     <div class="view-tabs" id="mainViewTabs" role="list" aria-label="Views"></div>
@@ -2312,12 +2312,9 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
   </div>
 </div>
 
-<div class="modal-bg search-bg" id="searchModalBg" onclick="if(event.target===this) closeSearch()">
-  <div class="modal search-modal" role="dialog" aria-label="Find a task">
-    <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="searchInput" autocomplete="off" spellcheck="false" placeholder="Find a Task" title="Words match task names, WBS codes, notes and your own fields. #12 finds a task number, @anna a resource, status:late a status. Ctrl+H opens Find and Replace." oninput="renderSearch()" onkeydown="searchKey(event)" aria-controls="searchResults"></div>
-    <div class="search-results" id="searchResults" role="listbox"></div>
-    <div class="search-foot" id="searchFoot"><span data-shift><button type="button" class="btn-link" onclick="searchFilter()" title="Show only the matching tasks in the list (Shift+Enter)">Show Only Matches</button></span><span><button type="button" class="btn-link" onclick="openReplaceFromFind()" title="Find and replace (Ctrl+H)">Replace…</button></span><span class="search-count" id="searchCount"></span></div>
-  </div>
+<div class="search-pop" id="searchModalBg" onmousedown="event.preventDefault()">   <!-- the results under the sidebar's Find field; mousedown is kept off so the field keeps focus -->
+  <div class="search-results" id="searchResults" role="listbox"></div>
+  <div class="search-foot" id="searchFoot"><span data-shift><button type="button" class="btn-link" onclick="searchFilter()" title="Show only the matching tasks in the list (Shift+Enter)">Show Only Matches</button></span><span><button type="button" class="btn-link" onclick="openReplaceFromFind()" title="Find and replace (Ctrl+H)">Replace…</button></span><span class="search-count" id="searchCount"></span></div>
 </div>
 
 <div class="modal-bg" id="replaceModalBg" onclick="if(event.target===this) closeReplace()">
@@ -10862,14 +10859,25 @@ function hilite(text, q) {
   for (const w of terms) out = out.replace(new RegExp('(' + escapeHtml(w).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi'), '<mark>$1</mark>');
   return out;
 }
-function openSearch() {
-  closeDataMenu && closeDataMenu();
-  document.getElementById('searchInput').value = '';
-  renderSearch();
-  document.getElementById('searchModalBg').classList.add('open');
-  setTimeout(() => document.getElementById('searchInput').focus(), 30);
+let searchRevealed = false;   // Find was opened while the sidebar was hidden: it is shown for the search and hidden again after
+function searchPlace() {
+  const f = document.getElementById('sbSearch').getBoundingClientRect(), pop = document.getElementById('searchModalBg'), left = Math.max(8, f.left);
+  pop.style.left = left + 'px'; pop.style.top = (f.bottom + 6) + 'px'; pop.style.width = Math.min(520, window.innerWidth - left - 8) + 'px';
 }
-function closeSearch() { document.getElementById('searchModalBg').classList.remove('open'); }
+function searchFocus() { const pop = document.getElementById('searchModalBg'); closeDataMenu && closeDataMenu(); renderSearch(); searchPlace(); pop.classList.add('open'); document.getElementById('searchInput').setAttribute('aria-expanded', 'true'); }
+function searchBlur() {
+  setTimeout(() => { if (document.activeElement !== document.getElementById('searchInput')) closeSearch(); }, 120);
+}
+function openSearch() {   // the toolbar's Find, Ctrl+K and "/": into the field in the sidebar
+  closeDataMenu && closeDataMenu();
+  const root = document.documentElement;
+  if (root.classList.contains('sidebar-collapsed')) { root.classList.remove('sidebar-collapsed'); searchRevealed = true; }
+  const input = document.getElementById('searchInput'); input.focus(); input.select(); searchFocus();
+}
+function closeSearch() {
+  document.getElementById('searchModalBg').classList.remove('open'); document.getElementById('searchInput').setAttribute('aria-expanded', 'false');
+  if (searchRevealed) { searchRevealed = false; applySidebarState(); }
+}
 function renderSearch() {
   const q = document.getElementById('searchInput').value, box = document.getElementById('searchResults');
   const all = searchTasks(q); searchHits = all.slice(0, 50); searchIdx = 0;
@@ -10877,7 +10885,7 @@ function renderSearch() {
   else if (!searchHits.length) box.innerHTML = `<div class="search-empty">No task matches “${escapeHtml(q.trim())}”.</div>`;
   else box.innerHTML = searchHits.map(({ t, note }, i) => {
     const eff = effectiveDates(t.id), parts = taskPathParts(t), dates = t.startText != null && !hasChildren(t.id) ? t.startText : eff.start ? (t.milestone ? fmtDate(eff.start) : `${fmtDate(eff.start)} – ${fmtDate(eff.end)}`) : '';
-    return `<div class="sr${i === 0 ? ' active' : ''}" role="option" data-i="${i}" onmousemove="searchSetActive(${i})" onclick="searchGo(${i})"><span class="sr-id">#${taskDisplayId(t.id)}</span><span class="sr-main"><span class="sr-name" title="${escapeHtml(t.name)}">${(st => st ? `<i class="sr-dot st-${st.toLowerCase().replace(' ', '-')}" title="${st}"></i>` : '')(taskStatus(t.id))}${t.milestone ? '◆ ' : ''}${hilite(nameAroundMatch(t.name, q), q)}</span><span class="sr-path" title="${escapeHtml('WBS ' + wbsCode(t.id) + (parts.length ? ' · ' + parts.join(' › ') : ''))}"><span class="sr-wbs">${hilite(wbsCode(t.id), q)}</span>${parts.length ? ' · ' + escapeHtml(shortPathText(parts)) : ''}</span>${note ? `<span class="sr-note" title="${escapeHtml(t.notes)}"><i class="fa-regular fa-note-sticky"></i>${hilite(note, q)}</span>` : ''}</span><span class="sr-side">${escapeHtml(dates)}${t.resource ? `<span class="sr-res">${hilite(t.resource, q)}</span>` : ''}</span></div>`;
+    return `<div class="sr${i === 0 ? ' active' : ''}" role="option" data-i="${i}" onmousemove="searchSetActive(${i})" onclick="searchGo(${i})"><span class="sr-id">#${taskDisplayId(t.id)}</span><span class="sr-main"><span class="sr-name" title="${escapeHtml(t.name + ' · WBS ' + wbsCode(t.id))}">${(st => st ? `<i class="sr-dot st-${st.toLowerCase().replace(' ', '-')}" title="${st}"></i>` : '')(taskStatus(t.id))}${t.milestone ? '◆ ' : ''}${hilite(nameAroundMatch(t.name, q), q)}</span>${parts.length ? `<span class="sr-path" title="${escapeHtml('WBS ' + wbsCode(t.id) + ' · ' + parts.join(' › '))}"><span class="sr-wbs">${hilite(wbsCode(t.id), q)}</span> · ${escapeHtml(shortPathText(parts))}</span>` : ''}${note ? `<span class="sr-note" title="${escapeHtml(t.notes)}"><i class="fa-regular fa-note-sticky"></i>${hilite(note, q)}</span>` : ''}</span><span class="sr-side">${escapeHtml(dates)}${t.resource ? `<span class="sr-res">${hilite(t.resource, q)}</span>` : ''}</span></div>`;
   }).join('');
   document.getElementById('searchFoot').hidden = !q.trim();   // nothing under the field until there is something to say about the results
   const foot = document.querySelector('#searchFoot [data-shift]');
@@ -10891,12 +10899,14 @@ function searchKey(e) {
     searchSetActive((searchIdx + (e.key === 'ArrowDown' ? 1 : searchHits.length - 1)) % searchHits.length);
     const el = document.querySelector('#searchResults .sr.active'); if (el) el.scrollIntoView({ block: 'nearest' });
   } else if (e.key === 'Enter') { e.preventDefault(); if (e.shiftKey) searchFilter(); else searchGo(searchIdx); }
+  else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); const i = document.getElementById('searchInput'); if (i.value) { i.value = ''; renderSearch(); } else { closeSearch(); i.blur(); } }
 }
-function searchGo(i) { const h = searchHits[i]; if (!h) return; closeSearch(); jumpToTask(h.t.id); }
+function searchGo(i) { const h = searchHits[i]; if (!h) return; finishSearch(); jumpToTask(h.t.id); }
+function finishSearch() { const i = document.getElementById('searchInput'); i.value = ''; closeSearch(); i.blur(); }
 function searchFilter() {
   if (searchHits.length < 2) { if (searchHits.length === 1) searchGo(0); return; }
   const names = new Set(searchHits.map(h => h.t.name)), q = document.getElementById('searchInput').value.trim();
-  closeSearch();
+  finishSearch();
   colFilters.name = { type: 'values', values: names, blanks: false };
   filterPinned.clear(); render();
   showToast(`Showing the ${searchHits.length} task${searchHits.length === 1 ? '' : 's'} that match “${q}” — clear the filter in the bar under the toolbar`);

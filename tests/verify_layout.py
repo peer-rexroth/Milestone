@@ -12,7 +12,7 @@ SEED = """() => { tasks.length = 0; deletedTaskIds.length = 0;
   tasks.push(mk('a', 'Alpha', 0), mk('b', 'Beta', 1, { predecessors: [{ id: 'a', type: 'FS', lag: 0 }], startDate: '2026-09-14', endDate: '2026-09-18' }), mk('c', 'Gamma', 2));
   project.holidays = [{ date: '2026-10-05', name: 'Day off' }]; normalizeData(); save(); setSelection(['a', 'b']); render(); }"""
 DIALOGS = {
-  "Edit tasks": ("openBulkModal()", "bulkModalBg"), "Find": ("openSearch()", "searchModalBg"), "Print": ("openPrintModal()", "printModalBg"), "Working calendar": ("openCalendarModal()", "calendarModalBg"),
+  "Edit tasks": ("openBulkModal()", "bulkModalBg"), "Print": ("openPrintModal()", "printModalBg"), "Working calendar": ("openCalendarModal()", "calendarModalBg"),
   "Help": ("openHelpModal()", "helpModalBg"), "Task": ("openTaskModal('a')", "taskModalBg"), "Baseline": ("openBaselineModal()", "baselineModalBg"), "Excel export": ("openExcelExport()", "excelModalBg"),
   "Import": ("openForeignImport('Task Name,Start,Finish\\nA,07.09.2026,08.09.2026\\nB,09.09.2026,10.09.2026', 'plan.csv')", "foreignImportModalBg"),
 }
