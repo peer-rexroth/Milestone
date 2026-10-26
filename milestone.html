@@ -595,15 +595,16 @@ html.sidebar-collapsed .sidebar { display: none; }
 .sb-label { font-size: var(--fs-11); font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--text-faint); padding: 10px 10px 4px; }
 .sb-tools { flex: none; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--border); }
 .sb-tools .sb-cap { margin-left: auto; }
-.aa { display: inline-flex; align-items: baseline; font-weight: 700; font-size: var(--fs-15); line-height: 1; }
-.aa small { font-size: var(--fs-11); font-weight: 700; }
+.aa { display: inline-flex; align-items: baseline; gap: 1px; font-weight: 600; font-size: var(--fs-17); line-height: 1; letter-spacing: -0.02em; }   /* ClearDesk's aA: a small A (11px) beside a large A (17px), semibold */
+.aa small { font-size: var(--fs-11); font-weight: 600; }
 .sb-tools .plan-status { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; min-width: 0; }
-.sb-tools .plan-status #fileSyncBtn { height: 28px; padding: 0 12px; border-radius: 999px; background: var(--cap-fill); border: none; font-size: var(--fs-12); font-weight: 500; }
+.sb-tools .plan-status #fileSyncBtn { height: 36px; padding: 0 14px; border-radius: 999px; background: var(--cap-fill); border: none; font-size: var(--fs-13); font-weight: 500; }   /* ClearDesk's chip: 36px high, 13px, a 16px icon */
+.sb-tools .plan-status #fileSyncBtn i { font-size: var(--ico-16); }
 .sb-tools .plan-status #fileSyncBtn:hover { background: var(--cap-hover); }
-.sb-tools .sb-cap .btn, .sb-tools .sb-cap .icon-btn { width: 34px; height: 30px; border-radius: 999px; background: transparent; }
+.sb-tools .sb-cap { padding: 4px; }
+.sb-tools .sb-cap #themeToggleBtn { width: 37px; }   /* the aA button is a little wider in ClearDesk (36.6px): the capsule is 117px there */
+.sb-tools .sb-cap .btn, .sb-tools .sb-cap .icon-btn { width: 34px; height: 28px; border-radius: 999px; background: transparent; }
 .sb-tools .sb-cap i { font-size: var(--ico-18); }
-.sb-tools .sb-cap .aa { font-size: var(--fs-17); }
-.sb-tools .sb-cap .aa small { font-size: var(--fs-13); }
 .sb-tools .sb-cap .btn:hover, .sb-tools .sb-cap .icon-btn:hover { background: var(--cap-hover); }
 .sb-tools .dropdown-wrap { display: flex; }
 .sb-tools .sb-cap .btn { padding: 0; justify-content: center; border: none; background: transparent; color: var(--text-dim); font-size: var(--fs-15); }
@@ -1891,6 +1892,32 @@ html.sel-inactive .gantt-row-bg.selected { background: var(--cap-fill); }
 .ap-switch i { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--on-accent); box-shadow: 0 1px 2px var(--shadow-ink); transition: transform var(--dur-fast) ease; }
 .ap-match[aria-checked="true"] .ap-switch { background: var(--accent); }
 .ap-match[aria-checked="true"] .ap-switch i { transform: translateX(14px); }
+/* The toolbar starts with Add Task, then Indent / Outdent, then undo / redo (a view without Add Task starts with undo / redo): the group around Add Task dissolves so its parts and the History group order against each other. */
+.subbar .tb-group:has(> .split-btn) { display: contents; }
+.subbar > #sidebarShowBtn { order: 0; }
+.subbar .split-btn { order: 1; }
+.subbar .tb-group:has(> .split-btn) > .tb-sep { order: 1; }
+.subbar .tb-group:has(> .split-btn) > .tool-group { order: 2; }   /* Indent / Outdent right after Add Task */
+.subbar > .tool-group[aria-label="History"] { order: 3; }   /* then undo / redo */
+.subbar .tb-group:has(> .split-btn) > .sel-actions { order: 4; }
+.subbar .tb-group:has(> .split-btn) > .sel-chip { order: 5; }
+.subbar .tb-group:has(> .split-btn) > * { flex: none; }
+.subbar .sel-actions { flex-wrap: nowrap; }
+.subbar > :not(#sidebarShowBtn):not(.bar-title):not(.tb-group:has(> .split-btn)):not(.tool-group[aria-label="History"]) { order: 6; }
+.bar-title { display: none; order: 0; flex: 0 1 auto; min-width: 0; max-width: 240px; margin-right: 4px; line-height: 1.2; }   /* a quiet title only while the sidebar is hidden (it has no highlighted plan or view to say where you are) */
+html.sidebar-collapsed .bar-title { display: block; }
+.bar-title b { display: block; font-size: var(--fs-14); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar-title small { display: block; font-size: var(--fs-12); color: var(--text-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.subbar .btn.ico { width: 30px; padding: 0; justify-content: center; }
+.subbar .tool-group > .btn.ico { background: transparent; height: 26px; width: 30px; }
+.subbar .tool-group > .btn.ico:hover, .subbar .tool-group > .dropdown-wrap > .btn.ico:hover { background: var(--cap-hover); }
+.subbar .tool-group > .dropdown-wrap { display: flex; }
+.subbar .tool-group > .dropdown-wrap > .btn.ico { background: transparent; height: 26px; width: 30px; }
+.subbar .tool-group .btn-danger { color: var(--danger); }
+.subbar .icon-btn i, .subbar .btn.ico i { font-size: var(--ico-18); }   /* icon-only toolbar buttons draw at 18, as in ClearDesk's bars (the labelled Add Task keeps 16) */
+.subbar .tool-group > .btn.tb-toggle[aria-pressed="true"] { background: var(--cap-on); }
+.subbar .tool-group > :disabled { opacity: .4; }
+.dropdown-item > .mode-check:first-child { margin-left: 0; width: 18px; font-size: var(--ico-14); }   /* a pick list: the tick comes first, then the label */
 a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every control keeps the arrow */
 </style>
 </head>
