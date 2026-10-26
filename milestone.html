@@ -1326,7 +1326,7 @@ input.inline-edit[type=date]::-webkit-calendar-picker-indicator { margin: 0 0 0 
 .sc-keys { flex-shrink: 0; white-space: nowrap; }
 .sc-keys kbd { display: inline-block; min-width: 20px; padding: 1px 6px; margin-left: 2px; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: var(--r-xs); background: var(--panel-2); color: var(--text); font-family: inherit; font-weight: 600; font-size: var(--fs-11); line-height: 1.5; text-align: center; }
 .sc-keys .sc-or { margin: 0 2px 0 4px; color: var(--text-faint); font-size: var(--fs-11); }
-.grid-actions { position: absolute; right: 8px; top: 3px; bottom: 3px; display: flex; opacity: 0; align-items: center; gap: 2px; padding: 0 4px; border-radius: 999px; background: linear-gradient(var(--cap-fill), var(--cap-fill)), var(--row-bg); }
+.grid-actions { position: absolute; right: 8px; top: 3px; bottom: 3px; display: flex; opacity: 0; align-items: center; gap: 2px; padding: 0 4px; border-radius: 999px; background: linear-gradient(var(--cap-fill), var(--cap-fill)), var(--row-bg); box-shadow: inset 0 0 0 1px var(--border); }
 .grid-actions { pointer-events: none; }   /* the fade and the gaps let clicks through to the name; only the buttons themselves take them */
 .grid-actions .icon-btn { width: 24px; height: 24px; font-size: var(--fs-12); pointer-events: auto; }
 .grid-row:hover .grid-actions, .grid-row:focus-within .grid-actions { opacity: 1; }
@@ -1690,6 +1690,7 @@ select.rst-select:disabled { opacity: .5; }
 .trow.tadd { width: 100%; border: 0; background: none; color: var(--blue-text); font-weight: 500; text-align: left; }
 #predecessorRows:empty + .trow::before { display: none; }
 .trow.tadd:hover { background: var(--hover); border-radius: 0 0 var(--r-m) var(--r-m); }
+.tgrp > .tadd:first-child:hover, #predecessorRows:empty + .tadd:hover { border-radius: var(--r-m); }
 .trow .color-swatches { flex: none; gap: 10px; }
 .trow .swatch { width: 20px; height: 20px; border: 0; }
 .trow .swatch.selected { box-shadow: 0 0 0 2px var(--panel-2, var(--bg)), 0 0 0 4px var(--text-dim); }
@@ -1891,8 +1892,9 @@ html:not(.sel-inactive) .grid-row.selected .status-pill { background: var(--sel-
 html:not(.sel-inactive) .grid-row.selected i { color: inherit; }
 html:not(.sel-inactive) .grid-row.selected > .chg { background-color: var(--sel-fill); }
 html:not(.sel-inactive) .grid-row.selected :is(input, select, textarea, .inline-wrap) { --text: var(--ink); --text-dim: var(--ink-2); --text-faint: var(--ink-3); --border: var(--border-2); color: var(--ink); }
-html:not(.sel-inactive) .grid-row.selected .grid-actions { --text: var(--ink); --text-dim: var(--ink-2); }
-html:not(.sel-inactive) .grid-row.selected .grid-actions .icon-btn { color: var(--ink-2); }
+html:not(.sel-inactive) .grid-row.selected .grid-actions { background: var(--sel-fill); box-shadow: inset 0 0 0 1px var(--sel-halo); }   /* ClearDesk's: a translucent white capsule with a crisp ring and white glyphs on the accent */
+html:not(.sel-inactive) .grid-row.selected .grid-actions .icon-btn { color: #fff; }
+html:not(.sel-inactive) .grid-row.selected .grid-actions .icon-btn:hover { background: var(--sel-fill-hover); color: #fff; }
 html:not(.sel-inactive) .grid-row.selected .name-text.editable:hover, html:not(.sel-inactive) .grid-row.selected .grid-cell-dim.editable:hover { background: var(--sel-fill); }
 html.sel-inactive .grid-row.selected { --row-bg: var(--sel-inactive); }
 html.sel-inactive .gantt-row-bg.selected { background: var(--cap-fill); }
