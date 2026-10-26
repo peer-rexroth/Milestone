@@ -599,9 +599,6 @@ html.sidebar-collapsed .sidebar { display: none; }
 .sb-tools .sb-cap .btn:hover { color: var(--text); }
 .sb-tools .sb-cap .btn .btn-label { display: none; }
 html:not(.sidebar-collapsed) .sb-float { display: none; }   /* (the show button only exists while the sidebar is hidden) */
-.bar-title { flex: 0 1 auto; min-width: 120px; max-width: 280px; margin-right: 6px; line-height: 1.2; }
-.bar-title b { display: block; font-size: var(--fs-17); font-weight: 700; letter-spacing: -.01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.bar-title small { display: block; font-size: var(--fs-12); color: var(--text-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* narrow windows: the sidebar floats over the content (and starts hidden, see applySidebarState) */
 @media (max-width: 800px) {
   .sidebar { position: fixed; z-index: 70; top: 0; bottom: 0; left: 0; box-shadow: var(--shadow); }
@@ -1860,6 +1857,17 @@ html.sel-inactive .gantt-row-bg.selected { background: var(--cap-fill); }
 .ap-switch i { position: absolute; top: 2px; left: 2px; width: 24px; height: 24px; border-radius: 50%; background: var(--bg); box-shadow: var(--elev-1), 0 0 0 1px var(--border); transition: transform var(--dur-fast) ease; }
 .ap-switch.on { background: var(--accent); }
 .ap-switch.on i { transform: translateX(20px); background: var(--on-accent); }
+/* The toolbar starts with Add Task, then Indent / Outdent, then undo / redo (a view without Add Task starts with undo / redo): the group around Add Task dissolves so its parts and the History group order against each other. */
+.subbar .tb-group:has(> .split-btn) { display: contents; }
+.subbar > #sidebarShowBtn { order: 0; }
+.subbar .split-btn { order: 1; }
+.subbar .tb-group:has(> .split-btn) > .tb-sep { order: 1; }
+.subbar .tb-group:has(> .split-btn) > .tool-group { order: 2; }   /* Indent / Outdent right after Add Task */
+.subbar > .tool-group[aria-label="History"] { order: 3; }   /* then undo / redo */
+.subbar .tb-group:has(> .split-btn) > .sel-actions { order: 3; }
+.subbar .tb-group:has(> .split-btn) > * { flex: none; }
+.subbar .sel-actions { flex-wrap: nowrap; }
+.subbar > :not(#sidebarShowBtn):not(.tb-group:has(> .split-btn)):not(.tool-group[aria-label="History"]) { order: 4; }
 a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every control keeps the arrow */
 </style>
 </head>
@@ -1927,12 +1935,10 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
      data-more goes into the "More" menu when the toolbar is too narrow for everything (the higher the number, the sooner). -->
 <div class="subbar" id="subbar">
   <button class="icon-btn sb-float" id="sidebarShowBtn" onclick="toggleSidebar()" title="Show sidebar (Alt+Cmd/Ctrl+S)" aria-label="Show sidebar"><i class="fa-solid fa-sidebar"></i></button>
-  <div class="bar-title" data-more="3"><b id="barTitle"></b><small id="barSub"></small></div>
   <div class="tool-group" role="group" aria-label="History">
-  <button class="icon-btn" id="undoBtn" onclick="historyUndo()" title="Undo (Ctrl+Z)" disabled><i class="fa-solid fa-rotate-left"></i></button>
-  <button class="icon-btn" id="redoBtn" onclick="historyRedo()" title="Redo (Ctrl+Shift+Z)" disabled><i class="fa-solid fa-rotate-right"></i></button>
+  <button class="icon-btn" id="undoBtn" onclick="historyUndo()" title="Undo (Ctrl+Z)" aria-label="Undo" disabled><i class="fa-solid fa-undo"></i></button>
+  <button class="icon-btn" id="redoBtn" onclick="historyRedo()" title="Redo (Ctrl+Shift+Z)" aria-label="Redo" disabled><i class="fa-solid fa-redo"></i></button>
   </div>
-  <span class="tb-sep"></span>
   <div class="tb-group" data-views="tasks gantt">
     <div class="split-btn">
       <button class="btn" id="addTaskBtn" onclick="addTask()"><i class="fa-solid fa-plus"></i>Add Task</button>
@@ -5229,7 +5235,6 @@ function renderSidebarPlans() {   // the plans as rows, so switching needs no me
 function updateProjectNameUI() {
   renderSidebarPlans();
   document.getElementById('planBtnName').textContent = project.name;
-  document.getElementById('barTitle').textContent = project.name;
   for (const el of document.querySelectorAll('[data-ps-plan]')) el.textContent = '— ' + project.name;   // (Plan settings says which plan it is for)
   document.title = project.name + ' · Milestone';
 }
@@ -10001,6 +10006,10 @@ function positionDropdown(btnId, menuId, align) {
     menu.style.left = Math.max(8, rect.left) + 'px'; menu.style.right = 'auto';
     return;
   }
+  if (btn.closest('.sb-scroll') && btn.classList.contains('sb-row')) {   // a pull-down row in the sidebar: it opens to the right of the sidebar, level with the row, and never covers the row below
+    menu.style.bottom = 'auto'; menu.style.right = 'auto'; menu.style.left = (document.getElementById('sidebar').getBoundingClientRect().right + 6) + 'px'; menu.style.top = Math.max(8, rect.top - 6) + 'px';
+    return;
+  }
   menu.style.bottom = 'auto';
   menu.style.top = rect.bottom + 'px';
   if (align === 'left') { menu.style.left = rect.left + 'px'; menu.style.right = 'auto'; }
@@ -11234,8 +11243,6 @@ function updateStatusBar() {
   const all = tasks.filter(t => !t.spacer).length, sel = selectedIds().filter(id => !byId(id).spacer).length, nRes = (project.resources || []).length;
   document.getElementById('sbCount').textContent = currentView === 'tasks' || currentView === 'gantt'
     ? `${all} task${all === 1 ? '' : 's'}${sel ? ` · ${sel} selected` : ''}` : `${nRes} resource${nRes === 1 ? '' : 's'}`;
-  const vlabel = (MAIN_VIEWS.find(v => v.id === currentView) || {}).label || '';
-  document.getElementById('barSub').textContent = vlabel + ' · ' + document.getElementById('sbCount').textContent;
   { const real = tasks.filter(t => !t.spacer), done = real.filter(t => t.progress >= 100).length, ft = document.getElementById('sbFoot'); if (ft) ft.textContent = `${real.length} task${real.length === 1 ? '' : 's'} · ${done} done`; }
   for (const el of document.querySelectorAll('#statusbar [data-sb-views]')) el.classList.toggle('hidden', !el.dataset.sbViews.split(' ').includes(currentView));
   if (currentView === 'gantt' || currentView === 'resources') {

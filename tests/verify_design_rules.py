@@ -41,7 +41,7 @@ with sync_playwright() as p:
     # ---- 3. contrast
     ROLES = [("selected row text", ".grid-row.selected .grid-name"), ("row text", ".grid-row:not(.selected) .grid-name"), ("secondary row text", ".grid-row:not(.selected) .grid-cell-dim"),
              ("column header", "#gridHeader .col-head"), ("sidebar view", ".sidebar .view-tab:not(.active)"), ("sidebar active view", ".sidebar .view-tab.active"),
-             ("bar subtitle", "#barSub"), ("status pill", ".status-pill"), ("toolbar button", "#addTaskBtn"), ("sidebar section label", ".sb-label")]
+             ("status pill", ".status-pill"), ("toolbar button", "#addTaskBtn"), ("sidebar section label", ".sb-label")]
     for theme in ("light", "dark"):
         ev("t => { if (document.documentElement.dataset.theme !== t) toggleTheme(); }", theme); pg.mouse.click(700, 500); pg.wait_for_timeout(350)
         shot = Image.open(io.BytesIO(pg.screenshot())).convert("RGB")
