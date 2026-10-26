@@ -716,42 +716,26 @@ button:focus:not(:focus-visible) { outline: none; }
 .cf-caret { font-size: var(--fs-11); margin-left: 2px; }
 .cf-empty { padding: 16px 14px; border: 1px dashed var(--border); border-radius: var(--r-s); color: var(--text-dim); font-size: var(--fs-13); line-height: 1.5; text-align: center; }
 #cfAddMenu { z-index: 130; min-width: 230px; margin-top: 4px; }
-.fields-rows { display: flex; flex-direction: column; gap: 6px; }
-.fld-head, .fld-row { display: grid; grid-template-columns: 104px 1fr 56px 60px 28px; gap: 8px; align-items: center; }
-.fld-head { padding: 0 0 -2px; font-size: var(--fs-11); font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--text-faint); }
-.fld-head .fld-uses, .fld-head span:nth-child(3) { text-align: center; }
-.fld-kind { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-12); font-weight: 600; color: var(--text-dim); padding: 4px 8px; border-radius: var(--r-s); background: var(--panel-2); justify-self: start; white-space: nowrap; }
+.fields-rows:not(.tgrp) { display: none; }
+#fieldsAdd .empty-state { display: flex; flex-direction: column; align-items: center; padding-top: 80px; }
+.fld-row { gap: 12px; }
+.fld-row .fld-name { flex: 1 1 auto; min-width: 0; width: auto; padding: 6px 0; border: 0 !important; background-color: transparent !important; box-shadow: none !important; outline: 0; font: inherit; color: var(--text); }
+.fld-row .fld-name::placeholder { color: var(--text-faint); }
+.fld-kind { flex: none; min-width: 84px; display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-13); color: var(--text-faint); white-space: nowrap; }
 .fld-kind i { width: 14px; text-align: center; color: var(--text-faint); }
-.fld-show { display: flex; justify-content: center;}
+.fld-show { display: flex; }
 .fld-show input { position: absolute; opacity: 0; width: 1px; height: 1px; }
-.fld-switch { position: relative; width: 30px; height: 17px; border-radius: 999px; background: var(--border); transition: background .12s; flex-shrink: 0; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 12%, transparent); }
-.fld-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 13px; height: 13px; border-radius: 50%; background: var(--on-accent); box-shadow: 0 1px 2px rgba(0,0,0,.3); transition: transform .12s; }
+.fld-switch { position: relative; width: 38px; height: 22px; border-radius: 999px; background: var(--cap-hover); transition: background-color var(--dur-fast) ease; flex-shrink: 0; }
+.fld-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: var(--on-accent); box-shadow: 0 1px 3px var(--shadow-ink); transition: transform var(--dur-fast) ease; }
 .fld-show input:checked + .fld-switch { background: var(--accent); }
-.fld-show input:checked + .fld-switch::after { transform: translateX(13px); }
+.fld-show input:checked + .fld-switch::after { transform: translateX(16px); }
+.fld-show { align-items: center; gap: 8px; margin-left: 4px; font-size: var(--fs-13); color: var(--text-faint); }
+.fld-show > span:first-child { white-space: nowrap; }
 .fld-show input:focus-visible + .fld-switch { outline: 2px solid var(--accent); outline-offset: 2px; }
 .fld-row.removed .fld-show { opacity: .4; pointer-events: none; }
-.fld-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
-.fld-card { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 12px 12px 12px; border: 1px solid var(--border); border-radius: var(--r-m); background: var(--panel); color: var(--text); text-align: left;min-width: 0; }
-.fld-card:hover:not(:disabled) { border-color: color-mix(in srgb, var(--accent) 55%, var(--border)); background: color-mix(in srgb, var(--accent) 5%, var(--panel)); }
-.fld-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-.fld-card:disabled { opacity: .5; cursor: default; }
-.fld-card .fld-card-ico { width: 30px; height: 30px; border-radius: var(--r-s); display: inline-flex; align-items: center; justify-content: center; background: color-mix(in srgb, var(--accent) 12%, var(--panel)); color: var(--accent); font-size: var(--ico-18); margin-bottom: 4px; }
-.fld-card b { font-size: var(--fs-13); font-weight: 600; }
-.fld-card .fld-card-desc { font-size: var(--fs-12); color: var(--text-dim); line-height: 1.35; }
-.fld-card .fld-card-eg { font-size: var(--fs-12); color: var(--text-faint); line-height: 1.35; margin-top: 2px; }
-.fld-add { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.fld-add-label { font-size: var(--fs-12); color: var(--text-dim); font-weight: 600; margin-right: 2px; }
-.fld-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border: 1px solid var(--border); border-radius: var(--r-s); background: var(--panel); color: var(--text); font-size: var(--fs-12); font-weight: 500;}
-.fld-chip:hover:not(:disabled) { background: var(--panel-2); }
-.fld-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-.fld-chip:disabled { opacity: .5; cursor: default; }
-.fld-chip i { font-size: var(--ico-14); color: var(--text-faint); }
-.fld-chip small { font-size: var(--fs-11); color: var(--text-faint); }
-.fld-meter { font-size: var(--fs-12); color: var(--text-faint); }
-.fld-name { padding: 6px 8px; border: 1px solid var(--border); border-radius: var(--r-s); background: var(--panel); color: var(--text); min-width: 0; }
 .fld-name:disabled { opacity: .5; text-decoration: line-through; }
 .fld-name.bad { border-color: var(--danger); }
-.fld-uses { font-size: var(--fs-12); color: var(--text-faint); text-align: center; white-space: nowrap; }
+.fld-uses { flex: none; min-width: 64px; font-size: var(--fs-13); color: var(--text-faint); text-align: right; white-space: nowrap; }
 .fld-remove { width: 26px; height: 26px; border: none; border-radius: var(--r-s); background: transparent; color: var(--text-faint); }
 .fld-remove:hover { background: var(--panel-2); color: var(--danger); }
 .fld-row.removed .fld-remove:hover { color: var(--accent); }
@@ -2458,11 +2442,8 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
     <div class="modal-header"><div class="mh-title"><h2 id="fieldsModalTitle">Plan settings</h2><span class="ps-plan" id="fieldsPlanChip" data-ps-plan></span></div><button onclick="requestCloseFieldsModal()" aria-label="Close">&times;</button></div>
     <div class="settings-tabs" role="tablist" aria-label="Plan settings" data-current="fields"></div>
     <div class="modal-body">
-      <p class="cal-hint" style="margin:0">Extra information for your tasks, kept with this plan.</p>
-      <div class="fld-head hidden" id="fieldsHead"><span>Type</span><span>Name</span><span title="Show it as a column in the Tasks list (on this device)">In list</span><span class="fld-uses">Used</span><span></span></div>
       <div class="fields-rows" id="fieldsRows"></div>
       <div id="fieldsAdd"></div>
-      <div class="fld-meter" id="fieldsMeter"></div>
     </div>
     <div class="modal-footer">
       <span class="foot-note" id="fieldsNote"></span>
@@ -9089,7 +9070,7 @@ function toggleCfAddMenu(event) {
   if (menu.classList.contains('open')) { closeCfAddMenu(); return; }
   menu.innerHTML = CUSTOM_KINDS.map(k => {
     const info = FIELD_KIND_INFO[k.kind], free = freeFieldSlot(k.kind);
-    return `<button class="dropdown-item" role="menuitem"${free ? '' : ' disabled'} onclick="chooseNewFieldKind('${k.kind}')"><i class="fa-solid ${info.icon}"></i>${info.label}<span class="item-hint">${free ? info.hint : 'all 5 in use'}</span></button>`;
+    return `<button class="dropdown-item" role="menuitem" data-kind="${k.kind}"${free ? '' : ' disabled'} onclick="chooseNewFieldKind('${k.kind}')"><i class="fa-solid ${info.icon}"></i>${info.label}<span class="item-hint">${free ? info.hint : 'all 5 in use'}</span></button>`;
   }).join('');
   const r = event.currentTarget.getBoundingClientRect();
   placeMenu(menu, r.left, r.bottom);
@@ -9121,17 +9102,15 @@ function requestCloseFieldsModal() {
 }
 function renderFieldsRows() {
   const box = document.getElementById('fieldsRows'), has = fieldsDraft.length > 0;
-  document.getElementById('fieldsHead').classList.toggle('hidden', !has);
+  box.classList.toggle('tgrp', has);
   box.innerHTML = fieldsDraft.map((r, i) => {
     const info = FIELD_KIND_INFO[r.kind], uses = r.isNew ? '' : r.uses ? `${r.uses} task${r.uses === 1 ? '' : 's'}` : '—';
-    return `<div class="fld-row${r.removed ? ' removed' : ''}" data-i="${i}"><span class="fld-kind"><i class="fa-solid ${info.icon}"></i>${info.label}</span><input type="text" class="fld-name" maxlength="40" value="${escapeHtml(r.name)}" ${r.removed ? 'disabled ' : ''}placeholder="${escapeHtml(info.eg.split(', ')[0])}" aria-label="Name of the ${info.label.toLowerCase()} field" oninput="fieldsNameInput(${i}, this)" onkeydown="if(event.key==='Enter'){event.preventDefault();saveFieldsModal();}"><label class="fld-show" title="Show this field as a column in the Tasks list — on this device; the Gantt view keeps its own columns"><input type="checkbox" class="fld-show-in"${r.show ? ' checked' : ''} aria-label="Show ${escapeHtml(r.name || info.label)} in the list" onchange="fieldsDraft[${i}].show = this.checked"><span class="fld-switch"></span></label><span class="fld-uses">${uses}</span><button type="button" class="fld-remove" onclick="fieldsToggleRemove(${i})" title="${r.removed ? 'Keep this field' : r.isNew ? 'Discard this new field' : 'Remove this field' + (r.uses ? ' and its values' : '')}" aria-label="${r.removed ? 'Keep' : 'Remove'} ${escapeHtml(r.name || info.label)}"><i class="fa-solid ${r.removed ? 'fa-rotate-left' : 'fa-xmark'}"></i></button></div>`;
+    return `<div class="trow fld-row${r.removed ? ' removed' : ''}" data-i="${i}"><input type="text" class="fld-name" maxlength="40" value="${escapeHtml(r.name)}" ${r.removed ? 'disabled ' : ''}placeholder="${escapeHtml(info.eg.split(', ')[0])}" aria-label="Name of the ${info.label.toLowerCase()} field" oninput="fieldsNameInput(${i}, this)" onkeydown="if(event.key==='Enter'){event.preventDefault();saveFieldsModal();}"><span class="fld-kind"><i class="fa-solid ${info.icon}"></i>${info.label}</span><span class="fld-uses">${uses}</span><label class="fld-show" title="Show this field as a column in the Tasks list — on this device; the Gantt view keeps its own columns"><span>In List</span><input type="checkbox" class="fld-show-in"${r.show ? ' checked' : ''} aria-label="Show ${escapeHtml(r.name || info.label)} in the list" onchange="fieldsDraft[${i}].show = this.checked"><span class="fld-switch"></span></label><button type="button" class="fld-remove" onclick="fieldsToggleRemove(${i})" title="${r.removed ? 'Keep this field' : r.isNew ? 'Discard this new field' : 'Remove this field' + (r.uses ? ' and its values' : '')}" aria-label="${r.removed ? 'Keep' : 'Remove'} ${escapeHtml(r.name || info.label)}"><i class="fa-solid ${r.removed ? 'fa-rotate-left' : 'fa-xmark'}"></i></button></div>`;
   }).join('');
-  // adding: with no field yet the four kinds are cards that say what each is for; afterwards a compact row of buttons (with how many of each are left)
-  const add = document.getElementById('fieldsAdd');
-  add.innerHTML = !has
-    ? `<div class="fld-cards" role="group" aria-label="Add a field">${CUSTOM_KINDS.map(k => { const info = FIELD_KIND_INFO[k.kind], left = fieldSlotsLeft(k.kind); return `<button type="button" class="fld-card" data-kind="${k.kind}"${left ? '' : ' disabled'} onclick="fieldsAddRow('${k.kind}')"><span class="fld-card-ico"><i class="fa-solid ${info.icon}"></i></span><b>${info.label}</b><span class="fld-card-desc">${info.desc}</span><span class="fld-card-eg">e.g. ${info.eg}</span></button>`; }).join('')}</div>`
-    : `<div class="fld-add" role="group" aria-label="Add a field"><span class="fld-add-label">Add</span>${CUSTOM_KINDS.map(k => { const info = FIELD_KIND_INFO[k.kind], left = fieldSlotsLeft(k.kind); return `<button type="button" class="fld-chip" data-kind="${k.kind}"${left ? '' : ' disabled'} onclick="fieldsAddRow('${k.kind}')" title="${left ? `Add ${info.hint}: ${info.eg}` : `All five ${info.label.toLowerCase()} fields are in use`}"><i class="fa-solid ${info.icon}"></i>${info.label}<small>${left ? `${left} left` : 'all used'}</small></button>`; }).join('')}</div>`;
-  document.getElementById('fieldsMeter').textContent = has ? `${fieldsDraft.filter(r => !r.removed).length} of ${CUSTOM_KINDS.length * 5} possible fields in use — up to five of each kind.` : '';
+  // adding: one button that opens the type menu (Text, Number, Date, Yes / No; a kind with all five used says so)
+  document.getElementById('fieldsAdd').innerHTML = !has
+    ? `<div class="empty-state">${emptyIcon('list')}No Custom Fields<button type="button" class="btn fld-addbtn" onclick="toggleCfAddMenu(event)" aria-haspopup="menu">Add Field</button></div>`
+    : `<div class="tgrp"><button type="button" class="trow tadd fld-addbtn" onclick="toggleCfAddMenu(event)" aria-haspopup="menu">Add Field…</button></div>`;
   const removing = fieldsDraft.filter(r => r.removed && !r.isNew).length;
   document.getElementById('fieldsNote').textContent = removing ? `${removing} field${removing === 1 ? '' : 's'} will be removed when you save.` : '';
 }
