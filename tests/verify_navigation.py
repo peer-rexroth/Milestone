@@ -54,7 +54,7 @@ with sync_playwright() as p:
     pg.click("#overOnlyBtn"); pg.wait_for_timeout(120)
     check("'Over-allocated only' narrows it to Anna (100% + 100% on overlapping days)", all_rows == 2 and rows() == 1 and "Anna" in pg.inner_text("#resourceBody"), (all_rows, rows()))
     ev("() => { byId('b').resource = 'Ben'; normalizeData(); save(); render(); }")
-    check("...with nobody over-allocated it says so, with a way back", "Nobody is over-allocated" in pg.inner_text("#resourceBody"))
+    check("...with nobody over-allocated it says so, with a way back", "Nobody Is Over-Allocated" in pg.inner_text("#resourceBody"))
     pg.click("#resourceBody .btn-link"); pg.wait_for_timeout(120)
     check("...'show everyone' turns it off again", rows() == 2 and pg.get_attribute("#overOnlyBtn", "aria-pressed") == "false")
 

@@ -7455,12 +7455,12 @@ function renderResourceUsage() {
   }).join('');
 
   if (!resources.length && overIds && (project.resources || []).length) {
-    document.getElementById('resourceBody').innerHTML = `<div class="empty-state" style="position:static;width:${RESOURCE_NAME_W + totalW}px">${emptyIcon('circle-check')}Nobody is over-allocated — <button class="btn-link" onclick="toggleOverOnly()">show everyone</button></div>`;
+    document.getElementById('resourceBody').innerHTML = `<div class="empty-state" style="position:static;width:${RESOURCE_NAME_W + totalW}px">${emptyIcon('circle-check')}Nobody Is Over-Allocated<span class="empty-sub"><button class="btn-link" onclick="toggleOverOnly()">Show Everyone</button></span></div>`;
     resourceRenderedWin = { from: 0, to: 0, n: 0, virtual: false };
     return;
   }
   if (!resources.length) {
-    document.getElementById('resourceBody').innerHTML = `<div class="empty-state" style="position:static;width:${RESOURCE_NAME_W + totalW}px">${emptyIcon('users')}No resources yet — type a name in a task's Resource field, or add one on the <strong>Resources</strong> tab</div>`;
+    document.getElementById('resourceBody').innerHTML = `<div class="empty-state" style="position:static;width:${RESOURCE_NAME_W + totalW}px">${emptyIcon('users')}No Resources<span class="empty-sub">Add resources on the Resources tab.</span></div>`;
     resourceRenderedWin = { from: 0, to: 0, n: 0, virtual: false };
     return;
   }
@@ -7699,7 +7699,7 @@ function renderResourceSheet() {
   document.getElementById('resourceSheetHeader').innerHTML = cols.map(c => `<div data-rskey="${c.key}" class="rz-${rsResizeEdge(c.key)}">${c.label}${c.money ? cur : ''}${c.key === 'id' || c.key === 'remove' ? '' : `<div class="col-resizer" data-rscol="${c.key}" title="Drag to resize · double-click to fit the content · right-click for more"></div>`}</div>`).join('');
   const pool = project.resources || [];
   document.getElementById('resourceSheetBody').innerHTML = pool.length ? pool.map((r, i) => resourceSheetRowHtml(r, i)).join('') + '<button type="button" class="rst-add-row" onclick="addResourceSheetRow()"><i class="fa-solid fa-plus"></i>Add resource</button>'
-    : '<div class="rst-empty">No resources yet — type a name in a task’s Resource field, or “Add Resource” above.</div>';
+    : `<div class="empty-state rst-empty">${emptyIcon('users')}No Resources<span class="empty-sub">Choose Add Resource above.</span></div>`;
   updateResourceSheetColumnLines();
 }
 // The column lines (see the CSS comment above .resourceSheet-pane-outer): reads the HEADER's and a real ROW's own
