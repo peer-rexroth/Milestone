@@ -42,7 +42,7 @@ with sync_playwright() as p:
     ev("() => setView('tasks')"); pg.wait_for_timeout(250)
     # ------------------------------------------------------------------ the dialog and bulk edit
     ev("() => openTaskModal('d')"); pg.wait_for_timeout(300)
-    check("the dialog calls it 'Row colour', with a 'No colour' choice and eight colours", "Row colour" in pg.inner_text("#taskModalBg .modal-body") and pg.locator("#taskColorSwatches .swatch").count() == 9 and pg.get_attribute("#taskColorSwatches .swatch.auto", "title") == "No colour")
+    check("the dialog calls it 'Color', with a 'No colour' choice and eight colours", "Color" in pg.inner_text("#taskModalBg .modal-body") and pg.locator("#taskColorSwatches .swatch").count() == 9 and pg.get_attribute("#taskColorSwatches .swatch.auto", "title") == "No colour")
     pg.click("#taskColorSwatches .swatch:nth-child(4)"); pg.click("#taskModalBg .btn-primary"); pg.wait_for_timeout(300)
     check("picking a colour and saving colours the row (Purple, the 3rd colour)", ev("() => byId('d').color") == "purple" and ev("() => document.querySelector(\".grid-row[data-id='d']\").classList.contains('colored')"), ev("() => byId('d').color"))
     ev("() => openTaskModal('d')"); pg.wait_for_timeout(300); pg.click("#taskColorSwatches .swatch.auto"); pg.click("#taskModalBg .btn-primary"); pg.wait_for_timeout(300)

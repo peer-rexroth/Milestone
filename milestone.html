@@ -547,9 +547,10 @@ button { cursor: default; }
 }
 html.sidebar-collapsed .sidebar { display: none; }
 .sidebar { position: relative; z-index: 60; }   /* above the content, so the tools bar's menus (wider than the sidebar) are not painted over by it */
-.sb-head { display: flex; align-items: center; gap: 8px; height: 52px; flex: none; padding: 0 12px 0 14px; }   /* just the round hide button (the views are rows below) */
-.sb-head #sidebarToggleBtn, .sb-float { background: var(--cap-fill); border-radius: 50%; width: 36px; height: 36px; flex: none; box-shadow: var(--elev-1); }   /* ClearDesk's round hide / show button */
-.sb-head #sidebarToggleBtn i, .sb-float i { font-size: var(--ico-16); }
+.sb-head { display: flex; align-items: center; gap: 8px; height: 52px; flex: none; padding: 0 12px; }   /* just the round hide button (the views are rows below) */
+.sb-head #sidebarToggleBtn, .sb-float { background: var(--cap-fill); border-radius: 50%; width: 36px; height: 36px; flex: none; box-shadow: inset 0 1px 0 rgba(255,255,255,.8), 0 1px 4px rgba(40,50,110,.1); }   /* ClearDesk's round hide / show button: the same glyph (a 16px outline svg), the same lit edge */
+html[data-theme="dark"] .sb-head #sidebarToggleBtn, html[data-theme="dark"] .sb-float { box-shadow: inset 0 1px 0 rgba(255,255,255,.22), 0 1px 4px rgba(40,50,110,.1); }
+.sb-head #sidebarToggleBtn svg, .sb-float svg { width: 16px; height: 16px; flex: none; }
 .sb-head #sidebarToggleBtn:hover { background: var(--cap-hover); }
 .sidebar .view-tabs { display: flex; flex-direction: column; gap: 2px; padding: 0; background: none; border-radius: 0; }
 .sidebar .view-tab { display: flex; align-items: center; gap: 10px; width: 100%; height: auto; padding: 8px 10px; border: none; border-radius: var(--r-m); background: transparent; color: var(--text-dim); font-size: var(--fs-14); font-weight: 500; text-align: left; }
@@ -705,7 +706,6 @@ button:focus:not(:focus-visible) { outline: none; }
 .deadline-note.late { color: var(--danger); font-weight: 600; }
 .tab-badge { min-width: 18px; padding: 0 4px; border-radius: 999px; background: color-mix(in srgb, var(--accent) 16%, var(--panel)); color: var(--accent); font-size: var(--fs-11); line-height: 17px; text-align: center; }
 .tab-pane { display: flex; flex-direction: column; gap: 12px; }
-#taskDatesBlock .calc-row { margin-top: 12px; }   /* the 12px rhythm of the dialog between the Start row and the Actual row too */
 .task-sep { height: 1px; background: var(--border); margin: 0 -2px; flex-shrink: 0; }   /* the Edit task dialog's four sections: Task | Schedule | Rules and look | Predecessors (the flex gap above and below makes the air) */
 .info-i { margin-left: 4px; color: var(--text-faint); font-size: var(--fs-11); cursor: help; outline: none; }
 .info-i:hover, .info-i:focus-visible { color: var(--accent); }
@@ -1650,7 +1650,7 @@ select.rst-select:disabled { opacity: .5; }
 .field-grid-4 > .span2 { grid-column: span 2; } .field-grid-4 > .span3 { grid-column: span 3; }
 .field-grid-4 input[type=date], .field-grid-4 input[type=number], .field-grid-4 input[type=text], .field-grid-4 select { padding: 8px 8px; }
 .ms-field { align-self: end; padding-bottom: 8px; }   /* the task dialog: a lot of fields, so more room before it scrolls */
-.modal.wide { width: 660px; }   /* (620px before the dialogs got 24px of padding: the fields keep their width) */
+.modal.wide { width: 560px; }   /* (620px before the dialogs got 24px of padding: the fields keep their width) */
 .modal.settings-modal { width: 680px; height: min(810px, 94vh); max-height: 94vh; }   /* (760px before the dialogs got ClearDesk's 24px padding; 810 keeps the same room for the content) */
 .modal.settings-modal .modal-body { flex: 1; min-height: 0; }
 .settings-tabs { display: flex; gap: 1px; padding: 0 8px; border-bottom: 1px solid var(--border); flex-shrink: 0; overflow-x: auto; }
@@ -1659,16 +1659,10 @@ select.rst-select:disabled { opacity: .5; }
 .settings-tab i { font-size: var(--ico-14); opacity: .8; }
 .settings-tab:hover { color: var(--text); }
 .settings-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
-.minute-mode #taskDatesBlock { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
-.minute-mode #taskDatesBlock > .field-grid-4 { display: contents; }   /* (the two rows of fields become one grid, so they can be ordered together) */
-.minute-mode #taskDatesBlock #taskTextDatesNote { grid-column: 1 / -1; order: 9; }
 /* A date + a time need ~230px: in an hours & minutes plan the four date fields take two of the four columns each; the numbers (Duration, %, Remaining, Status) share one row between the planned and the actual dates.
    The two Actual fields pin an explicit column-start (not just `span 2`, which is relative to wherever the auto-placement cursor happens to be): a
    milestone hides Finish/Duration/Actual Finish, and without the pin the cursor's gap-filling shifted Actual Start out from under Start by a column
    ("dates are not aligned under each other" — a real layout bug, not a rounding/pixel one). Start/Finish need no pin — nothing is ever hidden before them. */
-.minute-mode #taskStartField { grid-column: span 2; order: 1; } .minute-mode #taskEndField { grid-column: span 2; order: 2; }
-.minute-mode #taskDurationField { order: 3; } .minute-mode #taskProgressField { order: 4; } .minute-mode #taskRemainingField { order: 5; } .minute-mode #taskStatusField { order: 6; }
-.minute-mode #taskActualStartField { grid-column: 1 / span 2; order: 7; } .minute-mode #taskActualFinishField { grid-column: 3 / span 2; order: 8; }
 /* Dialogs wear ClearDesk's shell (design-system 6.2): no bars and no hairlines, 24px padding, the title 17/600 on the left, body text 14 in secondary ink,
    the buttons on the right with Cancel first; a quiet round x (Esc and Cancel close too). A dialog with tabs or a toolbar keeps the rule under them. */
 .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 24px 24px 0; border-bottom: 0; gap: 8px; }
@@ -1681,6 +1675,53 @@ select.rst-select:disabled { opacity: .5; }
 .modal-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 16px 24px 24px; border-top: 0; }
 .modal-footer .btn:not(.btn-primary) { background: var(--bg-2); box-shadow: var(--elev-1); border-color: transparent; }
 .modal-tabs + .modal-body, .modal-tabs ~ .modal-body { padding-top: 16px; }
+
+/* The task dialog is a grouped inspector, like ClearDesk's task panel: tinted groups of rows (label left, value right, hairlines between, no boxes),
+   switches for the on / off choices, read-only values as plain grey text. The inputs keep their ids; each row's id is what the code hides. */
+.modal-tabs { display: flex; gap: 2px; width: max-content; margin: 12px 24px 0; padding: 3px; border: 0; border-radius: 999px; background: var(--cap-fill); }
+.modal-tab { margin: 0; padding: 5px 14px; border: 0; border-radius: 999px; font-size: var(--fs-13); font-weight: 500; color: var(--text-dim); }
+.modal-tab.active { background: var(--glass-strong); color: var(--text); font-weight: 600; box-shadow: 0 1px 3px var(--shadow-ink); }
+.tgrp { background: color-mix(in srgb, var(--text) 5%, transparent); border-radius: var(--r-m); flex: none; }
+.tgrp.hidden { display: none; }
+.trow { display: flex; align-items: center; gap: 12px; min-height: 40px; padding: 4px 14px; position: relative; font-size: var(--fs-14); color: var(--text); line-height: normal; }
+.trow + .trow::before, #predecessorRows > .pred-row::before, #predecessorRows + .trow::before { content: ""; position: absolute; left: 14px; right: 0; top: 0; height: 1px; background: var(--border); }
+.trow > label { flex: 1; min-width: 0; font-size: var(--fs-14); font-weight: 400; color: var(--text); white-space: nowrap; }
+.trow .tin, .trow input.dt-date, .trow input.dt-time { flex: 0 1 220px; min-width: 0; width: auto; padding: 6px 0; border: 0 !important; background-color: transparent !important; box-shadow: none !important; outline: 0; color: var(--text-dim); font: inherit; text-align: right; }
+.trow .tname { flex: 1 1 auto; text-align: left; color: var(--text); font-weight: 500; }
+.trow .tin::placeholder, .trow input.dt-date::placeholder { color: var(--text-faint); }
+.trow select.tin { text-align-last: right; padding-right: 20px; cursor: default; }
+.trow .tunit { margin-left: -8px; color: var(--text-faint); font-size: var(--fs-14); }
+.trow .tro { color: var(--text-faint); }
+.trow .field-dt { flex: 0 1 auto; flex-wrap: nowrap; justify-content: flex-end; gap: 4px; }
+.trow .field-dt .dt-wrap { flex: 0 0 auto; min-width: 0; }
+.trow .field-dt input.dt-date { width: 112px; padding-right: 30px; }
+.trow .field-dt input.dt-time { flex: 0 0 64px; min-width: 64px; width: 64px; }
+.trow input.dt-err { color: var(--danger); }
+.trow:has(:is(.tin, input.dt-date, input.dt-time, select):focus-visible) { box-shadow: 0 0 0 3px var(--focus-ring); border-radius: var(--r-m); }
+.tsw { appearance: none; -webkit-appearance: none; flex: none; position: relative; width: 38px; height: 22px; margin: 0; border-radius: 999px; background: var(--cap-hover); transition: background-color var(--dur-fast) ease; }
+.tsw::after { content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: var(--on-accent); box-shadow: 0 1px 3px var(--shadow-ink); transition: transform var(--dur-fast) ease; }
+.tsw:checked { background: var(--accent); }
+.tsw:checked::after { transform: translateX(16px); }
+.tsw:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+.tcap { margin: 2px 14px -8px; font-size: var(--fs-12); font-weight: 600; color: var(--text-faint); }
+.trow.tadd { width: 100%; border: 0; background: none; color: var(--blue-text); font-weight: 500; text-align: left; }
+#predecessorRows:empty + .trow::before { display: none; }
+.trow.tadd:hover { background: var(--hover); border-radius: 0 0 var(--r-m) var(--r-m); }
+.trow .color-swatches { flex: none; gap: 10px; }
+.trow .swatch { width: 20px; height: 20px; border: 0; }
+.trow .swatch.selected { box-shadow: 0 0 0 2px var(--panel-2, var(--bg)), 0 0 0 4px var(--text-dim); }
+.trow .swatch.auto { border: 1.5px solid var(--text-faint); background: transparent; }
+.trow .swatch.auto.selected { box-shadow: none; border-color: var(--text); }
+.trow .swatch.auto i { font-size: var(--ico-12); }
+#predecessorRows .pred-row { position: relative; display: grid; grid-template-columns: 56px minmax(0, 1fr) 62px 84px 24px; gap: 8px; align-items: center; min-height: 40px; margin: 0; padding: 4px 14px; font-size: var(--fs-14); }
+#predecessorRows .pred-row:first-child::before { display: none; }
+#predecessorRows .pred-row select, #predecessorRows .pred-row input { padding: 6px 0; border: 0; background-color: transparent; font-size: var(--fs-14); color: var(--text); text-align: right; box-shadow: none; }
+#predecessorRows .pred-row select { padding-right: 22px; }
+#predecessorRows .pred-row .pred-id-input { text-align: left; }
+#predecessorRows .pred-name { min-height: 0; padding: 0; border: 0; background: none; font-size: var(--fs-14); color: var(--text-dim); }
+#predecessorRows .pred-name.none { color: var(--text-faint); }
+#taskTextDatesNote, #taskBaselineInfo { margin: -6px 14px 0; }
+.modal-tabs ~ .modal-body { padding-bottom: 12px; }
 .field { display: flex; flex-direction: column; gap: 4px; }
 .field label { font-size: var(--fs-12); font-weight: 600; color: var(--text-dim); }
 .field input[type=text], .field input[type=date], .field input[type=time], .field input[type=number], .field textarea, .field select {
@@ -1780,9 +1821,7 @@ input.dt-time { width: 84px; flex: 0 0 84px; text-align: center; }
 @media (max-width: 560px) {   /* a phone: dialogs stack instead of squeezing */
   .modal-body { padding: 14px 14px; }
   .field-grid-nm { grid-template-columns: minmax(0, 1fr); }
-  .field-grid-4, .minute-mode #taskDatesBlock { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .field-grid-4 > .span2, .field-grid-4 > .span3 { grid-column: 1 / -1; }
-  .minute-mode #taskActualStartField, .minute-mode #taskActualFinishField { grid-column: span 2; }   /* only 2 columns here — the desktop pin to column 1/3 would push a 3rd, empty column in */
+  .field-grid-4,   .field-grid-4 > .span2, .field-grid-4 > .span3 { grid-column: 1 / -1; }
   .bulk-row { grid-template-columns: 1fr; gap: 4px; }
   .bulk-ctl { flex-wrap: wrap; }
   #bulkVal-shift, #bulkVal-predId, #bulkVal-predLag { flex: 1 1 90px; }
@@ -1817,6 +1856,8 @@ input.dt-time { width: 84px; flex: 0 0 84px; text-align: center; }
   display: flex; align-items: center; gap: 14px; opacity: 0; pointer-events: none; transition: opacity var(--dur-base) ease, transform var(--dur-base) ease; z-index: 200; box-shadow: var(--glass-shadow);
 }
 #toast.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+html:has(.modal-bg.open) #toast { bottom: auto; top: 20px; transform: translateY(-20px); }   /* while a dialog is open the toast sits at the top: a tall sheet's Save button is where it would land */
+html:has(.modal-bg.open) #toast.show { transform: translateY(0); }
 #toast.error { border-color: var(--danger); }
 #toast.error #toastMsg { color: var(--red-text); }
 #toast button { border: none; background: none; color: var(--accent); font-weight: 600; font-size: var(--fs-13); }
@@ -1926,7 +1967,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 <div class="window" id="window">
 <aside class="sidebar" id="sidebar" aria-label="Plans and views">
   <div class="sb-head">
-    <button class="icon-btn" id="sidebarToggleBtn" onclick="toggleSidebar()" title="Hide sidebar (Alt+Cmd/Ctrl+S)" aria-label="Hide sidebar"><i class="fa-solid fa-sidebar"></i></button>
+    <button class="icon-btn" id="sidebarToggleBtn" onclick="toggleSidebar()" title="Hide sidebar (Alt+Cmd/Ctrl+S)" aria-label="Hide sidebar"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="11" rx="2.5"/><path d="M6 2.5v11"/></svg></button>
   </div>
   <div class="sb-search" id="sbSearch"><i class="fa-solid fa-magnifying-glass"></i><input type="search" id="searchInput" role="combobox" aria-label="Find a task" aria-expanded="false" aria-controls="searchResults" autocomplete="off" spellcheck="false" placeholder="Find a Task" title="Words match task names, WBS codes, notes and your own fields. #12 finds a task number, @anna a resource, status:late a status. Ctrl+H opens Find and Replace." oninput="renderSearch()" onfocus="searchFocus()" onblur="searchBlur()" onkeydown="searchKey(event)"></div>
   <div class="sb-scroll">
@@ -1980,7 +2021,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 <!-- The toolbar belongs to the view you are in: each .tb-group lists the views it shows in (data-views). A button with
      data-more goes into the "More" menu when the toolbar is too narrow for everything (the higher the number, the sooner). -->
 <div class="subbar" id="subbar">
-  <button class="icon-btn sb-float" id="sidebarShowBtn" onclick="toggleSidebar()" title="Show sidebar (Alt+Cmd/Ctrl+S)" aria-label="Show sidebar"><i class="fa-solid fa-sidebar"></i></button>
+  <button class="icon-btn sb-float" id="sidebarShowBtn" onclick="toggleSidebar()" title="Show sidebar (Alt+Cmd/Ctrl+S)" aria-label="Show sidebar"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="11" rx="2.5"/><path d="M6 2.5v11"/></svg></button>
   <div class="bar-title" data-more="3"><b id="barTitle"></b><small id="barSub"></small></div>
   <div class="tool-group" role="group" aria-label="History">
   <button class="icon-btn" id="undoBtn" onclick="historyUndo()" title="Undo (Ctrl+Z)" aria-label="Undo" disabled><i class="fa-solid fa-undo"></i></button>
@@ -2125,61 +2166,42 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
     <div class="modal-tabs" role="tablist">
       <button type="button" class="modal-tab active" id="taskTabBtnGeneral" role="tab" aria-selected="true" onclick="setTaskModalTab('general')">General</button>
       <button type="button" class="modal-tab" id="taskTabBtnNotes" role="tab" aria-selected="false" onclick="setTaskModalTab('notes')">Notes<span class="tab-dot hidden" id="taskNotesDot"></span></button>
-      <button type="button" class="modal-tab" id="taskTabBtnCustom" role="tab" aria-selected="false" onclick="setTaskModalTab('custom')">Custom fields<span class="tab-badge hidden" id="taskCustomBadge"></span></button>
+      <button type="button" class="modal-tab" id="taskTabBtnCustom" role="tab" aria-selected="false" onclick="setTaskModalTab('custom')">Custom Fields<span class="tab-badge hidden" id="taskCustomBadge"></span></button>
     </div>
     <div class="modal-body">
       <div class="tab-pane" id="taskTabGeneral">
-      <div class="field-grid-nm">
-        <div class="field"><label for="taskNameInput">Task Name</label><input type="text" id="taskNameInput" placeholder="Task name" onkeydown="if(event.key==='Enter'){event.preventDefault();saveTaskFromModal();}"></div>
-        <div class="field"><label for="taskModeInput">Task Mode</label><select id="taskModeInput"><option value="manual">Manually Scheduled</option><option value="auto">Auto Scheduled</option></select></div>
-        <div class="field"><label for="taskResourceInput">Resource</label><input type="text" id="taskResourceInput" maxlength="200"></div>
-        <div class="checkbox-row ms-field"><input type="checkbox" id="taskMilestoneInput" onchange="onMilestoneToggle()"><label for="taskMilestoneInput">Milestone</label></div>
-        <div class="field-grid-tt" id="taskTypeRow">
-          <label for="taskTypeInput">Task Type</label><select id="taskTypeInput"><option value="fixedUnits">Fixed Units</option><option value="fixedDuration">Fixed Duration</option><option value="fixedWork">Fixed Work</option></select>
-          <label class="tt-check" id="taskEffortDrivenField" title="On: adding or removing a resource keeps Work the same and moves the schedule (Fixed Units/Fixed Work) or the resource split (Fixed Duration). Off: it just adds or removes that capacity."><input type="checkbox" id="effortDrivenInput">Effort-driven</label>
-          <label for="taskWorkInput" title="Total effort, e.g. 4h, 2d, 1w — kept in step with Duration and the resource split by the Task Type above">Work</label><input type="text" id="taskWorkInput">
-        </div>
+      <div class="tgrp">
+        <div class="trow"><input type="text" class="tin tname" id="taskNameInput" placeholder="Task Name" aria-label="Task Name" onkeydown="if(event.key==='Enter'){event.preventDefault();saveTaskFromModal();}"></div>
+        <div class="trow"><label for="taskModeInput">Mode</label><select id="taskModeInput" class="tin"><option value="manual">Manually Scheduled</option><option value="auto">Auto Scheduled</option></select></div>
+        <div class="trow"><label for="taskResourceInput">Resource</label><input type="text" class="tin" id="taskResourceInput" maxlength="200" placeholder="None"></div>
+        <div class="trow ms-field"><label for="taskMilestoneInput">Milestone</label><input type="checkbox" class="tsw" id="taskMilestoneInput" role="switch" onchange="onMilestoneToggle()"></div>
       </div>
-      <div class="task-sep" role="separator"></div>
-      <div id="taskDatesBlock">
-      <div class="field-grid-4 dt-grid">
-        <div class="field" id="taskStartField"><label for="taskStartInput">Start</label><div class="field-dt"><input type="text" class="dt-date" id="taskStartInput" onchange="onTaskStartChange()"><input type="text" id="taskStartTimeInput" class="task-time-input hidden dt-time" aria-label="Start time" onchange="onTaskStartChange()"></div></div>
-        <div class="field" id="taskEndField"><label for="taskEndInput">Finish</label><div class="field-dt"><input type="text" class="dt-date" id="taskEndInput" onchange="onTaskEndChange()"><input type="text" id="taskEndTimeInput" class="task-time-input hidden dt-time" aria-label="Finish time" onchange="onTaskEndChange()"></div></div>
-        <div class="field" id="taskDurationField"><label for="taskDurationInput" id="taskDurationLabel" title="Working days, counted on the plan's working calendar">Duration (days)</label><input type="text" id="taskDurationInput" onchange="onTaskDurationChange()"></div>
-        <div class="field" id="taskProgressField"><label for="taskProgressInput">% Complete</label><input type="number" min="0" max="100" id="taskProgressInput"></div>
-      </div>
-      <div class="pred-empty hidden" id="taskTextDatesNote"></div>
-      <div class="field-grid-4 calc-row dt-grid">
-        <div class="field" id="taskActualStartField"><label for="taskActualStartInput">Actual Start<span class="info-i" id="taskActualsNote" tabindex="0" role="note"><i class="fa-regular fa-circle-question"></i></span></label><div class="field-dt"><input type="text" class="dt-date" id="taskActualStartInput" onchange="onActualStartChange()"><input type="text" id="taskActualStartTimeInput" class="task-time-input hidden dt-time" aria-label="Actual start time" onchange="onActualStartChange()"></div></div>
-        <div class="field" id="taskActualFinishField" title="Recording an Actual Finish marks the task 100% complete"><label for="taskActualFinishInput">Actual Finish</label><div class="field-dt"><input type="text" class="dt-date" id="taskActualFinishInput" onchange="onActualFinishChange()"><input type="text" id="taskActualFinishTimeInput" class="task-time-input hidden dt-time" aria-label="Actual finish time" onchange="onActualFinishChange()"></div></div>
-        <div class="field" id="taskRemainingField" title="Worked out by Milestone — not entered"><label>Remaining</label><div class="ro-value" id="taskRemainingInfo"></div></div>
-        <div class="field" id="taskStatusField" title="Worked out by Milestone — not entered"><label>Status</label><div class="ro-value" id="taskStatusInfo"></div></div>
+      <div id="taskDatesBlock" class="tgrp">
+        <div class="trow" id="taskStartField"><label for="taskStartInput">Start</label><div class="field-dt"><input type="text" class="dt-date" id="taskStartInput" onchange="onTaskStartChange()"><input type="text" id="taskStartTimeInput" class="task-time-input hidden dt-time" aria-label="Start time" onchange="onTaskStartChange()"></div></div>
+        <div class="trow" id="taskEndField"><label for="taskEndInput">Finish</label><div class="field-dt"><input type="text" class="dt-date" id="taskEndInput" onchange="onTaskEndChange()"><input type="text" id="taskEndTimeInput" class="task-time-input hidden dt-time" aria-label="Finish time" onchange="onTaskEndChange()"></div></div>
+        <div class="trow" id="taskDurationField"><label for="taskDurationInput" id="taskDurationLabel" title="Working days, counted on the plan's working calendar">Duration</label><input type="text" class="tin" id="taskDurationInput" onchange="onTaskDurationChange()"><span class="tunit" id="taskDurationUnit">days</span></div>
+        <div class="trow" id="taskProgressField"><label for="taskProgressInput">Complete</label><input type="number" class="tin" min="0" max="100" id="taskProgressInput"><span class="tunit">%</span></div>
+        <div class="trow" id="taskRemainingField" title="Worked out by Milestone — not entered"><label>Remaining</label><span class="tro" id="taskRemainingInfo"></span></div>
+        <div class="trow" id="taskStatusField" title="Worked out by Milestone — not entered"><label>Status</label><span class="tro" id="taskStatusInfo"></span></div>
         <span id="taskWbsInfo" class="hidden"></span>
       </div>
-      </div>
+      <div class="pred-empty hidden" id="taskTextDatesNote"></div>
       <div class="baseline-info hidden" id="taskBaselineInfo" title="From the plan's baseline (Schedule menu → Baseline…)"></div>
-      <div class="task-sep" role="separator"></div>
-      <div class="field-grid-4">
-        <div class="field span2">
-          <label for="taskConstraintTypeInput">Constraint</label>
-          <select id="taskConstraintTypeInput" onchange="onConstraintTypeChange()"></select>
-        </div>
-        <div class="field" id="taskConstraintDateField">
-          <label id="taskConstraintDateLabel" for="taskConstraintDateInput">Constraint date</label>
-          <div class="field-dt"><input type="text" class="dt-date" id="taskConstraintDateInput"><input type="text" id="taskConstraintTimeInput" class="task-time-input hidden dt-time" aria-label="Constraint time"></div>
-        </div>
-        <div class="field" id="taskDeadlineField" title="A target date: it doesn't move the task — the task is flagged when it finishes later (MS Project's Deadline)"><label for="taskDeadlineInput">Deadline<span class="deadline-note" id="taskDeadlineNote"></span></label><input type="text" class="dt-date" id="taskDeadlineInput" onchange="updateDeadlineNote()"></div>
+      <div class="tgrp" id="taskTypeRow">
+        <div class="trow"><label for="taskTypeInput">Type</label><select id="taskTypeInput" class="tin"><option value="fixedUnits">Fixed Units</option><option value="fixedDuration">Fixed Duration</option><option value="fixedWork">Fixed Work</option></select></div>
+        <div class="trow" id="taskEffortDrivenField" title="On: adding or removing a resource keeps Work the same and moves the schedule (Fixed Units/Fixed Work) or the resource split (Fixed Duration). Off: it just adds or removes that capacity."><label for="effortDrivenInput">Effort-Driven</label><input type="checkbox" class="tsw" id="effortDrivenInput" role="switch"></div>
+        <div class="trow"><label for="taskWorkInput" title="Total effort, e.g. 4h, 2d, 1w — kept in step with Duration and the resource split by the Type above">Work</label><input type="text" class="tin" id="taskWorkInput"></div>
       </div>
-      <div class="field">
-        <label title="Colours the task's row in the list (and its stripe in the chart)">Row colour</label>
-        <div class="color-swatches" id="taskColorSwatches"></div>
+      <div class="tgrp">
+        <div class="trow"><label for="taskConstraintTypeInput">Constraint</label><select id="taskConstraintTypeInput" class="tin" onchange="onConstraintTypeChange()"></select></div>
+        <div class="trow" id="taskConstraintDateField"><label id="taskConstraintDateLabel" for="taskConstraintDateInput">Constraint date</label><div class="field-dt"><input type="text" class="dt-date" id="taskConstraintDateInput"><input type="text" id="taskConstraintTimeInput" class="task-time-input hidden dt-time" aria-label="Constraint time"></div></div>
+        <div class="trow" id="taskDeadlineField" title="A target date: it doesn't move the task — the task is flagged when it finishes later (MS Project's Deadline)"><label for="taskDeadlineInput">Deadline<span class="deadline-note" id="taskDeadlineNote"></span></label><div class="field-dt"><input type="text" class="dt-date" id="taskDeadlineInput" onchange="updateDeadlineNote()"></div></div>
+        <div class="trow" id="taskActualStartField"><label for="taskActualStartInput">Actual Start<span class="info-i" id="taskActualsNote" tabindex="0" role="note"><i class="fa-regular fa-circle-question"></i></span></label><div class="field-dt"><input type="text" class="dt-date" id="taskActualStartInput" onchange="onActualStartChange()"><input type="text" id="taskActualStartTimeInput" class="task-time-input hidden dt-time" aria-label="Actual start time" onchange="onActualStartChange()"></div></div>
+        <div class="trow" id="taskActualFinishField" title="Recording an Actual Finish marks the task 100% complete"><label for="taskActualFinishInput">Actual Finish</label><div class="field-dt"><input type="text" class="dt-date" id="taskActualFinishInput" onchange="onActualFinishChange()"><input type="text" id="taskActualFinishTimeInput" class="task-time-input hidden dt-time" aria-label="Actual finish time" onchange="onActualFinishChange()"></div></div>
+        <div class="trow" title="Colours the task's row in the list (and its stripe in the chart)"><label>Color</label><div class="color-swatches" id="taskColorSwatches"></div></div>
       </div>
-      <div class="task-sep" role="separator"></div>
-      <div class="field">
-        <label>Predecessors</label>
-        <div id="predecessorRows"></div>
-        <button class="btn" type="button" onclick="addPredecessorRow()" style="align-self:flex-start"><i class="fa-solid fa-plus"></i>Add predecessor</button>
-      </div>
+      <div class="tcap">Predecessors</div>
+      <div class="tgrp"><div id="predecessorRows"></div><button class="trow tadd" type="button" onclick="addPredecessorRow()">Add Predecessor…</button></div>
       </div>
       <div class="tab-pane hidden" id="taskTabNotes">
         <textarea id="taskNotesInput" class="task-notes" maxlength="10000" placeholder="Notes for this task — background, decisions, links, who to ask…" oninput="document.getElementById('taskNotesDot').classList.toggle('hidden', !this.value.trim())"></textarea>
@@ -6618,7 +6640,7 @@ function dragStartTask(event, id) {
   draggedTaskId = id;
   event.dataTransfer.effectAllowed = 'move';
   event.dataTransfer.setData('text/plain', id);
-  const row = event.target.closest('.grid-row');
+  const row = event.target.closest?.('.grid-row');   // (a dragged text selection has a text node as its target)
   if (row) {
     event.dataTransfer.setDragImage(row, 16, 16);
     setTimeout(() => row.classList.add('dragging'), 0); // after the drag image is captured, so the ghost isn't dimmed
@@ -6662,7 +6684,7 @@ function dropOnTask(event, targetId) {
 }
 // Dropping in the blank space below the last row moves the task to the end of the top level.
 function dragOverEnd(event) {
-  if (!draggedTaskId || event.target.closest('.grid-row, .virt-spacer')) return;
+  if (!draggedTaskId || event.target.closest?.('.grid-row, .virt-spacer')) return;
   event.preventDefault();
   event.dataTransfer.dropEffect = 'move';
   if (dropIndicatorEl !== event.currentTarget) clearDropIndicators();
@@ -6670,7 +6692,7 @@ function dragOverEnd(event) {
   event.currentTarget.classList.add('drop-end');
 }
 function dropOnEnd(event) {
-  if (!draggedTaskId || event.target.closest('.grid-row, .virt-spacer')) return;
+  if (!draggedTaskId || event.target.closest?.('.grid-row, .virt-spacer')) return;
   event.preventDefault();
   const id = draggedTaskId;
   dragEndTask();
@@ -8241,7 +8263,8 @@ function openTaskModal(id, isNew) {
   const minuteMode = minuteModeActive();
   for (const el of document.querySelectorAll('.task-time-input')) el.classList.toggle('hidden', !minuteMode);
   document.getElementById('taskModalInner').classList.toggle('minute-mode', minuteMode);   // wider: a date input needs real room next to its paired time input
-  document.getElementById('taskDurationLabel').textContent = minuteMode ? 'Duration' : 'Duration (days)';
+  document.getElementById('taskDurationLabel').textContent = 'Duration';
+  document.getElementById('taskDurationUnit').textContent = minuteMode ? '' : 'days';   // (syncDurationUnit puts 'day' for 1 once the value is in)
   document.getElementById('taskDurationLabel').title = minuteMode ? "Working time, counted on the plan's working hours — e.g. \"4h\", \"90m\", \"2d\" (a bare number is hours)" : "Working days, counted on the plan's working calendar";
   if (minuteMode) {
     document.getElementById('taskStartTimeInput').value = t.startTime || wStart(t.startDate);
@@ -8249,6 +8272,7 @@ function openTaskModal(id, isNew) {
     document.getElementById('taskDurationInput').value = fmtDurationMinutes(durationMoment(taskMoment(t, 'start'), taskMoment(t, 'end')));
   } else {
     document.getElementById('taskDurationInput').value = durationDays(t.startDate, t.endDate);
+    syncDurationUnit();
   }
   document.getElementById('taskProgressInput').value = t.progress;
   document.getElementById('taskResourceInput').value = t.resource || '';
@@ -9835,6 +9859,11 @@ function onTaskEndChange() {
   if (af.value) { af.value = endEl.value; if (minute) document.getElementById('taskActualFinishTimeInput').value = document.getElementById('taskEndTimeInput').value; }   // a finished task's Finish IS its Actual Finish
   updateDurationDisplay();
 }
+function syncDurationUnit() {   // "1 day", "3 days": the unit beside the number follows it (an hours & minutes plan shows none)
+  const u = document.getElementById('taskDurationUnit'), v = document.getElementById('taskDurationInput');
+  if (u && v && !minuteModeActive()) u.textContent = parseInt(v.value, 10) === 1 ? 'day' : 'days';
+}
+document.getElementById('taskDurationInput').addEventListener('input', syncDurationUnit);
 function onTaskDurationChange() {
   let s = document.getElementById('taskStartInput').value;
   if (dialogIsAuto() && !isWorkDay(s)) { s = nextWorkDay(s); document.getElementById('taskStartInput').value = s; }
@@ -9860,6 +9889,7 @@ function updateDurationDisplay() {
     document.getElementById('taskDurationInput').value = fmtDurationMinutes(durationMinutes(sm, em));
   } else {
     document.getElementById('taskDurationInput').value = durationDays(s, e);
+    syncDurationUnit();
   }
 }
 function renderColorSwatches(selected) {
@@ -9878,13 +9908,13 @@ function pickTaskColor(id) { renderColorSwatches(id); document.getElementById('t
 // reference) on blur/Enter, not on every keystroke.
 function renderPredecessorRows() {
   const el = document.getElementById('predecessorRows');
-  if (editingPredecessors.length === 0) { el.innerHTML = '<div class="pred-empty">No predecessors — this task is scheduled independently.</div>'; return; }
-  el.innerHTML = `<div class="pred-head" aria-hidden="true"><span>Task #</span><span>Task name</span><span>Type</span><span>Lead / lag</span><span></span></div>` + editingPredecessors.map((p, i) => {
+  if (editingPredecessors.length === 0) { el.innerHTML = ''; return; }
+  el.innerHTML = editingPredecessors.map((p, i) => {
     const shown = p.id ? taskDisplayId(p.id) : '', pt = p.id ? byId(p.id) : null;
     return `
     <div class="pred-row">
       <input type="number" class="pred-id-input" min="1" step="1" placeholder="Task #" aria-label="Predecessor task number" value="${shown === '?' ? '' : shown}" onchange="onPredecessorIdChange(${i}, this.value)">
-      <span class="pred-name${pt ? '' : ' none'}" title="${pt ? escapeHtml(pt.name) : ''}">${pt ? escapeHtml(pt.name) : 'type the number of the task it depends on'}</span>
+      <span class="pred-name${pt ? '' : ' none'}" title="${pt ? escapeHtml(pt.name) : ''}">${pt ? escapeHtml(pt.name) : 'Task #'}</span>
       <select aria-label="Link type" title="FS finish-to-start, SS start-to-start, FF finish-to-finish, SF start-to-finish" onchange="editingPredecessors[${i}].type=this.value">
         ${DEP_TYPES.map(dt => `<option value="${dt}"${dt === p.type ? ' selected' : ''}>${dt}</option>`).join('')}
       </select>

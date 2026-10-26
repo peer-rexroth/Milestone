@@ -156,11 +156,10 @@ with sync_playwright() as p:
     # ================================================================ 3. predecessor rows in the task dialog
     plan([A, B])
     ev("() => openTaskModal(tasks.find(t => t.name === 'B').id)"); pg.wait_for_timeout(250)
-    check("the predecessor rows have a heading (Task #, Task name, Type, Lead / lag)", all(x in pg.inner_text("#predecessorRows .pred-head") for x in ("TASK #", "TASK NAME", "TYPE", "LEAD / LAG")) or all(x.lower() in pg.inner_text("#predecessorRows .pred-head").lower() for x in ("Task #", "Task name", "Type", "Lead / lag")))
     check("...each row shows the predecessor's NAME beside its number (A)", pg.inner_text("#predecessorRows .pred-row .pred-name") == "A")
     check("...and its boxes have accessible names", pg.get_attribute("#predecessorRows .pred-row select", "aria-label") == "Link type" and pg.get_attribute("#predecessorRows .pred-id-input", "aria-label") == "Predecessor task number")
     pg.fill("#predecessorRows .pred-id-input", "99"); pg.dispatch_event("#predecessorRows .pred-id-input", "change"); pg.wait_for_timeout(100)
-    check("a number that isn't a task is refused, and the row asks for one", "type the number" in pg.inner_text("#predecessorRows .pred-row .pred-name"), pg.inner_text("#predecessorRows .pred-row .pred-name"))
+    check("a number that isn't a task is refused, and the row asks for one", "Task #" in pg.inner_text("#predecessorRows .pred-row .pred-name"), pg.inner_text("#predecessorRows .pred-row .pred-name"))
     pg.fill("#predecessorRows .pred-id-input", "1"); pg.dispatch_event("#predecessorRows .pred-id-input", "change"); pg.wait_for_timeout(100)
     check("typing a valid number shows that task's name", pg.inner_text("#predecessorRows .pred-row .pred-name") == "A")
     lag_box = pg.locator("#predecessorRows .pred-lag-input").bounding_box()
