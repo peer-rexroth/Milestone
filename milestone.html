@@ -306,7 +306,7 @@ html[data-scheme="glass"][data-theme="dark"] {
   --wall: radial-gradient(55% 45% at 12% 10%, #2a2f3a 0, transparent 70%), radial-gradient(50% 45% at 88% 15%, #1b1f29 0, transparent 70%), radial-gradient(60% 55% at 75% 95%, #343a48 0, transparent 70%), linear-gradient(160deg, #14161c, #1a1d26);
 }
 
-html[data-scheme="glass"] :is(.content, .modal, .dropdown-menu) {
+html[data-scheme="glass"] :is(.content) {
   --bg: #ffffff;
   --bg-2: #f6f6f9;
   --bg-3: #ececf1;
@@ -319,7 +319,7 @@ html[data-scheme="glass"] :is(.content, .modal, .dropdown-menu) {
   --ink-border-2: var(--border-2);
 }
 
-html[data-scheme="glass"][data-theme="dark"] :is(.content, .modal, .dropdown-menu) {
+html[data-scheme="glass"][data-theme="dark"] :is(.content) {
   --bg: #1e1f24;
   --bg-2: #26272d;
   --bg-3: #31323a;
@@ -476,14 +476,16 @@ html[data-theme="light"] {
   --cap-fill: rgba(60,60,67,.08);
   --cap-hover: rgba(60,60,67,.16);
   --cap-on: rgba(60,60,67,.18);
-  --bar-bg: rgba(244,245,248,.92);
+  --bar-bg: #f5f6f9;   /* the colours ClearDesk's toolbar shows over its wallpaper (measured), as solid values here */
+  --bar-line: #e0e1e6;
 }
 
 html[data-theme="dark"] {
   --cap-fill: rgba(255,255,255,.10);
   --cap-hover: rgba(255,255,255,.19);
   --cap-on: rgba(255,255,255,.22);
-  --bar-bg: rgba(255,255,255,.04);
+  --bar-bg: #26272c;
+  --bar-line: #3c3d41;
 }
 
 
@@ -540,7 +542,7 @@ button { cursor: default; }
 .content { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
 .sidebar {
   flex: 0 0 var(--sidebar-w, 260px); width: var(--sidebar-w, 260px); display: flex; flex-direction: column; min-height: 0;
-  background: var(--bg-2); border-right: 1px solid var(--border);
+  background: var(--bg); border-right: 1px solid var(--border);   /* the glass chrome: ClearDesk's translucent fill (white 46% / 34,36,52 at 50%), not the lighter --bg-2 */
   backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
 }
 html.sidebar-collapsed .sidebar { display: none; }
@@ -595,7 +597,6 @@ html.sidebar-collapsed .sidebar { display: none; }
 .sb-tools .sb-cap { margin-left: auto; }
 .aa { display: inline-flex; align-items: baseline; font-weight: 700; font-size: var(--fs-15); line-height: 1; }
 .aa small { font-size: var(--fs-11); font-weight: 700; }
-.sb-foot { flex: none; padding: 8px 16px 12px; border-top: 1px solid var(--border); text-align: center; font-size: var(--fs-12); color: var(--text-faint); }
 .sb-tools .plan-status { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; min-width: 0; }
 .sb-tools .plan-status #fileSyncBtn { height: 28px; padding: 0 12px; border-radius: 999px; background: var(--cap-fill); border: none; font-size: var(--fs-12); font-weight: 500; }
 .sb-tools .plan-status #fileSyncBtn:hover { background: var(--cap-hover); }
@@ -618,7 +619,7 @@ html:not(.sidebar-collapsed) .sb-float { display: none; }   /* (the show button 
 
 .subbar {
   display: flex; align-items: center; gap: 6px 10px; height: 52px; min-height: 52px; padding: 0 20px;
-  background: var(--panel); border-bottom: 1px solid var(--border);
+  background: var(--bar-bg); border-bottom: 1px solid var(--bar-line);   /* tinted like ClearDesk's toolbar (--bar-bg), with its own hairline */
   flex-shrink: 0; flex-wrap: nowrap; overflow: hidden;   /* one row always: what doesn't fit goes into the "More" menu (fitToolbar()) instead of wrapping */
 }
 .subbar > * { flex-shrink: 0; }
@@ -1869,44 +1870,27 @@ html:not(.sel-inactive) .grid-row.selected .grid-actions .icon-btn { color: var(
 html:not(.sel-inactive) .grid-row.selected .name-text.editable:hover, html:not(.sel-inactive) .grid-row.selected .grid-cell-dim.editable:hover { background: var(--sel-fill); }
 html.sel-inactive .grid-row.selected { --row-bg: var(--sel-inactive); }
 html.sel-inactive .gantt-row-bg.selected { background: var(--cap-fill); }
-/* ── Appearance popover (ClearDesk's): Text Size, Light | Dark, Match System ───────────────────────────────── */
-#appearanceMenu { width: 300px; padding: 18px 16px 12px; }
-#appearanceMenu .ap-title { font-size: var(--fs-17); font-weight: 600; color: var(--text-dim); padding: 0 6px 10px; }
-#appearanceMenu .ap-seg { display: flex; gap: 4px; padding: 0 2px 16px; }
-#appearanceMenu .ap-seg-btn { flex: 1; height: 44px; display: flex; align-items: center; justify-content: center; gap: 8px; border: none; border-radius: var(--r-l); background: transparent; color: var(--text-dim); font-weight: 600; font-size: var(--fs-15); }
-#appearanceMenu .ap-seg-btn:hover { background: var(--hover); }
-#appearanceMenu .ap-seg-btn.on { background: var(--bg); color: var(--text); box-shadow: var(--elev-2), 0 0 0 1px var(--border); }
-#appearanceMenu .ap-seg-btn i { font-size: var(--ico-18); }
-#appearanceMenu .ap-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 6px 4px; font-size: var(--fs-15); font-weight: 600; color: var(--text); }
-.ap-switch { position: relative; width: 48px; height: 28px; border: none; border-radius: 999px; background: var(--cap-on); padding: 0; transition: background var(--dur-fast) ease; }
-.ap-switch i { position: absolute; top: 2px; left: 2px; width: 24px; height: 24px; border-radius: 50%; background: var(--bg); box-shadow: var(--elev-1), 0 0 0 1px var(--border); transition: transform var(--dur-fast) ease; }
-.ap-switch.on { background: var(--accent); }
-.ap-switch.on i { transform: translateX(20px); background: var(--on-accent); }
-/* The toolbar starts with Add Task, then Indent / Outdent, then undo / redo (a view without Add Task starts with undo / redo): the group around Add Task dissolves so its parts and the History group order against each other. */
-.subbar .tb-group:has(> .split-btn) { display: contents; }
-.subbar > #sidebarShowBtn { order: 0; }
-.subbar .split-btn { order: 1; }
-.subbar .tb-group:has(> .split-btn) > .tb-sep { order: 1; }
-.subbar .tb-group:has(> .split-btn) > .tool-group { order: 2; }   /* Indent / Outdent right after Add Task */
-.subbar > .tool-group[aria-label="History"] { order: 3; }   /* then undo / redo */
-.subbar .tb-group:has(> .split-btn) > .sel-actions { order: 4; }
-.subbar .tb-group:has(> .split-btn) > .sel-chip { order: 5; }
-.subbar .tb-group:has(> .split-btn) > * { flex: none; }
-.subbar .sel-actions { flex-wrap: nowrap; }
-.subbar > :not(#sidebarShowBtn):not(.bar-title):not(.tb-group:has(> .split-btn)):not(.tool-group[aria-label="History"]) { order: 6; }
-.bar-title { display: none; order: 0; flex: 0 1 auto; min-width: 0; max-width: 240px; margin-right: 4px; line-height: 1.2; }   /* a quiet title only while the sidebar is hidden (it has no highlighted plan or view to say where you are) */
-html.sidebar-collapsed .bar-title { display: block; }
-.bar-title b { display: block; font-size: var(--fs-14); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.bar-title small { display: block; font-size: var(--fs-12); color: var(--text-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.subbar .btn.ico { width: 30px; padding: 0; justify-content: center; }
-.subbar .tool-group > .btn.ico { background: transparent; height: 26px; width: 30px; }
-.subbar .tool-group > .btn.ico:hover, .subbar .tool-group > .dropdown-wrap > .btn.ico:hover { background: var(--cap-hover); }
-.subbar .tool-group > .dropdown-wrap { display: flex; }
-.subbar .tool-group > .dropdown-wrap > .btn.ico { background: transparent; height: 26px; width: 30px; }
-.subbar .tool-group .btn-danger { color: var(--danger); }
-.subbar .tool-group > .btn.tb-toggle[aria-pressed="true"] { background: var(--cap-on); }
-.subbar .tool-group > :disabled { opacity: .4; }
-.dropdown-item > .mode-check:first-child { margin-left: 0; width: 18px; font-size: var(--ico-14); }   /* a pick list: the tick comes first, then the label */
+/* ── Appearance popover: ClearDesk's panel, same measures (210px wide, 10x12 padding, 13px headings, a 4px-padded segmented control, a 34x20 switch) ───── */
+#appearanceMenu { width: 210px; padding: 0; min-width: 0; }
+.ap-panel { padding: 10px 12px; }
+.ap-head { font-size: var(--fs-13); font-weight: 600; color: var(--text-dim); margin-bottom: 8px; }
+.ap-head.ap-gap { margin-top: 6px; }
+.ap-seg { display: inline-flex; padding: 4px; margin-bottom: 8px; border-radius: var(--r-m); background: var(--bg-2); box-shadow: inset 0 0 0 1px var(--border-2); }
+.ap-btn { min-width: 30px; padding: 6px 12px; border: none; border-radius: 7px; background: transparent; color: var(--text-faint); font-weight: 600; font-size: var(--fs-12); text-align: center; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.ap-btn:hover:not(:disabled):not(.on) { color: var(--text); }
+.ap-btn.on { background: var(--glass-strong); color: var(--text); box-shadow: 0 1px 2px var(--shadow-ink), 0 0 0 .5px var(--border); }
+.ap-btn i { font-size: var(--ico-16); }
+.ap-two { display: flex; }
+.ap-two .ap-btn { flex: 1; }
+.ap-seg.ap-off { opacity: .5; }   /* Light | Dark stay visible while the app follows the system: dimmed, the current one marked */
+.ap-btn:disabled { cursor: default; }
+.ap-match { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; padding: 4px 0; background: none; border: 0; color: var(--text); font: inherit; font-size: var(--fs-13); text-align: left; }
+.ap-match-text { display: flex; flex-direction: column; gap: 1px; }
+.ap-sub { font-size: var(--fs-12); color: var(--text-faint); }
+.ap-switch { position: relative; flex: none; width: 34px; height: 20px; border-radius: 999px; background: var(--cap-hover); transition: background-color var(--dur-fast) ease; }
+.ap-switch i { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--on-accent); box-shadow: 0 1px 2px var(--shadow-ink); transition: transform var(--dur-fast) ease; }
+.ap-match[aria-checked="true"] .ap-switch { background: var(--accent); }
+.ap-match[aria-checked="true"] .ap-switch i { transform: translateX(14px); }
 a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every control keeps the arrow */
 </style>
 </head>
@@ -1959,7 +1943,6 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
     <button class="dropdown-item" role="menuitem" onclick="closeHelpMenu();openAboutModal()"><i class="fa-solid fa-circle-info"></i>About Milestone</button></div></div>
   </div>
   </div>
-  <div class="sb-foot" id="sbFoot"></div>
 </aside>
 <div class="dropdown-menu plan-menu" id="planMenu"></div>
 <div class="dropdown-menu" id="scheduleMenu"></div>   <!-- (outside the sidebar: its scroll area would clip a menu that is wider than the sidebar) -->
@@ -10049,20 +10032,22 @@ function applyTheme() {
   const m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute('content', theme === 'dark' ? '#171925' : '#f2f3f7');
 }
 function setThemePref(pref) { themePref = pref === 'light' || pref === 'dark' ? pref : 'auto'; theme = resolveTheme(); applyTheme(); save(); }
-const UI_SCALE_STEPS = [{ v: .9, label: 'Small', px: 13 }, { v: 1, label: 'Medium', px: 15 }, { v: 1.15, label: 'Large', px: 18 }, { v: 1.3, label: 'Extra Large', px: 21 }];
+const UI_SCALE_STEPS = [{ v: .9, label: 'Small', px: 12 }, { v: 1, label: 'Medium', px: 14 }, { v: 1.15, label: 'Large', px: 18 }, { v: 1.3, label: 'Extra Large', px: 22 }];
 function clampUiScale(v) { v = Number(v); if (!isFinite(v)) return 1; return UI_SCALE_STEPS.reduce((best, st) => Math.abs(st.v - v) < Math.abs(best.v - v) ? st : best).v; }
 function applyUiScale() { const w = document.getElementById('window'); if (w) w.style.zoom = uiScale === 1 ? '' : String(uiScale); requestAnimationFrame(() => { try { fitToolbar(); } catch (e) {} }); }   // (zoom on the window, not on <html>: the menus and dialogs stay outside it)
 function setUiScale(v) { uiScale = clampUiScale(v); applyUiScale(); save(); renderAppearanceMenu(); }
 function setMatchSystem(on) { themePref = on ? 'auto' : theme; theme = resolveTheme(); applyTheme(); save(); renderAppearanceMenu(); }
-function renderAppearanceMenu() {   // the Appearance popover: Text Size, Appearance (Light | Dark, only while Match System is off) and the Match System switch
-  const seg = (cls, on, extra) => `class="ap-seg-btn${on ? ' on' : ''}${cls ? ' ' + cls : ''}" aria-pressed="${on}" ${extra}`;
-  document.getElementById('appearanceMenu').innerHTML =
-    `<div class="ap-title">Text Size</div><div class="ap-seg" role="group" aria-label="Text Size">` + UI_SCALE_STEPS.map(st =>
-      `<button type="button" ${seg('', uiScale === st.v, `onclick="setUiScale(${st.v})" title="${st.label} (${Math.round(st.v * 100)}%)" aria-label="${st.label}, ${Math.round(st.v * 100)}%"`)}><span style="font-size:${st.px}px">A</span></button>`).join('') + `</div>` +
-    (themePref === 'auto' ? '' : `<div class="ap-title">Appearance</div><div class="ap-seg ap-two" role="group" aria-label="Appearance">` +
-      `<button type="button" ${seg('', theme === 'light', `onclick="setThemePref('light');renderAppearanceMenu()"`)}><i class="fa-solid fa-sun"></i>Light</button>` +
-      `<button type="button" ${seg('', theme === 'dark', `onclick="setThemePref('dark');renderAppearanceMenu()"`)}><i class="fa-solid fa-moon"></i>Dark</button></div>`) +
-    `<div class="ap-row"><span id="apMatchLabel">Match System</span><button type="button" class="ap-switch${themePref === 'auto' ? ' on' : ''}" role="switch" aria-checked="${themePref === 'auto'}" aria-labelledby="apMatchLabel" onclick="setMatchSystem(${themePref !== 'auto'})"><i></i></button></div>`;
+function renderAppearanceMenu() {   // ClearDesk's popover: Text Size, Appearance (Light | Dark stay visible but dimmed while Match System is on, the current one marked) and the Match System row
+  const auto = themePref === 'auto', cur = theme;
+  document.getElementById('appearanceMenu').innerHTML = `<div class="ap-panel">
+    <div class="ap-head">Text Size</div>
+    <div class="ap-seg" role="group" aria-label="Text Size">${UI_SCALE_STEPS.map(st => `<button type="button" class="ap-btn${uiScale === st.v ? ' on' : ''}" style="font-size:${st.px}px" title="${st.label} (${Math.round(st.v * 100)}%)" aria-label="${st.label}, ${Math.round(st.v * 100)}%" aria-pressed="${uiScale === st.v}" onclick="setUiScale(${st.v})">A</button>`).join('')}</div>
+    <div class="ap-head ap-gap">Appearance</div>
+    <div class="ap-seg ap-two${auto ? ' ap-off' : ''}" role="group" aria-label="Light or Dark">
+      <button type="button" class="ap-btn${cur === 'light' ? ' on' : ''}"${auto ? ' disabled' : ''} aria-pressed="${cur === 'light'}" onclick="setThemePref('light');renderAppearanceMenu()"><i class="fa-solid fa-sun"></i>Light</button>
+      <button type="button" class="ap-btn${cur === 'dark' ? ' on' : ''}"${auto ? ' disabled' : ''} aria-pressed="${cur === 'dark'}" onclick="setThemePref('dark');renderAppearanceMenu()"><i class="fa-solid fa-moon"></i>Dark</button></div>
+    <button type="button" class="ap-match" role="switch" aria-checked="${auto}" title="Follow the system's light or dark setting" onclick="setMatchSystem(${!auto})"><span class="ap-match-text"><span>Match System</span>${auto ? `<span class="ap-sub">Currently ${cur === 'dark' ? 'Dark' : 'Light'}</span>` : ''}</span><span class="ap-switch"><i></i></span></button>
+  </div>`;
 }
 function toggleAppearanceMenu(e) { if (e) e.stopPropagation(); const m = document.getElementById('appearanceMenu'); if (m.classList.contains('open')) { closeAppearanceMenu(); return; } closeToolbarMenus(); closeDataMenu(); closeHelpMenu(); closeScheduleMenu(); closePlanMenu(); renderAppearanceMenu(); positionDropdown('themeToggleBtn', 'appearanceMenu'); m.classList.add('open'); }
 function closeAppearanceMenu() { document.getElementById('appearanceMenu').classList.remove('open'); }
@@ -11338,7 +11323,6 @@ function updateStatusBar() {
   const all = tasks.filter(t => !t.spacer).length, sel = selectedIds().filter(id => !byId(id).spacer).length, nRes = (project.resources || []).length;
   document.getElementById('sbCount').textContent = currentView === 'tasks' || currentView === 'gantt'
     ? `${all} task${all === 1 ? '' : 's'}${sel ? ` · ${sel} selected` : ''}` : `${nRes} resource${nRes === 1 ? '' : 's'}`;
-  { const real = tasks.filter(t => !t.spacer), done = real.filter(t => t.progress >= 100).length, ft = document.getElementById('sbFoot'); if (ft) ft.textContent = `${real.length} task${real.length === 1 ? '' : 's'} · ${done} done`; }
   { const vl = (MAIN_VIEWS.find(v => v.id === currentView) || {}).label || '', bs = document.getElementById('barSub'); if (bs) bs.textContent = vl; }
   for (const el of document.querySelectorAll('#statusbar [data-sb-views]')) el.classList.toggle('hidden', !el.dataset.sbViews.split(' ').includes(currentView));
   if (currentView === 'gantt' || currentView === 'resources') {
