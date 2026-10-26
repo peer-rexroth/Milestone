@@ -36,7 +36,7 @@ with sync_playwright() as p:
     check("exactly the 2 truly-overlapping days are colored over (one red run)", [x[1] for x in segs] == [False, True, False], segs)
     pg.locator("#resourceBody .res-load-seg.over").click(); pg.wait_for_timeout(120)
     items = pg.locator("#loadMenu .dropdown-item").all_inner_texts()
-    check("clicking the red run lists the tasks behind it (A and B, 100% each) and offers Level resources", pg.locator("#loadMenu.open").count() == 1 and any("A" in i and "100%" in i for i in items) and any("B" in i for i in items) and any("Level resources" in i for i in items), items)
+    check("clicking the red run lists the tasks behind it (A and B, 100% each) and offers Level Resources", pg.locator("#loadMenu.open").count() == 1 and any("A" in i and "100%" in i for i in items) and any("B" in i for i in items) and any("Level Resources" in i for i in items), items)
     pg.locator("#loadMenu .dropdown-item", has_text="B").click(); pg.wait_for_timeout(150)
     check("...and a task there opens it in the Gantt, selected", ev("() => currentView") == "gantt" and ev("() => byId(selectedTaskId).name") == "B")
     ev("() => setView('resources')"); pg.wait_for_timeout(100)

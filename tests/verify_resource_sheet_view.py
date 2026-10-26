@@ -81,15 +81,15 @@ with sync_playwright() as p:
     bx = hb("group"); pg.mouse.click(bx["x"] + 3, bx["y"] + 10); pg.mouse.click(bx["x"] + 3, bx["y"] + 10); pg.wait_for_timeout(150)
     check("double-clicking the edge fits the column: the longest value shows in full", ev("() => { const i = rsVisibleCols().findIndex(c => c.key === 'group'), e = document.querySelector('.rst-row').children[i].querySelector('input'); return e.scrollWidth <= e.clientWidth; }"))
     pg.click('#resourceSheetHeader [data-rskey="stdRate"]', button="right"); pg.wait_for_timeout(80)
-    check("right-click on a header: Fit to content, Fit all columns, Reset all (Default width is hidden: this column was not resized)", [x.strip() for x in pg.locator("#colWidthMenu.open .dropdown-item").all_inner_texts()] == ["Fit to content", "Fit all columns", "Reset all column widths"])
-    pg.click("#colWidthMenu .dropdown-item:has-text('Fit all columns')"); pg.wait_for_timeout(150)
+    check("right-click on a header: Fit to Content, Fit All Columns, Reset all (Default Width is hidden: this column was not resized)", [x.strip() for x in pg.locator("#colWidthMenu.open .dropdown-item").all_inner_texts()] == ["Fit to Content", "Fit All Columns", "Reset All Column Widths"])
+    pg.click("#colWidthMenu .dropdown-item:has-text('Fit All Columns')"); pg.wait_for_timeout(150)
     fa = ev("() => ({ ...rsColWidths })")
     check("Fit all fits every shown column but Resource Name (which keeps filling the sheet)", "name" not in fa and all(k in fa for k in ("type", "group", "stdRate", "accrueAt")), fa)
     check("...with nothing cut: Std Rate 1250.75 and the uppercase headers show whole", ev("() => { const i = rsVisibleCols().findIndex(c => c.key === 'stdRate'), e = document.querySelector('.rst-row').children[i].querySelector('input'); return e.scrollWidth <= e.clientWidth; }") and ev("() => [...document.querySelectorAll('#resourceSheetHeader > div')].every(d => d.scrollWidth <= d.clientWidth + 1)"))
-    pg.click('#resourceSheetHeader [data-rskey="group"]', button="right"); pg.click("#colWidthMenu .dropdown-item:has-text('Default width')"); pg.wait_for_timeout(120)
-    check("Default width gives one column back its own width", "group" not in ev("() => rsColWidths") and cw("group") == 75)
+    pg.click('#resourceSheetHeader [data-rskey="group"]', button="right"); pg.click("#colWidthMenu .dropdown-item:has-text('Default Width')"); pg.wait_for_timeout(120)
+    check("Default Width gives one column back its own width", "group" not in ev("() => rsColWidths") and cw("group") == 75)
     pg.click('#resourceSheetHeader [data-rskey="type"]', button="right"); pg.click("#colWidthMenu .dropdown-item:has-text('Reset all')"); pg.wait_for_timeout(120)
-    check("Reset all column widths clears them all", ev("() => Object.keys(rsColWidths).length") == 0)
+    check("Reset All Column Widths clears them all", ev("() => Object.keys(rsColWidths).length") == 0)
 
     ev("() => { tasks.length = 0; delete project.resources; rsColShow = { materialLabel: true, ovtRate: true, code: true }; save(); render(); }")   # the checks below test every column
 

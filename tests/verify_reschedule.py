@@ -78,7 +78,7 @@ with sync_playwright() as p:
       tasks.push(mk('Done', 1, '2026-09-07', '2026-09-08', {{progress: 100}}));
     }}""")
     pg.click("#scheduleMenuBtn"); pg.wait_for_selector("#scheduleMenu.open")
-    check("the schedule menu has 'Reschedule remaining work…'", pg.locator("#planRescheduleItem").count() == 1)
+    check("the schedule menu has 'Reschedule Remaining Work…'", pg.locator("#planRescheduleItem").count() == 1)
     pg.click("#planRescheduleItem"); pg.wait_for_selector("#rescheduleModalBg.open")
     check("the date field defaults to today", ev("() => document.getElementById('rescheduleDateInput').value") == ev("() => todayStr()"))
     check("the hint counts the incomplete tasks (1 of 2 — Done doesn't count) and says how many would move", "1 unfinished task" in pg.inner_text("#rescheduleHint"), pg.inner_text("#rescheduleHint"))

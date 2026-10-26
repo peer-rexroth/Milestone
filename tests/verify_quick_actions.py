@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Right-click quick action (Mark complete) and Find searching Notes: what it changes, what it skips, one history step, the menu's place, and the
+"""Right-click quick action (Mark Complete) and Find searching Notes: what it changes, what it skips, one history step, the menu's place, and the
 Find window's note snippet and ranking. See "Quick actions" and "Find a task" in CLAUDE.md."""
 import os
 from playwright.sync_api import sync_playwright
@@ -28,43 +28,43 @@ with sync_playwright() as p:
     toast = lambda: ev("() => document.getElementById('toastMsg').textContent")
     def rclick(i, x=300): pg.locator(f"#gridRows .grid-row[data-id='{i}']").click(button="right", position={"x": x, "y": 10}); pg.wait_for_timeout(150)
     mi = lambda t: pg.locator(f"#rowMenu .dropdown-item:has-text('{t}')")
-    # ================================================== Mark complete
+    # ================================================== Mark Complete
     rclick("a")
-    check("the row menu has 'Mark complete' in the first block, right under Edit task… (both change the task you clicked), and no colour swatches", mi("Mark complete").count() == 1 and pg.locator("#rowMenu .menu-swatch").count() == 0 and ev("() => [...document.querySelectorAll('#rowMenu > *')].map(e => e.classList.contains('dropdown-sep') ? '|' : [...e.childNodes].filter(x => x.nodeType === 3).map(x => x.textContent).join('').trim().replace(/\\s.*/, '')).join(' ')") == "Edit Mark | Add Add | Duplicate Copy Cut Paste | Indent Outdent | Delete")
-    mi("Mark complete").click(); pg.wait_for_timeout(250)
-    check("Mark complete sets the task to 100% (40 → 100), and says so with how to undo", prog("a") == 100 and "100% complete" in toast() and "undoes" in toast(), toast())
+    check("the row menu has 'Mark Complete' in the first block, right under Edit task… (both change the task you clicked), and no colour swatches", mi("Mark Complete").count() == 1 and pg.locator("#rowMenu .menu-swatch").count() == 0 and ev("() => [...document.querySelectorAll('#rowMenu > *')].map(e => e.classList.contains('dropdown-sep') ? '|' : [...e.childNodes].filter(x => x.nodeType === 3).map(x => x.textContent).join('').trim().replace(/\\s.*/, '')).join(' ')") == "Edit Mark | Add Add | Duplicate Copy Cut Paste | Indent Outdent | Delete")
+    mi("Mark Complete").click(); pg.wait_for_timeout(250)
+    check("Mark Complete sets the task to 100% (40 → 100), and says so with how to undo", prog("a") == 100 and "100% complete" in toast() and "undoes" in toast(), toast())
     check("...it changed only that task (updatedAt moved on it alone)", ev("() => tasks.filter(t => t.updatedAt > 1).map(t => t.id).sort()") == ["a", "g"] or ev("() => tasks.filter(t => t.updatedAt > 1).map(t => t.id).sort()") == ["a"], ev("() => tasks.filter(t => t.updatedAt > 1).map(t => t.id)"))
     ev("() => historyUndo()"); pg.wait_for_timeout(200)
     check("one Undo step takes it back (100 → 40)", prog("a") == 40, prog("a"))
     rclick("c")
-    check("an already complete task: 'Mark complete' is not offered", mi("Mark complete").count() == 0)
+    check("an already complete task: 'Mark Complete' is not offered", mi("Mark Complete").count() == 0)
     pg.keyboard.press("Escape")
     rclick("g")
-    check("a group (its % is worked out from its tasks) can't be marked: not offered", mi("Mark complete").count() == 0)
+    check("a group (its % is worked out from its tasks) can't be marked: not offered", mi("Mark Complete").count() == 0)
     pg.keyboard.press("Escape")
     ev("() => { setSelection(['a', 'b', 'c', 'g', 'd']); render(); }"); pg.wait_for_timeout(100)
     rclick("b")
-    mi("Mark complete").click(); pg.wait_for_timeout(250)
+    mi("Mark Complete").click(); pg.wait_for_timeout(250)
     check("with several selected it completes every open task without sub-tasks (Discovery, Build, Launch) and leaves the group and the finished one alone", [prog(i) for i in "abcd"] == [100, 100, 100, 100] and "3 tasks" in toast(), (toast(), [prog(i) for i in "abcd"]))
     check("...the group's own % follows from its tasks (rollup 100)", ev("() => effectiveDates('g').progress") == 100)
     ev("() => historyUndo()"); pg.wait_for_timeout(200)
     check("...and that is one undo step too", [prog(i) for i in "abcd"] == [40, 0, 100, 0], [prog(i) for i in "abcd"])
     # filtered: the task stays visible
     ev("() => { colFilters.progress = { type: 'rule', rule: 'lt', a: '50' }; render(); }"); pg.wait_for_timeout(150)
-    ev("() => { setSelection(['b']); render(); }"); rclick("b"); mi("Mark complete").click(); pg.wait_for_timeout(250)
+    ev("() => { setSelection(['b']); render(); }"); rclick("b"); mi("Mark Complete").click(); pg.wait_for_timeout(250)
     check("under a filter that the new % no longer matches, the edited row stays in the list (pinned), like any edit", pg.locator("#gridRows .grid-row[data-id='b']").count() == 1)
     ev("() => { for (const k of Object.keys(colFilters)) colFilters[k] = null; filterPinned.clear(); } "); ev(SEED); pg.wait_for_timeout(200)
     # empty line / empty area
     ev("() => { setSelection(['sp']); render(); }"); pg.locator("#gridRows .grid-row.spacer-row").click(button="right", position={"x": 200, "y": 10}); pg.wait_for_timeout(150)
-    check("an empty line has no Mark complete (nothing to complete)", mi("Mark complete").count() == 0)
+    check("an empty line has no Mark Complete (nothing to complete)", mi("Mark Complete").count() == 0)
     pg.keyboard.press("Escape")
     pg.mouse.click(700, 760, button="right"); pg.wait_for_timeout(150)
-    check("the empty area of the list has none either", pg.locator("#rowMenu").inner_text().find("Mark complete") < 0)
+    check("the empty area of the list has none either", pg.locator("#rowMenu").inner_text().find("Mark Complete") < 0)
     pg.keyboard.press("Escape")
     # Gantt right-click
     ev("() => { currentView = 'gantt'; render(); }"); pg.wait_for_timeout(300)
     pg.locator("#gridRows .grid-row[data-id='b']").click(button="right", position={"x": 300, "y": 10}); pg.wait_for_timeout(150)
-    mi("Mark complete").click(); pg.wait_for_timeout(250)
+    mi("Mark Complete").click(); pg.wait_for_timeout(250)
     check("the same menu in the Gantt view works (Build → 100%)", prog("b") == 100)
     ev("() => { currentView = 'tasks'; render(); }")
     # ================================================== Find in Notes

@@ -32,7 +32,7 @@ with sync_playwright() as p:
 
     # ---------------------------------------------------------------- the dialog
     pg.click("#addMenuBtn"); pg.click("#addRecurBtn"); pg.wait_for_timeout(150)
-    check("Add menu → Recurring task… opens the dialog", pg.locator("#recurModalBg.open").count() == 1 and pg.inner_text("#recurOkBtn") == "Create")
+    check("Add menu → Recurring Task… opens the dialog", pg.locator("#recurModalBg.open").count() == 1 and pg.inner_text("#recurOkBtn") == "Create")
     pg.fill("#recurName", "Weekly status meeting")
     ev("() => { const s = document.getElementById('recurStart'); s.value = '2026-10-05'; s.dispatchEvent(new Event('change', { bubbles: true })); }")
     ev("() => { for (const i of document.querySelectorAll('#recurDays input')) i.checked = i.value === '1'; }")
@@ -61,7 +61,7 @@ with sync_playwright() as p:
     check("a new pattern makes the occurrences again — the started one is kept, not duplicated", len(k) == 5 and k[0] == ["Daily stand-up 1", "2026-10-05", 50] and [x[1] for x in k] == ["2026-10-05", "2026-10-06", "2026-10-07", "2026-10-08", "2026-10-09"], k)
     check("...renamed throughout, the pattern stored on the summary", ev("(id) => byId(id).name", sid) == "Daily stand-up" and ev("(id) => byId(id).recurrence.freq", sid) == "daily")
     pg.click(f"#gridRows .grid-row[data-id='{sid}']", button="right", position={"x": 300, "y": 16}); pg.wait_for_timeout(80)
-    check("the right-click menu offers Change recurrence…", pg.locator("#rowMenu.open .dropdown-item:has-text('Change recurrence')").count() == 1)
+    check("the right-click menu offers Change Recurrence…", pg.locator("#rowMenu.open .dropdown-item:has-text('Change recurrence')").count() == 1)
     pg.keyboard.press("Escape")
 
     # ---------------------------------------------------------------- milestones, minute mode, data

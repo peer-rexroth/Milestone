@@ -36,7 +36,7 @@ with sync_playwright() as p:
     tab("Tasks")
     check("...and back: the Tasks view's own", hdr() == TASKS_DEFAULT, hdr())
     # ================================================================ the menu belongs to a view
-    open_menu(); head = pg.inner_text("#columnsMenu .cols-head"); hint = pg.inner_text("#columnsMenu .cols-hint")
+    open_menu(); head = pg.inner_text("#columnsMenu .cols-head"); hint = pg.get_attribute("#columnsMenu .cols-head", "title")
     check("the Columns menu says which view it edits (Tasks view) and that the other view keeps its own choice", "Tasks view" in head and "Gantt view keeps its own choice" in hint, (head, hint))
     tab("Gantt")
     check("switching views closes the menu (it would otherwise show the other view's ticks)", pg.locator("#columnsMenu.open").count() == 0)

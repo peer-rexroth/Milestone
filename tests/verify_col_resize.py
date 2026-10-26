@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Resizable columns (drag a header edge, double-click to fit, right-click -> Fit / Default width, saved on the device),
+"""Resizable columns (drag a header edge, double-click to fit, right-click -> Fit / Default Width, saved on the device),
 the Resource cell's percentage chips, and change highlighting (the cells the last edit changed are shaded, MS Project style).
 See "Resizable columns, change highlighting, Resource chips" in CLAUDE.md."""
 import os
@@ -77,27 +77,27 @@ with sync_playwright() as p:
     check("...and all of that cell's text is visible (nothing cut)", ev("() => { const c = document.querySelector('#gridRows .grid-row').children[visibleTaskCols().indexOf('resource') + 1]; return c.scrollWidth <= c.clientWidth + 1; }"))
     pg.mouse.click(box["x"] + 3, box["y"] + 20); pg.mouse.click(box["x"] + 3, box["y"] + 20)
     pg.click('#gridHeader .col-head >> nth=3', button="right"); pg.wait_for_timeout(100)
-    check("right-click on a header opens Fit to content (and no Default width: that column was never resized, so there is nothing to reset)", pg.locator("#colWidthMenu.open").count() == 1 and "Fit to content" in pg.inner_text("#colWidthMenu") and "Default width" not in pg.inner_text("#colWidthMenu"))
-    check("Default width is not offered for a column nobody resized (the menu hides it)", pg.locator("#colWidthMenu button:has-text('Default width')").count() == 0)
+    check("right-click on a header opens Fit to Content (and no Default Width: that column was never resized, so there is nothing to reset)", pg.locator("#colWidthMenu.open").count() == 1 and "Fit to Content" in pg.inner_text("#colWidthMenu") and "Default Width" not in pg.inner_text("#colWidthMenu"))
+    check("Default Width is not offered for a column nobody resized (the menu hides it)", pg.locator("#colWidthMenu button:has-text('Default Width')").count() == 0)
     pg.keyboard.press("Escape"); pg.mouse.click(700, 600); pg.wait_for_timeout(100)
     check("clicking elsewhere closes it", pg.locator("#colWidthMenu.open").count() == 0)
     ev("() => { colWidths.resource = 300; render(); }")
-    pg.click('#gridHeader .col-head:has(.col-resizer[data-col="resource"])', button="right"); pg.click("#colWidthMenu button:has-text('Default width')"); pg.wait_for_timeout(150)
-    check("Default width brings the column back", ev("() => colWidths.resource") is None and abs(cellw("resource") - 140) <= 2, cellw("resource"))
+    pg.click('#gridHeader .col-head:has(.col-resizer[data-col="resource"])', button="right"); pg.click("#colWidthMenu button:has-text('Default Width')"); pg.wait_for_timeout(150)
+    check("Default Width brings the column back", ev("() => colWidths.resource") is None and abs(cellw("resource") - 140) <= 2, cellw("resource"))
     ev("() => { colWidths.resource = 300; colWidths.start = 150; render(); }")
     pg.click('#gridHeader .col-head >> nth=1', button="right"); pg.click("#colWidthMenu button:has-text('Reset all')"); pg.wait_for_timeout(150)
-    check("Reset all column widths clears every one", ev("() => Object.keys(colWidths).length") == 0)
+    check("Reset All Column Widths clears every one", ev("() => Object.keys(colWidths).length") == 0)
     ev("() => { colWidths.name = 200; render(); }")
     check("a resized Task Name keeps the width you gave it", abs(cellw("name") - 200) <= 2, cellw("name"))
     ev("() => { colWidths = {}; save(); render(); }")
-    pg.click("#columnsBtn"); check("the Columns menu has Reset column widths (disabled when none is resized)", pg.locator("#columnsMenu button:has-text('Reset column widths')").is_disabled()); pg.keyboard.press("Escape"); pg.mouse.click(700, 600)
-    pg.click('#gridHeader .col-head >> nth=1', button="right"); pg.click("#colWidthMenu button:has-text('Fit all columns')"); pg.wait_for_timeout(200)
+    pg.click("#columnsBtn"); check("the Columns menu hides Reset Column Widths when none is resized", pg.locator("#columnsMenu button:has-text('Reset Column Widths')").count() == 0); pg.keyboard.press("Escape"); pg.mouse.click(700, 600)
+    pg.click('#gridHeader .col-head >> nth=1', button="right"); pg.click("#colWidthMenu button:has-text('Fit All Columns')"); pg.wait_for_timeout(200)
     cw = ev("() => ({ ...colWidths })")
-    check("Fit all columns fits every shown column but leaves Task Name filling the pane", "name" not in cw and all(k in cw for k in ["start", "end", "duration", "progress", "preds", "resource", "status"]), cw)
+    check("Fit All Columns fits every shown column but leaves Task Name filling the pane", "name" not in cw and all(k in cw for k in ["start", "end", "duration", "progress", "preds", "resource", "status"]), cw)
     check("...and each one shows all its text", ev("() => visibleTaskCols().filter(c => c !== 'name').every(c => { const k = visibleTaskCols().indexOf(c) + 1; return [...document.querySelectorAll('#gridRows .grid-row')].every(r => r.children[k].scrollWidth <= r.children[k].clientWidth + 1); })"))
     ev("() => { colWidths = {}; save(); render(); }")
-    pg.click("#columnsBtn"); pg.click("#columnsMenu button:has-text('Fit all columns')"); pg.wait_for_timeout(200)
-    check("the Columns menu has Fit all columns too", ev("() => Object.keys(colWidths).length") > 5)
+    pg.click("#columnsBtn"); pg.click("#columnsMenu button:has-text('Fit Columns to Content')"); pg.wait_for_timeout(200)
+    check("the Columns menu has Fit All Columns too", ev("() => Object.keys(colWidths).length") > 5)
     ev("() => { colWidths = {}; save(); render(); }")
 
     # ------------------------------------------------------------ date columns keep room for their editor
@@ -155,7 +155,7 @@ with sync_playwright() as p:
     check("a Task Form edit: Duration (typed) is not shaded, Finish and the follower's dates are", m.get("a") and "duration" not in m["a"] and "end" in m["a"] and m.get("b") == ["end", "start"], m)
     pg.click("#taskFormBtn")
     # the toggle
-    pg.click("#columnsBtn"); pg.click("#columnsMenu button:has-text('Highlight what the last edit changed')"); pg.keyboard.press("Escape"); pg.mouse.click(700, 600); pg.wait_for_timeout(100)
+    pg.click("#columnsBtn"); pg.click("#columnsMenu button:has-text('Highlight Changes')"); pg.keyboard.press("Escape"); pg.mouse.click(700, 600); pg.wait_for_timeout(100)
     check("switched off in the Columns menu, nothing is shaded (and it is remembered)", ev("() => document.querySelectorAll('#gridRows .chg').length") == 0 and ev("() => JSON.parse(localStorage.getItem('milestone-prefs')).showChanges") is False)
     ev("() => { showChanges = true; save(); render(); }")
     check("no console errors", not errors, errors)

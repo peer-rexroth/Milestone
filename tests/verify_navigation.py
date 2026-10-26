@@ -95,7 +95,7 @@ with sync_playwright() as p:
     # ---------------------------------------------------------------- C: Plan settings
     pg.click("#scheduleMenuBtn"); pg.wait_for_selector("#scheduleMenu.open")
     items = [t.split("\n")[0].strip() for t in pg.locator("#scheduleMenu .dropdown-item").all_inner_texts()]
-    check("the Schedule menu holds just the three actions (Baseline, Reschedule, Level) — Plan settings is the gear next to the plan switcher", items == ["Baseline…", "Reschedule remaining work…", "Level resources…"] and pg.locator("#subbar #planSettingsBtn").count() == 1, items)
+    check("the Schedule menu holds just the three actions (Baseline, Reschedule, Level) — Plan settings is the gear next to the plan switcher", items == ["Baseline…", "Reschedule Remaining Work…", "Level Resources…"] and pg.locator("#subbar #planSettingsBtn").count() == 1, items)
     pg.keyboard.press("Escape")
     pg.click("#planSettingsBtn"); pg.wait_for_timeout(150)
     open_bg = lambda: ev("() => [...document.querySelectorAll('.modal-bg.open')].map(e => e.id)")
@@ -136,7 +136,7 @@ with sync_playwright() as p:
     ev("() => { delete project.honorConstraintDates; save(); render(); }")
     # currency
     pg.click("#planMenuBtn"); pg.wait_for_selector("#planMenu.open")
-    check("the plan menu has Plan settings… too", pg.locator("#planMenuSettingsItem").count() == 1)
+    check("the plan menu has Plan Settings… too", pg.locator("#planMenuSettingsItem").count() == 1)
     pg.click("#planMenuSettingsItem"); pg.wait_for_timeout(150)
     check("...which reopens it on the tab last used (Scheduling rules)", open_bg() == ["rulesModalBg"])
     pg.click(".modal-bg.open [data-settings-tab='format']"); pg.wait_for_timeout(150)

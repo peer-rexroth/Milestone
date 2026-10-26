@@ -3,7 +3,7 @@
 across the working days it spans (uniform across the span — Milestone has no per-day Work-distribution profile the way
 MS Project does, a deliberate simplification); overallocatedResources() flags a working day where the sum exceeds a
 resource's own max units, or ANY load at all on a day the resource has taken off (capacity 0 that day, not merely
-excluded). Surfaced via the Schedule menu's own "Level resources…" hint and the Resources view's red coloring — an
+excluded). Surfaced via the Schedule menu's own "Level Resources…" hint and the Resources view's red coloring — an
 earlier top-bar badge (mirroring the sync-conflict badge) was removed at the user's request, one more thing in the bar
 they didn't want to see. See "Resource levelling" in CLAUDE.md."""
 import os
@@ -32,7 +32,7 @@ with sync_playwright() as p:
     over = ev("() => overallocatedResources()")
     check("exactly the 2 truly-overlapping days are flagged, not the whole span", len(over) == 1 and over[0]["name"] == "Anna" and len(over[0]["days"]) == 2, over)
     check("there is no top-bar badge for it any more", pg.locator("#resourceOverallocBtn").count() == 0)
-    check("the Schedule menu's Level resources… item shows the count instead", (pg.click("#scheduleMenuBtn"), "1 over-allocated" in pg.inner_text("#planLevelItem"))[1])
+    check("the Schedule menu's Level Resources… item shows the count instead", (pg.click("#scheduleMenuBtn"), "1 over-allocated" in pg.inner_text("#planLevelItem"))[1])
     pg.keyboard.press("Escape")
 
     # ---------------------------------------------------------------- fixing the overlap clears it

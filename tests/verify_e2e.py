@@ -33,7 +33,7 @@ with sync_playwright() as p:
     toast = lambda: pg.inner_text("#toastMsg")
 
     # ============================================================ 1. an empty plan
-    check("a fresh plan shows the empty state and a working Add Task button", "No tasks yet" in pg.inner_text("#gridRows") and pg.locator("#addTaskBtn").is_enabled())
+    check("a fresh plan shows the empty state (No Tasks) and the toolbar Add Task works", "No Tasks" in pg.inner_text("#gridRows") and pg.locator("#addTaskBtn").is_enabled())
     check("the toolbar buttons that need a task are disabled (Indent, Delete, Duplicate) until one is selected", pg.is_disabled("#indentBtn") and pg.is_disabled("#deleteTaskBtn") and pg.is_disabled("#cloneTaskBtn"))
     # ============================================================ 2. building the plan (through the dialog)
     add_task("Kick-off", "2026-09-07", "2026-09-07"); add_task("Design", "2026-09-07", "2026-09-11"); add_task("Sketches", "2026-09-07", "2026-09-09"); add_task("Review", "2026-09-10", "2026-09-11"); add_task("Build", "2026-09-14", "2026-09-25"); add_task("Test", "2026-09-28", "2026-10-02")
@@ -116,7 +116,7 @@ with sync_playwright() as p:
     pg.click("#dataMenuBtn"); 
     with pg.expect_download() as dl2: pg.click("#dataMenu >> text=Export plan")
     jpath = os.path.join(tempfile.mkdtemp(), "plan.json"); dl2.value.save_as(jpath); data = json.load(open(jpath))
-    check("Export plan (JSON): all tasks, the project settings (working calendar, baselines) and tombstones", len(data["tasks"]) == 6 and data["project"]["workDays"] == [1, 2, 3, 4, 5, 6] and data["project"]["baselines"]["0"] and "deletedTaskIds" in data)
+    check("Export Plan (JSON): all tasks, the project settings (working calendar, baselines) and tombstones", len(data["tasks"]) == 6 and data["project"]["workDays"] == [1, 2, 3, 4, 5, 6] and data["project"]["baselines"]["0"] and "deletedTaskIds" in data)
     pg.evaluate("() => { tasks.find(t => t.name === 'Build').name = 'Build (changed)'; save(); }")
     pg.click("#dataMenuBtn"); pg.set_input_files("#fileInput", jpath); pg.wait_for_selector("#importModalBg.open"); pg.click("#importModalBg button:has-text('Replace')"); pg.wait_for_timeout(400)
     if pg.locator("#confirmModalBg.open").count(): pg.click("#confirmModalActionBtn"); pg.wait_for_timeout(300)

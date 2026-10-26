@@ -90,8 +90,8 @@ with sync_playwright() as p:
     pg.click("#filterBar .sort-chip button"); pg.wait_for_timeout(120)
     check("the chip's × clears the sort: the plan's order is back", ev("() => visibleTaskList().map(v => v.task.id)") == ["p", "a", "b", "c", "d", "m"] and ev("() => sortSpec") is None)
     pg.click("#gridHeader .col-head:has(.col-resizer[data-col='name'])", button="right"); pg.wait_for_timeout(80)
-    check("right-click on a header offers Sort ascending / descending", pg.locator("#colWidthMenu.open .dropdown-item:has-text('Sort ascending')").count() == 1)
-    pg.click("#colWidthMenu .dropdown-item:has-text('Sort ascending')"); pg.wait_for_timeout(100)
+    check("right-click on a header offers Sort Ascending / descending", pg.locator("#colWidthMenu.open .dropdown-item:has-text('Sort Ascending')").count() == 1)
+    pg.click("#colWidthMenu .dropdown-item:has-text('Sort Ascending')"); pg.wait_for_timeout(100)
     check("...A → Z by name (groups too)", ev("() => visibleTaskList().map(v => v.task.name)") == ["Phase", "Build", "Design", "Docs", "Launch", "Side job"])
     ev("() => setSort(null, 0)")
 

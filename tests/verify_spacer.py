@@ -20,7 +20,7 @@ with sync_playwright() as p:
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type in ("error", "warning") else None)
     pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn")
     ev = pg.evaluate
-    def add_line(): pg.click("#addMenuBtn"); pg.click("#addSpacerBtn")   # the Add menu's "Add empty line"
+    def add_line(): pg.click("#addMenuBtn"); pg.click("#addSpacerBtn")   # the Add menu's "Add Empty Line"
     def fresh(): ev(SEED); pg.wait_for_timeout(120)
     def pick(name, mods=None):
         row = pg.locator(f".grid-row[data-id='{ev('(n) => tasks.find(t => t.name === n).id', name)}']"); row.locator("> div").first.click(modifiers=mods or []); pg.wait_for_timeout(80)
@@ -32,7 +32,7 @@ with sync_playwright() as p:
     # ---------------------------------------------------------------- the button and where the line goes
     fresh()
     pg.click("#addMenuBtn")
-    check("the Add menu has an 'Add empty line' item", pg.locator("#addMenu.open #addSpacerBtn").is_visible() and "Add empty line" in pg.inner_text("#addSpacerBtn"))
+    check("the Add menu has an 'Add Empty Line' item", pg.locator("#addMenu.open #addSpacerBtn").is_visible() and "Add Empty Line" in pg.inner_text("#addSpacerBtn"))
     pg.keyboard.press("Escape")
     add_line(); pg.wait_for_timeout(200)
     check("nothing selected: the line goes to the end of the top level, and no dialog opens", ev(OUTLINE) == ["Group", "Alpha@1", "Beta@1", "Gamma", "Delta", "·"] and not modal_open(), ev(OUTLINE))
@@ -166,6 +166,6 @@ with sync_playwright() as p:
     ev("() => openHelpModal()")
     pg.wait_for_timeout(200)
     txt = ev("() => document.getElementById('helpModalBg').innerText")
-    check("the Help explains the empty line", "Add empty line" in txt or "empty line" in txt)
+    check("the Help explains the empty line", "Add Empty Line" in txt or "empty line" in txt)
     check("no console errors", not errors, errors[:5])
     print("console errors/warnings:", errors[:5]); print(f"{sum(results)}/{len(results)} passed"); b.close()

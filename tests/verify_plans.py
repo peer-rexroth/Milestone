@@ -49,7 +49,7 @@ def make(b, init):
     def modal_link_existing(fname):     # ... -> a plan file that is already in the folder
         pg.click("#linkFolderBtn"); pg.wait_for_selector("#folderFilesModalBg.open"); pg.click(f"#folderFilesList .folder-row:has-text('{fname}')"); pg.click("#folderFilesOkBtn")
         pg.wait_for_selector("#fileSyncModalBg:not(.open)"); settle()
-    def open_plan_from(fname):          # plan menu -> Open plan from folder… -> the file
+    def open_plan_from(fname):          # plan menu -> Open Plan from Folder… -> the file
         open_menu(); pg.click("#planOpenFileItem"); pg.wait_for_selector("#folderFilesModalBg.open"); return pg.locator(f"#folderFilesList .folder-row:has-text('{fname}')")
     h.modal_link_new, h.modal_link_existing, h.open_plan_from = modal_link_new, modal_link_existing, open_plan_from
     def new_plan(name, fname=None):

@@ -1003,7 +1003,7 @@ input.tf-cell[type=number] { -moz-appearance: textfield; }
 .grid-resize-handle:hover, .grid-resize-handle.resizing { background: color-mix(in srgb, var(--accent) 40%, transparent); }
 .main.view-tasks .grid-resize-handle { display: none; }
 .grid-header-clip { flex-shrink: 0; overflow: hidden; }   /* the header scrolls sideways with the rows (scrollLeft is set from the rows' scroll event) but never by itself */
-.grid-header { font-size: var(--fs-12); font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: .03em; border-bottom: 1px solid var(--border); flex-shrink: 0; --row-bg: var(--panel); background: var(--row-bg); }
+.grid-header { font-size: var(--fs-12); font-weight: 600; color: var(--text-dim); border-bottom: 1px solid var(--border); flex-shrink: 0; --row-bg: var(--panel); background: var(--row-bg); }
 .grid-rows { flex: 1; overflow: hidden; position: relative; }
 /* Task view: the grid is the only pane, so it scrolls on its own.
    Gantt view: the grid's scrollTop is instead driven programmatically from
@@ -1350,9 +1350,10 @@ input.inline-edit[type=date]::-webkit-calendar-picker-indicator { margin: 0 0 0 
 @media (hover: none) { .grid-actions .icon-btn { pointer-events: none; } }   /* touch: an invisible Delete under a tap on the name would be a trap — the toolbar's selection buttons and the row menu do the same */
 .grid-name:has(input.inline-edit) > .grid-actions { display: none; }   /* while the name is being edited the editor owns the whole cell */
 
-.empty-state { padding: 60px 24px; text-align: center; color: var(--text-dim); }
-.empty-state i { font-size: 30px; color: var(--text-faint); margin-bottom: 12px; display: block; }
+.empty-state { padding: 60px 24px; text-align: center; color: var(--text-dim); font-size: var(--fs-15); font-weight: 600; }
+.empty-state .empty-ico { display: block; width: 45px; height: 45px; margin: 0 auto 12px; opacity: .4; color: var(--text); }   /* a thin line, not the 2-unit stroke of the small icons */
 .empty-state .btn { margin-top: 14px; }
+.empty-state .empty-sub { display: block; margin-top: 4px; font-size: var(--fs-13); font-weight: 400; color: var(--text-faint); }
 
 .gantt-pane-outer { flex: 1; min-width: 0; overflow: auto; position: relative; background: var(--panel); }   /* flat, like the list beside it */
 .gantt-content { position: relative; }
@@ -1435,7 +1436,7 @@ svg.gantt-deps path.hl.critical { stroke: var(--danger); }
 .resource-scroll { position: absolute; inset: 0; overflow: auto; }
 .resource-header-row { position: sticky; top: 0; z-index: 5; display: flex; height: var(--head-h); background: var(--panel-2); border-bottom: 1px solid var(--border); }
 .resource-name-cell { position: sticky; left: 0; z-index: 6; flex: 0 0 var(--res-name-w, 180px); width: var(--res-name-w, 180px); padding: 0 10px; display: flex; align-items: center; font-size: var(--fs-12); font-weight: 600; color: var(--text-dim); background: var(--panel-2); border-right: 1px solid var(--border); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.resource-name-cell.head { text-transform: uppercase; letter-spacing: .03em; font-size: var(--fs-12); color: var(--text-dim); }
+.resource-name-cell.head { font-size: var(--fs-12); color: var(--text-dim); }
 .resource-timeline-head { position: relative; flex-shrink: 0; }
 .resource-body { position: relative; }
 .resource-row { display: flex; position: absolute; left: 0; height: var(--row-h); border-bottom: 1px solid var(--border); }   /* width set inline (name column + timeline) — an absolutely-positioned child can't size its parent's scrollWidth, so resourceBody's own width is set alongside it in JS, the same way ganttRows' is */
@@ -1474,7 +1475,7 @@ svg.gantt-deps text.status-label { fill: var(--task-purple); font-size: var(--fs
 .rst-cur:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); }
 .rst-scroll { flex: 1; overflow: auto; position: relative; }
 .rst-header, .rst-row { display: grid; grid-template-columns: var(--rs-cols, 40px minmax(160px,1fr) 111px 75px 93px 108px 110px 114px 88px 40px); column-gap: 0; min-width: max-content; align-items: center; }
-.rst-header { position: sticky; top: 0; z-index: 3; height: var(--head-h); font-size: var(--fs-12); font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: .03em; border-bottom: 1px solid var(--border); --row-bg: var(--panel); background: var(--row-bg); }
+.rst-header { position: sticky; top: 0; z-index: 3; height: var(--head-h); font-size: var(--fs-12); font-weight: 600; color: var(--text-dim); border-bottom: 1px solid var(--border); --row-bg: var(--panel); background: var(--row-bg); }
 .rst-row { height: var(--row-h); border-bottom: 1px solid var(--border); font-size: var(--fs-12); --row-bg: var(--panel); background: var(--row-bg); }
 .rst-row:hover { --row-bg: var(--panel-2); }
 .rst-row:focus-within { --row-bg: var(--sel-inactive); }   /* the row you are in, with the cursor in a field: the same neutral grey as a selected task row while typing */
@@ -1930,15 +1931,15 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
   <div class="dropdown-wrap">
     <button class="btn" id="dataMenuBtn" aria-label="Data" onclick="toggleDataMenu()" title="Data: import, export, print, backups"><i class="fa-solid fa-hard-drive"></i><span class="btn-label">Data</span></button>
     <div class="dropdown-menu" id="dataMenu">
-      <button class="dropdown-item" onclick="triggerImport()"><i class="fa-solid fa-arrow-down-to-bracket"></i>Import plan (JSON)…</button>
-      <button class="dropdown-item" id="foreignImportItem" onclick="triggerForeignImport()" title="Adds tasks from an MS Project XML file or a CSV table to this plan. Excel (.xlsx) files and CSV tables are read too — the sheet needs a header row such as Task Name, Start, Finish."><i class="fa-solid fa-arrow-down-to-bracket"></i>Import tasks (MS Project XML, Excel, CSV)…</button>
+      <button class="dropdown-item" onclick="triggerImport()"><i class="fa-solid fa-arrow-down-to-bracket"></i>Import Plan (JSON)…</button>
+      <button class="dropdown-item" id="foreignImportItem" onclick="triggerForeignImport()" title="Adds tasks from an MS Project XML file or a CSV table to this plan. Excel (.xlsx) files and CSV tables are read too — the sheet needs a header row such as Task Name, Start, Finish."><i class="fa-solid fa-arrow-down-to-bracket"></i>Import Tasks…</button>
       <div class="dropdown-sep"></div>
-      <button class="dropdown-item" onclick="exportProject()"><i class="fa-solid fa-arrow-up-from-bracket"></i>Export plan (JSON)</button>
+      <button class="dropdown-item" onclick="exportProject()"><i class="fa-solid fa-arrow-up-from-bracket"></i>Export Plan (JSON)</button>
       <button class="dropdown-item" id="excelExportItem" onclick="openExcelExport()"><i class="fa-solid fa-file-excel"></i>Export to Excel…</button>
       <button class="dropdown-item" id="csvExportItem" onclick="openCsvExport()"><i class="fa-solid fa-file-csv"></i>Export to CSV…</button>
       <button class="dropdown-item" id="mspdiExportItem" onclick="exportMspdi()"><i class="fa-solid fa-file-code"></i>Export MS Project XML</button>
       <div class="dropdown-sep"></div>
-      <button class="dropdown-item" id="printItem" onclick="openPrintModal()"><i class="fa-solid fa-print"></i>Print / PDF / picture…</button>
+      <button class="dropdown-item" id="printItem" onclick="openPrintModal()"><i class="fa-solid fa-print"></i>Print / PDF / Picture…</button>
       <div class="dropdown-sep"></div>
       <button class="dropdown-item" onclick="openBackupsModal()"><i class="fa-solid fa-clock-rotate-left"></i>Local Backups…</button>
     </div>
@@ -2028,9 +2029,9 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 <div class="dropdown-menu" id="groupMenu" role="menu"></div>
 <div class="dropdown-menu" id="loadMenu" role="menu"></div>
 <div class="dropdown-menu" id="addMenu" role="menu">
-  <button class="dropdown-item" id="addSpacerBtn" role="menuitem" onclick="closeAddMenu();addSpacer()"><i class="fa-solid fa-grip-lines"></i>Add empty line<span class="item-hint">a blank row to separate tasks</span></button>
-  <button class="dropdown-item" id="addRecurBtn" role="menuitem" onclick="closeAddMenu();openRecurModal()"><i class="fa-solid fa-repeat"></i>Recurring task…<span class="item-hint">a meeting every week, a report every month</span></button>
-  <button class="dropdown-item" id="pasteBtn" role="menuitem" onclick="closeAddMenu();pasteButton()"><i class="fa-regular fa-paste"></i>Paste tasks<span class="item-hint" data-kbd="V"></span></button>
+  <button class="dropdown-item" id="addSpacerBtn" role="menuitem" title="A blank row to separate tasks" onclick="closeAddMenu();addSpacer()"><i class="fa-solid fa-grip-lines"></i>Add Empty Line</button>
+  <button class="dropdown-item" id="addRecurBtn" role="menuitem" title="A meeting every week, a report every month" onclick="closeAddMenu();openRecurModal()"><i class="fa-solid fa-repeat"></i>Recurring Task…</button>
+  <button class="dropdown-item" id="pasteBtn" role="menuitem" onclick="closeAddMenu();pasteButton()"><i class="fa-regular fa-paste"></i>Paste Tasks<span class="item-hint" data-kbd="V"></span></button>
   <div class="dropdown-sep"></div>
   <div class="menu-head">New tasks are</div>
   <button class="dropdown-item" id="newModeAuto" role="menuitemradio" onclick="setNewTaskMode('auto')"></button>
@@ -2375,7 +2376,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 <div class="modal-bg" id="backupsModalBg" onclick="if(event.target===this) closeBackupsModal()">
   <div class="modal narrow">
     <div class="modal-header"><h2>Local backups</h2><button onclick="closeBackupsModal()">&times;</button></div>
-    <div class="modal-body"><p class="cal-hint" style="margin:0">A snapshot of this plan is kept in this browser once a day you use Milestone. Restoring one downloads your current data first, as a safety copy.</p><div id="backupsList"></div></div>
+    <div class="modal-body"><p class="cal-hint" style="margin:0">One snapshot a day, kept in this browser. Restoring one saves your current data first.</p><div id="backupsList"></div></div>
     <div class="modal-footer"><button class="btn" onclick="closeBackupsModal()">Close</button></div>
   </div>
 </div>
@@ -2441,7 +2442,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
   <div class="modal mid">
     <div class="modal-header"><h2>Days off — <span id="resourceDaysName"></span></h2><button onclick="requestCloseResourceDaysModal()" aria-label="Close">&times;</button></div>
     <div class="modal-body">
-      <p class="cal-hint" style="margin:0">Days this resource doesn't work, on top of the plan's own working week and holidays. Levelling and over-allocation treat them as zero capacity.</p>
+      <p class="cal-hint" style="margin:0">Days off for this person, on top of the plan's calendar. They count as zero capacity.</p>
       <div class="res-days-add hol-fields">
         <div class="hol-field hol-field-date"><label for="resDayFrom">First day</label><input type="text" class="dt-date" id="resDayFrom" title="The day off, or the first day of a longer break" oninput="updateResDayAddBtn()" onchange="updateResDayAddBtn()" onkeydown="if(event.key==='Enter'){event.preventDefault();addResourceDayOff();}"></div>
         <div class="hol-field hol-field-date"><label for="resDayTo">Last day <span class="hol-opt">(optional)</span></label><input type="text" class="dt-date" id="resDayTo" title="Only for a break of several days — leave empty for a single day" oninput="updateResDayAddBtn()" onchange="updateResDayAddBtn()" onkeydown="if(event.key==='Enter'){event.preventDefault();addResourceDayOff();}"></div>
@@ -2523,7 +2524,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
         </div>
       </section>
       <details class="cal-how"><summary>How this works</summary>
-        <p class="cal-hint">Durations, lags and dependencies count working days only — weekdays that work and are not a holiday. Auto Scheduled tasks start and finish on working days; Manually Scheduled tasks keep the dates you give them. Days off are shaded in the Gantt chart. Public-holiday presets are a starting point — check them against your own calendar; regional and company days differ. Dates already in the plan are not moved when you change this, and other plans keep their own calendar.</p></details>
+        <p class="cal-hint">Durations, lags and links count working days. Days off are shaded in the chart. Dates already in the plan don't move when you change this, and other plans keep their own calendar.</p></details>
     </div>
     <div class="modal-footer">
       <span class="foot-note">Changes apply when you save.</span>
@@ -2541,12 +2542,12 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
       <section class="cal-sec">
         <div class="cal-sec-title">Status date</div>
         <div class="field-dt"><input type="text" class="dt-date" id="rulesStatusDateInput" aria-label="Status date" placeholder="Today"></div>
-        <p class="cal-hint" style="margin:0">Where the Gantt's <strong>Progress line</strong> measures from. Leave it empty to use today.</p>
+        <p class="cal-hint" style="margin:0">Where the <strong>Progress line</strong> measures from. Empty means today.</p>
       </section>
       <details class="cal-sec rules-adv" id="rulesAdv">
         <summary>Advanced</summary>
         <label class="hol-yearly" title="On: a Must Start On/Finish On/No Earlier Than/No Later Than date always wins, even over what a task's links would otherwise compute — today's standard. Off: a link wins when the two disagree; the constraint is still shown as unmet, just not forced."><input type="checkbox" id="honorConstraintDatesInput"> Tasks always honor their constraint dates</label>
-        <p class="cal-hint" style="margin:0">On (the standard): a constraint date overrides what the task's links say. Off: the links win, and the constraint shows as unmet (warning icon) without forcing the date.</p>
+        <p class="cal-hint" style="margin:0">On: a constraint date overrides the links. Off: the links win and the constraint shows a warning.</p>
       </details>
     </div>
     <div class="modal-footer"><span class="foot-note">Changes apply when you save.</span><button class="btn" onclick="closeRulesModal()">Cancel</button><button class="btn btn-primary" onclick="saveRulesModal()">Save</button></div>
@@ -2593,7 +2594,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
   <div class="modal mid">
     <div class="modal-header"><h2>Baselines</h2><button onclick="closeBaselineModal()" aria-label="Close">&times;</button></div>
     <div class="modal-body">
-      <p class="cal-hint" style="margin:0">A baseline is a frozen copy of every task's Start and Finish, taken only when you set it — so you can see later how far the plan has moved. Up to eleven are kept.</p>
+      <p class="cal-hint" style="margin:0">A frozen copy of every task's Start and Finish, to compare against later. Up to eleven.</p>
       <section class="cal-sec">
         <div class="cal-sec-title">Save a baseline <span class="cal-sec-note">applies when you click Set baseline</span></div>
         <div class="bl-grid">
@@ -2648,7 +2649,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
         <div class="recur-line"><label><input type="radio" name="recurEnd" id="recurEndCount" checked> End after</label><input type="number" id="recurCount" min="1" max="500" class="recur-num"> occurrences</div>
         <div class="recur-line"><label><input type="radio" name="recurEnd" id="recurEndUntil"> End by</label><input type="text" class="dt-date" id="recurUntil"></div>
         <p class="cal-hint recur-preview" id="recurPreview" style="margin:0"></p>
-        <p class="cal-hint hidden" id="recurKeepNote" style="margin:0">Occurrences that have started or finished are kept; the others are made again for the new pattern.</p>
+        <p class="cal-hint hidden" id="recurKeepNote" style="margin:0">Started or finished occurrences are kept; the rest are made again.</p>
       </section>
     </div>
     <div class="modal-footer">
@@ -2661,7 +2662,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
   <div class="modal mid">
     <div class="modal-header"><h2>Reschedule remaining work</h2><button onclick="closeRescheduleModal()" aria-label="Close">&times;</button></div>
     <div class="modal-body">
-      <p class="cal-hint" style="margin:0">Catches the plan up with reality as of a date you choose: a task that should already have started moves there, and an in-progress task whose remaining work won't fit keeps going from that date. Finished tasks, and tasks ahead of schedule, are left alone.</p>
+      <p class="cal-hint" style="margin:0">Catches the plan up as of a date: tasks that should have started move there, and unfinished work continues from it.</p>
       <section class="cal-sec">
         <div class="cal-sec-title">Status date</div>
         <div class="field-dt" id="rescheduleWhen"><input type="text" class="dt-date" id="rescheduleDateInput" aria-label="Status date" onchange="onRescheduleDateChange()"><input type="text" id="rescheduleTimeInput" class="hidden dt-time" aria-label="Status time" onchange="rescheduleTimeTouched = true; renderRescheduleModal()"></div>
@@ -2683,10 +2684,10 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
   <div class="modal mid">
     <div class="modal-header"><h2>Level resources</h2><button onclick="closeLevelModal()" aria-label="Close">&times;</button></div>
     <div class="modal-body">
-      <p class="cal-hint" style="margin:0">Delays a task that asks for more of a resource than it has, to the next span where every resource it's assigned to has room — never earlier than its own dependencies already allow.</p>
+      <p class="cal-hint" style="margin:0">Delays a task that needs more of a resource than there is, to the next span with room. Never earlier than its links allow.</p>
       <section class="cal-sec">
         <label class="checkbox-row"><input type="checkbox" id="levelWithinSlack" checked onchange="renderLevelModal()"><label for="levelWithinSlack">Keep within existing slack</label></label>
-        <p class="cal-hint" id="levelSlackHint" style="margin:0">Never pushes the project's own finish out — a conflict that can't be resolved this way is left in place and listed below.</p>
+        <p class="cal-hint" id="levelSlackHint" style="margin:0">Never moves the plan's finish. Conflicts it can't resolve are listed below.</p>
         <div class="cal-sec-title">Scope</div>
         <label class="checkbox-row"><input type="checkbox" id="levelFromOn" onchange="renderLevelModal()"><label for="levelFromOn">Only from a date on</label></label>
         <div class="field-dt" id="levelFromWhen"><input type="text" class="dt-date hidden" id="levelFromInput" aria-label="From date" onchange="renderLevelModal()"></div>
@@ -2709,7 +2710,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
   <div class="modal">
     <div class="modal-header"><h2>Changes made on both sides</h2><button onclick="closeSyncConflictsModal()">&times;</button></div>
     <div class="modal-body">
-      <p class="cal-hint" style="margin:0 0 12px">You and someone else changed the same thing since you last synced. The newer edit was kept automatically — check the ones that matter, and take the other version if it should have won.</p>
+      <p class="cal-hint" style="margin:0 0 12px">The newer edit was kept. Check the ones that matter; take the other version if it should have won.</p>
       <div id="syncConflictsBody"></div>
     </div>
     <div class="modal-footer">
@@ -3753,17 +3754,16 @@ function closeColumnsMenu() { document.getElementById('columnsMenu').classList.r
 function renderColumnsMenu() {
   const shown = new Set(visibleTaskCols()), menu = document.getElementById('columnsMenu'), scroll = menu.scrollTop, order = viewColOrder().filter(columnListed), vname = currentView === 'gantt' ? 'Gantt view' : 'Tasks view';
   menu.innerHTML =
-    `<div class="cols-head"><strong>Columns · ${vname}</strong><button class="btn-link" onclick="resetColumns()">Reset to default</button></div>` +
+    `<div class="cols-head" title="Drag a row to reorder. The ${currentView === 'gantt' ? 'Tasks' : 'Gantt'} view keeps its own choice."><strong>Columns · ${vname}</strong><button class="btn-link" onclick="resetColumns()">Reset to default</button></div>` +
     order.map((id, i) => {
       const c = TASK_COLS[id], lab = escapeHtml(c.label);
       return `<div class="cols-row" draggable="true" data-col-row="${id}" ondragstart="colDragStart(event, '${id}')" ondragover="colDragOver(event, '${id}')" ondragleave="colDragClear()" ondrop="colDrop(event, '${id}')" ondragend="colDragEnd()"><label class="cols-check${c.locked ? ' locked' : ''}"><input type="checkbox" data-col="${id}"${shown.has(id) ? ' checked' : ''}${c.locked ? ' disabled' : ''} onchange="toggleColumn('${id}', this.checked)"><i class="fa-solid fa-check cols-tick"></i><span>${lab}</span>${c.locked ? '<span class="cols-tag">always shown</span>' : ''}</label>` +
         `<span class="cols-move"><button aria-label="Move ${lab} up" onclick="moveColumn('${id}',-1)"${i === 0 ? ' disabled' : ''}><i class="fa-solid fa-chevron-up"></i></button><button aria-label="Move ${lab} down" onclick="moveColumn('${id}',1)"${i === order.length - 1 ? ' disabled' : ''}><i class="fa-solid fa-chevron-down"></i></button></span></div>`;
     }).join('') +
-    `<div class="cols-opts"><button class="cols-opt" onclick="showChanges = !showChanges; save(); render(); renderColumnsMenu()" aria-pressed="${showChanges}"><i class="fa-solid fa-check" style="visibility:${showChanges ? 'visible' : 'hidden'}"></i>Highlight what the last edit changed</button>` +
-    `<button class="cols-opt" onclick="closeColumnsMenu(); fitAllColumns()"><i></i>Fit all columns to content</button>` +
-    `<button class="cols-opt"${Object.keys(colWidths).length ? '' : ' disabled'} onclick="resetAllColWidths()"><i></i>Reset column widths</button></div>` +
-    `<div class="cols-foot"><button class="btn-link" onclick="closeColumnsMenu();openFieldsModal()">${activeCustomFields().length ? 'Manage custom fields…' : 'Add a custom field…'}</button></div>` +
-    `<div class="cols-hint">Drag a row (or a column heading) to reorder, or use the arrows beside a name. The ${currentView === 'gantt' ? 'Tasks' : 'Gantt'} view keeps its own choice.</div>`;
+    `<div class="cols-opts"><button class="cols-opt" title="Highlight what the last edit changed" onclick="showChanges = !showChanges; save(); render(); renderColumnsMenu()" aria-pressed="${showChanges}"><i class="fa-solid fa-check" style="visibility:${showChanges ? 'visible' : 'hidden'}"></i>Highlight Changes</button>` +
+    `<button class="cols-opt" onclick="closeColumnsMenu(); fitAllColumns()"><i></i>Fit Columns to Content</button>` +
+    (Object.keys(colWidths).length ? `<button class="cols-opt" onclick="resetAllColWidths()"><i></i>Reset Column Widths</button>` : '') +
+    `<button class="cols-opt cols-foot-item" onclick="closeColumnsMenu();openFieldsModal()"><i></i>${activeCustomFields().length ? 'Manage Custom Fields…' : 'Add Custom Field…'}</button></div>`;
   menu.scrollTop = scroll;   // the rows: re-rendering after a tick or a move must not jump back to the top
 }
 function loadPlanData(id) {
@@ -4417,7 +4417,7 @@ function renderGroupMenu() {
   menu.innerHTML = '<div class="menu-head">Group the list by</div>'
     + `<button class="dropdown-item" role="menuitemradio" aria-checked="${!cur}" onclick="setGroup(null)"><i class="fa-solid fa-ban"></i>None — the outline${!cur ? '<i class="fa-solid fa-check mode-check"></i>' : ''}</button>`
     + groupColumns().map(c => `<button class="dropdown-item" role="menuitemradio" aria-checked="${cur === c.id}" onclick="setGroup('${c.id}')"><i class="fa-solid fa-circle" style="visibility:hidden"></i>${escapeHtml(c.label)}${cur === c.id ? '<i class="fa-solid fa-check mode-check"></i>' : ''}</button>`).join('')
-    + (cur ? '<div class="dropdown-sep"></div><button class="dropdown-item" onclick="groupFoldAll(true)"><i class="fa-solid fa-angles-up"></i>Collapse all groups</button><button class="dropdown-item" onclick="groupFoldAll(false)"><i class="fa-solid fa-angles-down"></i>Expand all groups</button>' : '')
+    + (cur ? '<div class="dropdown-sep"></div><button class="dropdown-item" onclick="groupFoldAll(true)"><i class="fa-solid fa-angles-up"></i>Collapse All Groups</button><button class="dropdown-item" onclick="groupFoldAll(false)"><i class="fa-solid fa-angles-down"></i>Expand All Groups</button>' : '')
     + '<div class="menu-foot">Tasks view only. Nothing in the plan changes.</div>';
 }
 function toggleGroupMenu(event) {
@@ -5276,6 +5276,9 @@ function viewCount(id) {   // a count at the right of a view row, as the smart l
   const n = id === 'tasks' ? tasks.filter(t => !t.spacer).length : id === 'resourceSheet' ? (project.resources || []).length : null;
   return n === null ? '' : ` data-count="${n}"`;
 }
+function emptyIcon(name) {   // the registry drawing at 0.9 stroke: the 2-unit stroke is too heavy at 45px
+  return `<svg class="empty-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width=".9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${(typeof ICONS === 'object' && ICONS[name]) || ''}</svg>`;
+}
 function renderMainViewTabs() {
   document.getElementById('mainViewTabs').innerHTML = MAIN_VIEWS.map((v, i) =>
     (i && MAIN_VIEWS[i - 1].group !== v.group ? '<span class="view-tab-sep" aria-hidden="true"></span>' : '') +
@@ -5617,7 +5620,7 @@ function renderFilterBar() {
 function clearColFilter(col) { colFilters[col] = null; filterPinned.clear(); closeFilterMenu(); render(); }
 function clearAllFilters() { colFilters = newColFilters(); filterPinned.clear(); closeFilterMenu(); render(); }
 function filterEmptyHtml() {
-  return `<div class="empty-state"><i class="fa-solid fa-filter"></i>No tasks match the filter.<button class="btn" onclick="clearAllFilters()">Clear all filters</button></div>`;
+  return `<div class="empty-state">${emptyIcon('filter')}No Matching Tasks<span class="empty-sub">No task matches the filter.</span><button class="btn" onclick="clearAllFilters()">Clear Filters</button></div>`;
 }
 
 /* ---- the filter panel (opened from a column header) ---- */
@@ -6196,16 +6199,16 @@ function resetAllColWidths() { colWidths = {}; save(); render(); if (document.ge
 function openColWidthMenu(e, id) {
   e.preventDefault(); e.stopPropagation(); closeToolbarMenus(); closeColumnsMenu();
   const menu = document.getElementById('colWidthMenu'), custom = !!colWidths[id];
-  const sortItems = FILTER_COLS[id] ? `<button class="dropdown-item" role="menuitem" onclick="setSort('${id}', 1)"><i class="fa-solid fa-arrow-up-short-wide"></i>Sort ascending</button>`
-    + `<button class="dropdown-item" role="menuitem" onclick="setSort('${id}', -1)"><i class="fa-solid fa-arrow-down-short-wide"></i>Sort descending</button>`
-    + (sortSpec ? `<button class="dropdown-item" role="menuitem" onclick="setSort(null, 0)"><i class="fa-solid fa-xmark"></i>Clear sort</button>` : '') + '<div class="dropdown-sep"></div>' : '';
+  const sortItems = FILTER_COLS[id] ? `<button class="dropdown-item" role="menuitem" onclick="setSort('${id}', 1)"><i class="fa-solid fa-arrow-up-short-wide"></i>Sort Ascending</button>`
+    + `<button class="dropdown-item" role="menuitem" onclick="setSort('${id}', -1)"><i class="fa-solid fa-arrow-down-short-wide"></i>Sort Descending</button>`
+    + (sortSpec ? `<button class="dropdown-item" role="menuitem" onclick="setSort(null, 0)"><i class="fa-solid fa-xmark"></i>Clear Sort</button>` : '') + '<div class="dropdown-sep"></div>' : '';
   const grouping = currentView === 'tasks' && groupColumns().some(c => c.id === id)
-    ? `<button class="dropdown-item" role="menuitem" onclick="setGroup('${id}')"><i class="fa-solid fa-layer-group"></i>Group by ${escapeHtml(TASK_COLS[id].label)}</button>` + (groupSpec ? `<button class="dropdown-item" role="menuitem" onclick="setGroup(null)"><i class="fa-solid fa-xmark"></i>Clear grouping</button>` : '') + '<div class="dropdown-sep"></div>' : '';
+    ? `<button class="dropdown-item" role="menuitem" onclick="setGroup('${id}')"><i class="fa-solid fa-layer-group"></i>Group by ${escapeHtml(TASK_COLS[id].label)}</button>` + (groupSpec ? `<button class="dropdown-item" role="menuitem" onclick="setGroup(null)"><i class="fa-solid fa-xmark"></i>Clear Grouping</button>` : '') + '<div class="dropdown-sep"></div>' : '';
   menu.innerHTML = `<div class="menu-head">${escapeHtml(TASK_COLS[id].label)} column</div>` + sortItems + grouping
-    + `<button class="dropdown-item" role="menuitem" onclick="closeColWidthMenu(); fitColumn('${id}')"><i class="fa-solid fa-left-right"></i>Fit to content</button>`
-    + `<button class="dropdown-item" role="menuitem" onclick="closeColWidthMenu(); fitAllColumns()"><i class="fa-solid fa-arrows-left-right-to-line"></i>Fit all columns</button>`
-    + (custom ? `<button class="dropdown-item" role="menuitem" onclick="closeColWidthMenu(); resetColWidth('${id}')"><i class="fa-solid fa-rotate-left"></i>Default width</button>` : '')
-    + (Object.keys(colWidths).length ? `<button class="dropdown-item" role="menuitem" onclick="closeColWidthMenu(); resetAllColWidths()"><i class="fa-solid fa-table-columns"></i>Reset all column widths</button>` : '');   // (hidden when there is nothing to reset)
+    + `<button class="dropdown-item" role="menuitem" onclick="closeColWidthMenu(); fitColumn('${id}')"><i class="fa-solid fa-left-right"></i>Fit to Content</button>`
+    + `<button class="dropdown-item" role="menuitem" onclick="closeColWidthMenu(); fitAllColumns()"><i class="fa-solid fa-arrows-left-right-to-line"></i>Fit All Columns</button>`
+    + (custom ? `<button class="dropdown-item" role="menuitem" onclick="closeColWidthMenu(); resetColWidth('${id}')"><i class="fa-solid fa-rotate-left"></i>Default Width</button>` : '')
+    + (Object.keys(colWidths).length ? `<button class="dropdown-item" role="menuitem" onclick="closeColWidthMenu(); resetAllColWidths()"><i class="fa-solid fa-table-columns"></i>Reset All Column Widths</button>` : '');   // (hidden when there is nothing to reset)
   placeMenu(menu, e.clientX, e.clientY);
 }
 function closeColWidthMenu() { const m = document.getElementById('colWidthMenu'); if (m) m.classList.remove('open'); }
@@ -6322,7 +6325,7 @@ function renderGrid() {
   const el = document.getElementById('gridRows');
   if (list.length === 0 && filtersActive() && tasks.length) { el.innerHTML = filterEmptyHtml(); return; }
   if (list.length === 0) {
-    el.innerHTML = `<div class="empty-state"><i class="fa-solid fa-sitemap"></i>No tasks yet.<div style="font-size: var(--fs-12);margin-top:4px">Add your first task to start planning.</div><button class="btn btn-primary" onclick="addTask()"><i class="fa-solid fa-plus"></i>Add Task</button></div>`;
+    el.innerHTML = `<div class="empty-state">${emptyIcon('sitemap')}No Tasks<span class="empty-sub">Choose Add Task to start planning.</span></div>`;
     return;
   }
   const cyclic = taskCycleSet();
@@ -7238,8 +7241,8 @@ function renderGantt() {
 
   if (list.length === 0) {
     document.getElementById('ganttRows').innerHTML = filtersActive() && tasks.length
-      ? `<div class="empty-state" style="position:absolute;left:0;right:0"><i class="fa-solid fa-filter"></i>No tasks match the filter.</div>`
-      : `<div class="empty-state" style="position:absolute;left:0;right:0"><i class="fa-solid fa-chart-gantt"></i>Nothing to chart yet.</div>`;
+      ? `<div class="empty-state" style="position:absolute;left:0;right:0">${emptyIcon('filter')}No Matching Tasks</div>`
+      : `<div class="empty-state" style="position:absolute;left:0;right:0">${emptyIcon('chart-gantt')}Nothing to Chart</div>`;
     document.getElementById('ganttDeps').innerHTML = '';
     return;
   }
@@ -7439,12 +7442,12 @@ function renderResourceUsage() {
   }).join('');
 
   if (!resources.length && overIds && (project.resources || []).length) {
-    document.getElementById('resourceBody').innerHTML = `<div class="empty-state" style="position:static;width:${RESOURCE_NAME_W + totalW}px"><i class="fa-solid fa-circle-check"></i>Nobody is over-allocated — <button class="btn-link" onclick="toggleOverOnly()">show everyone</button></div>`;
+    document.getElementById('resourceBody').innerHTML = `<div class="empty-state" style="position:static;width:${RESOURCE_NAME_W + totalW}px">${emptyIcon('circle-check')}Nobody is over-allocated — <button class="btn-link" onclick="toggleOverOnly()">show everyone</button></div>`;
     resourceRenderedWin = { from: 0, to: 0, n: 0, virtual: false };
     return;
   }
   if (!resources.length) {
-    document.getElementById('resourceBody').innerHTML = `<div class="empty-state" style="position:static;width:${RESOURCE_NAME_W + totalW}px"><i class="fa-solid fa-users"></i>No resources yet — type a name in a task's Resource field, or add one on the <strong>Resources</strong> tab</div>`;
+    document.getElementById('resourceBody').innerHTML = `<div class="empty-state" style="position:static;width:${RESOURCE_NAME_W + totalW}px">${emptyIcon('users')}No resources yet — type a name in a task's Resource field, or add one on the <strong>Resources</strong> tab</div>`;
     resourceRenderedWin = { from: 0, to: 0, n: 0, virtual: false };
     return;
   }
@@ -7549,10 +7552,9 @@ function moveRsColumnTo(key, targetKey, after) {
 function resetRsColumns() { rsColShow = {}; rsColOrder = []; save(); render(); renderRsColumnsMenu(); }
 function renderRsColumnsMenu() {
   const menu = document.getElementById('rsColumnsMenu'); if (!menu) return;
-  menu.innerHTML = `<div class="cols-head"><strong>Columns · Resources</strong><button class="btn-link" onclick="resetRsColumns()">Reset to default</button></div>`
-    + `<div class="cols-hint">Material Label, Ovt Rate and Code start hidden, and show by themselves once a resource uses them.</div>`
+  menu.innerHTML = `<div class="cols-head" title="Material Label, Ovt Rate and Code start hidden and show by themselves once a resource uses them."><strong>Columns · Resources</strong><button class="btn-link" onclick="resetRsColumns()">Reset to default</button></div>`
     + rsAllCols().filter(c => !c.fixed).map(c => `<div class="cols-row" draggable="true" data-col-row="${c.key}" ondragstart="colDragStart(event, '${c.key}', 'rs')" ondragover="colDragOver(event, '${c.key}')" ondragleave="colDragClear()" ondrop="colDrop(event, '${c.key}')" ondragend="colDragEnd()"><label class="cols-check"><input type="checkbox" data-rscol="${c.key}"${rsColVisible(c) ? ' checked' : ''} onchange="toggleRsColumn('${c.key}', this.checked)"><i class="fa-solid fa-check cols-tick"></i><span>${escapeHtml(c.label)}</span></label></div>`).join('')
-    + `<div class="cols-opts"><button class="cols-opt" onclick="closeRsColumnsMenu(); fitAllRsColumns()"><i></i>Fit all columns to content</button><button class="cols-opt"${Object.keys(rsColWidths).length ? '' : ' disabled'} onclick="resetAllRsColWidths(); renderRsColumnsMenu()"><i class="fa-solid fa-rotate-left"></i>Reset column widths</button></div>`;
+    + `<div class="cols-opts"><button class="cols-opt" onclick="closeRsColumnsMenu(); fitAllRsColumns()"><i></i>Fit Columns to Content</button>` + (Object.keys(rsColWidths).length ? `<button class="cols-opt" onclick="resetAllRsColWidths(); renderRsColumnsMenu()"><i></i>Reset Column Widths</button>` : '') + `</div>`;
 }
 function toggleRsColumnsMenu() {
   const menu = document.getElementById('rsColumnsMenu');
@@ -7659,10 +7661,10 @@ function openRsColWidthMenu(e, key) {
   e.preventDefault(); e.stopPropagation(); closeToolbarMenus();
   const menu = document.getElementById('colWidthMenu'), c = RS_COLS.find(x => x.key === key);
   menu.innerHTML = `<div class="menu-head">${escapeHtml(c.label)} column</div>`
-    + `<button class="dropdown-item" role="menuitem" onclick="closeColWidthMenu(); fitRsColumn('${key}')"><i class="fa-solid fa-left-right"></i>Fit to content</button>`
-    + `<button class="dropdown-item" role="menuitem" onclick="closeColWidthMenu(); fitAllRsColumns()"><i class="fa-solid fa-arrows-left-right-to-line"></i>Fit all columns</button>`
-    + (rsColWidths[key] ? `<button class="dropdown-item" role="menuitem" onclick="closeColWidthMenu(); resetRsColWidth('${key}')"><i class="fa-solid fa-rotate-left"></i>Default width</button>` : '')
-    + (Object.keys(rsColWidths).length ? `<button class="dropdown-item" role="menuitem" onclick="closeColWidthMenu(); resetAllRsColWidths()"><i class="fa-solid fa-table-columns"></i>Reset all column widths</button>` : '');
+    + `<button class="dropdown-item" role="menuitem" onclick="closeColWidthMenu(); fitRsColumn('${key}')"><i class="fa-solid fa-left-right"></i>Fit to Content</button>`
+    + `<button class="dropdown-item" role="menuitem" onclick="closeColWidthMenu(); fitAllRsColumns()"><i class="fa-solid fa-arrows-left-right-to-line"></i>Fit All Columns</button>`
+    + (rsColWidths[key] ? `<button class="dropdown-item" role="menuitem" onclick="closeColWidthMenu(); resetRsColWidth('${key}')"><i class="fa-solid fa-rotate-left"></i>Default Width</button>` : '')
+    + (Object.keys(rsColWidths).length ? `<button class="dropdown-item" role="menuitem" onclick="closeColWidthMenu(); resetAllRsColWidths()"><i class="fa-solid fa-table-columns"></i>Reset All Column Widths</button>` : '');
   placeMenu(menu, e.clientX, e.clientY);
 }
 {
@@ -9238,8 +9240,8 @@ function renderTaskForm(force) {
       </div>
     </div>
     <div class="tf-note" id="tfNote"></div>
-    ${textNote.length ? `<div class="tf-hint">Free text on this task — ${escapeHtml(textNote.join(', '))}. Changing that date replaces it.</div>` : ''}
-    ${group ? '<div class="tf-hint">A group rolls up its tasks: its dates, % complete, resources and links belong to the tasks in it.</div>'
+    ${textNote.length ? `<div class="tf-hint">Free text: ${escapeHtml(textNote.join(', '))}. Changing the date replaces it.</div>` : ''}
+    ${group ? '<div class="tf-hint">A group takes its dates, % complete, resources and links from its tasks.</div>'
       : `<div class="tf-tables">
            <div class="tf-table tf-res"><div class="tf-row tf-row-head"><span class="r">ID</span><span>Resource Name</span><span class="r">Units</span><span class="r">Work</span><button type="button" class="tf-head-btn" id="tfEditResourcesBtn" title="Edit resources… — open the Resources tab (the plan's people, rates and days off)" aria-label="Edit resources"><i class="fa-solid fa-user-pen"></i></button></div>
              <div class="tf-scroll"><div class="tf-grid" id="tfResRows"></div><div class="tf-fill" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div></div></div>
@@ -10111,8 +10113,8 @@ function renderScheduleMenu() {
   document.getElementById('scheduleMenu').innerHTML =
     `<button class="dropdown-item" id="planBaselineItem" onclick="openBaselineModal()"><i class="fa-solid fa-ruler-horizontal"></i>Baseline…<span class="item-hint">${escapeHtml(baselineMenuHint())}</span></button>` +
     `<div class="dropdown-sep"></div>` +   // Baseline records the plan; the two below change it
-    `<button class="dropdown-item" id="planRescheduleItem" onclick="openRescheduleModal()"><i class="fa-solid fa-forward"></i>Reschedule remaining work…</button>` +
-    `<button class="dropdown-item" id="planLevelItem" onclick="openLevelModal()"><i class="fa-solid fa-scale-balanced"></i>Level resources…${overallocatedResources().length ? `<span class="item-hint">${overallocatedResources().length} over-allocated</span>` : ''}</button>`;
+    `<button class="dropdown-item" id="planRescheduleItem" onclick="openRescheduleModal()"><i class="fa-solid fa-forward"></i>Reschedule Remaining Work…</button>` +
+    `<button class="dropdown-item" id="planLevelItem" onclick="openLevelModal()"><i class="fa-solid fa-scale-balanced"></i>Level Resources…${overallocatedResources().length ? `<span class="item-hint">${overallocatedResources().length} over-allocated</span>` : ''}</button>`;
 }
 
 /* ============================ Merge (sync/import) =========================
@@ -10267,7 +10269,7 @@ function renderSyncConflictsModal() {
   const body = document.getElementById('syncConflictsBody');
   body.innerHTML = syncConflictLog.length ? syncConflictLog.map((c, i) => c.kind === 'file' ? `<div class="conflict-card">
       <div class="conflict-title"><i class="fa-solid fa-file-circle-check"></i><strong>${escapeHtml(c.name)}</strong><span class="conflict-time">${new Date(c.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span></div>
-      <p class="cal-hint" style="margin:0 0 8px">A conflicted copy of this plan's file (the sync service made it when two devices saved at the same time). ${c.changed ? `It was merged into the plan — ${c.tasks} task${c.tasks === 1 ? '' : 's'} changed${c.moved ? `, ${c.moved} re-planned` : ''}; the newer version of each task was kept.` : 'It held nothing this plan did not already have.'} ${c.renamedTo ? `The file was renamed <strong>${escapeHtml(c.renamedTo)}</strong> and is kept.` : 'It could not be renamed (the folder or the sync service did not allow it), so it stays where it is and is not read again until you reload the app.'}</p>
+      <p class="cal-hint" style="margin:0 0 8px">A conflicted copy of this plan's file (two devices saved at once). ${c.changed ? `Merged: ${c.tasks} task${c.tasks === 1 ? '' : 's'} changed${c.moved ? `, ${c.moved} re-planned` : ''}; the newer version of each was kept.` : 'It held nothing new.'} ${c.renamedTo ? `Renamed <strong>${escapeHtml(c.renamedTo)}</strong> and kept.` : 'Not renamed: it stays where it is until you reload.'}</p>
       <div class="conflict-actions"><button class="btn" onclick="dismissSyncConflict(${i})">Dismiss</button></div></div>` : `<div class="conflict-card">
       <div class="conflict-title">${c.kind === 'plan' ? '<i class="fa-solid fa-gear"></i>' : '<i class="fa-solid fa-list-check"></i>'}<strong>${escapeHtml(c.name || 'Untitled')}</strong><span class="conflict-time">${new Date(c.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span></div>
       <table class="conflict-table"><tr><th></th><th>Yours</th><th>The other version</th></tr>${c.fields.map(f => `<tr><td>${escapeHtml(conflictLabel(f.key))}</td>
@@ -11423,7 +11425,7 @@ function showLoadTasks(event, resId, d0, d1) {
   const menu = document.getElementById('loadMenu');
   menu.innerHTML = `<div class="menu-head">${escapeHtml(r.name)} · ${fmtDate(dayNumberToIso(d0))}${d1 > d0 ? ' – ' + fmtDate(dayNumberToIso(d1)) : ''} · ${total}% of ${r.maxUnits}%</div>`
     + rows.map(x => `<button class="dropdown-item" data-task="${x.t.id}"><i class="fa-solid fa-bars-progress"></i>#${taskDisplayId(x.t.id)} ${escapeHtml(x.t.name)}<span class="item-hint">${x.a.units}%</span></button>`).join('')
-    + `<div class="dropdown-sep"></div><button class="dropdown-item" data-level="1"><i class="fa-solid fa-scale-balanced"></i>Level resources…</button>`;
+    + `<div class="dropdown-sep"></div><button class="dropdown-item" data-level="1"><i class="fa-solid fa-scale-balanced"></i>Level Resources…</button>`;
   for (const it of menu.querySelectorAll('[data-task]')) it.onclick = e => { e.stopPropagation(); closeMoreMenu(); setView('gantt'); jumpToTask(it.dataset.task); };
   menu.querySelector('[data-level]').onclick = e => { e.stopPropagation(); closeMoreMenu(); openLevelModal(); };
   closeDataMenu(); closePlanMenu(); closeScheduleMenu();
@@ -11461,11 +11463,11 @@ function showRowMenu(x, y, onRow) {
   const item = (icon, label, fn, o = {}) => o.off ? '' : `<button class="dropdown-item${o.danger ? ' danger' : ''}" role="menuitem" onclick="closeRowMenu();${fn}"><i class="${icon}"></i>${label}${o.kbd ? `<span class="item-hint">${o.kbd}</span>` : ''}</button>`;
   const sep = '<div class="dropdown-sep"></div>', parts = [];
   if (real) parts.push(item('fa-solid fa-pen', real === 1 ? 'Edit task…' : `Edit ${real} tasks…`, 'editSelected()'));
-  { const one = ids.length === 1 && byId(ids[0]); if (one && one.recurrence) parts.push(item('fa-solid fa-repeat', 'Change recurrence…', `openRecurModal('${one.id}')`)); }
-  if (real) parts.push(item('fa-regular fa-circle-check', 'Mark complete', 'markSelectedComplete()', { off: !ids.some(id => { const t = byId(id); return !t.spacer && !hasChildren(id) && t.progress < 100; }) }));   // (with Edit: both change the task you clicked)
+  { const one = ids.length === 1 && byId(ids[0]); if (one && one.recurrence) parts.push(item('fa-solid fa-repeat', 'Change Recurrence…', `openRecurModal('${one.id}')`)); }
+  if (real) parts.push(item('fa-regular fa-circle-check', 'Mark Complete', 'markSelectedComplete()', { off: !ids.some(id => { const t = byId(id); return !t.spacer && !hasChildren(id) && t.progress < 100; }) }));   // (with Edit: both change the task you clicked)
   if (parts.length) parts.push(sep);   // (what you can do to this task, then what you can add)
   const addLabel = !n ? 'Add task' : ids.length === 1 && hasChildren(ids[0]) ? 'Add sub-task' : 'Add task below';   // (under a group the new task becomes its first sub-task)
-  parts.push(item('fa-solid fa-plus', addLabel, 'addTask()'), item('fa-solid fa-grip-lines', 'Add empty line', 'addSpacer()'));
+  parts.push(item('fa-solid fa-plus', addLabel, 'addTask()'), item('fa-solid fa-grip-lines', 'Add Empty Line', 'addSpacer()'));
   if (n) parts.push(sep, item('fa-regular fa-duplicate', 'Duplicate', 'cloneSelected()'), item('fa-regular fa-copy', 'Copy', 'copySelectionButton()', { kbd: MOD_KEY + 'C' }), item('fa-solid fa-scissors', 'Cut', 'copySelection(null, true)', { kbd: MOD_KEY + 'X' }));
   parts.push(n ? '' : sep, item('fa-regular fa-paste', 'Paste', 'pasteButton()', { kbd: MOD_KEY + 'V' }));
   if (n) parts.push(sep, item('fa-solid fa-indent', 'Indent', 'indentSelected()'), item('fa-solid fa-outdent', 'Outdent', 'outdentSelected()', { off: !ids.some(id => byId(id).parentId) }), sep, item('fa-solid fa-trash', n > 1 ? `Delete ${n} tasks` : 'Delete', 'deleteSelected()', { danger: true, kbd: 'Del' }));
@@ -11477,8 +11479,8 @@ function showGroupHeaderMenu(x, y, enc) {   // right-click on a group header (Gr
   const h = displayRows().find(r => r.header && r.id === decodeURIComponent(enc)), menu = document.getElementById('rowMenu');
   const item = (icon, label, fn) => `<button class="dropdown-item" role="menuitem" onclick="closeRowMenu();${fn}"><i class="${icon}"></i>${label}</button>`, sep = '<div class="dropdown-sep"></div>';
   menu.innerHTML = [h ? item(h.collapsed ? 'fa-solid fa-chevron-down' : 'fa-solid fa-chevron-right', h.collapsed ? 'Expand this group' : 'Collapse this group', `groupToggle('${enc}')`) : '',
-    item('fa-solid fa-angles-up', 'Collapse all groups', 'groupFoldAll(true)'), item('fa-solid fa-angles-down', 'Expand all groups', 'groupFoldAll(false)'), sep,
-    item('fa-solid fa-xmark', 'Clear grouping', 'setGroup(null)')].join('');
+    item('fa-solid fa-angles-up', 'Collapse All Groups', 'groupFoldAll(true)'), item('fa-solid fa-angles-down', 'Expand All Groups', 'groupFoldAll(false)'), sep,
+    item('fa-solid fa-xmark', 'Clear Grouping', 'setGroup(null)')].join('');
   closeDataMenu(); closePlanMenu(); closeColumnsMenu(); closeFilterMenu(); closeTaskModeMenu(); closeTaskTypeMenu(); closeAddMenu();
   placeMenu(menu, x, y);
 }
@@ -13271,16 +13273,16 @@ function renderPlanMenu() {
   document.getElementById('planMenu').innerHTML =
     `<div class="plan-list">${list}</div>` +
     `<div class="dropdown-sep"></div>` +
-    `<button class="dropdown-item" id="planNewItem" onclick="openPlanModal('new')"><i class="fa-solid fa-plus"></i>New plan…</button>` +
-    (fileSyncSupported() ? `<button class="dropdown-item" id="planOpenFileItem" onclick="openFileAsPlan()"><i class="fa-solid fa-folder-open"></i>Open plan from folder…</button>` : '') +
-    (fileSyncSupported() && watchNeedsPermission() ? `<button class="dropdown-item" id="planWatchAllowItem" onclick="allowWatchAccess()"><i class="fa-solid fa-triangle-exclamation" style="color:var(--task-amber)"></i>Allow access to the watched folder…<span class="item-hint" style="color:var(--task-amber)">needs permission</span></button>` : '') +
-    (fileSyncSupported() && syncFileHandle && !syncDirHandle ? `<button class="dropdown-item" id="planWatchItem" onclick="chooseWatchFolder()" title="This plan is linked to a single file. Link the folder it lives in: OneDrive, Dropbox and SharePoint keep a second copy of the file when two devices save at the same time, and Milestone can then merge those copies in"><i class="fa-solid fa-folder-tree"></i>Link this plan’s folder…<span class="item-hint">file only</span></button>` : '') +
+    `<button class="dropdown-item" id="planNewItem" onclick="openPlanModal('new')"><i class="fa-solid fa-plus"></i>New Plan…</button>` +
+    (fileSyncSupported() ? `<button class="dropdown-item" id="planOpenFileItem" onclick="openFileAsPlan()"><i class="fa-solid fa-folder-open"></i>Open Plan from Folder…</button>` : '') +
+    (fileSyncSupported() && watchNeedsPermission() ? `<button class="dropdown-item" id="planWatchAllowItem" onclick="allowWatchAccess()"><i class="fa-solid fa-triangle-exclamation" style="color:var(--task-amber)"></i>Allow Folder Access…<span class="item-hint" style="color:var(--task-amber)">needs permission</span></button>` : '') +
+    (fileSyncSupported() && syncFileHandle && !syncDirHandle ? `<button class="dropdown-item" id="planWatchItem" onclick="chooseWatchFolder()" title="This plan is linked to a single file. Link the folder it lives in: OneDrive, Dropbox and SharePoint keep a second copy of the file when two devices save at the same time, and Milestone can then merge those copies in"><i class="fa-solid fa-folder-tree"></i>Link Plan Folder…<span class="item-hint">file only</span></button>` : '') +
     `<div class="dropdown-sep"></div>` +
-    `<button class="dropdown-item" id="planRenameItem" onclick="openPlanModal('rename')"><i class="fa-solid fa-pen"></i>Rename plan…</button>` +
-    `<button class="dropdown-item" id="planMenuSettingsItem" onclick="openPlanSettings()"><i class="fa-solid fa-gear"></i>Plan settings…<span class="item-hint">${escapeHtml(planSettingsHint())}</span></button>` +
-    `<button class="dropdown-item" id="planDuplicateItem" onclick="duplicatePlan()"><i class="fa-regular fa-copy"></i>Duplicate plan…</button>` +
-    (fileSyncSupported() ? `<button class="dropdown-item" id="planDisconnectItem" onclick="disconnectFile()"${syncFileHandle ? '' : ' disabled title="This plan isn’t linked to a file"'}><i class="fa-solid fa-link-slash"></i>Disconnect folder…</button>` : '') +
-    `<button class="dropdown-item" id="planDeleteItem" onclick="deleteCurrentPlan()"${idx.plans.length < 2 ? ' disabled title="You need at least one plan"' : ''}><i class="fa-solid fa-trash"></i>Delete plan…</button>`;
+    `<button class="dropdown-item" id="planRenameItem" onclick="openPlanModal('rename')"><i class="fa-solid fa-pen"></i>Rename Plan…</button>` +
+    `<button class="dropdown-item" id="planMenuSettingsItem" onclick="openPlanSettings()"><i class="fa-solid fa-gear"></i>Plan Settings…<span class="item-hint">${escapeHtml(planSettingsHint())}</span></button>` +
+    `<button class="dropdown-item" id="planDuplicateItem" onclick="duplicatePlan()"><i class="fa-regular fa-copy"></i>Duplicate Plan…</button>` +
+    (fileSyncSupported() ? `<button class="dropdown-item" id="planDisconnectItem" onclick="disconnectFile()"${syncFileHandle ? '' : ' disabled title="This plan isn’t linked to a file"'}><i class="fa-solid fa-link-slash"></i>Disconnect Folder…</button>` : '') +
+    `<button class="dropdown-item" id="planDeleteItem" onclick="deleteCurrentPlan()"${idx.plans.length < 2 ? ' disabled title="You need at least one plan"' : ''}><i class="fa-solid fa-trash"></i>Delete Plan…</button>`;
 }
 
 function openPlanModal(mode) {

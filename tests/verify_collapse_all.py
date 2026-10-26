@@ -29,7 +29,7 @@ with sync_playwright() as p:
     geo2 = pg.evaluate("() => { const btn = document.getElementById('collapseToggleBtn').getBoundingClientRect(), id = document.querySelector('#gridRows .grid-row > div').getBoundingClientRect(); return Math.abs(btn.left - id.left); }")
     check("...and the same in the Gantt view's side list", geo2 < 2, geo2)
     pg.evaluate("() => { currentView = 'tasks'; render(); }")
-    check("everything open: the next click collapses (up arrows, 'Collapse all groups')", names() == FULL and st()["icon"] == "up" and st()["title"] == "Collapse all groups" and not st()["disabled"], st())
+    check("everything open: the next click collapses (up arrows, 'Collapse All Groups')", names() == FULL and st()["icon"] == "up" and st()["title"] == "Collapse All Groups" and not st()["disabled"], st())
     click()
     check("step 1 — collapse all: only the top-level tasks are left", names() == L0, names())
     check("...the button now offers the first level (down arrows, 'Expand to level 1')", st()["icon"] == "down" and st()["title"] == "Expand to level 1", st())
@@ -38,10 +38,10 @@ with sync_playwright() as p:
     check("...next: 'Expand to level 2'", st()["title"] == "Expand to level 2", st())
     click()
     check("step 3 — second level opened", names() == L2, names())
-    check("...next is the last level: 'Expand all groups'", st()["title"] == "Expand all groups" and st()["icon"] == "down", st())
+    check("...next is the last level: 'Expand All Groups'", st()["title"] == "Expand All Groups" and st()["icon"] == "down", st())
     click()
     check("step 4 — everything open again", names() == FULL, names())
-    check("...and the cycle starts over: the button offers to collapse again", st()["icon"] == "up" and st()["title"] == "Collapse all groups", st())
+    check("...and the cycle starts over: the button offers to collapse again", st()["icon"] == "up" and st()["title"] == "Collapse All Groups", st())
     click(); check("a second lap begins the same way (collapse all)", names() == L0)
     click(); click(); click()
     check("...and comes back to everything open after the same number of clicks", names() == FULL, names())
@@ -52,7 +52,7 @@ with sync_playwright() as p:
     check("(back at level 1)", names() == L1, names())
     pg.evaluate("() => { tasks.find(t => t.name === 'A2').collapsed = false; render(); }")
     check("open a nested group by hand -> that isn't one of the cycle's states", names() != L1 and names() != L2 and names() != FULL, names())
-    check("...so the next click restarts from 'Collapse all'", st()["title"] == "Collapse all groups", st())
+    check("...so the next click restarts from 'Collapse all'", st()["title"] == "Collapse All Groups", st())
     click(); check("...and does collapse everything", names() == L0, names())
     # ---- state comes from the stored flags: survives a reload mid-cycle
     click(); pg.reload(); pg.wait_for_selector("#undoBtn"); pg.wait_for_timeout(200)
@@ -65,14 +65,14 @@ with sync_playwright() as p:
     pg.evaluate("() => { currentView = 'tasks'; render(); }")
     # ---- two levels only / one level only
     make([["A"], ["A1", "A"], ["B"], ["B1", "B"], ["C"]])
-    check("one level of groups: the cycle is just collapse / expand", (click(), names())[1] == ["A", "B", "C"] and st()["title"] == "Expand all groups" and (click(), names())[1] == ["A", "A1", "B", "B1", "C"] and st()["title"] == "Collapse all groups")
+    check("one level of groups: the cycle is just collapse / expand", (click(), names())[1] == ["A", "B", "C"] and st()["title"] == "Expand All Groups" and (click(), names())[1] == ["A", "A1", "B", "B1", "C"] and st()["title"] == "Collapse All Groups")
     make([["A"], ["A1", "A"], ["A2", "A1"], ["B"]])
     seq = []
     for _ in range(5): click(); seq.append(names())
     check("two levels: collapse -> level 1 -> all, then around (5 clicks)", seq == [["A", "B"], ["A", "A1", "B"], ["A", "A1", "A2", "B"], ["A", "B"], ["A", "A1", "B"]], seq)
     # ---- the button survives re-renders
     pg.evaluate("() => { render(); render(); }")
-    check("the button survives re-renders (the header is rebuilt each time) with its state intact", pg.locator("#collapseToggleBtn").count() == 1 and st()["title"] == "Expand all groups", st())
+    check("the button survives re-renders (the header is rebuilt each time) with its state intact", pg.locator("#collapseToggleBtn").count() == 1 and st()["title"] == "Expand All Groups", st())
     # ---- filters
     pg.evaluate("() => { colFilters.name = {type: 'rule', rule: 'contains', a: 'a1'}; render(); }")
     check("while a filter is on the toggle is disabled and says why", st()["disabled"] and "filter" in st()["title"], st())

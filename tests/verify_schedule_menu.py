@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Baseline…, Reschedule remaining work… and Working calendar… moved out of the plan (switcher) menu into their own
+"""Baseline…, Reschedule Remaining Work… and Working calendar… moved out of the plan (switcher) menu into their own
 "Schedule" toolbar dropdown — an explicit user request ("is the plan dropdown overloaded?"): that menu had grown to
 11+ items spanning switch/create/schedule/manage, with switching plans — its actual, most frequent job — sitting above
 three dialog-openers. Scheduling precision… joined it later as its own dialog (moved out of Working calendar, again on
@@ -22,13 +22,13 @@ with sync_playwright() as p:
     pg.click("#planMenuBtn"); pg.wait_for_selector("#planMenu.open")
     plan_items = pg.locator("#planMenu .dropdown-item").all_inner_texts()
     check("the plan menu no longer has Baseline / Reschedule / Working calendar", pg.locator("#planBaselineItem").count() == 0 and pg.locator("#planRescheduleItem").count() == 0 and pg.locator("#planCalendarItem").count() == 0, plan_items)
-    check("...but still has New plan, Rename, Duplicate, Delete", any("New plan" in x for x in plan_items) and any("Rename plan" in x for x in plan_items) and any("Duplicate plan" in x for x in plan_items) and any("Delete plan" in x for x in plan_items), plan_items)
+    check("...but still has New plan, Rename, Duplicate, Delete", any("New Plan" in x for x in plan_items) and any("Rename Plan" in x for x in plan_items) and any("Duplicate Plan" in x for x in plan_items) and any("Delete Plan" in x for x in plan_items), plan_items)
     pg.keyboard.press("Escape")
 
     pg.click("#scheduleMenuBtn"); pg.wait_for_selector("#scheduleMenu.open")
     sched_items = pg.locator("#scheduleMenu .dropdown-item").all_inner_texts()
     check("the Schedule menu has only actions — Baseline, Reschedule remaining work, Level resources, in that order (Plan settings is the gear in the top bar)",
-          len(sched_items) == 3 and "Baseline" in sched_items[0] and "Reschedule remaining work" in sched_items[1] and "Level resources" in sched_items[2], sched_items)
+          len(sched_items) == 3 and "Baseline" in sched_items[0] and "Reschedule Remaining Work" in sched_items[1] and "Level Resources" in sched_items[2], sched_items)
     check("Baseline's hint is there (not set at first)", "not set" in sched_items[0], sched_items[0])
     check("the Plan settings gear's tooltip shows the calendar (Mon–Fri by default)", "Mon–Fri" in pg.get_attribute("#planSettingsBtn", "title"), pg.get_attribute("#planSettingsBtn", "title"))
     check("Resource Sheet / Working calendar / Scheduling precision are no longer menu items of their own", all(pg.locator("#" + i).count() == 0 for i in ["planResourcesItem", "planCalendarItem", "planPrecisionItem"]))

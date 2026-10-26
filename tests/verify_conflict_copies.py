@@ -107,7 +107,7 @@ with sync_playwright() as p:
     check("without permission a scan does nothing (the copy is left alone) and the state is known ('prompt')", n == 0 and "cbm_LAPSED.json" in ls() and "Waits for permission" not in names() and ev("() => syncDirPerm") == "prompt", (n, ev("() => syncDirPerm")))
     check("...the file button shows a warning and says the watched folder needs permission", pg.locator("#fileSyncBtn i.fa-triangle-exclamation").count() == 1 and "needs your permission" in (pg.get_attribute("#fileSyncBtn", "title") or ""), pg.get_attribute("#fileSyncBtn", "title"))
     pg.click("#planMenuBtn"); pg.wait_for_timeout(100)
-    check("...the plan menu shows 'Allow access to the watched folder…' (needs permission)", pg.locator("#planWatchAllowItem").count() == 1 and "needs permission" in pg.inner_text("#planWatchAllowItem")); pg.keyboard.press("Escape")
+    check("...the plan menu shows 'Allow Folder Access…' (needs permission)", pg.locator("#planWatchAllowItem").count() == 1 and "needs permission" in pg.inner_text("#planWatchAllowItem")); pg.keyboard.press("Escape")
     pg.click("#fileSyncBtn"); pg.wait_for_timeout(600); settle()
     check("clicking the file button asks for the permission again (it does not offer to disconnect), and the waiting copy is merged", not pg.locator("#confirmModalBg.open").count() and "Waits for permission" in names() and "merged_cbm_LAPSED.json" in ls() and ev("() => syncDirPerm") == "granted", (names(), ls()))
     check("...the warning is gone", pg.locator("#fileSyncBtn i.fa-triangle-exclamation").count() == 0 and pg.locator("#fileSyncBtn i.fa-check").count() == 1)
