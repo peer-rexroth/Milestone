@@ -1362,3 +1362,5 @@ A **tabbed** dialog (an explicit user request: "improve the visuals … look at 
 - No RBAC/roles, no multi-file sync split — deliberately out of scope for a single-user, single-project local planner (unlike Pulse, which is a multi-role team dashboard). Daily backups to the linked folder *are* built — see "Daily backups".
 
 - **Counts footer**: the sidebar ends with `#sbFoot` ("N tasks · M done", 12px, centred, hairline above, as in ClearDesk), filled by `updateStatusBar()`. Done = progress 100%, spacer rows not counted.
+
+- **App icon**: a white milestone diamond (a rounded square turned 45°, with a soft shadow under it) on an indigo gradient (`#7a86ff` to `#3d3acb`), `icons/icon.svg` as a full-bleed 1024 square with no baked-in rounding (the system masks it; the diamond stays inside the maskable safe zone, so the same PNGs serve `any` and `maskable`). `icon-180/192/512.png` are renders of it at exact size (headless Chrome); bump `CACHE_NAME` in `sw.js` when they change. Indigo, not blue: ClearDesk's icon is blue, and in a Dock the two must not look alike.

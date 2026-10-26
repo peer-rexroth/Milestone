@@ -1,4 +1,4 @@
-const CACHE_NAME = 'milestone-cache-v2';
+const CACHE_NAME = 'milestone-cache-v3';
 const APP_SHELL = [
   'milestone.html',
   'manifest.json',

@@ -1871,7 +1871,6 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
 .subbar .btn:hover, .subbar .icon-btn:hover { background: var(--cap-hover); color: var(--text); }
 .subbar .btn:disabled:hover, .subbar .icon-btn:disabled:hover { background: var(--cap-fill); }
 .subbar .tb-toggle[aria-pressed="true"] { background: var(--cap-on); color: var(--text); }
-.subbar .btn-danger { color: var(--danger); }
 .subbar .sb-float { background: var(--cap-fill); }
 .tool-group:not(:has(> :not(.tb-over))) { display: none; }   /* (every button of the group is under More: no empty capsule left behind) */
 .tool-group { display: inline-flex; gap: 2px; padding: 3px 4px; border-radius: 999px; background: var(--cap-fill); flex: none; }
@@ -1899,6 +1898,8 @@ html:not(.sel-inactive) .grid-row.selected :is(input, select, textarea, .inline-
 html:not(.sel-inactive) .grid-row.selected .grid-actions { background: linear-gradient(var(--sel-fill), var(--sel-fill)) padding-box, linear-gradient(var(--row-bg), var(--row-bg)) border-box; border-color: var(--sel-halo); }   /* ClearDesk's: a translucent white capsule with a crisp ring and white glyphs on the accent */
 html:not(.sel-inactive) .grid-row.selected .grid-actions .icon-btn { color: #fff; }
 html:not(.sel-inactive) .grid-row.selected .grid-actions .icon-btn:hover { background: var(--sel-fill-hover); color: #fff; }
+html:not(.sel-inactive) .grid-row.selected .grid-actions .icon-btn.btn-danger { color: #fff; }
+html:not(.sel-inactive) .grid-row.selected .grid-actions .icon-btn.btn-danger:hover { background: var(--sel-fill-hover); color: #fff; }
 html:not(.sel-inactive) .grid-row.selected .name-text.editable:hover, html:not(.sel-inactive) .grid-row.selected .grid-cell-dim.editable:hover { background: var(--sel-fill); }
 html.sel-inactive .grid-row.selected { --row-bg: var(--sel-inactive); }
 html.sel-inactive .gantt-row-bg.selected { background: var(--cap-fill); }
@@ -1944,7 +1945,11 @@ html.sidebar-collapsed .bar-title { display: block; }
 .subbar .tool-group > .btn.ico:hover, .subbar .tool-group > .dropdown-wrap > .btn.ico:hover { background: var(--cap-hover); }
 .subbar .tool-group > .dropdown-wrap { display: flex; }
 .subbar .tool-group > .dropdown-wrap > .btn.ico { background: transparent; height: 26px; width: 30px; }
-.subbar .tool-group .btn-danger { color: var(--danger); }
+/* Delete is quiet like the other icons; only the hover says it is destructive: a red fill and a red glyph (as in ClearDesk's toolbar) */
+.subbar .tool-group .btn-danger { color: var(--text); }
+.subbar .tool-group .btn-danger:hover:not(:disabled) { background: var(--red-bg); color: var(--red-text); }
+.grid-actions .icon-btn.btn-danger { color: var(--text-dim); }
+.grid-actions .icon-btn.btn-danger:hover { background: var(--red-bg); color: var(--red-text); }
 .subbar .icon-btn i, .subbar .btn.ico i { font-size: var(--ico-18); }   /* icon-only toolbar buttons draw at 18, as in ClearDesk's bars (the labelled Add Task keeps 16) */
 .subbar .tool-group > .btn.tb-toggle[aria-pressed="true"] { background: var(--cap-on); }
 .subbar .tool-group > :disabled { opacity: .4; }
@@ -11565,7 +11570,8 @@ function openBulkModal() {
   // editing a value ticks its box
   document.querySelectorAll('#bulkModalBg .bulk-ctl input, #bulkModalBg .bulk-ctl select').forEach(el => { const f = el.id.replace('bulkVal-', ''), box = document.getElementById('bulkOn-' + (f.startsWith('pred') ? 'pred' : f)); el.oninput = el.onchange = () => { if (box) box.checked = true; }; });
   document.getElementById('bulkModalBg').classList.add('open');
-  setTimeout(() => document.getElementById('bulkVal-progress').focus(), 40);
+  const first = document.getElementById('bulkVal-progress');
+  setTimeout(() => { first.focus(); if (document.activeElement !== first) setTimeout(() => first.focus(), 120); }, 40);   // (a second try: right after the dialog starts to fade in the box can refuse the first)
 }
 function closeBulkModal() { document.getElementById('bulkModalBg').classList.remove('open'); }
 // Dirty = at least one field is ticked to change — the same signal the dialog already uses to know what to apply, so
