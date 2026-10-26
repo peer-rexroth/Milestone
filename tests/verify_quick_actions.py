@@ -83,7 +83,7 @@ with sync_playwright() as p:
     ev("() => { tasks.find(t => t.id === 'e').notes = 'x'.repeat(300) + ' vendor ' + 'y'.repeat(300); }"); pg.fill("#searchInput", "vendor"); pg.wait_for_timeout(250)
     long_ = pg.locator("#searchResults .sr:has-text('Plain') .sr-note").inner_text()
     check("a long note is shown only around the hit (about 90 characters, with … at the cut ends)", "vendor" in long_ and len(long_) < 130 and long_.startswith("…") and long_.rstrip().endswith("…"), long_)
-    check("the empty Find window says notes can be searched", "note" in ev("() => { document.getElementById('searchInput').value = ''; renderSearch(); return document.getElementById('searchResults').textContent; }"))
+    check("the Find field's tooltip says notes can be searched (the empty window is just the field)", "notes" in ev("() => document.getElementById('searchInput').title"))
     foot = ev("() => { const f = document.getElementById('searchFoot'); return [f.scrollHeight, f.clientHeight, f.getBoundingClientRect().height]; }")
     check("the Find window's footer stays on one line (the Replace… link, the hints and the count all fit)", foot[2] < 40, foot)
     pg.keyboard.press("Escape")

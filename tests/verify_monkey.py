@@ -70,7 +70,7 @@ def run(seed, actions):
         def health(where):
             try:
                 bad = pg.evaluate("() => __livePlanProblems()")
-                modals = pg.evaluate("() => document.querySelectorAll('.modal-bg.open').length")
+                modals = pg.evaluate("() => document.querySelectorAll('.modal-bg.open:not(#confirmModalBg)').length")   # (a question — "Discard your changes?" — always sits above whatever dialog asked it, and Custom fields opens over the task dialog by design: task + fields + question is a legal stack of three, so the question does not count)
                 root = pg.evaluate("() => !!document.getElementById('printRoot')")
                 alive = pg.evaluate("() => 1 + 1") == 2
             except Exception as e:

@@ -1220,7 +1220,9 @@ html.time12 .tf-top.mm .tf-left { grid-template-columns: auto minmax(230px, 1fr)
 }
 .modal-bg.search-bg { align-items: flex-start; padding-top: 12vh; }   /* (.modal-bg centres; the palette must stay put at the top while its content grows and shrinks) */
 .modal.search-modal { width: 640px; max-width: 94vw; max-height: 47vh; overflow: hidden; }   /* 640px wide and 47vh high (a third smaller than it was): two-line results — name, WBS and path, dates and resource */
-.search-box { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.search-box { display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-bottom: 0; }
+.modal.search-modal { border: 0; box-shadow: var(--glass-shadow), 0 0 0 1px color-mix(in srgb, var(--text) 8%, transparent); }   /* no border drawn inside a shadow: one soft edge */
+.search-modal:has(.search-results:not(:empty)) .search-box { border-bottom: 1px solid var(--border); }   /* the rule appears only when there are results under it */
 .search-box > i { color: var(--text-faint); }
 .search-box input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; color: var(--text); font-size: var(--fs-15); }
 .search-x { border: 1px solid var(--border); background: var(--panel-2); color: var(--text-dim); border-radius: var(--r-xs); font-size: var(--fs-11); padding: 2px 6px;}
