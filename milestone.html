@@ -600,12 +600,12 @@ html[data-theme="dark"] .sb-head #sidebarToggleBtn, html[data-theme="dark"] .sb-
 .aa { display: inline-flex; align-items: baseline; gap: 1px; font-weight: 600; font-size: var(--fs-17); line-height: 1; letter-spacing: -0.02em; }   /* ClearDesk's aA: a small A (11px) beside a large A (17px), semibold */
 .aa small { font-size: var(--fs-11); font-weight: 600; }
 .sb-tools .plan-status { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; min-width: 0; }
-.sb-tools .plan-status #fileSyncBtn { height: 36px; padding: 0 14px; border-radius: 999px; background: var(--cap-fill); border: none; font-size: var(--fs-13); font-weight: 500; }   /* ClearDesk's chip: 36px high, 13px, a 16px icon */
+.sb-tools .plan-status #fileSyncBtn { height: 36px; padding: 0 12px; border-radius: 999px; background: var(--cap-fill); border: none; font-size: var(--fs-13); font-weight: 500; }   /* ClearDesk's chip: 36px high, 13px, a 16px icon */
 .sb-tools .plan-status #fileSyncBtn i { font-size: var(--ico-18); }
 .sb-tools .plan-status #fileSyncBtn:hover { background: var(--cap-hover); }
-.sb-tools .sb-cap { padding: 4px; }
+.sb-tools .sb-cap { padding: 3px 4px; }
 .sb-tools .sb-cap #themeToggleBtn { width: 37px; }   /* the aA button is a little wider in ClearDesk (36.6px): the capsule is 117px there */
-.sb-tools .sb-cap .btn, .sb-tools .sb-cap .icon-btn { width: 34px; height: 28px; border-radius: 999px; background: transparent; }
+.sb-tools .sb-cap .btn, .sb-tools .sb-cap .icon-btn { width: 34px; height: 30px; border-radius: 999px; background: transparent; }
 .sb-tools .sb-cap i { font-size: var(--ico-18); }
 .sb-tools .sb-cap .btn:hover, .sb-tools .sb-cap .icon-btn:hover { background: var(--cap-hover); }
 .sb-tools .dropdown-wrap { display: flex; }
@@ -1329,7 +1329,7 @@ input.inline-edit[type=date]::-webkit-calendar-picker-indicator { margin: 0 0 0 
 .sc-keys { flex-shrink: 0; white-space: nowrap; }
 .sc-keys kbd { display: inline-block; min-width: 20px; padding: 1px 6px; margin-left: 2px; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: var(--r-xs); background: var(--panel-2); color: var(--text); font-family: inherit; font-weight: 600; font-size: var(--fs-11); line-height: 1.5; text-align: center; }
 .sc-keys .sc-or { margin: 0 2px 0 4px; color: var(--text-faint); font-size: var(--fs-11); }
-.grid-actions { position: absolute; right: 8px; top: 3px; bottom: 3px; display: flex; opacity: 0; align-items: center; gap: 2px; padding: 0 4px; border-radius: 999px; background: linear-gradient(var(--cap-fill), var(--cap-fill)), var(--row-bg); box-shadow: inset 0 0 0 1px var(--border); }
+.grid-actions { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); box-sizing: border-box; display: flex; opacity: 0; align-items: center; gap: 2px; padding: 2px 4px; border: 1px solid var(--border); border-radius: 999px; background: linear-gradient(var(--cap-fill), var(--cap-fill)) padding-box, linear-gradient(var(--row-bg), var(--row-bg)) border-box; }
 .grid-actions { pointer-events: none; }   /* the fade and the gaps let clicks through to the name; only the buttons themselves take them */
 .grid-actions .icon-btn { width: 22px; height: 22px; border-radius: 50%; font-size: var(--fs-12); pointer-events: auto; }   /* a disc inside the pill, as in ClearDesk */
 .grid-actions .icon-btn:hover { background: var(--pressed); }
@@ -1874,11 +1874,11 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
 .subbar .btn-danger { color: var(--danger); }
 .subbar .sb-float { background: var(--cap-fill); }
 .tool-group:not(:has(> :not(.tb-over))) { display: none; }   /* (every button of the group is under More: no empty capsule left behind) */
-.tool-group { display: inline-flex; gap: 2px; padding: 4px; border-radius: 999px; background: var(--cap-fill); flex: none; }
-.subbar .tool-group > .icon-btn, .subbar .tool-group > .btn { background: transparent; height: 28px; width: 34px; }
+.tool-group { display: inline-flex; gap: 2px; padding: 3px 4px; border-radius: 999px; background: var(--cap-fill); flex: none; }
+.subbar .tool-group > .icon-btn, .subbar .tool-group > .btn { background: transparent; height: 30px; width: 34px; }
 .subbar .tool-group > .icon-btn:hover { background: var(--cap-hover); }
-.subbar .split-btn { gap: 2px; padding: 4px; border-radius: 999px; background: var(--cap-fill); }
-.subbar .split-btn .btn { background: transparent; height: 28px; border-radius: 999px; }
+.subbar .split-btn { gap: 2px; padding: 3px 4px; border-radius: 999px; background: var(--cap-fill); }
+.subbar .split-btn .btn { background: transparent; height: 30px; border-radius: 999px; }
 .subbar .split-btn .btn:hover { background: var(--cap-hover); }
 .subbar .split-btn .split-caret { padding: 0 8px; border-radius: 999px; }
 .subbar .sel-chip { border: none; background: var(--accent-tint); color: var(--text); height: 36px; border-radius: 999px; }
@@ -1896,7 +1896,7 @@ html:not(.sel-inactive) .grid-row.selected .status-pill { background: var(--sel-
 html:not(.sel-inactive) .grid-row.selected i { color: inherit; }
 html:not(.sel-inactive) .grid-row.selected > .chg { background-color: var(--sel-fill); }
 html:not(.sel-inactive) .grid-row.selected :is(input, select, textarea, .inline-wrap) { --text: var(--ink); --text-dim: var(--ink-2); --text-faint: var(--ink-3); --border: var(--border-2); color: var(--ink); }
-html:not(.sel-inactive) .grid-row.selected .grid-actions { background: linear-gradient(var(--sel-fill), var(--sel-fill)), var(--row-bg); box-shadow: inset 0 0 0 1px var(--sel-halo); }   /* ClearDesk's: a translucent white capsule with a crisp ring and white glyphs on the accent */
+html:not(.sel-inactive) .grid-row.selected .grid-actions { background: linear-gradient(var(--sel-fill), var(--sel-fill)) padding-box, linear-gradient(var(--row-bg), var(--row-bg)) border-box; border-color: var(--sel-halo); }   /* ClearDesk's: a translucent white capsule with a crisp ring and white glyphs on the accent */
 html:not(.sel-inactive) .grid-row.selected .grid-actions .icon-btn { color: #fff; }
 html:not(.sel-inactive) .grid-row.selected .grid-actions .icon-btn:hover { background: var(--sel-fill-hover); color: #fff; }
 html:not(.sel-inactive) .grid-row.selected .name-text.editable:hover, html:not(.sel-inactive) .grid-row.selected .grid-cell-dim.editable:hover { background: var(--sel-fill); }
@@ -1940,7 +1940,7 @@ html.sidebar-collapsed .bar-title { display: block; }
 .bar-title b { display: block; font-size: var(--fs-14); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bar-title small { display: block; font-size: var(--fs-12); color: var(--text-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .subbar .btn.ico { width: 36px; padding: 0; justify-content: center; }
-.subbar .tool-group > .btn.ico { background: transparent; height: 28px; width: 34px; }
+.subbar .tool-group > .btn.ico { background: transparent; height: 30px; width: 34px; }
 .subbar .tool-group > .btn.ico:hover, .subbar .tool-group > .dropdown-wrap > .btn.ico:hover { background: var(--cap-hover); }
 .subbar .tool-group > .dropdown-wrap { display: flex; }
 .subbar .tool-group > .dropdown-wrap > .btn.ico { background: transparent; height: 26px; width: 30px; }
