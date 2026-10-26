@@ -216,7 +216,7 @@ with sync_playwright() as p:
     check("a milestone: Duration and Finish read-only, Task Type and Effort driven off", pg.is_disabled("#tfDur") and pg.is_disabled("#tfFinish") and pg.is_disabled("#tfType") and pg.is_disabled("#tfEffort"))
     select("g")
     check("a group: dates and % read-only (rolled up), no Resources/Predecessors tables, a note saying why",
-          pg.is_disabled("#tfStart") and pg.is_disabled("#tfPct") and pg.locator("#tfResRows").count() == 0 and "rolls up" in pg.inner_text("#taskFormBody"))
+          pg.is_disabled("#tfStart") and pg.is_disabled("#tfPct") and pg.locator("#tfResRows").count() == 0 and "takes its dates" in pg.inner_text("#taskFormBody"))
     pg.fill("#tfName", "Phase 1"); pg.click("#tfOkBtn"); pg.wait_for_timeout(150)
     check("...its name can still be changed", task("g")["name"] == "Phase 1")
     ev("() => { tasks.push({ id: 'sp', name: '', spacer: true, parentId: null, order: 99, startDate: '2026-09-07', endDate: '2026-09-07', progress: 0, milestone: false, color: null, predecessors: [], collapsed: false, updatedAt: 1, constraintType: 'ASAP', constraintDate: null, taskMode: 'manual', resource: '', actualStart: null, actualFinish: null }); normalizeData(); save(); }")

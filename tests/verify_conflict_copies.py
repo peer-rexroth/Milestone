@@ -89,7 +89,7 @@ with sync_playwright() as p:
     ev("() => stopWatchingFolder()"); pg.wait_for_timeout(300)   # (the state of a plan linked to a single file, from before folders)
     check("a plan that is linked to a single file (no folder) is not watched: the folder handle is gone", ev("() => watchingFolder()") is False and ev("async () => !(await _fsGet(planDirKey(currentPlanId)))"))
     ev("() => updateFileSyncUI()")
-    check("...it gets a 'Link folder' reminder next to the file button and 'Link this plan's folder…' in the plan menu", pg.locator("#watchHint").is_visible() and "Link folder" in pg.inner_text("#watchHintBtn") and (pg.click("#planMenuBtn"), "Link this plan" in pg.inner_text("#planWatchItem"))[1]); pg.keyboard.press("Escape")
+    check("...it gets a 'Link folder' reminder next to the file button and 'Link Plan Folder…' in the plan menu", pg.locator("#watchHint").is_visible() and "Link folder" in pg.inner_text("#watchHintBtn") and (pg.click("#planMenuBtn"), "Link Plan Folder" in pg.inner_text("#planWatchItem"))[1]); pg.keyboard.press("Escape")
     put("cbm_WORKSTATION01.json", PLAN([T("tq", "Should not be read", 999)]))
     check("without a watched folder a copy is left alone", ev("() => scanConflictCopies()") == 0 and "cbm_WORKSTATION01.json" in ls() and "Should not be read" not in names())
     ev("() => chooseWatchFolder()"); pg.wait_for_timeout(500)

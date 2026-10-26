@@ -34,7 +34,7 @@ with sync_playwright() as p:
     check("the Tasks view's toolbar has a Group button; nothing is grouped at first", pg.is_visible("#groupBtn") and pg.get_attribute("#groupBtn", "aria-pressed") == "false" and not heads())
     pg.click("#groupBtn"); pg.wait_for_selector("#groupMenu.open")
     items = pg.locator("#groupMenu .dropdown-item").all_inner_texts()
-    check("its menu: None plus Status, Resource, Task Mode, Task Type, Start, Finish, Deadline, % Complete and the custom field in use (by its plan name)", [i.strip() for i in items][:9] == ["None — the outline", "Status", "Resource", "Task Mode", "Task Type", "Start", "Finish", "Deadline", "% Complete"] and "Squad" in [i.strip() for i in items], items)
+    check("its menu: None plus Status, Resource, Task Mode, Task Type, Start, Finish, Deadline, % Complete and the custom field in use (by its plan name)", [i.strip() for i in items][:9] == ["None", "Status", "Resource", "Task Mode", "Task Type", "Start", "Finish", "Deadline", "% Complete"] and "Squad" in [i.strip() for i in items], items)
     check("None is ticked while nothing is grouped", pg.locator("#groupMenu [aria-checked=true]").count() == 1 and "None" in pg.locator("#groupMenu [aria-checked=true]").inner_text())
     pg.click("#groupMenu button:has-text('Resource')"); pg.wait_for_timeout(250)
     check("Group by Resource: a header per value — Anna, Ben, then (none) last", heads() == ["Anna", "Ben", "(none)"], heads())

@@ -205,7 +205,7 @@ with sync_playwright() as p:
     close_all()
     ev("() => openBackupsModal()"); pg.wait_for_timeout(150)
     t = pg.inner_text("#backupsModalBg .modal-body")
-    check("Local Backups explains itself and each row says how many tasks it holds", "once a day" in t and re.search(r"\d+ tasks?", t), t)
+    check("Local Backups explains itself and each row says how many tasks it holds", "a day" in t and re.search(r"\d+ tasks?", t), t)
     close_all()
     ev("() => openBaselineModal()"); pg.wait_for_timeout(200)
     t = pg.inner_text("#baselineModalBg .modal-body").upper()
