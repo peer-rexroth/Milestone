@@ -438,6 +438,7 @@ html[data-scheme="glass"][data-theme="dark"] :is(.content) {
   --sel-text-3: rgba(255,255,255,.85);
   --hover: color-mix(in srgb, var(--text) 8%, transparent);
   --pressed: color-mix(in srgb, var(--text) 14%, transparent);
+  --ib-s: 22px; --ib-m: 26px;   /* the icon button: a disc (22px; 26px for a dialog's close) */
   --accent: #2a5fcf;
   --accent-hover: color-mix(in srgb, var(--accent) 88%, #000);
   --accent-tint: color-mix(in srgb, var(--accent) 24%, transparent);
@@ -651,10 +652,11 @@ html:not(.sidebar-collapsed) .sb-float { display: none; }   /* (the show button 
 .btn-primary.btn-danger { background: var(--danger); border-color: var(--danger); color: var(--on-accent); }
 .btn-primary.btn-danger:hover { background: var(--danger); }
 .icon-btn {
-  display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px;
-  border: none; background: transparent; color: var(--text-dim); border-radius: var(--r-s); font-size: var(--fs-15);
+  /* ONE icon button: a disc, filled on hover with no ring (as in ClearDesk). A segment inside a capsule group is a pill (wider than tall). */
+  display: inline-flex; align-items: center; justify-content: center; flex: none; box-sizing: border-box; width: var(--ib-s); height: var(--ib-s); padding: 0;
+  border: none; background: transparent; color: var(--text-dim); border-radius: 50%; font-size: var(--fs-15);
 }
-.icon-btn:hover { background: var(--panel-2); color: var(--text); }
+.icon-btn:hover { background: var(--pressed); color: var(--text); }
 .icon-btn.active { background: color-mix(in srgb, var(--accent) 16%, var(--panel)); color: var(--accent); }
 button:focus:not(:focus-visible) { outline: none; }
 /* One focus style: a solid ~3pt band in --focus-ring, the control's own border taking --focus-edge. Inputs ring on
@@ -685,8 +687,8 @@ button:focus:not(:focus-visible) { outline: none; }
 .dropdown-sep { height: 1px; background: var(--border); margin: 6px 2px; }
 /* ---- the collapse/expand-all toggle in the ID column's header ---- */
 .id-head { display: flex; align-items: center; justify-content: flex-start; }   /* the toggle sits at the left edge of the ID column */
-.id-toggle { width: 22px; height: 22px; padding: 0; border: none; border-radius: var(--r-xs); background: transparent; color: var(--text-dim); font-size: var(--fs-11); }
-.id-toggle:hover:not(:disabled) { background: var(--panel-2); color: var(--text); }
+.id-toggle { width: 22px; height: 22px; padding: 0; border: none; border-radius: 50%; background: transparent; color: var(--text-dim); font-size: var(--fs-11); }
+.id-toggle:hover:not(:disabled) { background: var(--pressed); color: var(--text); }
 .id-toggle:disabled { opacity: .35; cursor: default; }
 /* ---- status pill (the Status column) ---- */
 .status-pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: var(--fs-12); font-weight: 600; line-height: 16px; }
@@ -733,8 +735,8 @@ button:focus:not(:focus-visible) { outline: none; }
 .fld-name.bad { border-color: var(--danger); }
 .fld-uses { flex: none; min-width: 64px; font-size: var(--fs-13); color: var(--text-faint); text-align: right; white-space: nowrap; }
 .fld-uses:empty { display: none; }
-.fld-remove { flex: none; width: 26px; height: 26px; border: none; border-radius: var(--r-s); background: transparent; color: var(--text-faint); }
-.fld-remove:hover { background: var(--panel-2); color: var(--danger); }
+.fld-remove { flex: none; width: var(--ib-s); height: var(--ib-s); border: none; border-radius: 50%; background: transparent; color: var(--text-faint); }
+.fld-remove:hover { background: var(--pressed); color: var(--danger); }
 .fld-row.removed .fld-remove:hover { color: var(--accent); }
 .fld-empty { padding: 14px; border: 1px dashed var(--border); border-radius: var(--r-s); color: var(--text-faint); font-size: var(--fs-12); text-align: center; }
 .res-empty { padding: 14px; border: 1px dashed var(--border); border-radius: var(--r-s); color: var(--text-faint); font-size: var(--fs-12); text-align: center; }
@@ -809,10 +811,10 @@ body.col-moving, body.col-moving * { cursor: grabbing !important; user-select: n
 .main .grid-header { height: var(--head-h); }
 .main .grid-header > .col-head { white-space: normal; align-self: stretch; }   /* (the whole header height is the resize handle's) */
 .sort-ind { flex: none; font-size: var(--fs-11); color: var(--accent); }
-.col-filter-btn { flex-shrink: 0; width: 18px; height: 18px; padding: 0; border: none; border-radius: var(--r-xs); background: transparent; color: var(--text-faint); font-size: var(--fs-11); opacity: 0; }   /* quiet until it is needed: the header is hovered or focused, the menu is open, or a filter is active (below) — it keeps its space, so nothing shifts */
+.col-filter-btn { flex-shrink: 0; width: 18px; height: 18px; padding: 0; border: none; border-radius: 50%; background: transparent; color: var(--text-faint); font-size: var(--fs-11); opacity: 0; }   /* quiet until it is needed: the header is hovered or focused, the menu is open, or a filter is active (below) — it keeps its space, so nothing shifts */
 .col-head:hover .col-filter-btn, .col-head:focus-within .col-filter-btn, .col-filter-btn.menu-open { opacity: .55; }
 @media (hover: none) { .col-filter-btn { opacity: .55; } }   /* a touch screen has no hover */
-.col-head .col-filter-btn:hover { background: var(--panel-2); color: var(--text); opacity: 1; }
+.col-head .col-filter-btn:hover { background: var(--pressed); color: var(--text); opacity: 1; }
 .col-filter-btn.active { color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--panel)); opacity: 1; }
 .filter-bar { display: flex; align-items: center; gap: 8px; font-size: var(--fs-12); color: var(--text-dim); min-width: 0; overflow: hidden; }
 /* ── Status bar ── */
@@ -828,8 +830,8 @@ body.col-moving, body.col-moving * { cursor: grabbing !important; user-select: n
 .sb-btn.hidden { display: none; }
 .sb-btn:disabled { opacity: .45; cursor: default; background: transparent; }
 .sb-toggle[aria-pressed="true"] { color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }   /* the Task Form toggle: highlighted while the pane is open */
-.sb-icon { border: none; background: transparent; color: var(--text-dim); width: 22px; height: 22px; border-radius: var(--r-xs);font-size: var(--ico-12); }
-.sb-icon:hover { background: color-mix(in srgb, var(--text) 8%, transparent); color: var(--text); }
+.sb-icon { border: none; background: transparent; color: var(--text-dim); width: 22px; height: 22px; border-radius: 50%;font-size: var(--ico-12); }
+.sb-icon:hover { background: var(--pressed); color: var(--text); }
 #zoomSlider { width: 140px; accent-color: var(--accent); }
 .sb-scale { display: inline-flex; align-items: center; border: 1px solid var(--border); border-radius: var(--r-s); overflow: hidden; background: var(--panel); }
 .sb-scale #zoomTabs { display: inline-flex; padding: 0; gap: 0; border: none; background: transparent; border-radius: 0; }
@@ -1186,6 +1188,7 @@ html.time12 .tf-top.mm .tf-left { grid-template-columns: auto minmax(230px, 1fr)
 .print-preview { flex: 1; min-height: 0; overflow: auto; padding: 16px; display: flex; align-items: flex-start; justify-content: center; }
 .print-sheet { background: var(--on-accent); box-shadow: 0 1px 8px rgba(0, 0, 0, .3); width: 100%; max-width: 100%; }
 .print-sheet svg { display: block; width: 100%; height: 100%; }
+.print-nav .btn { border-radius: 999px; }
 .print-nav { display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-top: 1px solid var(--border); font-size: var(--fs-12); color: var(--text-dim); }
 .print-summary { margin-left: auto; text-align: right; }
 .print-img { display: flex; align-items: center; gap: 6px; }
@@ -1295,8 +1298,8 @@ html.time12 .tf-top.mm .tf-left { grid-template-columns: auto minmax(230px, 1fr)
 .hol-row .hol-name { flex: 1; min-width: 0; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hol-row .hol-tag { font-size: var(--fs-11); color: var(--text-dim); border: 1px solid var(--border); border-radius: var(--r-m); padding: 0 6px; white-space: nowrap; }
 .hol-row .hol-days { font-size: var(--fs-12); color: var(--text-faint); white-space: nowrap; }
-.hol-row button { background: none; border: 0; color: var(--text-dim);padding: 2px 6px; border-radius: var(--r-xs); }
-.hol-row button:hover { background: var(--panel-2); color: var(--danger); }
+.hol-row button { background: none; border: 0; color: var(--text-dim); width: var(--ib-s); height: var(--ib-s); padding: 0; border-radius: 50%; }
+.hol-row button:hover { background: var(--pressed); color: var(--danger); }
 .cal-hint { font-size: var(--fs-12); color: var(--text-dim); margin: 12px 0 0; line-height: 1.5; }
 .gantt-nonwork { position: absolute; top: 0; background: color-mix(in srgb, var(--text) 3.5%, transparent); pointer-events: none; }
 .grid-name .mismatch-warn { color: var(--task-amber); flex-shrink: 0; font-size: var(--fs-11); }
@@ -1328,7 +1331,8 @@ input.inline-edit[type=date]::-webkit-calendar-picker-indicator { margin: 0 0 0 
 .sc-keys .sc-or { margin: 0 2px 0 4px; color: var(--text-faint); font-size: var(--fs-11); }
 .grid-actions { position: absolute; right: 8px; top: 3px; bottom: 3px; display: flex; opacity: 0; align-items: center; gap: 2px; padding: 0 4px; border-radius: 999px; background: linear-gradient(var(--cap-fill), var(--cap-fill)), var(--row-bg); box-shadow: inset 0 0 0 1px var(--border); }
 .grid-actions { pointer-events: none; }   /* the fade and the gaps let clicks through to the name; only the buttons themselves take them */
-.grid-actions .icon-btn { width: 24px; height: 24px; font-size: var(--fs-12); pointer-events: auto; }
+.grid-actions .icon-btn { width: 22px; height: 22px; border-radius: 50%; font-size: var(--fs-12); pointer-events: auto; }   /* a disc inside the pill, as in ClearDesk */
+.grid-actions .icon-btn:hover { background: var(--pressed); }
 .grid-row:hover .grid-actions, .grid-row:focus-within .grid-actions { opacity: 1; }
 @media (hover: none) { .grid-actions .icon-btn { pointer-events: none; } }   /* touch: an invisible Delete under a tap on the name would be a trap — the toolbar's selection buttons and the row menu do the same */
 .grid-name:has(input.inline-edit) > .grid-actions { display: none; }   /* while the name is being edited the editor owns the whole cell */
@@ -1650,8 +1654,8 @@ select.rst-select:disabled { opacity: .5; }
    the buttons on the right with Cancel first; a quiet round x (Esc and Cancel close too). A dialog with tabs or a toolbar keeps the rule under them. */
 .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 24px 24px 0; border-bottom: 0; gap: 8px; }
 .modal-header h2 { margin: 0; font-size: var(--fs-17); font-weight: 600; }
-.modal-header button { border: none; background: none; font-size: var(--fs-17); color: var(--text-faint); width: 28px; height: 28px; border-radius: 50%; }
-.modal-header button:hover { background: var(--cap-hover); color: var(--text); }
+.modal-header button { border: none; background: none; font-size: var(--fs-17); color: var(--text-faint); width: var(--ib-m); height: var(--ib-m); border-radius: 50%; }
+.modal-header button:hover { background: var(--pressed); color: var(--text); }
 .modal-header .hdr-link { width: auto; height: auto; margin: 0 8px 0 auto; padding: 4px 8px; font-size: var(--fs-12); color: var(--accent); }
 .modal-body { padding: 14px 24px 0; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; color: var(--text-dim); line-height: 1.6; }
 .modal-body :is(input, select, textarea, .field label) { line-height: normal; }
@@ -1716,8 +1720,8 @@ select.rst-select:disabled { opacity: .5; }
 .field-dt { display: flex; flex-wrap: wrap; gap: 6px; }
 .dt-wrap { position: relative; display: block; min-width: 0; }
 .dt-wrap > input.dt-date { width: 100%; padding-right: 32px; }
-.dt-cal { position: absolute; right: 2px; top: 50%; transform: translateY(-50%); width: 28px; height: 28px; border: 0; background: none; color: var(--text); border-radius: var(--r-s);font-size: var(--fs-13); }
-.dt-cal:hover:not(:disabled) { background: var(--panel-2); }
+.dt-cal { position: absolute; right: 2px; top: 50%; transform: translateY(-50%); width: var(--ib-m); height: var(--ib-m); border: 0; background: none; color: var(--text); border-radius: 50%; font-size: var(--fs-13); }
+.dt-cal:hover:not(:disabled) { background: var(--pressed); }
 .dt-cal:disabled { opacity: .4; cursor: default; }
 .dt-native { position: absolute; right: 0; bottom: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 input.dt-date.dt-err, input.dt-time.dt-err { border-color: var(--danger); }
@@ -1745,8 +1749,8 @@ input.dt-time { width: 84px; flex: 0 0 84px; text-align: center; }
 .pred-row select, .pred-row input { padding: 6px 8px; border: 1px solid var(--border); border-radius: var(--r-s); background: var(--panel); font-size: var(--fs-12); }
 .pred-row input.pred-id-input::-webkit-outer-spin-button, .pred-row input.pred-id-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .pred-row input.pred-id-input { -moz-appearance: textfield; }
-.pred-remove { border: none; background: none; color: var(--text-faint); width: 24px; height: 24px; border-radius: var(--r-xs); }
-.pred-remove:hover { background: var(--panel-2); color: var(--danger); }
+.pred-remove { border: none; background: none; color: var(--text-faint); width: var(--ib-s); height: var(--ib-s); border-radius: 50%; }
+.pred-remove:hover { background: var(--pressed); color: var(--danger); }
 .pred-empty { font-size: var(--fs-12); color: var(--text-faint); padding: 4px 0; }
 .fs-points { margin: 8px 0 0; padding-left: 16px; display: flex; flex-direction: column; gap: 4px; }
 .id-badge { font-size: var(--fs-12); font-weight: 600; color: var(--text-faint); margin-left: 8px; vertical-align: middle; }
@@ -1892,7 +1896,7 @@ html:not(.sel-inactive) .grid-row.selected .status-pill { background: var(--sel-
 html:not(.sel-inactive) .grid-row.selected i { color: inherit; }
 html:not(.sel-inactive) .grid-row.selected > .chg { background-color: var(--sel-fill); }
 html:not(.sel-inactive) .grid-row.selected :is(input, select, textarea, .inline-wrap) { --text: var(--ink); --text-dim: var(--ink-2); --text-faint: var(--ink-3); --border: var(--border-2); color: var(--ink); }
-html:not(.sel-inactive) .grid-row.selected .grid-actions { background: var(--sel-fill); box-shadow: inset 0 0 0 1px var(--sel-halo); }   /* ClearDesk's: a translucent white capsule with a crisp ring and white glyphs on the accent */
+html:not(.sel-inactive) .grid-row.selected .grid-actions { background: linear-gradient(var(--sel-fill), var(--sel-fill)), var(--row-bg); box-shadow: inset 0 0 0 1px var(--sel-halo); }   /* ClearDesk's: a translucent white capsule with a crisp ring and white glyphs on the accent */
 html:not(.sel-inactive) .grid-row.selected .grid-actions .icon-btn { color: #fff; }
 html:not(.sel-inactive) .grid-row.selected .grid-actions .icon-btn:hover { background: var(--sel-fill-hover); color: #fff; }
 html:not(.sel-inactive) .grid-row.selected .name-text.editable:hover, html:not(.sel-inactive) .grid-row.selected .grid-cell-dim.editable:hover { background: var(--sel-fill); }
