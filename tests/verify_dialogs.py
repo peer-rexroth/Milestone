@@ -62,8 +62,8 @@ with sync_playwright() as p:
     ev("() => openTaskModal('b')"); pg.wait_for_timeout(250); pg.fill("#taskNameInput", "Build 2"); pg.press("#taskNameInput", "Enter"); pg.wait_for_timeout(250)
     check("Enter in the name box saves the task", not open_("taskModalBg") and ev("() => byId('b').name") == "Build 2")
     ev("() => { byId('b').name = 'Build'; save(); render(); }")
-    fresh(); ev("() => deleteTaskFlow('c')"); pg.wait_for_timeout(150)
-    check("...a delete confirmation shows 'Cancel' and 'Delete' again", pg.inner_text("#confirmModalCancelBtn") == "Cancel" and pg.inner_text("#confirmModalActionBtn") == "Delete"); pg.keyboard.press("Escape"); pg.wait_for_timeout(100)
+    fresh(); ev("() => openConfirmModal({ title: 'Delete plan', body: 'x', confirmLabel: 'Delete', action() {} })"); pg.wait_for_timeout(150)
+    check("...a (destructive) confirmation shows 'Cancel' and 'Delete' again, and no button has the focus", pg.inner_text("#confirmModalCancelBtn") == "Cancel" and pg.inner_text("#confirmModalActionBtn") == "Delete" and ev("() => document.activeElement.id") == "confirmModalBox"); pg.keyboard.press("Escape"); pg.wait_for_timeout(100)
 
     # ------------------------------------------------------------------ Working calendar
     fresh(); ev("() => openCalendarModal()"); pg.wait_for_timeout(300)

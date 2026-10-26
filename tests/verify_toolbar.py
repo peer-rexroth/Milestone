@@ -99,8 +99,7 @@ with sync_playwright() as p:
     rclick("Beta"); pg.click("#rowMenu >> text=Outdent"); pg.wait_for_timeout(200)
     check("Outdent (menu) takes it out again", ev("() => byId('b').parentId") == "g")
     rclick("Gamma"); pg.click("#rowMenu >> text=Delete"); pg.wait_for_timeout(200)
-    check("Delete (menu) asks for confirmation as the toolbar does", "Delete" in pg.inner_text("#confirmModalTitle") and "Gamma" in pg.inner_text("#confirmModalBody"))
-    pg.click("#confirmModalActionBtn"); pg.wait_for_timeout(200)
+    check("Delete (menu) deletes at once, as the toolbar does (no question)", pg.locator("#confirmModalBg.open").count() == 0)
     check("...and deletes the row", "Gamma" not in ev(OUTLINE))
     # several selected
     fresh(); pick("Alpha"); pick("Gamma", ["Meta"]); pick("Delta", ["Meta"]); rclick("Gamma")

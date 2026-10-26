@@ -67,7 +67,7 @@ with sync_playwright() as p:
     check("Ctrl+A with a collapsed group selects what is visible", sel() == ["G", "H"], sel())
     ev("() => { selectedTaskId = tasks.find(t => t.name === 'G').id; render(); }")
     check("assigning selectedTaskId directly (older code, tests) is a single selection", sel() == ["G"], sel())
-    ev("() => { setSelection([tasks[0].id, tasks[3].id]); deleteTaskFlow(tasks[3].id); confirmModalAction(); }")
+    ev("() => { setSelection([tasks[0].id, tasks[3].id]); deleteTaskFlow(tasks[3].id); }")
     check("a task that disappears leaves the selection without breaking anything", "H" not in sel(), sel())
 
     # ------------------------------------------------------------ buttons follow the selection
@@ -80,11 +80,9 @@ with sync_playwright() as p:
     # ------------------------------------------------------------ delete, clone, indent, outdent on several
     seed([{"name": "G"}, {"name": "G1", "parent": "G"}, {"name": "G2", "parent": "G"}, {"name": "X"}, {"name": "Y"}, {"name": "Z"}])
     click("G"); click("G1", ["Meta"]); click("Y", ["Meta"])
-    pg.keyboard.press("Delete"); pg.wait_for_selector("#confirmModalBg.open"); pg.wait_for_timeout(200)
-    body = pg.inner_text("#confirmModalBg .modal-body") if pg.locator("#confirmModalBg .modal-body").count() else pg.inner_text("#confirmModalBg")
-    check("the Delete key asks first; a parent and its child both selected count once: 2 tasks and 2 sub-tasks", "Delete these 2 tasks and 2 sub-tasks" in body, body)
-    pg.click("#confirmModalBg .btn-danger"); pg.wait_for_timeout(200)
-    check("...confirming deletes them (G with G1 and G2, and Y); X and Z stay", names() == ["X", "Z"] and sel() == [], names())
+    pg.keyboard.press("Delete"); pg.wait_for_timeout(250)
+    check("the Delete key deletes at once, without asking: a parent and its child both selected count once (4 tasks in the toast)", pg.locator("#confirmModalBg.open").count() == 0 and "4 tasks deleted" in pg.inner_text("#toastMsg"), pg.inner_text("#toastMsg"))
+    check("...G with G1 and G2, and Y are gone; X and Z stay", names() == ["X", "Z"] and sel() == [], names())
     check("...it is one Undo step (Ctrl+Z brings all four back)", (pg.keyboard.press("Control+z"), pg.wait_for_timeout(150), sorted(ev("() => tasks.map(t => t.name)")))[2] == ["G", "G1", "G2", "X", "Y", "Z"], ev("() => tasks.map(t => t.name)"))
     seed(FIVE)
     click("B"); click("D", ["Meta"]); pg.click("#cloneTaskBtn"); pg.wait_for_timeout(150)

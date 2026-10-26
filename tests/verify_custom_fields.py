@@ -171,8 +171,8 @@ with sync_playwright() as p:
     pg.locator("#fieldsRows .fld-row").nth(2).locator(".fld-remove").click(); pg.wait_for_timeout(80)
     check("...the same button restores it", "removed" not in (pg.locator("#fieldsRows .fld-row").nth(2).get_attribute("class") or "") and pg.inner_text("#fieldsNote").strip() == "")
     pg.locator("#fieldsRows .fld-row").nth(2).locator(".fld-remove").click(); pg.click("#fieldsModalBg .btn-primary"); pg.wait_for_timeout(200)
-    check("saving a removal that has values asks first, naming the field and the number of tasks", modal_open("confirmModalBg") and "Approved" in pg.inner_text("#confirmModalBody") and "1 task" in pg.inner_text("#confirmModalBody") and pg.inner_text("#confirmModalActionBtn") == "Remove", pg.inner_text("#confirmModalBody"))
-    pg.click("#confirmModalActionBtn"); pg.wait_for_timeout(250)
+    check("saving a removal that has values does not ask: the toast names the field and the number of tasks and offers Undo", not modal_open("confirmModalBg") and "Approved" in pg.inner_text("#toastMsg") and "1 task" in pg.inner_text("#toastMsg") and pg.locator("#toastUndoBtn").is_visible(), pg.inner_text("#toastMsg"))
+    pg.wait_for_timeout(250)
     check("confirmed: the rename applied, the flag's name and its values are gone, the field is out of use", ev("() => project.fieldNames") == {"number1": "Budget (EUR)", "date1": "Due"} and custom("Solo") == {"number1": 5} and "flag1" not in ev("() => activeCustomFields()"), (ev("() => project.fieldNames"), custom("Solo")))
     ev("() => historyUndo()"); pg.wait_for_timeout(200)
     check("Undo (Ctrl+Z) brings the field, its name and its values back", ev("() => project.fieldNames.flag1") == "Approved" and custom("Solo") == {"number1": 5, "flag1": True} and ev("() => project.fieldNames.number1") == "Budget", (ev("() => project.fieldNames"), custom("Solo")))
@@ -231,7 +231,7 @@ with sync_playwright() as p:
     pg.locator("#filterTree .ft-cb[data-key='all']").uncheck(); pg.locator("#filterTree .ft-label:has-text('Yes') .ft-cb").check(); pg.click("#filterOkBtn"); pg.wait_for_timeout(100)
     check("...only the flagged tasks; chip 'Approved: Yes'", set(names()) == {"F1", "F3"} and "Approved: Yes" in pg.inner_text("#filterBar"), names()); clear()
     ev("() => { colFilters.flag1 = { type: 'values', values: new Set(['Yes']), blanks: false }; render(); openFieldsModal(); }"); pg.wait_for_selector("#fieldsModalBg.open")
-    pg.locator("#fieldsRows .fld-row").last.locator(".fld-remove").click(); pg.click("#fieldsModalBg .btn-primary"); pg.wait_for_timeout(150); pg.click("#confirmModalActionBtn"); pg.wait_for_timeout(250)
+    pg.locator("#fieldsRows .fld-row").last.locator(".fld-remove").click(); pg.click("#fieldsModalBg .btn-primary"); pg.wait_for_timeout(250)   # (removing a field with values does not ask; the toast offers Undo)
     check("removing a field also drops a filter on it (no invisible filter left)", ev("() => colFilters.flag1") is None and len(names()) == 4, names()); clear()
 
     # ================================================================= Excel

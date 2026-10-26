@@ -72,7 +72,7 @@ async ([seed, steps, allowCalendar]) => {
   const edit = (t, field, value) => { editingCell = { id: t.id, field }; commitInlineEdit(t.id, field, value); };
   const OPS = [
     ['add', 10, () => { const s = anyTask(); selectedTaskId = s ? s.id : null; addTask(); closeTaskModal(); const n = tasks.find(x => x.id === selectedTaskId); if (n) { n.name = 'T' + ri(1e6); if (rnd() < .5) { const d = randDate(); n.startDate = isWorkDay(d) ? d : nextWorkDay(d); n.endDate = shiftWork(n.startDate, ri(6)); wtStale.add(n.id); } save(); render(); } }],
-    ['delete', 5, () => { const t = anyTask(); if (!t || tasks.length < 3) return; deleteTaskFlow(t.id); confirmModalAction(); }],
+    ['delete', 5, () => { const t = anyTask(); if (!t || tasks.length < 3) return; deleteTaskFlow(t.id); }],
     ['indent', 6, () => { const t = anyTask(); if (!t) return; selectedTaskId = t.id; indentSelected(); }],
     ['outdent', 5, () => { const t = anyTask(); if (!t) return; selectedTaskId = t.id; outdentSelected(); }],
     ['move', 6, () => { const t = anyTask(), o = anyTask(); if (!t || !o) return; moveTask(t.id, o.id, pick(['before', 'after', 'into', 'end'])); }],
@@ -116,7 +116,7 @@ async ([seed, steps, allowCalendar]) => {
       else if (x < .75) commitResourceCell(r.id, 'costPerUse', pick(['20', '0', '1e20']));
       else if (x < .85) commitResourceCell(r.id, 'maxUnits', pick(['50', '800', '9999', '0']));
       else if (x < .95) commitResourceCell(r.id, 'name', 'R' + ri(1000));
-      else { removeResourceSheetRow(r.id); confirmModalAction(); } }],
+      else { removeResourceSheetRow(r.id); } }],
     ['baselineSet', 3, () => applyBaselineChange(ri(BASELINE_SLOTS), rnd() < .8 ? 'all' : (selectedTaskId && byId(selectedTaskId) ? 'selected' : 'all'), false)],
     ['baselineClear', 2, () => applyBaselineChange(ri(BASELINE_SLOTS), 'all', true)],
     ['compare', 1, () => { const s = setBaselineSlots(); if (s.length) setCompareBaseline(pick(s)); }],

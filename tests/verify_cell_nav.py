@@ -109,7 +109,7 @@ with sync_playwright() as p:
     ev(SEED); pg.wait_for_timeout(200)
     ev("() => { activeCell = { id: 'm', col: 'name', shown: true }; setSelection(['m']); render(); }"); pg.wait_for_timeout(80)
     key("Delete"); pg.wait_for_timeout(200)
-    check("Delete still asks before deleting the selected task", ev("() => document.getElementById('confirmModalBg').classList.contains('open')")); pg.click("#confirmModalActionBtn"); pg.wait_for_timeout(250)
+    check("Delete deletes the selected task at once (no question; the toast offers Undo)", not ev("() => document.getElementById('confirmModalBg').classList.contains('open')") and ev("() => document.getElementById('toastUndoBtn').offsetParent !== null")); pg.wait_for_timeout(100)
     check("...and then deletes it (the cursor goes with it)", ev("() => !byId('m')") and cur() is None, cur())
     # views
     ev(SEED); pg.wait_for_timeout(200)

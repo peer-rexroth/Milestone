@@ -560,6 +560,20 @@ html.sidebar-collapsed .sidebar { display: none; }
 .plan-status { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }   /* the plan's file status sits right under its name */
 .plan-status #fileSyncBtn { padding: 4px 8px; font-size: var(--fs-12); }
 .plan-btn i { font-size: var(--ico-12); color: var(--text-faint); flex-shrink: 0; }
+.sb-plans { display: flex; flex-direction: column; gap: 2px; }
+.sb-plans:empty { display: none; }
+.sb-plans .sb-label { padding: 6px 10px 2px; }
+.sb-plan-row { display: flex; align-items: center; gap: 10px; width: 100%; padding: 6px 10px; border: none; background: transparent; border-radius: var(--r-m); text-align: left; font-size: var(--fs-13); font-weight: 500; color: var(--text-dim); }
+.sb-plan-row i { font-size: var(--ico-14); color: var(--text-faint); }
+.sb-plan-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.sb-plan-row:hover { background: color-mix(in srgb, var(--text) 7%, transparent); color: var(--text); }
+.sb-plan-row.active { background: var(--panel); color: var(--text); font-weight: 600; box-shadow: inset 0 0 0 1px var(--border); }
+.sb-resizer { position: relative; flex: none; width: 0; z-index: 6; }   /* the hairline is the sidebar's border; this is a 6px hit strip over it */
+.sb-resizer::before { content: ''; position: absolute; top: 0; bottom: 0; left: -3px; width: 6px; cursor: col-resize; }
+.sb-resizer::after { content: ''; position: absolute; top: 0; bottom: 0; left: -1px; width: 2px; background: var(--accent); opacity: 0; transition: opacity var(--dur-fast) ease; }
+.sb-resizer:hover::after, .sb-resizer.dragging::after, .sb-resizer:focus-visible::after { opacity: 1; }
+html.sidebar-collapsed .sb-resizer { display: none; }
+@media (max-width: 800px) { .sb-resizer { display: none; } }
 .sb-scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 4px 12px; }
 .sb-label { font-size: var(--fs-11); font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--text-faint); padding: 10px 10px 4px; }
 .sb-tools { flex: none; display: flex; align-items: center; gap: 2px; padding: 8px 12px; border-top: 1px solid var(--border); }
@@ -610,11 +624,11 @@ html:not(.sidebar-collapsed) .sb-float { display: none; }   /* (the show button 
 .btn:disabled:hover { background: var(--panel); }
 .btn-primary:disabled:hover { background: var(--primary); filter: none; }   /* (a disabled primary button keeps its fill on hover — the rule above would leave white text on white) */
 .btn-primary.btn-danger:disabled:hover { background: var(--danger); }
-.btn-primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+.btn-primary { background: var(--primary); border-color: var(--primary); color: var(--on-accent); }
 .btn-primary:hover { background: var(--accent-hover); filter: none; }
 .btn-danger { color: var(--danger); }
 /* Filled red button — the confirm dialog's default for destructive actions (Delete task, Delete plan). */
-.btn-primary.btn-danger { background: var(--danger); border-color: var(--danger); color: #fff; }
+.btn-primary.btn-danger { background: var(--danger); border-color: var(--danger); color: var(--on-accent); }
 .btn-primary.btn-danger:hover { background: var(--danger); }
 .icon-btn {
   display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px;
@@ -692,7 +706,7 @@ button:focus:not(:focus-visible) { outline: none; }
 .fld-show { display: flex; justify-content: center;}
 .fld-show input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .fld-switch { position: relative; width: 30px; height: 17px; border-radius: 999px; background: var(--border); transition: background .12s; flex-shrink: 0; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 12%, transparent); }
-.fld-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 13px; height: 13px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.3); transition: transform .12s; }
+.fld-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 13px; height: 13px; border-radius: 50%; background: var(--on-accent); box-shadow: 0 1px 2px rgba(0,0,0,.3); transition: transform .12s; }
 .fld-show input:checked + .fld-switch { background: var(--accent); }
 .fld-show input:checked + .fld-switch::after { transform: translateX(13px); }
 .fld-show input:focus-visible + .fld-switch { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -799,7 +813,7 @@ body.col-moving, body.col-moving * { cursor: grabbing !important; user-select: n
 .statusbar .sb-views.hidden, .statusbar .sb-views:has(#filterBar.hidden) { display: none; }   /* (no filter: no divider either) */
 .sb-sep { width: 1px; height: 16px; background: var(--border); }
 .sb-spacer { flex: 1 1 auto; }
-.sb-btn { display: inline-flex; align-items: center; gap: 6px; border: none; background: transparent; color: var(--text-dim); font-size: var(--fs-12); padding: 2px 6px; border-radius: var(--r-s);}
+.sb-btn { display: inline-flex; align-items: center; gap: 6px; border: none; background: transparent; color: var(--text-dim); font-size: var(--fs-12); padding: 2px 6px; min-height: 22px; border-radius: var(--r-s);}   /* (22px: the 20x20 hit-area minimum) */
 .sb-btn:hover { background: color-mix(in srgb, var(--text) 8%, transparent); color: var(--text); }
 .sb-btn.hidden { display: none; }
 .sb-btn:disabled { opacity: .45; cursor: default; background: transparent; }
@@ -870,11 +884,15 @@ body.col-moving, body.col-moving * { cursor: grabbing !important; user-select: n
    the toolbar, laid out like MS Project's — two compact rows of fields with their labels beside them, then two LIST
    tables (Resources, Predecessors) styled like the task list: a header row, column lines down to the bottom, cells that
    show a box only on hover/focus. A vertical "Task Form" label on the left edge, as in MS Project. */
-.task-form-pane { flex: 0 0 var(--task-form-h, 340px); height: var(--task-form-h, 340px); display: flex; min-height: 0; border-top: 1px solid var(--border); background: var(--panel); position: relative; }
+.task-form-pane { flex: 0 0 var(--task-form-h, 340px); height: var(--task-form-h, 340px); display: flex; flex-direction: column; min-height: 0; border-top: 1px solid var(--border); background: var(--panel); position: relative; }
 .task-form-resize { position: absolute; left: 0; right: 0; top: -4px; height: 8px; cursor: row-resize; z-index: 5; }
 .task-form-resize:hover, .task-form-resize.dragging { background: color-mix(in srgb, var(--accent) 35%, transparent); }
-.tf-strip { flex: 0 0 22px; display: flex; align-items: center; justify-content: center; background: var(--panel-2); border-right: 1px solid var(--border); }
-.tf-strip span { writing-mode: vertical-rl; transform: rotate(180deg); font-size: var(--fs-11); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-faint); white-space: nowrap; }
+.tf-bar { flex: none; height: 40px; display: flex; align-items: center; gap: 8px; padding: 0 20px; border-bottom: 1px solid var(--border); }   /* the panel's own bar, like every column's */
+.tf-bar b { font-size: var(--fs-14); font-weight: 600; white-space: nowrap; }
+.tf-sub { font-size: var(--fs-12); color: var(--text-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.tf-sp { flex: 1; }
+.tf-bar .tool-group .icon-btn { background: transparent; height: 26px; width: 30px; border: none; border-radius: 999px; }
+.tf-bar .tool-group .icon-btn:hover { background: var(--cap-hover); }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 .tf-body { flex: 1; min-width: 0; min-height: 0; overflow: auto; padding: 10px 14px 10px; display: flex; flex-direction: column; gap: 8px; }
 .tf-wrap { flex: 1; min-height: 0; align-self: flex-start; width: max-content; max-width: 100%; display: flex; flex-direction: column; gap: 8px; }   /* sized to the field grid, so the tables below end exactly where the OK button does */
@@ -1033,10 +1051,10 @@ input.tf-cell[type=number] { -moz-appearance: textfield; }
 /* a task's colour: a 4px stripe at the row's left edge and a light tint of the same colour (list and chart row alike); selection and hover still show through */
 .grid-row.colored { --row-bg: color-mix(in srgb, var(--row-accent) 9%, var(--panel)); }
 .grid-row.colored:hover { --row-bg: color-mix(in srgb, var(--row-accent) 15%, var(--panel-2)); }
-.grid-row.colored.selected { --row-bg: color-mix(in srgb, var(--row-accent) 12%, color-mix(in srgb, var(--accent) 12%, var(--panel))); }
+.grid-row.colored.selected { --row-bg: var(--accent); }
 .main .grid-row.colored > :first-child { box-shadow: -6px 0 0 0 var(--row-bg), -10px 0 0 0 var(--row-accent), inset -1px 0 0 var(--border); }
 .gantt-row-bg.colored { background: color-mix(in srgb, var(--row-accent) 9%, transparent); }
-.grid-row.selected { --row-bg: color-mix(in srgb, var(--accent) 10%, var(--panel)); }
+.grid-row.selected { --row-bg: var(--accent); color: var(--on-accent); }   /* the selection is a solid accent fill with white text, one task or many (design-system 3); see "Selection" below */
 .grid-row.grabbing { cursor: grabbing; }
 .grid-row.dragging { opacity: .4; }
 .grid-row.drop-before::after, .grid-row.drop-after::after, .grid-row.drop-into::after { content: ''; position: absolute; left: 0; right: 0; height: 2px; background: var(--accent); z-index: 6; pointer-events: none; }
@@ -1156,7 +1174,7 @@ html.time12 .tf-top.mm .tf-left { grid-template-columns: auto minmax(230px, 1fr)
 .print-range .dt-wrap { flex: 1; min-width: 0; }
 .print-side { flex: 1; min-width: 0; display: flex; flex-direction: column; background: var(--panel-2); }
 .print-preview { flex: 1; min-height: 0; overflow: auto; padding: 16px; display: flex; align-items: flex-start; justify-content: center; }
-.print-sheet { background: #fff; box-shadow: 0 1px 8px rgba(0, 0, 0, .3); width: 100%; max-width: 100%; }
+.print-sheet { background: var(--on-accent); box-shadow: 0 1px 8px rgba(0, 0, 0, .3); width: 100%; max-width: 100%; }
 .print-sheet svg { display: block; width: 100%; height: 100%; }
 .print-nav { display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-top: 1px solid var(--border); font-size: var(--fs-12); color: var(--text-dim); }
 .print-summary { margin-left: auto; text-align: right; }
@@ -1330,7 +1348,7 @@ input.inline-edit[type=date]::-webkit-calendar-picker-indicator { margin: 0 0 0 
 .gantt-rows { position: relative; }
 .gantt-row-bg.spacer { background: color-mix(in srgb, var(--panel-2) 50%, transparent); }
 .gantt-row-bg { position: absolute; left: 0; right: 0; height: var(--row-h); border-bottom: 1px solid var(--border); }
-.gantt-row-bg.selected { background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.gantt-row-bg.selected { background: color-mix(in srgb, var(--accent) 12%, transparent); }   /* the chart's band stays a tint: the bars are on it */
 .gantt-deadline { position: absolute; width: 12px; height: 26px; z-index: 4; pointer-events: auto; }
 .gantt-deadline::before { content: ''; position: absolute; left: 0; top: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid var(--task-green); }
 .gantt-deadline::after { content: ''; position: absolute; left: 5px; top: 7px; width: 2px; height: 19px; background: var(--task-green); }
@@ -1430,7 +1448,7 @@ svg.gantt-deps text.status-label { fill: var(--task-purple); font-size: var(--fs
 .rst-header { position: sticky; top: 0; z-index: 3; height: var(--head-h); font-size: var(--fs-12); font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: .03em; border-bottom: 1px solid var(--border); --row-bg: var(--panel); background: var(--row-bg); }
 .rst-row { height: var(--row-h); border-bottom: 1px solid var(--border); font-size: var(--fs-12); --row-bg: var(--panel); background: var(--row-bg); }
 .rst-row:hover { --row-bg: var(--panel-2); }
-.rst-row:focus-within { --row-bg: color-mix(in srgb, var(--accent) 10%, var(--panel)); }   /* the row you are in: the same tint as a selected row in the task list */
+.rst-row:focus-within { --row-bg: var(--sel-inactive); }   /* the row you are in, with the cursor in a field: the same neutral grey as a selected task row while typing */
 /* The column lines: not cell borders (see the comment above) — a gradient painted on a pseudo-element from the
    resolved track positions, the identical mechanism the task list itself uses, so the header and every row agree
    pixel-for-pixel even though the tracks are a px/fr mix. */
@@ -1733,12 +1751,16 @@ input.dt-time { width: 84px; flex: 0 0 84px; text-align: center; }
 .backup-row:last-child { border-bottom: none; }
 
 #toast {
-  position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%) translateY(20px);
-  background: var(--text); color: var(--page-bg); padding: 10px 16px; border-radius: var(--r-s); font-size: var(--fs-13);
-  display: flex; align-items: center; gap: 12px; opacity: 0; pointer-events: none; transition: opacity .18s ease, transform .18s ease; z-index: 200; box-shadow: var(--shadow);
+  position: fixed; bottom: 44px; right: 20px; transform: translateY(20px);
+  background: var(--glass-strong); color: var(--text); border: 1px solid var(--glass-edge); padding: 10px 14px; border-radius: var(--r-l); font-size: var(--fs-13);
+  backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+  display: flex; align-items: center; gap: 14px; opacity: 0; pointer-events: none; transition: opacity var(--dur-base) ease, transform var(--dur-base) ease; z-index: 200; box-shadow: var(--glass-shadow);
 }
-#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
-#toast button { border: none; background: none; color: color-mix(in srgb, var(--accent) 70%, white); font-weight: 600; font-size: var(--fs-13); }
+#toast.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+#toast.error { border-color: var(--danger); }
+#toast.error #toastMsg { color: var(--red-text); }
+#toast button { border: none; background: none; color: var(--accent); font-weight: 600; font-size: var(--fs-13); }
+#toast #toastCloseBtn { color: var(--text-dim); font-weight: 400; padding: 0 2px; }
 
 .file-sync-help { margin-top: 10px; border-top: 1px solid var(--border); padding-top: 10px; }
 .file-sync-help summary {font-size: var(--fs-12); color: var(--text-dim); font-weight: 600; }
@@ -1772,6 +1794,23 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
 .subbar .sel-chip { border: none; background: var(--accent-tint); color: var(--text); height: 30px; border-radius: 999px; }
 .subbar .tb-sep { background: transparent; width: 4px; }
 .sidebar .sb-tools { gap: 2px; }
+/* ── Selection (design-system 3) ─────────────────────────────────────────────────────────────────────────
+   A selected row is a solid --accent fill with white text. `color` inherits as a computed value, so it is set on the row, and the
+   text variables are re-pointed for the descendants that read them. Pills turn translucent white. Inputs opened inside the row keep
+   their own (un-selected) text colours: --ink* were captured on <html>, before any row changed the variables.
+   While the list is not the active area (focus in the Task Form or the sidebar, typing in a field, an inactive window) html.sel-inactive
+   is on and the row is just a neutral grey with everything inside looking unselected: every white-on-blue rule is prefixed
+   html:not(.sel-inactive), so a new selected-state rule needs that prefix too. */
+html:not(.sel-inactive) .grid-row.selected { --text: #fff; --text-dim: var(--sel-text-2); --text-faint: var(--sel-text-3); --border: var(--sel-line); }
+html:not(.sel-inactive) .grid-row.selected .status-pill { background: var(--sel-fill); color: #fff; }
+html:not(.sel-inactive) .grid-row.selected i { color: inherit; }
+html:not(.sel-inactive) .grid-row.selected > .chg { background-color: var(--sel-fill); }
+html:not(.sel-inactive) .grid-row.selected :is(input, select, textarea, .inline-wrap) { --text: var(--ink); --text-dim: var(--ink-2); --text-faint: var(--ink-3); --border: var(--border-2); color: var(--ink); }
+html:not(.sel-inactive) .grid-row.selected .grid-actions { --text: var(--ink); --text-dim: var(--ink-2); }
+html:not(.sel-inactive) .grid-row.selected .grid-actions .icon-btn { color: var(--ink-2); }
+html:not(.sel-inactive) .grid-row.selected .name-text.editable:hover, html:not(.sel-inactive) .grid-row.selected .grid-cell-dim.editable:hover { background: var(--sel-fill); }
+html.sel-inactive .grid-row.selected { --row-bg: var(--sel-inactive); }
+html.sel-inactive .gantt-row-bg.selected { background: var(--cap-fill); }
 a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every control keeps the arrow */
 </style>
 </head>
@@ -1796,6 +1835,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
     <button class="btn conflict-btn hidden" id="syncConflictBtn" onclick="openSyncConflictsModal()"></button>
     <span class="watch-hint hidden" id="watchHint"><button class="btn watch-btn" id="watchHintBtn" onclick="chooseWatchFolder()" title="This plan is linked to a single file (from before plans were linked by folder). Link the folder it lives in: OneDrive, Dropbox and SharePoint keep a second copy of the file when two devices save at the same time, and Milestone can then merge those copies in."><i class="fa-solid fa-folder-tree"></i>Link folder</button><button class="watch-x" onclick="declineWatch()" title="Don't remind me for this plan (the plan menu still has it)" aria-label="Don't remind me">&times;</button></span>
   </div>
+  <div class="sb-plans" id="sbPlans" role="list" aria-label="Plans"></div>
   </div>
   <div class="sb-scroll">
     <div class="sb-label">Views</div>
@@ -1831,6 +1871,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
   <button class="icon-btn" onclick="openAboutModal()" title="About" aria-label="About"><i class="fa-solid fa-circle-info"></i></button>
   </div>
 </aside>
+<div class="sb-resizer" id="sidebarResizer" role="separator" aria-orientation="vertical" aria-label="Resize the sidebar" tabindex="0" title="Drag to resize · double-click to reset"></div>
 <div class="content" id="content">
 
 <!-- The toolbar belongs to the view you are in: each .tb-group lists the views it shows in (data-views). A button with
@@ -1942,8 +1983,8 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 </div>
 <div class="task-form-pane hidden" id="taskFormPane" role="region" aria-label="Task Form">
   <div class="task-form-resize" id="taskFormResize" title="Drag to resize"></div>
-  <div class="tf-strip" aria-hidden="true"><span>Task Form</span></div>
-  <span class="sr-only" id="tfTaskLabel" aria-live="polite"></span>
+  <div class="tf-bar"><b>Task Form</b><span class="tf-sub" id="tfTaskLabel" aria-live="polite"></span><span class="tf-sp"></span>
+    <div class="tool-group"><button class="icon-btn" id="tfCloseBtn" onclick="toggleTaskForm()" aria-label="Close the Task Form" title="Close the Task Form"><i class="fa-solid fa-xmark"></i></button></div></div>
   <div class="tf-body" id="taskFormBody"></div>
 </div>
 <!-- The status bar (MS Project has one): the new-task mode, what's shown and selected, the filters, the file, the zoom. -->
@@ -2048,7 +2089,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 
 <!-- Confirm modal -->
 <div class="modal-bg" id="confirmModalBg" onclick="if(event.target===this) closeConfirmModal()">
-  <div class="modal narrow" id="confirmModalBox">
+  <div class="modal narrow" id="confirmModalBox" tabindex="-1">
     <div class="modal-header"><h2 id="confirmModalTitle">Confirm</h2><button onclick="closeConfirmModal()">&times;</button></div>
     <div class="modal-body"><div id="confirmModalBody" style="font-size: var(--fs-13);line-height:1.5"></div></div>
     <div class="modal-footer">
@@ -2873,7 +2914,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
   </div>
 </div>
 
-<div id="toast" role="status" aria-live="polite"><span id="toastMsg"></span><button id="toastUndoBtn" class="hidden"></button></div>
+<div id="toast" role="status" aria-live="polite"><span id="toastMsg"></span><button id="toastUndoBtn" class="hidden"></button><button id="toastCloseBtn" class="hidden" onclick="dismissToast()" aria-label="Dismiss">&times;</button></div>
 
 <script>
 /* ============================== Constants ============================== */
@@ -5120,10 +5161,19 @@ function renderMainViewTabs() {
   document.getElementById('main').classList.toggle('view-resources', currentView === 'resources');
   document.getElementById('main').classList.toggle('view-resourceSheet', currentView === 'resourceSheet');
 }
-function setView(id) { closeFloatingSidebar(); currentView = id; editingCell = null; if (id !== 'tasks' && id !== 'gantt') activeCell = null;   // (Tasks and Gantt share the list, so the cursor stays)
+function setView(id) { closeFloatingSidebar(); selZone = 'list'; currentView = id; editingCell = null; if (id !== 'tasks' && id !== 'gantt') activeCell = null;   // (Tasks and Gantt share the list, so the cursor stays)
   closeColumnsMenu(); save(); render(); }
 
+function renderSidebarPlans() {   // the plans as rows, so switching needs no menu (shown from two plans on; the plan button's menu still creates / links / renames)
+  const el = document.getElementById('sbPlans'); if (!el) return;
+  const idx = readPlansIndex() || { plans: [] }, list = idx.plans.filter(p => isSafeId(p.id));
+  el.innerHTML = list.length < 2 ? '' : '<div class="sb-label">Plans</div>' + list.map(p => {
+    const cur = p.id === currentPlanId, name = cur ? project.name : p.name;
+    return `<button class="sb-plan-row${cur ? ' active' : ''}" role="listitem" data-plan-id="${p.id}"${cur ? ' aria-current="true"' : ''} onclick="switchPlan('${p.id}')" title="${escapeHtml(name)}"><i class="fa-regular fa-folder-open"></i><span>${escapeHtml(name)}</span></button>`;
+  }).join('');
+}
 function updateProjectNameUI() {
+  renderSidebarPlans();
   document.getElementById('planBtnName').textContent = project.name;
   document.getElementById('barTitle').textContent = project.name;
   for (const el of document.querySelectorAll('[data-ps-plan]')) el.textContent = '— ' + project.name;   // (Plan settings says which plan it is for)
@@ -6027,8 +6077,8 @@ function openColWidthMenu(e, id) {
   menu.innerHTML = `<div class="menu-head">${escapeHtml(TASK_COLS[id].label)} column</div>` + sortItems + grouping
     + `<button class="dropdown-item" role="menuitem" onclick="closeColWidthMenu(); fitColumn('${id}')"><i class="fa-solid fa-left-right"></i>Fit to content</button>`
     + `<button class="dropdown-item" role="menuitem" onclick="closeColWidthMenu(); fitAllColumns()"><i class="fa-solid fa-arrows-left-right-to-line"></i>Fit all columns</button>`
-    + `<button class="dropdown-item" role="menuitem"${custom ? '' : ' disabled'} onclick="closeColWidthMenu(); resetColWidth('${id}')"><i class="fa-solid fa-rotate-left"></i>Default width</button>`
-    + `<button class="dropdown-item" role="menuitem"${Object.keys(colWidths).length ? '' : ' disabled'} onclick="closeColWidthMenu(); resetAllColWidths()"><i class="fa-solid fa-table-columns"></i>Reset all column widths</button>`;
+    + (custom ? `<button class="dropdown-item" role="menuitem" onclick="closeColWidthMenu(); resetColWidth('${id}')"><i class="fa-solid fa-rotate-left"></i>Default width</button>` : '')
+    + (Object.keys(colWidths).length ? `<button class="dropdown-item" role="menuitem" onclick="closeColWidthMenu(); resetAllColWidths()"><i class="fa-solid fa-table-columns"></i>Reset all column widths</button>` : '');   // (hidden when there is nothing to reset)
   placeMenu(menu, e.clientX, e.clientY);
 }
 function closeColWidthMenu() { const m = document.getElementById('colWidthMenu'); if (m) m.classList.remove('open'); }
@@ -7475,8 +7525,8 @@ function openRsColWidthMenu(e, key) {
   menu.innerHTML = `<div class="menu-head">${escapeHtml(c.label)} column</div>`
     + `<button class="dropdown-item" role="menuitem" onclick="closeColWidthMenu(); fitRsColumn('${key}')"><i class="fa-solid fa-left-right"></i>Fit to content</button>`
     + `<button class="dropdown-item" role="menuitem" onclick="closeColWidthMenu(); fitAllRsColumns()"><i class="fa-solid fa-arrows-left-right-to-line"></i>Fit all columns</button>`
-    + `<button class="dropdown-item" role="menuitem"${rsColWidths[key] ? '' : ' disabled'} onclick="closeColWidthMenu(); resetRsColWidth('${key}')"><i class="fa-solid fa-rotate-left"></i>Default width</button>`
-    + `<button class="dropdown-item" role="menuitem"${Object.keys(rsColWidths).length ? '' : ' disabled'} onclick="closeColWidthMenu(); resetAllRsColWidths()"><i class="fa-solid fa-table-columns"></i>Reset all column widths</button>`;
+    + (rsColWidths[key] ? `<button class="dropdown-item" role="menuitem" onclick="closeColWidthMenu(); resetRsColWidth('${key}')"><i class="fa-solid fa-rotate-left"></i>Default width</button>` : '')
+    + (Object.keys(rsColWidths).length ? `<button class="dropdown-item" role="menuitem" onclick="closeColWidthMenu(); resetAllRsColWidths()"><i class="fa-solid fa-table-columns"></i>Reset all column widths</button>` : '');
   placeMenu(menu, e.clientX, e.clientY);
 }
 {
@@ -7649,8 +7699,8 @@ function removeResourceSheetRow(id) {
   const r = (project.resources || []).find(x => x.id === id); if (!r) return;
   const uses = tasks.filter(t => taskAssignments(t).some(a => a.resource.id === id)).length;
   const doRemove = () => { removeResourceEverywhere(id); project.resources = (project.resources || []).filter(x => x.id !== id); if (!project.resources.length) delete project.resources; project.updatedAt = Date.now(); save(); render(); };
-  if (uses) openConfirmModal({ title: 'Remove resource?', body: `Remove “${escapeHtml(r.name)}”? ${uses} task${uses === 1 ? '' : 's'} will no longer list it — Undo (Ctrl+Z) brings it back.`, confirmLabel: 'Remove', action: doRemove });
-  else doRemove();
+  doRemove();
+  showToast(uses ? `Removed “${r.name}” from ${uses} task${uses === 1 ? '' : 's'}` : `Removed “${r.name}”`, false, () => historyUndo());   // (it does not ask: Undo brings it back)
 }
 function addResourceSheetRow() {
   const taken = new Set((project.resources || []).map(x => x.name.toLowerCase()));
@@ -7971,18 +8021,12 @@ function cloneOne(id) {
   return { src, root, copies, undo, inCycle, cycleSrc };
 }
 function deleteSelected() { const roots = selectionRoots(); if (roots.length) deleteTaskFlow(roots); }
-// deleteTaskFlow(id) or deleteTaskFlow([ids]): asks first (every deletion can be undone), then deleteTasksNow().
+// deleteTaskFlow(id) or deleteTaskFlow([ids]): deletes at once (every deletion can be undone, so it does not ask): the toast offers Undo.
 function deleteTaskFlow(idOrIds) {
   const ids = (Array.isArray(idOrIds) ? idOrIds : [idOrIds]).filter(x => byId(x)); if (!ids.length) return;
   const set = new Set(ids), roots = ids.filter(id => { let p = byId(id).parentId; while (p) { if (set.has(p)) return false; p = (byId(p) || {}).parentId; } return true; });
-  const allIds = [...new Set(roots.flatMap(id => [id, ...descendantIds(id)]))], count = allIds.length, t = byId(roots[0]);
-  openConfirmModal({
-    title: roots.length > 1 ? 'Delete Tasks' : 'Delete Task',
-    body: roots.length > 1 ? `Delete these ${roots.length} tasks${count > roots.length ? ` and ${count - roots.length} sub-task${count - roots.length === 1 ? '' : 's'}` : ''}? This can be undone.`
-      : count > 1 ? `Delete ${t.spacer ? 'the empty line' : `"${escapeHtml(t.name)}"`} and ${count - 1} sub-task${count - 1 === 1 ? '' : 's'}? This can be undone.` : `Delete ${t.spacer ? 'this empty line' : `"${escapeHtml(t.name)}"`}? This can be undone.`,
-    confirmLabel: 'Delete',
-    action() { deleteTasksNow(allIds); }
-  });
+  const allIds = [...new Set(roots.flatMap(id => [id, ...descendantIds(id)]))];
+  deleteTasksNow(allIds);
 }
 function deleteTasksNow(allIds, opts = {}) {
   const count = allIds.length;
@@ -8948,7 +8992,8 @@ function saveFieldsModal() {
   }
   const gone = rows.filter(r => r.removed && !r.isNew), withValues = gone.filter(r => r.uses), nTasks = new Set(tasks.filter(t => gone.some(r => customValue(t, r.id) !== undefined)).map(t => t.id)).size;
   if (withValues.length) {
-    openConfirmModal({ title: 'Remove custom fields?', body: `Remove ${withValues.map(r => `“${escapeHtml(r.orig)}”`).join(', ')}? The values on ${nTasks} task${nTasks === 1 ? '' : 's'} are deleted too — Undo (Ctrl+Z) brings them back.`, confirmLabel: 'Remove', action() { applyFieldsDraft(); } });
+    applyFieldsDraft();   // (it does not ask: Undo brings the fields and their values back)
+    showToast(`Removed ${withValues.map(r => `“${r.orig}”`).join(', ')} and its values on ${nTasks} task${nTasks === 1 ? '' : 's'}`, false, () => historyUndo());
     return;
   }
   applyFieldsDraft();
@@ -9008,7 +9053,7 @@ function tfDurText(t) {
 }
 function tfHeader() {
   const t = byId(tfTaskId), dirty = tfDirty(), note = document.getElementById('tfNote'), $ = id => document.getElementById(id);
-  $('tfTaskLabel').textContent = t ? `Task Form: #${taskDisplayId(t.id)} ${t.name}` : '';
+  $('tfTaskLabel').textContent = t ? `#${taskDisplayId(t.id)} ${t.name}` : '';
   if (!note) return;   // (nothing selected / an empty line: no fields, no buttons)
   const elsewhere = dirty && selectedTaskId !== tfTaskId;
   note.textContent = !t || !dirty ? '' : elsewhere ? `Changes to #${taskDisplayId(t.id)} ${t.name} not applied — the form stays on this task until you click OK or Cancel` : 'Not applied yet — OK applies, Cancel discards';
@@ -9821,15 +9866,21 @@ let toastTimer = null;
 function showToast(msg, isError, undoAction, actionLabel) {
   const el = document.getElementById('toast');
   document.getElementById('toastMsg').textContent = msg;
-  el.style.background = isError ? 'var(--danger)' : 'var(--text)';
-  el.style.color = isError ? '#fff' : 'var(--page-bg)';
+  el.classList.toggle('error', !!isError); el.setAttribute('role', isError ? 'alert' : 'status');
+  document.getElementById('toastCloseBtn').classList.toggle('hidden', !isError);
   const btn = document.getElementById('toastUndoBtn');
   toastUndoAction = undoAction || null;
   if (undoAction) { btn.textContent = actionLabel || 'Undo'; btn.classList.remove('hidden'); } else { btn.classList.add('hidden'); }
   el.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('show'), actionLabel && actionLabel !== 'Undo' && actionLabel !== 'Review' ? 14000 : undoAction ? 6000 : 2600);
+  toastMs = isError ? 0 : actionLabel && actionLabel !== 'Undo' && actionLabel !== 'Review' ? 14000 : undoAction ? 6000 : 2600;   // an error stays until it is dismissed
+  armToastTimer();
 }
+let toastMs = 0;
+function armToastTimer() { clearTimeout(toastTimer); if (toastMs) toastTimer = setTimeout(() => document.getElementById('toast').classList.remove('show'), toastMs); }
+function dismissToast() { clearTimeout(toastTimer); document.getElementById('toast').classList.remove('show'); }
+(function () { const t = document.getElementById('toast'); if (!t) return;   // held while the pointer or focus is on it
+  t.addEventListener('mouseenter', () => clearTimeout(toastTimer)); t.addEventListener('mouseleave', armToastTimer);
+  t.addEventListener('focusin', () => clearTimeout(toastTimer)); t.addEventListener('focusout', armToastTimer); })();
 function triggerToastUndo() { if (toastUndoAction) { toastUndoAction(); toastUndoAction = null; } document.getElementById('toast').classList.remove('show'); }
 
 function openConfirmModal({ title, body, action, confirmLabel, confirmClass, cancelLabel, altLabel, altAction }) {
@@ -9841,6 +9892,10 @@ function openConfirmModal({ title, body, action, confirmLabel, confirmClass, can
   document.getElementById('confirmModalCancelBtn').textContent = cancelLabel || 'Cancel';
   document.getElementById('confirmModalActionBtn').className = confirmClass || 'btn btn-primary btn-danger';   // callers that aren't destructive pass a plainer class
   document.getElementById('confirmModalBg').classList.add('open');
+  // A destructive question has no default button (focus goes to the dialog itself, so Return does nothing and Esc cancels; Cancel is never the
+  // default either); a plain one focuses its button. The box is shown with a visibility transition, so focus waits a frame.
+  const act = document.getElementById('confirmModalActionBtn'), box = document.getElementById('confirmModalBox');
+  setTimeout(() => (/btn-danger/.test(act.className) ? box : act).focus({ preventScroll: true }), 30);
 }
 function closeConfirmModal() { document.getElementById('confirmModalBg').classList.remove('open'); modalTarget = null; }
 function confirmModalAlt() { const a = modalTarget && modalTarget.alt; closeConfirmModal(); if (a) a(); }   // (closed first: the action may open a question of its own)
@@ -11097,6 +11152,7 @@ function closeRowMenu() { document.getElementById('rowMenu').classList.remove('o
 function closeToolbarMenus() { closeGroupMenu(); closeAddMenu(); closeRowMenu(); closeMoreMenu(); closeSbModeMenu(); closeColWidthMenu(); closeRsColumnsMenu(); }
 /* ---- the status bar ---- */
 function updateStatusBar() {
+  applySelActive();
   const auto = project.newTaskMode !== 'manual', mode = document.getElementById('sbMode');
   mode.innerHTML = `<i class="fa-solid ${auto ? 'fa-chart-gantt' : 'fa-thumbtack'}"${auto ? '' : ' style="color:var(--task-amber)"'}></i>New tasks: ${auto ? 'Auto Scheduled' : 'Manually Scheduled'}`;
   const all = tasks.filter(t => !t.spacer).length, sel = selectedIds().filter(id => !byId(id).spacer).length, nRes = (project.resources || []).length;
@@ -11230,9 +11286,17 @@ function markSelectedComplete() {
   normalizeData(); save(); render();
   showToast(`Marked ${ids.length === 1 ? taskLabel(byId(ids[0])) : ids.length + ' tasks'} 100% complete — Ctrl/Cmd+Z undoes it`);
 }
+// A context menu hides what does not apply (the HIG, design-system 5.5) and so can leave separators behind: drop leading, trailing and doubled ones.
+function tidyMenuSeps(html) {
+  const sep = '<div class="dropdown-sep"></div>';
+  let out = html; while (out.includes(sep + sep)) out = out.split(sep + sep).join(sep);
+  while (out.startsWith(sep)) out = out.slice(sep.length);
+  while (out.endsWith(sep)) out = out.slice(0, -sep.length);
+  return out;
+}
 function showRowMenu(x, y, onRow) {
   const ids = onRow ? selectedIds() : [], n = ids.length, real = ids.filter(id => !byId(id).spacer).length, menu = document.getElementById('rowMenu');
-  const item = (icon, label, fn, o = {}) => `<button class="dropdown-item${o.danger ? ' danger' : ''}" role="menuitem"${o.off ? ' disabled' : ''} onclick="closeRowMenu();${fn}"><i class="${icon}"></i>${label}${o.kbd ? `<span class="item-hint">${o.kbd}</span>` : ''}</button>`;
+  const item = (icon, label, fn, o = {}) => o.off ? '' : `<button class="dropdown-item${o.danger ? ' danger' : ''}" role="menuitem" onclick="closeRowMenu();${fn}"><i class="${icon}"></i>${label}${o.kbd ? `<span class="item-hint">${o.kbd}</span>` : ''}</button>`;
   const sep = '<div class="dropdown-sep"></div>', parts = [];
   if (real) parts.push(item('fa-solid fa-pen', real === 1 ? 'Edit task…' : `Edit ${real} tasks…`, 'editSelected()'));
   { const one = ids.length === 1 && byId(ids[0]); if (one && one.recurrence) parts.push(item('fa-solid fa-repeat', 'Change recurrence…', `openRecurModal('${one.id}')`)); }
@@ -11243,7 +11307,7 @@ function showRowMenu(x, y, onRow) {
   if (n) parts.push(sep, item('fa-regular fa-duplicate', 'Duplicate', 'cloneSelected()'), item('fa-regular fa-copy', 'Copy', 'copySelectionButton()', { kbd: MOD_KEY + 'C' }), item('fa-solid fa-scissors', 'Cut', 'copySelection(null, true)', { kbd: MOD_KEY + 'X' }));
   parts.push(n ? '' : sep, item('fa-regular fa-paste', 'Paste', 'pasteButton()', { kbd: MOD_KEY + 'V' }));
   if (n) parts.push(sep, item('fa-solid fa-indent', 'Indent', 'indentSelected()'), item('fa-solid fa-outdent', 'Outdent', 'outdentSelected()', { off: !ids.some(id => byId(id).parentId) }), sep, item('fa-solid fa-trash', n > 1 ? `Delete ${n} tasks` : 'Delete', 'deleteSelected()', { danger: true, kbd: 'Del' }));
-  menu.innerHTML = parts.join('');
+  menu.innerHTML = tidyMenuSeps(parts.join(''));   // (a command that does not apply to these rows is left out, not dimmed)
   closeDataMenu(); closePlanMenu(); closeColumnsMenu(); closeFilterMenu(); closeTaskModeMenu(); closeTaskTypeMenu(); closeAddMenu();
   placeMenu(menu, x, y);
 }
@@ -13266,6 +13330,48 @@ function closeAboutModal() { document.getElementById('aboutModalBg').classList.r
 // and never so wide that the chart is squeezed out.
 function minGridPaneWidth() { return Math.max(GRID_PANE_MIN_WIDTH, frozenMinWidth + 60); }
 function applyGridPaneWidth() { document.documentElement.style.setProperty('--grid-pane-width', Math.max(minGridPaneWidth(), Math.min(gridPaneWidth, window.innerWidth - 240)) + 'px'); }
+/* ---- the selection is accent-coloured only while the list is the active area (Finder / Mail), grey otherwise ---- */
+let selZone = 'list', selWindowActive = true;
+function selZoneOf(el) {   // where the pointer / keyboard is: the list, somewhere else, or null (a menu, dialog, toolbar or status bar: the state stays as it was)
+  if (!el || !el.closest) return null;
+  if (el.closest('.modal-bg, .dropdown-menu, #toast, .subbar, .statusbar')) return null;
+  if (el.closest('.sidebar, #taskFormPane')) return 'other';
+  return el.closest('.main') ? 'list' : null;
+}
+function selEditing() { const a = document.activeElement; return !!a && !!a.closest && !!a.closest('.main') && (a.matches('input, select, textarea') || a.isContentEditable); }
+function applySelActive() { document.documentElement.classList.toggle('sel-inactive', !selWindowActive || selZone !== 'list' || selEditing()); }
+for (const t of ['mousedown', 'focusin']) document.addEventListener(t, e => { const z = selZoneOf(e.target); if (z) selZone = z; applySelActive(); }, true);
+document.addEventListener('focusout', () => setTimeout(applySelActive, 0), true);
+document.addEventListener('keydown', e => { if (/^Arrow/.test(e.key) && !(e.target.matches && e.target.matches('input, select, textarea')) && !(e.target.closest && e.target.closest('.modal-bg, .dropdown-menu'))) { selZone = 'list'; applySelActive(); } }, true);
+window.addEventListener('blur', () => { selWindowActive = false; applySelActive(); });
+window.addEventListener('focus', () => { selWindowActive = true; applySelActive(); });
+/* ---- the sidebar's width: drag the edge, double-click resets, arrow keys nudge (16px, Shift 48); per device ---- */
+const SIDEBAR_W_KEY = 'milestone-sidebar-w', SIDEBAR_W = { min: 220, def: 260, max: 480 };
+function setSidebarWidth(w, save = true) {
+  w = Math.max(SIDEBAR_W.min, Math.min(SIDEBAR_W.max, Math.round(w)));
+  if (w === SIDEBAR_W.def) document.documentElement.style.removeProperty('--sidebar-w'); else document.documentElement.style.setProperty('--sidebar-w', w + 'px');
+  if (save) try { w === SIDEBAR_W.def ? localStorage.removeItem(SIDEBAR_W_KEY) : localStorage.setItem(SIDEBAR_W_KEY, String(w)); } catch (e) {}
+  requestAnimationFrame(fitToolbar);
+  return w;
+}
+function sidebarWidthNow() { return document.getElementById('sidebar').getBoundingClientRect().width; }
+function wireSidebarResizer() {
+  const h = document.getElementById('sidebarResizer'); if (!h) return;
+  try { const v = Number(localStorage.getItem(SIDEBAR_W_KEY)); if (v) setSidebarWidth(v, false); } catch (e) {}
+  h.addEventListener('pointerdown', e => {
+    if (e.button !== 0) return; e.preventDefault(); h.setPointerCapture(e.pointerId); h.classList.add('dragging');
+    const x0 = e.clientX, w0 = sidebarWidthNow();
+    const move = ev => setSidebarWidth(w0 + (ev.clientX - x0), false);
+    const up = () => { h.removeEventListener('pointermove', move); h.removeEventListener('pointerup', up); h.classList.remove('dragging'); setSidebarWidth(sidebarWidthNow()); };
+    h.addEventListener('pointermove', move); h.addEventListener('pointerup', up);
+  });
+  h.addEventListener('dblclick', () => setSidebarWidth(SIDEBAR_W.def));
+  h.addEventListener('keydown', e => {
+    const d = e.key === 'ArrowLeft' ? -1 : e.key === 'ArrowRight' ? 1 : 0;
+    if (d) { e.preventDefault(); setSidebarWidth(sidebarWidthNow() + d * (e.shiftKey ? 48 : 16)); } else if (e.key === 'Home') { e.preventDefault(); setSidebarWidth(SIDEBAR_W.def); }
+  });
+}
+wireSidebarResizer();
 /* ---- the sidebar: hide / show (per device, never in the plan) ---- */
 const SIDEBAR_KEY = 'milestone-sidebar';
 let sidebarCollapsed = null;   // null = no choice yet: hidden in a narrow window (where it floats), shown otherwise

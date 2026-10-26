@@ -175,7 +175,7 @@ with sync_playwright() as p:
     check("...each has a name (its title)", all(i["name"] for i in info), [i["id"] for i in info if not i["name"]])
     check("...the confirmation is an alertdialog", [i["role"] for i in info if i["id"] == "confirmModalBg"] == ["alertdialog"])
     check("...and no header × is left without a name", all(i["unnamed"] == 0 for i in info), [i["id"] for i in info if i["unnamed"]])
-    check("the toast is a polite live region", ev("() => [document.getElementById('toast').getAttribute('role'), document.getElementById('toast').getAttribute('aria-live')]") == ["status", "polite"])
+    ev("() => showToast('x')"); check("the toast is a polite live region (and an error one is an alert)", ev("() => [document.getElementById('toast').getAttribute('role'), document.getElementById('toast').getAttribute('aria-live')]") == ["status", "polite"])
     plan([A, B])
     ev("() => openTaskModal(tasks.find(t => t.name === 'B').id)"); pg.wait_for_timeout(300)
     inside = lambda: ev("() => !!document.activeElement.closest('#taskModalBg')")

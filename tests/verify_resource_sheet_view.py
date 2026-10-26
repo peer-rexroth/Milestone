@@ -81,7 +81,7 @@ with sync_playwright() as p:
     bx = hb("group"); pg.mouse.click(bx["x"] + 3, bx["y"] + 10); pg.mouse.click(bx["x"] + 3, bx["y"] + 10); pg.wait_for_timeout(150)
     check("double-clicking the edge fits the column: the longest value shows in full", ev("() => { const i = rsVisibleCols().findIndex(c => c.key === 'group'), e = document.querySelector('.rst-row').children[i].querySelector('input'); return e.scrollWidth <= e.clientWidth; }"))
     pg.click('#resourceSheetHeader [data-rskey="stdRate"]', button="right"); pg.wait_for_timeout(80)
-    check("right-click on a header: Fit to content, Fit all columns, Default width, Reset all", [x.strip() for x in pg.locator("#colWidthMenu.open .dropdown-item").all_inner_texts()] == ["Fit to content", "Fit all columns", "Default width", "Reset all column widths"])
+    check("right-click on a header: Fit to content, Fit all columns, Reset all (Default width is hidden: this column was not resized)", [x.strip() for x in pg.locator("#colWidthMenu.open .dropdown-item").all_inner_texts()] == ["Fit to content", "Fit all columns", "Reset all column widths"])
     pg.click("#colWidthMenu .dropdown-item:has-text('Fit all columns')"); pg.wait_for_timeout(150)
     fa = ev("() => ({ ...rsColWidths })")
     check("Fit all fits every shown column but Resource Name (which keeps filling the sheet)", "name" not in fa and all(k in fa for k in ("type", "group", "stdRate", "accrueAt")), fa)
@@ -252,9 +252,9 @@ with sync_playwright() as p:
     ben_id = ev("() => project.resources.find(r => r.name === 'Ben').id")
     ev("(id) => removeResourceSheetRow(id)", ben_id)
     pg.wait_for_timeout(120)
-    check("removing a resource IN USE asks for confirmation, naming it", ev("() => document.getElementById('confirmModalBg').classList.contains('open')") and "Ben" in ev("() => document.getElementById('confirmModalBody').textContent"))
-    pg.click("#confirmModalBg .btn-primary"); pg.wait_for_timeout(120)
-    check("...confirming removes it from the pool and strips it from every task's text (A's own % for Ben is gone, Anna Schmidt's kept)",
+    check("removing a resource IN USE does not ask: the toast names it and offers Undo", not ev("() => document.getElementById('confirmModalBg').classList.contains('open')") and "Ben" in ev("() => document.getElementById('toastMsg').textContent") and ev("() => document.getElementById('toastUndoBtn').offsetParent !== null"))
+    pg.wait_for_timeout(120)
+    check("...it is out of the pool from the pool and strips it from every task's text (A's own % for Ben is gone, Anna Schmidt's kept)",
           "Ben" not in [r["name"] for r in ev("() => project.resources")] and "Ben" not in ev("() => tasks.find(t => t.name === 'A').resource"), ev("() => tasks.find(t => t.name === 'A').resource"))
     pg.keyboard.press("Control+z"); pg.wait_for_timeout(150)
     check("Ctrl+Z (the app's generic history) restores both the pool entry and the task text", "Ben" in [r["name"] for r in ev("() => project.resources")] and "Ben" in ev("() => tasks.find(t => t.name === 'A').resource"))
