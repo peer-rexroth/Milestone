@@ -319,6 +319,10 @@ html[data-scheme="glass"] :is(.content) {
   --ink-border-2: var(--border-2);
 }
 
+/* menus sit inside the content area in the markup but are chrome: they keep the chrome's hairlines (.13), not the flat content's (.10), like ClearDesk's */
+html[data-scheme="glass"][data-theme="light"] .dropdown-menu { --border: rgba(40,44,70,.13); --border-2: rgba(40,44,70,.24); }
+html[data-scheme="glass"][data-theme="dark"] .dropdown-menu { --border: rgba(255,255,255,.14); --border-2: rgba(255,255,255,.26); }
+
 html[data-scheme="glass"][data-theme="dark"] :is(.content) {
   --bg: #1e1f24;
   --bg-2: #26272d;
@@ -676,7 +680,7 @@ button:focus:not(:focus-visible) { outline: none; }
 }
 .dropdown-menu.open { display: block; }
 .dropdown-item {
-  display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; min-height: 36px;
+  display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px;
   border: none; background: transparent; border-radius: var(--r-s); font-size: var(--fs-14); color: var(--text); text-align: left;
 }
 .dropdown-item:hover:not(:disabled) { background: var(--accent); color: var(--on-accent); }
@@ -934,7 +938,10 @@ body.col-moving, body.col-moving * { cursor: grabbing !important; user-select: n
 .tf-top .trow:has(:disabled) > label { color: var(--text-dim); }
 .tf-top .tsw:disabled { opacity: .5; }
 .tf-dt { display: flex; gap: 4px; justify-content: flex-end; flex: 0 1 auto; min-width: 0; }
-.tf-dt .dt-wrap { flex: 0 0 auto; min-width: 0; }
+.tf-top .tf-dt .dt-wrap { flex: 0 0 auto; width: 112px; min-width: 0; }
+.tf-top .tf-dt input.dt-date { width: 100%; }
+.tf-top .tf-dt input.dt-time { flex: 0 0 64px; width: 64px; min-width: 64px; }
+html.time12 .tf-top .tf-dt input.dt-time { flex-basis: 84px; width: 84px; min-width: 84px; }
 .tf-dt input.dt-date { width: 112px; padding-right: 30px; }
 .tf-dt input.dt-time { flex: 0 0 64px; min-width: 64px; width: 64px; text-align: right; }
 .tf-top .dt-cal { width: 26px; height: 26px; }
