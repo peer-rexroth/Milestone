@@ -919,7 +919,12 @@ body.col-moving, body.col-moving * { cursor: grabbing !important; user-select: n
 .tf-foot .tf-note { flex: 1; min-width: 0; margin: 0 8px; }
 .tf-foot .tf-note:empty { display: block; }
 .tf-btns { display: flex; gap: 8px; }
-.tf-btns .btn { min-width: 76px; justify-content: center; }
+.tf-btns .btn { height: 36px; min-width: 80px; justify-content: center; }
+.tf-btns .btn:not(.btn-primary) { background: var(--bg-2); box-shadow: var(--elev-1); border-color: transparent; }
+.tf-act .btn:disabled { visibility: hidden; }   /* nothing to apply or discard: no idle Cancel / Save (they show with the first change) */
+.tf-step .icon-btn { background: transparent; height: 30px; width: 34px; border-radius: 999px; }
+.tf-step .icon-btn:hover:not(:disabled) { background: var(--cap-hover); }
+.tf-step .icon-btn:disabled { opacity: .4; }
 .tf-top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; align-items: start; }
 .tf-top .tf-name-in { flex: 1 1 auto; }
 .tf-top .tf-in, .tf-top select.tin { width: auto; }
@@ -9262,9 +9267,9 @@ function renderTaskForm(force) {
   const tfBtn = (id, label, title, cls = '') => `<button type="button" class="btn btn-sm${cls}" id="${id}" title="${title}">${label}</button>`;
   body.innerHTML = `<div class="tf-wrap">
     <div class="tf-foot">
-      <div class="tf-btns">${tfBtn('tfPrevBtn', 'Previous', 'Previous task (applies your changes first)')}${tfBtn('tfNextBtn', 'Next', 'Next task (applies your changes first)')}</div>
+      <div class="tool-group tf-step"><button type="button" class="icon-btn" id="tfPrevBtn" title="Previous task (applies your changes first)" aria-label="Previous task"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3L5 8l5 5"/></svg></button><button type="button" class="icon-btn" id="tfNextBtn" title="Next task (applies your changes first)" aria-label="Next task"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg></button></div>
       <div class="tf-note" id="tfNote"></div>
-      <div class="tf-btns">${tfBtn('tfCancelBtn', 'Cancel', 'Discard the changes in the form (Esc)')}${tfBtn('tfOkBtn', 'Save', 'Apply the changes (Enter) — one Undo step', ' btn-primary')}</div>
+      <div class="tf-btns tf-act">${tfBtn('tfCancelBtn', 'Cancel', 'Discard the changes in the form (Esc)')}${tfBtn('tfOkBtn', 'Save', 'Apply the changes (Enter) — one Undo step', ' btn-primary')}</div>
     </div>
     <div class="tf-top${mm ? ' mm' : ''}">
       <div class="tgrp tf-left">
