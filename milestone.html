@@ -588,7 +588,8 @@ html[data-theme="dark"] .sb-head #sidebarToggleBtn, html[data-theme="dark"] .sb-
 .sb-plan-main i { font-size: var(--ico-16); color: var(--text-dim); width: 1em; }
 .sb-plan-main span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1; }
 .sb-plan-row:hover .sb-plan-main { background: var(--hover); color: var(--text); }
-.sb-plan-row.active { background: var(--cap-on); }
+/* the current plan is semibold, with no fill: the fill (one row at a time) belongs to the active view above */
+.sb-plan-row.active { background: none; }
 .sb-plan-row.active .sb-plan-main { color: var(--text); font-weight: 600; background: none; }
 .sb-plan-more { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); opacity: 0; }
 .sb-plan-row:hover .sb-plan-more, .sb-plan-row:focus-within .sb-plan-more { opacity: 1; }
@@ -683,6 +684,7 @@ button:focus:not(:focus-visible) { outline: none; }
   display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px;
   border: none; background: transparent; border-radius: var(--r-s); font-size: var(--fs-14); color: var(--text); text-align: left;
 }
+.dropdown-menu:is(#groupMenu, #taskModeMenu, #taskTypeMenu, #sbModeMenu) .dropdown-item { padding: 6px 8px; gap: 8px; }   /* pickers (a list to choose from) are 29px rows like ClearDesk's option pop-ups; action menus are 33px */
 .dropdown-item:hover:not(:disabled) { background: var(--accent); color: var(--on-accent); }
 .dropdown-item:hover:not(:disabled) i, .dropdown-item:hover:not(:disabled) .item-hint { color: inherit; }
 .dropdown-item i { width: 15px; height: 15px; color: var(--text-dim); }   /* (a masked icon is square: a 15px width over a 1em height clipped the top and bottom of the drawing) */
@@ -762,7 +764,7 @@ button:focus:not(:focus-visible) { outline: none; }
 .cols-row.dragging { opacity: .4; }
 .cols-row.drop-before { box-shadow: 0 -2px 0 var(--accent); }
 .cols-row.drop-after { box-shadow: 0 2px 0 var(--accent); }
-.cols-check { position: relative; display: flex; align-items: center; gap: 4px; flex: 1; min-width: 0; padding: 6px 8px; border-radius: var(--r-s); font-size: var(--fs-14); color: var(--text); }
+.cols-check { position: relative; display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; padding: 6px 8px; border-radius: var(--r-s); font-size: var(--fs-14); color: var(--text); }
 .cols-check input { position: absolute; opacity: 0; width: 100%; height: 100%; inset: 0; margin: 0; }   /* (still the real control: the label, the keyboard and the tests use it) */
 .cols-tick { width: 18px; font-size: var(--ico-14); visibility: hidden; color: var(--text); }
 .cols-check input:checked ~ .cols-tick { visibility: visible; }
@@ -778,7 +780,7 @@ button:focus:not(:focus-visible) { outline: none; }
 .cols-move button:hover:not(:disabled) { background: rgba(255,255,255,.25); }
 .cols-move button:disabled { opacity: .35; cursor: default; }
 .cols-opts { padding: 6px 0 2px; border-top: 1px solid var(--border); margin-top: 6px; display: flex; flex-direction: column; gap: 0; }
-.cols-opt { display: flex; align-items: center; gap: 4px; border: none; background: transparent; color: var(--text); font-size: var(--fs-14); padding: 6px 8px; border-radius: var(--r-s); text-align: left; }
+.cols-opt { display: flex; align-items: center; gap: 8px; border: none; background: transparent; color: var(--text); font-size: var(--fs-14); padding: 6px 8px; border-radius: var(--r-s); text-align: left; }
 .cols-opt i { width: 18px; height: 18px; font-size: var(--ico-14); color: var(--text); }
 .cols-opt:hover:not(:disabled) { background: var(--accent); color: var(--on-accent); }
 .cols-opt:hover:not(:disabled) i { color: var(--on-accent); }
