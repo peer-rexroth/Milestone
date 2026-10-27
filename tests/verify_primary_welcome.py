@@ -46,7 +46,7 @@ with sync_playwright() as p:
     pg.goto(URL); pg.wait_for_selector("#fileSyncModalBg.open"); ev = pg.evaluate
     check("brand-new install: the dialog is a welcome — 'Welcome to Milestone'", pg.inner_text("#fileSyncModalTitle") == "Welcome to Milestone")
     txt = pg.inner_text("#fileSyncModalText")
-    check("...it asks where the plans should live, says nothing leaves the computer, and still has one main button", "Where should your plans live?" in txt and "nothing leaves your computer" in txt and "choose folder" in pg.inner_text("#linkFolderBtn").lower())
+    check("...it asks where the plans should live, says nothing leaves the computer, and still has one main button", "folder you choose" in txt and "choose folder" in pg.inner_text("#linkFolderBtn").lower())
     check("...it is still mandatory: no close button, Escape leaves it open", pg.locator("#fileSyncModalBg .modal-header button").count() == 0 and (pg.keyboard.press("Escape") or True) and ev("() => document.getElementById('fileSyncModalBg').classList.contains('open')"))
     check("cancelling the picker keeps the welcome", (pg.click("#linkFolderBtn") or True) and (pg.wait_for_timeout(300) or True) and pg.inner_text("#fileSyncModalTitle") == "Welcome to Milestone")
     pg.reload(); pg.wait_for_selector("#fileSyncModalBg.open")

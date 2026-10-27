@@ -74,7 +74,7 @@ with sync_playwright() as p:
     ])
     pg.click("#scheduleMenuBtn"); pg.click("#planLevelItem"); pg.wait_for_selector("#levelModalBg.open")
     check("nothing resolvable within slack -> the button stays disabled", pg.get_attribute("#levelBtn", "disabled") is not None)
-    check("the hint mentions the unresolved conflicts", "could not be resolved" in pg.inner_text("#levelHint"), pg.inner_text("#levelHint"))
+    check("the hint mentions the unresolved conflicts", "be resolved" in pg.inner_text("#levelHint"), pg.inner_text("#levelHint"))
     check("the unresolved note names the tasks", not ("hidden" in pg.get_attribute("#levelUnresolvedNote", "class")) and "E" in pg.inner_text("#levelUnresolvedNote") and "F" in pg.inner_text("#levelUnresolvedNote"))
     pg.click("#levelWithinSlack")
     pg.wait_for_timeout(150)

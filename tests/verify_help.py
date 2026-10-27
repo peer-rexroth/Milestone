@@ -68,7 +68,7 @@ with sync_playwright() as p:
     # ---------------------------------------------------------------- looks: contrast in both themes, narrow screens
     def contrast(pg):
         return ev("""() => { const lum = c => { const m = c.match(/[\\d.]+/g).map(Number); const f = v => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }; return .2126 * f(m[0]) + .7152 * f(m[1]) + .0722 * f(m[2]); };
-          const bg = el => { for (let e = el; e; e = e.parentElement) { const c = getComputedStyle(e).backgroundColor; if (!/rgba\\(0, 0, 0, 0\\)|transparent/.test(c)) return c; } return 'rgb(255,255,255)'; };
+          const bg = el => { for (let e = el; e; e = e.parentElement) { const c = getComputedStyle(e).backgroundColor; if (!/rgba\\(0, 0, 0, 0\\)|transparent|\\/ 0\\.\\d+\\)/.test(c)) return c; } return 'rgb(255,255,255)'; };
           const ratio = el => { const a = lum(getComputedStyle(el).color), b2 = lum(bg(el)); return (Math.max(a, b2) + .05) / (Math.min(a, b2) + .05); };
           const q = s => ratio(document.querySelector(s));
           return { body: q('#helpPane-start .help-row > span'), strong: q('#helpPane-start .help-row strong'), title: q('#helpPane-start .help-section-title'), active: q('#helpModalBg .help-nav button.active'), idle: q('#helpTab-list'), code: q('#helpPane-scheduling code') }; }""")

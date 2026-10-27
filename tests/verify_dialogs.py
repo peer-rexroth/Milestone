@@ -74,7 +74,7 @@ with sync_playwright() as p:
     check("...the region, both years and the Add button are rows of one group (label left, value right), stacked", top("#holYearFrom") > top("#holRegion") and top("#holYearTo") > top("#holYearFrom") and top("#calendarModalBg .hol-preset .btn") > top("#holYearTo"))
     check("...the dates of a break, the name and Add are rows of one group, in that order", top("#holTo") > top("#holFrom") and top("#holName") > top("#holTo") and top("#calendarModalBg .hol-add .btn") > top("#holName"))
     check("...the long explanation is folded away ('How this works')", ev("() => !document.querySelector('#calendarModalBg .cal-how').open") and not pg.locator("#calendarModalBg .cal-how .cal-hint").is_visible())
-    check("...and the footer says changes apply on Save", "when you save" in pg.inner_text("#calendarModalBg .foot-note"))
+    check("...and the footer is just Cancel and Save", pg.locator("#calendarModalBg .modal-footer button").all_inner_texts() == ["Cancel", "Save"])
     check("the empty list explains itself and 'Clear all' is hidden", not pg.locator("#holClearBtn").is_visible() and ev("() => getComputedStyle(document.getElementById('holList'), '::before').content").startswith('"No Days Off'))
     pg.click("#calendarDays .cal-day:has-text('Sat')"); pg.wait_for_timeout(80)
     check("ticking Saturday updates the chip live ('Mon–Sat')", pg.inner_text("#calendarSummaryLive") == "Mon–Sat", pg.inner_text("#calendarSummaryLive"))
@@ -99,7 +99,7 @@ with sync_playwright() as p:
     check("...nothing set yet: the compare list says so and the hint tells what to do first", "none set" in pg.inner_text("#baselineCompareSelect") and "Set a baseline" in pg.inner_text("#baselineCompareHint") and pg.is_disabled("#baselineCompareSelect"))
     check("...the 'selected task' choice is disabled with a reason", pg.is_disabled("#baselineScopeSel") and "Select a task" in (ev("() => document.getElementById('baselineScopeSel').closest('label').title")))
     pg.click("#baselineSetBtn"); pg.wait_for_timeout(200)
-    check("after setting one, the compare list names it with its date and the hint explains the chart", "Baseline — set" in pg.inner_text("#baselineCompareSelect") and "grey line" in pg.inner_text("#baselineCompareHint") and not pg.is_disabled("#baselineCompareSelect"), pg.inner_text("#baselineCompareSelect"))
+    check("after setting one, the compare list names it with its date and the hint explains the chart", "Baseline — set" in pg.inner_text("#baselineCompareSelect") and "Gantt bars" in pg.inner_text("#baselineCompareHint") and not pg.is_disabled("#baselineCompareSelect"), pg.inner_text("#baselineCompareSelect"))
     ev("() => { byId('b').actualStart = '2025-01-15'; byId('b').startDate = '2025-01-13'; renderBaselineModal(); }"); pg.wait_for_timeout(100)
     check("a task with an actual date that is not in the schedule brings the 'Actual dates' section back", pg.locator("#baselineActualsSec").is_visible() and not pg.is_disabled("#baselineApplyBtn"))
 

@@ -1766,12 +1766,13 @@ html.settings-switching .modal-bg { transition: none; }
 .tick:checked { background: var(--accent); -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M3 8.5l3.2 3L13 4.5'/></svg>") center/16px no-repeat; mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M3 8.5l3.2 3L13 4.5'/></svg>") center/16px no-repeat; }
 .tick:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; border-radius: 4px; }
 label.trow.tpick { justify-content: space-between; cursor: default; }
+label.trow.tpick { padding-block: 8px; }
 label.trow.tpick > span { flex: 1; min-width: 0; }
 label.trow.tpick:hover { background: var(--hover); }
 .tgrp > label.trow.tpick:first-child:hover { border-radius: var(--r-m) var(--r-m) 0 0; }
 .tgrp > label.trow.tpick:last-child:hover { border-radius: 0 0 var(--r-m) var(--r-m); }
 .tgrp > label.trow.tpick:only-child:hover { border-radius: var(--r-m); }
-.trow .tsub { display: block; font-size: var(--fs-12); color: var(--text-faint); }
+.trow .tsub { display: block; margin-top: 2px; font-size: var(--fs-12); color: var(--text-faint); }
 .trow + .trow::before { z-index: 0; }
 /* a row of choices as a capsule (Daily / Weekly / Monthly / Yearly) */
 .recur-freq { display: flex; gap: 2px; width: max-content; max-width: 100%; margin: 4px auto 4px 0; padding: 3px; border-radius: 999px; background: var(--cap-fill); }
@@ -1818,6 +1819,29 @@ label.trow.tpick:hover { background: var(--hover); }
 .insp .backup-row + .backup-row::before { content: ""; position: absolute; left: 14px; right: 0; top: 0; height: 1px; background: var(--border); }
 .insp #backupsList .pred-empty { padding: 0 14px; line-height: 40px; color: var(--text-faint); font-size: var(--fs-14); }
 .insp .modal-body > .tgrp:empty { display: none; }
+#calendarModalBg #workHoursEditor { padding: 0; margin-top: 8px; gap: 18px; background: none; border-radius: 0; }
+:is(#calendarModalBg) .workhours-editor > * { padding: 0; }
+:is(#calendarModalBg) .wh-breaks { gap: 6px; }
+:is(#calendarModalBg) .wh-cap { margin: 0 14px; font-size: var(--fs-12); font-weight: 600; color: var(--text-faint); }
+:is(#calendarModalBg) .wh-cap .cal-sec-note { margin-left: 4px; font-weight: 400; }
+:is(#calendarModalBg) :is(.wh-day-row, .wh-break-add) input.dt-time { flex: 0 0 84px; width: 84px; padding: 6px 0; border: 0; background-color: transparent; box-shadow: none; text-align: right; color: var(--text-dim); font: inherit; }
+html.time12 :is(#calendarModalBg) :is(.wh-day-row, .wh-break-add) input.dt-time { flex-basis: 96px; width: 96px; }
+:is(#calendarModalBg) .wh-breaks-grp > .hol-list { background: none; border-radius: 0; max-height: none; }
+:is(#calendarModalBg) .wh-breaks-grp > .hol-list:empty { display: none; }
+:is(#calendarModalBg) .wh-breaks-grp > .hol-list:not(:empty) + .wh-break-add::before, :is(#calendarModalBg) .wh-break-add + .tadd::before, :is(#calendarModalBg) .whd-details .tgrp > :is(.whd-list:not(:empty), .whd-add) + :is(.whd-add, .tadd)::before { content: ""; position: absolute; left: 14px; right: 0; top: 0; height: 1px; background: var(--border); }
+:is(#calendarModalBg) .whd-details { border: 0; padding: 0; }
+:is(#calendarModalBg) .whd-details > summary { margin: 0 14px 6px; font-size: var(--fs-12); font-weight: 600; color: var(--text-faint); list-style-position: inside; }
+:is(#calendarModalBg) .whd-list { display: flex; flex-direction: column; gap: 0; }
+:is(#calendarModalBg) .whd-list:empty { display: none; }
+:is(#calendarModalBg) .whd-row { position: relative; flex-wrap: nowrap; gap: 8px; min-height: 40px; padding: 2px 14px; font-size: var(--fs-14); }
+:is(#calendarModalBg) .whd-row + .whd-row::before { content: ""; position: absolute; left: 14px; right: 0; top: 0; height: 1px; background: var(--border); }
+:is(#calendarModalBg) .whd-row .whd-name { width: 44px; font-weight: 400; }
+:is(#calendarModalBg) .whd-row input { padding: 6px 0; border: 0; background-color: transparent; box-shadow: none; color: var(--text-dim); font: inherit; }
+:is(#calendarModalBg) .whd-row input.dt-time { flex: 0 0 84px; width: 84px; text-align: right; }
+:is(#calendarModalBg) .whd-row .whd-breaks { flex: 1 1 120px; text-align: right; }
+:is(#calendarModalBg) .whd-remove { width: var(--ib-s); height: var(--ib-s); border-radius: 50%; }
+:is(#calendarModalBg) .whd-remove:hover { background: var(--pressed); color: var(--text); }
+:is(#calendarModalBg) .whd-add select { flex: 0 1 140px; }
 .insp .fs-text { margin: 0 14px; font-size: var(--fs-13); color: var(--text-dim); line-height: 1.5; }
 .insp .fs-text ul { margin: 6px 0 0; padding-left: 18px; }
 .insp .tgrp > .tadd + .tadd::before { content: ""; position: absolute; left: 14px; right: 0; top: 0; height: 1px; background: var(--border); }
@@ -1984,6 +2008,21 @@ input.dt-time { width: 84px; flex: 0 0 84px; text-align: center; }
 .help-section > .help-row:last-child { border-radius: 0 0 var(--r-l) var(--r-l); }
 .help-section > .help-section-title + .help-row:last-child { border-radius: var(--r-l); }
 .help-section-title { font-size: var(--fs-11); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-dim); }
+/* Help and Shortcuts as grouped inspectors: sentence-case captions over tinted cards, hairlines inset from the left */
+.help-section-title, .sc-group h3 { margin: 0; padding: 0 14px 6px; font-size: var(--fs-12); font-weight: 600; text-transform: none; letter-spacing: 0; color: var(--text-faint); }
+.help-section > .help-row, .help-section > .help-keys { background: color-mix(in srgb, var(--text) 5%, transparent); border-radius: 0; }
+.help-section > .help-row + .help-row { border-top: 0; position: relative; }
+.help-section > .help-row + .help-row::before { content: ""; position: absolute; left: 16px; right: 0; top: 0; height: 1px; background: var(--border); }
+.help-section > .help-section-title + .help-row { border-radius: var(--r-m) var(--r-m) 0 0; }
+.help-section > .help-row:last-child { border-radius: 0 0 var(--r-m) var(--r-m); }
+.help-section > .help-section-title + .help-row:last-child { border-radius: var(--r-m); }
+.sc-group .sc-row { padding: 8px 14px; background: color-mix(in srgb, var(--text) 5%, transparent); border-bottom: 0; position: relative; font-size: var(--fs-13); }
+.sc-group .sc-row + .sc-row::before { content: ""; position: absolute; left: 14px; right: 0; top: 0; height: 1px; background: var(--border); }
+.sc-group h3 + .sc-row { border-radius: var(--r-m) var(--r-m) 0 0; }
+.sc-group .sc-row:last-child { border-radius: 0 0 var(--r-m) var(--r-m); }
+.sc-group h3 + .sc-row:last-child { border-radius: var(--r-m); }
+.sc-group { margin: 0 0 18px; }
+
 .help-row { display: flex; gap: 12px; align-items: flex-start; font-size: var(--fs-13); line-height: 1.6; color: var(--text-dim); }
 .help-row > i { flex: 0 0 18px; margin-top: 2px; text-align: center; font-size: var(--ico-16); color: var(--text-faint); }
 .help-row strong { color: var(--text); font-weight: 600; }
@@ -2434,15 +2473,15 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
   <div class="modal narrow insp">
     <div class="modal-header"><h2>Export to Excel</h2><button onclick="closeExcelModal()" aria-label="Close">&times;</button></div>
     <div class="modal-body">
-      <p class="cal-hint">Saves an Excel workbook (.xlsx) with a formatted task list — real dates, durations and percentages, indented groups, filters and print settings.</p>
+      <p class="cal-hint">Saves a formatted workbook (.xlsx).</p>
       <section class="cal-sec" id="excelScopeBlock"><div class="cal-sec-title">Which Tasks</div><div class="tgrp">
         <label class="trow tpick"><span id="excelScopeAll"></span><input type="radio" class="tick" name="excelScope" value="all" checked></label>
         <label class="trow tpick"><span id="excelScopeFiltered"></span><input type="radio" class="tick" name="excelScope" value="filtered"></label>
       </div></section>
       <section class="cal-sec"><div class="cal-sec-title">Columns</div><div class="tgrp">
         <label class="trow tpick"><span>As shown in the task list</span><input type="radio" class="tick" name="excelCols" value="shown" checked></label>
-        <label class="trow tpick"><span>All columns<span class="tsub">Also WBS, Actual Start/Finish, Resource, baselines and the custom fields in use</span></span><input type="radio" class="tick" name="excelCols" value="all"></label>
-      </div><p class="cal-hint">The Tasks sheet follows the columns of the <strong>Tasks view</strong>; the Gantt sheet's list follows those of the <strong>Gantt view</strong> (each view keeps its own choice).</p></section>
+        <label class="trow tpick"><span>All columns<span class="tsub">With WBS, resources, baselines and custom fields</span></span><input type="radio" class="tick" name="excelCols" value="all"></label>
+      </div></section>
       <div class="tgrp"><div class="trow"><label for="excelGantt" class="tgrow">Add a Gantt chart sheet</label><input type="checkbox" class="tsw" role="switch" id="excelGantt" checked></div></div>
     </div>
     <div class="modal-footer"><button class="btn" onclick="closeExcelModal()">Cancel</button><button class="btn btn-primary" id="excelExportBtn" onclick="runExcelExport()"><i class="fa-solid fa-file-excel"></i>Export</button></div>
@@ -2453,14 +2492,14 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
   <div class="modal narrow insp" role="dialog" aria-labelledby="csvTitle">
     <div class="modal-header"><h2 id="csvTitle">Export to CSV</h2><button onclick="closeCsvExport()" aria-label="Close">&times;</button></div>
     <div class="modal-body">
-      <p class="cal-hint">Saves the task list as a plain text table (.csv) with a header row — the dates, durations and percentages as the list shows them, sub-tasks indented. Opens in Excel and most other tools, and Milestone's own CSV import reads it back.</p>
+      <p class="cal-hint">Saves a plain text table (.csv).</p>
       <section class="cal-sec" id="csvScopeBlock"><div class="cal-sec-title">Which Tasks</div><div class="tgrp">
         <label class="trow tpick"><span id="csvScopeAll"></span><input type="radio" class="tick" name="csvScope" value="all" checked></label>
         <label class="trow tpick"><span id="csvScopeFiltered"></span><input type="radio" class="tick" name="csvScope" value="filtered"></label>
       </div></section>
       <section class="cal-sec"><div class="cal-sec-title">Columns</div><div class="tgrp">
         <label class="trow tpick"><span>As shown in the Tasks view</span><input type="radio" class="tick" name="csvCols" value="shown" checked></label>
-        <label class="trow tpick"><span>All columns<span class="tsub">Also WBS, Actual Start/Finish, Resource, baselines and the custom fields in use</span></span><input type="radio" class="tick" name="csvCols" value="all"></label>
+        <label class="trow tpick"><span>All columns<span class="tsub">With WBS, resources, baselines and custom fields</span></span><input type="radio" class="tick" name="csvCols" value="all"></label>
       </div></section>
       <div class="tgrp"><div class="trow"><label for="csvSep" class="tgrow">Separator</label><select id="csvSep" class="tin"><option value=",">Comma ( , )</option><option value=";">Semicolon ( ; ) — Excel in many countries</option><option value="&#9;">Tab</option></select></div></div>
     </div>
@@ -2474,7 +2513,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
     <span class="alert-ico" aria-hidden="true"><i class="fa-solid fa-circle-info"></i></span>
     <h3 id="importTitle">Import data</h3>
     <p id="importInfo"></p>
-    <p class="alert-info"><strong>Merge</strong> keeps your tasks and adds or updates from the file. <strong>Replace</strong> downloads a safety backup, then overwrites everything.</p>
+    <p class="alert-info"><strong>Merge</strong> keeps your tasks. <strong>Replace</strong> overwrites them after a backup.</p>
     <div class="modal-actions">
       <button class="btn" onclick="closeImportModal()">Cancel</button>
       <button class="btn btn-primary" onclick="applyImport('merge')">Merge</button>
@@ -2492,14 +2531,14 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
       <div class="fi-warn hidden" id="foreignImportWarn"></div>
       <div class="tgrp hidden" id="foreignImportFmtField"><div class="trow"><label for="foreignImportFmt" class="tgrow">Dates in the file</label>
         <select id="foreignImportFmt" class="tin fi-fmt" onchange="foreignImportFormatChanged()">
-          <option value="auto">Detect (day first, unless it can only be month first)</option>
-          <option value="dmy">Day.Month.Year (07.09.2026, 07/09/2026)</option>
-          <option value="mdy">Month/Day/Year (09/07/2026)</option>
-          <option value="ymd">Year-Month-Day (2026-09-07)</option>
+          <option value="auto">Detect</option>
+          <option value="dmy">Day.Month.Year</option>
+          <option value="mdy">Month/Day/Year</option>
+          <option value="ymd">Year-Month-Day</option>
         </select></div></div>
       <section class="cal-sec"><div class="cal-sec-title">What to Do With It</div><div class="tgrp">
         <label class="trow tpick"><span>Add the tasks to this plan, after the existing ones</span><input type="radio" class="tick" name="fiMode" value="append" checked></label>
-        <label class="trow tpick"><span>Replace this plan's tasks<span class="tsub">A backup file is downloaded first</span></span><input type="radio" class="tick" name="fiMode" value="replace"></label>
+        <label class="trow tpick"><span>Replace this plan's tasks<span class="tsub">Downloads a backup first</span></span><input type="radio" class="tick" name="fiMode" value="replace"></label>
       </div></section>
       <div class="tgrp hidden" id="foreignImportCalRow"><div class="trow"><label for="foreignImportCal" class="tgrow">Also take the working days, holidays, baselines and working hours from the file</label><input type="checkbox" class="tsw" role="switch" id="foreignImportCal"></div></div>
     </div>
@@ -2559,7 +2598,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
         </details>
       </section>
     </div>
-    <div class="modal-footer"><span class="foot-note">One Undo step.</span><button class="btn" onclick="closeReplace()">Cancel</button><button class="btn btn-primary" id="frBtn" onclick="runReplace()">Replace all</button></div>
+    <div class="modal-footer"><button class="btn" onclick="closeReplace()">Cancel</button><button class="btn btn-primary" id="frBtn" onclick="runReplace()">Replace all</button></div>
   </div>
 </div>
 
@@ -2596,7 +2635,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
           <label class="trow tpick"><span>Dependency arrows</span><input type="checkbox" class="tick" id="printDeps"></label>
           <label class="trow tpick"><span>Today line</span><input type="checkbox" class="tick" id="printToday"></label>
           <label class="trow tpick"><span>Days off shaded</span><input type="checkbox" class="tick" id="printShade"></label>
-          <label class="trow tpick"><span>Every group expanded<span class="tsub">Otherwise as the list shows it</span></span><input type="checkbox" class="tick" id="printExpand"></label>
+          <label class="trow tpick"><span>Every group expanded</span><input type="checkbox" class="tick" id="printExpand"></label>
         </div></section>
       </div>
       <div class="print-side">
@@ -2612,7 +2651,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 <div class="modal-bg" id="backupsModalBg" onclick="if(event.target===this) closeBackupsModal()">
   <div class="modal narrow insp">
     <div class="modal-header"><h2>Local backups</h2><button onclick="closeBackupsModal()" aria-label="Close">&times;</button></div>
-    <div class="modal-body"><p class="cal-hint">One snapshot a day, kept in this browser. Restoring one saves your current data first.</p><div class="tgrp" id="backupsList"></div></div>
+    <div class="modal-body"><p class="cal-hint">One snapshot a day.</p><div class="tgrp" id="backupsList"></div></div>
     <div class="modal-footer"><button class="btn" onclick="closeBackupsModal()">Close</button></div>
   </div>
 </div>
@@ -2674,7 +2713,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
   <div class="modal mid">
     <div class="modal-header"><h2>Days off — <span id="resourceDaysName"></span></h2><button onclick="requestCloseResourceDaysModal()" aria-label="Close">&times;</button></div>
     <div class="modal-body">
-      <p class="cal-hint">Days off for this person, on top of the plan's calendar. They count as zero capacity.</p>
+      <p class="cal-hint">On top of the plan's calendar.</p>
       <section class="cal-sec"><div class="res-days-add hol-add hol-fields">
         <div class="hol-field hol-field-date"><label for="resDayFrom">First day</label><input type="text" class="dt-date" id="resDayFrom" title="The day off, or the first day of a longer break" oninput="updateResDayAddBtn()" onchange="updateResDayAddBtn()" onkeydown="if(event.key==='Enter'){event.preventDefault();addResourceDayOff();}"></div>
         <div class="hol-field hol-field-date"><label for="resDayTo">Last day <span class="hol-opt">(optional)</span></label><input type="text" class="dt-date" id="resDayTo" title="Only for a break of several days — leave empty for a single day" oninput="updateResDayAddBtn()" onchange="updateResDayAddBtn()" onkeydown="if(event.key==='Enter'){event.preventDefault();addResourceDayOff();}"></div>
@@ -2701,33 +2740,38 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
         <div class="cal-days" id="calendarDays"></div>
       </section>
       <section class="cal-sec" id="precisionSec">
-        <div class="cal-sec-title">Days or hours <span class="cal-sec-note">how finely start and finish are planned</span></div>
+        <div class="cal-sec-title">Days or hours </div>
         <div class="precision-row" id="precisionRow">
-          <label class="precision-opt"><input type="radio" name="timeUnit" value="day" id="precisionDay"><span>Days <span class="cal-sec-note">the standard — Start and Finish are whole days</span></span></label>
-          <label class="precision-opt"><input type="radio" name="timeUnit" value="minute" id="precisionMinute"><span>Hours &amp; minutes <span class="cal-sec-note">Start and Finish have a time of day, so several tasks can share a day</span></span></label>
+          <label class="precision-opt"><input type="radio" name="timeUnit" value="day" id="precisionDay"><span>Days <span class="cal-sec-note">Start and Finish are whole days</span></span></label>
+          <label class="precision-opt"><input type="radio" name="timeUnit" value="minute" id="precisionMinute"><span>Hours &amp; minutes <span class="cal-sec-note">Start and Finish have a time of day</span></span></label>
         </div>
         <div class="workhours-editor hidden" id="workHoursEditor">
-          <div class="wh-day-row">
-            <span class="wh-cap">Working day</span>
+          <div class="tgrp"><div class="trow wh-day-row">
+            <label class="tgrow" for="whStart">Working day</label>
             <input type="text" id="whStart" class="dt-time" aria-label="Working day starts">
             <span class="hol-to">to</span>
             <input type="text" id="whEnd" class="dt-time" aria-label="Working day ends">
-          </div>
+          </div></div>
           <div class="wh-breaks">
-            <div class="wh-cap">Breaks <span class="cal-sec-note">lunch, etc. — not counted as working time</span></div>
-            <div class="hol-list" id="whBreakList"></div>
-            <div class="wh-break-add">
-              <input type="text" id="whBreakFrom" class="dt-time" aria-label="Break starts" onkeydown="if(event.key==='Enter'){event.preventDefault();addWorkBreak();}">
-              <span class="hol-to">to</span>
-              <input type="text" id="whBreakTo" class="dt-time" aria-label="Break ends" onkeydown="if(event.key==='Enter'){event.preventDefault();addWorkBreak();}">
-              <button class="btn" type="button" onclick="addWorkBreak()"><i class="fa-solid fa-plus"></i>Add break</button>
+            <div class="wh-cap">Breaks <span class="cal-sec-note">not counted as working time</span></div>
+            <div class="tgrp wh-breaks-grp">
+              <div class="hol-list" id="whBreakList"></div>
+              <div class="trow wh-break-add">
+                <label class="tgrow" for="whBreakFrom">New break</label>
+                <input type="text" id="whBreakFrom" class="dt-time" aria-label="Break starts" onkeydown="if(event.key==='Enter'){event.preventDefault();addWorkBreak();}">
+                <span class="hol-to">to</span>
+                <input type="text" id="whBreakTo" class="dt-time" aria-label="Break ends" onkeydown="if(event.key==='Enter'){event.preventDefault();addWorkBreak();}">
+              </div>
+              <button class="trow tadd" id="whBreakAddBtn" type="button" onclick="addWorkBreak()">Add Break</button>
             </div>
           </div>
           <details class="whd-details" id="whDayDetails">
             <summary>Different hours on some days <span class="whd-count" id="whDayCount"></span></summary>
-            <div class="cal-sec-note">A short Friday, say — its own start, end and breaks (like 12:00-13:00, 15:00-15:15).</div>
-            <div class="whd-list" id="whDayRows"></div>
-            <div class="whd-add" id="whDayAddRow"><select id="whDayAddSelect" aria-label="Weekday to add"></select><button class="btn" type="button" onclick="addHoursDay()"><i class="fa-solid fa-plus"></i>Add a different day</button></div>
+            <div class="tgrp">
+              <div class="whd-list" id="whDayRows"></div>
+              <div class="trow whd-add" id="whDayAddRow"><label class="tgrow" for="whDayAddSelect">Day</label><select id="whDayAddSelect" class="tin" aria-label="Weekday to add"></select></div>
+              <button class="trow tadd" id="whDayAddBtn" type="button" onclick="addHoursDay()">Add a Different Day</button>
+            </div>
           </details>
         </div>
       </section>
@@ -2745,7 +2789,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
         </div>
       </section>
       <section class="cal-sec">
-        <div class="cal-sec-title">Another day off <span class="cal-sec-note">a single day, a break, or a day that comes back every year</span></div>
+        <div class="cal-sec-title">Another day off </div>
         <div class="hol-add hol-fields">
           <div class="hol-field hol-field-date"><label for="holFrom">First day</label><input type="text" class="dt-date" id="holFrom" title="The day off, or the first day of a longer break" oninput="updateHolAddBtn()" onchange="holToChanged()" onkeydown="if(event.key==='Enter'){event.preventDefault();addHoliday();}"></div>
           <div class="hol-field hol-field-date"><label for="holTo">Last day <span class="hol-opt">(optional)</span></label><input type="text" class="dt-date" id="holTo" title="Only for a break of several days — leave empty for a single day" oninput="holToChanged()" onchange="holToChanged()" onkeydown="if(event.key==='Enter'){event.preventDefault();addHoliday();}"></div>
@@ -2756,10 +2800,9 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
         </div>
       </section>
       <details class="cal-how"><summary>How this works</summary>
-        <p class="cal-hint">Durations, lags and links count working days. Days off are shaded in the chart. Dates already in the plan don't move when you change this, and other plans keep their own calendar.</p></details>
+        <p class="cal-hint">Durations and links count working days. Dates already in the plan don't move.</p></details>
     </div>
     <div class="modal-footer">
-      <span class="foot-note">Changes apply when you save.</span>
       <button class="btn" onclick="closeCalendarModal()">Cancel</button>
       <button class="btn btn-primary" onclick="saveCalendar()">Save</button>
     </div>
@@ -2773,15 +2816,15 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
     <div class="modal-body">
       <section class="cal-sec">
         <div class="tgrp"><div class="trow"><label for="rulesStatusDateInput">Status date</label><div class="field-dt"><input type="text" class="dt-date" id="rulesStatusDateInput" aria-label="Status date" placeholder="Today"></div></div></div>
-        <p class="cal-hint" style="margin:0">Where the <strong>Progress line</strong> measures from. Empty means today.</p>
+        <p class="cal-hint" style="margin:0">Where the progress line starts. Empty means today.</p>
       </section>
       <details class="cal-sec rules-adv" id="rulesAdv">
         <summary>Advanced</summary>
         <label class="hol-yearly" title="On: a Must Start On/Finish On/No Earlier Than/No Later Than date always wins, even over what a task's links would otherwise compute — today's standard. Off: a link wins when the two disagree; the constraint is still shown as unmet, just not forced."><input type="checkbox" id="honorConstraintDatesInput"> Tasks always honor their constraint dates</label>
-        <p class="cal-hint" style="margin:0">On: a constraint date overrides the links. Off: the links win and the constraint shows a warning.</p>
+        <p class="cal-hint" style="margin:0">A constraint date wins over links.</p>
       </details>
     </div>
-    <div class="modal-footer"><span class="foot-note">Changes apply when you save.</span><button class="btn" onclick="closeRulesModal()">Cancel</button><button class="btn btn-primary" onclick="saveRulesModal()">Save</button></div>
+    <div class="modal-footer"><button class="btn" onclick="closeRulesModal()">Cancel</button><button class="btn btn-primary" onclick="saveRulesModal()">Save</button></div>
   </div>
 </div>
 <div class="modal-bg" id="formatModalBg" onclick="if(event.target===this) closeFormatModal()">
@@ -2792,7 +2835,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
       <section class="cal-sec">
         <div class="cal-sec-title">Currency <span class="scope-badge" title="Saved with the plan: everyone who opens it sees the same currency"><i class="fa-regular fa-file-lines"></i>This plan</span></div>
         <div class="fmt-cur"><select id="planCurrencyInput" aria-label="Currency" onchange="setCurrencyFromPage(this.value)"></select><span class="fmt-cur-eg">looks like <strong id="planCurrencyPreview"></strong></span></div>
-        <div class="fmt-cap">Every money figure in this plan — the Resources tab's rates, the Cost column, Excel — is shown in it. Nothing is converted.</div>
+        <div class="fmt-cap">Applies to all amounts.</div>
       </section>
       <section class="cal-sec">
         <div class="cal-sec-title">Dates and times <span class="scope-badge device-badge" title="Saved in this browser, not in the plan: every device — and every plan on it — shows dates the way you choose here, and a colleague chooses their own."><i class="fa-solid fa-laptop"></i>This device</span></div>
@@ -2805,7 +2848,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
           <section>
             <div class="cal-sec-title">Time format</div>
             <div class="fmt-tiles fmt-tiles-time" id="fmtTimeOpts" role="radiogroup" aria-label="Time format"></div>
-            <div class="fmt-cap">Shown in plans whose precision is “Hours &amp; minutes”.</div>
+            <div class="fmt-cap">For plans with hours and minutes.</div>
           </section>
         </div>
         <div class="fmt-preview" aria-live="polite">
@@ -2815,7 +2858,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
         </div>
       </section>
     </div>
-    <div class="modal-footer"><span class="foot-note">Changes apply as you click.</span><button class="btn btn-primary" onclick="closeFormatModal()">Done</button></div>
+    <div class="modal-footer"><button class="btn btn-primary" onclick="closeFormatModal()">Done</button></div>
   </div>
 </div>
 </div>
@@ -2825,9 +2868,9 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
   <div class="modal mid insp">
     <div class="modal-header"><h2>Baselines</h2><button onclick="closeBaselineModal()" aria-label="Close">&times;</button></div>
     <div class="modal-body">
-      <p class="cal-hint">A frozen copy of every task's Start and Finish, to compare against later. Up to eleven.</p>
+      <p class="cal-hint">Compares against a saved copy of the schedule.</p>
       <section class="cal-sec">
-        <div class="cal-sec-title">Save a Baseline <span class="cal-sec-note">applies when you click Set Baseline</span></div>
+        <div class="cal-sec-title">Save a Baseline </div>
         <div class="tgrp">
           <div class="trow"><label for="baselineSlotSelect" class="tgrow">Which baseline</label><select id="baselineSlotSelect" class="tin" onchange="renderBaselineModal()"></select></div>
           <label class="trow tpick"><span>The entire plan</span><input type="radio" class="tick" name="baselineScope" id="baselineScopeAll" value="all" checked></label>
@@ -2836,7 +2879,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
         <div class="bl-status"><span id="baselineSlotInfo"></span><button class="btn-link danger" id="baselineClearBtn" onclick="clearBaselineFromDialog()">Clear This Baseline</button></div>
       </section>
       <section class="cal-sec">
-        <div class="cal-sec-title">Compare the Chart and Columns With <span class="cal-sec-note">applies right away</span></div>
+        <div class="cal-sec-title">Compare the Chart and Columns With </div>
         <div class="tgrp"><div class="trow"><label for="baselineCompareSelect" class="tgrow">Baseline</label><select id="baselineCompareSelect" class="tin bl-compare" aria-label="Baseline to compare with" onchange="setCompareBaseline(this.value)"></select></div></div>
         <p class="cal-hint" id="baselineCompareHint"></p>
       </section>
@@ -2870,7 +2913,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
           <div class="trow"><label for="recurEvery" class="tgrow">Every</label><input type="number" id="recurEvery" min="1" max="99" class="tin recur-num"><span id="recurEveryUnit" class="tunit">week(s)</span></div>
           <div class="trow" id="recurDaysRow"><label class="tgrow">On</label><div class="cal-days" id="recurDays"></div></div>
           <div class="trow" id="recurWorkdaysRow"><label for="recurWorkdays" class="tgrow">Working days only</label><input type="checkbox" class="tsw" role="switch" id="recurWorkdays"></div>
-          <div class="trow" id="recurMonthRow"><label for="recurMonthDay" class="tgrow">On day <span class="cal-sec-note">(the last day in a shorter month)</span></label><input type="number" id="recurMonthDay" min="1" max="31" class="tin recur-num"></div>
+          <div class="trow" id="recurMonthRow"><label for="recurMonthDay" class="tgrow">On day <span class="cal-sec-note">(or the last day)</span></label><input type="number" id="recurMonthDay" min="1" max="31" class="tin recur-num"></div>
         </div>
       </section>
       <section class="cal-sec">
@@ -2881,7 +2924,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
           <div class="trow"><label for="recurUntil" class="tgrow">End by</label><input type="text" class="dt-date" id="recurUntil"><input type="radio" class="tick" name="recurEnd" id="recurEndUntil" aria-label="End by a date"></div>
         </div>
         <p class="cal-hint recur-preview" id="recurPreview"></p>
-        <p class="cal-hint hidden" id="recurKeepNote">Started or finished occurrences are kept; the rest are made again.</p>
+        <p class="cal-hint hidden" id="recurKeepNote">Started occurrences are kept.</p>
       </section>
     </div>
     <div class="modal-footer">
@@ -2894,7 +2937,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
   <div class="modal mid insp">
     <div class="modal-header"><h2>Reschedule remaining work</h2><button onclick="closeRescheduleModal()" aria-label="Close">&times;</button></div>
     <div class="modal-body">
-      <p class="cal-hint">Catches the plan up as of a date: tasks that should have started move there, and unfinished work continues from it.</p>
+      <p class="cal-hint">Moves unfinished work to start from a date.</p>
       <section class="cal-sec">
         <div class="tgrp"><div class="trow"><label for="rescheduleDateInput" class="tgrow">Status date</label><div class="field-dt" id="rescheduleWhen"><input type="text" class="dt-date" id="rescheduleDateInput" aria-label="Status date" onchange="onRescheduleDateChange()"><input type="text" id="rescheduleTimeInput" class="hidden dt-time" aria-label="Status time" onchange="rescheduleTimeTouched = true; renderRescheduleModal()"></div></div></div>
         <p class="cal-hint" id="rescheduleHint"></p>
@@ -2915,10 +2958,9 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
   <div class="modal mid insp">
     <div class="modal-header"><h2>Level resources</h2><button onclick="closeLevelModal()" aria-label="Close">&times;</button></div>
     <div class="modal-body">
-      <p class="cal-hint">Delays a task that needs more of a resource than there is, to the next span with room. Never earlier than its links allow.</p>
+      <p class="cal-hint">Delays tasks so no resource is over-allocated.</p>
       <section class="cal-sec">
         <div class="tgrp"><div class="trow"><label for="levelWithinSlack" class="tgrow">Keep within existing slack</label><input type="checkbox" class="tsw" role="switch" id="levelWithinSlack" checked onchange="renderLevelModal()"></div></div>
-        <p class="cal-hint" id="levelSlackHint">Never moves the plan's finish. Conflicts it can't resolve are listed below.</p>
       </section>
       <section class="cal-sec">
         <div class="cal-sec-title">Scope</div>
@@ -2945,7 +2987,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
   <div class="modal insp">
     <div class="modal-header"><h2>Changes made on both sides</h2><button onclick="closeSyncConflictsModal()" aria-label="Close">&times;</button></div>
     <div class="modal-body">
-      <p class="cal-hint">The newer edit was kept. Check the ones that matter; take the other version if it should have won.</p>
+      <p class="cal-hint">The newer edit was kept.</p>
       <div id="syncConflictsBody"></div>
     </div>
     <div class="modal-footer">
@@ -2981,7 +3023,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
           <div class="help-row"><i class="fa-solid fa-window-minimize"></i><span>The <strong>status bar</strong> along the bottom shows how new tasks are scheduled (click to change), how many tasks there are and are selected, the active filters, and — in the Gantt and Resource Plan — a zoom slider. The Task Form switch is its first button.</span></div>
           <div class="help-row"><i class="fa-solid fa-plus"></i><span><strong>Add Task</strong> inserts a task below the selected one, or at the bottom when nothing is selected. Each task has a start and end date and a % complete, and can be a <strong>milestone</strong> (a one-day diamond).</span></div>
           <div class="help-row"><i class="fa-solid fa-keyboard"></i><span><strong>Dates and times in dialogs</strong> are typed in the format of the list — <strong>24.12.2026</strong> (or 24.12.26, 24.12.), <strong>14:30</strong> (or 1430, 2:30pm) — or picked with the calendar button. Something unreadable is refused, marks the box red and puts the old value back; <strong>Enter</strong> settles a box, and in a single-purpose dialog like Reschedule or Baselines it applies the dialog.</span></div>
-          <div class="help-row"><i class="fa-regular fa-calendar"></i><span><strong>Date format</strong>: Plan settings → <strong>Formats</strong> chooses how dates (dd.mm.yyyy, dd/mm/yyyy, mm/dd/yyyy, yyyy-mm-dd) and times (24-hour or 12-hour AM / PM) are shown and typed on this computer — click a tile, or <strong>Use my browser's format</strong>. The plan itself isn't changed, and the list, dialogs, Gantt, Print, Excel and CSV all follow it. A date typed in the other order is still understood when it can only mean one thing.</span></div>
+          <div class="help-row"><i class="fa-regular fa-calendar"></i><span><strong>Date format</strong>: Plan settings → <strong>Formats</strong> chooses how dates (dd.mm.yyyy, dd/mm/yyyy, mm/dd/yyyy, yyyy-mm-dd) and times (24-hour or 12-hour AM / PM) are shown and typed on this computer — pick a format, or <strong>Use my browser's format</strong>. The plan itself isn't changed, and the list, dialogs, Gantt, Print, Excel and CSV all follow it. A date typed in the other order is still understood when it can only mean one thing.</span></div>
           <div class="help-row"><i class="fa-solid fa-computer-mouse"></i><span><strong>Right-click</strong> a task (in the list, or its row in the chart) for a menu with Edit, Add task, Add empty line, Duplicate, Copy, Cut, Paste, Indent, Outdent and Delete. Right-clicking on the empty part of the list offers Add task, Add empty line and Paste. The buttons for the selected tasks (<strong>Edit, Duplicate, Copy, Delete</strong>) appear in the toolbar while something is selected; with one task <strong>Edit</strong> opens the same dialog as a double-click.</span></div>
           <div class="help-row"><i class="fa-solid fa-palette"></i><span><strong>Row colour</strong> (in the task dialog, or under Edit for several tasks) marks a task in the list with a stripe at its left edge and a light tint of the same colour — also behind its bar in the Gantt chart, and in the printout and the Excel export. The bars themselves keep their <strong>status</strong> colours: green complete, red late, blue in progress, grey not started.</span></div>
           <div class="help-row"><i class="fa-solid fa-grip-lines"></i><span><strong>Add empty line</strong> (in the menu next to Add Task, or on the right-click menu) inserts a blank row below the selected task (below its whole block when it is a group) to separate blocks of tasks. It has an ID but no name, dates or WBS, is never scheduled, charted or linked, and can be moved, indented, copied and deleted like any row.</span></div>
@@ -3008,7 +3050,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
         <div class="help-section">
           <div class="help-section-title">Find a task</div>
           <div class="help-row"><i class="fa-regular fa-keyboard"></i><span>Press <strong>?</strong> anywhere (or use <strong>Keyboard shortcuts</strong> at the top of this window) for the list of keyboard shortcuts.</span></div>
-          <div class="help-row"><i class="fa-solid fa-magnifying-glass"></i><span><strong>Ctrl/Cmd+K</strong>, <code>/</code> or the <strong>Find</strong> button opens a search: part of a name or a note (every word must match), a WBS code such as <code>2.1</code>, <code>#12</code> for the task with that ID, or <code>@anna</code> for a resource, and <code>status:late</code> for the late tasks (also <code>complete</code>, <code>future</code>, <code>on</code> for on schedule — combine it with words). <strong>Enter</strong> goes to the task — folded groups open, a filter that would hide it steps aside, the row (and in the Gantt view the bar) scrolls into view and flashes. <strong>Shift+Enter</strong> shows only the matches.</span></div>
+          <div class="help-row"><i class="fa-solid fa-magnifying-glass"></i><span><strong>Ctrl/Cmd+K</strong>, <code>/</code> or the <strong>Find</strong> field in the sidebar starts a search: part of a name or a note (every word must match), a WBS code such as <code>2.1</code>, <code>#12</code> for the task with that ID, or <code>@anna</code> for a resource, and <code>status:late</code> for the late tasks (also <code>complete</code>, <code>future</code>, <code>on</code>). <strong>Enter</strong> goes to the task — folded groups open, a filter that would hide it steps aside, the row (and in the Gantt view the bar) scrolls into view and flashes. <strong>Shift+Enter</strong> shows only the matches.</span></div>
           <div class="help-row"><i class="fa-solid fa-arrows-left-right"></i><span><strong>Find and replace</strong> (<kbd>Ctrl</kbd>+<kbd>H</kbd>, or the link in the Find window) changes text in one field of many tasks at once — <strong>Task Name</strong>, <strong>Resource</strong>, <strong>Notes</strong> or a custom text field — for all tasks, the filtered ones or the selected ones. The preview shows every change first; one Undo takes it all back.</span></div>
         </div>
         <div class="help-divider"></div>
@@ -8619,9 +8661,9 @@ function renderBaselineModal() {   // labels and buttons follow the chosen slot 
   for (const o of sel.options) { const n = Number(o.value), c = baselineTasksWith(n).length, m = project.baselines && project.baselines[n]; o.textContent = `${baselineName(n)} — ${c ? `set${m ? ' ' + fmtDate(m.setAt) : ''} · ${c} task${c === 1 ? '' : 's'}` : 'not set'}`; }
   const setSlots = setBaselineSlots();
   cmp.innerHTML = setSlots.length ? setSlots.map(n => { const m = project.baselines && project.baselines[n]; return `<option value="${n}">${baselineName(n)}${m ? ' — set ' + fmtDate(m.setAt) : ''}</option>`; }).join('') : '<option value="0">— none set yet —</option>';
-  document.getElementById('baselineCompareHint').textContent = setSlots.length ? 'Drawn as the thin grey line under the Gantt bars and used by the Baseline and Variance columns (positive = later than the baseline).' : 'Set a baseline above first — then the Gantt chart and the Baseline / Variance columns can compare with it.';
+  document.getElementById('baselineCompareHint').textContent = setSlots.length ? 'Drawn under the Gantt bars and used by the Baseline and Variance columns.' : 'Set a baseline first.';
   cmp.disabled = !setSlots.length; if (setSlots.length) cmp.value = String(setSlots.includes(compareBaseline()) ? compareBaseline() : setSlots[0]);
-  document.getElementById('baselineSlotInfo').textContent = count ? `${baselineName(slot)} was set${meta ? ' on ' + fmtDate(meta.setAt) : ''} for ${count} task${count === 1 ? '' : 's'}. Setting it again replaces it (for the tasks you apply it to).` : `${baselineName(slot)} is not set. Setting it saves the current Start and Finish of the tasks you choose.`;
+  document.getElementById('baselineSlotInfo').textContent = count ? `${baselineName(slot)} was set${meta ? ' on ' + fmtDate(meta.setAt) : ''} for ${count} task${count === 1 ? '' : 's'}.` : `${baselineName(slot)} is not set.`;
   document.getElementById('baselineSetBtn').textContent = count ? `Set ${baselineName(slot)} again` : `Set ${baselineName(slot)}`;
   document.getElementById('baselineClearBtn').disabled = !count; document.getElementById('baselineClearBtn').classList.toggle('hidden', !count);   // (nothing to clear: no faint dead link)
   document.getElementById('baselineFootNote').textContent = minuteModeActive() ? 'A baseline keeps each task\'s time of day too.' : '';
@@ -8728,10 +8770,10 @@ function fmtRsChange(r) {
 function renderRescheduleModal() {
   const cand = rescheduleCandidates().length, { iso, time } = rescheduleStatus(), rows = cand ? rescheduleDryRun(iso, time) : [], n = rows.length;
   rows.sort((a, b) => taskDisplayId(a.id) - taskDisplayId(b.id));   // the algorithm's own processing order, not a user-meaningful one — list it the way the grid does, so it's easy to check off against what's on screen
-  document.getElementById('rescheduleHint').textContent = !cand ? 'Every task is already finished — nothing to reschedule.'
-    : n === cand ? `${n === 1 ? 'The 1 unfinished task would' : `All ${n} unfinished tasks would`} move — they are overdue or behind.`
-    : n ? `${n} of the ${cand} unfinished tasks would move — the overdue or behind ones; the rest stay.`
-    : `${cand} task${cand === 1 ? ' is' : 's are'} not finished yet, but none is behind as of this ${minuteModeActive() ? 'moment' : 'date'} — nothing would move.`;
+  document.getElementById('rescheduleHint').textContent = !cand ? 'Every task is finished.'
+    : n === cand ? `${n === 1 ? 'The 1 unfinished task' : `All ${n} unfinished tasks`} would move.`
+    : n ? `${n} of ${cand} unfinished tasks would move.`
+    : 'Nothing would move.';
   document.getElementById('rescheduleBtn').disabled = !n;
   document.getElementById('rescheduleDetails').classList.toggle('hidden', !n);
   if (n) {
@@ -8775,9 +8817,9 @@ function renderLevelModal() {
   const dry = hasPool ? levelDryRun(levelOpts()) : { rows: [], unresolved: [] };
   const rows = dry.rows.slice().sort((a, b) => taskDisplayId(a.id) - taskDisplayId(b.id));
   const n = rows.length, u = dry.unresolved.length;
-  document.getElementById('levelHint').textContent = !hasPool ? 'No resources yet — type a name in a task’s Resource field, or add one on the Resources tab, then come back here.'
-    : (!n && !u) ? 'Nothing to level — no resource is over-allocated within this scope.'
-    : `${n} task${n === 1 ? '' : 's'} would move to resolve ${n === 1 ? 'a' : 'the'} conflict${u ? `; ${u} more resource-day conflict${u === 1 ? '' : 's'} could not be resolved within slack` : ''}.`;
+  document.getElementById('levelHint').textContent = !hasPool ? 'No resources yet.'
+    : (!n && !u) ? 'Nothing to level.'
+    : `${n} task${n === 1 ? '' : 's'} would move.${u ? ` ${u} conflict${u === 1 ? '' : 's'} can't be resolved.` : ''}`;
   document.getElementById('levelBtn').disabled = !n;
   document.getElementById('levelDetails').classList.toggle('hidden', !n);
   if (n) {
@@ -8786,7 +8828,7 @@ function renderLevelModal() {
   }
   const note = document.getElementById('levelUnresolvedNote');
   note.classList.toggle('hidden', !u);
-  if (u) note.textContent = `Could not be resolved within slack: ${dry.unresolved.map(x => x.name).join(', ')}. Try turning off "Keep within existing slack".`;
+  if (u) note.textContent = `Can't be resolved: ${dry.unresolved.map(x => x.name).join(', ')}.`;
 }
 function runLevel() {
   const opts = levelOpts();
@@ -9198,7 +9240,7 @@ function renderHoursByDay() {
     const v = by[d] || base;
     return `<div class="whd-row" data-wd="${d}"><span class="whd-name">${WEEKDAY_NAMES[d]}</span>` +
       `<input type="text" class="dt-time whd-start" aria-label="${WEEKDAY_NAMES[d]} starts" value="${v.start}"><span class="hol-to">to</span><input type="text" class="dt-time whd-end" aria-label="${WEEKDAY_NAMES[d]} ends" value="${v.end}">` +
-      `<input type="text" class="whd-breaks" aria-label="${WEEKDAY_NAMES[d]} breaks" placeholder="breaks, e.g. 12:00-13:00" value="${breaksText(v.breaks)}">` +
+      `<input type="text" class="whd-breaks" aria-label="${WEEKDAY_NAMES[d]} breaks" placeholder="Breaks" value="${breaksText(v.breaks)}">` +
       `<button type="button" class="whd-remove" aria-label="Remove ${WEEKDAY_NAMES[d]}'s own hours" title="Remove"><i class="fa-solid fa-xmark"></i></button></div>`;
   }).join('');
   for (const btn of document.querySelectorAll('#whDayRows .whd-remove')) btn.onclick = () => removeHoursDay(Number(btn.closest('.whd-row').dataset.wd));
@@ -10540,7 +10582,7 @@ function renderSyncConflictsModal() {
   const body = document.getElementById('syncConflictsBody');
   body.innerHTML = syncConflictLog.length ? syncConflictLog.map((c, i) => c.kind === 'file' ? `<div class="conflict-card">
       <div class="conflict-title"><i class="fa-solid fa-file-circle-check"></i><strong>${escapeHtml(c.name)}</strong><span class="conflict-time">${new Date(c.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span></div>
-      <p class="cal-hint" style="margin:0 0 8px">A conflicted copy of this plan's file (two devices saved at once). ${c.changed ? `Merged: ${c.tasks} task${c.tasks === 1 ? '' : 's'} changed${c.moved ? `, ${c.moved} re-planned` : ''}; the newer version of each was kept.` : 'It held nothing new.'} ${c.renamedTo ? `Renamed <strong>${escapeHtml(c.renamedTo)}</strong> and kept.` : 'Not renamed: it stays where it is until you reload.'}</p>
+      <p class="cal-hint" style="margin:0 0 8px">Two devices saved at once. ${c.changed ? `${c.tasks} task${c.tasks === 1 ? '' : 's'} merged${c.moved ? `, ${c.moved} re-planned` : ''}.` : 'Nothing new.'} ${c.renamedTo ? `Kept as <strong>${escapeHtml(c.renamedTo)}</strong>.` : ''}</p>
       <div class="conflict-actions"><button class="btn" onclick="dismissSyncConflict(${i})">Dismiss</button></div></div>` : `<div class="conflict-card">
       <div class="conflict-title">${c.kind === 'plan' ? '<i class="fa-solid fa-gear"></i>' : '<i class="fa-solid fa-list-check"></i>'}<strong>${escapeHtml(c.name || 'Untitled')}</strong><span class="conflict-time">${new Date(c.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span></div>
       <table class="conflict-table"><tr><th></th><th>Yours</th><th>The other version</th></tr>${c.fields.map(f => `<tr><td>${escapeHtml(conflictLabel(f.key))}</td>
@@ -11790,7 +11832,7 @@ function openBulkModal() {
   const ids = selectedIds().filter(id => !byId(id).spacer); if (!ids.length) return;   // (empty lines have no fields)
   const groups = ids.filter(id => hasChildren(id)).length;
   document.getElementById('bulkTitle').textContent = ids.length === 1 ? 'Edit task' : `Edit ${ids.length} tasks`;
-  document.getElementById('bulkHint').textContent = `Tick the fields you want to change — everything else stays as it is.${groups ? ' Groups keep the progress and dates worked out from their tasks.' : ''}`;
+  document.getElementById('bulkHint').textContent = `Tick the fields to change.${groups ? ' Groups keep their worked-out progress and dates.' : ''}`;
   for (const f of ['progress', 'resource', 'mode', 'worktype', 'work', 'color', 'shift', 'pred']) document.getElementById('bulkOn-' + f).checked = false;
   for (const id of ['bulkVal-progress', 'bulkVal-resource', 'bulkVal-work', 'bulkVal-shift', 'bulkVal-predId', 'bulkVal-predLag']) document.getElementById(id).value = '';
   { const sh = document.getElementById('bulkVal-shift'), mm = minuteModeActive(); sh.type = mm ? 'text' : 'number'; sh.placeholder = mm ? '− earlier, + later' : '− earlier, + later'; sh.setAttribute('aria-label', mm ? 'Working time to move by, such as 2h, -30m or 1d' : 'Working days to move by'); document.getElementById('bulkShiftHint').textContent = mm ? 'e.g. 2h, -30m, 1d' : 'working days'; }
@@ -12934,9 +12976,9 @@ function openFileSyncModal() {
   const first = !missing && isFirstRun();
   document.getElementById('fileSyncModalTitle').textContent = missing ? 'Linked file not found' : first ? 'Welcome to Milestone' : 'Choose a folder to continue';
   document.getElementById('fileSyncModalText').innerHTML = missing
-    ? `<p style="margin:0">“${escapeHtml(fname)}” was moved, renamed or deleted. Pick the file where it went, or choose a folder and create a new file for “${escapeHtml(project.name)}” (its current tasks are saved into it).</p>`
-    : first ? `<p style="margin:0">Where should your plans live? Milestone keeps each plan as a file in a folder on your disk — no account, no server, and nothing leaves your computer.</p><ul class="fs-points"><li>Choose the folder, then create a new file there or pick a plan file that is already in it.</li><li>Choose a folder that iCloud Drive, OneDrive or Dropbox syncs and your devices stay in step; the conflicted copies a sync service makes are merged for you.</li><li>You can change the folder or add more plans later.</li></ul>`
-    : `<p style="margin:0">Milestone keeps “${escapeHtml(project.name)}” as a file in a folder on your disk.</p><ul class="fs-points"><li>Choose the folder, then create a new file there or pick a plan file that is already in it.</li><li>In a folder synced by iCloud Drive, OneDrive or Dropbox, your devices stay in step.</li><li>The conflicted copies a sync service makes are merged for you.</li></ul>`;
+    ? `<p style="margin:0">“${escapeHtml(fname)}” was moved, renamed or deleted. Pick the file, or choose a folder to create a new one.</p>`
+    : first ? `<p style="margin:0">Plans are saved as files in a folder you choose.</p>`
+    : `<p style="margin:0">“${escapeHtml(project.name)}” is saved as a file in a folder you choose.</p>`;
   document.getElementById('linkSameFolderBtn').classList.toggle('hidden', !(missing && syncDirHandle));
   document.getElementById('fileSyncModalBg').classList.add('open');
 }
@@ -13579,7 +13621,7 @@ function openPlanModal(mode) {
   const needsFile = fileSyncSupported();
   document.getElementById('planSubmitBtn').textContent = isNew ? (needsFile ? 'Create…' : 'Create') : 'Rename';
   document.getElementById('planModalHint').textContent = !isNew ? '' : needsFile
-    ? 'Every plan lives in a file in a folder on your disk. After you name it, you’ll choose the folder.'
+    ? 'You’ll choose the folder next.'
     : 'A new plan starts empty and is kept in this browser (this browser can’t save to files).';
   document.getElementById('planModalHint').classList.toggle('hidden', !isNew);
   const input = document.getElementById('planNameInput');

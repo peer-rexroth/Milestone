@@ -142,7 +142,7 @@ with sync_playwright() as p:
     check("the breaks list and the day rows write a break the same way ('12:00-13:00')", "12:00-13:00" in pg.inner_text("#whBreakList") and ev("() => breaksText([{start:'12:00',end:'13:00'}])") == "12:00-13:00")
     check("with no different days yet, only 'Add a different day' is offered — no rows to open the section for", pg.locator("#whDayRows .whd-row").count() == 0 and pg.locator("#whDayAddSelect option").count() == 5)
     pg.click("#whDayDetails summary"); pg.wait_for_timeout(100)
-    pg.select_option("#whDayAddSelect", "5"); pg.click("#whDayAddRow button")
+    pg.select_option("#whDayAddSelect", "5"); pg.click("#whDayAddBtn")
     rows = pg.locator("#whDayRows .whd-row")
     h0 = rows.first.bounding_box()["height"]
     check("an added weekday row is ONE line (name, start, end and breaks side by side)", h0 < 44, h0)
@@ -210,11 +210,11 @@ with sync_playwright() as p:
     close_all()
     ev("() => openBaselineModal()"); pg.wait_for_timeout(200)
     t = pg.inner_text("#baselineModalBg .modal-body").upper()
-    check("Baselines: 'Save a baseline' says it applies on Set baseline, the comparison says it applies right away", "SAVE A BASELINE" in t and "APPLIES WHEN YOU CLICK SET BASELINE" in t and "APPLIES RIGHT AWAY" in t, t[:300])
+    check("Baselines: one short line, then 'Save a baseline' and the comparison", "SAVE A BASELINE" in t.upper() and "COMPARE THE CHART AND COLUMNS WITH" in t.upper() and len(t.split("\n")[0]) < 70, t[:300])
     check("...and in a minute-mode plan the footer notes the time of day is kept", "time of day" in pg.inner_text("#baselineFootNote"))
     close_all()
     ev("() => { fileSyncStatus = 'unlinked'; openFileSyncModal(); }"); pg.wait_for_timeout(150)
-    check("the folder dialog is a short line and three points, not one paragraph", pg.locator("#fileSyncModalText .fs-points li").count() == 3, pg.inner_text("#fileSyncModalText"))
+    check("the folder dialog is one short line", len(pg.inner_text("#fileSyncModalText")) < 90 and pg.locator("#fileSyncModalText .fs-points li").count() == 0, pg.inner_text("#fileSyncModalText"))
     close_all()
     check("'mid' dialogs share one width (560px)", ev("() => { document.getElementById('rescheduleModalBg').classList.add('open'); const w = Math.round(document.querySelector('#rescheduleModalBg .modal').getBoundingClientRect().width); document.getElementById('rescheduleModalBg').classList.remove('open'); return w; }") == 560)
 

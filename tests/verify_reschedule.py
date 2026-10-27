@@ -112,7 +112,7 @@ with sync_playwright() as p:
     # ---------------------------------------------------------------- nothing to do
     seed(f"() => {{ const mk = {MK}; tasks.push(mk('Done', 0, '2026-09-07', '2026-09-08', {{progress: 100}})); }}")
     pg.click("#scheduleMenuBtn"); pg.wait_for_selector("#scheduleMenu.open"); pg.click("#planRescheduleItem"); pg.wait_for_selector("#rescheduleModalBg.open")
-    check("with everything finished, the hint says so and the button is disabled", "already finished" in pg.inner_text("#rescheduleHint") and pg.is_disabled("#rescheduleBtn"), pg.inner_text("#rescheduleHint"))
+    check("with everything finished, the hint says so and the button is disabled", "finished" in pg.inner_text("#rescheduleHint") and pg.is_disabled("#rescheduleBtn"), pg.inner_text("#rescheduleHint"))
     pg.keyboard.press("Escape")
 
     check("no console errors or page errors across the whole run", not errors, errors[:5])

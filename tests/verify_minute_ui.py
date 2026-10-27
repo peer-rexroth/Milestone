@@ -42,7 +42,7 @@ with sync_playwright() as p:
     pg.check("#precisionMinute")
     pg.fill("#whStart", "09:00"); pg.fill("#whEnd", "18:00")
     pg.click("#whBreakList .hol-row button")   # remove the default 12:00-13:00 break first — an overlapping add would be deduped, not replace it
-    pg.fill("#whBreakFrom", "12:30"); pg.fill("#whBreakTo", "13:15"); pg.click("#calendarModalBg .wh-break-add button")
+    pg.fill("#whBreakFrom", "12:30"); pg.fill("#whBreakTo", "13:15"); pg.click("#whBreakAddBtn")
     check("the added break appears in its list", "12:30" in pg.inner_text("#whBreakList") and "13:15" in pg.inner_text("#whBreakList"))
     pg.click("#calendarModalBg .modal-footer button.btn-primary"); pg.wait_for_timeout(150)
     wh = ev("() => ({ timeUnit: project.timeUnit, workHours: project.workHours })")
@@ -61,7 +61,7 @@ with sync_playwright() as p:
 
     # ---------------------------------------------------------------- an invalid break is refused with a message, not silently dropped
     pg.click("#planSettingsBtn"); pg.click(".modal-bg.open [data-settings-tab='calendar']"); pg.wait_for_selector("#calendarModalBg.open")
-    pg.fill("#whBreakFrom", "14:00"); pg.fill("#whBreakTo", "13:00"); pg.click("#calendarModalBg .wh-break-add button")
+    pg.fill("#whBreakFrom", "14:00"); pg.fill("#whBreakTo", "13:00"); pg.click("#whBreakAddBtn")
     check("a break ending before it starts is refused with a toast, not added", "end after it starts" in pg.inner_text("#toastMsg"))
     pg.keyboard.press("Escape")
 

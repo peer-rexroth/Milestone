@@ -59,7 +59,7 @@ with sync_playwright() as p:
     check("with the defaults: the Tasks sheet has the Tasks view's default columns, the Gantt sheet the Gantt view's (Task Name, Start, Finish, Duration, % Complete)", header(wd["Tasks"]) == ["ID", "Task Name", "Start", "Finish", "Duration", "% Complete", "Predecessors", "Resource", "Status"] and header(wd["Gantt"]) == ["ID", "Task Name", "Start", "Finish", "Duration", "% Complete"], (header(wd["Tasks"]), header(wd["Gantt"])))
     # ================================================================ the dialog path
     pg.click("#dataMenuBtn"); pg.click("#dataMenu >> text=Export to Excel"); pg.wait_for_selector("#excelModalBg.open")
-    check("the export dialog says which view each sheet follows", "Tasks view" in pg.inner_text("#excelModalBg") and "Gantt view" in pg.inner_text("#excelModalBg"))
+    check("the export dialog offers the columns as shown in the list or all of them", "As shown in the task list" in pg.inner_text("#excelModalBg") and "All columns" in pg.inner_text("#excelModalBg"))
     with pg.expect_download() as dl: pg.click("#excelExportBtn")
     import tempfile, os
     path = os.path.join(tempfile.mkdtemp(), "export.xlsx"); dl.value.save_as(path); wbk = openpyxl.load_workbook(path)

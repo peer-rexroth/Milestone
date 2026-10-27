@@ -130,7 +130,7 @@ with sync_playwright() as p:
     # --- New plan needs a file
     n0 = len(B.index()["plans"])
     B.open_menu(); pg.click("#planNewItem"); pg.wait_for_selector("#planModalBg.open")
-    check("New plan dialog has one button, 'Create…', and explains the file", pg.locator("#planSubmitBtn").inner_text() == "Create…" and pg.locator("#planFileBtn").count() == 0 and "file" in pg.inner_text("#planModalHint"))
+    check("New plan dialog has one button, 'Create…', and explains the file", pg.locator("#planSubmitBtn").inner_text() == "Create…" and pg.locator("#planFileBtn").count() == 0 and "folder" in pg.inner_text("#planModalHint"))
     pg.fill("#planNameInput", "Plan B"); pg.evaluate("() => window.__pick = '__abort__'"); pg.click("#planSubmitBtn"); pg.wait_for_timeout(400)
     check("cancelling the save dialog creates no plan", len(B.index()["plans"]) == n0 and B.pname() == "Alpha", (len(B.index()["plans"]), B.pname()))
     pg.evaluate("() => window.__pick = null"); pg.click("#planSubmitBtn"); pg.wait_for_selector("#planModalBg:not(.open)"); B.settle()
