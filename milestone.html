@@ -1654,11 +1654,11 @@ select.rst-select:disabled { opacity: .5; }
 .settings-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 /* ── Plan settings as a grouped inspector (Calendar, Scheduling rules, Formats): the same capsule tabs, captions, tinted groups of label-left / value-right
    rows, switches and accent "add" rows as Edit Task. No uppercase section titles, no outlined boxes, no tiles. ── */
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .settings-tabs { width: max-content; max-width: calc(100% - 48px); margin: 12px 24px 0; padding: 3px; gap: 2px; border: 0; border-radius: 999px; background: var(--cap-fill); }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .settings-tab { margin: 0; padding: 5px 14px; border: 0; border-radius: 999px; font-size: var(--fs-13); font-weight: 500; color: var(--text-dim); }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .settings-tab i { display: none; }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .settings-tab.active { background: var(--glass-strong); color: var(--text); font-weight: 600; box-shadow: 0 1px 3px var(--shadow-ink); }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .cal-summary { border: 0; background: var(--cap-fill); }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #fieldsModalBg) .settings-tabs { width: max-content; max-width: calc(100% - 48px); margin: 12px 24px 0; padding: 3px; gap: 2px; border: 0; border-radius: 999px; background: var(--cap-fill); }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #fieldsModalBg) .settings-tab { margin: 0; padding: 5px 14px; border: 0; border-radius: 999px; font-size: var(--fs-13); font-weight: 500; color: var(--text-dim); }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #fieldsModalBg) .settings-tab i { display: none; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #fieldsModalBg) .settings-tab.active { background: var(--glass-strong); color: var(--text); font-weight: 600; box-shadow: 0 1px 3px var(--shadow-ink); }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #fieldsModalBg) .cal-summary { border: 0; background: var(--cap-fill); }
 :is(#calendarModalBg, #rulesModalBg, #formatModalBg) .modal-body { gap: 18px; padding-top: 16px; }
 :is(#calendarModalBg, #rulesModalBg, #formatModalBg) .cal-sec { gap: 6px; }
 :is(#calendarModalBg, #rulesModalBg, #formatModalBg) .cal-sec + .cal-sec, :is(#calendarModalBg, #rulesModalBg, #formatModalBg) .cal-sec + .cal-how { padding-top: 0; border-top: 0; }
