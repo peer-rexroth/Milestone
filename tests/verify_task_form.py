@@ -48,11 +48,9 @@ with sync_playwright() as p:
 
     # ---------------------------------------------------------------- what it shows
     ev("() => { setSelection(['b']); render(); }"); pg.wait_for_timeout(80)
-    lines = ev("""() => { const row = document.querySelector('#tfResRows .tf-row'), head = document.querySelector('.tf-res .tf-row-head');
-      const edges = el => [...el.children].slice(0, -1).map(c => Math.round(c.getBoundingClientRect().right));
-      const colored = [...row.children].slice(0, -1).every(c => getComputedStyle(c).borderRightColor !== 'rgba(0, 0, 0, 0)');
-      return { same: JSON.stringify(edges(row)) === JSON.stringify(edges(head)), colored }; }""")
-    check("the tables are real lists: a data row's column lines sit exactly under the header's, and every cell (editable ones too) draws its line", lines == {"same": True, "colored": True}, lines)
+    lines = ev("""() => ({ grouped: !!document.querySelector('.tf-res.tgrp') && !!document.querySelector('.tf-pred.tgrp') && !!document.querySelector('.tf-left.tgrp') && !!document.querySelector('.tf-right.tgrp'),
+      noHeader: !document.querySelector('.tf-row-head'), switches: ['tfEffort', 'tfManual'].every(id => document.getElementById(id).classList.contains('tsw')) })""")
+    check("the form is grouped rows like Edit Task: tinted groups, no gridded table header, switches for Effort driven / Manually Scheduled", lines == {"grouped": True, "noHeader": True, "switches": True}, lines)
     seed(); select("b")
     check("it shows the selected task: header, name, duration, start, finish, % complete, type",
           "#2 Build" in pg.inner_text("#tfTaskLabel") and pg.input_value("#tfName") == "Build" and pg.input_value("#tfDur") == "10 days"
@@ -66,7 +64,7 @@ with sync_playwright() as p:
     check("the Predecessors table lists its link: ID 1, Design, FS, +1 — plus a blank row",
           pred_rows.count() == 2 and pred_rows.nth(0).locator("input[aria-label='Predecessor task number']").input_value() == "1" and pred_rows.nth(0).locator(".tf-pred-name").inner_text() == "Design"
           and pred_rows.nth(0).locator("select").input_value() == "FS" and pred_rows.nth(0).locator("input[aria-label='Lead or lag']").input_value() == "+1")
-    check("OK and Cancel are disabled while nothing has changed", not pg.is_enabled("#tfOkBtn") and not pg.is_enabled("#tfCancelBtn"))
+    check("Save and Cancel are disabled while nothing has changed", not pg.is_enabled("#tfOkBtn") and not pg.is_enabled("#tfCancelBtn"))
     select("a")
     check("selecting another task shows that one (nothing pending)", pg.input_value("#tfName") == "Design" and pg.locator("#tfResRows .tf-row:not(.tf-row-head)").nth(0).locator("input[aria-label='Units']").input_value() == "50%")
 
@@ -78,7 +76,7 @@ with sync_playwright() as p:
     pg.select_option("#tfType", "fixedDuration")
     pg.locator("#tfResRows .tf-row:not(.tf-row-head)").nth(1).locator("input[aria-label='Resource name']").fill("Carl")
     pg.locator("#tfResRows .tf-row:not(.tf-row-head)").nth(1).locator("input[aria-label='Units']").fill("50")
-    check("editing shows 'not applied yet' and enables OK / Cancel", "Not applied" in pg.inner_text("#tfNote") and pg.is_enabled("#tfOkBtn"))
+    check("editing shows 'not applied yet' and enables Save / Cancel", "Not applied" in pg.inner_text("#tfNote") and pg.is_enabled("#tfOkBtn"))
     check("nothing is written to the plan before OK", task("b")["name"] == "Build" and task("b")["res"] == "Ben")
     pg.click("#tfOkBtn"); pg.wait_for_timeout(200)
     tb = task("b")
@@ -224,14 +222,11 @@ with sync_playwright() as p:
     check("an empty line has nothing to edit", "nothing to edit" in pg.inner_text("#taskFormBody"))
 
     GEOM = """() => { const r = s => document.querySelector(s).getBoundingClientRect();
-      return { okR: Math.round(r('#tfOkBtn').right), predR: Math.round(r('.tf-pred').right), resL: Math.round(r('.tf-res').left), nameL: Math.round(r('label[for=tfName]').left),
-               resW: Math.round(r('.tf-res').width), predW: Math.round(r('.tf-pred').width), durW: r('#tfDur').width, nameW: r('#tfName').width,
-               resR: Math.round(r('.tf-res').right), durR: Math.round(r('#tfDur').right), finR: Math.round(document.getElementById('tfFinish').closest('.tf-dt').getBoundingClientRect().right),
-               rightL: Math.round(r('.tf-right').left), predL: Math.round(r('.tf-pred').left),
-               startW: Math.round(document.getElementById('tfStart').closest('.tf-dt').getBoundingClientRect().width), finW: Math.round(document.getElementById('tfFinish').closest('.tf-dt').getBoundingClientRect().width) }; }"""
-    def geom_ok(g): return abs(g["okR"] - g["predR"]) <= 1 and abs(g["resL"] - g["nameL"]) <= 1 and abs(g["resW"] - g["predW"]) <= 1 and g["durW"] < g["nameW"] and abs(g["durR"] - g["resR"]) <= 1 and abs(g["finR"] - g["resR"]) <= 1 and abs(g["rightL"] - g["predL"]) <= 1 and abs(g["startW"] - g["finW"]) <= 1
+      return { l: [Math.round(r('.tf-left').left), Math.round(r('.tf-res').left)], lr: [Math.round(r('.tf-left').right), Math.round(r('.tf-res').right)],
+               rl: [Math.round(r('.tf-right').left), Math.round(r('.tf-pred').left)], rr: [Math.round(r('.tf-right').right), Math.round(r('.tf-pred').right)], saveR: Math.round(r('#tfOkBtn').right), predR: Math.round(r('.tf-pred').right) }; }"""
+    def geom_ok(g): return abs(g["l"][0] - g["l"][1]) <= 1 and abs(g["lr"][0] - g["lr"][1]) <= 1 and abs(g["rl"][0] - g["rl"][1]) <= 1 and abs(g["rr"][0] - g["rr"][1]) <= 1 and abs(g["saveR"] - g["predR"]) <= 14
     seed(); select("b"); g = ev(GEOM)
-    check("day plan: the fields line up with the tables — left half (Name…Duration, Start…Finish) over the Resources table, right half (Effort driven…Next, Task type…OK) over the Predecessors table; Start and Finish the same width; Duration short, Name wide", geom_ok(g), g)
+    check("day plan: the two field groups sit exactly over the Resources and Predecessors lists, and Save lines up with the right edge", geom_ok(g), g)
     # ---------------------------------------------------------------- Hours & minutes plan: times
     seed(); ev("() => { project.timeUnit = 'minute'; normalizeData(); save(); render(); }"); select("a")
     g = ev(GEOM)

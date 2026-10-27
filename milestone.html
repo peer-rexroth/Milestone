@@ -907,75 +907,71 @@ body.col-moving, body.col-moving * { cursor: grabbing !important; user-select: n
 .tf-bar .tool-group .icon-btn:hover { background: var(--cap-hover); }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 .tf-body { flex: 1; min-width: 0; min-height: 0; overflow: auto; padding: 10px 14px 10px; display: flex; flex-direction: column; gap: 8px; }
-.tf-wrap { flex: 1; min-height: 0; align-self: flex-start; width: max-content; max-width: 100%; display: flex; flex-direction: column; gap: 8px; }   /* sized to the field grid, so the tables below end exactly where the OK button does */
+.tf-wrap { flex: 1; min-height: 0; width: 100%; max-width: 1200px; display: flex; flex-direction: column; gap: 12px; }   /* sized to the field grid, so the tables below end exactly where the OK button does */
 .tf-empty { color: var(--text-dim); font-size: var(--fs-13); padding: 14px 2px; }
-.tf-top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6px 12px; align-items: start; font-size: var(--fs-13); }   /* the same two halves (and 12px gap) as the tables below, so the fields line up with them left and right */
-.tf-left { display: grid; grid-template-columns: auto minmax(150px, 1fr) auto minmax(150px, 1fr); gap: 6px 10px; align-items: center; }   /* Start and Finish share one width */
-.tf-top.mm .tf-left { grid-template-columns: auto minmax(206px, 1fr) auto minmax(206px, 1fr); }   /* date + time */
-.tf-right { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 10px; align-items: center; }
-.tf-left > label, .tf-pair > label { color: var(--text-dim); white-space: nowrap; }
-.tf-left .tf-name-in { grid-column: 2 / span 2; }   /* Name takes the room above the "Finish:" label too */
-.tf-dur { grid-column: 4; display: flex; align-items: center; gap: 8px; min-width: 0; }   /* Duration: label + a short box, above Finish's box */
-.tf-dur > label { color: var(--text-dim); white-space: nowrap; }
-.tf-dur .tf-in { flex: 1 1 auto; min-width: 0; }
-.tf-in, .tf-top select { padding: 4px 8px; border: 1px solid var(--border); border-radius: var(--r-s); background: var(--panel); color: var(--text); width: 100%; min-width: 0; font-size: var(--fs-13); }
-.tf-in:disabled, .tf-top select:disabled { background: var(--panel-2); color: var(--text-dim); }
-.tf-top .dt-wrap > input.dt-date { padding: 4px 28px 4px 8px; border: 1px solid var(--border); border-radius: var(--r-s); background: var(--panel); color: var(--text); font-size: var(--fs-13); }
-.tf-top .dt-wrap > input.dt-date:disabled { background: var(--panel-2); color: var(--text-dim); }
-.tf-top .dt-cal { width: 26px; height: 26px; }
-.tf-checks { display: flex; align-items: center; gap: 16px; white-space: nowrap; }
-.tf-check { display: flex; align-items: center; gap: 6px;}
-.tf-check input:disabled + span { opacity: .5; }
-.tf-pair { display: flex; align-items: center; gap: 6px; }
-.tf-pair select { width: 152px; }   /* "Fixed Duration" + the chevron */
-.tf-pair #tfPct { width: 62px; text-align: right; }
-.tf-btns { display: flex; gap: 6px; justify-content: flex-end; }
-.tf-btns .btn { min-width: 72px; justify-content: center; }
-.tf-dt { display: flex; gap: 6px; min-width: 0; }
-.tf-dt .dt-wrap { flex: 1 1 122px; min-width: 122px; }
-.tf-dt input.dt-time { flex: 0 0 64px; width: 64px; padding-inline: 8px; text-align: left; }
 .tf-note { font-size: var(--fs-12); color: var(--text-faint); min-height: 0; }
 .tf-note:empty { display: none; }
 .tf-note.dirty { color: var(--warning, #bf8700); }
 .tf-hint { font-size: var(--fs-12); color: var(--text-faint); }
-/* the two list tables */
-.tf-tables { flex: 1; min-height: 110px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }   /* two tables of the same width */
-.tf-table { display: flex; flex-direction: column; min-height: 0; border: 1px solid var(--border); border-radius: var(--r-s); overflow: hidden; background: var(--panel); }
-.tf-scroll { flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; }
-.tf-grid { display: flex; flex-direction: column; flex-shrink: 0; }
-.tf-row, .tf-fill { display: grid; }
-.tf-res .tf-row, .tf-res .tf-fill { grid-template-columns: 40px minmax(110px, 1fr) 72px 84px 30px; }
-.tf-pred .tf-row, .tf-pred .tf-fill { grid-template-columns: 56px minmax(110px, 1fr) 76px 76px 30px; }
-.tf-row { height: 30px; border-bottom: 1px solid var(--border); font-size: var(--fs-12); }
-.tf-row > *, .tf-fill > * { border-right: 1px solid var(--border); min-width: 0; }
-.tf-row > *:last-child, .tf-fill > *:last-child { border-right: none; }
-.tf-row > span { display: flex; align-items: center; padding: 0 8px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-.tf-row.tf-row-head { height: 28px; background: var(--panel-2); font-size: var(--fs-12); font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: .03em; flex-shrink: 0; }
-.tf-row .r { justify-content: flex-end; text-align: right; }
-.tf-fill { flex: 1; min-height: 0; }
-.tf-row:not(.tf-row-head):hover { background: var(--panel-2); }
-.tf-cell { width: 100%; height: 100%; border: 1px solid transparent; border-radius: 0; background: transparent; color: var(--text); padding: 0 8px; font-size: var(--fs-12); outline: none; min-width: 0; }
-/* An editable cell is a grid track itself, so its OWN border must carry the column line (a plain border: 1px transparent
-   would otherwise wipe out the `.tf-row > *` border-right every other cell draws — the lines went missing in data rows). */
-.tf-row > .tf-cell { border-right-color: var(--border); }
-.tf-row > .tf-cell:hover { border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
-.tf-row > .tf-cell:focus { border-color: var(--accent); background: var(--panel); }
+/* The form is the Edit Task inspector laid out for a wide, short pane: tinted groups of label-left / value-right rows (.tgrp / .trow, the same pieces),
+   switches for on/off, the two lists as grouped rows with a quiet "add" row, and Cancel · Save. */
+.tf-foot { display: flex; align-items: center; gap: 8px; }
+.tf-foot .tf-note { flex: 1; min-width: 0; margin: 0 8px; }
+.tf-foot .tf-note:empty { display: block; }
+.tf-btns { display: flex; gap: 8px; }
+.tf-btns .btn { min-width: 76px; justify-content: center; }
+.tf-top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; align-items: start; }
+.tf-top .tf-name-in { flex: 1 1 auto; }
+.tf-top .tf-in, .tf-top select.tin { width: auto; }
+.tf-top #tfPct { flex: 0 1 80px; }
+.tf-top select.tin { flex: 0 1 220px; background-color: transparent; }
+.tf-top .trow:has(:disabled) > label { color: var(--text-dim); }
+.tf-top .tsw:disabled { opacity: .5; }
+.tf-dt { display: flex; gap: 4px; justify-content: flex-end; flex: 0 1 auto; min-width: 0; }
+.tf-dt .dt-wrap { flex: 0 0 auto; min-width: 0; }
+.tf-dt input.dt-date { width: 112px; padding-right: 30px; }
+.tf-dt input.dt-time { flex: 0 0 64px; min-width: 64px; width: 64px; text-align: right; }
+.tf-top .dt-cal { width: 26px; height: 26px; }
+.tf-tables { flex: 1; min-height: 110px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; align-items: start; }
+.tf-sec { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.tf-cap { display: flex; align-items: center; justify-content: space-between; margin: 0 14px; font-size: var(--fs-12); font-weight: 600; color: var(--text-faint); }
+.tf-head-btn { border: none; background: none; padding: 0; font-size: var(--fs-12); font-weight: 500; color: var(--blue-text); }
+.tf-head-btn:hover { text-decoration: underline; }
+.tf-table { display: flex; flex-direction: column; min-width: 0; }
+.tf-grid { display: flex; flex-direction: column; }
+.tf-row { position: relative; display: grid; align-items: center; gap: 8px; min-height: 40px; padding: 0 14px; font-size: var(--fs-14); }
+.tf-row + .tf-row::before { content: ""; position: absolute; left: 14px; right: 0; top: 0; height: 1px; background: var(--border); }
+.tf-res .tf-row { grid-template-columns: 24px minmax(0, 1fr) 56px 76px 24px; }
+.tf-pred .tf-row { grid-template-columns: 44px minmax(0, 1fr) 56px 64px 24px; }
+.tf-row > * { min-width: 0; }
+.tf-row > span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.tf-cell { width: 100%; height: 32px; border: 0; border-radius: var(--r-xs); background: transparent; color: var(--text-dim); padding: 0; font-size: var(--fs-14); outline: none; min-width: 0; box-shadow: none; }
+.tf-row > .tf-cell:focus { background: transparent; }
+.tf-row:focus-within { background: var(--hover); }
 .tf-cell::placeholder { color: var(--text-faint); }
-select.tf-cell { padding: 0 24px 0 8px !important; background-position: right 7px center !important; }
+.tf-res .tf-cell:not(.tf-units) { color: var(--text); }
+select.tf-cell { padding: 0 20px 0 0 !important; text-align-last: left; }
 input.tf-cell[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 input.tf-cell[type=number] { -moz-appearance: textfield; }
 .tf-units, .tf-lag { text-align: right; }
-.tf-id { color: var(--text-faint); font-size: var(--fs-12); justify-content: flex-end; }
-.tf-work { color: var(--text-dim); font-variant-numeric: tabular-nums; justify-content: flex-end; }
+.tf-id { color: var(--text-faint); font-size: var(--fs-12); text-align: right; }
+.tf-work { color: var(--text-dim); font-variant-numeric: tabular-nums; text-align: right; }
+.tf-pred-name { color: var(--text-dim); }
 .tf-pred-name.none { color: var(--text-faint); }
-.tf-row.tf-blank select.tf-cell, .tf-row.tf-blank .tf-cell { color: var(--text-faint); }   /* the trailing add-row: its defaults (FS, 0, 100%) read as hints until typed in */
-.tf-remove { width: 100%; height: 100%; border: none; background: transparent; color: var(--text-faint);opacity: 0; }
+.tf-row.tf-blank .tf-cell, .tf-row.tf-blank select.tf-cell { color: var(--text-faint); }   /* the trailing "add" row: its defaults (FS, 0, 100%) read as hints until typed over */
+.tf-row.tf-blank input.tf-cell:first-of-type { color: var(--blue-text); font-weight: 500; }
+.tf-row.tf-blank input.tf-cell:first-of-type::placeholder { color: var(--blue-text); opacity: 1; }
+.tf-res .tf-blank > .tf-id { display: none; }
+.tf-res .tf-blank > .tf-cell:first-of-type { grid-column: 1 / 3; }
+.tf-pred .tf-blank > .tf-pred-name { display: none; }
+.tf-pred .tf-blank > .tf-cell:first-child { grid-column: 1 / 3; text-align: left !important; }
+.tf-blank > :is(.tf-units, .tf-work, select.tf-cell, .tf-lag) { opacity: 0; }
+.tf-blank:focus-within > :is(.tf-units, .tf-work, select.tf-cell, .tf-lag) { opacity: 1; }
+.tf-remove { width: var(--ib-s); height: var(--ib-s); padding: 0; border: none; border-radius: 50%; background: transparent; color: var(--text-faint); opacity: 0; }
 .tf-row:hover .tf-remove, .tf-remove:focus { opacity: 1; }
-.tf-remove:hover { color: var(--danger); }
-.tf-head-btn { border: none; background: transparent; color: var(--text-faint);font-size: var(--fs-12); }
-.tf-head-btn:hover { color: var(--accent); }
+.tf-remove:hover { background: var(--pressed); color: var(--text); }
 .tf-remove[hidden] { display: block !important; visibility: hidden; }
-@media (max-width: 1080px) { .tf-wrap { width: 100%; } .tf-top { grid-template-columns: 1fr; } .tf-left, .tf-top.mm .tf-left { grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr); } .tf-checks, .tf-pair, .tf-btns { grid-column: 1 / -1; justify-content: flex-start; } .tf-tables { grid-template-columns: 1fr; } }
+@media (max-width: 1080px) { .tf-top, .tf-tables { grid-template-columns: 1fr; } }
 .grid-pane { width: var(--grid-pane-width, 360px); flex-shrink: 0; display: flex; flex-direction: column; border-right: 1px solid var(--border); background: var(--panel); position: relative; }
 /* The task list — the same one in the Tasks view and (left of the chart) in the Gantt view; the Tasks-view rules below apply to both. */
 .grid-header, .grid-row {
@@ -1116,8 +1112,7 @@ input.inline-edit { width: 100%; min-width: 0; padding: 2px 6px; border: 1px sol
 html.time12 input.dt-time { width: 104px; flex: 0 0 104px; }
 html.time12 .field-dt input.dt-time { flex: 0 0 104px; min-width: 104px; }
 html.time12 .cal-sec .wh-break-add input.dt-time, html.time12 .whd-row input.dt-time, html.time12 .wh-day-row input.dt-time { width: 104px; }
-html.time12 .tf-dt input.dt-time { flex: 0 0 84px; width: 84px; }
-html.time12 .tf-top.mm .tf-left { grid-template-columns: auto minmax(230px, 1fr) auto minmax(230px, 1fr); }
+html.time12 .tf-dt input.dt-time { flex: 0 0 104px; min-width: 104px; width: 104px; }
 .fmt-top { display: flex; align-items: center; gap: 12px; }
 .scope-badge { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 999px; background: var(--panel-2); color: var(--text-dim); font-size: var(--fs-11); font-weight: 600; letter-spacing: 0; text-transform: none; cursor: help; }   /* what a setting is saved with: This plan / This device */
 .fmt-cur { display: flex; align-items: center; gap: 14px; }
@@ -2914,7 +2909,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
         <div class="help-section">
           <div class="help-section-title">Task Form</div>
           <div class="help-row"><i class="fa-regular fa-rectangle-list"></i><span><strong>Task Form</strong> (the toggle at the left of the status bar, Tasks and Gantt views) opens a pane below the list with the selected task's details, as in MS Project: name, duration, start, finish, Task Type, % complete, Effort driven, Manually Scheduled, and tables of its <strong>resources</strong> (Units, Work) and <strong>predecessors</strong> (Type, Lag). Drag its top edge to resize.</span></div>
-          <div class="help-row"><i class="fa-solid fa-check"></i><span>Change several fields, then <strong>OK</strong> (or <kbd>Enter</kbd>) applies them together — one Undo step; <strong>Cancel</strong> (or <kbd>Esc</kbd>) throws them away. <strong>Previous / Next</strong> apply first, then move on. Until you click OK or Cancel the form stays on its task, even if you select another row.</span></div>
+          <div class="help-row"><i class="fa-solid fa-check"></i><span>Change several fields, then <strong>Save</strong> (or <kbd>Enter</kbd>) applies them together — one Undo step; <strong>Cancel</strong> (or <kbd>Esc</kbd>) throws them away. <strong>Previous / Next</strong> apply first, then move on. Until you click OK or Cancel the form stays on its task, even if you select another row.</span></div>
         </div>
         <div class="help-section">
           <div class="help-section-title">Notes, deadlines and slack</div>
@@ -9237,7 +9232,7 @@ function tfHeader() {
   $('tfTaskLabel').textContent = t ? `#${taskDisplayId(t.id)} ${t.name}` : '';
   if (!note) return;   // (nothing selected / an empty line: no fields, no buttons)
   const elsewhere = dirty && selectedTaskId !== tfTaskId;
-  note.textContent = !t || !dirty ? '' : elsewhere ? `Changes to #${taskDisplayId(t.id)} ${t.name} not applied — the form stays on this task until you click OK or Cancel` : 'Not applied yet — OK applies, Cancel discards';
+  note.textContent = !t || !dirty ? '' : elsewhere ? `Changes to #${taskDisplayId(t.id)} ${t.name} not applied — the form stays on this task until you click Save or Cancel` : 'Not applied yet — Save applies, Cancel discards';
   note.classList.toggle('dirty', dirty);
   for (const id of ['tfOkBtn', 'tfCancelBtn']) $(id).disabled = !dirty;
   const list = tfStepList(), i = list.indexOf(tfTaskId);
@@ -9266,30 +9261,32 @@ function renderTaskForm(force) {
   const textNote = [t.startText != null && `Start "${t.startText}"`, t.endText != null && `Finish "${t.endText}"`].filter(Boolean);
   const tfBtn = (id, label, title, cls = '') => `<button type="button" class="btn btn-sm${cls}" id="${id}" title="${title}">${label}</button>`;
   body.innerHTML = `<div class="tf-wrap">
+    <div class="tf-foot">
+      <div class="tf-btns">${tfBtn('tfPrevBtn', 'Previous', 'Previous task (applies your changes first)')}${tfBtn('tfNextBtn', 'Next', 'Next task (applies your changes first)')}</div>
+      <div class="tf-note" id="tfNote"></div>
+      <div class="tf-btns">${tfBtn('tfCancelBtn', 'Cancel', 'Discard the changes in the form (Esc)')}${tfBtn('tfOkBtn', 'Save', 'Apply the changes (Enter) — one Undo step', ' btn-primary')}</div>
+    </div>
     <div class="tf-top${mm ? ' mm' : ''}">
-      <div class="tf-left">
-        <label for="tfName">Name:</label><input type="text" class="tf-in tf-name-in" id="tfName" maxlength="255" value="${escapeHtml(t.name)}">
-        <div class="tf-dur"><label for="tfDur">Duration:</label><input type="text" class="tf-in" id="tfDur" value="${escapeHtml(tfOrig.dur)}" ${datesRO || ms ? 'disabled' : ''} title="${mm ? 'Working time — 4h, 90m, 2d, 1w (a bare number is hours)' : 'Working days — 5, 5d, 2w'}"></div>
-        <label for="tfStart">Start:</label><div class="tf-dt"><input type="text" class="dt-date" id="tfStart" ${datesRO ? 'disabled' : ''}>${mm ? `<input type="text" class="dt-time tf-in" id="tfStartTime" aria-label="Start time" ${datesRO ? 'disabled' : ''}>` : ''}</div>
-        <label for="tfFinish">Finish:</label><div class="tf-dt"><input type="text" class="dt-date" id="tfFinish" ${datesRO || ms ? 'disabled' : ''}>${mm ? `<input type="text" class="dt-time tf-in" id="tfFinishTime" aria-label="Finish time" ${datesRO || ms ? 'disabled' : ''}>` : ''}</div>
+      <div class="tgrp tf-left">
+        <div class="trow"><label for="tfName">Name</label><input type="text" class="tin tf-in tf-name-in" id="tfName" maxlength="255" value="${escapeHtml(t.name)}"></div>
+        <div class="trow"><label for="tfDur">Duration</label><input type="text" class="tin tf-in" id="tfDur" value="${escapeHtml(tfOrig.dur)}" ${datesRO || ms ? 'disabled' : ''} title="${mm ? 'Working time — 4h, 90m, 2d, 1w (a bare number is hours)' : 'Working days — 5, 5d, 2w'}"></div>
+        <div class="trow"><label for="tfStart">Start</label><div class="tf-dt"><input type="text" class="dt-date" id="tfStart" ${datesRO ? 'disabled' : ''}>${mm ? `<input type="text" class="dt-time tf-in" id="tfStartTime" aria-label="Start time" ${datesRO ? 'disabled' : ''}>` : ''}</div></div>
+        <div class="trow"><label for="tfFinish">Finish</label><div class="tf-dt"><input type="text" class="dt-date" id="tfFinish" ${datesRO || ms ? 'disabled' : ''}>${mm ? `<input type="text" class="dt-time tf-in" id="tfFinishTime" aria-label="Finish time" ${datesRO || ms ? 'disabled' : ''}>` : ''}</div></div>
       </div>
-      <div class="tf-right">
-        <div class="tf-checks"><label class="tf-check" title="${noTT ? 'Only for an ordinary task (not a milestone or a group)' : 'Adding or removing a resource keeps Work the same and moves the schedule (Fixed Units / Fixed Work)'}"><input type="checkbox" id="tfEffort" ${t.effortDriven === true ? 'checked' : ''} ${noTT ? 'disabled' : ''}><span>Effort driven</span></label>
-        <label class="tf-check"><input type="checkbox" id="tfManual" ${t.taskMode === 'manual' ? 'checked' : ''}><span>Manually Scheduled</span></label></div>
-        <div class="tf-btns">${tfBtn('tfPrevBtn', 'Previous', 'Previous task (applies your changes first)')}${tfBtn('tfNextBtn', 'Next', 'Next task (applies your changes first)')}</div>
-        <div class="tf-pair"><label for="tfType">Task type:</label><select id="tfType" ${noTT ? 'disabled' : ''}>${typeOpts}</select>
-        <label for="tfPct">% Complete:</label><input type="text" class="tf-in" inputmode="numeric" id="tfPct" value="${group ? Math.round(effectiveProgressOf(t.id)) : t.progress}%" ${group ? 'disabled title="A group\'s % complete is worked out from its tasks"' : ''}></div>
-        <div class="tf-btns">${tfBtn('tfCancelBtn', 'Cancel', 'Discard the changes in the form (Esc)')}${tfBtn('tfOkBtn', 'OK', 'Apply the changes (Enter) — one Undo step', ' btn-primary')}</div>
+      <div class="tgrp tf-right">
+        <div class="trow tf-pair"><label for="tfType">Task type</label><select id="tfType" class="tin" ${noTT ? 'disabled' : ''}>${typeOpts}</select></div>
+        <div class="trow tf-pair"><label for="tfPct">% Complete</label><input type="text" class="tin tf-in" inputmode="numeric" id="tfPct" value="${group ? Math.round(effectiveProgressOf(t.id)) : t.progress}%" ${group ? 'disabled title="A group\'s % complete is worked out from its tasks"' : ''}></div>
+        <div class="trow tf-check" title="${noTT ? 'Only for an ordinary task (not a milestone or a group)' : 'Adding or removing a resource keeps Work the same and moves the schedule (Fixed Units / Fixed Work)'}"><label for="tfEffort">Effort driven</label><input type="checkbox" class="tsw" role="switch" id="tfEffort" ${t.effortDriven === true ? 'checked' : ''} ${noTT ? 'disabled' : ''}></div>
+        <div class="trow tf-check"><label for="tfManual">Manually Scheduled</label><input type="checkbox" class="tsw" role="switch" id="tfManual" ${t.taskMode === 'manual' ? 'checked' : ''}></div>
       </div>
     </div>
-    <div class="tf-note" id="tfNote"></div>
     ${textNote.length ? `<div class="tf-hint">Free text: ${escapeHtml(textNote.join(', '))}. Changing the date replaces it.</div>` : ''}
     ${group ? '<div class="tf-hint">A group takes its dates, % complete, resources and links from its tasks.</div>'
       : `<div class="tf-tables">
-           <div class="tf-table tf-res"><div class="tf-row tf-row-head"><span class="r">ID</span><span>Resource Name</span><span class="r">Units</span><span class="r">Work</span><button type="button" class="tf-head-btn" id="tfEditResourcesBtn" title="Edit resources… — open the Resources tab (the plan's people, rates and days off)" aria-label="Edit resources"><i class="fa-solid fa-user-pen"></i></button></div>
-             <div class="tf-scroll"><div class="tf-grid" id="tfResRows"></div><div class="tf-fill" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div></div></div>
-           <div class="tf-table tf-pred"><div class="tf-row tf-row-head"><span class="r">ID</span><span>Predecessor Name</span><span>Type</span><span class="r">Lag</span><span></span></div>
-             <div class="tf-scroll"><div class="tf-grid" id="tfPredRows"></div><div class="tf-fill" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></div></div></div>
+           <div class="tf-sec"><div class="tf-cap"><span>Resources</span><button type="button" class="tf-head-btn" id="tfEditResourcesBtn" title="Edit resources… — open the Resources tab (the plan's people, rates and days off)" aria-label="Edit resources">Edit Resources…</button></div>
+             <div class="tgrp tf-table tf-res"><div class="tf-grid" id="tfResRows"></div></div></div>
+           <div class="tf-sec"><div class="tf-cap"><span>Predecessors</span></div>
+             <div class="tgrp tf-table tf-pred"><div class="tf-grid" id="tfPredRows"></div></div></div>
          </div>
          <datalist id="tfResList">${(project.resources || []).map(r => `<option value="${escapeHtml(r.name)}">`).join('')}</datalist>`}</div>`;
   body.querySelector('#tfPrevBtn').onclick = () => taskFormStep(-1); body.querySelector('#tfNextBtn').onclick = () => taskFormStep(1);
@@ -9313,9 +9310,9 @@ function tfResRowHtml(t, r, i, blank) {
   const work = unchanged ? fmtWorkHours(Math.round(assignmentHours(t, { units: r.saved }) * 60)) : '';
   const rid = res ? (project.resources || []).indexOf(res) + 1 : '';
   return `<div class="tf-row${blank ? ' tf-blank' : ''}" data-i="${i}"><span class="tf-id">${rid || ''}</span>
-      <input type="text" class="tf-cell" list="tfResList" maxlength="60" value="${escapeHtml(r.name)}" placeholder="${blank ? 'Add a resource' : ''}" aria-label="Resource name" oninput="tfResInput(${i}, 'name', this.value)">
+      <input type="text" class="tf-cell" list="tfResList" maxlength="60" value="${escapeHtml(r.name)}" placeholder="${blank ? 'Add Resource…' : ''}" aria-label="Resource name" oninput="tfResInput(${i}, 'name', this.value)">
       <input type="text" class="tf-cell tf-units" inputmode="numeric" value="${escapeHtml(r.units)}" placeholder="${blank ? '100%' : ''}" aria-label="Units" oninput="tfResInput(${i}, 'units', this.value)">
-      <span class="tf-work" title="${unchanged ? 'This assignment\'s share of the task\'s Work' : 'Worked out when you click OK'}">${work || (blank ? '' : '—')}</span>
+      <span class="tf-work" title="${unchanged ? 'This assignment\'s share of the task\'s Work' : 'Worked out when you click Save'}">${work || (blank ? '' : '—')}</span>
       <button type="button" class="tf-remove" ${blank ? 'hidden' : ''} aria-label="Remove ${escapeHtml(r.name || 'this resource')}" title="Remove" onclick="tfResRemove(${i})"><i class="fa-solid fa-xmark"></i></button></div>`;
 }
 function renderTfResRows() {
@@ -9323,7 +9320,7 @@ function renderTfResRows() {
   el.innerHTML = tfRes.map((r, i) => tfResRowHtml(t, r, i, false)).join('') + tfResRowHtml(t, { name: '', units: '', saved: null }, tfRes.length, true);
   tfRefreshWork();
 }
-// What OK would make of Work right now, per resource row: worked out on a COPY of the task with the very rules OK applies
+// What Save would make of Work right now, per resource row: worked out on a COPY of the task with the very rules OK applies
 // (the Task Type triangle, Effort driven; a typed Duration too), so the Work column follows what is typed instead of
 // staying at its old value — or "—" — until OK is clicked. Null when an entry isn't valid yet.
 function tfWorkPreview() {
@@ -9373,7 +9370,7 @@ function tfResInput(i, key, v) {
 function tfResRemove(i) { tfRes.splice(i, 1); renderTfResRows(); tfHeader(); }
 function tfPredRowHtml(p, i, blank) {
   const pt = tfPredTask(p.num);
-  return `<div class="tf-row${blank ? ' tf-blank' : ''}" data-i="${i}"><input type="number" class="tf-cell" min="1" step="1" value="${escapeHtml(p.num)}" placeholder="${blank ? 'Task #' : ''}" aria-label="Predecessor task number" style="text-align:right" oninput="tfPredInput(${i}, 'num', this.value)">
+  return `<div class="tf-row${blank ? ' tf-blank' : ''}" data-i="${i}"><input type="number" class="tf-cell" min="1" step="1" value="${escapeHtml(p.num)}" placeholder="${blank ? 'Add Predecessor…' : ''}" aria-label="Predecessor task number" style="text-align:right" oninput="tfPredInput(${i}, 'num', this.value)">
       <span class="tf-pred-name${pt ? '' : ' none'}" data-i="${i}" title="${pt ? escapeHtml(pt.name) : ''}">${pt ? escapeHtml(pt.name) : (p.num ? 'no such task' : '')}</span>
       <select class="tf-cell" aria-label="Link type" title="FS finish-to-start, SS start-to-start, FF finish-to-finish, SF start-to-finish" onchange="tfPredInput(${i}, 'type', this.value)">${DEP_TYPES.map(dt => `<option value="${dt}"${dt === p.type ? ' selected' : ''}>${dt}</option>`).join('')}</select>
       <input type="text" class="tf-cell tf-lag" value="${escapeHtml(p.lag)}" placeholder="${blank ? '0' : ''}" aria-label="Lead or lag" title="${minuteModeActive() ? 'Working time — 2h, -30m, 1d; a bare number is hours' : 'Working days — negative is a lead'}. Positive delays the task (lag), negative lets it overlap (lead)" oninput="tfPredInput(${i}, 'lag', this.value)">
