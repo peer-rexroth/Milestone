@@ -1717,10 +1717,14 @@ select.rst-select:disabled { opacity: .5; }
 #predecessorRows .pred-row select { padding-right: 28px; text-align: left; text-align-last: left; color: var(--text-dim); }
 #predecessorRows .pred-row input[type=number]:not(.pred-id-input), #predecessorRows .pred-row .pred-lag-input { color: var(--text-dim); }
 #predecessorRows .pred-row .pred-id-input { text-align: left; }
-#predecessorRows .pred-name { min-height: 0; padding: 0; border: 0; background: none; font-size: var(--fs-14); color: var(--text-dim); }
+#predecessorRows .pred-name { display: block; min-width: 0; min-height: 0; padding: 0; border: 0; background: none; font-size: var(--fs-14); color: var(--text-dim); }
 #predecessorRows .pred-name.none { color: var(--text-faint); }
 #taskTextDatesNote, #taskBaselineInfo { margin: -6px 14px 0; }
 .modal-tabs ~ .modal-body { padding-bottom: 12px; }
+/* Scroll edge (Apple): at rest the first group sits 16px under the tabs; once the body is scrolled a hairline appears there and the content fades out
+   under it instead of being clipped flat (the 1px border is the hairline's place, its first pixel stays unmasked) */
+.modal-tabs ~ .modal-body { border-top: 1px solid transparent; padding-top: 15px; }
+.modal-tabs ~ .modal-body.scrolled { border-top-color: var(--border); -webkit-mask-image: linear-gradient(#000 1px, transparent 1px, #000 15px); mask-image: linear-gradient(#000 1px, transparent 1px, #000 15px); }
 .field { display: flex; flex-direction: column; gap: 4px; }
 .field label { font-size: var(--fs-12); font-weight: 600; color: var(--text-dim); }
 .field input[type=text], .field input[type=date], .field input[type=time], .field input[type=number], .field textarea, .field select {
@@ -1857,7 +1861,7 @@ input.dt-time { width: 84px; flex: 0 0 84px; text-align: center; }
 #toast.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
 html:has(.modal-bg.open) #toast { bottom: auto; top: 20px; transform: translateY(-20px); }   /* while a dialog is open the toast sits at the top: a tall sheet's Save button is where it would land */
 html:has(.modal-bg.open) #toast.show { transform: translateY(0); }
-#toast.error { border-color: var(--danger); }
+#toast.error { background: linear-gradient(var(--red-bg), var(--red-bg)), var(--glass-strong); border-color: transparent; }   /* a soft red tint like ClearDesk's, not an outline */
 #toast.error #toastMsg { color: var(--red-text); }
 #toast button { border: none; background: none; color: var(--accent); font-weight: 600; font-size: var(--fs-13); }
 #toast #toastCloseBtn { color: var(--text-dim); font-weight: 400; padding: 0 2px; }
@@ -2201,7 +2205,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
         <div class="trow"><label for="taskConstraintTypeInput">Constraint</label><select id="taskConstraintTypeInput" class="tin" onchange="onConstraintTypeChange()"></select></div>
         <div class="trow" id="taskConstraintDateField"><label id="taskConstraintDateLabel" for="taskConstraintDateInput">Constraint date</label><div class="field-dt"><input type="text" class="dt-date" id="taskConstraintDateInput"><input type="text" id="taskConstraintTimeInput" class="task-time-input hidden dt-time" aria-label="Constraint time"></div></div>
         <div class="trow" id="taskDeadlineField" title="A target date: it doesn't move the task — the task is flagged when it finishes later (MS Project's Deadline)"><label for="taskDeadlineInput">Deadline<span class="deadline-note" id="taskDeadlineNote"></span></label><div class="field-dt"><input type="text" class="dt-date" id="taskDeadlineInput" onchange="updateDeadlineNote()"></div></div>
-        <div class="trow" id="taskActualStartField"><label for="taskActualStartInput">Actual Start<span class="info-i" id="taskActualsNote" tabindex="0" role="note"><i class="fa-regular fa-circle-question"></i></span></label><div class="field-dt"><input type="text" class="dt-date" id="taskActualStartInput" onchange="onActualStartChange()"><input type="text" id="taskActualStartTimeInput" class="task-time-input hidden dt-time" aria-label="Actual start time" onchange="onActualStartChange()"></div></div>
+        <div class="trow" id="taskActualStartField"><label for="taskActualStartInput" id="taskActualsNote">Actual Start</label><div class="field-dt"><input type="text" class="dt-date" id="taskActualStartInput" onchange="onActualStartChange()"><input type="text" id="taskActualStartTimeInput" class="task-time-input hidden dt-time" aria-label="Actual start time" onchange="onActualStartChange()"></div></div>
         <div class="trow" id="taskActualFinishField" title="Recording an Actual Finish marks the task 100% complete"><label for="taskActualFinishInput">Actual Finish</label><div class="field-dt"><input type="text" class="dt-date" id="taskActualFinishInput" onchange="onActualFinishChange()"><input type="text" id="taskActualFinishTimeInput" class="task-time-input hidden dt-time" aria-label="Actual finish time" onchange="onActualFinishChange()"></div></div>
         <div class="trow" title="Colours the task's row in the list (and its stripe in the chart)"><label>Color</label><div class="color-swatches" id="taskColorSwatches"></div></div>
       </div>
@@ -8293,7 +8297,6 @@ function openTaskModal(id, isNew) {
   syncActualTimeInputs();
   const actNote = document.getElementById('taskActualsNote');
   actNote.title = actNote.dataset.tip = group ? 'A group shows the actual dates of the tasks in it: the earliest actual start, and an actual finish once every task has finished.' : "Recording an Actual Start or Finish sets the task's Start or Finish to it — the actual dates are the schedule.";   // (a hint on the label's ⓘ; it used to be a line of text between the sections)
-  actNote.setAttribute('aria-label', actNote.title);
   renderColorSwatches(t.color);
   const typeSel = document.getElementById('taskConstraintTypeInput');
   typeSel.innerHTML = CONSTRAINT_TYPES.map(c => `<option value="${c.id}"${c.id === t.constraintType ? ' selected' : ''}>${c.label}</option>`).join('');
@@ -9941,7 +9944,7 @@ function onPredecessorIdChange(i, value) {
   let error = null;
   if (!targetId) error = `No task #${value}`;
   else if (targetId === editingTaskId) error = "A task can't depend on itself";
-  else if (hasChildren(targetId)) error = "Can't depend on a summary task — pick one of its own leaf tasks";
+  else if (hasChildren(targetId)) error = "A summary task can't be a predecessor. Pick one of its tasks instead.";
   else if (byId(targetId).spacer) error = "Can't depend on an empty line";
   else if (editingPredecessors.some((p, idx) => idx !== i && p.id === targetId)) error = 'Already added';
   if (error) { showToast(error, true); editingPredecessors[i].id = null; }
@@ -10067,6 +10070,7 @@ function dismissToast() { clearTimeout(toastTimer); document.getElementById('toa
   t.addEventListener('focusin', () => clearTimeout(toastTimer)); t.addEventListener('focusout', armToastTimer); })();
 function triggerToastUndo() { if (toastUndoAction) { toastUndoAction(); toastUndoAction = null; } document.getElementById('toast').classList.remove('show'); }
 
+document.addEventListener('scroll', e => { const el = e.target; if (el && el.classList && el.classList.contains('modal-body')) el.classList.toggle('scrolled', el.scrollTop > 1); }, true);   // (the scroll edge of a tabbed dialog, see .modal-body.scrolled)
 let confirmReturnFocus = null;   // (its own, so the alert never overwrites where the dialog underneath returns focus)
 function openConfirmModal({ title, body, action, confirmLabel, confirmClass, cancelLabel, altLabel, altAction, onCancel, icon, danger }) {
   modalTarget = { action, alt: altAction || null, onCancel: onCancel || null };
@@ -11637,7 +11641,7 @@ function applyBulkEdit() {
     if (minuteModeActive()) { lag = parseLagInput(val('predLag')); if (lag === null) { showToast(`Can't read "${val('predLag')}" as a lag — try 2h, -30m, 1d or 1w`, true); return; } }
     else lag = val('predLag').trim() === '' ? 0 : Number(val('predLag'));
     if (!predTarget) { showToast(`No task #${val('predId')}`, true); return; }
-    if (hasChildren(predTarget)) { showToast("Can't depend on a summary task — pick one of its own leaf tasks", true); return; }
+    if (hasChildren(predTarget)) { showToast("A summary task can't be a predecessor. Pick one of its tasks instead.", true); return; }
     if (byId(predTarget).spacer) { showToast("Can't depend on an empty line", true); return; }
     if (!minuteModeActive() && (!Number.isInteger(lag) || Math.abs(lag) > MAX_LAG_DAYS)) { showToast(`The lag must be a whole number of days, at most ${MAX_LAG_DAYS.toLocaleString('en')}`, true); return; }
   }

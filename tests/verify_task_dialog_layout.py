@@ -43,8 +43,8 @@ with sync_playwright() as p:
     check("...it reads 'day' for 1 and 'days' for 3", u1 == "day" and pg.inner_text("#taskDurationUnit") == "days", (u1, pg.inner_text("#taskDurationUnit")))
     # the note about actuals
     tip = pg.get_attribute("#taskActualsNote", "title")
-    check("the note about actual dates is a hint on an ⓘ beside 'Actual Start'", "Recording an Actual" in tip and pg.is_visible("#taskActualsNote"))
-    check("...it is keyboard-focusable and has an accessible name", pg.get_attribute("#taskActualsNote", "tabindex") == "0" and "Recording an Actual" in pg.get_attribute("#taskActualsNote", "aria-label"))
+    check("the note about actual dates is a tooltip on the 'Actual Start' label (no icon)", "Recording an Actual" in tip and pg.is_visible("#taskActualsNote"))
+    check("...and there is no ⓘ beside it", pg.evaluate("() => !document.querySelector('#taskActualStartField .info-i')"))
     check("...and no 'Recording…' sentence is left in the dialog's text", "Recording an Actual Start" not in pg.inner_text("#taskModalBg .modal-body"))
     # always fits the window: the body scrolls, the footer stays
     pg.set_viewport_size({"width": 1400, "height": 830}); pg.wait_for_timeout(250)
