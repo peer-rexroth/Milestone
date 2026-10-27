@@ -74,7 +74,7 @@ with sync_playwright() as p:
     check("...cleared", ev("() => 'statusDate' in project") is False)
     ev("() => openSettingsTab('rules')"); pg.wait_for_timeout(100); pg.fill("#rulesStatusDateInput", "02.09.2026"); pg.press("#rulesStatusDateInput", "Tab")
     pg.keyboard.press("Escape"); pg.wait_for_timeout(120)
-    check("closing with an unsaved status date asks first (it counts as a change)", "Discard your changes" in pg.inner_text("#confirmModalBg")); pg.click("#confirmModalBg .modal-footer .btn:has-text('Discard')"); pg.wait_for_timeout(120)
+    check("closing with an unsaved status date asks first (it counts as a change)", "Discard your changes" in pg.inner_text("#confirmModalBg")); pg.click("#confirmModalBg .modal-actions .btn:has-text('Discard')"); pg.wait_for_timeout(120)
     check("...and discarding leaves the plan as it was", ev("() => 'statusDate' in project") is False)
 
     # ---- data

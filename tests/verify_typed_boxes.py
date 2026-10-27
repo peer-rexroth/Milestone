@@ -103,7 +103,7 @@ with sync_playwright() as p:
     check("Enter in a box of the Edit-tasks dialog applies it (both tasks at 50%, dialog closed)", ev("() => tasks.map(t => t.progress)") == [50, 50] and not ev("() => document.getElementById('bulkModalBg').classList.contains('open')"), ev("() => tasks.map(t => t.progress)"))
     ev("() => openTaskModal(tasks[0].id)"); pg.wait_for_timeout(200)
     t1 = pg.inner_text("#taskModalTitle"); close_all()
-    ev("() => { pendingImportData = { tasks: [], project: {} }; openImportModal(); }"); t2 = ev("() => document.querySelector('#importModalBg h2').textContent"); close_all()
+    ev("() => { pendingImportData = { tasks: [], project: {} }; openImportModal(); }"); t2 = ev("() => document.querySelector('#importModalBg h3').textContent"); close_all()
     ev("() => openBackupsModal()"); t3 = ev("() => document.querySelector('#backupsModalBg h2').textContent"); close_all()
     check("dialog titles are sentence case: 'Edit task', 'Import data', 'Local backups'", t1.startswith("Edit task") and t2 == "Import data" and t3 == "Local backups", (t1, t2, t3))
     ev("() => openBaselineModal()"); pg.wait_for_timeout(200)

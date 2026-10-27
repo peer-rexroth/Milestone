@@ -1525,10 +1525,20 @@ select.rst-select:disabled { opacity: .5; }
   transition: opacity var(--dur-fast) ease, visibility var(--dur-fast) ease;
 }
 .modal-bg.open { opacity: 1; visibility: visible; pointer-events: auto; }
-#confirmModalBg { z-index: 110; }   /* a question ("discard your changes?", "delete?") always sits above whatever dialog asked it, wherever that dialog is in the page */
+#confirmModalBg { z-index: 210; }   /* a question ("discard your changes?", "delete?") always sits above whatever dialog asked it, wherever that dialog is in the page */
 .modal { background: var(--glass-strong); border: 1px solid var(--glass-edge); border-radius: var(--r-xl); box-shadow: var(--glass-shadow), inset 0 1px 0 var(--glass-rim); width: 480px; max-width: 92vw; max-height: 86vh; display: flex; flex-direction: column; }
 .modal.narrow { width: 380px; }
-#confirmModalBg .modal.three-way { width: 460px; }   /* three buttons in the footer need the room */
+/* alert shell (ClearDesk's DIALOG-SHELL): a question gets a round tinted icon, a centred title and sentence, full-width buttons */
+.modal.alert { width: 340px; text-align: center; align-items: center; gap: 12px; padding: 24px 24px 20px; }
+.modal.alert.alert-wide { width: 400px; }   /* three buttons */
+.modal.alert h3 { margin: 0; font-size: var(--fs-17); font-weight: 600; color: var(--text); }
+.modal.alert p, .modal.alert .alert-body { margin: 0; font-size: var(--fs-14); color: var(--text-2); line-height: 1.6; }
+.alert-ico { width: 40px; height: 40px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: var(--ico-18); background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); }
+.alert-ico.danger { background: var(--red-bg); color: var(--red-text); }
+.modal.alert .modal-actions { align-self: stretch; display: flex; justify-content: center; gap: 8px; margin-top: 8px; }
+.modal.alert .modal-actions .btn { flex: 1; justify-content: center; }
+.modal.alert .modal-actions .btn:not(.btn-primary) { background: var(--bg-2); box-shadow: var(--elev-1); border-color: transparent; }
+.modal.alert .alert-info { align-self: stretch; text-align: left; font-size: var(--fs-12); color: var(--text-3); }
 .modal.roomy { width: 540px; max-height: 94vh; }
 /* dialog sizes: narrow 380 (questions), 480 (default), mid 520 (Baselines), wide 620 (Edit Task, Working calendar, imports — many fields side by side) */
 .modal.mid { width: 560px; max-height: 94vh; }
@@ -1657,7 +1667,7 @@ select.rst-select:disabled { opacity: .5; }
 .modal-header button { border: none; background: none; font-size: var(--fs-17); color: var(--text-faint); width: var(--ib-m); height: var(--ib-m); border-radius: 50%; }
 .modal-header button:hover { background: var(--pressed); color: var(--text); }
 .modal-header .hdr-link { width: auto; height: auto; margin: 0 8px 0 auto; padding: 4px 8px; font-size: var(--fs-12); color: var(--accent); }
-.modal-body { padding: 14px 24px 0; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; color: var(--text-dim); line-height: 1.6; }
+.modal-body { padding: 16px 24px 0; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; color: var(--text-dim); line-height: 1.6; }
 .modal-body :is(input, select, textarea, .field label) { line-height: normal; }
 .modal-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 16px 24px 24px; border-top: 0; }
 .modal-footer .btn:not(.btn-primary) { background: var(--bg-2); box-shadow: var(--elev-1); border-color: transparent; }
@@ -2213,12 +2223,13 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 </div>
 
 <!-- Confirm modal -->
-<div class="modal-bg" id="confirmModalBg" onclick="if(event.target===this) closeConfirmModal()">
-  <div class="modal narrow" id="confirmModalBox" tabindex="-1">
-    <div class="modal-header"><h2 id="confirmModalTitle">Confirm</h2><button onclick="closeConfirmModal()">&times;</button></div>
-    <div class="modal-body"><div id="confirmModalBody" style="font-size: var(--fs-13);line-height:1.5"></div></div>
-    <div class="modal-footer">
-      <button class="btn" id="confirmModalCancelBtn" onclick="closeConfirmModal()">Cancel</button>
+<div class="modal-bg" id="confirmModalBg" onclick="if(event.target===this) closeConfirmModal(true)">
+  <div class="modal alert" id="confirmModalBox" tabindex="-1" aria-labelledby="confirmModalTitle" aria-describedby="confirmModalBody">
+    <span class="alert-ico danger" id="confirmModalIcon" aria-hidden="true"><i class="fa-solid fa-trash"></i></span>
+    <h3 id="confirmModalTitle">Confirm</h3>
+    <p id="confirmModalBody"></p>
+    <div class="modal-actions">
+      <button class="btn" id="confirmModalCancelBtn" onclick="closeConfirmModal(true)">Cancel</button>
       <button class="btn btn-primary btn-danger" id="confirmModalActionBtn" onclick="confirmModalAction()">Delete</button>
       <button class="btn btn-primary hidden" id="confirmModalAltBtn" onclick="confirmModalAlt()">Save</button>
     </div>
@@ -2284,14 +2295,16 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 
 <!-- Import modal -->
 <div class="modal-bg" id="importModalBg" onclick="if(event.target===this) closeImportModal()">
-  <div class="modal narrow">
-    <div class="modal-header"><h2>Import data</h2><button onclick="closeImportModal()" aria-label="Close">&times;</button></div>
-    <div class="modal-body">
-      <div class="cal-hint" id="importInfo" style="margin:0 0 4px"></div>
-      <div class="import-mode-row"><div><strong>Merge</strong><div style="font-size: var(--fs-12);color:var(--text-dim)">Keep existing tasks, add/update from the file</div></div><button class="btn btn-primary" onclick="applyImport('merge')">Merge</button></div>
-      <div class="import-mode-row"><div><strong>Replace</strong><div style="font-size: var(--fs-12);color:var(--text-dim)">Downloads a safety backup, then overwrites everything</div></div><button class="btn btn-primary btn-danger" onclick="applyImport('replace')">Replace</button></div>
+  <div class="modal alert alert-wide" tabindex="-1" aria-labelledby="importTitle" aria-describedby="importInfo">
+    <span class="alert-ico" aria-hidden="true"><i class="fa-solid fa-circle-info"></i></span>
+    <h3 id="importTitle">Import data</h3>
+    <p id="importInfo"></p>
+    <p class="alert-info"><strong>Merge</strong> keeps your tasks and adds or updates from the file. <strong>Replace</strong> downloads a safety backup, then overwrites everything.</p>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeImportModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="applyImport('merge')">Merge</button>
+      <button class="btn btn-primary btn-danger" onclick="applyImport('replace')">Replace</button>
     </div>
-    <div class="modal-footer"><button class="btn" onclick="closeImportModal()">Cancel</button></div>
   </div>
 </div>
 
@@ -8319,7 +8332,7 @@ function taskModalDirty() {
 }
 function requestCloseTaskModal() {
   if (!taskModalDirty()) { closeTaskModal(); return; }
-  openConfirmModal({ title: 'Discard your changes?', body: 'You changed this task but did not save it.', confirmLabel: 'Discard changes', cancelLabel: 'Keep editing', action() { closeTaskModal(); } });
+  openConfirmModal({ title: 'Discard your changes?', body: 'You changed this task but did not save it.', icon: 'triangle-exclamation', confirmLabel: 'Discard changes', cancelLabel: 'Keep editing', action() { closeTaskModal(); } });
 }
 function closeTaskModal() {
   document.getElementById('taskModalBg').classList.remove('open');
@@ -8736,7 +8749,7 @@ function openSettingsTab(id) {
   const go = () => { if (from) from.close(); settingsTab = id; target.open(); };
   // Three ways out: keep editing, throw the edits away, or save them and carry on (stays put when the save is refused or asks its own question).
   const saveAndGo = () => { from.save(); if (!document.getElementById(from.bg).classList.contains('open')) { settingsTab = id; target.open(); } };
-  if (from && from.dirty()) openConfirmModal({ title: 'Save your changes?', body: `You changed ${from.what} but did not save it.`, confirmLabel: 'Discard changes', confirmClass: 'btn', cancelLabel: 'Keep editing', action: go, altLabel: 'Save and continue', altAction: saveAndGo });
+  if (from && from.dirty()) openConfirmModal({ title: 'Save your changes?', body: `You changed ${from.what} but did not save it.`, icon: 'triangle-exclamation', confirmLabel: 'Discard changes', confirmClass: 'btn', cancelLabel: 'Keep editing', action: go, altLabel: 'Save and continue', altAction: saveAndGo });
   else go();
 }
 function openPlanSettings(tab) { closeScheduleMenu(); closePlanMenu(); openSettingsTab(tab || settingsTab || 'calendar'); }
@@ -8757,7 +8770,7 @@ function closeRulesModal() { document.getElementById('rulesModalBg').classList.r
 function rulesDirty() { return rulesSnapshot !== null && document.getElementById('rulesModalBg').classList.contains('open') && rulesState() !== rulesSnapshot; }
 function requestCloseRulesModal() {
   if (!rulesDirty()) { closeRulesModal(); return; }
-  openConfirmModal({ title: 'Discard your changes?', body: 'You changed the scheduling rules but did not save them.', confirmLabel: 'Discard changes', cancelLabel: 'Keep editing', action() { closeRulesModal(); } });
+  openConfirmModal({ title: 'Discard your changes?', body: 'You changed the scheduling rules but did not save them.', icon: 'triangle-exclamation', confirmLabel: 'Discard changes', cancelLabel: 'Keep editing', action() { closeRulesModal(); } });
 }
 function saveRulesModal() {
   const honor = document.getElementById('honorConstraintDatesInput').checked;
@@ -8846,7 +8859,7 @@ function calendarDraftState() { return JSON.stringify([[...document.querySelecto
 function calendarDirty() { return calSnapshot !== null && document.getElementById('calendarModalBg').classList.contains('open') && calendarDraftState() !== calSnapshot; }
 function requestCloseCalendarModal() {
   if (!calendarDirty()) { closeCalendarModal(); return; }
-  openConfirmModal({ title: 'Discard your changes?', body: 'You changed the working calendar but did not save it.', confirmLabel: 'Discard changes', cancelLabel: 'Keep editing', action() { closeCalendarModal(); } });
+  openConfirmModal({ title: 'Discard your changes?', body: 'You changed the working calendar but did not save it.', icon: 'triangle-exclamation', confirmLabel: 'Discard changes', cancelLabel: 'Keep editing', action() { closeCalendarModal(); } });
 }
 function updateCalendarSummary() {   // the chip in the header: what the calendar would be if you saved now
   const days = [...document.querySelectorAll('#calendarDays input:checked')].map(i => Number(i.value)).sort((a, b) => a - b), n = calHolidays.length;
@@ -9109,7 +9122,7 @@ function closeFieldsModal() { document.getElementById('fieldsModalBg').classList
 function fieldsDirty() { return fieldsDraft !== null && document.getElementById('fieldsModalBg').classList.contains('open') && JSON.stringify(fieldsDraft) !== fieldsOrig; }
 function requestCloseFieldsModal() {
   if (!fieldsDirty()) { closeFieldsModal(); return; }
-  openConfirmModal({ title: 'Discard your changes?', body: 'You changed the custom fields but did not save them.', confirmLabel: 'Discard changes', cancelLabel: 'Keep editing', action() { closeFieldsModal(); } });
+  openConfirmModal({ title: 'Discard your changes?', body: 'You changed the custom fields but did not save them.', icon: 'triangle-exclamation', confirmLabel: 'Discard changes', cancelLabel: 'Keep editing', action() { closeFieldsModal(); } });
 }
 function renderFieldsRows() {
   const box = document.getElementById('fieldsRows'), has = fieldsDraft.length > 0;
@@ -9197,7 +9210,7 @@ function applyFieldsDraft() {
 const TASK_FORM_MIN_H = 190;
 let tfTaskId = null, tfSnapshot = null, tfRes = [], tfPreds = [], tfOrig = null;
 function toggleTaskForm() {
-  if (showTaskForm && tfDirty()) { openConfirmModal({ title: 'Discard your changes?', body: 'The Task Form has changes that were not applied.', confirmLabel: 'Discard changes', cancelLabel: 'Keep editing', action() { tfSnapshot = null; showTaskForm = false; save(); render(); } }); return; }
+  if (showTaskForm && tfDirty()) { openConfirmModal({ title: 'Discard your changes?', body: 'The Task Form has changes that were not applied.', icon: 'triangle-exclamation', confirmLabel: 'Discard changes', cancelLabel: 'Keep editing', action() { tfSnapshot = null; showTaskForm = false; save(); render(); } }); return; }
   showTaskForm = !showTaskForm; tfSnapshot = null; tfTaskId = null; save(); render();
 }
 function applyTaskFormHeight() {
@@ -9678,7 +9691,7 @@ function closeResourceDaysModal() { document.getElementById('resourceDaysModalBg
 function resourceDaysDirty() { return resourceDaysDraft !== null && document.getElementById('resourceDaysModalBg').classList.contains('open') && JSON.stringify(resourceDaysDraft) !== resourceDaysOrig; }
 function requestCloseResourceDaysModal() {
   if (!resourceDaysDirty()) { closeResourceDaysModal(); return; }
-  openConfirmModal({ title: 'Discard your changes?', body: 'You changed the days off but did not save them.', confirmLabel: 'Discard changes', cancelLabel: 'Keep editing', action() { closeResourceDaysModal(); } });
+  openConfirmModal({ title: 'Discard your changes?', body: 'You changed the days off but did not save them.', icon: 'triangle-exclamation', confirmLabel: 'Discard changes', cancelLabel: 'Keep editing', action() { closeResourceDaysModal(); } });
 }
 function renderResourceDays() {
   const list = document.getElementById('resDayList');
@@ -10054,23 +10067,35 @@ function dismissToast() { clearTimeout(toastTimer); document.getElementById('toa
   t.addEventListener('focusin', () => clearTimeout(toastTimer)); t.addEventListener('focusout', armToastTimer); })();
 function triggerToastUndo() { if (toastUndoAction) { toastUndoAction(); toastUndoAction = null; } document.getElementById('toast').classList.remove('show'); }
 
-function openConfirmModal({ title, body, action, confirmLabel, confirmClass, cancelLabel, altLabel, altAction }) {
-  modalTarget = { action, alt: altAction || null };
-  const altBtn = document.getElementById('confirmModalAltBtn'); altBtn.classList.toggle('hidden', !altAction); document.getElementById('confirmModalBox').classList.toggle('three-way', !!altAction); if (altAction) altBtn.textContent = altLabel || 'Save';   // (an optional third button: the primary way out when there is one)
+let confirmReturnFocus = null;   // (its own, so the alert never overwrites where the dialog underneath returns focus)
+function openConfirmModal({ title, body, action, confirmLabel, confirmClass, cancelLabel, altLabel, altAction, onCancel, icon, danger }) {
+  modalTarget = { action, alt: altAction || null, onCancel: onCancel || null };
+  const bg = document.getElementById('confirmModalBg'), box = document.getElementById('confirmModalBox');
+  if (!bg.classList.contains('open')) confirmReturnFocus = document.activeElement;
+  const altBtn = document.getElementById('confirmModalAltBtn'); altBtn.classList.toggle('hidden', !altAction); box.classList.toggle('alert-wide', !!altAction); if (altAction) altBtn.textContent = altLabel || 'Save';   // (an optional third button: the primary way out when there is one)
   document.getElementById('confirmModalTitle').textContent = title || 'Confirm';
   document.getElementById('confirmModalBody').innerHTML = body || '';
   document.getElementById('confirmModalActionBtn').textContent = confirmLabel || 'Delete';
   document.getElementById('confirmModalCancelBtn').textContent = cancelLabel || 'Cancel';
-  document.getElementById('confirmModalActionBtn').className = confirmClass || 'btn btn-primary btn-danger';   // callers that aren't destructive pass a plainer class
-  document.getElementById('confirmModalBg').classList.add('open');
+  const act = document.getElementById('confirmModalActionBtn');
+  act.className = confirmClass || 'btn btn-primary btn-danger';   // callers that aren't destructive pass a plainer class
+  const red = danger != null ? !!danger : /btn-danger/.test(act.className);
+  const ico = document.getElementById('confirmModalIcon'); ico.classList.toggle('danger', red);
+  ico.innerHTML = '<i class="fa-solid fa-' + (icon || (red ? 'trash' : 'circle-info')) + '"></i>';
+  bg.classList.add('open');
   // A destructive question has no default button (focus goes to the dialog itself, so Return does nothing and Esc cancels; Cancel is never the
   // default either); a plain one focuses its button. The box is shown with a visibility transition, so focus waits a frame.
-  const act = document.getElementById('confirmModalActionBtn'), box = document.getElementById('confirmModalBox');
-  setTimeout(() => (/btn-danger/.test(act.className) ? box : act).focus({ preventScroll: true }), 30);
+  setTimeout(() => (red ? box : act).focus({ preventScroll: true }), 30);
 }
-function closeConfirmModal() { document.getElementById('confirmModalBg').classList.remove('open'); modalTarget = null; }
+// Closes ALONE (Esc, Cancel, a click outside and its own button): the dialog that asked stays open underneath. `cancelled` runs the asker's onCancel.
+function closeConfirmModal(cancelled) {
+  const t = modalTarget; document.getElementById('confirmModalBg').classList.remove('open'); modalTarget = null;
+  if (cancelled === true && t && t.onCancel) t.onCancel();
+  const o = confirmReturnFocus; confirmReturnFocus = null;
+  if (o && document.contains(o)) try { o.focus({ preventScroll: true }); } catch (e) { /* gone */ }
+}
 function confirmModalAlt() { const a = modalTarget && modalTarget.alt; closeConfirmModal(); if (a) a(); }   // (closed first: the action may open a question of its own)
-function confirmModalAction() { if (modalTarget && modalTarget.action) modalTarget.action(); closeConfirmModal(); }
+function confirmModalAction() { const a = modalTarget && modalTarget.action; closeConfirmModal(); if (a) a(); }
 
 /* ================================= Theme ==================================== */
 function systemTheme() { return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; }
@@ -11579,7 +11604,7 @@ function closeBulkModal() { document.getElementById('bulkModalBg').classList.rem
 function bulkDirty() { return document.getElementById('bulkModalBg').classList.contains('open') && [...document.querySelectorAll('#bulkModalBg .bulk-on input[type=checkbox]')].some(cb => cb.checked); }
 function requestCloseBulkModal() {
   if (!bulkDirty()) { closeBulkModal(); return; }
-  openConfirmModal({ title: 'Discard your changes?', body: 'You ticked fields to change but did not apply them.', confirmLabel: 'Discard changes', cancelLabel: 'Keep editing', action() { closeBulkModal(); } });
+  openConfirmModal({ title: 'Discard your changes?', body: 'You ticked fields to change but did not apply them.', icon: 'triangle-exclamation', confirmLabel: 'Discard changes', cancelLabel: 'Keep editing', action() { closeBulkModal(); } });
 }
 function wouldCreateCycle(taskId, predId) {   // does predId (through its own predecessors) already depend on taskId?
   const seen = new Set(), stack = [predId];
@@ -13707,9 +13732,10 @@ function wireGlobalEvents() {
     if (handleCellNavKey(e) || sheetEntryKey(e)) return;
     if (e.key !== 'Escape') return;
     if (document.getElementById('cfAddMenu').classList.contains('open')) { closeCfAddMenu(); return; }
-    if (document.getElementById('fieldsModalBg').classList.contains('open')) { if (document.getElementById('confirmModalBg').classList.contains('open')) closeConfirmModal(); else requestCloseFieldsModal(); return; }   // only the topmost dialog: the task dialog underneath keeps its unsaved edits
-    if (document.getElementById('resourceDaysModalBg').classList.contains('open')) { if (document.getElementById('confirmModalBg').classList.contains('open')) closeConfirmModal(); else requestCloseResourceDaysModal(); return; }
-    if (document.getElementById('confirmModalBg').classList.contains('open') && (taskModalDirty() || calendarDirty() || rulesDirty() || bulkDirty())) { closeConfirmModal(); return; }   // the "discard your changes?" question: Escape = keep editing
+    if (document.getElementById('confirmModalBg').classList.contains('open')) { closeConfirmModal(true); return; }   // a question closes ALONE and first; the dialog that asked stays open underneath
+    if (document.getElementById('fieldsModalBg').classList.contains('open')) { if (document.getElementById('confirmModalBg').classList.contains('open')) closeConfirmModal(true); else requestCloseFieldsModal(); return; }   // only the topmost dialog: the task dialog underneath keeps its unsaved edits
+    if (document.getElementById('resourceDaysModalBg').classList.contains('open')) { if (document.getElementById('confirmModalBg').classList.contains('open')) closeConfirmModal(true); else requestCloseResourceDaysModal(); return; }
+    if (document.getElementById('confirmModalBg').classList.contains('open') && (taskModalDirty() || calendarDirty() || rulesDirty() || bulkDirty())) { closeConfirmModal(true); return; }   // the "discard your changes?" question: Escape = keep editing
     if (taskModalDirty()) { requestCloseTaskModal(); return; }
     if (calendarDirty()) { requestCloseCalendarModal(); return; }
     if (rulesDirty()) { requestCloseRulesModal(); return; }
