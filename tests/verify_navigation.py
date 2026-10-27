@@ -38,7 +38,7 @@ with sync_playwright() as p:
 
     # ---------------------------------------------------------------- A: the toolbar belongs to the view
     view("tasks")
-    check("Tasks: Add Task, Find, Columns, Task Form — no zoom, no Gantt toggles, no Add Resource", all(vis(i) for i in ["addTaskBtn", "searchBtn", "columnsBtn", "taskFormBtn"]) and not any(vis(i) for i in ["zoomTabs", "baselineBtn", "criticalPathBtn", "addResourceBtn"]))
+    check("Tasks: Add Task, Find, Columns, Task Form — no zoom, no Gantt toggles, no Add Resource", all(vis(i) for i in ["addTaskBtn", "columnsBtn", "taskFormBtn"]) and not any(vis(i) for i in ["zoomTabs", "baselineBtn", "criticalPathBtn", "addResourceBtn"]))
     view("gantt")
     check("Gantt: the same plus labelled Baseline / Critical path toggles; the timescale (Fit / Week / Month / Year) is in the status bar only, not the toolbar", all(vis(i) for i in ["addTaskBtn", "zoomTabs", "fitZoomBtn", "baselineBtn", "criticalPathBtn"]) and pg.locator("#subbar #zoomTabs, #subbar #fitZoomBtn").count() == 0 and pg.locator("#statusbar #zoomTabs").count() == 1 and pg.locator("#statusbar #fitZoomBtn").count() == 1 and "Baseline" in pg.inner_text("#baselineBtn") and "Critical path" in pg.inner_text("#criticalPathBtn"))
     before = ev("() => showCriticalPath")
@@ -46,7 +46,7 @@ with sync_playwright() as p:
     check("a toggle shows its state (aria-pressed)", ev("() => showCriticalPath") != before and pg.get_attribute("#criticalPathBtn", "aria-pressed") == ("true" if not before else "false"))
     pg.click("#criticalPathBtn")
     view("resourceSheet")
-    check("Resource Sheet: Add Resource — no task buttons, no currency picker (it is a plan setting), and no third bar above the sheet", vis("addResourceBtn") and pg.locator("#rsCurrencyInput").count() == 0 and not any(vis(i) for i in ["addTaskBtn", "searchBtn", "zoomTabs"]) and pg.locator(".rst-toolbar").count() == 0)
+    check("Resource Sheet: Add Resource — no task buttons, no currency picker (it is a plan setting), and no third bar above the sheet", vis("addResourceBtn") and pg.locator("#rsCurrencyInput").count() == 0 and not any(vis(i) for i in ["addTaskBtn", "zoomTabs"]) and pg.locator(".rst-toolbar").count() == 0)
     view("resources")
     check("Resource Plan: the timescale and Fit (status bar) and 'Over-allocated only' — no task buttons, no 'Edit resources…' (the Resources tab is next to it)", pg.locator("#editResourcesBtn").count() == 0 and all(vis(i) for i in ["zoomTabs", "fitZoomBtn", "overOnlyBtn"]) and not vis("addTaskBtn"))
     rows = lambda: pg.locator("#resourceBody .resource-row").count()

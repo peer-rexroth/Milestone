@@ -58,11 +58,11 @@ with sync_playwright() as p:
           and pg.input_value("#tfPct") == "0%" and pg.input_value("#tfType") == "fixedUnits", pg.inner_text("#tfTaskLabel"))
     check("Effort driven unticked (the default), Manually Scheduled unticked (an Auto task)", not pg.is_checked("#tfEffort") and not pg.is_checked("#tfManual"))
     res_rows = pg.locator("#tfResRows .tf-row:not(.tf-row-head)")
-    check("the Resources table lists its assignment with Units and Work, plus a blank row to add one",
-          res_rows.count() == 2 and res_rows.nth(0).locator("input[aria-label='Resource name']").input_value() == "Ben" and res_rows.nth(0).locator("input[aria-label='Units']").input_value() == "100%" and res_rows.nth(0).locator(".tf-work").inner_text() == "80 hrs")   # Work always in hours
+    check("the Resources table lists its assignment with Units and Work, and an Add Resource… button",
+          res_rows.count() == 1 and res_rows.nth(0).locator("input[aria-label='Resource name']").input_value() == "Ben" and res_rows.nth(0).locator("input[aria-label='Units']").input_value() == "100%" and res_rows.nth(0).locator(".tf-work").inner_text() == "80 hrs")   # Work always in hours
     pred_rows = pg.locator("#tfPredRows .tf-row:not(.tf-row-head)")
-    check("the Predecessors table lists its link: ID 1, Design, FS, +1 — plus a blank row",
-          pred_rows.count() == 2 and pred_rows.nth(0).locator("input[aria-label='Predecessor task number']").input_value() == "1" and pred_rows.nth(0).locator(".tf-pred-name").inner_text() == "Design"
+    check("the Predecessors table lists its link: ID 1, Design, FS, +1 — and an Add Predecessor… button",
+          pred_rows.count() == 1 and pred_rows.nth(0).locator("input[aria-label='Predecessor task number']").input_value() == "1" and pred_rows.nth(0).locator(".tf-pred-name").inner_text() == "Design"
           and pred_rows.nth(0).locator("select").input_value() == "FS" and pred_rows.nth(0).locator("input[aria-label='Lead or lag']").input_value() == "+1")
     check("Save and Cancel are disabled while nothing has changed", not pg.is_enabled("#tfOkBtn") and not pg.is_enabled("#tfCancelBtn"))
     select("a")
@@ -74,6 +74,7 @@ with sync_playwright() as p:
     pg.fill("#tfDur", "5")
     pg.fill("#tfPct", "40")
     pg.select_option("#tfType", "fixedDuration")
+    pg.click("#tfResAdd")
     pg.locator("#tfResRows .tf-row:not(.tf-row-head)").nth(1).locator("input[aria-label='Resource name']").fill("Carl")
     pg.locator("#tfResRows .tf-row:not(.tf-row-head)").nth(1).locator("input[aria-label='Units']").fill("50")
     check("editing shows 'not applied yet' and enables Save / Cancel", "Not applied" in pg.inner_text("#tfNote") and pg.is_enabled("#tfOkBtn"))
@@ -132,6 +133,7 @@ with sync_playwright() as p:
     # ---------------------------------------------------------------- predecessors: add, change, remove, refuse
     select("c")
     prow = lambda i: pg.locator("#tfPredRows .tf-row:not(.tf-row-head)").nth(i)
+    pg.click("#tfPredAdd")
     prow(1).locator("input[aria-label='Predecessor task number']").fill("1")
     check("typing an ID shows that task's name right away", prow(1).locator(".tf-pred-name").inner_text() == "Design")
     prow(1).locator("select").select_option("SS"); prow(1).locator("input[aria-label='Lead or lag']").fill("-2")
@@ -139,6 +141,7 @@ with sync_playwright() as p:
     check("a new predecessor is added with its type and a lead", [(x["id"], x["type"], x["lag"]) for x in task("c")["preds"]] == [("b", "FS", 0), ("a", "SS", -2)], task("c")["preds"])
     prow(0).locator(".tf-remove").click(); pg.click("#tfOkBtn"); pg.wait_for_timeout(200)
     check("✕ removes one", [x["id"] for x in task("c")["preds"]] == ["a"], task("c")["preds"])
+    pg.click("#tfPredAdd")
     for num, msg in [("99", "No task #99"), ("3", "itself"), ("4", "summary task")]:
         prow(1).locator("input[aria-label='Predecessor task number']").fill(num)
         pg.click("#tfOkBtn"); pg.wait_for_timeout(120)
@@ -162,11 +165,11 @@ with sync_playwright() as p:
     pg.click("#tfCancelBtn")
 
     # ---------------------------------------------------------------- adding a row the way a person does: click, type, click the next box, type
-    select("b")
-    rrow(1).locator("input[aria-label='Resource name']").click(); pg.keyboard.type("Dana")
+    select("b"); pg.click("#tfResAdd")
+    pg.keyboard.type("Dana")
     rrow(1).locator("input[aria-label='Units']").click(); pg.keyboard.type("25")
-    check("clicking from the new row's name into its Units keeps both (the next blank row is added below, nothing is rebuilt under the cursor)",
-          rrow(1).locator("input[aria-label='Resource name']").input_value() == "Dana" and rrow(1).locator("input[aria-label='Units']").input_value() == "25" and pg.locator("#tfResRows .tf-row:not(.tf-row-head)").count() == 3)
+    check("clicking from the new row's name into its Units keeps both (nothing is rebuilt under the cursor)",
+          rrow(1).locator("input[aria-label='Resource name']").input_value() == "Dana" and rrow(1).locator("input[aria-label='Units']").input_value() == "25" and pg.locator("#tfResRows .tf-row:not(.tf-row-head)").count() == 2)
     pg.click("#tfOkBtn"); pg.wait_for_timeout(150)
     check("...and OK saves it as Dana[25%]", "Dana[25%]" in task("b")["res"], task("b"))
     pg.keyboard.press("Control+z"); pg.wait_for_timeout(150)
@@ -201,7 +204,7 @@ with sync_playwright() as p:
     # ---------------------------------------------------------------- effort driven through the form
     ev("() => { byId('a').resource = 'Anna'; byId('a').work = null; normalizeData(); save(); render(); }")
     select("a"); pg.wait_for_timeout(80)
-    pg.check("#tfEffort"); rrow(1).locator("input[aria-label='Resource name']").fill("Ben")
+    pg.check("#tfEffort"); pg.click("#tfResAdd"); rrow(1).locator("input[aria-label='Resource name']").fill("Ben")
     pg.click("#tfOkBtn"); pg.wait_for_timeout(200)
     check("Effort driven ticked + a second person: Fixed Units finishes faster (5 days -> 3)", ev("() => durationDays(byId('a').startDate, byId('a').endDate)") == 3 and task("a")["ed"] is True, ev("() => [byId('a').startDate, byId('a').endDate]"))
 

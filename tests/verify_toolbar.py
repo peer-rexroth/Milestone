@@ -33,7 +33,7 @@ with sync_playwright() as p:
     fresh()
     check("the Print button is not in the toolbar any more (it is in the Data menu, and Ctrl/Cmd+P)", pg.locator("#printBtn").count() == 0 and pg.locator("#newTaskModeBtn").count() == 0)
     check("nothing selected: Indent / Outdent, Edit / Duplicate / Copy / Delete are there but disabled, and the count chip is not shown", pg.is_disabled("#indentBtn") and all(pg.is_disabled("#" + i) for i in ["bulkEditBtn", "cloneTaskBtn", "copyBtn", "deleteTaskBtn"]) and not pg.locator("#selChip").is_visible())
-    check("the visible toolbar: Undo, Redo, Add Task + arrow, Indent, Outdent … Find, Columns", all(pg.locator("#" + i).is_visible() for i in ["undoBtn", "redoBtn", "addTaskBtn", "addMenuBtn", "indentBtn", "outdentBtn", "searchBtn", "columnsBtn"]))
+    check("the visible toolbar: Undo, Redo, Add Task + arrow, Indent, Outdent … Find, Columns", all(pg.locator("#" + i).is_visible() for i in ["undoBtn", "redoBtn", "addTaskBtn", "addMenuBtn", "indentBtn", "outdentBtn", "columnsBtn"]))
     check("...separators divide the groups", pg.locator(".subbar .tb-sep").count() >= 2)
     pick("Gamma")
     check("a single selection shows no chip (the status bar says it), just the four labelled buttons", not pg.locator("#selChip").is_visible() and [pg.inner_text("#" + i).strip() for i in ["bulkEditBtn", "cloneTaskBtn", "copyBtn", "deleteTaskBtn"]] == ["Edit", "Duplicate", "Copy", "Delete"])

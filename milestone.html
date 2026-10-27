@@ -829,7 +829,7 @@ body.col-moving, body.col-moving * { cursor: grabbing !important; user-select: n
 .sb-btn:hover { background: color-mix(in srgb, var(--text) 8%, transparent); color: var(--text); }
 .sb-btn.hidden { display: none; }
 .sb-btn:disabled { opacity: .45; cursor: default; background: transparent; }
-.sb-toggle[aria-pressed="true"] { color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }   /* the Task Form toggle: highlighted while the pane is open */
+.sb-toggle[aria-pressed="true"] { color: var(--text); background: var(--cap-on); }   /* the Task Form toggle: highlighted while the pane is open */
 .sb-icon { border: none; background: transparent; color: var(--text-dim); width: 22px; height: 22px; border-radius: 50%;font-size: var(--ico-12); }
 .sb-icon:hover { background: var(--pressed); color: var(--text); }
 #zoomSlider { width: 140px; accent-color: var(--accent); }
@@ -838,7 +838,7 @@ body.col-moving, body.col-moving * { cursor: grabbing !important; user-select: n
 .sb-scale .sb-seg, .sb-scale .view-tab { border: none; border-left: 1px solid var(--border); background: transparent; color: var(--text-dim); font-size: var(--fs-12); font-weight: 500; padding: 2px 8px; line-height: 18px; border-radius: 0; box-shadow: none;}
 .sb-scale .sb-seg { border-left: none; }
 .sb-scale .sb-seg:hover, .sb-scale .view-tab:hover { background: color-mix(in srgb, var(--text) 7%, transparent); color: var(--text); }
-.sb-scale .sb-seg[aria-pressed="true"], .sb-scale .view-tab.active { background: color-mix(in srgb, var(--accent) 14%, var(--panel)); color: var(--accent); font-weight: 600; }
+.sb-scale .sb-seg[aria-pressed="true"], .sb-scale .view-tab.active { background: var(--cap-on); color: var(--text); font-weight: 600; }
 .statusbar .filter-chip { padding: 1px 2px 1px 6px; }
 .filter-bar.hidden { display: none; }
 .filter-chip { display: inline-flex; align-items: center; gap: 6px; padding: 2px 4px 2px 8px; border-radius: 999px; white-space: nowrap; font-size: var(--fs-12); color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--panel)); border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--panel)); }
@@ -942,20 +942,23 @@ body.col-moving, body.col-moving * { cursor: grabbing !important; user-select: n
 .tf-cap { display: flex; align-items: center; justify-content: space-between; margin: 0 14px; font-size: var(--fs-12); font-weight: 600; color: var(--text-faint); }
 .tf-head-btn { border: none; background: none; padding: 0; font-size: var(--fs-12); font-weight: 500; color: var(--blue-text); }
 .tf-head-btn:hover { text-decoration: underline; }
-.tf-table { display: flex; flex-direction: column; min-width: 0; }
+.tf-table { display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
 .tf-grid { display: flex; flex-direction: column; }
 .tf-row { position: relative; display: grid; align-items: center; gap: 8px; min-height: 40px; padding: 0 14px; font-size: var(--fs-14); }
 .tf-row + .tf-row::before { content: ""; position: absolute; left: 14px; right: 0; top: 0; height: 1px; background: var(--border); }
-.tf-res .tf-row { grid-template-columns: 24px minmax(0, 1fr) 56px 76px 24px; }
-.tf-pred .tf-row { grid-template-columns: 44px minmax(0, 1fr) 56px 64px 24px; }
+.tf-res .tf-row { grid-template-columns: minmax(0, 1fr) 56px 76px 24px; }
+.tf-res .tf-id { display: none; }
+.tf-pred .tf-row { grid-template-columns: 28px minmax(0, 1fr) 56px 64px 24px; }
+.tf-pred .tf-row > input.tf-cell:first-child { text-align: left !important; }
 .tf-row > * { min-width: 0; }
 .tf-row > span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .tf-cell { width: 100%; height: 32px; border: 0; border-radius: var(--r-xs); background: transparent; color: var(--text-dim); padding: 0; font-size: var(--fs-14); outline: none; min-width: 0; box-shadow: none; }
 .tf-row > .tf-cell:focus { background: transparent; }
 .tf-row:focus-within { background: var(--hover); }
+.tf-cell:focus-visible, select.tf-cell:focus-visible { outline: none !important; box-shadow: none !important; }   /* the row's tint is the focus mark, as in Edit Task */
 .tf-cell::placeholder { color: var(--text-faint); }
 .tf-res .tf-cell:not(.tf-units) { color: var(--text); }
-select.tf-cell { padding: 0 20px 0 0 !important; text-align-last: left; }
+select.tf-cell { padding: 0 20px 0 0 !important; text-align-last: left; background-repeat: no-repeat !important; background-position: right 2px center !important; }
 input.tf-cell[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 input.tf-cell[type=number] { -moz-appearance: textfield; }
 .tf-units, .tf-lag { text-align: right; }
@@ -963,19 +966,11 @@ input.tf-cell[type=number] { -moz-appearance: textfield; }
 .tf-work { color: var(--text-dim); font-variant-numeric: tabular-nums; text-align: right; }
 .tf-pred-name { color: var(--text-dim); }
 .tf-pred-name.none { color: var(--text-faint); }
-.tf-row.tf-blank .tf-cell, .tf-row.tf-blank select.tf-cell { color: var(--text-faint); }   /* the trailing "add" row: its defaults (FS, 0, 100%) read as hints until typed over */
-.tf-row.tf-blank input.tf-cell:first-of-type { color: var(--blue-text); font-weight: 500; }
-.tf-row.tf-blank input.tf-cell:first-of-type::placeholder { color: var(--blue-text); opacity: 1; }
-.tf-res .tf-blank > .tf-id { display: none; }
-.tf-res .tf-blank > .tf-cell:first-of-type { grid-column: 1 / 3; }
-.tf-pred .tf-blank > .tf-pred-name { display: none; }
-.tf-pred .tf-blank > .tf-cell:first-child { grid-column: 1 / 3; text-align: left !important; }
-.tf-blank > :is(.tf-units, .tf-work, select.tf-cell, .tf-lag) { opacity: 0; }
-.tf-blank:focus-within > :is(.tf-units, .tf-work, select.tf-cell, .tf-lag) { opacity: 1; }
 .tf-remove { width: var(--ib-s); height: var(--ib-s); padding: 0; border: none; border-radius: 50%; background: transparent; color: var(--text-faint); opacity: 0; }
 .tf-row:hover .tf-remove, .tf-remove:focus { opacity: 1; }
 .tf-remove:hover { background: var(--pressed); color: var(--text); }
-.tf-remove[hidden] { display: block !important; visibility: hidden; }
+.tf-grid:not(:empty) + .tf-add::before { content: ""; position: absolute; left: 14px; right: 0; top: 0; height: 1px; background: var(--border); }
+.tf-add:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--focus-ring); }
 @media (max-width: 1080px) { .tf-top, .tf-tables { grid-template-columns: 1fr; } }
 .grid-pane { width: var(--grid-pane-width, 360px); flex-shrink: 0; display: flex; flex-direction: column; border-right: 1px solid var(--border); background: var(--panel); position: relative; }
 /* The task list — the same one in the Tasks view and (left of the chart) in the Gantt view; the Tasks-view rules below apply to both. */
@@ -1958,7 +1953,7 @@ html.sidebar-collapsed .bar-title { display: block; }
 .subbar .tool-group > .btn.ico { background: transparent; height: 30px; width: 34px; }
 .subbar .tool-group > .btn.ico:hover, .subbar .tool-group > .dropdown-wrap > .btn.ico:hover { background: var(--cap-hover); }
 .subbar .tool-group > .dropdown-wrap { display: flex; }
-.subbar .tool-group > .dropdown-wrap > .btn.ico { background: transparent; height: 26px; width: 30px; }
+.subbar .tool-group > .dropdown-wrap > .btn.ico { background: transparent; height: 30px; width: 34px; }
 /* Delete is quiet like the other icons; only the hover says it is destructive: a red fill and a red glyph (as in ClearDesk's toolbar) */
 .subbar .tool-group .btn-danger { color: var(--text); }
 .subbar .tool-group .btn-danger:hover:not(:disabled) { background: var(--red-bg); color: var(--red-text); }
@@ -2080,7 +2075,6 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
   <div class="tb-group" data-views="tasks gantt">
     <span class="tb-sep"></span>
     <div class="tool-group" role="group" aria-label="View options">
-    <button class="btn ico" id="searchBtn" data-more="2" onclick="openSearch()" title="Find a task by name, WBS, number (#12), resource (@anna) or status (status:late) — Ctrl/Cmd+K, or /"><i class="fa-solid fa-magnifying-glass"></i><span class="sr-only">Find</span></button>
     <button class="btn btn-sm tb-toggle ico" id="groupBtn" data-views="tasks" data-more="6" onclick="toggleGroupMenu(event)" aria-pressed="false" aria-haspopup="menu" title="Group the list by Status, Resource, a month … (Tasks view)"><i class="fa-solid fa-layer-group"></i><span class="sr-only">Group</span></button>
     <button class="btn ico" id="columnsBtn" data-more="7" onclick="toggleColumnsMenu()" title="Choose which columns the task list shows"><i class="fa-solid fa-table-columns"></i><span class="sr-only">Columns</span></button>
     </div>
@@ -9221,7 +9215,7 @@ function applyTaskFormHeight() {
   document.documentElement.style.setProperty('--task-form-h', Math.max(TASK_FORM_MIN_H, Math.min(max, taskFormHeight)) + 'px');
 }
 function tfState() {
-  const vals = [...document.querySelectorAll('#taskFormBody input, #taskFormBody select')].map(el => el.type === 'checkbox' ? el.checked : el.value);
+  const vals = [...document.querySelectorAll('#taskFormBody input, #taskFormBody select')].filter(el => { const row = el.closest('.tf-row'); return !row || row.querySelector('input.tf-cell').value.trim() !== ''; }).map(el => el.type === 'checkbox' ? el.checked : el.value);
   return JSON.stringify(vals);
 }
 function tfDirty() { return tfSnapshot !== null && !!byId(tfTaskId) && tfState() !== tfSnapshot; }
@@ -9289,9 +9283,9 @@ function renderTaskForm(force) {
     ${group ? '<div class="tf-hint">A group takes its dates, % complete, resources and links from its tasks.</div>'
       : `<div class="tf-tables">
            <div class="tf-sec"><div class="tf-cap"><span>Resources</span><button type="button" class="tf-head-btn" id="tfEditResourcesBtn" title="Edit resources… — open the Resources tab (the plan's people, rates and days off)" aria-label="Edit resources">Edit Resources…</button></div>
-             <div class="tgrp tf-table tf-res"><div class="tf-grid" id="tfResRows"></div></div></div>
+             <div class="tgrp tf-table tf-res"><div class="tf-grid" id="tfResRows"></div><button type="button" class="trow tadd tf-add" id="tfResAdd" onclick="tfAddRow('res')">Add Resource…</button></div></div>
            <div class="tf-sec"><div class="tf-cap"><span>Predecessors</span></div>
-             <div class="tgrp tf-table tf-pred"><div class="tf-grid" id="tfPredRows"></div></div></div>
+             <div class="tgrp tf-table tf-pred"><div class="tf-grid" id="tfPredRows"></div><button type="button" class="trow tadd tf-add" id="tfPredAdd" onclick="tfAddRow('pred')">Add Predecessor…</button></div></div>
          </div>
          <datalist id="tfResList">${(project.resources || []).map(r => `<option value="${escapeHtml(r.name)}">`).join('')}</datalist>`}</div>`;
   body.querySelector('#tfPrevBtn').onclick = () => taskFormStep(-1); body.querySelector('#tfNextBtn').onclick = () => taskFormStep(1);
@@ -9310,19 +9304,19 @@ function renderTaskForm(force) {
   tfHeader();
 }
 function effectiveProgressOf(id) { const e = effectiveDates(id); return Number.isFinite(e.progress) ? e.progress : (byId(id) || {}).progress || 0; }
-function tfResRowHtml(t, r, i, blank) {
-  const res = r.name ? resourceByName(r.name) : null, unchanged = !blank && r.saved !== null && res && Number(String(r.units).replace('%', '')) === r.saved;
+function tfResRowHtml(t, r, i) {
+  const res = r.name ? resourceByName(r.name) : null, unchanged = r.saved !== null && res && Number(String(r.units).replace('%', '')) === r.saved;
   const work = unchanged ? fmtWorkHours(Math.round(assignmentHours(t, { units: r.saved }) * 60)) : '';
   const rid = res ? (project.resources || []).indexOf(res) + 1 : '';
-  return `<div class="tf-row${blank ? ' tf-blank' : ''}" data-i="${i}"><span class="tf-id">${rid || ''}</span>
-      <input type="text" class="tf-cell" list="tfResList" maxlength="60" value="${escapeHtml(r.name)}" placeholder="${blank ? 'Add Resource…' : ''}" aria-label="Resource name" oninput="tfResInput(${i}, 'name', this.value)">
-      <input type="text" class="tf-cell tf-units" inputmode="numeric" value="${escapeHtml(r.units)}" placeholder="${blank ? '100%' : ''}" aria-label="Units" oninput="tfResInput(${i}, 'units', this.value)">
-      <span class="tf-work" title="${unchanged ? 'This assignment\'s share of the task\'s Work' : 'Worked out when you click Save'}">${work || (blank ? '' : '—')}</span>
-      <button type="button" class="tf-remove" ${blank ? 'hidden' : ''} aria-label="Remove ${escapeHtml(r.name || 'this resource')}" title="Remove" onclick="tfResRemove(${i})"><i class="fa-solid fa-xmark"></i></button></div>`;
+  return `<div class="tf-row" data-i="${i}"><span class="tf-id">${rid || ''}</span>
+      <input type="text" class="tf-cell" list="tfResList" maxlength="60" value="${escapeHtml(r.name)}" placeholder="Resource name" aria-label="Resource name" oninput="tfResInput(${i}, 'name', this.value)">
+      <input type="text" class="tf-cell tf-units" inputmode="numeric" value="${escapeHtml(r.units)}" placeholder="100%" aria-label="Units" oninput="tfResInput(${i}, 'units', this.value)">
+      <span class="tf-work" title="${unchanged ? 'This assignment\'s share of the task\'s Work' : 'Worked out when you click Save'}">${work || '—'}</span>
+      <button type="button" class="tf-remove" aria-label="Remove ${escapeHtml(r.name || 'this resource')}" title="Remove" onclick="tfResRemove(${i})"><i class="fa-solid fa-xmark"></i></button></div>`;
 }
 function renderTfResRows() {
   const t = byId(tfTaskId), el = document.getElementById('tfResRows'); if (!t || !el) return;
-  el.innerHTML = tfRes.map((r, i) => tfResRowHtml(t, r, i, false)).join('') + tfResRowHtml(t, { name: '', units: '', saved: null }, tfRes.length, true);
+  el.innerHTML = tfRes.map((r, i) => tfResRowHtml(t, r, i)).join('');
   tfRefreshWork();
 }
 // What Save would make of Work right now, per resource row: worked out on a COPY of the task with the very rules OK applies
@@ -9360,34 +9354,44 @@ function tfRefreshWork() {
     cell.title = hit ? "This assignment's share of the task's Work — follows what you type; applied with OK" : "Not worked out yet — check the Units (1%–800%)";
   }
 }
-// Typing into the blank row makes it a real one and adds the next blank row BELOW it, in place — rebuilding the table
-// here would replace the very box the person is moving into (the click or the typing would be lost).
-function tfGrow(listSel, rowHtml) {
-  const rows = document.querySelectorAll(`${listSel} .tf-row:not(.tf-row-head)`), last = rows[rows.length - 1];
-  if (last) { last.classList.remove('tf-blank'); const x = last.querySelector('.tf-remove'); if (x) x.hidden = false; last.querySelectorAll('[placeholder]').forEach(el => { el.placeholder = ''; }); }
-  document.querySelector(listSel).insertAdjacentHTML('beforeend', rowHtml);
+// "Add Resource…" / "Add Predecessor…" are buttons, as in Edit Task: a click adds an empty row and puts the cursor in its first box (an empty row
+// that is left again goes away, see the focusout handler below; Save skips empty rows).
+function tfAddRow(kind) {
+  if (kind === 'res') { tfRes.push({ name: '', units: '', saved: null }); renderTfResRows(); }
+  else { tfPreds.push({ num: '', type: 'FS', lag: '' }); renderTfPredRows(); }
+  const rows = document.querySelectorAll(kind === 'res' ? '#tfResRows .tf-row' : '#tfPredRows .tf-row'), last = rows[rows.length - 1];
+  if (last) last.querySelector('input.tf-cell').focus();
 }
 function tfResInput(i, key, v) {
-  if (i === tfRes.length) { tfRes.push({ name: '', units: '', saved: null }); tfRes[i][key] = v; tfGrow('#tfResRows', tfResRowHtml(byId(tfTaskId), { name: '', units: '', saved: null }, tfRes.length, true)); }
-  else tfRes[i][key] = v;
+  tfRes[i][key] = v;
   tfHeader();
 }
+// A row whose main box is empty and which is left again goes away (it would sit there as an empty band).
+document.addEventListener('focusout', e => {
+  const row = e.target.closest && e.target.closest('#tfResRows .tf-row, #tfPredRows .tf-row'); if (!row) return;
+  setTimeout(() => {
+    if (!row.isConnected || row.contains(document.activeElement)) return;
+    const main = row.querySelector('input.tf-cell'), i = Number(row.dataset.i);
+    if (!main || main.value.trim() !== '') return;
+    if (row.parentElement.id === 'tfResRows') { if (i < tfRes.length && !String(tfRes[i].name).trim()) tfResRemove(i); }
+    else if (i < tfPreds.length && !String(tfPreds[i].num).trim()) tfPredRemove(i);
+  }, 0);
+});
 function tfResRemove(i) { tfRes.splice(i, 1); renderTfResRows(); tfHeader(); }
-function tfPredRowHtml(p, i, blank) {
+function tfPredRowHtml(p, i) {
   const pt = tfPredTask(p.num);
-  return `<div class="tf-row${blank ? ' tf-blank' : ''}" data-i="${i}"><input type="number" class="tf-cell" min="1" step="1" value="${escapeHtml(p.num)}" placeholder="${blank ? 'Add Predecessor…' : ''}" aria-label="Predecessor task number" style="text-align:right" oninput="tfPredInput(${i}, 'num', this.value)">
+  return `<div class="tf-row" data-i="${i}"><input type="number" class="tf-cell" min="1" step="1" value="${escapeHtml(p.num)}" placeholder="Task #" aria-label="Predecessor task number" style="text-align:right" oninput="tfPredInput(${i}, 'num', this.value)">
       <span class="tf-pred-name${pt ? '' : ' none'}" data-i="${i}" title="${pt ? escapeHtml(pt.name) : ''}">${pt ? escapeHtml(pt.name) : (p.num ? 'no such task' : '')}</span>
       <select class="tf-cell" aria-label="Link type" title="FS finish-to-start, SS start-to-start, FF finish-to-finish, SF start-to-finish" onchange="tfPredInput(${i}, 'type', this.value)">${DEP_TYPES.map(dt => `<option value="${dt}"${dt === p.type ? ' selected' : ''}>${dt}</option>`).join('')}</select>
-      <input type="text" class="tf-cell tf-lag" value="${escapeHtml(p.lag)}" placeholder="${blank ? '0' : ''}" aria-label="Lead or lag" title="${minuteModeActive() ? 'Working time — 2h, -30m, 1d; a bare number is hours' : 'Working days — negative is a lead'}. Positive delays the task (lag), negative lets it overlap (lead)" oninput="tfPredInput(${i}, 'lag', this.value)">
-      <button type="button" class="tf-remove" ${blank ? 'hidden' : ''} aria-label="Remove this predecessor" title="Remove" onclick="tfPredRemove(${i})"><i class="fa-solid fa-xmark"></i></button></div>`;
+      <input type="text" class="tf-cell tf-lag" value="${escapeHtml(p.lag)}" placeholder="0" aria-label="Lead or lag" title="${minuteModeActive() ? 'Working time — 2h, -30m, 1d; a bare number is hours' : 'Working days — negative is a lead'}. Positive delays the task (lag), negative lets it overlap (lead)" oninput="tfPredInput(${i}, 'lag', this.value)">
+      <button type="button" class="tf-remove" aria-label="Remove this predecessor" title="Remove" onclick="tfPredRemove(${i})"><i class="fa-solid fa-xmark"></i></button></div>`;
 }
 function renderTfPredRows() {
   const el = document.getElementById('tfPredRows'); if (!el) return;
-  el.innerHTML = tfPreds.map((p, i) => tfPredRowHtml(p, i, false)).join('') + tfPredRowHtml({ num: '', type: 'FS', lag: '' }, tfPreds.length, true);
+  el.innerHTML = tfPreds.map((p, i) => tfPredRowHtml(p, i)).join('');
 }
 function tfPredTask(num) { const n = parseInt(num, 10); const id = Number.isFinite(n) ? taskIdByDisplayId(n) : null; return id ? byId(id) : null; }
 function tfPredInput(i, key, v) {
-  if (i === tfPreds.length) { tfPreds.push({ num: '', type: 'FS', lag: '' }); tfGrow('#tfPredRows', tfPredRowHtml({ num: '', type: 'FS', lag: '' }, tfPreds.length, true)); }
   tfPreds[i][key] = v;
   if (key === 'num') { const span = document.querySelector(`#tfPredRows .tf-pred-name[data-i="${i}"]`), pt = tfPredTask(v); if (span) { span.textContent = pt ? pt.name : (v ? 'no such task' : ''); span.classList.toggle('none', !pt); } }
   tfHeader();

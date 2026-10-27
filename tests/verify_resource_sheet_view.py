@@ -31,7 +31,7 @@ with sync_playwright() as p:
           and ev("() => getComputedStyle(document.getElementById('gridPane')).display") == "none" and ev("() => getComputedStyle(document.getElementById('ganttPaneOuter')).display") == "none" and ev("() => getComputedStyle(document.getElementById('resourcePaneOuter')).display") == "none")
     vis = lambda i: ev("i => document.getElementById(i).offsetParent !== null", i)
     check("the toolbar is the Resource Sheet's own: Add Resource and Currency — no zoom, no Gantt toggles, no task buttons (Add Task, Find, Columns)",
-          vis("addResourceBtn") and pg.locator("#rsCurrencyInput").count() == 0 and not any(vis(i) for i in ["zoomTabs", "criticalPathBtn", "addTaskBtn", "searchBtn", "columnsBtn"]))
+          vis("addResourceBtn") and pg.locator("#rsCurrencyInput").count() == 0 and not any(vis(i) for i in ["zoomTabs", "criticalPathBtn", "addTaskBtn", "columnsBtn"]))
     check("...and there is no third bar above the sheet any more", pg.locator(".rst-toolbar").count() == 0)
 
     pg.click("#mainViewTabs .view-tab:has-text('Tasks')"); pg.wait_for_timeout(100)
