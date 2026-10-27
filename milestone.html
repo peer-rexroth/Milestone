@@ -683,7 +683,7 @@ button:focus:not(:focus-visible) { outline: none; }
 }
 .dropdown-item:hover:not(:disabled) { background: var(--accent); color: var(--on-accent); }
 .dropdown-item:hover:not(:disabled) i, .dropdown-item:hover:not(:disabled) .item-hint { color: inherit; }
-.dropdown-item i { width: 15px; color: var(--text-dim); }
+.dropdown-item i { width: 15px; height: 15px; color: var(--text-dim); }   /* (a masked icon is square: a 15px width over a 1em height clipped the top and bottom of the drawing) */
 .dropdown-sep { height: 1px; background: var(--border); margin: 6px 2px; }
 /* ---- the collapse/expand-all toggle in the ID column's header ---- */
 .id-head { display: flex; align-items: center; justify-content: flex-start; }   /* the toggle sits at the left edge of the ID column */
@@ -721,7 +721,7 @@ button:focus:not(:focus-visible) { outline: none; }
 .fld-row .fld-name { flex: 1 1 auto; min-width: 0; width: auto; padding: 6px 0; border: 0 !important; background-color: transparent !important; box-shadow: none !important; outline: 0; font: inherit; color: var(--text); }
 .fld-row .fld-name::placeholder { color: var(--text-faint); }
 .fld-kind { flex: none; min-width: 84px; display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-13); color: var(--text-faint); white-space: nowrap; }
-.fld-kind i { width: 14px; text-align: center; color: var(--text-faint); }
+.fld-kind i { width: 14px; height: 14px; text-align: center; color: var(--text-faint); }
 .fld-show { display: flex; }
 .fld-show input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .fld-switch { position: relative; width: 38px; height: 22px; border-radius: 999px; background: var(--cap-hover); transition: background-color var(--dur-fast) ease; flex-shrink: 0; }
@@ -777,7 +777,7 @@ button:focus:not(:focus-visible) { outline: none; }
 .cols-move button:disabled { opacity: .35; cursor: default; }
 .cols-opts { padding: 6px 0 2px; border-top: 1px solid var(--border); margin-top: 6px; display: flex; flex-direction: column; gap: 0; }
 .cols-opt { display: flex; align-items: center; gap: 4px; border: none; background: transparent; color: var(--text); font-size: var(--fs-14); padding: 6px 8px; border-radius: var(--r-s); text-align: left; }
-.cols-opt i { width: 18px; font-size: var(--ico-14); color: var(--text); }
+.cols-opt i { width: 18px; height: 18px; font-size: var(--ico-14); color: var(--text); }
 .cols-opt:hover:not(:disabled) { background: var(--accent); color: var(--on-accent); }
 .cols-opt:hover:not(:disabled) i { color: var(--on-accent); }
 .cols-opt:disabled { opacity: .45; cursor: default; }
@@ -1521,6 +1521,7 @@ select.rst-select:disabled { opacity: .5; }
   transition: opacity var(--dur-fast) ease, visibility var(--dur-fast) ease;
 }
 .modal-bg.open { opacity: 1; visibility: visible; pointer-events: auto; }
+html.settings-switching .modal-bg { transition: none; }
 #confirmModalBg { z-index: 210; }   /* a question ("discard your changes?", "delete?") always sits above whatever dialog asked it, wherever that dialog is in the page */
 .modal { background: var(--glass-strong); border: 1px solid var(--glass-edge); border-radius: var(--r-xl); box-shadow: var(--glass-shadow), inset 0 1px 0 var(--glass-rim); width: 480px; max-width: 92vw; max-height: 86vh; display: flex; flex-direction: column; }
 .modal.narrow { width: 380px; }
@@ -1867,7 +1868,7 @@ input.dt-time { width: 84px; flex: 0 0 84px; text-align: center; }
 .help-rail .help-search-bar input { height: 32px; padding: 0 12px; border: none; border-radius: 999px; background: var(--cap-fill); }
 .help-nav { width: auto; flex: 1; min-height: 0; flex-shrink: 0; display: flex; flex-direction: column; gap: 2px; padding: 4px 12px 12px; border-right: 0; background: transparent; overflow-y: auto; }
 .help-nav button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 7px 10px; border: 0; border-radius: var(--r-m); background: transparent; color: var(--text); font: inherit; font-size: var(--fs-13); text-align: left; }
-.help-nav button i { width: 16px; text-align: center; font-size: var(--ico-16); color: var(--text-faint); flex-shrink: 0; }
+.help-nav button i { width: 16px; height: 16px; text-align: center; font-size: var(--ico-16); color: var(--text-faint); flex-shrink: 0; }
 .help-nav button:hover { background: var(--hover); color: var(--text); }
 .help-nav button.active { background: var(--accent); color: var(--on-accent); font-weight: 600; box-shadow: none; }   /* the solid accent on the current topic, as in System Settings */
 .help-nav button.active i { color: inherit; }
@@ -8827,9 +8828,12 @@ function currentSettingsTab() { const t = SETTINGS_TABS.find(t => document.getEl
 function openSettingsTab(id) {
   const cur = currentSettingsTab(), target = SETTINGS_TABS.find(t => t.id === id); if (!target || cur === id) return;
   const from = SETTINGS_TABS.find(t => t.id === cur);
-  const go = () => { if (from) from.close(); settingsTab = id; target.open(); };
+  // The next tab opens BEFORE the current one closes, with the backdrop's fade switched off: closing first left a gap where the task list showed
+  // through (and took clicks) and the scrim faded out and in again.
+  const swap = fn => { document.documentElement.classList.add('settings-switching'); fn(); requestAnimationFrame(() => requestAnimationFrame(() => document.documentElement.classList.remove('settings-switching'))); };
+  const go = () => swap(() => { settingsTab = id; target.open(); if (from) from.close(); });
   // Three ways out: keep editing, throw the edits away, or save them and carry on (stays put when the save is refused or asks its own question).
-  const saveAndGo = () => { from.save(); if (!document.getElementById(from.bg).classList.contains('open')) { settingsTab = id; target.open(); } };
+  const saveAndGo = () => { from.save(); if (!document.getElementById(from.bg).classList.contains('open')) swap(() => { settingsTab = id; target.open(); }); };
   if (from && from.dirty()) openConfirmModal({ title: 'Save your changes?', body: `You changed ${from.what} but did not save it.`, icon: 'triangle-exclamation', confirmLabel: 'Discard changes', confirmClass: 'btn', cancelLabel: 'Keep editing', action: go, altLabel: 'Save and continue', altAction: saveAndGo });
   else go();
 }
