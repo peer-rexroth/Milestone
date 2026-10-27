@@ -195,8 +195,6 @@ html[data-scheme="glass"][data-theme="dark"] :is(.main, .drawer, .notes-main) {
   --dur-fast: .12s;
   --dur-base: .2s;
   --fs-11: 11px;
-  --gl-6: 6px;
-  --gl-7: 7px;
   --gl-8: 8px;
   --gl-9: 9px;
   --gl-10: 10px;

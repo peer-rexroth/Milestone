@@ -395,8 +395,6 @@ html[data-scheme="glass"][data-theme="dark"] :is(.content) {
   --dur-fast: .12s;
   --dur-base: .2s;
   --fs-11: 11px;
-  --gl-6: 6px;
-  --gl-7: 7px;
   --gl-8: 8px;
   --gl-9: 9px;
   --gl-10: 10px;
@@ -816,6 +814,8 @@ body.col-moving, body.col-moving * { cursor: grabbing !important; user-select: n
 .col-head:hover .col-filter-btn, .col-head:focus-within .col-filter-btn, .col-filter-btn.menu-open { opacity: .55; }
 @media (hover: none) { .col-filter-btn { opacity: .55; } }   /* a touch screen has no hover */
 .col-head .col-filter-btn:hover { background: var(--pressed); color: var(--text); opacity: 1; }
+.col-filter-btn { position: relative; }
+.col-filter-btn::before { content: ""; position: absolute; inset: -4px; }   /* the 18px button keeps its look; its hit area is 26px (≥ 20) */
 .col-filter-btn.active { color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--panel)); opacity: 1; }
 .filter-bar { display: flex; align-items: center; gap: 8px; font-size: var(--fs-12); color: var(--text-dim); min-width: 0; overflow: hidden; }
 /* ── Status bar ── */
@@ -1051,7 +1051,7 @@ input.tf-cell[type=number] { -moz-appearance: textfield; }
 .folder-row .fr-main { flex: 1; min-width: 0; }
 .folder-row .fr-name { font-size: var(--fs-13); font-weight: 600; word-break: break-all; }
 .folder-row .fr-meta { font-size: var(--fs-12); color: var(--text-dim); margin-top: 1px; }
-.folder-row .fr-tag { flex: none; font-size: var(--fs-11); font-weight: 600; padding: 1px 8px; border-radius: 99px; color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--panel)); white-space: nowrap; }
+.folder-row .fr-tag { flex: none; font-size: var(--fs-11); font-weight: 600; padding: 1px 8px; border-radius: 999px; color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--panel)); white-space: nowrap; }
 .folder-row .fr-new { margin-top: 6px; }
 .folder-row .fr-new input[type=text] { width: 100%; box-sizing: border-box; padding: 6px 8px; border: 1px solid var(--border); border-radius: var(--r-s); background: var(--panel); color: var(--text); }
 .folder-row .fr-new input[type=text]:focus { outline: none; border-color: var(--accent); }
@@ -1174,7 +1174,7 @@ html.time12 .tf-dt input.dt-time { flex: 0 0 104px; min-width: 104px; width: 104
 .bulk-hint { font-size: var(--fs-12); color: var(--text-dim); margin: 0; }
 .modal.print-modal { width: 1040px; max-width: 96vw; height: min(780px, 92vh); max-height: none; }
 .print-layout { display: flex; flex: 1; min-height: 0; }
-.print-opts { width: 300px; flex-shrink: 0; overflow-y: auto; padding: 16px 16px; border-right: 1px solid var(--border); display: flex; flex-direction: column; gap: 14px; }
+.print-opts { width: 340px; flex-shrink: 0; overflow-y: auto; padding: 16px 16px; border-right: 1px solid var(--border); display: flex; flex-direction: column; gap: 18px; }
 .print-two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .print-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; }
 .print-chk { display: flex; align-items: center; gap: 6px; font-size: var(--fs-13); color: var(--text);margin-top: 2px; flex-wrap: wrap; }
@@ -1660,82 +1660,176 @@ html.settings-switching .modal-bg { transition: none; }
 :is(#calendarModalBg, #rulesModalBg, #formatModalBg, #fieldsModalBg) .settings-tab i { display: none; }
 :is(#calendarModalBg, #rulesModalBg, #formatModalBg, #fieldsModalBg) .settings-tab.active { background: var(--glass-strong); color: var(--text); font-weight: 600; box-shadow: 0 1px 3px var(--shadow-ink); }
 :is(#calendarModalBg, #rulesModalBg, #formatModalBg, #fieldsModalBg) .cal-summary { border: 0; background: var(--cap-fill); }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .modal-body { gap: 18px; padding-top: 16px; }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .cal-sec { gap: 6px; }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .cal-sec + .cal-sec, :is(#calendarModalBg, #rulesModalBg, #formatModalBg) .cal-sec + .cal-how { padding-top: 0; border-top: 0; }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .cal-sec-title { margin: 0 14px; font-size: var(--fs-12); font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--text-faint); }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .cal-sec-title .cal-sec-note { font-weight: 400; }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .scope-badge { padding: 0; background: none; font-size: var(--fs-12); font-weight: 500; color: var(--text-faint); }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .cal-hint, :is(#calendarModalBg, #rulesModalBg, #formatModalBg) .fmt-cap { margin: 0 14px; font-size: var(--fs-12); color: var(--text-faint); line-height: 1.4; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .modal-body { gap: 18px; padding-top: 16px; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .cal-sec { gap: 6px; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .cal-sec + .cal-sec, :is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .cal-sec + .cal-how { padding-top: 0; border-top: 0; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .cal-sec-title { margin: 0 14px; font-size: var(--fs-12); font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--text-faint); }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .cal-sec-title .cal-sec-note { font-weight: 400; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .scope-badge { padding: 0; background: none; font-size: var(--fs-12); font-weight: 500; color: var(--text-faint); }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .cal-hint, :is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .fmt-cap { margin: 0 14px; font-size: var(--fs-12); color: var(--text-faint); line-height: 1.4; }
 /* the tinted groups */
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) :is(.cal-days, .precision-row, .hol-list, .hol-preset, .hol-add, .fmt-cur, .fmt-tiles, .fmt-top, .fmt-preview, .workhours-editor, .rules-adv > label) { background: color-mix(in srgb, var(--text) 5%, transparent); border: 0; border-radius: var(--r-m); }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) :is(.precision-row, .hol-list, .hol-preset, .hol-add, .fmt-tiles) { display: flex; flex-direction: column; flex-wrap: nowrap; gap: 0; align-items: stretch; padding: 0; overflow: visible; max-height: none; }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .hol-list { max-height: 220px; overflow-y: auto; }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .hol-list:empty::before { content: 'No Days Off'; padding: 0 14px; line-height: 40px; color: var(--text-faint); font-size: var(--fs-14); }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) :is(.cal-days, .precision-row, .hol-list, .hol-preset, .hol-add, .fmt-cur, .fmt-tiles, .fmt-top, .fmt-preview, .workhours-editor, .rules-adv > label) { background: color-mix(in srgb, var(--text) 5%, transparent); border: 0; border-radius: var(--r-m); }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) :is(.precision-row, .hol-list, .hol-preset, .hol-add, .fmt-tiles) { display: flex; flex-direction: column; flex-wrap: nowrap; gap: 0; align-items: stretch; padding: 0; overflow: visible; max-height: none; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .hol-list { max-height: 220px; overflow-y: auto; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .hol-list:empty::before { content: 'No Days Off'; padding: 0 14px; line-height: 40px; color: var(--text-faint); font-size: var(--fs-14); }
 /* a row */
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) :is(.precision-opt, .hol-row, .hol-field, .hol-yearly, .fmt-tile, .wh-day-row) { position: relative; display: flex; flex-direction: row; align-items: center; gap: 12px; min-height: 40px; padding: 4px 14px; font-size: var(--fs-14); color: var(--text); border: 0; border-radius: 0; background: none; box-shadow: none; }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) :is(.precision-opt, .hol-row, .hol-field, .hol-yearly, .fmt-tile) + :is(.precision-opt, .hol-row, .hol-field, .hol-yearly, .fmt-tile)::before { content: ""; position: absolute; left: 14px; right: 0; top: 0; height: 1px; background: var(--border); }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .hol-row { gap: 10px; border-bottom: 0; }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .hol-row .hol-when { color: var(--text); }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .hol-row .hol-name { color: var(--text-dim); }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .hol-row .hol-tag { border: 0; background: var(--cap-fill); padding: 1px 8px; border-radius: 999px; }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .hol-row button:hover { color: var(--text); }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .hol-field > label { flex: 1; min-width: 0; font-size: var(--fs-14); color: var(--text); }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .hol-field .hol-opt { color: var(--text-faint); }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .hol-field :is(input[type=text], input[type=number], select), :is(#calendarModalBg, #rulesModalBg, #formatModalBg) .fmt-cur select { flex: 0 1 200px; width: auto; min-width: 0; padding: 6px 0; border: 0; background-color: transparent; box-shadow: none; text-align: right; color: var(--text-dim); font: inherit; }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .hol-field select { padding-right: 20px; text-align-last: right; }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .hol-field .dt-wrap { flex: 0 1 200px; width: auto; }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .hol-field input.dt-date { width: 100%; padding: 6px 30px 6px 0; border: 0; background-color: transparent; text-align: right; color: var(--text-dim); font: inherit; box-shadow: none; }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .hol-field-name input[type=text] { flex: 1 1 auto; width: auto; }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .hol-break { display: none; }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .cal-sec :is(.hol-preset, .hol-add) > :is(.hol-field, .hol-yearly) { flex: none; width: 100%; min-width: 0; }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .hol-add.hol-fields { align-items: stretch !important; }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .hol-field input[type=number] { -moz-appearance: textfield; }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .hol-field input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }   /* (their old flex-basis widths would be heights in a column) */
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .hol-field select, :is(#calendarModalBg, #rulesModalBg, #formatModalBg) .fmt-cur select { padding-right: 24px !important; background-position: right 0 center !important; background-repeat: no-repeat !important; }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .hol-yearly { justify-content: space-between; flex-direction: row-reverse; white-space: normal; }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .hol-yearly input { appearance: none; -webkit-appearance: none; flex: none; position: relative; width: 38px; height: 22px; margin: 0; border-radius: 999px; background: var(--cap-hover); }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .hol-yearly input::after { content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: var(--on-accent); box-shadow: 0 1px 3px var(--shadow-ink); transition: transform var(--dur-fast) ease; }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .hol-yearly input:checked { background: var(--accent); }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .hol-yearly input:checked::after { transform: translateX(16px); }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .hol-yearly input:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) :is(.precision-opt, .hol-row, .hol-field, .hol-yearly, .fmt-tile, .wh-day-row) { position: relative; display: flex; flex-direction: row; align-items: center; gap: 12px; min-height: 40px; padding: 4px 14px; font-size: var(--fs-14); color: var(--text); border: 0; border-radius: 0; background: none; box-shadow: none; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) :is(.precision-opt, .hol-row, .hol-field, .hol-yearly, .fmt-tile) + :is(.precision-opt, .hol-row, .hol-field, .hol-yearly, .fmt-tile)::before { content: ""; position: absolute; left: 14px; right: 0; top: 0; height: 1px; background: var(--border); }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .hol-row { gap: 10px; border-bottom: 0; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .hol-row .hol-when { color: var(--text); }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .hol-row .hol-name { color: var(--text-dim); }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .hol-row .hol-tag { border: 0; background: var(--cap-fill); padding: 1px 8px; border-radius: 999px; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .hol-row button:hover { color: var(--text); }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .hol-field > label { flex: 1; min-width: 0; font-size: var(--fs-14); color: var(--text); }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .hol-field .hol-opt { color: var(--text-faint); }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .hol-field :is(input[type=text], input[type=number], select), :is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .fmt-cur select { flex: 0 1 200px; width: auto; min-width: 0; padding: 6px 0; border: 0; background-color: transparent; box-shadow: none; text-align: right; color: var(--text-dim); font: inherit; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .hol-field select { padding-right: 20px; text-align-last: right; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .hol-field .dt-wrap { flex: 0 1 200px; width: auto; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .hol-field input.dt-date { width: 100%; padding: 6px 30px 6px 0; border: 0; background-color: transparent; text-align: right; color: var(--text-dim); font: inherit; box-shadow: none; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .hol-field-name input[type=text] { flex: 1 1 auto; width: auto; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .hol-break { display: none; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .cal-sec :is(.hol-preset, .hol-add) > :is(.hol-field, .hol-yearly) { flex: none; width: 100%; min-width: 0; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .hol-add.hol-fields { align-items: stretch !important; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .hol-field input[type=number] { -moz-appearance: textfield; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .hol-field input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }   /* (their old flex-basis widths would be heights in a column) */
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .hol-field select, :is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .fmt-cur select { padding-right: 24px !important; background-position: right 0 center !important; background-repeat: no-repeat !important; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .hol-yearly { justify-content: space-between; flex-direction: row-reverse; white-space: normal; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .hol-yearly input { appearance: none; -webkit-appearance: none; flex: none; position: relative; width: 38px; height: 22px; margin: 0; border-radius: 999px; background: var(--cap-hover); }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .hol-yearly input::after { content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: var(--on-accent); box-shadow: 0 1px 3px var(--shadow-ink); transition: transform var(--dur-fast) ease; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .hol-yearly input:checked { background: var(--accent); }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .hol-yearly input:checked::after { transform: translateX(16px); }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .hol-yearly input:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
 /* "Add …" rows */
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) :is(.hol-preset > .btn, .hol-add > .btn, #fmtSystemBtn) { position: relative; display: flex; justify-content: flex-start; width: 100%; height: auto; min-height: 40px; padding: 4px 14px; border: 0; border-radius: 0 0 var(--r-m) var(--r-m); background: none; box-shadow: none; color: var(--blue-text); font-size: var(--fs-14); font-weight: 500; text-align: left; }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) :is(.hol-preset > .btn, .hol-add > .btn):hover, :is(#calendarModalBg, #rulesModalBg, #formatModalBg) #fmtSystemBtn:hover { background: var(--hover); }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) :is(.hol-preset > .btn, .hol-add > .btn)::before { content: ""; position: absolute; left: 14px; right: 0; top: 0; height: 1px; background: var(--border); }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) :is(.hol-preset > .btn, .hol-add > .btn) i { display: none; }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .hol-add > .btn[disabled] { opacity: .45; }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) #fmtSystemBtn { border-radius: var(--r-m); }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) :is(.hol-preset > .btn, .hol-add > .btn, #fmtSystemBtn) { position: relative; display: flex; justify-content: flex-start; width: 100%; height: auto; min-height: 40px; padding: 4px 14px; border: 0; border-radius: 0 0 var(--r-m) var(--r-m); background: none; box-shadow: none; color: var(--blue-text); font-size: var(--fs-14); font-weight: 500; text-align: left; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) :is(.hol-preset > .btn, .hol-add > .btn):hover, :is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) #fmtSystemBtn:hover { background: var(--hover); }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) :is(.hol-preset > .btn, .hol-add > .btn)::before { content: ""; position: absolute; left: 14px; right: 0; top: 0; height: 1px; background: var(--border); }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) :is(.hol-preset > .btn, .hol-add > .btn) i { display: none; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .hol-add > .btn[disabled] { opacity: .45; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) #fmtSystemBtn { border-radius: var(--r-m); }
 /* days of the week */
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .cal-days { gap: 6px; padding: 10px 14px; }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .cal-day span { min-width: 0; width: 38px; padding: 7px 0; border: 0; border-radius: 999px; background: var(--cap-fill); font-weight: 500; }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .cal-day input:checked + span { background: var(--accent); color: var(--on-accent); font-weight: 600; }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .cal-day input:focus-visible + span { outline: 3px solid var(--focus-ring); outline-offset: 1px; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .cal-days { gap: 6px; padding: 10px 14px; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .cal-day span { min-width: 0; width: 38px; padding: 7px 0; border: 0; border-radius: 999px; background: var(--cap-fill); font-weight: 500; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .cal-day input:checked + span { background: var(--accent); color: var(--on-accent); font-weight: 600; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .cal-day input:focus-visible + span { outline: 3px solid var(--focus-ring); outline-offset: 1px; }
 /* choose one: a tick at the right */
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .precision-opt { align-items: center; justify-content: space-between; flex-direction: row-reverse; padding: 8px 14px; }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .precision-opt input { appearance: none; -webkit-appearance: none; width: 16px; height: 16px; margin: 0; flex: none; background: none; }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .precision-opt input:checked { background: var(--accent); -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M3 8.5l3.2 3L13 4.5'/></svg>") center/16px no-repeat; mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M3 8.5l3.2 3L13 4.5'/></svg>") center/16px no-repeat; }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .precision-opt > span { flex: 1; min-width: 0; }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .precision-opt .cal-sec-note { font-size: var(--fs-12); color: var(--text-faint); margin-top: 0; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .precision-opt { align-items: center; justify-content: space-between; flex-direction: row-reverse; padding: 8px 14px; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .precision-opt input { appearance: none; -webkit-appearance: none; width: 16px; height: 16px; margin: 0; flex: none; background: none; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .precision-opt input:checked { background: var(--accent); -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M3 8.5l3.2 3L13 4.5'/></svg>") center/16px no-repeat; mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M3 8.5l3.2 3L13 4.5'/></svg>") center/16px no-repeat; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .precision-opt > span { flex: 1; min-width: 0; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .precision-opt .cal-sec-note { font-size: var(--fs-12); color: var(--text-faint); margin-top: 0; }
 /* formats */
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .fmt-cur { flex-direction: row; justify-content: space-between; gap: 12px; padding: 4px 14px; min-height: 40px; }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .fmt-cur select { flex: none; width: auto; max-width: 60%; text-align: left; text-align-last: left; color: var(--text); }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .fmt-cols { display: flex; flex-direction: column; gap: 20px; }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .fmt-cols > section { display: flex; flex-direction: column; gap: 6px; padding: 0 !important; border: 0 !important; }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .fmt-cols .cal-sec-title { margin-bottom: 0; }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .fmt-tile { justify-content: space-between; text-align: left; cursor: default; min-height: 36px; padding-block: 2px; }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .fmt-tile b { font-size: var(--fs-14); font-weight: 400; }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .fmt-tile small { margin-left: auto; margin-right: 22px; }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .fmt-tile:hover { background: var(--hover); }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .fmt-tile[aria-checked="true"] { background: none; box-shadow: none; }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .fmt-tile[aria-checked="true"]::after { content: ""; position: absolute; right: 14px; top: 50%; width: 16px; height: 16px; margin-top: -8px; background: var(--accent); -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M3 8.5l3.2 3L13 4.5'/></svg>") center/16px no-repeat; mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M3 8.5l3.2 3L13 4.5'/></svg>") center/16px no-repeat; }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .fmt-tile[aria-checked="true"] small { color: var(--text-faint); }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .fmt-preview { padding: 10px 14px; }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .fmt-preview-label { font-size: var(--fs-12); font-weight: 600; letter-spacing: 0; text-transform: none; }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .fmt-preview-row { font-size: var(--fs-14); }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .fmt-cur { flex-direction: row; justify-content: space-between; gap: 12px; padding: 4px 14px; min-height: 40px; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .fmt-cur select { flex: none; width: auto; max-width: 60%; text-align: left; text-align-last: left; color: var(--text); }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .fmt-cols { display: flex; flex-direction: column; gap: 20px; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .fmt-cols > section { display: flex; flex-direction: column; gap: 6px; padding: 0 !important; border: 0 !important; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .fmt-cols .cal-sec-title { margin-bottom: 0; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .fmt-tile { justify-content: space-between; text-align: left; cursor: default; min-height: 36px; padding-block: 2px; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .fmt-tile b { font-size: var(--fs-14); font-weight: 400; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .fmt-tile small { margin-left: auto; margin-right: 22px; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .fmt-tile:hover { background: var(--hover); }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .fmt-tile[aria-checked="true"] { background: none; box-shadow: none; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .fmt-tile[aria-checked="true"]::after { content: ""; position: absolute; right: 14px; top: 50%; width: 16px; height: 16px; margin-top: -8px; background: var(--accent); -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M3 8.5l3.2 3L13 4.5'/></svg>") center/16px no-repeat; mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M3 8.5l3.2 3L13 4.5'/></svg>") center/16px no-repeat; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .fmt-tile[aria-checked="true"] small { color: var(--text-faint); }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .fmt-preview { padding: 10px 14px; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .fmt-preview-label { font-size: var(--fs-12); font-weight: 600; letter-spacing: 0; text-transform: none; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .fmt-preview-row { font-size: var(--fs-14); }
 /* scheduling rules */
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .rules-adv > summary { margin: 0 14px; font-size: var(--fs-12); font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--text-faint); }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg) .cal-how > summary { margin: 0 14px; font-weight: 600; color: var(--text-faint); }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .rules-adv > summary { margin: 0 14px; font-size: var(--fs-12); font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--text-faint); }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .cal-how > summary { margin: 0 14px; font-weight: 600; color: var(--text-faint); }
+/* ── The other dialogs as grouped inspectors (Baselines, Reschedule, Level, Recurring, Exports, Import, Edit tasks, Find and Replace, New plan, Backups,
+   Print): `.insp` on the .modal. Captions, tinted groups (.tgrp) of label-left / value-right rows (.trow), a tick at the right for "choose one" (.tick, also
+   for a list of options to include), switches (.tsw), a round "include" check (.bulk-on), accent "add" rows (.tadd). ── */
+.insp .modal-body { gap: 18px; padding-top: 16px; }
+.insp .cal-sec { gap: 6px; }
+.insp .cal-sec + .cal-sec { padding-top: 0; border-top: 0; }
+.insp .cal-sec-title { margin: 0 14px; font-size: var(--fs-12); font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--text-faint); }
+.insp .cal-sec-title .cal-sec-note { font-weight: 400; }
+.insp .cal-hint, .insp .bulk-hint { margin: 0 14px; font-size: var(--fs-12); color: var(--text-faint); line-height: 1.4; }
+.insp .cal-hint:empty, .insp .bulk-hint:empty { display: none; }
+.insp .modal-body > .cal-hint:first-child, .insp .modal-body > .bulk-hint:first-child { margin: 0 14px -6px; }
+.insp .trow > label.tgrow { flex: 1; }
+.insp .trow :is(input[type=number], input[type=text], select):not(.tsw):not(.dt-date):not(.dt-time) { flex: 0 1 220px; min-width: 0; padding: 6px 0; border: 0; background-color: transparent; box-shadow: none; text-align: right; color: var(--text-dim); font: inherit; }
+.insp .trow select { padding-right: 24px !important; text-align-last: right; background-position: right 0 center !important; background-repeat: no-repeat !important; }
+.insp .trow input[type=number] { -moz-appearance: textfield; }
+.insp .trow input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.insp .trow .recur-num { flex: 0 0 56px; }
+.insp .trow .tunit { margin-left: 0; }
+.insp .trow input.dt-date { flex: 0 0 auto; width: 112px; padding: 6px 30px 6px 0; border: 0; background-color: transparent; box-shadow: none; text-align: right; color: var(--text-dim); font: inherit; }
+.insp .bl-status { margin: 0 14px; font-size: var(--fs-12); color: var(--text-faint); display: flex; align-items: center; gap: 8px; justify-content: space-between; }
+.insp .trow .dt-wrap { flex: 0 0 auto; }
+.insp .trow .field-dt { flex: 0 1 auto; }
+.insp .trow input.tin::placeholder, .insp .trow input::placeholder { color: var(--text-faint); }
+.insp .trow.hidden, #levelFromRow:has(#levelFromInput.hidden) { display: none; }
+.insp .tgrp.hidden, .insp .cal-sec.hidden { display: none; }
+.insp .trow:has(+ .trow)::after { content: none; }
+.tick { appearance: none; -webkit-appearance: none; flex: none; width: 16px; height: 16px; margin: 0; background: none; }
+.tick:checked { background: var(--accent); -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M3 8.5l3.2 3L13 4.5'/></svg>") center/16px no-repeat; mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M3 8.5l3.2 3L13 4.5'/></svg>") center/16px no-repeat; }
+.tick:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; border-radius: 4px; }
+label.trow.tpick { justify-content: space-between; cursor: default; }
+label.trow.tpick > span { flex: 1; min-width: 0; }
+label.trow.tpick:hover { background: var(--hover); }
+.tgrp > label.trow.tpick:first-child:hover { border-radius: var(--r-m) var(--r-m) 0 0; }
+.tgrp > label.trow.tpick:last-child:hover { border-radius: 0 0 var(--r-m) var(--r-m); }
+.tgrp > label.trow.tpick:only-child:hover { border-radius: var(--r-m); }
+.trow .tsub { display: block; font-size: var(--fs-12); color: var(--text-faint); }
+.trow + .trow::before { z-index: 0; }
+/* a row of choices as a capsule (Daily / Weekly / Monthly / Yearly) */
+.recur-freq { display: flex; gap: 2px; width: max-content; max-width: 100%; margin: 4px auto 4px 0; padding: 3px; border-radius: 999px; background: var(--cap-fill); }
+.recur-freq label { padding: 5px 14px; border-radius: 999px; font-size: var(--fs-13); font-weight: 500; color: var(--text-dim); white-space: nowrap; cursor: default; }
+.recur-freq input { position: absolute; opacity: 0; pointer-events: none; }
+.recur-freq label:has(input:checked) { background: var(--glass-strong); color: var(--text); font-weight: 600; box-shadow: 0 1px 3px var(--shadow-ink); }
+.recur-freq label:has(input:focus-visible) { outline: 3px solid var(--focus-ring); }
+.trow .cal-days { flex: 0 1 auto; justify-content: flex-end; gap: 4px; }
+.trow .cal-day span { min-width: 0; width: 36px; padding: 6px 0; border: 0; border-radius: 999px; background: var(--cap-fill); font-weight: 500; }
+.trow .cal-day input:checked + span { background: var(--accent); color: var(--on-accent); font-weight: 600; }
+
+.modal.insp.narrow { width: 440px; }
+.insp .trow .tgrow { line-height: 1.35; }
+
+/* Edit tasks: each row has a round "include" check in front of its label */
+.insp .bulk-row { display: flex; grid-template-columns: none; }
+.insp .bulk-on { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; font-size: var(--fs-14); color: var(--text); white-space: nowrap; }
+.insp .bulk-on input { appearance: none; -webkit-appearance: none; flex: none; width: 20px; height: 20px; margin: 0; border: 1.5px solid var(--text-faint); border-radius: 50%; background: transparent; }
+.insp .bulk-on input:checked { border-color: var(--accent); background: var(--accent) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M3.5 8.5l3 3L12.5 5'/></svg>") center/12px no-repeat; }
+.insp .bulk-on input:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+.insp .bulk-ctl { flex: 0 1 260px; justify-content: flex-end; }
+.insp .bulk-ctl :is(input, select) { flex: 1 1 0; max-width: none; padding: 6px 0; border: 0; background-color: transparent; box-shadow: none; text-align: right; color: var(--text-dim); font: inherit; }
+.insp .bulk-ctl input[type=number] { max-width: none; }
+.insp .bulk-ctl input.dt-date { padding-right: 30px; }
+.insp .bulk-ctl select { padding-right: 24px; text-align-last: right; background-position: right 0 center !important; background-repeat: no-repeat !important; }
+.insp #bulkVal-predId, .insp #bulkVal-predLag { flex: 0 0 64px; }
+.insp #bulkVal-shift { flex: 0 0 120px; }
+.insp .bulk-ctl .bulk-hint { margin: 0; white-space: nowrap; }
+.insp #bulkCustom { gap: 0; }
+/* import summary, lists of tasks, conflicts, backups */
+.insp .fi-file { margin: 0 14px; font-size: var(--fs-14); }
+.insp .fi-summary { margin: 0 14px; font-size: var(--fs-13); }
+.insp .fi-preview { border: 0; background: color-mix(in srgb, var(--text) 5%, transparent); border-radius: var(--r-m); padding: 8px 14px; }
+.insp .fi-warn { margin: 0; border-left: 0; border-radius: var(--r-m); padding: 10px 14px; background: color-mix(in srgb, #bf8700 12%, transparent); }
+.insp .fi-fmt { flex-basis: 280px; }
+.insp .rs-details > summary { margin: 0 14px; font-size: var(--fs-12); font-weight: 600; color: var(--blue-text); }
+.insp .rs-list { margin: 6px 0 0; padding: 4px 14px; border-radius: var(--r-m); background: color-mix(in srgb, var(--text) 5%, transparent); gap: 0; max-height: 200px; }
+.insp .rs-row { padding: 8px 0; font-size: var(--fs-13); }
+.insp .rs-row + .rs-row { border-top: 1px solid var(--border); }
+.insp .conflict-card { border: 0; background: color-mix(in srgb, var(--text) 5%, transparent); border-radius: var(--r-m); padding: 12px 14px; margin-bottom: 8px; }
+.insp .conflict-card .cal-hint { margin: 0 0 8px; }
+.insp #backupsList.tgrp { overflow: hidden; }
+.insp .backup-row { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 40px; padding: 4px 14px; border: 0; font-size: var(--fs-14); }
+.insp .backup-row + .backup-row::before { content: ""; position: absolute; left: 14px; right: 0; top: 0; height: 1px; background: var(--border); }
+.insp #backupsList .pred-empty { padding: 0 14px; line-height: 40px; color: var(--text-faint); font-size: var(--fs-14); }
+.insp .modal-body > .tgrp:empty { display: none; }
+.insp .fs-text { margin: 0 14px; font-size: var(--fs-13); color: var(--text-dim); line-height: 1.5; }
+.insp .fs-text ul { margin: 6px 0 0; padding-left: 18px; }
+.insp .tgrp > .tadd + .tadd::before { content: ""; position: absolute; left: 14px; right: 0; top: 0; height: 1px; background: var(--border); }
+.insp .tgrp > .tadd.hidden { display: none; }
+.insp .file-sync-help { margin: 0 14px; font-size: var(--fs-12); color: var(--text-faint); }
+#resDayList .pred-empty, #resDayList:empty::before { border: 0; background: none; text-align: left; padding: 0 14px; line-height: 40px; color: var(--text-faint); font-size: var(--fs-14); }
+.print-opts .print-range { flex-wrap: nowrap; }
+.print-opts .print-range .dt-date { flex: 0 0 auto; width: 96px; padding-right: 26px; }
+.print-opts .print-range .tgrow { flex: 1 1 0; min-width: 0; }
+.print-opts .print-range .tunit { flex: none; }
+.print-opts .trow .dt-wrap { flex: 0 0 auto; width: auto; }
+
 
 /* A date + a time need ~230px: in an hours & minutes plan the four date fields take two of the four columns each; the numbers (Duration, %, Remaining, Status) share one row between the planned and the actual dates.
    The two Actual fields pin an explicit column-start (not just `span 2`, which is relative to wherever the auto-placement cursor happens to be): a
@@ -2322,11 +2416,11 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 
 <!-- Plan name modal (New plan / Rename plan) -->
 <div class="modal-bg" id="planModalBg" onclick="if(event.target===this) closePlanModal()">
-  <div class="modal narrow">
-    <div class="modal-header"><h2 id="planModalTitle">New plan</h2><button onclick="closePlanModal()">&times;</button></div>
+  <div class="modal narrow insp">
+    <div class="modal-header"><h2 id="planModalTitle">New plan</h2><button onclick="closePlanModal()" aria-label="Close">&times;</button></div>
     <div class="modal-body">
-      <div class="field"><label for="planNameInput">Plan name</label><input type="text" id="planNameInput" maxlength="80" onkeydown="if(event.key==='Enter'){event.preventDefault();submitPlanModal()}"></div>
-      <p id="planModalHint" style="font-size: var(--fs-12);color:var(--text-dim);margin:0;line-height:1.5"></p>
+      <div class="tgrp"><div class="trow"><label for="planNameInput" class="tgrow">Plan name</label><input type="text" id="planNameInput" class="tin" maxlength="80" onkeydown="if(event.key==='Enter'){event.preventDefault();submitPlanModal()}"></div></div>
+      <p class="cal-hint" id="planModalHint"></p>
     </div>
     <div class="modal-footer">
       <button class="btn" onclick="closePlanModal()">Cancel</button>
@@ -2337,41 +2431,38 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 
 <!-- Excel export modal -->
 <div class="modal-bg" id="excelModalBg" onclick="if(event.target===this) closeExcelModal()">
-  <div class="modal narrow">
-    <div class="modal-header"><h2>Export to Excel</h2><button onclick="closeExcelModal()">&times;</button></div>
+  <div class="modal narrow insp">
+    <div class="modal-header"><h2>Export to Excel</h2><button onclick="closeExcelModal()" aria-label="Close">&times;</button></div>
     <div class="modal-body">
-      <p style="font-size: var(--fs-13);color:var(--text-dim);margin:0;line-height:1.5">Saves an Excel workbook (.xlsx) with a formatted task list — real dates, durations and percentages, indented groups, filters and print settings.</p>
-      <div class="field" id="excelScopeBlock"><label>Which tasks</label>
-        <label class="checkbox-row"><input type="radio" name="excelScope" value="all" checked><span id="excelScopeAll"></span></label>
-        <label class="checkbox-row"><input type="radio" name="excelScope" value="filtered"><span id="excelScopeFiltered"></span></label>
-      </div>
-      <div class="field"><label>Columns</label>
-        <label class="checkbox-row"><input type="radio" name="excelCols" value="shown" checked><span>As shown in the task list</span></label>
-        <label class="checkbox-row"><input type="radio" name="excelCols" value="all"><span>All columns (also WBS, Actual Start/Finish, Resource, baselines and the custom fields in use)</span></label>
-        <div style="font-size: var(--fs-12);color:var(--text-dim);margin-top:4px;line-height:1.45">The Tasks sheet follows the columns of the <strong>Tasks view</strong>; the Gantt sheet's list follows those of the <strong>Gantt view</strong> (each view keeps its own choice).</div>
-      </div>
-      <label class="checkbox-row"><input type="checkbox" id="excelGantt" checked>Add a Gantt chart sheet</label>
+      <p class="cal-hint">Saves an Excel workbook (.xlsx) with a formatted task list — real dates, durations and percentages, indented groups, filters and print settings.</p>
+      <section class="cal-sec" id="excelScopeBlock"><div class="cal-sec-title">Which Tasks</div><div class="tgrp">
+        <label class="trow tpick"><span id="excelScopeAll"></span><input type="radio" class="tick" name="excelScope" value="all" checked></label>
+        <label class="trow tpick"><span id="excelScopeFiltered"></span><input type="radio" class="tick" name="excelScope" value="filtered"></label>
+      </div></section>
+      <section class="cal-sec"><div class="cal-sec-title">Columns</div><div class="tgrp">
+        <label class="trow tpick"><span>As shown in the task list</span><input type="radio" class="tick" name="excelCols" value="shown" checked></label>
+        <label class="trow tpick"><span>All columns<span class="tsub">Also WBS, Actual Start/Finish, Resource, baselines and the custom fields in use</span></span><input type="radio" class="tick" name="excelCols" value="all"></label>
+      </div><p class="cal-hint">The Tasks sheet follows the columns of the <strong>Tasks view</strong>; the Gantt sheet's list follows those of the <strong>Gantt view</strong> (each view keeps its own choice).</p></section>
+      <div class="tgrp"><div class="trow"><label for="excelGantt" class="tgrow">Add a Gantt chart sheet</label><input type="checkbox" class="tsw" role="switch" id="excelGantt" checked></div></div>
     </div>
     <div class="modal-footer"><button class="btn" onclick="closeExcelModal()">Cancel</button><button class="btn btn-primary" id="excelExportBtn" onclick="runExcelExport()"><i class="fa-solid fa-file-excel"></i>Export</button></div>
   </div>
 </div>
 
 <div class="modal-bg" id="csvModalBg" onclick="if(event.target===this) closeCsvExport()">
-  <div class="modal narrow" role="dialog" aria-labelledby="csvTitle">
+  <div class="modal narrow insp" role="dialog" aria-labelledby="csvTitle">
     <div class="modal-header"><h2 id="csvTitle">Export to CSV</h2><button onclick="closeCsvExport()" aria-label="Close">&times;</button></div>
     <div class="modal-body">
-      <p style="font-size: var(--fs-13);color:var(--text-dim);margin:0;line-height:1.5">Saves the task list as a plain text table (.csv) with a header row — the dates, durations and percentages as the list shows them, sub-tasks indented. Opens in Excel and most other tools, and Milestone's own CSV import reads it back.</p>
-      <div class="field" id="csvScopeBlock"><label>Which tasks</label>
-        <label class="checkbox-row"><input type="radio" name="csvScope" value="all" checked><span id="csvScopeAll"></span></label>
-        <label class="checkbox-row"><input type="radio" name="csvScope" value="filtered"><span id="csvScopeFiltered"></span></label>
-      </div>
-      <div class="field"><label>Columns</label>
-        <label class="checkbox-row"><input type="radio" name="csvCols" value="shown" checked><span>As shown in the Tasks view</span></label>
-        <label class="checkbox-row"><input type="radio" name="csvCols" value="all"><span>All columns (also WBS, Actual Start/Finish, Resource, baselines and the custom fields in use)</span></label>
-      </div>
-      <div class="field"><label for="csvSep">Separator</label>
-        <select id="csvSep"><option value=",">Comma ( , )</option><option value=";">Semicolon ( ; ) — Excel in many countries</option><option value="&#9;">Tab</option></select>
-      </div>
+      <p class="cal-hint">Saves the task list as a plain text table (.csv) with a header row — the dates, durations and percentages as the list shows them, sub-tasks indented. Opens in Excel and most other tools, and Milestone's own CSV import reads it back.</p>
+      <section class="cal-sec" id="csvScopeBlock"><div class="cal-sec-title">Which Tasks</div><div class="tgrp">
+        <label class="trow tpick"><span id="csvScopeAll"></span><input type="radio" class="tick" name="csvScope" value="all" checked></label>
+        <label class="trow tpick"><span id="csvScopeFiltered"></span><input type="radio" class="tick" name="csvScope" value="filtered"></label>
+      </div></section>
+      <section class="cal-sec"><div class="cal-sec-title">Columns</div><div class="tgrp">
+        <label class="trow tpick"><span>As shown in the Tasks view</span><input type="radio" class="tick" name="csvCols" value="shown" checked></label>
+        <label class="trow tpick"><span>All columns<span class="tsub">Also WBS, Actual Start/Finish, Resource, baselines and the custom fields in use</span></span><input type="radio" class="tick" name="csvCols" value="all"></label>
+      </div></section>
+      <div class="tgrp"><div class="trow"><label for="csvSep" class="tgrow">Separator</label><select id="csvSep" class="tin"><option value=",">Comma ( , )</option><option value=";">Semicolon ( ; ) — Excel in many countries</option><option value="&#9;">Tab</option></select></div></div>
     </div>
     <div class="modal-footer"><button class="btn" onclick="closeCsvExport()">Cancel</button><button class="btn btn-primary" id="csvExportBtn" onclick="runCsvExport()"><i class="fa-solid fa-file-csv"></i>Export</button></div>
   </div>
@@ -2393,43 +2484,44 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 </div>
 
 <div class="modal-bg" id="foreignImportModalBg" onclick="if(event.target===this) closeForeignImport()">
-  <div class="modal">
+  <div class="modal insp">
     <div class="modal-header"><h2 id="foreignImportTitle">Import</h2><button onclick="closeForeignImport()" aria-label="Close">&times;</button></div>
     <div class="modal-body">
       <div class="fi-file" id="foreignImportFile"></div>
       <div class="fi-summary" id="foreignImportSummary"></div>
       <div class="fi-warn hidden" id="foreignImportWarn"></div>
-      <div class="field hidden" id="foreignImportFmtField"><label for="foreignImportFmt">Dates in the file are written as</label>
-        <select id="foreignImportFmt" onchange="foreignImportFormatChanged()">
+      <div class="tgrp hidden" id="foreignImportFmtField"><div class="trow"><label for="foreignImportFmt" class="tgrow">Dates in the file</label>
+        <select id="foreignImportFmt" class="tin fi-fmt" onchange="foreignImportFormatChanged()">
           <option value="auto">Detect (day first, unless it can only be month first)</option>
           <option value="dmy">Day.Month.Year (07.09.2026, 07/09/2026)</option>
           <option value="mdy">Month/Day/Year (09/07/2026)</option>
           <option value="ymd">Year-Month-Day (2026-09-07)</option>
-        </select></div>
-      <div class="field"><label>What to do with it</label>
-        <div class="radio-col">
-          <label class="radio-row"><input type="radio" name="fiMode" value="append" checked> <span>Add the tasks to this plan, after the existing ones</span></label>
-          <label class="radio-row"><input type="radio" name="fiMode" value="replace"> <span>Replace this plan's tasks — a backup file is downloaded first</span></label>
-        </div></div>
-      <label class="radio-row hidden" id="foreignImportCalRow"><input type="checkbox" id="foreignImportCal"> <span>Also take the working days, holidays, baselines and working hours from the file</span></label>
+        </select></div></div>
+      <section class="cal-sec"><div class="cal-sec-title">What to Do With It</div><div class="tgrp">
+        <label class="trow tpick"><span>Add the tasks to this plan, after the existing ones</span><input type="radio" class="tick" name="fiMode" value="append" checked></label>
+        <label class="trow tpick"><span>Replace this plan's tasks<span class="tsub">A backup file is downloaded first</span></span><input type="radio" class="tick" name="fiMode" value="replace"></label>
+      </div></section>
+      <div class="tgrp hidden" id="foreignImportCalRow"><div class="trow"><label for="foreignImportCal" class="tgrow">Also take the working days, holidays, baselines and working hours from the file</label><input type="checkbox" class="tsw" role="switch" id="foreignImportCal"></div></div>
     </div>
     <div class="modal-footer"><button class="btn" onclick="closeForeignImport()">Cancel</button><button class="btn btn-primary" id="foreignImportGo" onclick="applyForeignImport()">Import</button></div>
   </div>
 </div>
 
 <div class="modal-bg" id="bulkModalBg" onclick="if(event.target===this) requestCloseBulkModal()">
-  <div class="modal mid">
+  <div class="modal mid insp">
     <div class="modal-header"><h2 id="bulkTitle">Edit tasks</h2><button onclick="requestCloseBulkModal()" aria-label="Close">&times;</button></div>
     <div class="modal-body">
       <p class="bulk-hint" id="bulkHint"></p>
-      <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-progress"> % complete</label><div class="bulk-ctl"><input type="number" id="bulkVal-progress" min="0" max="100" step="1" placeholder="0 – 100" aria-label="% complete"></div></div>
-      <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-resource"> Resource</label><div class="bulk-ctl"><input type="text" id="bulkVal-resource" maxlength="200" placeholder="Empty clears the resource" aria-label="Resource"></div></div>
-      <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-mode"> Task Mode</label><div class="bulk-ctl"><select id="bulkVal-mode" aria-label="Task Mode"><option value="auto">Auto Scheduled</option><option value="manual">Manually Scheduled</option></select></div></div>
-      <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-worktype"> Task Type</label><div class="bulk-ctl"><select id="bulkVal-worktype" aria-label="Task Type"><option value="fixedUnits">Fixed Units</option><option value="fixedDuration">Fixed Duration</option><option value="fixedWork">Fixed Work</option></select></div></div>
-      <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-work"> Work</label><div class="bulk-ctl"><input type="text" id="bulkVal-work" placeholder="e.g. 4h, 2d, 1w" aria-label="Work"></div></div>
-      <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-color"> Row colour</label><div class="bulk-ctl"><select id="bulkVal-color" aria-label="Row colour"></select></div></div>
-      <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-shift"> Move dates by</label><div class="bulk-ctl"><input type="number" id="bulkVal-shift" step="1" placeholder="− earlier, + later" aria-label="Working days to move by"><span class="bulk-hint" id="bulkShiftHint">working days</span></div></div>
-      <div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-pred"> Add predecessor</label><div class="bulk-ctl"><input type="number" id="bulkVal-predId" min="1" step="1" placeholder="task #" aria-label="Predecessor task number"><select id="bulkVal-predType" aria-label="Link type: Finish-to-Start, Start-to-Start, Finish-to-Finish or Start-to-Finish" title="Link type: FS Finish-to-Start, SS Start-to-Start, FF Finish-to-Finish, SF Start-to-Finish"><option value="FS" title="Finish-to-Start">FS</option><option value="SS" title="Start-to-Start">SS</option><option value="FF" title="Finish-to-Finish">FF</option><option value="SF" title="Start-to-Finish">SF</option></select><input type="number" id="bulkVal-predLag" step="1" placeholder="lag" aria-label="Lag in working days" title="Lag — positive delays the start, negative overlaps it"></div></div>
+      <div class="tgrp">
+      <div class="trow bulk-row"><label class="bulk-on tgrow"><input type="checkbox" id="bulkOn-progress"> % complete</label><div class="bulk-ctl"><input type="number" id="bulkVal-progress" min="0" max="100" step="1" placeholder="0 – 100" aria-label="% complete"></div></div>
+      <div class="trow bulk-row"><label class="bulk-on tgrow"><input type="checkbox" id="bulkOn-resource"> Resource</label><div class="bulk-ctl"><input type="text" id="bulkVal-resource" maxlength="200" placeholder="Empty clears the resource" aria-label="Resource"></div></div>
+      <div class="trow bulk-row"><label class="bulk-on tgrow"><input type="checkbox" id="bulkOn-mode"> Task Mode</label><div class="bulk-ctl"><select id="bulkVal-mode" aria-label="Task Mode"><option value="auto">Auto Scheduled</option><option value="manual">Manually Scheduled</option></select></div></div>
+      <div class="trow bulk-row"><label class="bulk-on tgrow"><input type="checkbox" id="bulkOn-worktype"> Task Type</label><div class="bulk-ctl"><select id="bulkVal-worktype" aria-label="Task Type"><option value="fixedUnits">Fixed Units</option><option value="fixedDuration">Fixed Duration</option><option value="fixedWork">Fixed Work</option></select></div></div>
+      <div class="trow bulk-row"><label class="bulk-on tgrow"><input type="checkbox" id="bulkOn-work"> Work</label><div class="bulk-ctl"><input type="text" id="bulkVal-work" placeholder="Work" aria-label="Work"></div></div>
+      <div class="trow bulk-row"><label class="bulk-on tgrow"><input type="checkbox" id="bulkOn-color"> Row colour</label><div class="bulk-ctl"><select id="bulkVal-color" aria-label="Row colour"></select></div></div>
+      <div class="trow bulk-row"><label class="bulk-on tgrow"><input type="checkbox" id="bulkOn-shift"> Move dates by</label><div class="bulk-ctl"><input type="number" id="bulkVal-shift" step="1" placeholder="− earlier, + later" aria-label="Working days to move by"><span class="bulk-hint" id="bulkShiftHint">working days</span></div></div>
+      <div class="trow bulk-row"><label class="bulk-on tgrow"><input type="checkbox" id="bulkOn-pred"> Add predecessor</label><div class="bulk-ctl"><input type="number" id="bulkVal-predId" min="1" step="1" placeholder="task #" aria-label="Predecessor task number"><select id="bulkVal-predType" aria-label="Link type: Finish-to-Start, Start-to-Start, Finish-to-Finish or Start-to-Finish" title="Link type: FS Finish-to-Start, SS Start-to-Start, FF Finish-to-Finish, SF Start-to-Finish"><option value="FS" title="Finish-to-Start">FS</option><option value="SS" title="Start-to-Start">SS</option><option value="FF" title="Finish-to-Finish">FF</option><option value="SF" title="Start-to-Finish">SF</option></select><input type="number" id="bulkVal-predLag" step="1" placeholder="lag" aria-label="Lag in working days" title="Lag — positive delays the start, negative overlaps it"></div></div>
+      </div>
       <div id="bulkCustom"></div>
     </div>
     <div class="modal-footer"><button class="btn" onclick="closeBulkModal()">Cancel</button><button class="btn btn-primary" id="bulkApplyBtn" onclick="applyBulkEdit()">Apply</button></div>
@@ -2442,52 +2534,70 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 </div>
 
 <div class="modal-bg" id="replaceModalBg" onclick="if(event.target===this) closeReplace()">
-  <div class="modal mid" role="dialog" aria-labelledby="replaceTitle">
+  <div class="modal mid insp" role="dialog" aria-labelledby="replaceTitle">
     <div class="modal-header"><h2 id="replaceTitle">Find and replace</h2><button onclick="closeReplace()" aria-label="Close">&times;</button></div>
     <div class="modal-body">
-      <div class="field"><label for="frFind">Find</label><input type="text" id="frFind" autocomplete="off" spellcheck="false" oninput="renderReplace()"></div>
-      <div class="field"><label for="frWith">Replace with</label><input type="text" id="frWith" autocomplete="off" spellcheck="false" oninput="renderReplace()"></div>
-      <div class="field"><label for="frField">In</label><select id="frField" onchange="renderReplace()"></select></div>
-      <div class="field" id="frScopeBlock"><label>Which tasks</label>
-        <label class="checkbox-row"><input type="radio" name="frScope" value="all" checked onchange="renderReplace()"><span id="frScopeAll"></span></label>
-        <label class="checkbox-row" id="frScopeFilteredRow"><input type="radio" name="frScope" value="filtered" onchange="renderReplace()"><span id="frScopeFiltered"></span></label>
-        <label class="checkbox-row" id="frScopeSelectedRow"><input type="radio" name="frScope" value="selected" onchange="renderReplace()"><span id="frScopeSelected"></span></label>
+      <div class="tgrp">
+        <div class="trow"><label for="frFind" class="tgrow">Find</label><input type="text" id="frFind" class="tin" autocomplete="off" spellcheck="false" oninput="renderReplace()"></div>
+        <div class="trow"><label for="frWith" class="tgrow">Replace with</label><input type="text" id="frWith" class="tin" autocomplete="off" spellcheck="false" oninput="renderReplace()"></div>
+        <div class="trow"><label for="frField" class="tgrow">In</label><select id="frField" class="tin" onchange="renderReplace()"></select></div>
       </div>
-      <label class="checkbox-row"><input type="checkbox" id="frCase" onchange="renderReplace()">Match case</label>
-      <label class="checkbox-row"><input type="checkbox" id="frWhole" onchange="renderReplace()">Match the whole cell, not a part of it</label>
-      <p class="cal-hint" id="frHint" style="margin:0" aria-live="polite"></p>
-      <details class="rs-details hidden" id="frDetails" open>
-        <summary>Which tasks <span id="frDetailsCount"></span></summary>
-        <div class="rs-list fr-list" id="frList"></div>
-      </details>
+      <section class="cal-sec" id="frScopeBlock"><div class="cal-sec-title">Which Tasks</div><div class="tgrp">
+        <label class="trow tpick"><span id="frScopeAll"></span><input type="radio" class="tick" name="frScope" value="all" checked onchange="renderReplace()"></label>
+        <label class="trow tpick" id="frScopeFilteredRow"><span id="frScopeFiltered"></span><input type="radio" class="tick" name="frScope" value="filtered" onchange="renderReplace()"></label>
+        <label class="trow tpick" id="frScopeSelectedRow"><span id="frScopeSelected"></span><input type="radio" class="tick" name="frScope" value="selected" onchange="renderReplace()"></label>
+      </div></section>
+      <div class="tgrp">
+        <div class="trow"><label for="frCase" class="tgrow">Match case</label><input type="checkbox" class="tsw" role="switch" id="frCase" onchange="renderReplace()"></div>
+        <div class="trow"><label for="frWhole" class="tgrow">Match the whole cell, not a part of it</label><input type="checkbox" class="tsw" role="switch" id="frWhole" onchange="renderReplace()"></div>
+      </div>
+      <section class="cal-sec">
+        <p class="cal-hint" id="frHint" aria-live="polite"></p>
+        <details class="rs-details hidden" id="frDetails" open>
+          <summary>Which tasks <span id="frDetailsCount"></span></summary>
+          <div class="rs-list fr-list" id="frList"></div>
+        </details>
+      </section>
     </div>
     <div class="modal-footer"><span class="foot-note">One Undo step.</span><button class="btn" onclick="closeReplace()">Cancel</button><button class="btn btn-primary" id="frBtn" onclick="runReplace()">Replace all</button></div>
   </div>
 </div>
 
 <div class="modal-bg" id="printModalBg" onclick="if(event.target===this) closePrintModal()">
-  <div class="modal print-modal" role="dialog" aria-labelledby="printModalTitle">
+  <div class="modal print-modal insp" role="dialog" aria-labelledby="printModalTitle">
     <div class="modal-header"><h2 id="printModalTitle">Print or save as PDF</h2><button onclick="closePrintModal()" aria-label="Close">&times;</button></div>
     <div class="print-layout">
       <div class="print-opts" oninput="printOptionChanged()" onchange="printOptionChanged()">
-        <div class="field"><label for="printTitle">Title</label><input type="text" id="printTitle" maxlength="120"></div>
-        <div class="print-two">
-          <div class="field"><label for="printPaper">Paper</label><select id="printPaper"><option>A4</option><option>A3</option><option>Letter</option><option>Legal</option><option>Tabloid</option></select></div>
-          <div class="field"><label for="printOrient">Orientation</label><select id="printOrient"><option value="landscape">Landscape</option><option value="portrait">Portrait</option></select></div>
+        <div class="tgrp">
+          <div class="trow"><label for="printTitle" class="tgrow">Title</label><input type="text" id="printTitle" class="tin" maxlength="120"></div>
+          <div class="trow"><label for="printPaper" class="tgrow">Paper</label><select id="printPaper" class="tin"><option>A4</option><option>A3</option><option>Letter</option><option>Legal</option><option>Tabloid</option></select></div>
+          <div class="trow"><label for="printOrient" class="tgrow">Orientation</label><select id="printOrient" class="tin"><option value="landscape">Landscape</option><option value="portrait">Portrait</option></select></div>
+          <div class="trow"><label for="printScale" class="tgrow">Timescale</label><select id="printScale" class="tin"><option value="auto">Automatic</option><option value="hour">Hours</option><option value="week">Weeks</option><option value="month">Months</option><option value="quarter">Quarters</option></select></div>
         </div>
-        <div class="field"><label>Task list columns</label><div class="print-cols"><label class="print-chk"><input type="checkbox" id="printCol-id"> ID</label><label class="print-chk"><input type="checkbox" id="printCol-wbs"> WBS</label><label class="print-chk"><input type="checkbox" id="printCol-name"> Task Name</label><label class="print-chk"><input type="checkbox" id="printCol-start"> Start</label><label class="print-chk"><input type="checkbox" id="printCol-end"> Finish</label><label class="print-chk"><input type="checkbox" id="printCol-duration"> Days</label><label class="print-chk"><input type="checkbox" id="printCol-progress"> % complete</label><label class="print-chk"><input type="checkbox" id="printCol-resource"> Resource</label><label class="print-chk"><input type="checkbox" id="printCol-preds"> Predecessors</label></div></div>
-        <div class="field"><label>Time range</label>
-          <label class="print-chk"><input type="radio" name="printRange" id="printRangeAll" checked> The whole plan</label>
-          <label class="print-chk"><input type="radio" name="printRange" id="printRangeCustom"> A custom range</label>
-          <div class="print-range"><input type="text" class="dt-date" id="printFrom" aria-label="From" onfocus="document.getElementById('printRangeCustom').checked = true"><span>to</span><input type="text" class="dt-date" id="printTo" aria-label="To" onfocus="document.getElementById('printRangeCustom').checked = true"></div></div>
-        <div class="field"><label for="printScale">Timescale</label><select id="printScale"><option value="auto">Automatic for the length of the plan</option><option value="hour">Hours</option><option value="week">Weeks</option><option value="month">Months</option><option value="quarter">Quarters</option></select></div>
-        <div class="field"><label>Show</label>
-          <label class="print-chk"><input type="checkbox" id="printBaseline"> Baseline under the bars</label>
-          <label class="print-chk"><input type="checkbox" id="printCritical"> Critical path</label>
-          <label class="print-chk"><input type="checkbox" id="printDeps"> Dependency arrows</label>
-          <label class="print-chk"><input type="checkbox" id="printToday"> Today line</label>
-          <label class="print-chk"><input type="checkbox" id="printShade"> Days off shaded</label>
-          <label class="print-chk"><input type="checkbox" id="printExpand"> Every group expanded (otherwise as the list shows it)</label></div>
+        <section class="cal-sec"><div class="cal-sec-title">Task List Columns</div><div class="tgrp">
+          <label class="trow tpick"><span>ID</span><input type="checkbox" class="tick" id="printCol-id"></label>
+          <label class="trow tpick"><span>WBS</span><input type="checkbox" class="tick" id="printCol-wbs"></label>
+          <label class="trow tpick"><span>Task Name</span><input type="checkbox" class="tick" id="printCol-name"></label>
+          <label class="trow tpick"><span>Start</span><input type="checkbox" class="tick" id="printCol-start"></label>
+          <label class="trow tpick"><span>Finish</span><input type="checkbox" class="tick" id="printCol-end"></label>
+          <label class="trow tpick"><span>Days</span><input type="checkbox" class="tick" id="printCol-duration"></label>
+          <label class="trow tpick"><span>% complete</span><input type="checkbox" class="tick" id="printCol-progress"></label>
+          <label class="trow tpick"><span>Resource</span><input type="checkbox" class="tick" id="printCol-resource"></label>
+          <label class="trow tpick"><span>Predecessors</span><input type="checkbox" class="tick" id="printCol-preds"></label>
+        </div></section>
+        <section class="cal-sec"><div class="cal-sec-title">Time Range</div><div class="tgrp">
+          <label class="trow tpick"><span>The whole plan</span><input type="radio" class="tick" id="printRangeAll" name="printRange" checked></label>
+          <label class="trow tpick"><span>A custom range</span><input type="radio" class="tick" id="printRangeCustom" name="printRange"></label>
+          <div class="trow print-range"><label for="printFrom" class="tgrow">From – to</label><input type="text" class="dt-date" id="printFrom" aria-label="From" onfocus="document.getElementById('printRangeCustom').checked = true"><span class="tunit">to</span><input type="text" class="dt-date" id="printTo" aria-label="To" onfocus="document.getElementById('printRangeCustom').checked = true"></div>
+        </div></section>
+        <section class="cal-sec"><div class="cal-sec-title">Show</div><div class="tgrp">
+          <label class="trow tpick"><span>Baseline under the bars</span><input type="checkbox" class="tick" id="printBaseline"></label>
+          <label class="trow tpick"><span>Critical path</span><input type="checkbox" class="tick" id="printCritical"></label>
+          <label class="trow tpick"><span>Dependency arrows</span><input type="checkbox" class="tick" id="printDeps"></label>
+          <label class="trow tpick"><span>Today line</span><input type="checkbox" class="tick" id="printToday"></label>
+          <label class="trow tpick"><span>Days off shaded</span><input type="checkbox" class="tick" id="printShade"></label>
+          <label class="trow tpick"><span>Every group expanded<span class="tsub">Otherwise as the list shows it</span></span><input type="checkbox" class="tick" id="printExpand"></label>
+        </div></section>
       </div>
       <div class="print-side">
         <div class="print-preview" id="printPreview"></div>
@@ -2500,9 +2610,9 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 
 <!-- Backups modal -->
 <div class="modal-bg" id="backupsModalBg" onclick="if(event.target===this) closeBackupsModal()">
-  <div class="modal narrow">
-    <div class="modal-header"><h2>Local backups</h2><button onclick="closeBackupsModal()">&times;</button></div>
-    <div class="modal-body"><p class="cal-hint" style="margin:0">One snapshot a day, kept in this browser. Restoring one saves your current data first.</p><div id="backupsList"></div></div>
+  <div class="modal narrow insp">
+    <div class="modal-header"><h2>Local backups</h2><button onclick="closeBackupsModal()" aria-label="Close">&times;</button></div>
+    <div class="modal-body"><p class="cal-hint">One snapshot a day, kept in this browser. Restoring one saves your current data first.</p><div class="tgrp" id="backupsList"></div></div>
     <div class="modal-footer"><button class="btn" onclick="closeBackupsModal()">Close</button></div>
   </div>
 </div>
@@ -2511,12 +2621,11 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
      backdrop clicks and Escape ignore it. It opens whenever the current plan has no usable file (on load, on
      switching to such a plan, when the file went missing, and straight after the user disconnects one). -->
 <div class="modal-bg" id="fileSyncModalBg">
-  <div class="modal narrow">
+  <div class="modal narrow insp">
     <div class="modal-header"><h2 id="fileSyncModalTitle">Choose a folder to continue</h2></div>
     <div class="modal-body">
-      <div id="fileSyncModalText" style="font-size: var(--fs-13);color:var(--text-dim);margin:0;line-height:1.5"></div>
-      <button class="btn btn-primary" id="linkFolderBtn" onclick="chooseFolderForPlan('link')"><i class="fa-solid fa-folder-open"></i>Choose folder…</button>
-      <button class="btn hidden" id="linkSameFolderBtn" onclick="chooseFolderForPlan('link', true)"><i class="fa-solid fa-file-circle-question"></i>Pick a file in the same folder</button>
+      <div id="fileSyncModalText" class="cal-hint fs-text"></div>
+      <div class="tgrp"><button class="trow tadd" type="button" id="linkFolderBtn" onclick="chooseFolderForPlan('link')">Choose Folder…</button><button class="trow tadd hidden" type="button" id="linkSameFolderBtn" onclick="chooseFolderForPlan('link', true)">Pick a File in the Same Folder</button></div>
       <details class="file-sync-help">
         <summary>My plan isn't syncing across devices</summary>
         <div class="file-sync-help-body">Choose a folder your cloud provider (iCloud Drive, OneDrive, Dropbox, …) actually syncs — a folder that only exists on this computer stays local. Milestone rereads the file every 45s and on every save and merges changes, so two devices editing at once won't lose work; and because it can see the whole folder it also merges the “conflicted copies” a sync service makes when two devices save at the same moment. Chrome does not allow Desktop, Documents or Downloads themselves — pick a folder inside them.</div>
@@ -2565,13 +2674,13 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
   <div class="modal mid">
     <div class="modal-header"><h2>Days off — <span id="resourceDaysName"></span></h2><button onclick="requestCloseResourceDaysModal()" aria-label="Close">&times;</button></div>
     <div class="modal-body">
-      <p class="cal-hint" style="margin:0">Days off for this person, on top of the plan's calendar. They count as zero capacity.</p>
-      <div class="res-days-add hol-fields">
+      <p class="cal-hint">Days off for this person, on top of the plan's calendar. They count as zero capacity.</p>
+      <section class="cal-sec"><div class="res-days-add hol-add hol-fields">
         <div class="hol-field hol-field-date"><label for="resDayFrom">First day</label><input type="text" class="dt-date" id="resDayFrom" title="The day off, or the first day of a longer break" oninput="updateResDayAddBtn()" onchange="updateResDayAddBtn()" onkeydown="if(event.key==='Enter'){event.preventDefault();addResourceDayOff();}"></div>
         <div class="hol-field hol-field-date"><label for="resDayTo">Last day <span class="hol-opt">(optional)</span></label><input type="text" class="dt-date" id="resDayTo" title="Only for a break of several days — leave empty for a single day" oninput="updateResDayAddBtn()" onchange="updateResDayAddBtn()" onkeydown="if(event.key==='Enter'){event.preventDefault();addResourceDayOff();}"></div>
         <div class="hol-field hol-field-name"><label for="resDayName">Name <span class="hol-opt">(optional)</span></label><input type="text" id="resDayName" maxlength="60" onkeydown="if(event.key==='Enter'){event.preventDefault();addResourceDayOff();}"></div>
         <button class="btn" type="button" id="resDayAddBtn" onclick="addResourceDayOff()"><i class="fa-solid fa-plus"></i><span>Add</span></button>
-      </div>
+      </div></section>
       <div class="hol-list" id="resDayList"></div>
     </div>
     <div class="modal-footer">
@@ -2713,31 +2822,28 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 </div>
 
 <div class="modal-bg" id="baselineModalBg" onclick="if(event.target===this) closeBaselineModal()">
-  <div class="modal mid">
+  <div class="modal mid insp">
     <div class="modal-header"><h2>Baselines</h2><button onclick="closeBaselineModal()" aria-label="Close">&times;</button></div>
     <div class="modal-body">
-      <p class="cal-hint" style="margin:0">A frozen copy of every task's Start and Finish, to compare against later. Up to eleven.</p>
+      <p class="cal-hint">A frozen copy of every task's Start and Finish, to compare against later. Up to eleven.</p>
       <section class="cal-sec">
-        <div class="cal-sec-title">Save a baseline <span class="cal-sec-note">applies when you click Set baseline</span></div>
-        <div class="bl-grid">
-          <div class="field"><label for="baselineSlotSelect">Which baseline</label><select id="baselineSlotSelect" onchange="renderBaselineModal()"></select></div>
-          <div class="field"><label>Apply to</label>
-            <div class="radio-col">
-              <label class="radio-row"><input type="radio" name="baselineScope" id="baselineScopeAll" value="all" checked> <span>The entire plan</span></label>
-              <label class="radio-row"><input type="radio" name="baselineScope" id="baselineScopeSel" value="selected"> <span id="baselineScopeSelLabel">The selected task</span></label>
-            </div></div>
+        <div class="cal-sec-title">Save a Baseline <span class="cal-sec-note">applies when you click Set Baseline</span></div>
+        <div class="tgrp">
+          <div class="trow"><label for="baselineSlotSelect" class="tgrow">Which baseline</label><select id="baselineSlotSelect" class="tin" onchange="renderBaselineModal()"></select></div>
+          <label class="trow tpick"><span>The entire plan</span><input type="radio" class="tick" name="baselineScope" id="baselineScopeAll" value="all" checked></label>
+          <label class="trow tpick"><span id="baselineScopeSelLabel">The selected task</span><input type="radio" class="tick" name="baselineScope" id="baselineScopeSel" value="selected"></label>
         </div>
-        <div class="bl-status"><span id="baselineSlotInfo"></span><button class="btn-link danger" id="baselineClearBtn" onclick="clearBaselineFromDialog()">Clear this baseline</button></div>
+        <div class="bl-status"><span id="baselineSlotInfo"></span><button class="btn-link danger" id="baselineClearBtn" onclick="clearBaselineFromDialog()">Clear This Baseline</button></div>
       </section>
       <section class="cal-sec">
-        <div class="cal-sec-title">Compare the chart and columns with <span class="cal-sec-note">applies right away</span></div>
-        <select id="baselineCompareSelect" class="bl-compare" aria-label="Baseline to compare with" onchange="setCompareBaseline(this.value)"></select>
-        <p class="cal-hint" id="baselineCompareHint" style="margin:0"></p>
+        <div class="cal-sec-title">Compare the Chart and Columns With <span class="cal-sec-note">applies right away</span></div>
+        <div class="tgrp"><div class="trow"><label for="baselineCompareSelect" class="tgrow">Baseline</label><select id="baselineCompareSelect" class="tin bl-compare" aria-label="Baseline to compare with" onchange="setCompareBaseline(this.value)"></select></div></div>
+        <p class="cal-hint" id="baselineCompareHint"></p>
       </section>
       <section class="cal-sec" id="baselineActualsSec">
-        <div class="cal-sec-title">Actual dates</div>
-        <p class="cal-hint" id="baselineActualsInfo" style="margin:0"></p>
-        <div><button class="btn" id="baselineApplyBtn" onclick="applyActualsToSchedule()">Apply actual dates to the schedule</button></div>
+        <div class="cal-sec-title">Actual Dates</div>
+        <div class="tgrp"><button class="trow tadd" id="baselineApplyBtn" type="button" onclick="applyActualsToSchedule()">Apply Actual Dates to the Schedule</button></div>
+        <p class="cal-hint" id="baselineActualsInfo"></p>
       </section>
     </div>
     <div class="modal-footer">
@@ -2749,29 +2855,33 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 </div>
 
 <div class="modal-bg" id="recurModalBg" onclick="if(event.target===this) closeRecurModal()">
-  <div class="modal mid">
+  <div class="modal mid insp">
     <div class="modal-header"><h2 id="recurTitle">Recurring task</h2><button onclick="closeRecurModal()" aria-label="Close">&times;</button></div>
     <div class="modal-body" id="recurBody">
-      <div class="field-grid-4">
-        <div class="field span2"><label for="recurName">Task name</label><input type="text" id="recurName" maxlength="200" placeholder="e.g. Weekly status meeting"></div>
-        <div class="field"><label for="recurDur" id="recurDurLabel">Duration (days)</label><input type="text" id="recurDur" title="0 makes each occurrence a milestone"></div>
-        <div class="field" id="recurTimeField"><label for="recurTime">Starts at</label><input type="text" class="dt-time" id="recurTime"></div>
+      <div class="tgrp">
+        <div class="trow"><label for="recurName" class="tgrow">Task name</label><input type="text" id="recurName" class="tin" maxlength="200" placeholder="Name"></div>
+        <div class="trow"><label for="recurDur" id="recurDurLabel" class="tgrow">Duration (days)</label><input type="text" id="recurDur" class="tin" title="0 makes each occurrence a milestone"></div>
+        <div class="trow" id="recurTimeField"><label for="recurTime" class="tgrow">Starts at</label><input type="text" class="dt-time" id="recurTime"></div>
       </div>
       <section class="cal-sec">
-        <div class="cal-sec-title">Recurrence pattern</div>
-        <div class="recur-freq"><label><input type="radio" name="recurFreq" value="daily">Daily</label><label><input type="radio" name="recurFreq" value="weekly">Weekly</label><label><input type="radio" name="recurFreq" value="monthly">Monthly</label><label><input type="radio" name="recurFreq" value="yearly">Yearly</label></div>
-        <div class="recur-line">Every <input type="number" id="recurEvery" min="1" max="99" class="recur-num"> <span id="recurEveryUnit">week(s)</span></div>
-        <div class="recur-line" id="recurDaysRow"><span>on</span><div class="cal-days" id="recurDays"></div></div>
-        <div class="recur-line" id="recurWorkdaysRow"><label class="checkbox-row"><input type="checkbox" id="recurWorkdays"><span>Working days only</span></label></div>
-        <div class="recur-line" id="recurMonthRow">on day <input type="number" id="recurMonthDay" min="1" max="31" class="recur-num"> <span class="cal-sec-note">(the last day in a shorter month)</span></div>
+        <div class="cal-sec-title">Recurrence Pattern</div>
+        <div class="tgrp">
+          <div class="trow"><div class="recur-freq"><label><input type="radio" name="recurFreq" value="daily">Daily</label><label><input type="radio" name="recurFreq" value="weekly">Weekly</label><label><input type="radio" name="recurFreq" value="monthly">Monthly</label><label><input type="radio" name="recurFreq" value="yearly">Yearly</label></div></div>
+          <div class="trow"><label for="recurEvery" class="tgrow">Every</label><input type="number" id="recurEvery" min="1" max="99" class="tin recur-num"><span id="recurEveryUnit" class="tunit">week(s)</span></div>
+          <div class="trow" id="recurDaysRow"><label class="tgrow">On</label><div class="cal-days" id="recurDays"></div></div>
+          <div class="trow" id="recurWorkdaysRow"><label for="recurWorkdays" class="tgrow">Working days only</label><input type="checkbox" class="tsw" role="switch" id="recurWorkdays"></div>
+          <div class="trow" id="recurMonthRow"><label for="recurMonthDay" class="tgrow">On day <span class="cal-sec-note">(the last day in a shorter month)</span></label><input type="number" id="recurMonthDay" min="1" max="31" class="tin recur-num"></div>
+        </div>
       </section>
       <section class="cal-sec">
         <div class="cal-sec-title">Range</div>
-        <div class="recur-line"><span>Start</span><input type="text" class="dt-date" id="recurStart"></div>
-        <div class="recur-line"><label><input type="radio" name="recurEnd" id="recurEndCount" checked> End after</label><input type="number" id="recurCount" min="1" max="500" class="recur-num"> occurrences</div>
-        <div class="recur-line"><label><input type="radio" name="recurEnd" id="recurEndUntil"> End by</label><input type="text" class="dt-date" id="recurUntil"></div>
-        <p class="cal-hint recur-preview" id="recurPreview" style="margin:0"></p>
-        <p class="cal-hint hidden" id="recurKeepNote" style="margin:0">Started or finished occurrences are kept; the rest are made again.</p>
+        <div class="tgrp">
+          <div class="trow"><label for="recurStart" class="tgrow">Start</label><input type="text" class="dt-date" id="recurStart"></div>
+          <div class="trow"><label for="recurCount" class="tgrow">End after</label><input type="number" id="recurCount" min="1" max="500" class="tin recur-num"><span class="tunit">occurrences</span><input type="radio" class="tick" name="recurEnd" id="recurEndCount" checked aria-label="End after a number of occurrences"></div>
+          <div class="trow"><label for="recurUntil" class="tgrow">End by</label><input type="text" class="dt-date" id="recurUntil"><input type="radio" class="tick" name="recurEnd" id="recurEndUntil" aria-label="End by a date"></div>
+        </div>
+        <p class="cal-hint recur-preview" id="recurPreview"></p>
+        <p class="cal-hint hidden" id="recurKeepNote">Started or finished occurrences are kept; the rest are made again.</p>
       </section>
     </div>
     <div class="modal-footer">
@@ -2781,14 +2891,13 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
   </div>
 </div>
 <div class="modal-bg" id="rescheduleModalBg" onclick="if(event.target===this) closeRescheduleModal()">
-  <div class="modal mid">
+  <div class="modal mid insp">
     <div class="modal-header"><h2>Reschedule remaining work</h2><button onclick="closeRescheduleModal()" aria-label="Close">&times;</button></div>
     <div class="modal-body">
-      <p class="cal-hint" style="margin:0">Catches the plan up as of a date: tasks that should have started move there, and unfinished work continues from it.</p>
+      <p class="cal-hint">Catches the plan up as of a date: tasks that should have started move there, and unfinished work continues from it.</p>
       <section class="cal-sec">
-        <div class="cal-sec-title">Status date</div>
-        <div class="field-dt" id="rescheduleWhen"><input type="text" class="dt-date" id="rescheduleDateInput" aria-label="Status date" onchange="onRescheduleDateChange()"><input type="text" id="rescheduleTimeInput" class="hidden dt-time" aria-label="Status time" onchange="rescheduleTimeTouched = true; renderRescheduleModal()"></div>
-        <p class="cal-hint" id="rescheduleHint" style="margin:0"></p>
+        <div class="tgrp"><div class="trow"><label for="rescheduleDateInput" class="tgrow">Status date</label><div class="field-dt" id="rescheduleWhen"><input type="text" class="dt-date" id="rescheduleDateInput" aria-label="Status date" onchange="onRescheduleDateChange()"><input type="text" id="rescheduleTimeInput" class="hidden dt-time" aria-label="Status time" onchange="rescheduleTimeTouched = true; renderRescheduleModal()"></div></div></div>
+        <p class="cal-hint" id="rescheduleHint"></p>
         <details class="rs-details hidden" id="rescheduleDetails">
           <summary>Which tasks <span id="rescheduleDetailsCount"></span></summary>
           <div class="rs-list" id="rescheduleList"></div>
@@ -2803,22 +2912,26 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 </div>
 
 <div class="modal-bg" id="levelModalBg" onclick="if(event.target===this) closeLevelModal()">
-  <div class="modal mid">
+  <div class="modal mid insp">
     <div class="modal-header"><h2>Level resources</h2><button onclick="closeLevelModal()" aria-label="Close">&times;</button></div>
     <div class="modal-body">
-      <p class="cal-hint" style="margin:0">Delays a task that needs more of a resource than there is, to the next span with room. Never earlier than its links allow.</p>
+      <p class="cal-hint">Delays a task that needs more of a resource than there is, to the next span with room. Never earlier than its links allow.</p>
       <section class="cal-sec">
-        <label class="checkbox-row"><input type="checkbox" id="levelWithinSlack" checked onchange="renderLevelModal()"><label for="levelWithinSlack">Keep within existing slack</label></label>
-        <p class="cal-hint" id="levelSlackHint" style="margin:0">Never moves the plan's finish. Conflicts it can't resolve are listed below.</p>
+        <div class="tgrp"><div class="trow"><label for="levelWithinSlack" class="tgrow">Keep within existing slack</label><input type="checkbox" class="tsw" role="switch" id="levelWithinSlack" checked onchange="renderLevelModal()"></div></div>
+        <p class="cal-hint" id="levelSlackHint">Never moves the plan's finish. Conflicts it can't resolve are listed below.</p>
+      </section>
+      <section class="cal-sec">
         <div class="cal-sec-title">Scope</div>
-        <label class="checkbox-row"><input type="checkbox" id="levelFromOn" onchange="renderLevelModal()"><label for="levelFromOn">Only from a date on</label></label>
-        <div class="field-dt" id="levelFromWhen"><input type="text" class="dt-date hidden" id="levelFromInput" aria-label="From date" onchange="renderLevelModal()"></div>
-        <p class="cal-hint" id="levelHint" style="margin:0"></p>
+        <div class="tgrp">
+          <div class="trow"><label for="levelFromOn" class="tgrow">Only from a date on</label><input type="checkbox" class="tsw" role="switch" id="levelFromOn" onchange="renderLevelModal()"></div>
+          <div class="trow" id="levelFromRow"><label for="levelFromInput" class="tgrow">From</label><div class="field-dt" id="levelFromWhen"><input type="text" class="dt-date hidden" id="levelFromInput" aria-label="From date" onchange="renderLevelModal()"></div></div>
+        </div>
+        <p class="cal-hint" id="levelHint"></p>
         <details class="rs-details hidden" id="levelDetails">
           <summary>Which tasks <span id="levelDetailsCount"></span></summary>
           <div class="rs-list" id="levelList"></div>
         </details>
-        <p class="cal-hint hidden" id="levelUnresolvedNote" style="margin:0"></p>
+        <p class="cal-hint hidden" id="levelUnresolvedNote"></p>
       </section>
     </div>
     <div class="modal-footer">
@@ -2829,10 +2942,10 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 </div>
 
 <div class="modal-bg" id="syncConflictsModalBg" onclick="if(event.target===this) closeSyncConflictsModal()">
-  <div class="modal">
-    <div class="modal-header"><h2>Changes made on both sides</h2><button onclick="closeSyncConflictsModal()">&times;</button></div>
+  <div class="modal insp">
+    <div class="modal-header"><h2>Changes made on both sides</h2><button onclick="closeSyncConflictsModal()" aria-label="Close">&times;</button></div>
     <div class="modal-body">
-      <p class="cal-hint" style="margin:0 0 12px">The newer edit was kept. Check the ones that matter; take the other version if it should have won.</p>
+      <p class="cal-hint">The newer edit was kept. Check the ones that matter; take the other version if it should have won.</p>
       <div id="syncConflictsBody"></div>
     </div>
     <div class="modal-footer">
@@ -6573,7 +6686,7 @@ function renderGrid() {
     };
     if (t.spacer) {   // an empty line: the ID and a blank cell in every column (nothing to edit)
       for (const c of cols) cells[c] = '<div class="grid-cell-dim"></div>';
-      cells.name = `<div class="grid-name" style="--depth:${depth}"><button class="chevron empty" tabindex="-1"><i class="fa-solid fa-chevron-down"></i></button><span class="name-text spacer-label" title="Empty line — it only separates tasks"></span>${actionsHtml}</div>`;
+      cells.name = `<div class="grid-name" style="--depth:${depth}"><button class="chevron empty" tabindex="-1" aria-hidden="true"><i class="fa-solid fa-chevron-down"></i></button><span class="name-text spacer-label" title="Empty line — it only separates tasks"></span>${actionsHtml}</div>`;
     }
     return `<div class="grid-row${isSelected(t.id) ? ' selected' : ''}${t.spacer ? ' spacer-row' : ''}${t.color ? ' colored' : ''}"${t.color ? ` style="--row-accent:var(--task-${t.color})"` : ''} data-id="${t.id}" onclick="selectTask('${t.id}', event)" ondblclick="rowDblClick(event, '${t.id}')" draggable="${(editingCell && editingCell.id === t.id) || groupingOn() ? 'false' : 'true'}" ondragstart="dragStartTask(event,'${t.id}')" ondragend="dragEndTask()" ondragover="dragOverTask(event,'${t.id}')" ondrop="dropOnTask(event,'${t.id}')">
       <div class="grid-cell-dim" style="text-align:center">${taskDisplayId(t.id)}</div>
@@ -11384,7 +11497,7 @@ function openPrintModal() {
   const d = printDefaults(), g = id => document.getElementById(id);
   g('printPaper').value = d.paper; g('printOrient').value = d.orient; g('printScale').value = d.scale; g('printTitle').value = d.title;
   g('printScale').querySelector('option[value=hour]').hidden = !minuteModeActive();   // (the Hours scale belongs to a minute-mode plan)
-  { const lab = g('printCol-duration').parentElement; lab.lastChild.textContent = minuteModeActive() ? ' Duration' : ' Days'; }   // (a minute-mode plan's duration is in working time, not days)
+  { const lab = g('printCol-duration').parentElement.querySelector('span'); lab.textContent = minuteModeActive() ? 'Duration' : 'Days'; }   // (a minute-mode plan's duration is in working time, not days)
   for (const c of Object.keys(PRINT_COLS)) g('printCol-' + c).checked = d.cols.includes(c);
   g('printRangeAll').checked = true; g('printFrom').value = ''; g('printTo').value = '';
   g('printBaseline').checked = d.baseline; g('printCritical').checked = d.critical; g('printDeps').checked = d.deps; g('printToday').checked = d.today; g('printShade').checked = d.shade; g('printExpand').checked = d.expandAll;
@@ -11685,10 +11798,10 @@ function openBulkModal() {
   document.getElementById('bulkVal-mode').value = 'auto'; document.getElementById('bulkVal-predType').value = 'FS';
   document.getElementById('bulkVal-color').innerHTML = BULK_COLORS.map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
   const custom = bulkCustomCols();
-  document.getElementById('bulkCustom').innerHTML = custom.length ? '<div class="bulk-sep"></div>' + custom.map(cid => {
+  document.getElementById('bulkCustom').innerHTML = custom.length ? '<div class="tgrp">' + custom.map(cid => {
     const kind = CUSTOM_FIELDS[cid].kind, an = escapeHtml(customFieldName(cid)), ctl = kind === 'flag' ? `<select id="bulkVal-${cid}" aria-label="${an}"><option value="1">Yes</option><option value="">No</option></select>` : kind === 'date' ? `<input type="text" class="dt-date" id="bulkVal-${cid}" aria-label="${an}">` : `<input type="text" id="bulkVal-${cid}" aria-label="${an}" ${kind === 'number' ? 'inputmode="decimal" placeholder="number"' : 'maxlength="255"'}>`;
-    return `<div class="bulk-row"><label class="bulk-on"><input type="checkbox" id="bulkOn-${cid}"> ${escapeHtml(customFieldName(cid))}</label><div class="bulk-ctl">${ctl}</div></div>`;
-  }).join('') : '';
+    return `<div class="trow bulk-row"><label class="bulk-on tgrow"><input type="checkbox" id="bulkOn-${cid}"> ${escapeHtml(customFieldName(cid))}</label><div class="bulk-ctl">${ctl}</div></div>`;
+  }).join('') + '</div>' : '';
   enhanceBoxes(document.getElementById('bulkCustom'));
   // editing a value ticks its box
   document.querySelectorAll('#bulkModalBg .bulk-ctl input, #bulkModalBg .bulk-ctl select').forEach(el => { const f = el.id.replace('bulkVal-', ''), box = document.getElementById('bulkOn-' + (f.startsWith('pred') ? 'pred' : f)); el.oninput = el.onchange = () => { if (box) box.checked = true; }; });
@@ -14037,6 +14150,12 @@ document.addEventListener('DOMContentLoaded', () => {
   wireEnterApplies('baselineModalBg', 'baselineSetBtn');
   enhanceBoxes();
   initDialogAccessibility();
+  // An icon-only button gets its accessible name from its tooltip (write the title; this copies it into aria-label and follows later changes).
+  const nameFromTitle = el => { if (el.tagName === 'BUTTON' && el.title && !el.getAttribute('aria-label') && !el.textContent.trim()) el.setAttribute('aria-label', el.title); };
+  const nameAll = root => { if (root.nodeType !== 1) return; nameFromTitle(root); root.querySelectorAll && root.querySelectorAll('button[title]').forEach(nameFromTitle); };
+  nameAll(document.body);
+  new MutationObserver(ms => { for (const m of ms) { if (m.type === 'attributes') { const t = m.target; if (t.tagName === 'BUTTON' && t.title && !t.textContent.trim()) t.setAttribute('aria-label', t.title); } else m.addedNodes.forEach(nameAll); } })
+    .observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['title'] });
   load();
   resetHistory();
   applyTheme(); applyGridPaneWidth();

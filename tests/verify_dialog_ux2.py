@@ -59,7 +59,7 @@ with sync_playwright() as p:
     close_all()
     pg.set_viewport_size({"width": 390, "height": 780})
     ev("() => openBaselineModal()"); pg.wait_for_timeout(200)
-    check("on a phone the baseline grid stacks to one column (Which baseline above Apply to, not squeezed side by side)", ev("() => getComputedStyle(document.querySelector('#baselineModalBg .bl-grid')).gridTemplateColumns.split(' ').length") == 1)
+    check("on a phone the baseline rows stay one column (Which baseline above Apply to)", ev("() => document.getElementById('baselineScopeAll').getBoundingClientRect().top > document.getElementById('baselineSlotSelect').getBoundingClientRect().top"))
     close_all()
     pg.set_viewport_size({"width": 1400, "height": 860})
 

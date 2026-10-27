@@ -180,6 +180,8 @@ with sync_playwright() as p:
     inside = lambda: ev("() => !!document.activeElement.closest('#taskModalBg')")
     ev("() => { const f = [...document.querySelectorAll('#taskModalBg .modal-footer button')]; f[f.length - 1].focus(); }")
     pg.keyboard.press("Tab")
+    nameless = ev("() => [...document.querySelectorAll('button')].filter(b => b.title && !b.textContent.trim() && !b.getAttribute('aria-label')).map(b => b.id || b.className)")
+    check("every icon-only button with a tooltip also has an aria-label (copied from the title)", nameless == [], nameless)
     check("Tab from the last control goes to the first inside the dialog (not out to the page)", inside() and ev("() => document.activeElement.closest('.modal-header') !== null || document.activeElement.getAttribute('aria-label') === 'Close'"), ev("() => document.activeElement.outerHTML.slice(0, 80)"))
     pg.keyboard.press("Shift+Tab")
     check("Shift+Tab from the first goes to the last (Save)", inside() and ev("() => document.activeElement.textContent.trim()") == "Save", ev("() => document.activeElement.textContent"))

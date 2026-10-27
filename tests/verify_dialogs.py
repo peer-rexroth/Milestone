@@ -95,7 +95,7 @@ with sync_playwright() as p:
     fresh(); ev("() => openBaselineModal()"); pg.wait_for_timeout(300)
     bx = pg.locator("#baselineModalBg .modal").bounding_box()
     check("the baseline dialog is 560px wide (the shared 'mid' width) and fits without scrolling", round(bx["width"]) == 560 and fits("#baselineModalBg"), bx)
-    check("...'Baseline' and 'Apply to' sit side by side; the 'Actual dates' section is hidden while there is nothing to apply", abs(top("#baselineSlotSelect") - top("#baselineScopeAll")) <= 12 and not pg.locator("#baselineActualsSec").is_visible())
+    check("...'Which baseline' and 'Apply to' are rows of one group, one under the other; the 'Actual dates' section is hidden while there is nothing to apply", top("#baselineScopeAll") > top("#baselineSlotSelect") and not pg.locator("#baselineActualsSec").is_visible())
     check("...nothing set yet: the compare list says so and the hint tells what to do first", "none set" in pg.inner_text("#baselineCompareSelect") and "Set a baseline" in pg.inner_text("#baselineCompareHint") and pg.is_disabled("#baselineCompareSelect"))
     check("...the 'selected task' choice is disabled with a reason", pg.is_disabled("#baselineScopeSel") and "Select a task" in (ev("() => document.getElementById('baselineScopeSel').closest('label').title")))
     pg.click("#baselineSetBtn"); pg.wait_for_timeout(200)
