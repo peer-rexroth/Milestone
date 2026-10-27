@@ -42,7 +42,7 @@ with sync_playwright() as p:
     labs = [l.strip() for l in pg.locator("#calendarModalBg .hol-preset label").all_inner_texts()]
     check("the public-holiday row has labels: Country or region, From year, To year", labs == ["Country or region", "From year", "To year"], labs)
     rowy = ev("() => { const m = id => { const r = document.getElementById(id).getBoundingClientRect(); return (r.top + r.bottom) / 2; }; const btn = document.querySelector('#calendarModalBg .hol-preset .btn').getBoundingClientRect(); return [m('holRegion'), m('holYearFrom'), m('holYearTo'), (btn.top + btn.bottom) / 2]; }")
-    check("...and the region, both years and the button are still on one row (centres within 3px)", max(rowy) - min(rowy) < 3, rowy)
+    check("...and they are stacked rows: region, From year, To year, then the button", rowy == sorted(rowy) and rowy[3] > rowy[2] > rowy[1] > rowy[0], rowy)
     # ================================================== Scheduling rules
     pg.click(".modal-bg.open [data-settings-tab='rules']"); pg.wait_for_timeout(150)
     check("Scheduling rules: just the Status date and, folded under Advanced, the constraint-dates switch — the new-task mode is gone (the Add menu has it)", pg.is_visible("#rulesStatusDateInput") and pg.locator("#rulesNewAuto").count() == 0 and pg.locator("#rulesNewManual").count() == 0 and not ev("() => document.getElementById('rulesAdv').open") and not pg.is_visible("#honorConstraintDatesInput"))
