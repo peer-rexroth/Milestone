@@ -1164,7 +1164,7 @@ html.time12 .tf-dt input.dt-time { flex: 0 0 104px; min-width: 104px; width: 104
 .menu-head { padding: 6px 10px 2px; font-size: var(--fs-12); font-weight: 500; color: var(--text-faint); }   /* a section caption: small, regular weight, sentence case (not capitals) */
 .dropdown-item.danger, .dropdown-item.danger i { color: var(--danger); }
 #rowMenu { min-width: 230px; margin-top: 0; }
-.row-sub { display: none; margin-top: 0; min-width: 190px; z-index: 81; position: absolute; }
+.row-sub { display: none; margin-top: 0; min-width: 164px; width: max-content; max-width: 280px; z-index: 81; position: absolute; }
 .sub-wrap { position: relative; }
 .sub-wrap:hover > .row-sub, .sub-wrap.open > .row-sub { display: block; }
 .sub-wrap:hover > .has-sub, .sub-wrap.open > .has-sub { background: var(--accent); color: var(--on-accent); }
@@ -2217,7 +2217,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
   <div class="sb-head">
     <button class="icon-btn" id="sidebarToggleBtn" onclick="toggleSidebar()" title="Hide sidebar (Alt+Cmd/Ctrl+S)" aria-label="Hide sidebar"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="11" rx="2.5"/><path d="M6 2.5v11"/></svg></button>
   </div>
-  <div class="sb-search" id="sbSearch"><i class="fa-solid fa-magnifying-glass"></i><input type="search" id="searchInput" role="combobox" aria-label="Find a task" aria-expanded="false" aria-controls="searchResults" autocomplete="off" spellcheck="false" placeholder="Find a Task" title="Words match task names, WBS codes, notes and your own fields. #12 finds a task number, @anna a resource, status:late a status. Ctrl+H opens Find and Replace." oninput="renderSearch()" onfocus="searchFocus()" onblur="searchBlur()" onkeydown="searchKey(event)"></div>
+  <div class="sb-search" id="sbSearch"><i class="fa-solid fa-magnifying-glass"></i><input type="search" id="searchInput" role="combobox" aria-label="Find a task" aria-expanded="false" aria-controls="searchResults" autocomplete="off" spellcheck="false" placeholder="Find a Task" title="Search names, codes, notes and fields: #12, @anna, status:late (Ctrl+H replaces)" oninput="renderSearch()" onfocus="searchFocus()" onblur="searchBlur()" onkeydown="searchKey(event)"></div>
   <div class="sb-scroll">
     <div class="sb-sec"><span class="sb-label">Views</span></div>
     <div class="view-tabs" id="mainViewTabs" role="list" aria-label="Views"></div>
@@ -2230,14 +2230,14 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
   <div class="plan-status">
     <button class="btn" id="fileSyncBtn" onclick="onFileSyncBtnClick()"></button>
     <button class="btn conflict-btn hidden" id="syncConflictBtn" onclick="openSyncConflictsModal()"></button>
-    <span class="watch-hint hidden" id="watchHint"><button class="btn watch-btn" id="watchHintBtn" onclick="chooseWatchFolder()" title="This plan is linked to a single file (from before plans were linked by folder). Link the folder it lives in: OneDrive, Dropbox and SharePoint keep a second copy of the file when two devices save at the same time, and Milestone can then merge those copies in."><i class="fa-solid fa-folder-tree"></i>Link folder</button><button class="watch-x" onclick="declineWatch()" title="Don't remind me for this plan (the plan menu still has it)" aria-label="Don't remind me">&times;</button></span>
+    <span class="watch-hint hidden" id="watchHint"><button class="btn watch-btn" id="watchHintBtn" onclick="chooseWatchFolder()" title="Link this plan's folder so copies from other devices can be merged"><i class="fa-solid fa-folder-tree"></i>Link folder</button><button class="watch-x" onclick="declineWatch()" title="Don't remind me for this plan (the plan menu still has it)" aria-label="Don't remind me">&times;</button></span>
   </div>
   <div class="tool-group sb-cap" role="group" aria-label="Tools">
   <div class="dropdown-wrap">
     <button class="btn" id="dataMenuBtn" aria-label="Data" onclick="toggleDataMenu()" title="Data: import, export, print, backups"><i class="fa-solid fa-hard-drive"></i><span class="btn-label">Data</span></button>
     <div class="dropdown-menu" id="dataMenu">
       <button class="dropdown-item" onclick="triggerImport()"><i class="fa-solid fa-arrow-down-to-bracket"></i>Import Plan (JSON)…</button>
-      <button class="dropdown-item" id="foreignImportItem" onclick="triggerForeignImport()" title="Adds tasks from an MS Project XML file or a CSV table to this plan. Excel (.xlsx) files and CSV tables are read too — the sheet needs a header row such as Task Name, Start, Finish."><i class="fa-solid fa-arrow-down-to-bracket"></i>Import Tasks…</button>
+      <button class="dropdown-item" id="foreignImportItem" onclick="triggerForeignImport()" title="Add tasks from MS Project XML, Excel or CSV (needs a header row)"><i class="fa-solid fa-arrow-down-to-bracket"></i>Import Tasks…</button>
       <div class="dropdown-sep"></div>
       <button class="dropdown-item" onclick="exportProject()"><i class="fa-solid fa-arrow-up-from-bracket"></i>Export Plan (JSON)</button>
       <button class="dropdown-item" id="excelExportItem" onclick="openExcelExport()"><i class="fa-solid fa-file-excel"></i>Export to Excel…</button>
@@ -2278,7 +2278,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
   <div class="tb-group" data-views="tasks gantt">
     <div class="split-btn">
       <button class="btn" id="addTaskBtn" onclick="addTask()"><i class="fa-solid fa-plus"></i>Add Task</button>
-      <button class="btn split-caret" id="addMenuBtn" onclick="toggleAddMenu(event)" title="More ways to add rows — an empty line, paste — and how new tasks are scheduled" aria-haspopup="menu" aria-label="More add options"><i class="fa-solid fa-chevron-down"></i></button>
+      <button class="btn split-caret" id="addMenuBtn" onclick="toggleAddMenu(event)" title="Empty line, paste, and how new tasks are scheduled" aria-haspopup="menu" aria-label="More add options"><i class="fa-solid fa-chevron-down"></i></button>
     </div>
     <span class="tb-sep"></span>
     <div class="tool-group" role="group" aria-label="Structure">
@@ -2311,7 +2311,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
   <div class="tb-group" data-views="resources">
     <span class="tb-sep"></span>
     <span class="res-legend" id="resLegend" data-more="8" title="Each bar is a person's load on those days, as a % of their Max Units"><span class="sw"></span>Within capacity<span class="sw over"></span>Over capacity — click a red bar</span>
-    <button class="btn btn-sm" id="levelResBtn" data-more="5" onclick="openLevelModal()" title="Level resources — delay tasks so nobody is over capacity (within slack by default)"><i class="fa-solid fa-scale-balanced"></i>Level…</button>
+    <button class="btn btn-sm" id="levelResBtn" data-more="5" onclick="openLevelModal()" title="Level resources — delay tasks so nobody is overbooked"><i class="fa-solid fa-scale-balanced"></i>Level…</button>
     <button class="btn btn-sm tb-toggle" id="overOnlyBtn" data-more="4" onclick="toggleOverOnly()" aria-pressed="false" title="Show only the resources that are over-allocated somewhere"><i class="fa-solid fa-triangle-exclamation"></i>Over-allocated only</button>
   </div>
   <div class="tb-group" data-views="resourceSheet">
@@ -2386,7 +2386,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 </div>
 <!-- The status bar (MS Project has one): the new-task mode, what's shown and selected, the filters, the file, the zoom. -->
 <div class="statusbar" id="statusbar" role="status" aria-label="Status bar">
-  <span class="sb-views" data-sb-views="tasks gantt"><button class="sb-btn sb-toggle" id="taskFormBtn" onclick="toggleTaskForm()" aria-pressed="false" title="Show or hide the Task Form — the selected task's details, resources and predecessors in a pane below (like MS Project's Details)"><i class="fa-regular fa-rectangle-list"></i>Task Form</button><span class="sb-sep"></span></span>
+  <span class="sb-views" data-sb-views="tasks gantt"><button class="sb-btn sb-toggle" id="taskFormBtn" onclick="toggleTaskForm()" aria-pressed="false" title="Show or hide the Task Form below the list"><i class="fa-regular fa-rectangle-list"></i>Task Form</button><span class="sb-sep"></span></span>
   <button class="sb-btn" id="sbMode" onclick="toggleSbModeMenu(event)" aria-haspopup="menu" title="How new tasks are scheduled — click to change"></button>
   <span class="sb-sep"></span>
   <span class="sb-text" id="sbCount"></span>
@@ -2396,7 +2396,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
     <button class="sb-btn" id="sbTodayBtn" onclick="goToToday()" title="Scroll the chart to today"><i class="fa-solid fa-calendar-day"></i>Today</button>
     <button class="sb-btn" id="sbScrollTaskBtn" onclick="scrollToSelectedTask()" title="Scroll the chart to the selected task's bar"><i class="fa-solid fa-crosshairs"></i>Scroll to task</button>
     <span class="sb-sep"></span>
-    <span class="sb-scale" role="group" aria-label="Timescale"><button class="sb-seg" id="fitZoomBtn" onclick="fitZoom()" aria-pressed="false" title="Fit — the whole plan across the chart's width (the standard); Week / Month / Year are fixed scales">Fit</button><span class="view-tabs" id="zoomTabs"></span></span>
+    <span class="sb-scale" role="group" aria-label="Timescale"><button class="sb-seg" id="fitZoomBtn" onclick="fitZoom()" aria-pressed="false" title="Fit the whole plan to the chart width; Week, Month and Year are fixed">Fit</button><span class="view-tabs" id="zoomTabs"></span></span>
     <button class="sb-icon" onclick="nudgeZoom(-1)" title="Zoom out" aria-label="Zoom out"><i class="fa-solid fa-minus"></i></button>
     <input type="range" id="zoomSlider" min="0" max="1000" step="1" aria-label="Zoom" title="Zoom — drag for any scale between the presets" oninput="onZoomSlider(this.value)" onchange="save()">
     <button class="sb-icon" onclick="nudgeZoom(1)" title="Zoom in" aria-label="Zoom in"><i class="fa-solid fa-plus"></i></button>
@@ -2436,13 +2436,13 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
       <div class="baseline-info hidden" id="taskBaselineInfo" title="From the plan's baseline (Schedule menu → Baseline…)"></div>
       <div class="tgrp" id="taskTypeRow">
         <div class="trow"><label for="taskTypeInput">Type</label><select id="taskTypeInput" class="tin"><option value="fixedUnits">Fixed Units</option><option value="fixedDuration">Fixed Duration</option><option value="fixedWork">Fixed Work</option></select></div>
-        <div class="trow" id="taskEffortDrivenField" title="On: adding or removing a resource keeps Work the same and moves the schedule (Fixed Units/Fixed Work) or the resource split (Fixed Duration). Off: it just adds or removes that capacity."><label for="effortDrivenInput">Effort-Driven</label><input type="checkbox" class="tsw" id="effortDrivenInput" role="switch"></div>
-        <div class="trow"><label for="taskWorkInput" title="Total effort, e.g. 4h, 2d, 1w — kept in step with Duration and the resource split by the Type above">Work</label><input type="text" class="tin" id="taskWorkInput"></div>
+        <div class="trow" id="taskEffortDrivenField" title="On: adding a resource keeps Work and moves the schedule. Off: it adds capacity"><label for="effortDrivenInput">Effort-Driven</label><input type="checkbox" class="tsw" id="effortDrivenInput" role="switch"></div>
+        <div class="trow"><label for="taskWorkInput" title="Total effort, e.g. 4h, 2d, 1w; follows Duration and Type">Work</label><input type="text" class="tin" id="taskWorkInput"></div>
       </div>
       <div class="tgrp">
         <div class="trow"><label for="taskConstraintTypeInput">Constraint</label><select id="taskConstraintTypeInput" class="tin" onchange="onConstraintTypeChange()"></select></div>
         <div class="trow" id="taskConstraintDateField"><label id="taskConstraintDateLabel" for="taskConstraintDateInput">Constraint date</label><div class="field-dt"><input type="text" class="dt-date" id="taskConstraintDateInput"><input type="text" id="taskConstraintTimeInput" class="task-time-input hidden dt-time" aria-label="Constraint time"></div></div>
-        <div class="trow" id="taskDeadlineField" title="A target date: it doesn't move the task — the task is flagged when it finishes later (MS Project's Deadline)"><label for="taskDeadlineInput">Deadline<span class="deadline-note" id="taskDeadlineNote"></span></label><div class="field-dt"><input type="text" class="dt-date" id="taskDeadlineInput" onchange="updateDeadlineNote()"></div></div>
+        <div class="trow" id="taskDeadlineField" title="A target date; the task is flagged if it finishes later"><label for="taskDeadlineInput">Deadline<span class="deadline-note" id="taskDeadlineNote"></span></label><div class="field-dt"><input type="text" class="dt-date" id="taskDeadlineInput" onchange="updateDeadlineNote()"></div></div>
         <div class="trow" id="taskActualStartField"><label for="taskActualStartInput" id="taskActualsNote">Actual Start</label><div class="field-dt"><input type="text" class="dt-date" id="taskActualStartInput" onchange="onActualStartChange()"><input type="text" id="taskActualStartTimeInput" class="task-time-input hidden dt-time" aria-label="Actual start time" onchange="onActualStartChange()"></div></div>
         <div class="trow" id="taskActualFinishField" title="Recording an Actual Finish marks the task 100% complete"><label for="taskActualFinishInput">Actual Finish</label><div class="field-dt"><input type="text" class="dt-date" id="taskActualFinishInput" onchange="onActualFinishChange()"><input type="text" id="taskActualFinishTimeInput" class="task-time-input hidden dt-time" aria-label="Actual finish time" onchange="onActualFinishChange()"></div></div>
         <div class="trow" title="Colours the task's row in the list (and its stripe in the chart)"><label>Color</label><div class="color-swatches" id="taskColorSwatches"></div></div>
@@ -2584,7 +2584,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
       <div class="trow bulk-row"><label class="bulk-on tgrow"><input type="checkbox" id="bulkOn-work"> Work</label><div class="bulk-ctl"><input type="text" id="bulkVal-work" placeholder="Work" aria-label="Work"></div></div>
       <div class="trow bulk-row"><label class="bulk-on tgrow"><input type="checkbox" id="bulkOn-color"> Row colour</label><div class="bulk-ctl"><select id="bulkVal-color" aria-label="Row colour"></select></div></div>
       <div class="trow bulk-row"><label class="bulk-on tgrow"><input type="checkbox" id="bulkOn-shift"> Move dates by</label><div class="bulk-ctl"><input type="number" id="bulkVal-shift" step="1" placeholder="− earlier, + later" aria-label="Working days to move by"><span class="bulk-hint" id="bulkShiftHint">working days</span></div></div>
-      <div class="trow bulk-row"><label class="bulk-on tgrow"><input type="checkbox" id="bulkOn-pred"> Add predecessor</label><div class="bulk-ctl"><input type="number" id="bulkVal-predId" min="1" step="1" placeholder="task #" aria-label="Predecessor task number"><select id="bulkVal-predType" aria-label="Link type: Finish-to-Start, Start-to-Start, Finish-to-Finish or Start-to-Finish" title="Link type: FS Finish-to-Start, SS Start-to-Start, FF Finish-to-Finish, SF Start-to-Finish"><option value="FS" title="Finish-to-Start">FS</option><option value="SS" title="Start-to-Start">SS</option><option value="FF" title="Finish-to-Finish">FF</option><option value="SF" title="Start-to-Finish">SF</option></select><input type="number" id="bulkVal-predLag" step="1" placeholder="lag" aria-label="Lag in working days" title="Lag — positive delays the start, negative overlaps it"></div></div>
+      <div class="trow bulk-row"><label class="bulk-on tgrow"><input type="checkbox" id="bulkOn-pred"> Add predecessor</label><div class="bulk-ctl"><input type="number" id="bulkVal-predId" min="1" step="1" placeholder="task #" aria-label="Predecessor task number"><select id="bulkVal-predType" aria-label="Link type: Finish-to-Start, Start-to-Start, Finish-to-Finish or Start-to-Finish" title="FS finish-to-start · SS start-to-start · FF finish-to-finish · SF start-to-finish"><option value="FS" title="Finish-to-Start">FS</option><option value="SS" title="Start-to-Start">SS</option><option value="FF" title="Finish-to-Finish">FF</option><option value="SF" title="Start-to-Finish">SF</option></select><input type="number" id="bulkVal-predLag" step="1" placeholder="lag" aria-label="Lag in working days" title="Lag — positive delays the start, negative overlaps it"></div></div>
       </div>
       <div id="bulkCustom"></div>
     </div>
@@ -2668,7 +2668,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
         <div class="print-nav"><button class="btn" id="printPrev" onclick="printPage(-1)" aria-label="Previous page"><i class="fa-solid fa-chevron-left"></i></button><span id="printPageInfo"></span><button class="btn" id="printNext" onclick="printPage(1)" aria-label="Next page"><i class="fa-solid fa-chevron-right"></i></button><span class="print-summary" id="printSummary"></span></div>
       </div>
     </div>
-    <div class="modal-footer"><span class="print-img" role="group" aria-label="Picture of the whole chart"><span class="print-img-label" title="One picture with every row, whatever the paper — for slides and documents">Picture:</span><button class="btn" id="printCopyImg" onclick="exportPrintImage('copy')" title="Copy the chart as a PNG picture"><i class="fa-regular fa-copy"></i>Copy</button><button class="btn" id="printPng" onclick="exportPrintImage('png')" title="Download the chart as a PNG picture"><i class="fa-regular fa-image"></i>PNG</button><button class="btn" id="printSvg" onclick="exportPrintImage('svg')" title="Download the chart as an SVG drawing (editable in PowerPoint, Illustrator, Inkscape)"><i class="fa-solid fa-vector-square"></i>SVG</button></span><span class="print-tip" title="Your browser's print dialog has “Save as PDF”.">Pictures show every row on one image.</span><button class="btn" onclick="closePrintModal()">Cancel</button><button class="btn btn-primary" id="printGo" onclick="doPrint()"><i class="fa-solid fa-print"></i>Print / Save as PDF…</button></div>
+    <div class="modal-footer"><span class="print-img" role="group" aria-label="Picture of the whole chart"><span class="print-img-label" title="One picture with every row, whatever the paper — for slides and documents">Picture:</span><button class="btn" id="printCopyImg" onclick="exportPrintImage('copy')" title="Copy the chart as a PNG picture"><i class="fa-regular fa-copy"></i>Copy</button><button class="btn" id="printPng" onclick="exportPrintImage('png')" title="Download the chart as a PNG picture"><i class="fa-regular fa-image"></i>PNG</button><button class="btn" id="printSvg" onclick="exportPrintImage('svg')" title="Download the chart as an editable SVG drawing"><i class="fa-solid fa-vector-square"></i>SVG</button></span><span class="print-tip" title="Your browser's print dialog has “Save as PDF”.">Pictures show every row on one image.</span><button class="btn" onclick="closePrintModal()">Cancel</button><button class="btn btn-primary" id="printGo" onclick="doPrint()"><i class="fa-solid fa-print"></i>Print / Save as PDF…</button></div>
   </div>
 </div>
 
@@ -2845,7 +2845,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
       </section>
       <details class="cal-sec rules-adv" id="rulesAdv">
         <summary>Advanced</summary>
-        <label class="hol-yearly" title="On: a Must Start On/Finish On/No Earlier Than/No Later Than date always wins, even over what a task's links would otherwise compute — today's standard. Off: a link wins when the two disagree; the constraint is still shown as unmet, just not forced."><input type="checkbox" id="honorConstraintDatesInput"> Tasks always honor their constraint dates</label>
+        <label class="hol-yearly" title="On: a constraint date wins over links. Off: links win, the constraint shows unmet"><input type="checkbox" id="honorConstraintDatesInput"> Tasks always honor their constraint dates</label>
         <p class="cal-hint" style="margin:0">A constraint date wins over links.</p>
       </details>
     </div>
@@ -2863,7 +2863,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
         <div class="fmt-cap">Applies to all amounts.</div>
       </section>
       <section class="cal-sec">
-        <div class="cal-sec-title">Dates and times <span class="scope-badge device-badge" title="Saved in this browser, not in the plan: every device — and every plan on it — shows dates the way you choose here, and a colleague chooses their own."><i class="fa-solid fa-laptop"></i>This device</span></div>
+        <div class="cal-sec-title">Dates and times <span class="scope-badge device-badge" title="Saved on this device, not in the plan"><i class="fa-solid fa-laptop"></i>This device</span></div>
         <div class="fmt-top"><button type="button" class="btn" id="fmtSystemBtn" onclick="useSystemFormat()"></button></div>
         <div class="fmt-cols">
           <section>
@@ -5654,7 +5654,7 @@ function updateSelectionUI() {
   for (const id of ['cloneTaskBtn', 'copyBtn', 'deleteTaskBtn']) document.getElementById(id).disabled = !has;   // (the group stays where it is: it is enabled by a selection, it does not appear and shift the bar)
   document.getElementById('bulkEditBtn').disabled = !ids.some(id => !byId(id).spacer);   // an empty line has no fields
   const nEdit = ids.filter(id => !byId(id).spacer).length;
-  document.getElementById('bulkEditBtn').title = nEdit > 1 ? `Change a field for all ${nEdit} selected tasks` : 'Edit the selected task (select several with Ctrl/Cmd+click or Shift+click to change a field for all of them)';
+  document.getElementById('bulkEditBtn').title = nEdit > 1 ? `Change a field for all ${nEdit} selected tasks` : 'Edit the selected task (select several to change them together)';
   document.getElementById('selChip').innerHTML = `${n} selected <i class="fa-solid fa-xmark"></i>`;
   document.getElementById('selChip').classList.toggle('hidden', n < 2);   // one row: the row itself shows it (and the status bar says "1 selected"); the chip only earns its place for a multi-selection, where Clear matters
   fitToolbar();   // the selection buttons come and go: the toolbar may need the More menu (or not) now
@@ -9021,7 +9021,7 @@ function openSettingsTab(id) {
   else go();
 }
 function openPlanSettings(tab) { closeScheduleMenu(); closePlanMenu(); openSettingsTab(tab || settingsTab || 'calendar'); }
-function updatePlanSettingsBtn() { const b = document.getElementById('planSettingsBtn'); if (b) b.title = `Plan settings — ${planSettingsHint()}  (calendar and working hours, scheduling rules, custom fields, formats)`; }
+function updatePlanSettingsBtn() { const b = document.getElementById('planSettingsBtn'); if (b) b.title = `Plan settings — ${planSettingsHint()} (⌘,)`; }
 function planSettingsHint() { return calendarSummary() + (minuteModeActive() ? ' · Hours & minutes' : ''); }
 // Scheduling rules: whether a constraint date always wins over the links, and the default mode for new tasks.
 let rulesSnapshot = null;
@@ -10602,7 +10602,7 @@ function updateSyncConflictsUI() {
   const n = syncConflictLog.length, onlyFiles = n && syncConflictLog.every(c => c.kind === 'file');
   btn.classList.toggle('hidden', !n);
   btn.innerHTML = `<i class="fa-solid fa-code-merge"></i>${onlyFiles ? `${n} merged cop${n === 1 ? 'y' : 'ies'}` : `${n} conflict${n === 1 ? '' : 's'}`}`;
-  btn.title = 'Both you and someone else changed the same thing — the newer edit was kept. Click to review.';
+  btn.title = 'Two edits collided; the newer was kept. Click to review';
 }
 function openSyncConflictsModal() { renderSyncConflictsModal(); document.getElementById('syncConflictsModalBg').classList.add('open'); }
 function closeSyncConflictsModal() { document.getElementById('syncConflictsModalBg').classList.remove('open'); }
@@ -13660,7 +13660,7 @@ function renderPlanMenu() {
     `<button class="dropdown-item" id="planNewItem" onclick="openPlanModal('new')"><i class="fa-solid fa-plus"></i>New Plan…</button>` +
     (fileSyncSupported() ? `<button class="dropdown-item" id="planOpenFileItem" onclick="openFileAsPlan()"><i class="fa-solid fa-folder-open"></i>Open Plan from Folder…</button>` : '') +
     (fileSyncSupported() && watchNeedsPermission() ? `<button class="dropdown-item" id="planWatchAllowItem" onclick="allowWatchAccess()"><i class="fa-solid fa-triangle-exclamation" style="color:var(--task-amber)"></i>Allow Folder Access…<span class="item-hint" style="color:var(--task-amber)">needs permission</span></button>` : '') +
-    (fileSyncSupported() && syncFileHandle && !syncDirHandle ? `<button class="dropdown-item" id="planWatchItem" onclick="chooseWatchFolder()" title="This plan is linked to a single file. Link the folder it lives in: OneDrive, Dropbox and SharePoint keep a second copy of the file when two devices save at the same time, and Milestone can then merge those copies in"><i class="fa-solid fa-folder-tree"></i>Link Plan Folder…<span class="item-hint">file only</span></button>` : '') +
+    (fileSyncSupported() && syncFileHandle && !syncDirHandle ? `<button class="dropdown-item" id="planWatchItem" onclick="chooseWatchFolder()" title="Link this plan's folder so copies from other devices can be merged"><i class="fa-solid fa-folder-tree"></i>Link Plan Folder…<span class="item-hint">file only</span></button>` : '') +
     `<div class="dropdown-sep"></div>` +
     `<button class="dropdown-item" id="planRenameItem" onclick="openPlanModal('rename')"><i class="fa-solid fa-pen"></i>Rename Plan…</button>` +
     `<button class="dropdown-item" id="planMenuSettingsItem" onclick="openPlanSettings()"><i class="fa-solid fa-gear"></i>Plan Settings…<span class="item-hint">${escapeHtml(planSettingsHint())}</span></button>` +

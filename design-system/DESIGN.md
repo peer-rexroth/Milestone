@@ -22,7 +22,7 @@ Source of truth for everything: `cleardesk.html` (CSS tokens near the top of the
 2. **Quiet by default, controls appear when you point at them.** Row actions, remove buttons, hierarchy buttons and "add" toggles show on hover/focus only. The resting screen is text and a few pills.
 3. **Few boxes.** Inputs inside lists are "ghost" fields (no border, a faint tint on focus). Boxed fields exist only inside dialogs. The detail panel is grouped rows (label left, value right, hairlines), not a form.
 4. **Flat fills and crisp rings, no coloured glows.** No blurred coloured shadows, no gradients on buttons. Hover darkens or tints; it does not grow a shadow.
-5. **The arrow cursor, everywhere.** The hand is for links only. Never `cursor: pointer` on a control.
+5. **The arrow cursor, everywhere.** The hand is for links only. Never `cursor: pointer` on a control. The exceptions are the system's own: `text` over a text field or editor, `col-resize` / `row-resize` on a resize edge, `not-allowed` on a refused drop target; there is no `grab` cursor (an invisible handle must not change the pointer).
 6. **One icon per meaning, one family.** See section 4.
 7. **Undo instead of "Are you sure?"** for anything that can be undone (a toast with Undo, 6 seconds). Ask only for what cannot be undone.
 8. **Hide what does not apply, don't dim it** in context menus.
@@ -50,12 +50,14 @@ Roles, not colours. Always use the token, never a literal. The only literals all
 | Text | `--text` | `#15161b` | `#f5f6fa` |
 | Secondary text | `--text-2` | text at 74% | text at 74% |
 | Tertiary text | `--text-3` | text at 62% | text at 62% |
-| Destructive | `--danger` | `#d92d20` | same |
-| Status colours | `--blue-text`, `--green-text`, `--red-text`, `--amber-text` (+ `-bg` tints) | `#0959c8`, `#1a7a36`, `#c4281f`, `#8a4b00` | `#8cc2ff`, `#8ee6a4`, `#ff9a92`, `#ffc566` |
+| Destructive fill | `--danger` | `#d92d20` | same |
+| Destructive text (the panel's Delete) | `--red-text` | `#c4281f` | `#ff9a92` (`--danger` on dark was 3.4:1) |
+| Tick on the green completed fill | `--on-green` | `#fff` | `#0b2a14` (white on the dark theme's light green was 1.5:1) |
+| Status colours | `--blue-text`, `--green-text`, `--red-text`, `--amber-text` (+ `-bg` tints) | `#0959c8`, `#17722f`, `#c4281f`, `#8a4b00` | `#8cc2ff`, `#8ee6a4`, `#ff9a92`, `#ffc566` |
 | Toolbar capsule fill | `--cap-fill` / `--cap-hover` / `--cap-on` | `rgba(60,60,67,.08 / .16 / .18)` | `rgba(255,255,255,.10 / .19 / .22)` |
 | Focus ring | `--focus-ring`, `--focus-edge` | `#9bbcf6`, `#89aae6` | `#417391`, `#3c6f8c` |
 
-- **Contrast:** text ≥ 4.5:1 on every surface in both themes, including on the selected row (`--text-3` was raised to .62 for this). White text on `--accent` is ≥ 4.5:1.
+- **Contrast:** text ≥ 4.5:1 on every surface in both themes, including on the selected row (`--text-3` was raised to .62 for this). White text on `--accent` is ≥ 4.5:1. `--text-3` holds on content surfaces only; on the glass sidebar it measured 3.8:1, so sidebar and column counts use `--text-2`.
 - **Colour is never the only cue:** status has a dot and text, an unresolved include is red *and* wavy-underlined, overdue is a colour *and* a calendar glyph.
 - **Dark mode is a second full set of values**, not an inversion. Define the same variables in both blocks (a variable only the light block sets leaks into dark).
 - **Theme** follows the system live; the user may override with Light / Dark. It is a per-device preference, never synced.
@@ -64,11 +66,11 @@ Roles, not colours. Always use the token, never a literal. The only literals all
 ### 2.2 Typography
 
 - **One family:** the system stack (`--font`: `-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif`); monospace only for code (`--mono`: `'SF Mono', 'Fira Code', 'Cascadia Code', monospace`). No serif anywhere (the toolbar's italic *I* is the system italic).
-- **Seven sizes, nothing in between:** `--fs-11` 11, `--fs-12` 12, `--fs-13` 13 (the default control text), `--fs-14` 14 (body, list rows), `--fs-15` 15 (fields in dialogs), `--fs-17` 17 (dialog titles, panel title), `--fs-22` 22 (page titles).
+- **Seven sizes, nothing in between:** `--fs-11` 11, `--fs-12` 12, `--fs-13` 13 (the default control text), `--fs-14` 14 (body, list rows), `--fs-15` 15 (fields in dialogs), `--fs-17` 17 (dialog titles, panel title, the window bar's title at weight 700), `--fs-22` 22 (reserved for a large page title; the bar title is 17). Monospace text (a prompt template, the Compare view) uses `--fs-13` like the rest; `em` sizes are allowed only for inline code inside running text.
 - **Weights:** 400, 500, 600, 700 only. Titles and bold row text 600; pills 500–600; section labels 600 uppercase with letter-spacing `.04–.08em` at 11–12px.
 - **macOS minimums:** default 13pt, nothing below 10pt for text. Control glyphs (tick marks, tiny chevrons) are icons, not text, and use the `--gl-8…10` tokens (`--gl-8` draws about 10px, the smallest glyph anywhere; the old 6 and 7 are gone, U-10).
 - Line height 1.45–1.7 in body copy; dialogs 1.6.
-- **Text size setting:** Small 90%, Medium 100% (default), Large 115%, Extra Large 130%, applied as CSS `zoom` on `<html>` (so every layout measure scales). The HIG asks for up to 200%; browser zoom covers that.
+- **Text size setting:** Small 90%, Medium 100% (default), Large 115%, Extra Large 130%, applied as CSS `zoom` on `<html>` (so every layout measure scales). The setting is **per device** (`cleardesk_uiscale`), like the theme; it is not written to the data file. The HIG asks for up to 200%; browser zoom covers that.
 
 ### 2.3 Spacing, radius, elevation
 
@@ -76,7 +78,7 @@ Roles, not colours. Always use the token, never a literal. The only literals all
 - **One left gutter** `--gutter` 20px: every pane's content starts 20px in, so switching modes keeps the margin.
 - **Radius ladder:** `--r-xs` 4 (chips, tiny), `--r-s` 8 (rows, controls), `--r-m` 10 (cards, fields, buttons), `--r-l` 12 (bars), `--r-xl` 16 (menus, dialogs, columns), plus `999px` for pills and capsules and `50%` for circles. One name per value; do not invent radii.
 - **Toolbar controls are capsules** (fully rounded); content uses the ladder.
-- **Elevation:** three levels `--elev-1/2/3` (`0 1px 2px .12`, `0 6px 18px .14`, `0 8px 32px .18`); menus and dialogs use `--glass-shadow` plus an inner top highlight `--glass-rim` (a 1px inset white line, the "lit edge"). Dark mode shadows are stronger, rims weaker.
+- **Elevation:** three levels `--elev-1/2/3` (only `--elev-2` is used so far; `--shadow` is the resting button shadow and `--glass-lift-1/2` lift a board tile) (`0 1px 2px .12`, `0 6px 18px .14`, `0 8px 32px .18`); menus and dialogs use `--glass-shadow` plus an inner top highlight `--glass-rim` (a 1px inset white line, the "lit edge"). Dark mode shadows are stronger, rims weaker.
 - **Hairlines, not borders:** 1px, `--border`. Cards and board tiles have *no* outline: they are set off by fill (`--bg` on a `--bg-2` column) and a whisper of shadow in light mode.
 
 ### 2.4 Materials (the glass)
@@ -93,6 +95,7 @@ Roles, not colours. Always use the token, never a literal. The only literals all
 - **No overshoot, no spring, no bounce.** (A `cubic-bezier(.34,1.56,.64,1)` on buttons was removed.)
 - **The checkbox pop** is 1.15× over 200ms and plays only for the box you just ticked, never on a re-render or a view switch.
 - **Selection and hover are instant:** no colour transition on rows or cards (a 120ms fade left a trail of half-faded rows when moving the pointer or holding an arrow key).
+- **Exit easing and press state:** a row that leaves (delete, complete in a filtered view) fades and slides out over `--dur-fast` with `ease-in` (leaving things accelerate away); pressing a button, segment or chip scales it to .94 for as long as it is held (`:active`), with no transition of its own. No rule uses `transition: all`: the filter chips list `background-color, color, border-color` and the toast `transform, opacity`.
 - `prefers-reduced-motion` collapses every animation and transition to ~0.
 - A scrolling column pauses hover (`pointer-events: none` on its cards for 140ms after the last scroll event) so the card under a still pointer does not repaint every frame.
 
@@ -102,7 +105,7 @@ Roles, not colours. Always use the token, never a literal. The only literals all
 - Every column starts with its own **52px bar** with a hairline under it, so baselines line up across sidebar header, list header and editor toolbar.
 - A **docked detail panel** (420px) beside the list, not an overlay: the list stays visible, ↑/↓ move the selection and the panel together, Esc closes it. Under 800px it floats.
 - Three-pane shape for document modes: list (300, resizable 200–600) + editor (text capped at 900px, left-aligned) + optional inspector (340, resizable 260–560; floats over the editor under 740px).
-- The sidebar collapses (⌥⌘S) and starts collapsed under 800px, where it floats.
+- The sidebar collapses (⌥⌘S) and floats below 1100px (a docked 300px sidebar leaves a bar under 680px; it starts hidden there, hides when you resize across the line and is not saved), so every bar keeps one row. The detail panel is `clamp(340px, 36vw, 420px)`. A bar steps down on **its own pane's width** (container queries), never by wrapping.
 - **Navigation details are in section 19; a general, rearrangeable layout system (Xcode / Pages / Mail style regions) is in section 20.**
 
 ---
@@ -110,9 +113,9 @@ Roles, not colours. Always use the token, never a literal. The only literals all
 ## 3. Selection, focus, hover
 
 - **Selected task = ONE solid accent row with white text; its subtasks sit on a light accent tint** (`--sel-sub-tint`, 9% light / 16% dark), identical for one task or many. On a list row the solid part is the first grid row, on a board tile the top block (checkbox, title, secondary line, tags). Badges become translucent white, checkboxes white; inside the tinted part every colour is back to normal (the content re-points `--text*` / `--border*` to the un-selected `--ink*` values). Chosen from four mocks (keep the whole block solid / solid title line / deeper solid / tint only) because Apple's outline views make the parent row solid and leave its children alone, and a tall solid block was too heavy. A task with no (or collapsed) subtasks is a single solid row. An **accent bar** on the left edge was built and **rejected** (it reads as Material, not Apple) — do not rebuild it.
-- **Grey when focus is elsewhere:** when the pointer/keyboard/focus is in the detail panel, sidebar, quick-add field, an editor, or the window is inactive, the selection becomes a neutral fill (`rgba(60,60,67,.18)` light / `rgba(255,255,255,.22)` dark, transparent border) and everything inside looks as it does unselected. Typing in any text field also makes it grey. The grey state has the same two parts (a grey band on a lighter grey body), pills on it keep ≥ 4.5:1 (the badge is its own colour at 11% light / 20% dark over the page colour, not a white plate), and the title / date text in Notes and Prompts rows measured 4.9:1 or better in both themes.
+- **Grey when focus is elsewhere:** when the pointer/keyboard/focus is in the detail panel, sidebar, quick-add field, an editor, or the window is inactive, the selection becomes a neutral fill (`rgba(60,60,67,.18)` light / `rgba(255,255,255,.22)` dark, transparent border) and everything inside looks as it does unselected. Typing in any text field also makes it grey. The grey state has the same two parts (an opaque grey band, the page colour with the text colour mixed in at `--sel-grey-mix`, on a lighter grey body; the band never sits on top of the body tint, which made the board tile's coloured line 3.2:1), pills on it keep ≥ 4.5:1 (the badge is its own colour at 11% light / 20% dark over the page colour, not a white plate), and the title / date text in Notes and Prompts rows measured 4.9:1 or better in both themes.
 - **Never rebuild the list to move the highlight**: toggle a class on the rows that exist (a rebuild flashes, loses hover, scroll and focus).
-- **Hover is a fill** (`--bg-2` for rows, `--cap-hover` for capsules); hover must not beat selection (`:hover:not(.selected)`).
+- **Hover is a fill** (`--bg-2` for rows, `--cap-hover` for capsules); hover must not beat selection (`:hover:not(.selected)`). The two places where depth is used instead: a button rests with a faint `--glass-lift-1` shadow and a board tile lifts with a soft shadow on hover (a filled hover would swallow its grey status pill); neither adds a coloured glow.
 - **Editable cells** (priority, status, due) react on the **pill only** on hover (brightness + soft halo), never on the whole cell. On the selected row they show a small chevron so they read as pop-up buttons; unselected rows stay calm.
 - **One focus ring** (Apple Mail's search-field ring): a ~3pt band in `--focus-ring` with the control's own border taking `--focus-edge`. Inputs show it on `:focus-visible`; clickable non-inputs get it as a 3px outline for keyboard focus only. The browser's default blue ring is switched off everywhere (a clicked `<select>` kept it).
 - A control is not left ringed after a mouse choice: blur a `<select>` after a pointer change, and blur buttons/checkbox divs after a real click. Keyboard users keep focus.
@@ -125,7 +128,7 @@ Roles, not colours. Always use the token, never a literal. The only literals all
 
 ### 4.1 The family
 
-- **Outline only.** 24×24 grid, **2-unit stroke**, round caps and joins, `currentColor`, `fill: none`. No filled glyphs (so a "star" is an outline; a favourite is shown by colour).
+- **Outline only.** 24×24 grid, **2-unit stroke**, round caps and joins, `currentColor`, `fill: none`. No filled glyphs (so a "star" is an outline; a favourite is shown by colour). Two allowed details: a dot (an ellipsis, a keyboard key, the exclamation point) is a zero-length stroke at 2–2.2 so it reads as a dot, and a drawing that had to be scaled to fit the visible window carries its own `<g transform>` with the stroke compensated back to 2 (the registry's 18 oversized drawings). Keep geometry inside 4–20 (the mask shows 2.5–21.5 including the stroke).
 - Keep drawings inside the 4–20 box so optical size is the same across icons (a rounded square is `4.5…19.5`).
 - **Four drawn sizes:** 12 (chevrons, tiny marks), 14 (badges, chips, row marks), 16 (lists, sidebar, menus, icon buttons, search fields), 18 (toolbars). Nothing else.
 - **Effective line weight scales with size** (as SF Symbols do): 1.17px at 14, 1.33px at 16, 1.5px at 18. Do not set a different stroke per context.
@@ -134,6 +137,7 @@ Roles, not colours. Always use the token, never a literal. The only literals all
 - **Two ways to draw the same registry:**
   - *Masked glyph:* `<i class="fa-solid fa-NAME">` with a CSS rule `.fa-NAME { --fa: url("data:image/svg+xml,…") }` and `mask: var(--fa) center / calc(1.26 * 100%) no-repeat; background: currentColor; width:1em; height:1em`. Icons draw **1.26× their font-size**, so use size tokens `--ico-12|14|16|18` (each `calc(N / 1.26)`), not raw px. Sizes follow `font-size`.
   - *Inline svg* (`class="tb-ico2"`, 18px, stroke 2; menus `svg.mi`, 16px) for toolbars and menus.
+- **A masked icon's box is square.** The mask is 126% of the box *width*: widening an icon with `width: 16px` while its height stays `1em` makes the drawing taller than the box, so its top and bottom are cut (a house lost its roof and floor). When a rule sets a width, set the same height and size the mask from the font size (`mask-size: calc(1em * var(--ico-k))`).
 - **Never give a masked icon `width: auto`**: it is an empty box that gets its width from `1em`, so `auto` collapses it to zero and its button shows as an empty circle.
 - **Colour follows state:** default grey (`--text-2`), white on a selected/blue hover row, red on danger items, amber for lock/favourite on.
 - **Text-style toolbar glyphs** (B, I, U, S, A): letters at weight 600, 15px (the italic I is 500, 16px so a slanted letter is not heavier). The text-colour **A** has a 14×3px bar underneath showing the last colour used (grey until one is chosen), as in Pages.
@@ -225,7 +229,9 @@ One shape per job, so the same kind of thing always looks the same:
 
 - **Surface:** glass (2.4), `--r-xl`, 230px wide for the main menu, small option menus at a fixed `--submenu-w` 164px so Priority/Status/Due/Move look the same everywhere.
 - **Row:** 8px radius, a 22px tick column for the current value (✓ at the left for single-choice lists, at the right for toggle states), then a dot or 16px icon, then the label. **Hover fills the row with the accent and turns text white**, as in a macOS pop-up; a destructive item turns white on it too.
-- **Context-menu rules:** Title-style labels ("Open Details", "Add Subtask", "Move to"); few items; **one level of submenu** (hover or click to open, flips left and nudges up when near the edge); **hide unavailable items** (do not dim); separators group (≤ 3 groups) and are cleaned up when a group empties; Delete is last, red; the ⌫ glyph hint, not "Del".
+- **A flyout is as wide as its longest label** (`width: max-content`, at least `--submenu-w`, at most 280px) so labels like "Plain Text (.txt)" never wrap onto a second line; it is measured while hidden and flips to the left when it would leave the window.
+- **Context-menu rules:** Title-style labels ("Open Details", "Add Subtask", "Move to"); few items; **one level of submenu** (hover or click to open, flips left and nudges up when near the edge); **hide unavailable items** (do not dim); separators group (≤ 3 groups; the task row menu's four are a documented exception, U-07) and are cleaned up when a group empties; Delete is always its own last group, red; the ⌫ glyph hint, not "Del". A command that opens a dialog or asks for more input ends in an ellipsis ("Edit…", "Print / Save as PDF…"); a row that only acts does not. Move to lists its targets with an icon each (project icons in Tasks, the folder glyph in Notes and Prompts): icons on all rows or none.
+- **Coverage:** every row in the sidebar has a right-click menu: a project or folder (New Here, Edit…, Delete), a smart view or All / Pinned / Favorites row (New Task / Note / Prompt Here; Overdue also *Move All to Today*), and a Recently Deleted row (*Delete All…*, nothing while it is empty).
 - Every context-menu command also exists in a visible control (toolbar, panel, ⋯ button).
 - A menu **never changes the selection**; it acts on the whole selection if the clicked row is part of it, else on that row.
 - Position with the real layout rect (measure the zoom factor from an element), then pull the menu 16px inside the window edge.
@@ -238,13 +244,23 @@ One shape per job, so the same kind of thing always looks the same:
 - **Toast:** bottom-right, glass, 13px, a live region (`role="status"`, `role="alert"` for errors). Success 2.4s, with Undo 6s; **held while the pointer or focus is on it**. **An error toast stays until dismissed** (a ✕ button), per the HIG's warning about time-boxed messages.
 - **Banners** are quiet neutral bars (a small amber icon, one pill action, ✕), not coloured blocks. A first-run notice is a banner, not a modal.
 - **Inline messages** for form validation, in red, under the field, saying what to do.
-- **A new-version banner** compares server headers and offers Reload.
+- **A new-version banner** says a newer copy is ready and offers Reload; it stays until acted on. The reference is **the copy that actually loaded**, not the first check after load (a page started from the offline copy would otherwise take the newer stamp as its baseline and never report it was stale). The service worker remembers the stamp and source of the last page it served and answers the page. A **Check for Updates** command in the Help menu runs the same comparison on request and **always answers**: "up to date", the banner returning even if dismissed, or "could not reach the server".
 
 ### 5.7 Tooltips
 
-Native `title` attributes (browser delay and style), always paired with an `aria-label` on icon-only controls. The pairing is automatic: write the `title`, and a small observer copies it into `aria-label` for any button with no text of its own (and follows later title changes); a test scans the markup so a nameless icon-only button cannot be added (U-16). Truncated text gets its full text as a `title` too.
+Native `title` attributes (browser delay and style), written to four rules: **sentence case, verb first** for what a control does ("Hide variables", "Copy the finished prompt"); a command that has a name in the menus keeps that name in title style with its shortcut in parentheses ("Undo (⌘Z)", "Bold (⌘B)"); do not repeat the control's own visible name; 75 characters at most.
+
+The tooltips are always paired with an `aria-label` on icon-only controls. The pairing is automatic: write the `title`, and a small observer copies it into `aria-label` for any button with no text of its own (and follows later title changes); a test scans the markup so a nameless icon-only button cannot be added (U-16). Truncated text gets its full text as a `title` too.
 
 ---
+
+### 5.8 The find bar and the searchable picker
+
+- **Find bar** (⌘F in Notes and in a prompt template; one component for both): a bar between the toolbar and the editor, hairline under it, on the content surface. A **capsule field** (28px, `--cap-fill`) with the options menu on its magnifier (*Find* / *Find and Replace* as a ticked pair, then *Ignore Case* and *Whole Words*), the **count inside the field** ("3 of 12", "No Results" in red), a joined ↑ ↓ capsule, a *Replace…* toggle (the ellipsis because it reveals more input) and *Done*. A second row holds the Replace field, *Replace* and *Replace All* on the **same grid columns** as the row above, so edges line up. Every control is 28px high; buttons are the toolbar's quiet family (soft fill, no ring; A-04). The field rings as a whole when focused.
+- **Matches** are tinted with two tokens (`--find-hit`, `--find-cur`): all matches, the current one stronger; never colour alone for the count. In Notes the tint is the CSS Custom Highlight API (nothing is added to the note); in a template it is a transparent-text copy under the textarea.
+- **Keys:** ⌘F find, ⌥⌘F with Replace, ⌘G / ⇧⌘G next / previous, ↵ / ⇧↵ in the field, Esc or Done closes and leaves the current match selected. Replace is one undo step, Replace All is one step with a toast Undo.
+- **Searchable picker** (choosing one item from a list that can be long: the prompt to include): a popover with a capsule search field on top, **Favorites first, then the items by folder** while the field is empty, a ranked flat list while typing (starts with, a word starts with, contains, folder only; ties by favorite, then A to Z). The first row is selected, ↑ ↓ ↵ Esc work in the field. It sits under its button, takes only the room below it (and opens above only when clearly more room there), and its content never exceeds the menu's 300px.
+- **Autocomplete where the text is typed** (the Notes `/` menu, `{{>` in a template): a small menu at the caret that narrows as you type; ↑ ↓ choose, ↵ / Tab insert, Esc keeps what you typed and stays closed for that spot; it opens while typing only, never after a paste or an undo.
 
 ## 6. Dialogs, sheets and modals (the Apple feeling)
 
@@ -267,16 +283,16 @@ An alert can open **over** a sheet (it stacks at a higher z-index and closes on 
 
 ### 6.2 Anatomy of a dialog
 - **Scrim:** `rgba(20,24,50,.22)` (`--scrim-glass`) plus `backdrop-filter: blur(4px)` over the whole window; fades in 120ms (`--dur-fast`); the dialog itself does not slide.
-- **Panel:** glass-strong (97%) with blur, 1px `--glass-edge`, **`--r-xl` 16px**, `--glass-shadow` and the inner top rim highlight. Padding **24px**, flex column, **gap 14px**.
+- **Panel:** glass-strong (97%) with blur, 1px `--glass-edge`, **`--r-xl` 16px**, `--glass-shadow` and the inner top rim highlight. Padding **24px**, flex column, **gap 16px** (one padding and one gap for every `.modal`; Compare, a 1280px two-pane editor, is a window in all but name and keeps 20px / 10px).
 - **Width:** 380px standard (360 narrow lists, 420 link/sync, 860 × min(700px, 88vh) settings), `max-width: 90vw`.
-- **Title** 17px / 600, left-aligned, no close button on small dialogs. **Body** 14px, `--text-2`, line-height 1.6, complete sentences. An optional 12px `--text-3` sub-line under the title.
+- **Title** 17px / 600, left-aligned, no close button on small dialogs. **Body** 14px, `--text-2`, line-height 1.6, complete sentences. An optional 13px `--text-3` sub-line under the title. A confirmation or a choice of actions is `role="alertdialog"` (Import included); a sheet is `role="dialog"`. Compare's dismiss is *Close* (it saves only on *Save*), every other sheet's is *Cancel*.
 - **Fields** boxed (5.3), full width, 15px.
 - **Button row:** right-aligned, gap 8px, **Cancel on the left, the primary action on the right** (the trailing side is the default). Title-style, one or two words, a verb that says the result ("Replace", "Create", "Save"), never "OK" except in a purely informational alert, never "Yes/No".
 
 ### 6.3 Behaviour
 - **Esc cancels; clicking the scrim cancels** (except where unsaved work would be lost: ask inline first).
 - **Return = the default (primary) action.** A **destructive confirm has no default button** (focus goes to the dialog itself, so Return does nothing; Cancel is never made the default: the HIG says to give no button the default instead). A plain confirm focuses its button.
-- **Focus** moves into the dialog when it opens and **returns to where it came from** when it closes; Tab / Shift+Tab wrap inside.
+- **Focus** moves into the dialog when it opens (its first text field, else its primary button, else its first control; the dialog itself when it has none) and **returns to where it came from** when it closes; Tab / Shift+Tab wrap inside. Do this once, from the `open` class of the dialog backdrop, not in each dialog's own opener: five dialogs once forgot (audit V-01).
 - **One close path** (`closeModal(id)`) for every dialog, which also drops that dialog's pending state.
 - **Only one sheet at a time**, but a **confirmation alert stacks over a sheet**: it has its own return-focus and close path and Esc closes it first, then the sheet (Compare routes Esc through its own close request so unsaved edits ask first, wherever focus is).
 - **Dialogs that edit a draft end Cancel · Save (or Create)**; dialogs whose changes apply as you go end in **Done** only and say so ("Saved as you type").
@@ -315,11 +331,12 @@ The first-run "link a file" prompt is a **quiet banner**, never a modal; the dia
 
 ## 8. Wording
 
-- **Title-style capitalisation** for menu items and buttons: "Open Details", "Copy Note", "Insert Row Above"; short prepositions stay lower-case ("Move to"). Alert titles that are sentences use sentence style.
+- **Title-style capitalisation** for menu items and buttons: "Open Details", "Copy Note", "Insert Row Above"; short prepositions stay lower-case ("Move to"). Sheet titles (a dialog you fill in) are title style too ("New Project", "Sync to a File", "Choose the Data File", "Import Data"); an alert's title is the question it asks, in sentence style ("Delete this note permanently?").
 - **Cancel** is always the dismiss word. Verbs for actions ("Delete", "Replace", "Create"); the same term for the same thing (Duplicate everywhere, Recently Deleted everywhere).
 - Placeholders say what to type and what happens ("Add a task…", "Web address, e-mail or phone number").
 - Empty-state labels are title-style nouns ("No Prompts").
 - No "Are you sure?" copy: say what will happen and what is lost.
+- **No app name in a command's label.** Name the thing, not the product: "Note File (.json)", not "ClearDesk Note (.json)".
 
 ---
 
@@ -378,7 +395,7 @@ The first-run "link a file" prompt is a **quiet banner**, never a modal; the dia
 
 ## 12. Where we deliberately differ from the HIG (and why)
 
-The app was audited against Apple's Human Interface Guidelines (29 findings, most fixed). These are the places where we **chose** to differ or accept a gap. They look like bugs to someone porting the system; they are not. Change one only with a new decision.
+The app was audited against Apple's Human Interface Guidelines (two passes: 29 findings, then 28 more; all but the decisions below are fixed). These are the places where we **chose** to differ or accept a gap. They look like bugs to someone porting the system; they are not. Change one only with a new decision.
 
 | Decision | HIG says | We do | Why |
 |---|---|---|---|
@@ -388,9 +405,12 @@ The app was audited against Apple's Human Interface Guidelines (29 findings, mos
 | Compare (a diff editor) is a modal sheet | repeated edit-and-observe belongs in a window or panel | kept as a modal | decided after mocking three alternatives (a pane in the main window, its own window, a docked panel); the modal was judged good enough. In a new app prefer the pane |
 | Selected row = solid accent with white text | "appropriate feedback"; no style prescribed | solid | a tinted block with an accent bar was built and rejected as not Apple-like; the bar is a Material/web pattern |
 | Filled red button in confirmations that the person chose | do not style a deliberately chosen destructive button red | red for Delete / Replace / Discard | house rule: one rule everywhere, plain red text outside confirmations |
-| Task row context menu is long (four submenus) | few items | kept | decided: Repeat, Status, Priority and Due all stay reachable in one place |
+| Task row context menu is long (five submenus: Priority, Status, Due, Repeat, Move to) | few items | kept | decided: Repeat, Status, Priority and Due all stay reachable in one place |
 | "Pin" in Notes, "Favorite" in Prompts | one term per concept | two words | they are different concepts in the app (pinned to the top of a list vs. a Favorites filter); decided to keep |
 | English-only strings | localisation | hard-coded English (dates use the locale) | a product decision; if localised, move strings to one table and use `Intl.PluralRules` |
+| Done with no Cancel (*Projects Shown*, *Global Variables*) | pair Done with a way to cancel | Done only | every change applies as you make it and is saved; Esc or a click outside closes without losing anything, so a Cancel would have nothing to revert |
+| ⌃⌘C is Copy Note; ⌘B toggles the sidebar in Tasks | ⌘⌥C copies style, avoid Control, ⌘B is Bold | both | ⌘⇧C opens the Chrome inspector; in Notes ⌘B stays Bold and the sidebar shortcut steps aside, ⌥⌘S works everywhere |
+| Sidebar icons are neutral grey | sidebar icons use the accent colour by default | grey | a web app cannot read the system accent colour; a fixed blue would ignore it |
 | Native browser tooltips | consistent tooltips | `title` attributes | accepted; always paired with an `aria-label` |
 
 Table "+" and grips: closed (U-11, U-10). Their hit areas were measured at 20×20 or more with `elementFromPoint`, the "+" is a 10px glyph in a 14px disc, and there is a keyboard menu (Shift+F10).
@@ -415,6 +435,12 @@ Table "+" and grips: closed (U-11, U-10). Their hit areas were measured at 20×2
 
 **A column-width / pane resizer:** 4–6px hit strip on the edge, pointer events measured once for the UI zoom, double-click resets, ←/→ nudge by 16px (Shift 48), clamped, stored per device.
 
+**Import and export** (every data type, one grammar):
+- **One import door** (Data → Import…), plus drop on the list and an "Import … Here…" on a folder. The file is recognised by its **content**, never its name, so a notes or prompts file can never reach the Replace / Merge dialog meant for a full backup and empty the rest of the app.
+- **Merge is the default and is quiet**: a file of one data type merges straight in and says what happened in a toast ("Imported 3 notes · 2 already here"); **every import offers Undo** that removes exactly what came in (items, the folders it created, anything else it added). Re-importing the same file adds nothing (existing ids are skipped).
+- **Where it lands is predictable**: one item goes into the folder you are looking at (as a text file does); a file with several keeps its own folders; an explicit "Import Here…" wins over both.
+- **Export commands exist in every mode** (the whole-app backup, then each data type) rather than appearing only in their own mode. A single item's Export submenu lists the **readable formats and Print first**, then, after a separator, the **re-importable file**.
+
 **Soft-delete trash view** in every mode: the same banner ("removed after 30 days" + Delete All), the same rows with solid selection, Restore and Delete Permanently as two toolbar icon buttons and in the context menu.
 
 ---
@@ -425,7 +451,7 @@ Table "+" and grips: closed (U-11, U-10). Their hit areas were measured at 20×2
 - `assets/favicon.svg`: the same drawing on a rounded square with slightly heavier strokes, for tab size. `assets/icon-maskable.svg`: the same drawing with the glyph smaller, inside the safe zone.
 - **PNG renders:** 180, 192, 512 from `icon.svg`, plus a 512 maskable. Render with headless Chrome at the exact pixel size, and **bump the cache name in the service worker** (`CACHE_NAME`) whenever shell files change, so installed copies refresh.
 - **`manifest.json`** (`assets/manifest.json`): a stable `id`, `display: standalone`, categories, **separate `any` icons (192/512) and a `maskable` one**, `theme_color` / `background_color`, and three **jump-list `shortcuts`** (New Task / New Note / New Prompt → `?new=task|note|prompt`). A tiny launch function reads `?new=`, removes it from the address, and runs the action. Shortcuts only appear after the app is installed afresh.
-- `<meta name="theme-color">` twice, one per colour scheme, matching the chrome colour.
+- `<meta name="theme-color">` twice, one per colour scheme, matching the chrome colour (light `#ffffff`, dark `#1e1f24`). The manifest can hold only one colour (`#ffffff`), so the dark tint comes from the meta tags. The service worker precaches every icon the manifest and the page name (192, 512, 180, maskable 512, favicon).
 - **Not used on purpose:** window-controls-overlay, screenshots in the manifest.
 - **Safari cannot install this kind of PWA on macOS**; the launcher script opens it in Chrome/Edge. Offline support needs the http server (not `file://`).
 - **A new-version notice** (a quiet banner with Reload) compares the page's server headers on load, on tab focus and hourly, and when a new service worker takes over.
@@ -448,7 +474,7 @@ Table "+" and grips: closed (U-11, U-10). Their hit areas were measured at 20×2
 ## 16. Settings: per device vs synced
 
 - **Per device, never synced:** theme (Light/Dark/Auto), sidebar width and collapsed state, list and inspector widths, the open item, the selected folder, sort choices, the chosen view mode.
-- **Exception:** the text size is saved in the data, so it follows you to another device.
+- **Text size is per device too** (it is not in the data file). The data file does carry the last view, filters and sort (so a reload on this device restores them), but another device's copy of them is never applied; only the data itself, the project order and the "shown in All Tasks" list travel.
 - **Synced with the data:** the data itself, the project order, which projects show in "All Tasks" (with a timestamp so the newer copy wins).
 - A synced file must never push one device's display choice onto another.
 
@@ -485,12 +511,12 @@ Sources: measured from ClearDesk (marked **ClearDesk**), and Apple's HIG pages *
 
 - **What belongs in it** (HIG): the top-level areas and collections (folders, projects, smart views). Keep it **two levels deep at most**; deeper hierarchies get a content list between the sidebar and the detail (that is why ClearDesk has sidebar → list → editor). **ClearDesk:** one level of subfolders, nothing deeper.
 - **Rows** (ClearDesk): `.nav-item` and `.project-row`: 6–8px vertical padding, 8px gap, `--r-m` radius, 13px; a 14px leading icon (the registry's outline icons, grey), the label (500 weight, ellipsis when long, full name as a tooltip), the **count** at the right (12px, tertiary text).
-- **Current location:** the active row gets a **quiet neutral fill** (`--bg-2`) and heavier text (600 for projects). The sidebar's selection is *not* the accent colour (the accent is used for the content list's selection and the primary button), so there is no blue/grey "focus elsewhere" state to manage in the sidebar. The HIG still wants the current selection **persistently highlighted in each pane that leads to the detail**; the active row, the toolbar title and the list selection together do that.
+- **Current location:** the active row gets a **quiet neutral fill** (`--cap-on`, the 18% neutral "on" grey; hover is the lighter `--hover`) and heavier text (600 for projects). The sidebar's selection is *not* the accent colour (the accent is used for the content list's selection and the primary button), so there is no blue/grey "focus elsewhere" state to manage in the sidebar. The HIG still wants the current selection **persistently highlighted in each pane that leads to the detail**; the active row, the toolbar title and the list selection together do that.
 - **Sections:** an 11px / 600 / uppercase / `.08em` / tertiary-text label; collapsible with a small chevron (Tags), or a "+" at the right (Projects, Folders). Collapse state is per device.
 - **Smart views** (All Tasks, My Day, This Week, Overdue; All Notes, Pinned; All Prompts, Favorites) sit above the user's own collections, with counts. They are navigation too: they have context menus where there is something to offer.
 - **Hover capsule instead of reserved buttons:** a project row's Edit/Delete float just left of the count on hover/focus and take **no width**, so counts line up with the rows above; while the capsule shows the name gives up 76px.
 - **Reordering and moving:** drag a folder/project onto a sibling (a line above/below shows where), Option+↑/↓ on a focused one, Move Up/Down in its menu; dragging an item onto a folder moves it.
-- **Symbols:** familiar outline icons per row; user-chosen project icons come from a fixed picker. Sidebar icons stay neutral grey (HIG: colour only with a clear purpose; the system accent colour applies if you use it).
+- **Symbols:** familiar outline icons per row; user-chosen project icons come from a fixed picker. Sidebar icons stay neutral grey. The HIG says sidebar icons take the accent colour by default; a web app cannot read the system accent, and a fixed blue would not follow the user's choice, so grey is the honest default (see §12).
 - **Hide and show:** a toggle in the sidebar header and a floating copy while hidden; ⌥⌘S; it starts hidden in narrow windows and **floats** over the content there (picking something closes it again without saving the choice). HIG: let people hide it, offer more than one way to bring it back, **don't hide it by default** in wide windows.
 - **Avoid critical actions at the bottom** (HIG): people move windows so the bottom edge hides. ClearDesk's bottom tools bar only holds secondary things (link-file status, Data / Appearance / Help menus that open upward, a counts footer).
 - **Width:** 300 default, 260–480, draggable, double-click resets, arrow keys when the divider is focused; per device. 260 is what the bottom bar needs in its widest state: re-measure if it grows.
@@ -513,7 +539,7 @@ HIG toolbar layout (follow it when building a bar):
 - **Trailing:** things that must always stay visible: buttons that open an **inspector**, search, the **More (⋯)** menu, and **one primary action** (Done / Save / Copy) at the far end.
 - **At most three groups**, each a joined capsule; keep text-labelled buttons apart from icon buttons; prefer symbols **without borders** (the group's capsule is the container); don't tint bars.
 - **Overflow:** define what moves into the ⋯ menu as the bar narrows; don't create layouts that overflow by default. Every toolbar command must also exist as a menu command (in a web app: in a ⋯ menu or the Shortcuts list).
-- **ClearDesk's main bar:** title (22 / 700, `-0.01em`) with a 12px subtitle ("3 open · 1 overdue", plus "· K selected" for two or more) · selection capsule (Complete, Priority ▾, Due ▾, Move ▾ | Duplicate, Delete; disabled with no selection, acting on the whole selection through the same code path as the context menu) · **Filter** button (shows a count; a ✕ clears) · **view switch** (List | Board, segmented) · **Sort** pull-down (shows the base key). The board adds a **group-by** segmented control (Project | Status).
+- **ClearDesk's main bar:** title (17 / 700, `-0.01em`: a window title, not a page heading) with a 12px subtitle ("3 open · 1 overdue", plus "· K selected" for two or more) · selection capsule (Complete, Priority ▾, Due ▾, Move ▾ | Duplicate, Delete; disabled with no selection, acting on the whole selection through the same code path as the context menu) · **Filter** button (shows a count; a ✕ clears) · **view switch** (List | Board, segmented) · **Sort** pull-down (shows the base key). The board adds a **group-by** segmented control (Project | Status).
 - **Filters** live in a popover from the Filter button (chips inside), not in the sidebar.
 - **Rules:** icon-only buttons have tooltips and `aria-label`s; a disabled button stays visible (a toolbar is not a menu; do not hide toolbar items, only dim them).
 
