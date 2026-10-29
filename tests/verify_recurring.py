@@ -65,14 +65,14 @@ with sync_playwright() as p:
     pg.keyboard.press("Escape")
 
     # ---------------------------------------------------------------- milestones, minute mode, data
-    ev("() => { setSelection([]); openRecurModal(); }"); pg.fill("#recurName", "Report due"); pg.fill("#recurDur", "0")
+    ev("() => { setSelection([]); openRecurModal(); }"); pg.wait_for_timeout(300); pg.fill("#recurName", "Report due"); pg.fill("#recurDur", "0")
     ev("() => { document.querySelector('input[name=recurFreq][value=monthly]').checked = true; const s = document.getElementById('recurStart'); s.value = '2026-10-01'; document.getElementById('recurMonthDay').value = 15; }")
     pg.fill("#recurCount", "3"); pg.locator("#recurCount").dispatch_event("input"); pg.click("#recurOkBtn"); pg.wait_for_timeout(150)
     m = ev("() => { const s = tasks.find(t => t.recurrence && t.name === 'Report due'); return childrenOf(s.id).map(t => [t.milestone, t.startDate]); }")
     check("duration 0 makes milestones (monthly on the 15th)", m == [[True, "2026-10-15"], [True, "2026-11-16"], [True, "2026-12-15"]], m)
     check("a recurrence on a task without sub-tasks is dropped by the cleaner", ev("() => { const t = tasks.find(x => x.id === 'k'); t.recurrence = { freq: 'weekly', start: '2026-10-05', count: 3 }; normalizeData(); return !('recurrence' in t); }"))
     check("garbage in a stored pattern is cleaned (every clamped, a count default)", ev("() => { const r = cleanRecurrence({ freq: 'weekly', every: 500, days: [9, 1, 'x'], start: '2026-10-05' }); return r.every === 99 && JSON.stringify(r.days) === '[1]' && r.count === 1; }"))
-    ev("() => { project.timeUnit = 'minute'; save(); render(); setSelection([]); openRecurModal(); }")
+    ev("() => { project.timeUnit = 'minute'; save(); render(); setSelection([]); openRecurModal(); }"); pg.wait_for_timeout(300)
     pg.fill("#recurName", "Sync"); pg.fill("#recurDur", "30m")
     ev("() => { document.querySelector('input[name=recurFreq][value=daily]').checked = true; document.querySelector('input[name=recurFreq][value=daily]').dispatchEvent(new Event('change', { bubbles: true })); const s = document.getElementById('recurStart'); s.value = '2026-10-05'; document.getElementById('recurTime').value = '14:00'; }")   # (daily: the weekly pattern's default weekday is today's, so a fixed Monday only matched on a Monday)
     pg.fill("#recurCount", "2"); pg.locator("#recurCount").dispatch_event("input"); pg.click("#recurOkBtn"); pg.wait_for_timeout(150)

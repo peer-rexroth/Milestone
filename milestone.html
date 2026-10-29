@@ -636,7 +636,7 @@ html:not(.sidebar-collapsed) .sb-float { display: none; }   /* (the show button 
 .tb-over { display: none !important; }
 .tb-toggle[aria-pressed="true"] { background: color-mix(in srgb, var(--accent) 14%, var(--panel)); border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); color: var(--accent); }
 #moreMenu .menu-head { padding-top: 8px; }
-#moreMenu .dropdown-item .mode-check { margin-left: auto; color: var(--accent); }
+#moreMenu .dropdown-item .mode-check { margin-left: auto; color: inherit; }
 
 .btn {
   display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px;
@@ -1108,7 +1108,9 @@ input.inline-edit { width: 100%; min-width: 0; padding: 2px 6px; border: 1px sol
 .task-mode-cell:hover { background: var(--panel-2); border-radius: var(--r-xs); }
 .main .task-mode-cell, .main .custom-flag { justify-content: flex-start; }   /* under the left-aligned header label, like every other column */
 .dropdown-item.active { background: color-mix(in srgb, var(--accent) 10%, var(--panel)); }
-.dropdown-item .mode-check { margin-left: auto; color: var(--accent); }
+.dropdown-item .mode-check { margin-left: auto; color: inherit; }   /* a tick is the text colour (white on the blue hover row), never the accent */
+.dropdown-menu:is(#taskModeMenu, #taskTypeMenu, #sbModeMenu) .dropdown-item .mode-check { order: -1; margin-left: 0; width: 18px; font-size: var(--ico-14); }   /* pickers: the tick column comes first, like Group By and Columns */
+.dropdown-menu:is(#taskModeMenu, #taskTypeMenu, #sbModeMenu, #groupMenu) .dropdown-item.active { background: transparent; }
 .subbar-spacer { flex: 1 1 auto; }
 .tb-sep { width: 1px; height: 22px; background: var(--border); margin: 0 2px; flex-shrink: 0; }
 .split-btn { display: inline-flex; }
@@ -1162,6 +1164,17 @@ html.time12 .tf-dt input.dt-time { flex: 0 0 104px; min-width: 104px; width: 104
 .menu-head { padding: 6px 10px 2px; font-size: var(--fs-12); font-weight: 500; color: var(--text-faint); }   /* a section caption: small, regular weight, sentence case (not capitals) */
 .dropdown-item.danger, .dropdown-item.danger i { color: var(--danger); }
 #rowMenu { min-width: 230px; margin-top: 0; }
+.row-sub { display: none; margin-top: 0; min-width: 190px; z-index: 81; position: absolute; }
+.sub-wrap { position: relative; }
+.sub-wrap:hover > .row-sub, .sub-wrap.open > .row-sub { display: block; }
+.sub-wrap:hover > .has-sub, .sub-wrap.open > .has-sub { background: var(--accent); color: var(--on-accent); }
+.sub-wrap:hover > .has-sub i, .sub-wrap.open > .has-sub i { color: inherit; }
+.dropdown-item .sub-chev { margin-left: auto; font-size: var(--ico-12); color: var(--text-faint); }
+.row-sub .dropdown-item { padding: 6px 8px; gap: 8px; }
+.row-sub .dropdown-item .mode-check { order: -1; margin-left: 0; width: 18px; font-size: var(--ico-14); color: inherit; }
+.sub-dot { width: 12px; height: 12px; border-radius: 50%; flex: none; margin: 0 1px; }
+.sub-dot.sub-none { border: 1.5px solid var(--text-faint); box-sizing: border-box; }
+
 .sel-chip { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border: 1px solid var(--accent); border-radius: var(--r-l); background: color-mix(in srgb, var(--accent) 12%, transparent); color: var(--text); font-size: var(--fs-12); font-weight: 600;}
 .sel-chip:hover { background: color-mix(in srgb, var(--accent) 22%, transparent); }
 .sel-chip i { font-size: var(--ico-14); color: var(--text-dim); }
@@ -1325,8 +1338,10 @@ input.inline-edit[type=date]::-webkit-calendar-picker-indicator { margin: 0 0 0 
 /* Row actions (Edit / Duplicate / Delete) are an overlay on the right end of the Task Name cell, shown (opacity) while the row is hovered or has focus — invisible, not removed, so they are always in the layout and a script can reach them: they take no
    column of their own (it was 88px of mostly empty space) and, because Task Name is a frozen column, they stay in view when the list scrolls sideways.
    The fade on their left lets a long name run underneath without a hard cut. */
-.modal.shortcuts-modal { width: 700px; max-width: 94vw; }
-.sc-cols { columns: 2 280px; column-gap: 32px; }
+.modal.shortcuts-modal { width: 760px; max-width: 94vw; }
+.shortcuts-modal .help-panes { padding-top: 56px; }
+.shortcuts-modal .help-nav { padding-top: 56px; }
+.shortcuts-modal .help-pane { gap: 20px; }
 .sc-group { break-inside: avoid; margin: 0 0 14px; }
 .sc-group h3 { margin: 0 0 6px; font-size: var(--fs-11); font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--text-dim); }
 .sc-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 4px 0; font-size: var(--fs-12); border-bottom: 1px solid var(--border); }
@@ -1354,7 +1369,8 @@ input.inline-edit[type=date]::-webkit-calendar-picker-indicator { margin: 0 0 0 
 /* Ticks span their whole period (a calendar week, a month, a quarter), so overflow is clipped rather than
    spilling into the next tick. Week and Year labels are two lines. Week: "CW 37" over the Monday's date. Year: the year
    (on each Q1) over the quarter. */
-.gantt-tick { overflow: hidden; }
+.gantt-tick { overflow: hidden; text-overflow: ellipsis; }   /* a label wider than its period ends in … instead of being cut */
+.gantt-tick b { overflow: hidden; text-overflow: ellipsis; }
 .gantt-tick.zoom-week, .gantt-tick.zoom-year { padding: 2px 0 0 4px; line-height: 12px; font-size: var(--fs-11); }
 .gantt-tick b { display: block; font-size: var(--fs-12); font-weight: 600; color: var(--text-dim); }
 .gantt-tick.year-start { border-left-color: var(--text-faint); }
@@ -3274,9 +3290,12 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 
 <!-- About modal -->
 <div class="modal-bg" id="shortcutsModalBg" onclick="if(event.target===this) closeShortcuts()">
-  <div class="modal shortcuts-modal" role="dialog" aria-labelledby="shortcutsTitle">
+  <div class="modal help-modal shortcuts-modal" role="dialog" aria-labelledby="shortcutsTitle">
     <div class="modal-header"><h2 id="shortcutsTitle">Keyboard shortcuts</h2><button onclick="closeShortcuts()" aria-label="Close">&times;</button></div>
-    <div class="modal-body" id="shortcutsBody"></div>
+    <div class="help-layout">
+      <div class="help-rail"><div class="help-nav" id="scNav"></div></div>
+      <div class="help-panes"><div class="help-pane" id="shortcutsBody"></div></div>
+    </div>
   </div>
 </div>
 
@@ -7080,7 +7099,7 @@ function openTaskModeMenu(event, target) {
   if (menu.classList.contains('open') && modeMenuTarget === target) { closeTaskModeMenu(); closeTaskTypeMenu(); return; }
   modeMenuTarget = target;
   const current = (byId(target) || {}).taskMode;
-  menu.innerHTML = TASK_MODES.map(m => `<button class="dropdown-item${m.id === current ? ' active' : ''}" onclick="pickTaskMode('${m.id}')"><i class="fa-solid ${m.icon}"></i>${m.label}${m.id === current ? '<i class="fa-solid fa-check mode-check"></i>' : ''}</button>`).join('');
+  menu.innerHTML = TASK_MODES.map(m => `<button class="dropdown-item${m.id === current ? ' active' : ''}" onclick="pickTaskMode('${m.id}')"><i class="fa-solid ${m.icon}"></i>${m.label}<i class="fa-solid fa-check mode-check" style="visibility:${m.id === current ? 'visible' : 'hidden'}"></i></button>`).join('');
   const rect = event.currentTarget.getBoundingClientRect();
   menu.classList.add('open');
   const w = menu.offsetWidth, h = menu.offsetHeight;
@@ -7110,7 +7129,7 @@ function openTaskTypeMenu(event, target) {
   if (menu.classList.contains('open') && typeMenuTarget === target) { closeTaskTypeMenu(); return; }
   typeMenuTarget = target;
   const t = byId(target), current = (t && (t.taskType === 'fixedDuration' || t.taskType === 'fixedWork')) ? t.taskType : 'fixedUnits';
-  menu.innerHTML = TASK_TYPES.map(m => `<button class="dropdown-item${m.id === current ? ' active' : ''}" onclick="pickTaskType('${m.id}')"><i class="fa-solid ${m.icon}"></i>${m.label}${m.id === current ? '<i class="fa-solid fa-check mode-check"></i>' : ''}</button>`).join('');
+  menu.innerHTML = TASK_TYPES.map(m => `<button class="dropdown-item${m.id === current ? ' active' : ''}" onclick="pickTaskType('${m.id}')"><i class="fa-solid ${m.icon}"></i>${m.label}<i class="fa-solid fa-check mode-check" style="visibility:${m.id === current ? 'visible' : 'hidden'}"></i></button>`).join('');
   const rect = event.currentTarget.getBoundingClientRect();
   menu.classList.add('open');
   const w = menu.offsetWidth, h = menu.offsetHeight;
@@ -7128,7 +7147,7 @@ function updateNewTaskModeUI() {   // what Add Task creates: shown in the Add me
   for (const m of TASK_MODES) {
     const el = document.getElementById(m.id === 'auto' ? 'newModeAuto' : 'newModeManual'), on = project.newTaskMode === m.id;
     el.classList.toggle('active', on); el.setAttribute('aria-checked', on ? 'true' : 'false');
-    el.innerHTML = `<i class="fa-solid ${m.icon} mode-${m.id}"></i>${m.label}${on ? '<i class="fa-solid fa-check mode-check"></i>' : ''}`;
+    el.innerHTML = `<i class="fa-solid ${m.icon} mode-${m.id}"></i>${m.label}<i class="fa-solid fa-check mode-check" style="visibility:${on ? 'visible' : 'hidden'}"></i>`;
   }
   document.getElementById('addTaskBtn').title = `Add a task below the selected one — new tasks are ${taskModeInfo(project.newTaskMode).label}`;
 }
@@ -7522,7 +7541,7 @@ function renderGantt() {
   document.getElementById('ganttHeader').innerHTML = ticks.map(t => {
     const left = Math.max(0, t.left), width = Math.min(t.width - (left - t.left), totalW - left);   // clipped to the chart at both ends (a scale's first and last week/month/quarter run past it)
     if (width <= 0) return '';
-    return `<div class="gantt-tick zoom-${z.id}${t.cls ? ' ' + t.cls : ''}${t.yearStart ? ' year-start' : ''}" style="left:${left}px;width:${width}px"${t.title ? ` title="${escapeHtml(t.title)}"` : ''}>${t.html || escapeHtml(t.label)}</div>`;
+    return `<div class="gantt-tick zoom-${z.id}${t.cls ? ' ' + t.cls : ''}${t.yearStart ? ' year-start' : ''}" style="left:${left}px;width:${width}px"${t.title ? ` title="${escapeHtml(t.title)}"` : ''}>${width < 18 ? '' : t.html || escapeHtml(t.label)}</div>`;   // (a sliver of a period has no room for its name; the tooltip keeps it)
   }).join('');
 
   if (list.length === 0) {
@@ -7724,7 +7743,7 @@ function renderResourceUsage() {
   document.getElementById('resourceTimelineHead').innerHTML = ticks.map(t => {
     const left = Math.max(0, t.left), width = Math.min(t.width - (left - t.left), totalW - left);   // clipped to the chart at both ends (a scale's first and last week/month/quarter run past it)
     if (width <= 0) return '';
-    return `<div class="gantt-tick zoom-${z.id}${t.cls ? ' ' + t.cls : ''}${t.yearStart ? ' year-start' : ''}" style="left:${left}px;width:${width}px"${t.title ? ` title="${escapeHtml(t.title)}"` : ''}>${t.html || escapeHtml(t.label)}</div>`;
+    return `<div class="gantt-tick zoom-${z.id}${t.cls ? ' ' + t.cls : ''}${t.yearStart ? ' year-start' : ''}" style="left:${left}px;width:${width}px"${t.title ? ` title="${escapeHtml(t.title)}"` : ''}>${width < 18 ? '' : t.html || escapeHtml(t.label)}</div>`;   // (a sliver of a period has no room for its name; the tooltip keeps it)
   }).join('');
 
   if (!resources.length && overIds && (project.resources || []).length) {
@@ -11701,7 +11720,7 @@ function toggleSbModeMenu(event) {
   closeMoreMenu(); closeAddMenu(); closeDataMenu(); closePlanMenu(); closeScheduleMenu();
   const cur = project.newTaskMode === 'manual' ? 'manual' : 'auto';
   menu.innerHTML = '<div class="menu-head">New tasks are</div>' + [['auto', 'Auto Scheduled', 'fa-chart-gantt', 'placed by their links and constraints'], ['manual', 'Manually Scheduled', 'fa-thumbtack', 'kept where you put them']].map(([id, label, icon, hint]) =>
-    `<button class="dropdown-item${cur === id ? ' active' : ''}" role="menuitemradio" aria-checked="${cur === id}" onclick="closeSbModeMenu(); setNewTaskMode('${id}')"><i class="fa-solid ${icon}"></i>${label}<span class="item-hint">${hint}</span></button>`).join('');
+    `<button class="dropdown-item${cur === id ? ' active' : ''}" role="menuitemradio" aria-checked="${cur === id}" onclick="closeSbModeMenu(); setNewTaskMode('${id}')"><i class="fa-solid ${icon}"></i>${label}<i class="fa-solid fa-check mode-check" style="visibility:${cur === id ? 'visible' : 'hidden'}"></i><span class="item-hint">${hint}</span></button>`).join('');
   const r = document.getElementById('sbMode').getBoundingClientRect();
   placeMenu(menu, r.left, r.top - 4);
   menu.style.top = Math.max(8, r.top - menu.offsetHeight - 4) + 'px';   // it opens upwards, from the bottom of the window
@@ -11794,6 +11813,27 @@ function tidyMenuSeps(html) {
   while (out.endsWith(sep)) out = out.slice(0, -sep.length);
   return out;
 }
+/* ---- right-click flyouts (Task Mode / Task Type / Color): hover or click the row, the choices open beside it ---- */
+function rowSubMenu(icon, label, rows) {   // rows: [icon-or-colour, label, fn, on]
+  const kids = rows.map(([lead, name, fn, on]) => `<button class="dropdown-item" role="menuitemradio" aria-checked="${on ? 'true' : 'false'}" onclick="closeRowMenu();${fn}"><i class="fa-solid fa-check mode-check" style="visibility:${on ? 'visible' : 'hidden'}"></i>${lead}${name}</button>`).join('');
+  return `<div class="sub-wrap" onmouseenter="rowSubPlace(this)"><button class="dropdown-item has-sub" role="menuitem" aria-haspopup="menu" onclick="rowSubToggle(this)"><i class="${icon}"></i>${label}<i class="fa-solid fa-chevron-right sub-chev"></i></button><div class="dropdown-menu row-sub" role="menu">${kids}</div></div>`;
+}
+function rowSubToggle(btn) { const w = btn.parentElement, was = w.classList.contains('open'); document.querySelectorAll('#rowMenu .sub-wrap.open').forEach(x => x.classList.remove('open')); if (!was) { w.classList.add('open'); rowSubPlace(w); } event.stopPropagation(); }
+function rowSubPlace(w) {   // beside the row, or to its left when the window ends there; nudged up when it would run off the bottom
+  const sub = w.querySelector('.row-sub'), r = w.getBoundingClientRect(), vis = sub.style.display;
+  sub.style.display = 'block'; sub.style.visibility = 'hidden';
+  const sw = sub.offsetWidth, sh = sub.offsetHeight;
+  sub.style.left = r.right + 4 + sw > window.innerWidth - 8 ? 'auto' : 'calc(100% + 4px)'; sub.style.right = r.right + 4 + sw > window.innerWidth - 8 ? 'calc(100% + 4px)' : 'auto';
+  sub.style.top = (r.top - 6 + sh > window.innerHeight - 8 ? Math.max(8 - r.top, window.innerHeight - 8 - sh - r.top) : -6) + 'px';
+  sub.style.display = vis; sub.style.visibility = '';
+}
+function setSelectedMode(mode) { for (const id of selectedIds()) setTaskMode(id, mode); }
+function setSelectedType(type) { for (const id of selectedIds()) setTaskTypeOf(id, type); }
+function setSelectedColor(c) {
+  const ts = selectedIds().map(byId).filter(t => t && !t.spacer), now = Date.now();
+  for (const t of ts) { t.color = c || null; t.updatedAt = now; }
+  if (ts.length) { save(); render(); }
+}
 function showRowMenu(x, y, onRow) {
   const ids = onRow ? selectedIds() : [], n = ids.length, real = ids.filter(id => !byId(id).spacer).length, menu = document.getElementById('rowMenu');
   const item = (icon, label, fn, o = {}) => o.off ? '' : `<button class="dropdown-item${o.danger ? ' danger' : ''}" role="menuitem" onclick="closeRowMenu();${fn}"><i class="${icon}"></i>${label}${o.kbd ? `<span class="item-hint">${o.kbd}</span>` : ''}</button>`;
@@ -11801,6 +11841,13 @@ function showRowMenu(x, y, onRow) {
   if (real) parts.push(item('fa-solid fa-pen', real === 1 ? 'Edit task…' : `Edit ${real} tasks…`, 'editSelected()'));
   { const one = ids.length === 1 && byId(ids[0]); if (one && one.recurrence) parts.push(item('fa-solid fa-repeat', 'Change Recurrence…', `openRecurModal('${one.id}')`)); }
   if (real) parts.push(item('fa-regular fa-circle-check', 'Mark Complete', 'markSelectedComplete()', { off: !ids.some(id => { const t = byId(id); return !t.spacer && !hasChildren(id) && t.progress < 100; }) }));   // (with Edit: both change the task you clicked)
+  if (real) {
+    const ts = ids.map(byId).filter(t => t && !t.spacer), same = f => ts.every(t => f(t) === f(ts[0])) ? f(ts[0]) : null;
+    const m = same(t => t.taskMode || 'auto'), ty = same(t => (t.taskType === 'fixedDuration' || t.taskType === 'fixedWork') ? t.taskType : 'fixedUnits'), co = same(t => t.color || '');
+    parts.push(rowSubMenu('fa-solid fa-thumbtack', 'Task Mode', TASK_MODES.map(x => [`<i class="fa-solid ${x.icon}"></i>`, x.label, `setSelectedMode('${x.id}')`, m === x.id])));
+    if (ts.some(t => !t.milestone && !hasChildren(t.id))) parts.push(rowSubMenu('fa-solid fa-percent', 'Task Type', TASK_TYPES.map(x => [`<i class="fa-solid ${x.icon}"></i>`, x.label, `setSelectedType('${x.id}')`, ty === x.id])));
+    parts.push(rowSubMenu('fa-solid fa-palette', 'Color', [['<span class="sub-dot sub-none"></span>', 'No colour', "setSelectedColor('')", co === '']].concat(TASK_COLORS.map(c => [`<span class="sub-dot" style="background:var(--task-${c.id})"></span>`, c.label, `setSelectedColor('${c.id}')`, co === c.id]))));
+  }
   if (parts.length) parts.push(sep);   // (what you can do to this task, then what you can add)
   const addLabel = !n ? 'Add task' : ids.length === 1 && hasChildren(ids[0]) ? 'Add sub-task' : 'Add task below';   // (under a group the new task becomes its first sub-task)
   parts.push(item('fa-solid fa-plus', addLabel, 'addTask()'), item('fa-solid fa-grip-lines', 'Add Empty Line', 'addSpacer()'));
@@ -13781,10 +13828,22 @@ function shortcutKeysHtml(keys) {
   const one = k => k.split('+').map(x => `<kbd>${x === 'Mod' ? (mac ? '⌘' : 'Ctrl') : x === 'Shift' && mac ? '⇧' : x}</kbd>`).join('');
   return keys.map(one).join('<span class="sc-or">or</span>');
 }
+const SHORTCUT_NAV = [['Anywhere', 'compass'], ['Tasks', 'table-list'], ['Task list', 'arrows-left-right'], ['Resource Sheet', 'users'], ['Editing a cell', 'pen'], ['Find', 'magnifying-glass'], ['Dialogs', 'sliders']];
 function openShortcuts() {
-  document.getElementById('shortcutsBody').innerHTML = '<div class="sc-cols">' + SHORTCUTS.map(([title, rows]) =>
-    `<div class="sc-group"><h3>${escapeHtml(title)}</h3>${rows.map(([k, what]) => `<div class="sc-row"><span>${escapeHtml(what)}</span><span class="sc-keys">${shortcutKeysHtml(k)}</span></div>`).join('')}</div>`).join('') + '</div>';
+  document.getElementById('shortcutsBody').innerHTML = SHORTCUTS.map(([title, rows], i) =>
+    `<div class="sc-group help-section" id="scGroup${i}"><h3 class="help-section-title">${escapeHtml(title)}</h3>${rows.map(([k, what]) => `<div class="sc-row help-row"><span>${escapeHtml(what)}</span><span class="sc-keys">${shortcutKeysHtml(k)}</span></div>`).join('')}</div>`).join('');
+  document.getElementById('scNav').innerHTML = SHORTCUTS.map((g, i) => { const [label, icon] = SHORTCUT_NAV[i] || [g[0], 'keyboard'];
+    return `<button type="button" data-sc="${i}" class="${i ? '' : 'active'}" onclick="scJump(${i})"><i class="fa-solid fa-${icon}"></i><span>${escapeHtml(label)}</span></button>`; }).join('');
+  const body = document.getElementById('shortcutsBody'); body.scrollTop = 0; body.onscroll = scSpy;
   document.getElementById('shortcutsModalBg').classList.add('open');
+}
+function scJump(i) { const body = document.getElementById('shortcutsBody'), g = document.getElementById('scGroup' + i); body.scrollTo({ top: g.offsetTop - body.offsetTop - 4, behavior: 'smooth' }); scMark(i); }
+function scMark(i) { document.querySelectorAll('#scNav button').forEach(b => b.classList.toggle('active', +b.dataset.sc === i)); }
+function scSpy() {   // the rail follows the scroll: the last group whose top has passed the top edge
+  const body = document.getElementById('shortcutsBody'); let cur = 0;
+  SHORTCUTS.forEach((_, i) => { if (document.getElementById('scGroup' + i).offsetTop - body.offsetTop - 24 <= body.scrollTop) cur = i; });
+  if (body.scrollTop + body.clientHeight >= body.scrollHeight - 2) cur = SHORTCUTS.length - 1;
+  scMark(cur);
 }
 function closeShortcuts() { document.getElementById('shortcutsModalBg').classList.remove('open'); }
 function openHelpModal(tab) { clearHelpSearch(); setHelpTab(tab || helpTab); document.getElementById('helpModalBg').classList.add('open'); }

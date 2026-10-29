@@ -26,7 +26,7 @@ with sync_playwright() as p:
     def rclick(name, x=300): row(name).click(button="right", position={"x": x, "y": 10}); pg.wait_for_timeout(120)
     sel = lambda: ev("() => selectedIds().map(id => byId(id).name)")
     menu_open = lambda id_: ev("(i) => document.getElementById(i).classList.contains('open')", id_)
-    items = lambda: [t.strip().split("\n")[0] for t in pg.locator("#rowMenu .dropdown-item").all_inner_texts()]
+    items = lambda: [t.strip().split("\n")[0] for t in pg.locator("#rowMenu > .dropdown-item, #rowMenu > .sub-wrap > .dropdown-item").all_inner_texts()]
     modal = lambda: ev("() => document.getElementById('taskModalBg').classList.contains('open')")
 
     # ---------------------------------------------------------------- the bar
@@ -77,8 +77,8 @@ with sync_playwright() as p:
     fresh()
     rclick("Beta")
     check("right-click on a row selects it and opens the menu at the pointer (the browser's own menu is not used)", sel() == ["Beta"] and menu_open("rowMenu"), sel())
-    check("...the menu: Edit, Mark Complete, Add task below, Add Empty Line, Duplicate, Copy, Cut, Paste, Indent, Outdent, Delete", items() == ["Edit task…", "Mark Complete", "Add task below", "Add Empty Line", "Duplicate", "Copy", "Cut", "Paste", "Indent", "Outdent", "Delete"], items())
-    check("...dividers: what you can do to the task (Edit…, Mark Complete), then what you can add; then clipboard, structure and delete each in their own block", ev("() => [...document.querySelectorAll('#rowMenu > *')].map(e => e.classList.contains('dropdown-sep') ? '|' : [...e.childNodes].filter(x => x.nodeType === 3).map(x => x.textContent).join('').trim().replace(/\\s.*/, '')).join(' ')") == "Edit Mark | Add Add | Duplicate Copy Cut Paste | Indent Outdent | Delete", ev("() => [...document.querySelectorAll('#rowMenu > *')].map(e => e.classList.contains('dropdown-sep') ? '|' : [...e.childNodes].filter(x => x.nodeType === 3).map(x => x.textContent).join('').trim().replace(/\\s.*/, '')).join(' ')"))
+    check("...the menu: Edit, Mark Complete, Task Mode / Type / Color flyouts, Add task below, Add Empty Line, Duplicate, Copy, Cut, Paste, Indent, Outdent, Delete", items() == ["Edit task…", "Mark Complete", "Task Mode", "Task Type", "Color", "Add task below", "Add Empty Line", "Duplicate", "Copy", "Cut", "Paste", "Indent", "Outdent", "Delete"], items())
+    check("...dividers: what you can do to the task (Edit…, Mark Complete, the flyouts), then what you can add; then clipboard, structure and delete each in their own block", ev("() => [...document.querySelectorAll('#rowMenu > *')].map(e => e.classList.contains('dropdown-sep') ? '|' : e.classList.contains('sub-wrap') ? e.firstElementChild.textContent.trim().replace(/\\s.*/, '') : [...e.childNodes].filter(x => x.nodeType === 3).map(x => x.textContent).join('').trim().replace(/\\s.*/, '')).join(' ')") == "Edit Mark Task Task Color | Add Add | Duplicate Copy Cut Paste | Indent Outdent | Delete", ev("() => [...document.querySelectorAll('#rowMenu > *')].map(e => e.classList.contains('dropdown-sep') ? '|' : e.classList.contains('sub-wrap') ? e.firstElementChild.textContent.trim().replace(/\\s.*/, '') : [...e.childNodes].filter(x => x.nodeType === 3).map(x => x.textContent).join('').trim().replace(/\\s.*/, '')).join(' ')"))
     check("...it stays inside the window (bottom rows near the edge)", ev("() => { const r = document.getElementById('rowMenu').getBoundingClientRect(); return r.bottom <= innerHeight && r.right <= innerWidth && r.left >= 0 && r.top >= 0; }"))
     pg.keyboard.press("Escape"); pg.wait_for_timeout(100)
     check("Escape closes it and keeps the selection", not menu_open("rowMenu") and sel() == ["Beta"])
