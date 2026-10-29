@@ -27,7 +27,7 @@ with sync_playwright() as p:
     def visible_names():
         return pg.evaluate("() => visibleTaskList().map(x => x.task.name || '(new)')")
     def add(name):
-        pg.click("#addTaskBtn"); pg.wait_for_selector("#taskModalBg.open")
+        pg.click("#addTaskBtn"); pg.wait_for_selector(".inline-edit"); pg.keyboard.press("Escape"); pg.evaluate("() => openTaskModal(selectedTaskId, true)"); pg.wait_for_selector("#taskModalBg.open")
         pg.fill("#taskNameInput", name); pg.click("#taskModalBg button:has-text('Save')"); pg.wait_for_selector("#taskModalBg:not(.open)")
     def select(name):
         pg.evaluate("n => { selectedTaskId = tasks.find(t => t.name === n).id; render(); }", name)

@@ -1718,6 +1718,13 @@ html.settings-switching .modal-bg { transition: none; }
 :is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .hol-field input[type=number] { -moz-appearance: textfield; }
 :is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .hol-field input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }   /* (their old flex-basis widths would be heights in a column) */
 :is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .hol-field select, :is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .fmt-cur select { padding-right: 24px !important; background-position: right 0 center !important; background-repeat: no-repeat !important; }
+/* The same value rules as the other dialogs' rows (see 'What can be edited reads as editable'): primary text colour, content-sized, a fill 6px wider than the value on hover, the chevron and the calendar icon on the row's right edge. */
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .hol-field :is(input[type=text], input[type=number], select):not(.dt-date), :is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .fmt-cur select { color: var(--text); border-radius: var(--r-xs); field-sizing: content; flex: 0 1 auto; max-width: 200px; min-width: 3ch; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .hol-field input.dt-date { color: var(--text); padding-right: 22px; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .hol-field .dt-cal { right: -6px; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .hol-field-name input[type=text] { field-sizing: fixed; flex: 1 1 auto; max-width: none; text-align: left; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .hol-field:hover :is(input[type=text], input[type=number], select):not(:focus):not(.dt-date):not(.hol-field-name input), :is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .fmt-cur:hover select:not(:focus), :is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .hol-field:hover .dt-wrap:not(:focus-within) { background-color: var(--hover) !important; box-shadow: -6px 0 0 var(--hover), 6px 0 0 var(--hover) !important; border-radius: var(--r-xs); }
+:is(#calendarModalBg) :is(.wh-day-row, .wh-break-add) input.dt-time { color: var(--text); border-radius: var(--r-xs); field-sizing: content; flex: 0 0 auto !important; width: auto !important; min-width: 5ch; }   /* (a standalone time is a value like any other) */
 :is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .hol-yearly { justify-content: space-between; flex-direction: row-reverse; white-space: normal; }
 :is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .hol-yearly input { appearance: none; -webkit-appearance: none; flex: none; position: relative; width: 38px; height: 22px; margin: 0; border-radius: 999px; background: var(--cap-hover); }
 :is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .hol-yearly input::after { content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: var(--on-accent); box-shadow: 0 1px 3px var(--shadow-ink); transition: transform var(--dur-fast) ease; }
@@ -1912,6 +1919,24 @@ html.time12 :is(#calendarModalBg) :is(.wh-day-row, .wh-break-add) input.dt-time 
 .trow .tin::placeholder, .trow input.dt-date::placeholder { color: var(--text-faint); }
 .trow select.tin { text-align-last: right; padding-right: 20px; cursor: default; }
 .trow .tunit { margin-left: -8px; color: var(--text-faint); font-size: var(--fs-14); }
+.trow :is(input[type=number], input[type=text], select):not(.tsw):not(.tname):not(.dt-date):not(.dt-time) { field-sizing: content; flex: 0 1 auto; min-width: 3ch; max-width: 220px; }   /* the value is as wide as its text, so the hover fill hugs it */
+.trow input[type=number] { -moz-appearance: textfield; }
+.trow input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.trow .tro { color: var(--text-faint); }
+/* What can be edited reads as editable (Apple's inspector cues): values you can change are in the primary text colour and fill softly when their row is pointed at; worked-out values (Remaining, Status) stay quiet and never fill. */
+.trow :is(input[type=number], input[type=text], select):not(.tsw):not(.tname), .trow input.dt-date, .trow input.dt-time { color: var(--text); border-radius: var(--r-xs); transition: background-color var(--dur-fast) ease, box-shadow var(--dur-fast) ease; }
+.trow:hover :is(input[type=number], input[type=text], select):not(.tsw):not(:focus):not(.dt-date):not(.dt-time):not(.field-vu input), .trow:hover input.dt-time:not(:focus):not(.field-dt input), .trow:hover :is(.field-dt, .field-vu):not(:focus-within) { background-color: var(--hover) !important; box-shadow: -6px 0 0 var(--hover), 6px 0 0 var(--hover) !important; }   /* (the fill reaches 6px past the value on each side without moving it; a date and its time are one fill) */
+.trow .field-dt { border-radius: var(--r-xs); }
+.trow .field-vu { display: flex; align-items: center; gap: 4px; flex: 0 1 auto; border-radius: var(--r-xs); }
+.trow .field-vu .tunit { margin-left: 0; }
+.trow .field-vu .tunit:empty { display: none; }   /* (an hours & minutes plan shows its unit inside the value) */
+/* One right edge: a value, a pop-up chevron and a calendar icon all end where the row's text column ends. */
+.trow select { background-position: right 0 center !important; padding-right: 26px !important; }
+.bulk-ctl :is(input, select) { field-sizing: fixed !important; }
+.bulk-ctl select { min-width: 60px !important; }   /* (the bulk dialog's controls fill their column) */
+.trow .dt-cal { right: -6px; }
+.trow .dt-wrap input.dt-date { padding-right: 22px; }
+.trow:has(.tro) { cursor: default; }
 .trow .tro { color: var(--text-faint); }
 .trow .field-dt { flex: 0 1 auto; flex-wrap: nowrap; justify-content: flex-end; gap: 4px; }
 .trow .field-dt .dt-wrap { flex: 0 0 auto; min-width: 0; }
@@ -1938,6 +1963,7 @@ html.time12 :is(#calendarModalBg) :is(.wh-day-row, .wh-break-add) input.dt-time 
 #predecessorRows .pred-row { position: relative; display: grid; grid-template-columns: 40px minmax(0, 1fr) 56px 84px 24px; gap: 8px; align-items: center; min-height: 40px; margin: 0; padding: 4px 14px; font-size: var(--fs-14); }
 #predecessorRows .pred-row:first-child::before { display: none; }
 #predecessorRows .pred-row select, #predecessorRows .pred-row input { padding: 6px 0; border: 0; background-color: transparent; font-size: var(--fs-14); color: var(--text); text-align: right; box-shadow: none; }
+#predecessorRows .pred-row :is(select, input):not(:focus):hover { background-color: var(--hover) !important; box-shadow: -4px 0 0 var(--hover), 4px 0 0 var(--hover) !important; border-radius: var(--r-xs); }   /* (the same fill as the other rows; the grid's 8px gap leaves room for 4px each side) */
 #predecessorRows .pred-row select { padding-right: 28px; text-align: left; text-align-last: left; color: var(--text-dim); }
 #predecessorRows .pred-row input[type=number]:not(.pred-id-input), #predecessorRows .pred-row .pred-lag-input { color: var(--text-dim); }
 #predecessorRows .pred-row .pred-id-input { text-align: left; }
@@ -2426,8 +2452,8 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
       <div id="taskDatesBlock" class="tgrp">
         <div class="trow" id="taskStartField"><label for="taskStartInput">Start</label><div class="field-dt"><input type="text" class="dt-date" id="taskStartInput" onchange="onTaskStartChange()"><input type="text" id="taskStartTimeInput" class="task-time-input hidden dt-time" aria-label="Start time" onchange="onTaskStartChange()"></div></div>
         <div class="trow" id="taskEndField"><label for="taskEndInput">Finish</label><div class="field-dt"><input type="text" class="dt-date" id="taskEndInput" onchange="onTaskEndChange()"><input type="text" id="taskEndTimeInput" class="task-time-input hidden dt-time" aria-label="Finish time" onchange="onTaskEndChange()"></div></div>
-        <div class="trow" id="taskDurationField"><label for="taskDurationInput" id="taskDurationLabel" title="Working days, counted on the plan's working calendar">Duration</label><input type="text" class="tin" id="taskDurationInput" onchange="onTaskDurationChange()"><span class="tunit" id="taskDurationUnit">days</span></div>
-        <div class="trow" id="taskProgressField"><label for="taskProgressInput">Complete</label><input type="number" class="tin" min="0" max="100" id="taskProgressInput"><span class="tunit">%</span></div>
+        <div class="trow" id="taskDurationField"><label for="taskDurationInput" id="taskDurationLabel" title="Working days, counted on the plan's working calendar">Duration</label><span class="field-vu"><input type="text" class="tin" id="taskDurationInput" onchange="onTaskDurationChange()"><span class="tunit" id="taskDurationUnit">days</span></span></div>
+        <div class="trow" id="taskProgressField"><label for="taskProgressInput">Complete</label><span class="field-vu"><input type="number" class="tin" min="0" max="100" id="taskProgressInput"><span class="tunit">%</span></span></div>
         <div class="trow" id="taskRemainingField" title="Worked out by Milestone — not entered"><label>Remaining</label><span class="tro" id="taskRemainingInfo"></span></div>
         <div class="trow" id="taskStatusField" title="Worked out by Milestone — not entered"><label>Status</label><span class="tro" id="taskStatusInfo"></span></div>
         <span id="taskWbsInfo" class="hidden"></span>
@@ -2935,7 +2961,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
         <div class="cal-sec-title">Recurrence Pattern</div>
         <div class="tgrp">
           <div class="trow"><div class="recur-freq"><label><input type="radio" name="recurFreq" value="daily">Daily</label><label><input type="radio" name="recurFreq" value="weekly">Weekly</label><label><input type="radio" name="recurFreq" value="monthly">Monthly</label><label><input type="radio" name="recurFreq" value="yearly">Yearly</label></div></div>
-          <div class="trow"><label for="recurEvery" class="tgrow">Every</label><input type="number" id="recurEvery" min="1" max="99" class="tin recur-num"><span id="recurEveryUnit" class="tunit">week(s)</span></div>
+          <div class="trow"><label for="recurEvery" class="tgrow">Every</label><span class="field-vu"><input type="number" id="recurEvery" min="1" max="99" class="tin recur-num"><span id="recurEveryUnit" class="tunit">week(s)</span></span></div>
           <div class="trow" id="recurDaysRow"><label class="tgrow">On</label><div class="cal-days" id="recurDays"></div></div>
           <div class="trow" id="recurWorkdaysRow"><label for="recurWorkdays" class="tgrow">Working days only</label><input type="checkbox" class="tsw" role="switch" id="recurWorkdays"></div>
           <div class="trow" id="recurMonthRow"><label for="recurMonthDay" class="tgrow">On day <span class="cal-sec-note">(or the last day)</span></label><input type="number" id="recurMonthDay" min="1" max="31" class="tin recur-num"></div>
@@ -2945,7 +2971,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
         <div class="cal-sec-title">Range</div>
         <div class="tgrp">
           <div class="trow"><label for="recurStart" class="tgrow">Start</label><input type="text" class="dt-date" id="recurStart"></div>
-          <div class="trow"><label for="recurCount" class="tgrow">End after</label><input type="number" id="recurCount" min="1" max="500" class="tin recur-num"><span class="tunit">occurrences</span><input type="radio" class="tick" name="recurEnd" id="recurEndCount" checked aria-label="End after a number of occurrences"></div>
+          <div class="trow"><label for="recurCount" class="tgrow">End after</label><span class="field-vu"><input type="number" id="recurCount" min="1" max="500" class="tin recur-num"><span class="tunit">occurrences</span></span><input type="radio" class="tick" name="recurEnd" id="recurEndCount" checked aria-label="End after a number of occurrences"></div>
           <div class="trow"><label for="recurUntil" class="tgrow">End by</label><input type="text" class="dt-date" id="recurUntil"><input type="radio" class="tick" name="recurEnd" id="recurEndUntil" aria-label="End by a date"></div>
         </div>
         <p class="cal-hint recur-preview" id="recurPreview"></p>
@@ -8314,7 +8340,7 @@ function onLinkHandleMouseDown(event, fromId) {
 // (as its sibling), or as the first sub-task of a summary task. With nothing
 // selected it's appended at the end of the top level. The new task then
 // becomes the selection, so repeated Add Task keeps stacking downward instead
-// of each new task jumping in above the previous one.
+// of each new task jumping in above the previous one. Its name opens for typing in the row (no dialog).
 function addTask() {
   const sel = selectedTaskId ? byId(selectedTaskId) : null;
   let parentId = null, insertAt = childrenOf(null).length;
@@ -8343,7 +8369,8 @@ function addTask() {
   sibs.forEach((s, i) => { if (s.order !== i) { s.order = i; if (s !== t) s.updatedAt = Date.now(); } });
   setSelection([t.id]);
   normalizeData(); save(); render();
-  openTaskModal(t.id, true);
+  const row = document.querySelector(`.grid-row[data-id="${t.id}"]`); if (row && row.scrollIntoView) row.scrollIntoView({ block: 'nearest' });
+  startInlineEdit(t.id, 'name');   // the name is typed in the row; the dialog is for a double-click
 }
 // Add an EMPTY LINE (see isSpacer) directly below the selected task — after its whole block when it is a group, at the same level; with nothing
 // selected at the end of the top level. It becomes the selection, so pressing the button again stacks another line below it. No dialog opens.
@@ -10232,6 +10259,8 @@ function addPredecessorRow() {
   if (!tasks.some(t => t.id !== editingTaskId && !hasChildren(t.id))) { showToast('No other tasks available to link', true); return; }
   editingPredecessors.push({ id: null, type: 'FS', lag: 0 });
   renderPredecessorRows();
+  const ids = document.querySelectorAll('#predecessorRows .pred-id-input'), last = ids[ids.length - 1];
+  if (last) { last.focus(); last.scrollIntoView({ block: 'nearest' }); }   // the cursor goes to the new row's task number
 }
 function removePredecessorRow(i) { editingPredecessors.splice(i, 1); renderPredecessorRows(); }
 

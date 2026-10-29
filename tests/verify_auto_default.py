@@ -19,14 +19,14 @@ with sync_playwright() as p:
 
     # ---- a fresh install
     check("fresh install: the 'New tasks' button reads Auto Scheduled", "Auto Scheduled" in pg.evaluate("() => document.querySelector('#addMenu .dropdown-item.active').textContent"))
-    pg.click("#addTaskBtn"); pg.wait_for_selector("#taskModalBg.open")
+    pg.click("#addTaskBtn"); pg.wait_for_selector(".inline-edit"); pg.keyboard.press("Escape"); pg.evaluate("() => openTaskModal(selectedTaskId, true)"); pg.wait_for_selector("#taskModalBg.open")
     check("...a new task is Auto Scheduled, and the dialog shows it", pg.evaluate("() => tasks[0].taskMode") == "auto" and pg.eval_on_selector("#taskModeInput", "e => e.value") == "auto")
     pg.fill("#taskNameInput", "First"); pg.click("#taskModalBg .btn-primary"); pg.wait_for_timeout(120)
     check("...and its row uses the Auto icon (chart), not the pushpin", pg.locator(".task-mode-cell i.mode-auto").count() == 1 and pg.locator(".task-mode-cell i.mode-manual").count() == 0)
     # ---- choosing Manual is remembered
     pg.click("#addMenuBtn"); pg.wait_for_selector("#addMenu.open"); pg.click("#newModeManual"); pg.wait_for_timeout(100)
     check("choosing Manually Scheduled for new tasks works", mode() == "manual" and "Manually Scheduled" in pg.evaluate("() => document.querySelector('#addMenu .dropdown-item.active').textContent"))
-    pg.click("#addTaskBtn"); pg.wait_for_selector("#taskModalBg.open"); pg.evaluate("() => closeTaskModal()")
+    pg.click("#addTaskBtn"); pg.wait_for_selector(".inline-edit"); pg.keyboard.press("Escape"); pg.evaluate("() => openTaskModal(selectedTaskId, true)"); pg.wait_for_selector("#taskModalBg.open"); pg.evaluate("() => closeTaskModal()")
     check("...new tasks are then Manual", pg.evaluate("() => tasks[tasks.length - 1].taskMode") == "manual")
     reload()
     check("...and that choice survives a reload (the one-time switch never overrides it)", mode() == "manual", mode())

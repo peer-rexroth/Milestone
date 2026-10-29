@@ -39,7 +39,7 @@ with sync_playwright() as p:
         return page.locator(f".grid-row[data-id='{id}']")
 
     # ---- Gap 1: default is Auto Scheduled (new tasks + project setting) — was Manual until the user asked for Auto
-    page.click("#addTaskBtn"); page.wait_for_selector("#taskModalBg.open")
+    page.click("#addTaskBtn"); page.wait_for_selector(".inline-edit"); page.keyboard.press("Escape"); page.evaluate("() => openTaskModal(selectedTaskId, true)"); page.wait_for_selector("#taskModalBg.open")
     check("1  new task defaults to auto", page.evaluate("() => tasks[0].taskMode") == "auto")
     check("1  modal Task Mode field shows auto", page.eval_on_selector("#taskModeInput", "e => e.value") == "auto")
     page.fill("#taskNameInput", "First"); page.click("#taskModalBg button:has-text('Save')")
@@ -65,7 +65,7 @@ with sync_playwright() as p:
     page.click("#addMenuBtn"); page.wait_for_selector("#addMenu.open")
     page.click("#newModeAuto")
     check("3  'New tasks' picker sets project default", page.evaluate("() => project.newTaskMode") == "auto" and "Auto Scheduled" in page.evaluate("() => document.querySelector('#addMenu .dropdown-item.active').textContent"))
-    page.click("#addTaskBtn"); page.wait_for_selector("#taskModalBg.open")
+    page.click("#addTaskBtn"); page.wait_for_selector(".inline-edit"); page.keyboard.press("Escape"); page.evaluate("() => openTaskModal(selectedTaskId, true)"); page.wait_for_selector("#taskModalBg.open")
     check("3  next new task follows the new default (auto)", page.eval_on_selector("#taskModeInput", "e => e.value") == "auto")
     page.click("#taskModalBg button:has-text('Cancel')")
     page.click("#addMenuBtn"); page.click("#newModeManual")

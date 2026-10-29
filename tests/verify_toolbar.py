@@ -56,7 +56,7 @@ with sync_playwright() as p:
     pg.click("#newModeManual"); pg.wait_for_timeout(120)
     check("choosing Manually Scheduled sets the project default and closes the menu", ev("() => project.newTaskMode") == "manual" and not menu_open("addMenu"))
     check("...the Add Task tooltip names the mode", "Manually Scheduled" in (pg.get_attribute("#addTaskBtn", "title") or ""), pg.get_attribute("#addTaskBtn", "title"))
-    pg.click("#addTaskBtn"); pg.wait_for_selector("#taskModalBg.open"); check("...and a new task is Manual", ev("() => document.getElementById('taskModeInput').value") == "manual"); ev("() => closeTaskModal()")
+    pg.click("#addTaskBtn"); pg.wait_for_selector(".inline-edit"); pg.keyboard.press("Escape"); pg.evaluate("() => openTaskModal(selectedTaskId, true)"); pg.wait_for_selector("#taskModalBg.open"); check("...and a new task is Manual", ev("() => document.getElementById('taskModeInput').value") == "manual"); ev("() => closeTaskModal()")
     pg.click("#addMenuBtn"); pg.click("#newModeAuto"); pg.wait_for_timeout(100)
     check("...and back to Auto", ev("() => project.newTaskMode") == "auto")
     pg.click("#addMenuBtn"); pg.click("body", position={"x": 900, "y": 500}); pg.wait_for_timeout(100)
@@ -117,7 +117,7 @@ with sync_playwright() as p:
     # empty area
     fresh(); pick("Gamma"); pg.locator("#gridRows").click(button="right", position={"x": 300, "y": 600}); pg.wait_for_timeout(120)
     check("right-click on the empty part of the list offers only Add task, Add Empty Line and Paste", items() == ["Add task", "Add Empty Line", "Paste"], items())
-    pg.click("#rowMenu >> text=Add task"); pg.wait_for_selector("#taskModalBg.open")
+    pg.click("#rowMenu >> text=Add task"); pg.wait_for_selector(".inline-edit"); pg.keyboard.press("Escape"); pg.evaluate("() => openTaskModal(selectedTaskId, true)"); pg.wait_for_selector("#taskModalBg.open")
     check("...Add task adds one at the end (nothing to be 'below') and opens its dialog", modal()); ev("() => closeTaskModal()"); pg.wait_for_timeout(250)
     # native menu inside an editor
     fresh(); pg.locator(".grid-row[data-id='c'] .name-text").click(); pg.wait_for_timeout(250)

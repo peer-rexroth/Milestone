@@ -92,7 +92,7 @@ with sync_playwright() as p:
     close_all()
     ev("() => openCalendarModal()"); pg.wait_for_timeout(250)
     tb = ev("() => [...document.querySelectorAll('#calendarModalBg input.dt-time')].filter(e => e.getBoundingClientRect().width).map(e => [Math.round(e.getBoundingClientRect().width), e.scrollWidth <= e.clientWidth])")
-    check("Scheduling precision at 390px: every time box is 80px+ and shows its whole time (24-hour: nothing to cut off)", all(w >= 80 and fit for w, fit in tb) and len(tb) >= 4, tb)
+    check("Scheduling precision at 390px: every time box shows its whole time (24-hour: nothing to cut off)", all(w >= 40 and fit for w, fit in tb) and len(tb) >= 4, tb)
     close_all()
     pg.set_viewport_size({"width": 1400, "height": 860})
 

@@ -27,7 +27,7 @@ with sync_playwright() as p:
         except Exception: target().click(); pg.wait_for_selector(".inline-edit")   # (the first click can land while the list is still re-rendering after a menu closed)
         focus_wait(); pg.fill(".inline-edit", value); pg.keyboard.press("Enter"); pg.wait_for_timeout(180)
     def add_task(name, start, end):   # through the dialog, as a user does
-        pg.click("#addTaskBtn"); pg.wait_for_selector("#taskModalBg.open"); pg.wait_for_timeout(120)
+        pg.click("#addTaskBtn"); pg.wait_for_selector(".inline-edit"); pg.keyboard.press("Escape"); pg.evaluate("() => openTaskModal(selectedTaskId, true)"); pg.wait_for_selector("#taskModalBg.open"); pg.wait_for_timeout(120)
         pg.fill("#taskNameInput", name); pg.fill("#taskStartInput", start); pg.dispatch_event("#taskStartInput", "change"); pg.fill("#taskEndInput", end); pg.dispatch_event("#taskEndInput", "change")
         pg.click("#taskModalBg .btn-primary"); pg.wait_for_selector("#taskModalBg:not(.open)"); pg.wait_for_timeout(150)
     toast = lambda: pg.inner_text("#toastMsg")

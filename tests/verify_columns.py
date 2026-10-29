@@ -381,7 +381,7 @@ with sync_playwright() as p:
 
     # ============================================================ notes are back (on request): a Notes tab; text an older version kept under `notes` shows again
     make([{"name": "WithOldNotes", "extra": {"notes": "kept in the data all along"}}])
-    pg.evaluate("() => { addTask(); }"); pg.wait_for_selector("#taskModalBg.open")
+    pg.evaluate("() => { addTask(); }"); pg.wait_for_selector(".inline-edit"); pg.keyboard.press("Escape"); pg.evaluate("() => openTaskModal(selectedTaskId, true)"); pg.wait_for_selector("#taskModalBg.open")
     check("the task dialog has a Notes tab", pg.locator("#taskTabBtnNotes").count() == 1 and pg.locator("#taskNotesInput").count() == 1)
     pg.evaluate("() => closeTaskModal()")
     check("a task created now has no notes value (absent = none)", pg.evaluate("() => tasks.filter(t => t.name !== 'WithOldNotes').every(t => !('notes' in t))"))

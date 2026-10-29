@@ -110,7 +110,7 @@ with sync_playwright() as p:
     # Add Task with nothing selected -> bottom of the list
     seed(); pg.evaluate("() => { selectedTaskId = tasks.find(t=>t.name==='Two').id; render(); }")
     pg.keyboard.press("Escape")
-    pg.click("#addTaskBtn"); pg.wait_for_selector("#taskModalBg.open"); pg.fill("#taskNameInput", "AT-BOTTOM")
+    pg.click("#addTaskBtn"); pg.wait_for_selector(".inline-edit"); pg.keyboard.press("Escape"); pg.evaluate("() => openTaskModal(selectedTaskId, true)"); pg.wait_for_selector("#taskModalBg.open"); pg.fill("#taskNameInput", "AT-BOTTOM")
     pg.click("#taskModalBg button:has-text('Save')"); pg.wait_for_selector("#taskModalBg:not(.open)")
     check("after Escape, Add Task appends at the bottom of the list", names()[-1] == "AT-BOTTOM", names())
     check("...at the top level, below the last group too", pg.evaluate("() => tasks.find(t=>t.name==='AT-BOTTOM').parentId") is None)

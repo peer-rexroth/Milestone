@@ -172,7 +172,7 @@ with sync_playwright() as p:
 
     # ---------------- pinned rows, empty result, views, reset
     seed(); apply_rule("start", "equals", "2027-01-11")
-    pg.evaluate("() => { addTask(); }"); pg.wait_for_selector("#taskModalBg.open"); pg.evaluate("() => closeTaskModal()")
+    pg.evaluate("() => { addTask(); }"); pg.wait_for_selector(".inline-edit"); pg.keyboard.press("Escape"); pg.evaluate("() => openTaskModal(selectedTaskId, true)"); pg.wait_for_selector("#taskModalBg.open"); pg.evaluate("() => closeTaskModal()")
     check("a task added while filtering stays visible even though it doesn't match", any(n == "" or n == "Untitled Task" for n in rows()) and "A3" in rows(), rows())
     tid = pg.evaluate("() => tasks.find(t => t.name === 'A3').id")
     pg.evaluate("(id) => { editingCell = {id, field: 'start'}; commitInlineEdit(id, 'start', '2026-12-24'); }", tid); pg.wait_for_timeout(100)
