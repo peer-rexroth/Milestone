@@ -53,7 +53,7 @@ with sync_playwright() as p:
     # ---------------------------------------------------------------- changing it
     ev("(id) => { const k = childrenOf(id); k[0].actualStart = k[0].startDate; k[0].progress = 50; save(); render(); }", sid)
     pg.click(f"#gridRows .grid-row[data-id='{sid}'] .recur-ind"); pg.wait_for_timeout(150)
-    check("the ↻ icon reopens it, filled in, as 'Change recurring task'", pg.inner_text("#recurTitle") == "Change recurring task" and pg.input_value("#recurName") == "Weekly status meeting" and not pg.is_hidden("#recurKeepNote"))
+    check("the ↻ icon reopens it, filled in, as 'Change Recurring Task'", pg.inner_text("#recurTitle") == "Change Recurring Task" and pg.input_value("#recurName") == "Weekly status meeting" and not pg.is_hidden("#recurKeepNote"))
     ev("() => { document.querySelector('input[name=recurFreq][value=daily]').checked = true; document.getElementById('recurWorkdays').checked = true; document.getElementById('recurEndCount').checked = true; }")
     pg.fill("#recurCount", "5"); pg.locator("#recurCount").dispatch_event("input"); pg.wait_for_timeout(60)
     pg.fill("#recurName", "Daily stand-up"); pg.click("#recurOkBtn"); pg.wait_for_timeout(200)

@@ -103,7 +103,7 @@ with sync_playwright() as p:
     seed([{"name": "G"}, {"name": "G1", "parent": "G", "s": "2026-09-07", "e": "2026-09-08"}, {"name": "G2", "parent": "G", "s": "2026-09-09", "e": "2026-09-10"},
           {"name": "X", "s": "2026-09-07", "e": "2026-09-11"}, {"name": "Y", "s": "2026-09-14", "e": "2026-09-15", "preds": [["X", "FS", 0]]}, {"name": "Z", "s": "2026-09-16", "e": "2026-09-17"}])
     click("X"); click("Y", ["Meta"]); click("G", ["Meta"]); pg.click("#bulkEditBtn"); pg.wait_for_selector("#bulkModalBg.open"); pg.wait_for_timeout(150)
-    check("the Edit dialog opens with the count in its title and a hint about groups", pg.inner_text("#bulkTitle") == "Edit 3 tasks" and "Groups keep" in pg.inner_text("#bulkHint"), (pg.inner_text("#bulkTitle"), pg.inner_text("#bulkHint")))
+    check("the Edit dialog opens with the count in its title and a hint about groups", pg.inner_text("#bulkTitle") == "Edit 3 Tasks" and "Groups keep" in pg.inner_text("#bulkHint"), (pg.inner_text("#bulkTitle"), pg.inner_text("#bulkHint")))
     pg.click("#bulkModalBg .modal-footer .btn-primary")
     check("Apply with nothing ticked asks for a field", "Tick at least one" in pg.inner_text("#toastMsg"), pg.inner_text("#toastMsg"))
     pg.fill("#bulkVal-progress", "60")
@@ -185,7 +185,7 @@ with sync_playwright() as p:
     pg.keyboard.press("Escape"); pg.wait_for_timeout(150); pg.click("#confirmModalActionBtn"); pg.wait_for_timeout(150)
     check("discarding closes the dialog", not ev("() => document.getElementById('bulkModalBg').classList.contains('open')"))
     click("A"); ev("() => openBulkModal()"); pg.wait_for_selector("#bulkModalBg.open"); pg.wait_for_timeout(100)
-    check("a single selected task can be edited the same way (title 'Edit task')", pg.inner_text("#bulkTitle") == "Edit task")
+    check("a single selected task can be edited the same way (title 'Edit Task')", pg.inner_text("#bulkTitle") == "Edit Task")
     pg.keyboard.press("Escape")
     # the toolbar's Edit button: one task -> the full task dialog (like a double-click), several -> the bulk dialog
     seed([{"name": "A", "s": "2026-09-07", "e": "2026-09-08"}, {"name": "B", "s": "2026-09-09", "e": "2026-09-10"}, {"name": "C", "s": "2026-09-11", "e": "2026-09-11"}])
@@ -195,7 +195,7 @@ with sync_playwright() as p:
     check("...it is the very dialog a double-click opens (Task Mode, dates, duration, constraint fields are there)", all(pg.locator(sel_).count() == 1 for sel_ in ["#taskModeInput", "#taskStartInput", "#taskDurationInput"]))
     pg.keyboard.press("Escape"); pg.wait_for_timeout(250)
     click("A"); click("C", ["Meta"]); pg.click("#bulkEditBtn"); pg.wait_for_timeout(300)
-    check("...with TWO selected it opens the bulk dialog ('Edit 2 tasks')", modal() == [False, True] and pg.inner_text("#bulkTitle") == "Edit 2 tasks", (modal(), pg.inner_text("#bulkTitle")))
+    check("...with TWO selected it opens the bulk dialog ('Edit 2 Tasks')", modal() == [False, True] and pg.inner_text("#bulkTitle") == "Edit 2 Tasks", (modal(), pg.inner_text("#bulkTitle")))
     pg.keyboard.press("Escape"); pg.wait_for_timeout(250)
     click("B"); tip1 = ev("() => document.getElementById('bulkEditBtn').title"); click("A"); click("B", ["Meta"]); tip2 = ev("() => document.getElementById('bulkEditBtn').title")
     check("...tooltip: 'Edit the selected task' for one, 'Change a field for all 2 selected tasks' for two", "Edit the selected task" in tip1 and "all 2 selected" in tip2, (tip1, tip2))

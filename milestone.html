@@ -449,6 +449,10 @@ html[data-scheme="glass"][data-theme="dark"] :is(.content) {
   --sel-inactive: var(--cap-on);
   --on-accent: #fff;
   --danger: #d92d20;
+  --warning: #bf8700;   /* amber: a caution line, an unsaved-changes note */
+  --shadow-ink-soft: rgba(0,0,0,.08);
+  --sheen: rgba(255,255,255,.8);   /* the top highlight of a round glass button */
+  --on-fill-soft: rgba(255,255,255,.3);   /* a lighter wash over a coloured fill (a progress fill, a hovered chip) */
 }
 
 html {
@@ -551,8 +555,8 @@ button { cursor: default; }
 html.sidebar-collapsed .sidebar { display: none; }
 .sidebar { position: relative; z-index: 60; }   /* above the content, so the tools bar's menus (wider than the sidebar) are not painted over by it */
 .sb-head { display: flex; align-items: center; gap: 8px; height: 52px; flex: none; padding: 0 12px; }   /* just the round hide button (the views are rows below) */
-.sb-head #sidebarToggleBtn, .sb-float { background: var(--cap-fill); border-radius: 50%; width: 36px; height: 36px; flex: none; box-shadow: inset 0 1px 0 rgba(255,255,255,.8), 0 1px 4px rgba(40,50,110,.1); }   /* ClearDesk's round hide / show button: the same glyph (a 16px outline svg), the same lit edge */
-html[data-theme="dark"] .sb-head #sidebarToggleBtn, html[data-theme="dark"] .sb-float { box-shadow: inset 0 1px 0 rgba(255,255,255,.22), 0 1px 4px rgba(40,50,110,.1); }
+.sb-head #sidebarToggleBtn, .sb-float { background: var(--cap-fill); border-radius: 50%; width: 36px; height: 36px; flex: none; box-shadow: inset 0 1px 0 var(--sheen), 0 1px 4px var(--shadow-ink-soft); }   /* ClearDesk's round hide / show button: the same glyph (a 16px outline svg), the same lit edge */
+html[data-theme="dark"] .sb-head #sidebarToggleBtn, html[data-theme="dark"] .sb-float { --sheen: rgba(255,255,255,.22); }
 .sb-head #sidebarToggleBtn svg, .sb-float svg { width: 16px; height: 16px; flex: none; }
 .sb-head #sidebarToggleBtn:hover { background: var(--cap-hover); }
 .sidebar .view-tabs { display: flex; flex-direction: column; gap: 2px; padding: 0; background: none; border-radius: 0; }
@@ -671,7 +675,7 @@ button:focus:not(:focus-visible) { outline: none; }
 
 .view-tabs { display: flex; background: var(--panel-2); border-radius: var(--r-s); padding: 2px; }
 .view-tab { padding: 4px 10px; border: none; background: transparent; border-radius: var(--r-s); font-size: var(--fs-12); font-weight: 500; color: var(--text-dim); }
-.view-tab.active { background: var(--panel); color: var(--text); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+.view-tab.active { background: var(--panel); color: var(--text); box-shadow: 0 1px 2px var(--shadow-ink-soft); }
 
 .dropdown-wrap { position: relative; }
 .dropdown-menu {
@@ -777,7 +781,7 @@ button:focus:not(:focus-visible) { outline: none; }
 .cols-row:hover .cols-move, .cols-row:focus-within .cols-move { opacity: 1; }
 .cols-move button { width: 22px; height: 22px; padding: 0; border: none; border-radius: var(--r-xs); background: transparent; color: inherit; font-size: var(--fs-11); }
 .cols-row:hover .cols-move, .cols-row:focus-within .cols-move { color: var(--on-accent); }
-.cols-move button:hover:not(:disabled) { background: rgba(255,255,255,.25); }
+.cols-move button:hover:not(:disabled) { background: var(--on-fill-soft); }
 .cols-move button:disabled { opacity: .35; cursor: default; }
 .cols-opts { padding: 6px 0 2px; border-top: 1px solid var(--border); margin-top: 6px; display: flex; flex-direction: column; gap: 0; }
 .cols-opt { display: flex; align-items: center; gap: 8px; border: none; background: transparent; color: var(--text); font-size: var(--fs-14); padding: 6px 8px; border-radius: var(--r-s); text-align: left; }
@@ -918,7 +922,7 @@ body.col-moving, body.col-moving * { cursor: grabbing !important; user-select: n
 .tf-empty { color: var(--text-dim); font-size: var(--fs-13); padding: 14px 2px; }
 .tf-note { font-size: var(--fs-12); color: var(--text-faint); min-height: 0; }
 .tf-note:empty { display: none; }
-.tf-note.dirty { color: var(--warning, #bf8700); }
+.tf-note.dirty { color: var(--warning); }
 .tf-hint { font-size: var(--fs-12); color: var(--text-faint); }
 /* The form is the Edit Task inspector laid out for a wide, short pane: tinted groups of label-left / value-right rows (.tgrp / .trow, the same pieces),
    switches for on/off, the two lists as grouped rows with a quiet "add" row, and Cancel · Save. */
@@ -1028,7 +1032,7 @@ input.tf-cell[type=number] { -moz-appearance: textfield; }
 /* An editor that is wider than its column (a narrow custom column, an unusual font) is the active layer, as in Excel: above the
    neighbouring cells (z-index works on a grid item without position — the frozen cells keep their sticky positioning), opaque,
    and lifted by a shadow, so it never reads as two values running into each other. */
-.main .grid-row > input.inline-edit, .main .grid-row > .inline-wrap { z-index: 4; background-color: var(--panel); box-shadow: 0 2px 8px rgba(0, 0, 0, .14); }
+.main .grid-row > input.inline-edit, .main .grid-row > .inline-wrap { z-index: 4; background-color: var(--panel); box-shadow: 0 2px 8px var(--shadow-ink); }
 /* Frozen columns: the ID column and everything up to and including Task Name stay put while the rest scrolls sideways (like Excel's
    "freeze panes"; updateFrozenColumns() marks the cells and gives each its `left`). They need an opaque background, or the columns
    scrolling underneath would show through: they inherit the row's (which changes on hover / selection). The column line at their
@@ -1037,7 +1041,7 @@ input.tf-cell[type=number] { -moz-appearance: textfield; }
 .main .grid-row > .frz, .main .grid-header > .frz { position: sticky; z-index: 3; box-shadow: inset -1px 0 0 var(--border); }
 .main .grid-row > .frz:not(input), .main .grid-header > .frz { align-self: stretch; }   /* cover the whole row height (cells are otherwise only as tall as their content); a cell's own flex box keeps its content centred */
 .main .grid-row > .frz:first-child, .main .grid-header > .frz:first-child { box-shadow: -10px 0 0 var(--row-bg), inset -1px 0 0 var(--border); }   /* ...and the row's 10px left padding, where the scrolled columns would show */
-.main .grid-pane.h-scrolled .grid-row > .frz-last, .main .grid-pane.h-scrolled .grid-header > .frz-last { box-shadow: inset -1px 0 0 var(--border), 5px 0 6px -4px rgba(0, 0, 0, .28); }   /* a soft edge while content slides underneath */
+.main .grid-pane.h-scrolled .grid-row > .frz-last, .main .grid-pane.h-scrolled .grid-header > .frz-last { box-shadow: inset -1px 0 0 var(--border), 5px 0 6px -4px var(--shadow-ink-strong); }   /* a soft edge while content slides underneath */
 /* The column lines stop at the last row: below it the list is plain (it read as an empty spreadsheet). The end of the list
    offers a quiet "Add task" row instead, as MS Project's blank rows do (Tasks view only — in the Gantt view the list and the
    chart scroll together row for row, so the list gets no extra row). */
@@ -1204,7 +1208,7 @@ html.time12 .tf-dt input.dt-time { flex: 0 0 104px; min-width: 104px; width: 104
 .print-range .dt-wrap { flex: 1; min-width: 0; }
 .print-side { flex: 1; min-width: 0; display: flex; flex-direction: column; background: var(--panel-2); }
 .print-preview { flex: 1; min-height: 0; overflow: auto; padding: 16px; display: flex; align-items: flex-start; justify-content: center; }
-.print-sheet { background: var(--on-accent); box-shadow: 0 1px 8px rgba(0, 0, 0, .3); width: 100%; max-width: 100%; }
+.print-sheet { background: var(--on-accent); box-shadow: 0 1px 8px var(--shadow-ink-strong); width: 100%; max-width: 100%; }
 .print-sheet svg { display: block; width: 100%; height: 100%; }
 .print-nav .btn { border-radius: 999px; }
 .print-nav { display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-top: 1px solid var(--border); font-size: var(--fs-12); color: var(--text-dim); }
@@ -1267,7 +1271,7 @@ html.time12 .tf-dt input.dt-time { flex: 0 0 104px; min-width: 104px; width: 104
 .cal-day { position: relative;}
 .cal-day input { position: absolute; opacity: 0; inset: 0; margin: 0;}
 .cal-day span { display: inline-block; min-width: 44px; padding: 6px 0; text-align: center; border: 1px solid var(--border); border-radius: var(--r-s); background: var(--panel); color: var(--text-dim); font-size: var(--fs-12); font-weight: 600; }
-.cal-day input:checked + span { background: var(--accent); border-color: var(--accent); color: #fff; }
+.cal-day input:checked + span { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 .cal-day input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
 .conflict-btn { color: var(--task-amber); border-color: color-mix(in srgb, var(--task-amber) 50%, var(--border)); }
 .conflict-btn i { margin-right: 6px; }
@@ -1304,7 +1308,7 @@ html.time12 .tf-dt input.dt-time { flex: 0 0 104px; min-width: 104px; width: 104
 .fi-row { display: flex; justify-content: space-between; gap: 12px; padding: 2px 0; font-size: var(--fs-12); }
 .fi-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); } .fi-dates { color: var(--text-dim); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .fi-more { color: var(--text-faint); font-size: var(--fs-12); padding-top: 2px; }
-.fi-warn { font-size: var(--fs-12); color: var(--text-dim); border-left: 3px solid #bf8700; padding: 4px 10px; background: color-mix(in srgb, #bf8700 10%, transparent); border-radius: 0 var(--r-s) var(--r-s) 0; }
+.fi-warn { font-size: var(--fs-12); color: var(--text-dim); border-left: 3px solid var(--warning); padding: 4px 10px; background: color-mix(in srgb, var(--warning) 10%, transparent); border-radius: 0 var(--r-s) var(--r-s) 0; }
 .hol-to { color: var(--text-dim); font-size: var(--fs-12); }
 .hol-yearly { display: inline-flex; align-items: center; gap: 4px; font-size: var(--fs-12); color: var(--text-dim); white-space: nowrap; }
 .hol-yearly input:disabled + * , .hol-yearly:has(input:disabled) { opacity: .5; }
@@ -1380,7 +1384,7 @@ input.inline-edit[type=date]::-webkit-calendar-picker-indicator { margin: 0 0 0 
 .gantt-tick.zoom-hour-day.dayoff b { color: var(--text-faint); font-weight: 500; }
 .gantt-tick.zoom-hour-h { top: 50%; padding: 2px 0 0 1px;   /* (measured: '12a' at 11px must fit a 20px cell, 1px border included) */
   line-height: 15px; font-size: var(--fs-11); border-top: 1px solid var(--border); }
-.gantt-drag-tip { position: fixed; z-index: 400; pointer-events: none; padding: 2px 8px; border-radius: var(--r-xs); font-size: var(--fs-12); background: var(--text); color: var(--panel); white-space: nowrap; box-shadow: 0 2px 8px rgba(0,0,0,.25); }
+.gantt-drag-tip { position: fixed; z-index: 400; pointer-events: none; padding: 2px 8px; border-radius: var(--r-xs); font-size: var(--fs-12); background: var(--text); color: var(--panel); white-space: nowrap; box-shadow: 0 2px 8px var(--shadow-ink-strong); }
 .gantt-rows { position: relative; }
 .gantt-row-bg.spacer { background: color-mix(in srgb, var(--panel-2) 50%, transparent); }
 .gantt-row-bg { position: absolute; left: 0; right: 0; height: var(--row-h); border-bottom: 1px solid var(--border); }
@@ -1407,7 +1411,7 @@ input.inline-edit[type=date]::-webkit-calendar-picker-indicator { margin: 0 0 0 
 .gantt-bracket { position: absolute; width: 10px; height: 20px; border: 2px solid var(--text-dim);}
 .gantt-bracket.br-start { border-right: none; }
 .gantt-bracket.br-end { border-left: none; }
-.gantt-bar .fill { position: absolute; top: 0; left: 0; bottom: 0; background: rgba(255,255,255,.3); }
+.gantt-bar .fill { position: absolute; top: 0; left: 0; bottom: 0; background: var(--on-fill-soft); }
 .gantt-bar.manual .fill { background: var(--bar-color, var(--accent)); }
 .gantt-out-label { position: absolute; height: 20px; line-height: 20px; font-size: var(--fs-11); color: var(--text-dim); white-space: nowrap; pointer-events: none; z-index: 1; }
 .gantt-bar .bar-label { position: absolute; left: 6px; top: 0; line-height: 20px; font-size: var(--fs-11); font-weight: 500; color: var(--on-accent); white-space: nowrap; pointer-events: none; mix-blend-mode: normal; }
@@ -1453,7 +1457,7 @@ svg.gantt-deps path.hl.critical { stroke: var(--danger); }
 .resource-timeline { position: relative; flex-shrink: 0; height: 100%; }
 .res-load-seg { position: absolute; top: 5px; height: 22px; border-radius: var(--r-xs); background: color-mix(in srgb, var(--accent) 55%, var(--panel)); }
 .res-load-seg.over { background: color-mix(in srgb, var(--danger) 65%, var(--panel));}
-.res-load-seg span { display: block; font-size: var(--fs-11); font-weight: 600; line-height: 22px; color: #fff; text-align: center; overflow: hidden; white-space: nowrap; text-overflow: clip; padding: 0 2px; }
+.res-load-seg span { display: block; font-size: var(--fs-11); font-weight: 600; line-height: 22px; color: var(--on-accent); text-align: center; overflow: hidden; white-space: nowrap; text-overflow: clip; padding: 0 2px; }
 .res-load-seg.over:hover { filter: brightness(1.08); box-shadow: 0 0 0 2px color-mix(in srgb, var(--danger) 40%, transparent); }
 .res-legend { display: flex; align-items: center; gap: 6px; font-size: var(--fs-12); color: var(--text-dim); white-space: nowrap; }
 .res-legend .sw { width: 12px; height: 12px; border-radius: var(--r-xs); background: color-mix(in srgb, var(--accent) 55%, var(--panel)); }
@@ -1838,7 +1842,7 @@ label.trow.tpick:hover { background: var(--hover); }
 .insp .fi-file { margin: 0 14px; font-size: var(--fs-14); }
 .insp .fi-summary { margin: 0 14px; font-size: var(--fs-13); }
 .insp .fi-preview { border: 0; background: color-mix(in srgb, var(--text) 5%, transparent); border-radius: var(--r-m); padding: 8px 14px; }
-.insp .fi-warn { margin: 0; border-left: 0; border-radius: var(--r-m); padding: 10px 14px; background: color-mix(in srgb, #bf8700 12%, transparent); }
+.insp .fi-warn { margin: 0; border-left: 0; border-radius: var(--r-m); padding: 10px 14px; background: color-mix(in srgb, var(--warning) 12%, transparent); }
 .insp .fi-fmt { flex-basis: 280px; }
 .insp .rs-details > summary { margin: 0 14px; font-size: var(--fs-12); font-weight: 600; color: var(--blue-text); }
 .insp .rs-list { margin: 6px 0 0; padding: 4px 14px; border-radius: var(--r-m); background: color-mix(in srgb, var(--text) 5%, transparent); gap: 0; max-height: 200px; }
@@ -1989,7 +1993,7 @@ html.time12 :is(#calendarModalBg) :is(.wh-day-row, .wh-break-add) input.dt-time 
 .dt-cal:disabled { opacity: .4; cursor: default; }
 .dt-native { position: absolute; right: 0; bottom: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 input.dt-date.dt-err, input.dt-time.dt-err { border-color: var(--danger); }
-.dt-err-bubble { position: fixed; z-index: 500; background: var(--danger); color: #fff; font-size: var(--fs-12); padding: 4px 8px; border-radius: var(--r-s); box-shadow: var(--shadow); opacity: 0; pointer-events: none; transform: translateY(-3px); transition: opacity .12s ease, transform .12s ease; max-width: 220px; }
+.dt-err-bubble { position: fixed; z-index: 500; background: var(--danger); color: var(--on-accent); font-size: var(--fs-12); padding: 4px 8px; border-radius: var(--r-s); box-shadow: var(--shadow); opacity: 0; pointer-events: none; transform: translateY(-3px); transition: opacity .12s ease, transform .12s ease; max-width: 220px; }
 .dt-err-bubble.show { opacity: 1; transform: translateY(0); }
 input.dt-time { width: 84px; flex: 0 0 84px; text-align: center; }
 .field-dt .dt-wrap { flex: 1 1 130px; min-width: 130px; }   /* the date: room for dd.mm.yyyy and the calendar button; grows to fill any extra room */   /* 104px: the native editor's own ~95px plus a little slack, same figure the grid's date columns use; grows to fill any extra room */
@@ -2169,16 +2173,16 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
    While the list is not the active area (focus in the Task Form or the sidebar, typing in a field, an inactive window) html.sel-inactive
    is on and the row is just a neutral grey with everything inside looking unselected: every white-on-blue rule is prefixed
    html:not(.sel-inactive), so a new selected-state rule needs that prefix too. */
-html:not(.sel-inactive) .grid-row.selected { --text: #fff; --text-dim: var(--sel-text-2); --text-faint: var(--sel-text-3); --border: var(--sel-line); }
-html:not(.sel-inactive) .grid-row.selected .status-pill { background: var(--sel-fill); color: #fff; }
+html:not(.sel-inactive) .grid-row.selected { --text: var(--on-accent); --text-dim: var(--sel-text-2); --text-faint: var(--sel-text-3); --border: var(--sel-line); }
+html:not(.sel-inactive) .grid-row.selected .status-pill { background: var(--sel-fill); color: var(--on-accent); }
 html:not(.sel-inactive) .grid-row.selected i { color: inherit; }
 html:not(.sel-inactive) .grid-row.selected > .chg { background-color: var(--sel-fill); }
 html:not(.sel-inactive) .grid-row.selected :is(input, select, textarea, .inline-wrap) { --text: var(--ink); --text-dim: var(--ink-2); --text-faint: var(--ink-3); --border: var(--border-2); color: var(--ink); }
 html:not(.sel-inactive) .grid-row.selected .grid-actions { background: linear-gradient(var(--sel-fill), var(--sel-fill)) padding-box, linear-gradient(var(--row-bg), var(--row-bg)) border-box; border-color: var(--sel-halo); }   /* ClearDesk's: a translucent white capsule with a crisp ring and white glyphs on the accent */
-html:not(.sel-inactive) .grid-row.selected .grid-actions .icon-btn { color: #fff; }
-html:not(.sel-inactive) .grid-row.selected .grid-actions .icon-btn:hover { background: var(--sel-fill-hover); color: #fff; }
-html:not(.sel-inactive) .grid-row.selected .grid-actions .icon-btn.btn-danger { color: #fff; }
-html:not(.sel-inactive) .grid-row.selected .grid-actions .icon-btn.btn-danger:hover { background: var(--sel-fill-hover); color: #fff; }
+html:not(.sel-inactive) .grid-row.selected .grid-actions .icon-btn { color: var(--on-accent); }
+html:not(.sel-inactive) .grid-row.selected .grid-actions .icon-btn:hover { background: var(--sel-fill-hover); color: var(--on-accent); }
+html:not(.sel-inactive) .grid-row.selected .grid-actions .icon-btn.btn-danger { color: var(--on-accent); }
+html:not(.sel-inactive) .grid-row.selected .grid-actions .icon-btn.btn-danger:hover { background: var(--sel-fill-hover); color: var(--on-accent); }
 html:not(.sel-inactive) .grid-row.selected .name-text.editable:hover, html:not(.sel-inactive) .grid-row.selected .grid-cell-dim.editable:hover { background: var(--sel-fill); }
 html.sel-inactive .grid-row.selected { --row-bg: var(--sel-inactive); }
 html.sel-inactive .gantt-row-bg.selected { background: var(--cap-fill); }
@@ -2234,6 +2238,8 @@ html.sidebar-collapsed .bar-title { display: block; }
 .subbar .tool-group > :disabled { opacity: .4; }
 .dropdown-item > .mode-check:first-child { margin-left: 0; width: 18px; font-size: var(--ico-14); }   /* a pick list: the tick comes first, then the label */
 a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every control keeps the arrow */
+/* Reduce Motion (System Settings → Accessibility): nothing moves on its own and nothing slides: the spinner and the jump flash stop, state changes are instant. */
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; transition-delay: 0s !important; scroll-behavior: auto !important; } }
 </style>
 </head>
 <body>
@@ -2507,7 +2513,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 <!-- Plan name modal (New plan / Rename plan) -->
 <div class="modal-bg" id="planModalBg" onclick="if(event.target===this) closePlanModal()">
   <div class="modal narrow insp">
-    <div class="modal-header"><h2 id="planModalTitle">New plan</h2><button onclick="closePlanModal()" aria-label="Close">&times;</button></div>
+    <div class="modal-header"><h2 id="planModalTitle">New Plan</h2><button onclick="closePlanModal()" aria-label="Close">&times;</button></div>
     <div class="modal-body">
       <div class="tgrp"><div class="trow"><label for="planNameInput" class="tgrow">Plan name</label><input type="text" id="planNameInput" class="tin" maxlength="80" onkeydown="if(event.key==='Enter'){event.preventDefault();submitPlanModal()}"></div></div>
       <p class="cal-hint" id="planModalHint"></p>
@@ -2562,7 +2568,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 <div class="modal-bg" id="importModalBg" onclick="if(event.target===this) closeImportModal()">
   <div class="modal alert alert-wide" tabindex="-1" aria-labelledby="importTitle" aria-describedby="importInfo">
     <span class="alert-ico" aria-hidden="true"><i class="fa-solid fa-circle-info"></i></span>
-    <h3 id="importTitle">Import data</h3>
+    <h3 id="importTitle">Import Data</h3>
     <p id="importInfo"></p>
     <p class="alert-info"><strong>Merge</strong> keeps your tasks. <strong>Replace</strong> overwrites them after a backup.</p>
     <div class="modal-actions">
@@ -2599,7 +2605,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 
 <div class="modal-bg" id="bulkModalBg" onclick="if(event.target===this) requestCloseBulkModal()">
   <div class="modal mid insp">
-    <div class="modal-header"><h2 id="bulkTitle">Edit tasks</h2><button onclick="requestCloseBulkModal()" aria-label="Close">&times;</button></div>
+    <div class="modal-header"><h2 id="bulkTitle">Edit Tasks</h2><button onclick="requestCloseBulkModal()" aria-label="Close">&times;</button></div>
     <div class="modal-body">
       <p class="bulk-hint" id="bulkHint"></p>
       <div class="tgrp">
@@ -2620,12 +2626,12 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 
 <div class="search-pop" id="searchModalBg" onmousedown="event.preventDefault()">   <!-- the results under the sidebar's Find field; mousedown is kept off so the field keeps focus -->
   <div class="search-results" id="searchResults" role="listbox"></div>
-  <div class="search-foot" id="searchFoot"><span data-shift><button type="button" class="btn-link" onclick="searchFilter()" title="Show only the matching tasks in the list (Shift+Enter)">Show Only Matches</button></span><span><button type="button" class="btn-link" onclick="openReplaceFromFind()" title="Find and replace (Ctrl+H)">Replace…</button></span><span class="search-count" id="searchCount"></span></div>
+  <div class="search-foot" id="searchFoot"><span data-shift><button type="button" class="btn-link" onclick="searchFilter()" title="Show only the matching tasks in the list (Shift+Enter)">Show Only Matches</button></span><span><button type="button" class="btn-link" onclick="openReplaceFromFind()" title="Find and replace (Ctrl+H)" id="searchReplaceBtn">Replace…</button></span><span class="search-count" id="searchCount"></span></div>
 </div>
 
 <div class="modal-bg" id="replaceModalBg" onclick="if(event.target===this) closeReplace()">
   <div class="modal mid insp" role="dialog" aria-labelledby="replaceTitle">
-    <div class="modal-header"><h2 id="replaceTitle">Find and replace</h2><button onclick="closeReplace()" aria-label="Close">&times;</button></div>
+    <div class="modal-header"><h2 id="replaceTitle">Find and Replace</h2><button onclick="closeReplace()" aria-label="Close">&times;</button></div>
     <div class="modal-body">
       <div class="tgrp">
         <div class="trow"><label for="frFind" class="tgrow">Find</label><input type="text" id="frFind" class="tin" autocomplete="off" spellcheck="false" oninput="renderReplace()"></div>
@@ -2655,7 +2661,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 
 <div class="modal-bg" id="printModalBg" onclick="if(event.target===this) closePrintModal()">
   <div class="modal print-modal insp" role="dialog" aria-labelledby="printModalTitle">
-    <div class="modal-header"><h2 id="printModalTitle">Print or save as PDF</h2><button onclick="closePrintModal()" aria-label="Close">&times;</button></div>
+    <div class="modal-header"><h2 id="printModalTitle">Print or Save as PDF</h2><button onclick="closePrintModal()" aria-label="Close">&times;</button></div>
     <div class="print-layout">
       <div class="print-opts" oninput="printOptionChanged()" onchange="printOptionChanged()">
         <div class="tgrp">
@@ -2701,7 +2707,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 <!-- Backups modal -->
 <div class="modal-bg" id="backupsModalBg" onclick="if(event.target===this) closeBackupsModal()">
   <div class="modal narrow insp">
-    <div class="modal-header"><h2>Local backups</h2><button onclick="closeBackupsModal()" aria-label="Close">&times;</button></div>
+    <div class="modal-header"><h2>Local Backups</h2><button onclick="closeBackupsModal()" aria-label="Close">&times;</button></div>
     <div class="modal-body"><p class="cal-hint">One snapshot a day.</p><div class="tgrp" id="backupsList"></div></div>
     <div class="modal-footer"><button class="btn" onclick="closeBackupsModal()">Close</button></div>
   </div>
@@ -2745,7 +2751,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 <!-- Rename custom field (opens above the task dialog, so it sits after it in the page) -->
 <div class="modal-bg" id="fieldsModalBg" onclick="if(event.target===this) requestCloseFieldsModal()">
   <div class="modal wide settings-modal" id="fieldsModal">
-    <div class="modal-header"><div class="mh-title"><h2 id="fieldsModalTitle">Plan settings</h2><span class="ps-plan" id="fieldsPlanChip" data-ps-plan></span></div><button onclick="requestCloseFieldsModal()" aria-label="Close">&times;</button></div>
+    <div class="modal-header"><div class="mh-title"><h2 id="fieldsModalTitle">Plan Settings</h2><span class="ps-plan" id="fieldsPlanChip" data-ps-plan></span></div><button onclick="requestCloseFieldsModal()" aria-label="Close">&times;</button></div>
     <div class="settings-tabs" role="tablist" aria-label="Plan settings" data-current="fields"></div>
     <div class="modal-body">
       <div class="fields-rows" id="fieldsRows"></div>
@@ -2783,7 +2789,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 
 <div class="modal-bg" id="calendarModalBg" onclick="if(event.target===this) requestCloseCalendarModal()">
   <div class="modal wide settings-modal">
-    <div class="modal-header"><div class="mh-title"><h2>Plan settings</h2><span class="ps-plan" data-ps-plan></span><span class="cal-summary" id="calendarSummaryLive"></span></div><button onclick="requestCloseCalendarModal()" aria-label="Close">&times;</button></div>
+    <div class="modal-header"><div class="mh-title"><h2>Plan Settings</h2><span class="ps-plan" data-ps-plan></span><span class="cal-summary" id="calendarSummaryLive"></span></div><button onclick="requestCloseCalendarModal()" aria-label="Close">&times;</button></div>
     <div class="settings-tabs" role="tablist" aria-label="Plan settings" data-current="calendar"></div>
     <div class="modal-body">
       <section class="cal-sec">
@@ -2862,7 +2868,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 
 <div class="modal-bg" id="rulesModalBg" onclick="if(event.target===this) requestCloseRulesModal()">
   <div class="modal wide settings-modal">
-    <div class="modal-header"><div class="mh-title"><h2>Plan settings</h2><span class="ps-plan" data-ps-plan></span></div><button onclick="requestCloseRulesModal()" aria-label="Close">&times;</button></div>
+    <div class="modal-header"><div class="mh-title"><h2>Plan Settings</h2><span class="ps-plan" data-ps-plan></span></div><button onclick="requestCloseRulesModal()" aria-label="Close">&times;</button></div>
     <div class="settings-tabs" role="tablist" aria-label="Plan settings" data-current="rules"></div>
     <div class="modal-body">
       <section class="cal-sec">
@@ -2880,7 +2886,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 </div>
 <div class="modal-bg" id="formatModalBg" onclick="if(event.target===this) closeFormatModal()">
   <div class="modal wide settings-modal" role="dialog" aria-labelledby="formatTitle">
-    <div class="modal-header"><div class="mh-title"><h2 id="formatTitle">Plan settings</h2><span class="ps-plan" data-ps-plan></span></div><button onclick="closeFormatModal()" aria-label="Close">&times;</button></div>
+    <div class="modal-header"><div class="mh-title"><h2 id="formatTitle">Plan Settings</h2><span class="ps-plan" data-ps-plan></span></div><button onclick="closeFormatModal()" aria-label="Close">&times;</button></div>
     <div class="settings-tabs" role="tablist" aria-label="Plan settings" data-current="format"></div>
     <div class="modal-body">
       <section class="cal-sec">
@@ -2950,7 +2956,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 
 <div class="modal-bg" id="recurModalBg" onclick="if(event.target===this) closeRecurModal()">
   <div class="modal mid insp">
-    <div class="modal-header"><h2 id="recurTitle">Recurring task</h2><button onclick="closeRecurModal()" aria-label="Close">&times;</button></div>
+    <div class="modal-header"><h2 id="recurTitle">Recurring Task</h2><button onclick="closeRecurModal()" aria-label="Close">&times;</button></div>
     <div class="modal-body" id="recurBody">
       <div class="tgrp">
         <div class="trow"><label for="recurName" class="tgrow">Task name</label><input type="text" id="recurName" class="tin" maxlength="200" placeholder="Name"></div>
@@ -2986,7 +2992,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 </div>
 <div class="modal-bg" id="rescheduleModalBg" onclick="if(event.target===this) closeRescheduleModal()">
   <div class="modal mid insp">
-    <div class="modal-header"><h2>Reschedule remaining work</h2><button onclick="closeRescheduleModal()" aria-label="Close">&times;</button></div>
+    <div class="modal-header"><h2>Reschedule Remaining Work</h2><button onclick="closeRescheduleModal()" aria-label="Close">&times;</button></div>
     <div class="modal-body">
       <p class="cal-hint">Moves unfinished work to start from a date.</p>
       <section class="cal-sec">
@@ -3007,7 +3013,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 
 <div class="modal-bg" id="levelModalBg" onclick="if(event.target===this) closeLevelModal()">
   <div class="modal mid insp">
-    <div class="modal-header"><h2>Level resources</h2><button onclick="closeLevelModal()" aria-label="Close">&times;</button></div>
+    <div class="modal-header"><h2>Level Resources</h2><button onclick="closeLevelModal()" aria-label="Close">&times;</button></div>
     <div class="modal-body">
       <p class="cal-hint">Delays tasks so no resource is over-allocated.</p>
       <section class="cal-sec">
@@ -3036,7 +3042,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 
 <div class="modal-bg" id="syncConflictsModalBg" onclick="if(event.target===this) closeSyncConflictsModal()">
   <div class="modal insp">
-    <div class="modal-header"><h2>Changes made on both sides</h2><button onclick="closeSyncConflictsModal()" aria-label="Close">&times;</button></div>
+    <div class="modal-header"><h2>Changes Made on Both Sides</h2><button onclick="closeSyncConflictsModal()" aria-label="Close">&times;</button></div>
     <div class="modal-body">
       <p class="cal-hint">The newer edit was kept.</p>
       <div id="syncConflictsBody"></div>
@@ -3317,7 +3323,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 <!-- About modal -->
 <div class="modal-bg" id="shortcutsModalBg" onclick="if(event.target===this) closeShortcuts()">
   <div class="modal help-modal shortcuts-modal" role="dialog" aria-labelledby="shortcutsTitle">
-    <div class="modal-header"><h2 id="shortcutsTitle">Keyboard shortcuts</h2><button onclick="closeShortcuts()" aria-label="Close">&times;</button></div>
+    <div class="modal-header"><h2 id="shortcutsTitle">Keyboard Shortcuts</h2><button onclick="closeShortcuts()" aria-label="Close">&times;</button></div>
     <div class="help-layout">
       <div class="help-rail"><div class="help-nav" id="scNav"></div></div>
       <div class="help-panes"><div class="help-pane" id="shortcutsBody"></div></div>
@@ -8544,7 +8550,7 @@ function openTaskModal(id, isNew) {
   editingCell = null;
   editingTaskId = id;
   const t = byId(id);
-  document.getElementById('taskModalTitle').firstChild.textContent = isNew ? 'New task' : 'Edit task';
+  document.getElementById('taskModalTitle').firstChild.textContent = isNew ? 'New Task' : 'Edit Task';
   document.getElementById('taskModalIdBadge').textContent = `#${taskDisplayId(id)} · WBS ${wbsCode(id)}`;
   document.getElementById('taskNameInput').value = t.name === 'Untitled Task' && isNew ? '' : t.name;
   document.getElementById('taskModeInput').value = t.taskMode;
@@ -9401,7 +9407,7 @@ function openFieldsModal(addKind) {
     const standalone = document.getElementById('taskModalBg').classList.contains('open');
     document.querySelector('#fieldsModalBg .settings-tabs').classList.toggle('hidden', standalone);
     document.getElementById('fieldsModal').classList.toggle('standalone', standalone);   // over the task dialog: the task dialog's width, as tall as its content
-    document.getElementById('fieldsModalTitle').textContent = standalone ? 'Custom fields' : 'Plan settings';
+    document.getElementById('fieldsModalTitle').textContent = standalone ? 'Custom Fields' : 'Plan Settings';
     document.getElementById('fieldsPlanChip').textContent = standalone ? '' : '— ' + project.name;
   }
   closePlanMenu && closePlanMenu();
@@ -9879,7 +9885,7 @@ function openRecurModal(summaryId) {
   recurEditId = t && t.recurrence ? t.id : null;
   const r = recurEditId ? t.recurrence : { freq: 'weekly', every: 1, days: [weekdayOf(dayNumber(nextWorkDay(todayStr())))], start: nextWorkDay(todayStr()), count: 10, dur: minuteModeActive() ? 60 : 1 };
   const $ = id => document.getElementById(id), mm = minuteModeActive();
-  $('recurTitle').textContent = recurEditId ? 'Change recurring task' : 'Recurring task';
+  $('recurTitle').textContent = recurEditId ? 'Change Recurring Task' : 'Recurring Task';
   $('recurOkBtn').textContent = recurEditId ? 'Save' : 'Create';
   $('recurName').value = recurEditId ? t.name : '';
   $('recurDur').value = mm ? fmtDurationMinutes(r.dur) : String(r.dur);
@@ -11298,7 +11304,7 @@ function jumpToTask(id) {
   });
 }
 
-/* ---- Find and replace (Ctrl+H, or "Find and replace…" in the Find palette): changes text in one field of many tasks at once — Task Name,
+/* ---- Find and replace (Ctrl+H, ⌥⌘F on a Mac, or "Find and replace…" in the Find palette): changes text in one field of many tasks at once — Task Name,
    Resource, Notes or a custom Text field. Live preview (what each match turns into, struck-out / inserted), then one history step. The field's own
    rules still apply afterwards (normalizeData()): a name can't be left empty (that task is skipped and said so), a Resource that gains or loses
    a share goes through the Task Type triangle like a typed edit, a pool resource appears for any new name. ---- */
@@ -11686,7 +11692,11 @@ function doPrint() {
 const BULK_COLORS = [['', 'No colour'], ['blue', 'Blue'], ['teal', 'Teal'], ['purple', 'Purple'], ['amber', 'Amber'], ['pink', 'Pink'], ['green', 'Green'], ['red', 'Red'], ['grey', 'Grey']];
 function bulkCustomCols() { return visibleTaskCols(currentView).filter(isCustomField); }
 /* ------------------------ Add menu and the right-click menu ------------------------ */
-const MOD_KEY = /Mac|iPhone|iPad/.test(navigator.platform || '') ? '⌘' : 'Ctrl+';
+const IS_MAC = /Mac|iPhone|iPad/.test(navigator.platform || '');
+const MOD_KEY = IS_MAC ? '⌘' : 'Ctrl+';
+// Find and replace: ⌥⌘F on a Mac (the HIG avoids Control as a modifier, and Ctrl+H is "delete backward" in a Mac text field), Ctrl+H elsewhere.
+function isFindReplaceKey(e) { return IS_MAC ? e.metaKey && e.altKey && !e.ctrlKey && !e.shiftKey && e.code === 'KeyF' : e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'h'; }
+const FIND_REPLACE_HINT = IS_MAC ? '⌥⌘F' : 'Ctrl+H';
 function placeMenu(menu, x, y, alignRightOf) {   // a fixed menu at (x, y) kept inside the window
   menu.classList.add('open');
   const w = menu.offsetWidth, h = menu.offsetHeight;
@@ -11862,11 +11872,47 @@ function setSelectedColor(c) {
   for (const t of ts) { t.color = c || null; t.updatedAt = now; }
   if (ts.length) { save(); render(); }
 }
+// One row of a right-click menu (shared by the task, plan and resource menus). `off` leaves it out, as the HIG asks of a context menu.
+const ctxItem = (icon, label, fn, o = {}) => o.off ? '' : `<button class="dropdown-item${o.danger ? ' danger' : ''}" role="menuitem" onclick="closeRowMenu();${fn}"><i class="${icon}"></i>${label}${o.kbd ? `<span class="item-hint">${o.kbd}</span>` : ''}</button>`;
+// Right-click on a plan in the sidebar: the plan menu's commands for THAT plan. They all act on the open plan, so another plan is opened first.
+async function planRowRun(id, cmd) {
+  if (id !== currentPlanId && !(await switchPlan(id))) return;
+  ({ rename: () => openPlanModal('rename'), duplicate: duplicatePlan, unlink: disconnectFile, remove: deleteCurrentPlan })[cmd]();
+}
+function showPlanRowMenu(x, y, id) {
+  const idx = readPlansIndex(), rec = idx && planRecord(idx, id), menu = document.getElementById('rowMenu'); if (!rec || !isSafeId(id)) return;
+  const cur = id === currentPlanId, linked = fileSyncSupported() && (cur ? !!syncFileHandle : !!rec.fileName), sep = '<div class="dropdown-sep"></div>';
+  menu.innerHTML = tidyMenuSeps([ctxItem('fa-regular fa-folder-open', 'Open Plan', `switchPlan('${id}')`, { off: cur }), cur ? '' : sep,
+    ctxItem('fa-solid fa-pen', 'Rename Plan…', `planRowRun('${id}','rename')`), ctxItem('fa-regular fa-duplicate', 'Duplicate Plan…', `planRowRun('${id}','duplicate')`),
+    ctxItem('fa-solid fa-link-slash', 'Unlink File…', `planRowRun('${id}','unlink')`, { off: !linked }), sep,
+    ctxItem('fa-solid fa-trash', 'Delete Plan…', `planRowRun('${id}','remove')`, { danger: true })].join(''));
+  closeDataMenu(); closePlanMenu(); closeColumnsMenu(); closeFilterMenu(); closeTaskModeMenu(); closeTaskTypeMenu(); closeAddMenu();
+  placeMenu(menu, x, y);
+}
+function onPlanRowContextMenu(e) {
+  if (document.querySelector('.modal-bg.open')) return;
+  const row = e.target.closest && e.target.closest('.sb-plan-row'); if (!row) return;
+  e.preventDefault(); showPlanRowMenu(e.clientX, e.clientY, row.dataset.planId);
+}
+// Right-click on a Resource Sheet row: add, days off, remove. A text box with selected text keeps the browser's own menu (cut / copy / paste).
+function showResourceRowMenu(x, y, id) {
+  const menu = document.getElementById('rowMenu'), sep = '<div class="dropdown-sep"></div>';
+  menu.innerHTML = tidyMenuSeps([ctxItem('fa-solid fa-plus', 'Add Resource', 'addResourceSheetRow()'), ctxItem('fa-solid fa-calendar-days', 'Days Off…', `openResourceDaysModal('${id}')`), sep,
+    ctxItem('fa-solid fa-trash', 'Remove Resource', `removeResourceSheetRow('${id}')`, { danger: true })].join(''));
+  closeDataMenu(); closePlanMenu(); closeColumnsMenu(); closeFilterMenu(); closeTaskModeMenu(); closeTaskTypeMenu(); closeAddMenu();
+  placeMenu(menu, x, y);
+}
+function onResourceRowContextMenu(e) {
+  if (document.querySelector('.modal-bg.open')) return;
+  const t = e.target, row = t.closest && t.closest('.rst-row'); if (!row || !isSafeId(row.dataset.id)) return;
+  if (t.matches && t.matches('input[type=text], input[type=number], textarea') && t.selectionStart !== t.selectionEnd) return;
+  e.preventDefault(); showResourceRowMenu(e.clientX, e.clientY, row.dataset.id);
+}
 function showRowMenu(x, y, onRow) {
   const ids = onRow ? selectedIds() : [], n = ids.length, real = ids.filter(id => !byId(id).spacer).length, menu = document.getElementById('rowMenu');
-  const item = (icon, label, fn, o = {}) => o.off ? '' : `<button class="dropdown-item${o.danger ? ' danger' : ''}" role="menuitem" onclick="closeRowMenu();${fn}"><i class="${icon}"></i>${label}${o.kbd ? `<span class="item-hint">${o.kbd}</span>` : ''}</button>`;
+  const item = ctxItem;
   const sep = '<div class="dropdown-sep"></div>', parts = [];
-  if (real) parts.push(item('fa-solid fa-pen', real === 1 ? 'Edit task…' : `Edit ${real} tasks…`, 'editSelected()'));
+  if (real) parts.push(item('fa-solid fa-pen', real === 1 ? 'Edit Task…' : `Edit ${real} Tasks…`, 'editSelected()'));
   { const one = ids.length === 1 && byId(ids[0]); if (one && one.recurrence) parts.push(item('fa-solid fa-repeat', 'Change Recurrence…', `openRecurModal('${one.id}')`)); }
   if (real) parts.push(item('fa-regular fa-circle-check', 'Mark Complete', 'markSelectedComplete()', { off: !ids.some(id => { const t = byId(id); return !t.spacer && !hasChildren(id) && t.progress < 100; }) }));   // (with Edit: both change the task you clicked)
   if (real) {
@@ -11874,14 +11920,14 @@ function showRowMenu(x, y, onRow) {
     const m = same(t => t.taskMode || 'auto'), ty = same(t => (t.taskType === 'fixedDuration' || t.taskType === 'fixedWork') ? t.taskType : 'fixedUnits'), co = same(t => t.color || '');
     parts.push(rowSubMenu('fa-solid fa-thumbtack', 'Task Mode', TASK_MODES.map(x => [`<i class="fa-solid ${x.icon}"></i>`, x.label, `setSelectedMode('${x.id}')`, m === x.id])));
     if (ts.some(t => !t.milestone && !hasChildren(t.id))) parts.push(rowSubMenu('fa-solid fa-percent', 'Task Type', TASK_TYPES.map(x => [`<i class="fa-solid ${x.icon}"></i>`, x.label, `setSelectedType('${x.id}')`, ty === x.id])));
-    parts.push(rowSubMenu('fa-solid fa-palette', 'Color', [['<span class="sub-dot sub-none"></span>', 'No colour', "setSelectedColor('')", co === '']].concat(TASK_COLORS.map(c => [`<span class="sub-dot" style="background:var(--task-${c.id})"></span>`, c.label, `setSelectedColor('${c.id}')`, co === c.id]))));
+    parts.push(rowSubMenu('fa-solid fa-palette', 'Color', [['<span class="sub-dot sub-none"></span>', 'No Color', "setSelectedColor('')", co === '']].concat(TASK_COLORS.map(c => [`<span class="sub-dot" style="background:var(--task-${c.id})"></span>`, c.label, `setSelectedColor('${c.id}')`, co === c.id]))));
   }
   if (parts.length) parts.push(sep);   // (what you can do to this task, then what you can add)
-  const addLabel = !n ? 'Add task' : ids.length === 1 && hasChildren(ids[0]) ? 'Add sub-task' : 'Add task below';   // (under a group the new task becomes its first sub-task)
+  const addLabel = !n ? 'Add Task' : ids.length === 1 && hasChildren(ids[0]) ? 'Add Sub-task' : 'Add Task Below';   // (under a group the new task becomes its first sub-task)
   parts.push(item('fa-solid fa-plus', addLabel, 'addTask()'), item('fa-solid fa-grip-lines', 'Add Empty Line', 'addSpacer()'));
   if (n) parts.push(sep, item('fa-regular fa-duplicate', 'Duplicate', 'cloneSelected()'), item('fa-regular fa-copy', 'Copy', 'copySelectionButton()', { kbd: MOD_KEY + 'C' }), item('fa-solid fa-scissors', 'Cut', 'copySelection(null, true)', { kbd: MOD_KEY + 'X' }));
   parts.push(n ? '' : sep, item('fa-regular fa-paste', 'Paste', 'pasteButton()', { kbd: MOD_KEY + 'V' }));
-  if (n) parts.push(sep, item('fa-solid fa-indent', 'Indent', 'indentSelected()'), item('fa-solid fa-outdent', 'Outdent', 'outdentSelected()', { off: !ids.some(id => byId(id).parentId) }), sep, item('fa-solid fa-trash', n > 1 ? `Delete ${n} tasks` : 'Delete', 'deleteSelected()', { danger: true, kbd: 'Del' }));
+  if (n) parts.push(sep, item('fa-solid fa-indent', 'Indent', 'indentSelected()'), item('fa-solid fa-outdent', 'Outdent', 'outdentSelected()', { off: !ids.some(id => byId(id).parentId) }), sep, item('fa-solid fa-trash', n > 1 ? `Delete ${n} Tasks` : 'Delete', 'deleteSelected()', { danger: true, kbd: 'Del' }));
   menu.innerHTML = tidyMenuSeps(parts.join(''));   // (a command that does not apply to these rows is left out, not dimmed)
   closeDataMenu(); closePlanMenu(); closeColumnsMenu(); closeFilterMenu(); closeTaskModeMenu(); closeTaskTypeMenu(); closeAddMenu();
   placeMenu(menu, x, y);
@@ -11889,7 +11935,7 @@ function showRowMenu(x, y, onRow) {
 function showGroupHeaderMenu(x, y, enc) {   // right-click on a group header (Group by): fold it, fold or open them all, or clear the grouping
   const h = displayRows().find(r => r.header && r.id === decodeURIComponent(enc)), menu = document.getElementById('rowMenu');
   const item = (icon, label, fn) => `<button class="dropdown-item" role="menuitem" onclick="closeRowMenu();${fn}"><i class="${icon}"></i>${label}</button>`, sep = '<div class="dropdown-sep"></div>';
-  menu.innerHTML = [h ? item(h.collapsed ? 'fa-solid fa-chevron-down' : 'fa-solid fa-chevron-right', h.collapsed ? 'Expand this group' : 'Collapse this group', `groupToggle('${enc}')`) : '',
+  menu.innerHTML = [h ? item(h.collapsed ? 'fa-solid fa-chevron-down' : 'fa-solid fa-chevron-right', h.collapsed ? 'Expand Group' : 'Collapse Group', `groupToggle('${enc}')`) : '',
     item('fa-solid fa-angles-up', 'Collapse All Groups', 'groupFoldAll(true)'), item('fa-solid fa-angles-down', 'Expand All Groups', 'groupFoldAll(false)'), sep,
     item('fa-solid fa-xmark', 'Clear Grouping', 'setGroup(null)')].join('');
   closeDataMenu(); closePlanMenu(); closeColumnsMenu(); closeFilterMenu(); closeTaskModeMenu(); closeTaskTypeMenu(); closeAddMenu();
@@ -11915,7 +11961,7 @@ function editSelected() {
 function openBulkModal() {
   const ids = selectedIds().filter(id => !byId(id).spacer); if (!ids.length) return;   // (empty lines have no fields)
   const groups = ids.filter(id => hasChildren(id)).length;
-  document.getElementById('bulkTitle').textContent = ids.length === 1 ? 'Edit task' : `Edit ${ids.length} tasks`;
+  document.getElementById('bulkTitle').textContent = ids.length === 1 ? 'Edit Task' : `Edit ${ids.length} Tasks`;
   document.getElementById('bulkHint').textContent = `Tick the fields to change.${groups ? ' Groups keep their worked-out progress and dates.' : ''}`;
   for (const f of ['progress', 'resource', 'mode', 'worktype', 'work', 'color', 'shift', 'pred']) document.getElementById('bulkOn-' + f).checked = false;
   for (const id of ['bulkVal-progress', 'bulkVal-resource', 'bulkVal-work', 'bulkVal-shift', 'bulkVal-predId', 'bulkVal-predLag']) document.getElementById(id).value = '';
@@ -13503,6 +13549,7 @@ function disconnectFile() {
   if (!syncFileHandle) return;
   openConfirmModal({
     title: 'Unlink file',
+    icon: 'link-slash',   // a red dialog with no icon of its own shows the trash can, which says "deleted"
     body: `Stop saving <strong>${escapeHtml(project.name)}</strong> to <strong>${escapeHtml(syncFileHandle.name)}</strong>? The file keeps everything saved so far and is not deleted. Every plan needs a file, so you'll be asked to choose one straight away — the same file again, another one, or a new one.`,
     confirmLabel: 'Unlink',   // the default filled red button, as in ClearDesk (the file is kept, but the plan loses its file until you choose one)
     action: unlinkFile
@@ -13700,7 +13747,7 @@ function openPlanModal(mode) {
   closePlanMenu();
   planModalMode = mode;
   const isNew = mode === 'new';
-  document.getElementById('planModalTitle').textContent = isNew ? 'New plan' : 'Rename plan';
+  document.getElementById('planModalTitle').textContent = isNew ? 'New Plan' : 'Rename Plan';
   const needsFile = fileSyncSupported();
   document.getElementById('planSubmitBtn').textContent = isNew ? (needsFile ? 'Create…' : 'Create') : 'Rename';
   document.getElementById('planModalHint').textContent = !isNew ? '' : needsFile
@@ -13835,7 +13882,7 @@ const SHORTCUTS = [
   ['Anywhere', [
     [['?'], 'Show this sheet'],
     [['Mod+K', '/'], 'Find a task'],
-    [['Ctrl+H'], 'Find and replace in many tasks'],
+    [[IS_MAC ? 'Alt+Mod+F' : 'Ctrl+H'], 'Find and replace in many tasks'],
     [['Mod+P'], 'Print'],
     [['Esc'], 'Close the open dialog or menu; otherwise clear the selection'],
     [['Mod+Z'], 'Undo'], [['Mod+Shift+Z', 'Mod+Y'], 'Redo']]],
@@ -13863,7 +13910,7 @@ const SHORTCUTS = [
 ];
 function shortcutKeysHtml(keys) {
   const mac = /Mac|iPhone|iPad/.test(navigator.platform || '');
-  const one = k => k.split('+').map(x => `<kbd>${x === 'Mod' ? (mac ? '⌘' : 'Ctrl') : x === 'Shift' && mac ? '⇧' : x}</kbd>`).join('');
+  const one = k => k.split('+').map(x => `<kbd>${x === 'Mod' ? (mac ? '⌘' : 'Ctrl') : x === 'Shift' && mac ? '⇧' : x === 'Alt' && mac ? '⌥' : x}</kbd>`).join('');
   return keys.map(one).join('<span class="sc-or">or</span>');
 }
 const SHORTCUT_NAV = [['Anywhere', 'compass'], ['Tasks', 'table-list'], ['Task list', 'arrows-left-right'], ['Resource Sheet', 'users'], ['Editing a cell', 'pen'], ['Find', 'magnifying-glass'], ['Dialogs', 'sliders']];
@@ -14070,6 +14117,9 @@ function wireGlobalEvents() {
     if (!e.target.closest('#cfAddMenu') && !e.target.closest('#cfAddBtn') && !e.target.closest('#fieldsAddBtn')) closeCfAddMenu();
   });
   for (const id of ['gridRows', 'ganttRows']) document.getElementById(id).addEventListener('contextmenu', onListContextMenu);
+  document.getElementById('sbPlans').addEventListener('contextmenu', onPlanRowContextMenu);
+  document.getElementById('resourceSheetBody').addEventListener('contextmenu', onResourceRowContextMenu);
+  { const si = document.getElementById('searchInput'), rb = document.getElementById('searchReplaceBtn'); if (si) si.placeholder = si.placeholder.replace('Ctrl+H', FIND_REPLACE_HINT); if (rb) rb.title = rb.title.replace('Ctrl+H', FIND_REPLACE_HINT); }   // the shortcut is platform-specific (isFindReplaceKey)
   window.addEventListener('blur', closeToolbarMenus);
   document.addEventListener('keydown', (e) => {
     if ((e.ctrlKey || e.metaKey) && !e.altKey && (e.key.toLowerCase() === 'z' || e.key.toLowerCase() === 'y')) {   // Ctrl/Cmd+Z undo, +Shift+Z or Ctrl+Y redo
@@ -14084,7 +14134,7 @@ function wireGlobalEvents() {
     if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'a' && !typingNow && !modalOpen) { e.preventDefault(); setSelection(displayedTaskIds()); render(); return; }   // select every visible task
     if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'k' && !document.querySelector('.modal-bg.open:not(#searchModalBg)')) { e.preventDefault(); if (document.getElementById('searchModalBg').classList.contains('open')) closeSearch(); else openSearch(); return; }
     if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'p' && !document.querySelector('.modal-bg.open:not(#printModalBg)')) { e.preventDefault(); if (!document.getElementById('printModalBg').classList.contains('open')) openPrintModal(); return; }   // Ctrl/Cmd+P opens our print dialog instead of printing the screen
-    if (e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'h' && !document.querySelector('.modal-bg.open:not(#searchModalBg):not(#replaceModalBg)')) { e.preventDefault(); if (document.getElementById('replaceModalBg').classList.contains('open')) closeReplace(); else openReplaceFromFind(); return; }   // Ctrl+H on every platform (Cmd+H hides the browser on a Mac)
+    if (isFindReplaceKey(e) && !document.querySelector('.modal-bg.open:not(#searchModalBg):not(#replaceModalBg)')) { e.preventDefault(); if (document.getElementById('replaceModalBg').classList.contains('open')) closeReplace(); else openReplaceFromFind(); return; }   // Ctrl+H on every platform (Cmd+H hides the browser on a Mac)
     if (e.key === '?' && !typingNow && !modalOpen && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); openShortcuts(); return; }
     if (e.key === '/' && !typingNow && !modalOpen && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); openSearch(); return; }
     if ((e.key === 'Delete' || e.key === 'Backspace') && !typingNow && !modalOpen && !editingCell && selectedIds().length) { e.preventDefault(); deleteSelected(); return; }

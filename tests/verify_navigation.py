@@ -99,8 +99,8 @@ with sync_playwright() as p:
     pg.keyboard.press("Escape")
     pg.click("#planSettingsBtn"); pg.wait_for_timeout(150)
     open_bg = lambda: ev("() => [...document.querySelectorAll('.modal-bg.open')].map(e => e.id)")
-    check("Plan settings opens on its Calendar tab, titled 'Plan settings', the four tabs across the top",
-          open_bg() == ["calendarModalBg"] and pg.inner_text("#calendarModalBg h2") == "Plan settings"
+    check("Plan settings opens on its Calendar tab, titled 'Plan Settings', the four tabs across the top",
+          open_bg() == ["calendarModalBg"] and pg.inner_text("#calendarModalBg h2") == "Plan Settings"
           and [t.strip() for t in pg.locator("#calendarModalBg .settings-tab").all_inner_texts()] == ["Calendar", "Scheduling rules", "Custom fields", "Formats"], open_bg())
     size = lambda bg: ev("bg => { const r = document.querySelector('#' + bg + ' .modal').getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height)]; }", bg)
     s_cal = size("calendarModalBg")
@@ -149,10 +149,10 @@ with sync_playwright() as p:
     # custom fields from the task dialog: stands alone, no tabs
     ev("() => openTaskModal('a')"); pg.wait_for_timeout(120)
     ev("() => openFieldsModal()"); pg.wait_for_timeout(120)
-    check("Custom fields opened over the task dialog stands alone: titled 'Custom fields', no settings tabs", pg.inner_text("#fieldsModalTitle") == "Custom fields" and not pg.locator("#fieldsModalBg .settings-tabs").is_visible())
+    check("Custom fields opened over the task dialog stands alone: titled 'Custom Fields', no settings tabs", pg.inner_text("#fieldsModalTitle") == "Custom Fields" and not pg.locator("#fieldsModalBg .settings-tabs").is_visible())
     ev("() => { closeFieldsModal(); closeTaskModal(); }")
     ev("() => openPlanSettings('fields')"); pg.wait_for_timeout(120)
-    check("...but as a Plan settings tab it has the tabs and the Plan settings title", pg.inner_text("#fieldsModalTitle") == "Plan settings" and pg.locator("#fieldsModalBg .settings-tabs").is_visible())
+    check("...but as a Plan settings tab it has the tabs and the Plan Settings title", pg.inner_text("#fieldsModalTitle") == "Plan Settings" and pg.locator("#fieldsModalBg .settings-tabs").is_visible())
     pg.keyboard.press("Escape"); pg.wait_for_timeout(100)
     check("Escape closes Plan settings", open_bg() == [])
 

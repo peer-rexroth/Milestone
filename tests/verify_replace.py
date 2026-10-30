@@ -19,7 +19,7 @@ SEED = """() => { historyCoalesceMs = 0; project.workDays = [0,1,2,3,4,5,6]; del
   normalizeData(); save(); setSelection([]); currentView = 'tasks'; render(); resetHistory(); }"""
 with sync_playwright() as p:
     b = p.chromium.launch()
-    ctx = b.new_context(viewport={"width": 1300, "height": 800}); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
+    ctx = b.new_context(viewport={"width": 1300, "height": 800}); ctx.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker; Object.defineProperty(navigator, 'platform', {get: () => 'Linux x86_64'})")
     pg = ctx.new_page(); pg.on("pageerror", lambda e: errors.append(str(e))); pg.on("console", lambda m: errors.append(m.text) if m.type == "error" else None)
     pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn")
     ev = pg.evaluate; ev(SEED); pg.wait_for_timeout(250)

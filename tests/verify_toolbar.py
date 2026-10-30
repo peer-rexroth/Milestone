@@ -77,7 +77,7 @@ with sync_playwright() as p:
     fresh()
     rclick("Beta")
     check("right-click on a row selects it and opens the menu at the pointer (the browser's own menu is not used)", sel() == ["Beta"] and menu_open("rowMenu"), sel())
-    check("...the menu: Edit, Mark Complete, Task Mode / Type / Color flyouts, Add task below, Add Empty Line, Duplicate, Copy, Cut, Paste, Indent, Outdent, Delete", items() == ["Edit task…", "Mark Complete", "Task Mode", "Task Type", "Color", "Add task below", "Add Empty Line", "Duplicate", "Copy", "Cut", "Paste", "Indent", "Outdent", "Delete"], items())
+    check("...the menu: Edit, Mark Complete, Task Mode / Type / Color flyouts, Add Task Below, Add Empty Line, Duplicate, Copy, Cut, Paste, Indent, Outdent, Delete", items() == ["Edit Task…", "Mark Complete", "Task Mode", "Task Type", "Color", "Add Task Below", "Add Empty Line", "Duplicate", "Copy", "Cut", "Paste", "Indent", "Outdent", "Delete"], items())
     check("...dividers: what you can do to the task (Edit…, Mark Complete, the flyouts), then what you can add; then clipboard, structure and delete each in their own block", ev("() => [...document.querySelectorAll('#rowMenu > *')].map(e => e.classList.contains('dropdown-sep') ? '|' : e.classList.contains('sub-wrap') ? e.firstElementChild.textContent.trim().replace(/\\s.*/, '') : [...e.childNodes].filter(x => x.nodeType === 3).map(x => x.textContent).join('').trim().replace(/\\s.*/, '')).join(' ')") == "Edit Mark Task Task Color | Add Add | Duplicate Copy Cut Paste | Indent Outdent | Delete", ev("() => [...document.querySelectorAll('#rowMenu > *')].map(e => e.classList.contains('dropdown-sep') ? '|' : e.classList.contains('sub-wrap') ? e.firstElementChild.textContent.trim().replace(/\\s.*/, '') : [...e.childNodes].filter(x => x.nodeType === 3).map(x => x.textContent).join('').trim().replace(/\\s.*/, '')).join(' ')"))
     check("...it stays inside the window (bottom rows near the edge)", ev("() => { const r = document.getElementById('rowMenu').getBoundingClientRect(); return r.bottom <= innerHeight && r.right <= innerWidth && r.left >= 0 && r.top >= 0; }"))
     pg.keyboard.press("Escape"); pg.wait_for_timeout(100)
@@ -104,7 +104,7 @@ with sync_playwright() as p:
     # several selected
     fresh(); pick("Alpha"); pick("Gamma", ["Meta"]); pick("Delta", ["Meta"]); rclick("Gamma")
     check("right-click on a row that is IN the selection keeps the whole selection", sel() == ["Alpha", "Gamma", "Delta"], sel())
-    check("...and the menu speaks of the count (Edit 3 tasks…, Delete 3 tasks)", "Edit 3 tasks…" in items() and "Delete 3 tasks" in items(), items())
+    check("...and the menu speaks of the count (Edit 3 Tasks…, Delete 3 Tasks)", "Edit 3 Tasks…" in items() and "Delete 3 Tasks" in items(), items())
     pg.keyboard.press("Escape")
     rclick("Beta")
     check("right-click on a row that is NOT in the selection selects just that row", sel() == ["Beta"], sel())
@@ -112,11 +112,11 @@ with sync_playwright() as p:
     # an empty line
     fresh(); pick("Gamma"); pg.click("#addMenuBtn"); pg.click("#addSpacerBtn"); pg.wait_for_timeout(200)
     line = ev("() => tasks.find(t => t.spacer).id"); pg.locator(f".grid-row[data-id='{line}']").click(button="right", position={"x": 300, "y": 10}); pg.wait_for_timeout(120)
-    check("an empty line's menu has no Edit item", "Edit task…" not in items() and "Duplicate" in items() and "Delete" in items(), items())
+    check("an empty line's menu has no Edit item", "Edit Task…" not in items() and "Duplicate" in items() and "Delete" in items(), items())
     pg.keyboard.press("Escape")
     # empty area
     fresh(); pick("Gamma"); pg.locator("#gridRows").click(button="right", position={"x": 300, "y": 600}); pg.wait_for_timeout(120)
-    check("right-click on the empty part of the list offers only Add task, Add Empty Line and Paste", items() == ["Add task", "Add Empty Line", "Paste"], items())
+    check("right-click on the empty part of the list offers only Add Task, Add Empty Line and Paste", items() == ["Add Task", "Add Empty Line", "Paste"], items())
     pg.click("#rowMenu >> text=Add task"); pg.wait_for_selector(".inline-edit"); pg.keyboard.press("Escape"); pg.evaluate("() => openTaskModal(selectedTaskId, true)"); pg.wait_for_selector("#taskModalBg.open")
     check("...Add task adds one at the end (nothing to be 'below') and opens its dialog", modal()); ev("() => closeTaskModal()"); pg.wait_for_timeout(250)
     # native menu inside an editor

@@ -105,7 +105,7 @@ with sync_playwright() as p:
     t1 = pg.inner_text("#taskModalTitle"); close_all()
     ev("() => { pendingImportData = { tasks: [], project: {} }; openImportModal(); }"); t2 = ev("() => document.querySelector('#importModalBg h3').textContent"); close_all()
     ev("() => openBackupsModal()"); t3 = ev("() => document.querySelector('#backupsModalBg h2').textContent"); close_all()
-    check("dialog titles are sentence case: 'Edit task', 'Import data', 'Local backups'", t1.startswith("Edit task") and t2 == "Import data" and t3 == "Local backups", (t1, t2, t3))
+    check("sheet titles are title style: 'Edit Task', 'Import Data', 'Local Backups'", t1.startswith("Edit Task") and t2 == "Import Data" and t3 == "Local Backups", (t1, t2, t3))
     ev("() => openBaselineModal()"); pg.wait_for_timeout(200)
     check("'Clear this baseline' is not shown while there is nothing to clear", not pg.is_visible("#baselineClearBtn"))
     pg.click("#baselineSetBtn"); pg.wait_for_timeout(300)

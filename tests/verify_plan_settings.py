@@ -25,7 +25,7 @@ with sync_playwright() as p:
     for t, mid in (("calendar", "calendarModalBg"), ("rules", "rulesModalBg"), ("fields", "fieldsModalBg"), ("format", "formatModalBg")):
         pg.click(f".modal-bg.open [data-settings-tab='{t}']"); pg.wait_for_timeout(150)
         names[t] = pg.inner_text(f"#{mid} .modal-header")
-    check("every tab's header names the plan: 'Plan settings — Website relaunch'", all("Plan settings" in v and "— Website relaunch" in v for v in names.values()), names)
+    check("every tab's header names the plan: 'Plan Settings — Website relaunch'", all("Plan Settings" in v and "— Website relaunch" in v for v in names.values()), names)
     ev("() => { project.name = 'Intranet'; save(); render(); updateProjectNameUI(); }"); pg.wait_for_timeout(100)
     check("...and follows a rename", "— Intranet" in pg.inner_text("#formatModalBg .modal-header"))
     ev("() => { project.name = 'A very long plan name that would push the title and the summary chip right out of the header of the dialog'; updateProjectNameUI(); }"); pg.click(".modal-bg.open [data-settings-tab='calendar']"); pg.wait_for_timeout(150)
@@ -66,7 +66,7 @@ with sync_playwright() as p:
     # custom fields from the task dialog: stands alone, no plan chip
     ev("() => { tasks.push({ id: 'a', name: 'A', parentId: null, order: 0, startDate: '2030-03-04', endDate: '2030-03-08', progress: 0, milestone: false, color: null, predecessors: [], collapsed: false, updatedAt: 1 }); normalizeData(); save(); render(); openTaskModal('a'); }"); pg.wait_for_timeout(300)
     pg.click("#taskTabBtnCustom"); pg.click("#taskTabCustom .tadd, #taskTabCustom .empty-state .btn"); pg.wait_for_selector("#fieldsModalBg.open"); pg.wait_for_timeout(150)
-    check("Custom fields opened over the task dialog stands alone: titled 'Custom fields', no tabs, no plan chip", pg.inner_text("#fieldsModalTitle") == "Custom fields" and pg.inner_text("#fieldsPlanChip") == "")
+    check("Custom fields opened over the task dialog stands alone: titled 'Custom Fields', no tabs, no plan chip", pg.inner_text("#fieldsModalTitle") == "Custom Fields" and pg.inner_text("#fieldsPlanChip") == "")
     b.close()
 check("no console errors", not errors, errors)
 print(f"\n{sum(results)}/{len(results)}"); raise SystemExit(0 if all(results) else 1)

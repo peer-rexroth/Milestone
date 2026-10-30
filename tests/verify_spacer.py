@@ -131,7 +131,7 @@ with sync_playwright() as p:
     check("only an empty line selected: the bulk-edit button is disabled", pg.locator("#bulkEditBtn").is_disabled())
     sid = ev("() => tasks.find(t => t.spacer).id"); ev("(id) => { setSelection([id, 'c', 'd'], 'c'); render(); }", sid); pg.wait_for_timeout(80)
     pg.click("#bulkEditBtn"); pg.wait_for_timeout(200)
-    check("with tasks selected too it opens and counts only the tasks", "Edit 2 tasks" in pg.inner_text("#bulkTitle"), pg.inner_text("#bulkTitle"))
+    check("with tasks selected too it opens and counts only the tasks", "Edit 2 Tasks" in pg.inner_text("#bulkTitle"), pg.inner_text("#bulkTitle"))
     pg.fill("#bulkVal-resource", "Ben"); pg.click("#bulkModalBg .btn-primary"); pg.wait_for_timeout(250)
     check("...and changes only the tasks (the line stays empty)", ev("() => [byId('c').resource, byId('d').resource, tasks.find(t => t.spacer).resource]") == ["Ben", "Ben", ""], ev("() => [byId('c').resource, byId('d').resource]"))
     check("Find: '#n' of an empty line finds nothing, and a name search never lists one", ev("(n) => searchTasks('#' + n).length === 0 && searchTasks('a').every(r => !r.t.spacer) && searchTasks('2.').every(r => !r.t.spacer)", ev("(id) => taskDisplayId(id)", sid)))
