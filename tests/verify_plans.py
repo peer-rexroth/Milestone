@@ -80,7 +80,7 @@ with sync_playwright() as p:
     check("deleting the only plan leaves one empty plan open", len(A.index()["plans"]) == 1 and A.pname() == "New plan" and A.names() == [], (A.index(), A.pname()))
     pg.click("#toastUndoBtn"); A.settle()
     check("...and Undo brings the old plan back and drops the empty one", len(A.index()["plans"]) == 1 and A.pname() == "Legacy Proj" and A.names() == ["Legacy 1", "Legacy 2", "Legacy 3"], (A.index(), A.pname()))
-    A.open_menu(); check("no 'Disconnect file' item when files aren't supported", pg.locator("#planDisconnectItem").count() == 0); pg.keyboard.press("Escape")
+    A.open_menu(); check("no 'Unlink File' item when files aren't supported", pg.locator("#planDisconnectItem").count() == 0); pg.keyboard.press("Escape")
     A.new_plan("Second Plan")
     check("New plan (no file API): created straight away, empty, opened", A.pname() == "Second Plan" and A.names() == [] and not A.modal_open(), (A.pname(), A.names()))
     A.add("S1"); A.add("S2")
@@ -225,7 +225,7 @@ with sync_playwright() as p:
     idb_has = lambda key: pg.evaluate("""async (k) => new Promise(res => { const r = indexedDB.open('milestone-fs', 1); r.onsuccess = () => { const q = r.result.transaction('handles').objectStore('handles').getAllKeys(); q.onsuccess = () => res(q.result.includes(k)); }; })""", key)
     B.add("D0"); B.settle()
     pg.click("#fileSyncBtn"); pg.wait_for_selector("#confirmModalBg.open")
-    check("clicking the linked file button offers to disconnect (with a confirmation)", "orphan.json" in pg.inner_text("#confirmModalBody") and pg.inner_text("#confirmModalTitle") == "Disconnect file", pg.inner_text("#confirmModalBody"))
+    check("clicking the linked file button offers to disconnect (with a confirmation)", "orphan.json" in pg.inner_text("#confirmModalBody") and pg.inner_text("#confirmModalTitle") == "Unlink file", pg.inner_text("#confirmModalBody"))
     pg.click("#confirmModalBg button:has-text('Cancel')"); pg.wait_for_timeout(200)
     check("Cancel keeps the file linked", B.status() == "linked" and not B.modal_open())
     B.add("D1")     # edit and disconnect straight away: the file must still get it
@@ -245,7 +245,7 @@ with sync_playwright() as p:
 
     # disconnect from the plan menu, connect a DIFFERENT existing file (merged)
     B.write_file("different.json", json.dumps({"version": 1, "project": {"name": "Other", "updatedAt": 1}, "tasks": [dict(LEG[2], name="Other 1")], "deletedTaskIds": []}))
-    B.open_menu(); check("the plan menu has 'Disconnect file…', enabled while linked", not pg.locator("#planDisconnectItem").is_disabled())
+    B.open_menu(); check("the plan menu has 'Unlink File…', enabled while linked", not pg.locator("#planDisconnectItem").is_disabled())
     pg.click("#planDisconnectItem"); pg.wait_for_selector("#confirmModalBg.open"); pg.click("#confirmModalActionBtn"); pg.wait_for_selector("#fileSyncModalBg.open", timeout=4000); B.settle()
     B.modal_link_existing("different.json")
     check("connect a DIFFERENT file: linked, its tasks merged into the plan, plan's tasks written into it", B.status() == "linked" and "Other 1" in B.names() and "D3" in B.names() and sorted(B.file_tasks("different.json")) == sorted(B.names()), (B.names(), B.file_tasks("different.json")))
