@@ -1700,7 +1700,7 @@ html.settings-switching .modal-bg { transition: none; }
 :is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) :is(.cal-days, .precision-row, .hol-list, .hol-preset, .hol-add, .fmt-cur, .fmt-tiles, .fmt-top, .fmt-preview, .workhours-editor, .rules-adv > label) { background: color-mix(in srgb, var(--text) 5%, transparent); border: 0; border-radius: var(--r-m); }
 :is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) :is(.precision-row, .hol-list, .hol-preset, .hol-add, .fmt-tiles) { display: flex; flex-direction: column; flex-wrap: nowrap; gap: 0; align-items: stretch; padding: 0; overflow: visible; max-height: none; }
 :is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .hol-list { max-height: 220px; overflow-y: auto; }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .hol-list:empty::before { content: 'No Days Off'; padding: 0 14px; line-height: 40px; color: var(--text-faint); font-size: var(--fs-14); }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .hol-list:empty::before { content: 'No days off'; padding: 0 14px; line-height: 40px; color: var(--text-faint); font-size: var(--fs-14); }
 /* a row */
 :is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) :is(.precision-opt, .hol-row, .hol-field, .hol-yearly, .fmt-tile, .wh-day-row) { position: relative; display: flex; flex-direction: row; align-items: center; gap: 12px; min-height: 40px; padding: 4px 14px; font-size: var(--fs-14); color: var(--text); border: 0; border-radius: 0; background: none; box-shadow: none; }
 :is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) :is(.precision-opt, .hol-row, .hol-field, .hol-yearly, .fmt-tile) + :is(.precision-opt, .hol-row, .hol-field, .hol-yearly, .fmt-tile)::before { content: ""; position: absolute; left: 14px; right: 0; top: 0; height: 1px; background: var(--border); }
@@ -2531,7 +2531,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
     <div class="modal-header"><h2>Export to Excel</h2><button onclick="closeExcelModal()" aria-label="Close">&times;</button></div>
     <div class="modal-body">
       <p class="cal-hint">Saves a formatted workbook (.xlsx).</p>
-      <section class="cal-sec" id="excelScopeBlock"><div class="cal-sec-title">Which Tasks</div><div class="tgrp">
+      <section class="cal-sec" id="excelScopeBlock"><div class="cal-sec-title">Which tasks</div><div class="tgrp">
         <label class="trow tpick"><span id="excelScopeAll"></span><input type="radio" class="tick" name="excelScope" value="all" checked></label>
         <label class="trow tpick"><span id="excelScopeFiltered"></span><input type="radio" class="tick" name="excelScope" value="filtered"></label>
       </div></section>
@@ -2550,7 +2550,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
     <div class="modal-header"><h2 id="csvTitle">Export to CSV</h2><button onclick="closeCsvExport()" aria-label="Close">&times;</button></div>
     <div class="modal-body">
       <p class="cal-hint">Saves a plain text table (.csv).</p>
-      <section class="cal-sec" id="csvScopeBlock"><div class="cal-sec-title">Which Tasks</div><div class="tgrp">
+      <section class="cal-sec" id="csvScopeBlock"><div class="cal-sec-title">Which tasks</div><div class="tgrp">
         <label class="trow tpick"><span id="csvScopeAll"></span><input type="radio" class="tick" name="csvScope" value="all" checked></label>
         <label class="trow tpick"><span id="csvScopeFiltered"></span><input type="radio" class="tick" name="csvScope" value="filtered"></label>
       </div></section>
@@ -2593,7 +2593,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
           <option value="mdy">Month/Day/Year</option>
           <option value="ymd">Year-Month-Day</option>
         </select></div></div>
-      <section class="cal-sec"><div class="cal-sec-title">What to Do With It</div><div class="tgrp">
+      <section class="cal-sec"><div class="cal-sec-title">What to do with it</div><div class="tgrp">
         <label class="trow tpick"><span>Add the tasks to this plan, after the existing ones</span><input type="radio" class="tick" name="fiMode" value="append" checked></label>
         <label class="trow tpick"><span>Replace this plan's tasks<span class="tsub">Downloads a backup first</span></span><input type="radio" class="tick" name="fiMode" value="replace"></label>
       </div></section>
@@ -2638,7 +2638,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
         <div class="trow"><label for="frWith" class="tgrow">Replace with</label><input type="text" id="frWith" class="tin" autocomplete="off" spellcheck="false" oninput="renderReplace()"></div>
         <div class="trow"><label for="frField" class="tgrow">In</label><select id="frField" class="tin" onchange="renderReplace()"></select></div>
       </div>
-      <section class="cal-sec" id="frScopeBlock"><div class="cal-sec-title">Which Tasks</div><div class="tgrp">
+      <section class="cal-sec" id="frScopeBlock"><div class="cal-sec-title">Which tasks</div><div class="tgrp">
         <label class="trow tpick"><span id="frScopeAll"></span><input type="radio" class="tick" name="frScope" value="all" checked onchange="renderReplace()"></label>
         <label class="trow tpick" id="frScopeFilteredRow"><span id="frScopeFiltered"></span><input type="radio" class="tick" name="frScope" value="filtered" onchange="renderReplace()"></label>
         <label class="trow tpick" id="frScopeSelectedRow"><span id="frScopeSelected"></span><input type="radio" class="tick" name="frScope" value="selected" onchange="renderReplace()"></label>
@@ -2670,7 +2670,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
           <div class="trow"><label for="printOrient" class="tgrow">Orientation</label><select id="printOrient" class="tin"><option value="landscape">Landscape</option><option value="portrait">Portrait</option></select></div>
           <div class="trow"><label for="printScale" class="tgrow">Timescale</label><select id="printScale" class="tin"><option value="auto">Automatic</option><option value="hour">Hours</option><option value="week">Weeks</option><option value="month">Months</option><option value="quarter">Quarters</option></select></div>
         </div>
-        <section class="cal-sec"><div class="cal-sec-title">Task List Columns</div><div class="tgrp">
+        <section class="cal-sec"><div class="cal-sec-title">Task list columns</div><div class="tgrp">
           <label class="trow tpick"><span>ID</span><input type="checkbox" class="tick" id="printCol-id"></label>
           <label class="trow tpick"><span>WBS</span><input type="checkbox" class="tick" id="printCol-wbs"></label>
           <label class="trow tpick"><span>Task Name</span><input type="checkbox" class="tick" id="printCol-name"></label>
@@ -2681,7 +2681,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
           <label class="trow tpick"><span>Resource</span><input type="checkbox" class="tick" id="printCol-resource"></label>
           <label class="trow tpick"><span>Predecessors</span><input type="checkbox" class="tick" id="printCol-preds"></label>
         </div></section>
-        <section class="cal-sec"><div class="cal-sec-title">Time Range</div><div class="tgrp">
+        <section class="cal-sec"><div class="cal-sec-title">Time range</div><div class="tgrp">
           <label class="trow tpick"><span>The whole plan</span><input type="radio" class="tick" id="printRangeAll" name="printRange" checked></label>
           <label class="trow tpick"><span>A custom range</span><input type="radio" class="tick" id="printRangeCustom" name="printRange"></label>
           <div class="trow print-range"><label for="printFrom" class="tgrow">From – to</label><input type="text" class="dt-date" id="printFrom" aria-label="From" onfocus="document.getElementById('printRangeCustom').checked = true"><span class="tunit">to</span><input type="text" class="dt-date" id="printTo" aria-label="To" onfocus="document.getElementById('printRangeCustom').checked = true"></div>
@@ -2789,7 +2789,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 
 <div class="modal-bg" id="calendarModalBg" onclick="if(event.target===this) requestCloseCalendarModal()">
   <div class="modal wide settings-modal">
-    <div class="modal-header"><div class="mh-title"><h2>Plan Settings</h2><span class="ps-plan" data-ps-plan></span><span class="cal-summary" id="calendarSummaryLive"></span></div><button onclick="requestCloseCalendarModal()" aria-label="Close">&times;</button></div>
+    <div class="modal-header"><div class="mh-title"><h2>Plan Settings</h2><span class="ps-plan" data-ps-plan></span></div><button onclick="requestCloseCalendarModal()" aria-label="Close">&times;</button></div>
     <div class="settings-tabs" role="tablist" aria-label="Plan settings" data-current="calendar"></div>
     <div class="modal-body">
       <section class="cal-sec">
@@ -2927,7 +2927,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
     <div class="modal-body">
       <p class="cal-hint">A baseline saves a copy of the schedule to compare against.</p>
       <section class="cal-sec">
-        <div class="cal-sec-title">Save a Baseline </div>
+        <div class="cal-sec-title">Save a baseline </div>
         <div class="tgrp">
           <div class="trow"><label for="baselineSlotSelect" class="tgrow">Which baseline</label><select id="baselineSlotSelect" class="tin" onchange="renderBaselineModal()"></select></div>
           <label class="trow tpick"><span>The entire plan</span><input type="radio" class="tick" name="baselineScope" id="baselineScopeAll" value="all" checked></label>
@@ -2937,12 +2937,12 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
         <div class="bl-status" id="baselineStatus"><span id="baselineSlotInfo"></span><button class="btn-link danger" id="baselineClearBtn" onclick="clearBaselineFromDialog()">Clear This Baseline</button></div>
       </section>
       <section class="cal-sec">
-        <div class="cal-sec-title">Compare the Chart and Columns With </div>
+        <div class="cal-sec-title">Compare the chart and columns with </div>
         <div class="tgrp"><div class="trow"><label for="baselineCompareSelect" class="tgrow">Baseline</label><select id="baselineCompareSelect" class="tin bl-compare" aria-label="Baseline to compare with" onchange="setCompareBaseline(this.value)"></select></div></div>
         <p class="cal-hint" id="baselineCompareHint"></p>
       </section>
       <section class="cal-sec" id="baselineActualsSec">
-        <div class="cal-sec-title">Actual Dates</div>
+        <div class="cal-sec-title">Actual dates</div>
         <div class="tgrp"><button class="trow tadd" id="baselineApplyBtn" type="button" onclick="applyActualsToSchedule()">Apply Actual Dates to the Schedule</button></div>
         <p class="cal-hint" id="baselineActualsInfo"></p>
       </section>
@@ -2964,7 +2964,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
         <div class="trow" id="recurTimeField"><label for="recurTime" class="tgrow">Starts at</label><input type="text" class="dt-time" id="recurTime"></div>
       </div>
       <section class="cal-sec">
-        <div class="cal-sec-title">Recurrence Pattern</div>
+        <div class="cal-sec-title">Recurrence pattern</div>
         <div class="tgrp">
           <div class="trow"><div class="recur-freq"><label><input type="radio" name="recurFreq" value="daily">Daily</label><label><input type="radio" name="recurFreq" value="weekly">Weekly</label><label><input type="radio" name="recurFreq" value="monthly">Monthly</label><label><input type="radio" name="recurFreq" value="yearly">Yearly</label></div></div>
           <div class="trow"><label for="recurEvery" class="tgrow">Every</label><span class="field-vu"><input type="number" id="recurEvery" min="1" max="99" class="tin recur-num"><span id="recurEveryUnit" class="tunit">week(s)</span></span></div>
@@ -9161,10 +9161,7 @@ function requestCloseCalendarModal() {
   if (!calendarDirty()) { closeCalendarModal(); return; }
   openConfirmModal({ title: 'Discard your changes?', body: 'You changed the working calendar but did not save it.', icon: 'triangle-exclamation', confirmLabel: 'Discard changes', cancelLabel: 'Keep editing', action() { closeCalendarModal(); } });
 }
-function updateCalendarSummary() {   // the chip in the header: what the calendar would be if you saved now
-  const days = [...document.querySelectorAll('#calendarDays input:checked')].map(i => Number(i.value)).sort((a, b) => a - b), n = calHolidays.length;
-  document.getElementById('calendarSummaryLive').textContent = days.length ? calendarLabel(days) + (n ? ` · ${n} holiday${n === 1 ? '' : 's'}` : '') : 'No working day picked';
-}
+function updateCalendarSummary() {}   // (the header chip that summarised the calendar was dropped: the Working week row and the day count already say it)
 function clearHolidays() { if (!calHolidays.length) return; calHolidays = []; renderHolidayList(); }
 function fmtHolidayWhen(h) {
   if (h.yearly) return fmtDateShort(h.date);   // 25.12.
