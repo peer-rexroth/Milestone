@@ -1494,6 +1494,7 @@ svg.gantt-deps text.status-label { fill: var(--task-purple); font-size: var(--fs
 .rst-row:hover { --row-bg: var(--panel-2); }
 .rst-row:focus-within { --row-bg: var(--sel-inactive); }
 html:not(.sel-inactive) .rst-row.selected { --row-bg: var(--accent); --text: var(--on-accent); --text-dim: var(--sel-text-2); --text-faint: var(--sel-text-3); --border: var(--sel-line); color: var(--on-accent); }   /* the selected resource: the same solid accent as a selected task */
+html:not(.sel-inactive) :is(.grid-row, .rst-row).selected { border-bottom-color: var(--accent); }   /* a selected row is one solid block: its bottom hairline is the fill, not the pale line --sel-line would draw under only the last row */
 html:not(.sel-inactive) .rst-row.selected :is(input, select, .rst-days-link, .rst-remove) { color: var(--on-accent); }
 html:not(.sel-inactive) .rst-row.selected .rst-cell input.inline-edit::placeholder { color: var(--sel-text-3); }
 html:not(.sel-inactive) .rst-row.selected .rst-remove { opacity: 1; }
@@ -1541,7 +1542,6 @@ select.rst-select:disabled { opacity: .5; }
 .rst-row .rst-cell input, .rst-row .rst-cell select { pointer-events: none; }   /* cells are plain text until edited: only the cell being edited takes the pointer */
 .rst-row .rst-cell.rs-live input, .rst-row .rst-cell.rs-live select { pointer-events: auto; }
 .rst-row > .rst-cell.cursor:not(.rs-live) { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: var(--r-xs); }   /* the cell cursor: the same 2px ring as the task list's */
-html:not(.sel-inactive) .rst-row.selected > .rst-cell.cursor:not(.rs-live) { outline-color: var(--sel-line); }   /* on the accent row the ring is a soft line, so it is not mistaken for an edit box */
 
 .rst-row .rst-cell.rs-live select.rst-select { border-color: var(--border); background-color: var(--panel); background-size: 11px 7px; }   /* a dropdown shows its box only while it is being edited */
 .rst-row .rst-cell:focus-within select.rst-select:focus { border-color: transparent; background-color: transparent; outline: none; }
