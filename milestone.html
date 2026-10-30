@@ -1150,13 +1150,6 @@ html.time12 .tf-dt input.dt-time { flex: 0 0 104px; min-width: 104px; width: 104
 .fmt-tile:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .fmt-tile[aria-checked="true"] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--panel)); box-shadow: 0 0 0 1px var(--accent); }
 .fmt-tile[aria-checked="true"] small { color: var(--text-dim); }
-.fmt-preview { border: 1px dashed var(--border); border-radius: var(--r-s); padding: 10px 12px; background: var(--panel-2); }
-.fmt-preview-label { font-size: var(--fs-11); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 6px; }
-.fmt-preview-label span { text-transform: none; letter-spacing: 0; font-weight: 400; }
-.fmt-preview-row { display: flex; gap: 16px; align-items: baseline; font-size: var(--fs-13); flex-wrap: wrap; }
-.fmt-preview-row b { font-weight: 600; }
-.fmt-preview-row .fmt-k { color: var(--text-dim); margin-right: 4px; }
-.fmt-preview-hint { margin-top: 6px; font-size: var(--fs-12); color: var(--text-dim); }
 .menu-foot { padding: 6px 10px 6px; font-size: var(--fs-12); color: var(--text-faint); border-top: 1px solid var(--border); margin-top: 4px; max-width: 240px; }
 /* Group by: a header row per value (Tasks view) — a band of its own, bold, the whole row folds on a click */
 .grid-row.group-head { --row-bg: var(--panel-2); font-weight: 600;border-top: 1px solid var(--border); }
@@ -1576,7 +1569,7 @@ html.settings-switching .modal-bg { transition: none; }
 .foot-note { margin-right: auto; align-self: center; font-size: var(--fs-12); color: var(--text-faint); }
 /* sections of the calendar and baseline dialogs */
 .cal-sec { display: flex; flex-direction: column; gap: 8px; }
-.cal-sec + .cal-sec, .cal-sec + .cal-how { padding-top: 12px; border-top: 1px solid var(--border); }
+.cal-sec + .cal-sec { padding-top: 12px; border-top: 1px solid var(--border); }
 .cal-sec-title { display: flex; align-items: center; gap: 8px; font-size: var(--fs-12); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-dim); }
 .cal-sec-title .cal-sec-note { text-transform: none; letter-spacing: 0; font-weight: 500; color: var(--text-faint); }
 .cal-sec-title .btn-link { margin-left: auto; text-transform: none; letter-spacing: 0; }
@@ -1641,8 +1634,6 @@ html.settings-switching .modal-bg { transition: none; }
 .hol-field .dt-wrap { width: 100%; }
 .hol-fields .hol-yearly { height: 32px; }
 .hol-fields .btn { height: 32px; white-space: nowrap; }
-.cal-how summary {font-size: var(--fs-12); font-weight: 600; color: var(--text-dim); }
-.cal-how .cal-hint { margin-top: 8px; }
 .bl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
 .bl-grid .field select { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--r-s); background: var(--panel); color: var(--text); }
 .bl-status { display: flex; align-items: center; gap: 10px; font-size: var(--fs-12); color: var(--text-dim); line-height: 1.45; }
@@ -1691,13 +1682,13 @@ html.settings-switching .modal-bg { transition: none; }
 :is(#calendarModalBg, #rulesModalBg, #formatModalBg, #fieldsModalBg) .cal-summary { border: 0; background: var(--cap-fill); }
 :is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .modal-body { gap: 18px; padding-top: 16px; }
 :is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .cal-sec { gap: 6px; }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .cal-sec + .cal-sec, :is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .cal-sec + .cal-how { padding-top: 0; border-top: 0; }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .cal-sec + .cal-sec { padding-top: 0; border-top: 0; }
 :is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .cal-sec-title { margin: 0 14px; font-size: var(--fs-12); font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--text-faint); }
 :is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .cal-sec-title .cal-sec-note { font-weight: 400; }
 :is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .scope-badge { padding: 0; background: none; font-size: var(--fs-12); font-weight: 500; color: var(--text-faint); }
 :is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .cal-hint, :is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .fmt-cap { margin: 0 14px; font-size: var(--fs-12); color: var(--text-faint); line-height: 1.4; }
 /* the tinted groups */
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) :is(.cal-days, .precision-row, .hol-list, .hol-preset, .hol-add, .fmt-cur, .fmt-tiles, .fmt-top, .fmt-preview, .workhours-editor, .rules-adv > label) { background: color-mix(in srgb, var(--text) 5%, transparent); border: 0; border-radius: var(--r-m); }
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) :is(.cal-days, .precision-row, .hol-list, .hol-preset, .hol-add, .fmt-cur, .fmt-tiles, .fmt-top, .workhours-editor, .rules-adv > label) { background: color-mix(in srgb, var(--text) 5%, transparent); border: 0; border-radius: var(--r-m); }
 :is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) :is(.precision-row, .hol-list, .hol-preset, .hol-add, .fmt-tiles) { display: flex; flex-direction: column; flex-wrap: nowrap; gap: 0; align-items: stretch; padding: 0; overflow: visible; max-height: none; }
 :is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .hol-list { max-height: 220px; overflow-y: auto; }
 :is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .hol-list:empty::before { content: 'No days off'; padding: 0 14px; line-height: 40px; color: var(--text-faint); font-size: var(--fs-14); }
@@ -1766,12 +1757,8 @@ html.settings-switching .modal-bg { transition: none; }
 :is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .fmt-tile[aria-checked="true"] { background: none; box-shadow: none; }
 :is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .fmt-tile[aria-checked="true"]::after { content: ""; position: absolute; right: 14px; top: 50%; width: 16px; height: 16px; margin-top: -8px; background: var(--accent); -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M3 8.5l3.2 3L13 4.5'/></svg>") center/16px no-repeat; mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M3 8.5l3.2 3L13 4.5'/></svg>") center/16px no-repeat; }
 :is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .fmt-tile[aria-checked="true"] small { color: var(--text-faint); }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .fmt-preview { padding: 10px 14px; }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .fmt-preview-label { font-size: var(--fs-12); font-weight: 600; letter-spacing: 0; text-transform: none; }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .fmt-preview-row { font-size: var(--fs-14); }
-/* scheduling rules */
+:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) :is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) :is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) /* scheduling rules */
 :is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .rules-adv > summary { margin: 0 14px; font-size: var(--fs-12); font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--text-faint); }
-:is(#calendarModalBg, #rulesModalBg, #formatModalBg, #resourceDaysModalBg) .cal-how > summary { margin: 0 14px; font-weight: 600; color: var(--text-faint); }
 /* ── The other dialogs as grouped inspectors (Baselines, Reschedule, Level, Recurring, Exports, Import, Edit tasks, Find and Replace, New plan, Backups,
    Print): `.insp` on the .modal. Captions, tinted groups (.tgrp) of label-left / value-right rows (.trow), a tick at the right for "choose one" (.tick, also
    for a list of options to include), switches (.tsw), a round "include" check (.bulk-on), accent "add" rows (.tadd). ── */
@@ -2856,8 +2843,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
           <button class="btn" type="button" id="holAddBtn" onclick="addHoliday()"><i class="fa-solid fa-plus"></i><span>Add</span></button>
         </div>
       </section>
-      <details class="cal-how"><summary>How this works</summary>
-        <p class="cal-hint">Durations and links count working days. Dates already in the plan don't move.</p></details>
+      <p class="cal-hint cal-note">Durations and links count working days. Dates already in the plan don't move.</p>
     </div>
     <div class="modal-footer">
       <button class="btn" onclick="closeCalendarModal()">Cancel</button>
@@ -2908,11 +2894,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
             <div class="fmt-cap">For plans with hours and minutes.</div>
           </section>
         </div>
-        <div class="fmt-preview" aria-live="polite">
-          <div class="fmt-preview-label">Preview <span id="fmtPreviewSrc"></span></div>
-          <div class="fmt-preview-row" id="fmtPreview"></div>
-          <div class="fmt-preview-hint" id="fmtPreviewHint"></div>
-        </div>
+        <div class="fmt-cap" id="fmtTypeHint" aria-live="polite"></div>
       </section>
     </div>
     <div class="modal-footer"><button class="btn btn-primary" onclick="closeFormatModal()">Done</button></div>
@@ -9124,13 +9106,8 @@ function renderFormatModal() {
   const sys = detectSystemFormat(), same = sys.df === dateFormat && sys.tf === timeFormat, btn = document.getElementById('fmtSystemBtn');
   btn.innerHTML = same ? '<i class="fa-solid fa-check"></i>Same as your browser' : `<i class="fa-solid fa-wand-magic-sparkles"></i>Use my browser's format <span class="fmt-sys-eg">${eg(sys.df, sys.tf, 'date')} · ${sys.tf === '12h' ? '12-hour' : '24-hour'}</span>`;
   btn.disabled = same;
-  // a real sample: the plan's own first task (or a made-up one in an empty plan), in the format as chosen
-  const t = tasks.find(x => !x.spacer && !hasChildren(x.id) && effectiveDates(x.id).start), mm = minuteModeActive();
-  let name, s, e;
-  if (t) { const eff = effectiveDates(t.id); name = t.name; s = gridDateTimeText(eff.start, eff.startTime, mm); e = t.milestone ? '' : gridDateTimeText(eff.end, eff.endTime, mm, true); document.getElementById('fmtPreviewSrc').textContent = '— a task of this plan'; }
-  else { name = 'Sample task'; s = fmtDate('2026-12-24') + (mm ? ' ' + fmtTime('09:00') : ''); e = fmtDate('2026-12-30') + (mm ? ' ' + fmtTime('17:00') : ''); document.getElementById('fmtPreviewSrc').textContent = '— a sample'; }
-  document.getElementById('fmtPreview').innerHTML = `<span><b>${escapeHtml(name)}</b></span><span><span class="fmt-k">Start</span>${escapeHtml(s)}</span>${e ? `<span><span class="fmt-k">Finish</span>${escapeHtml(e)}</span>` : ''}`;
-  document.getElementById('fmtPreviewHint').textContent = `You type dates like ${fmtDate('2026-12-24')}${mm ? ` and times like ${fmtTime('14:30')}` : ''}.`;
+  const mm = minuteModeActive();
+  document.getElementById('fmtTypeHint').textContent = `You type dates like ${fmtDate('2026-12-24')}${mm ? ` and times like ${fmtTime('14:30')}` : ''}.`;   // (no sample task: the tiles above are the examples)
 }
 function openFormatModal() { closeScheduleMenu(); renderFormatModal(); document.getElementById('formatModalBg').classList.add('open'); }
 function closeFormatModal() { document.getElementById('formatModalBg').classList.remove('open'); }
@@ -9145,7 +9122,6 @@ function openCalendarModal() {
   document.getElementById('holYearly').checked = false; document.getElementById('holYearly').disabled = false;
   updateHolAddBtn();
   document.getElementById('calendarDays').onchange = updateCalendarSummary;
-  const how = document.querySelector('#calendarModalBg .cal-how'); if (how) how.open = false;
   initPrecisionSection();
   renderHolidayList();
   calSnapshot = calendarDraftState();
