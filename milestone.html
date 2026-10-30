@@ -1538,10 +1538,11 @@ select.rst-select:disabled { opacity: .5; }
    point at, or the one you are in), the remove button only on that row, an empty rate a faint 0.00. (The more specific
    selectors beat the global select rule, which comes last in the sheet.) */
 .rst-row .rst-cell select.rst-select { border-color: transparent; background-color: transparent; background-size: 0 0; }
-.rst-row > .rst-cell:focus-within { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: var(--r-xs); }   /* the cell you are in: the same 2px ring as the task list's cursor */
+.rst-row > .rst-cell:focus-within:not(:has(input.inline-edit:focus)) { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: var(--r-xs); }   /* a dropdown or button you are on: the 2px cursor ring of the task list; a text box edits as it does there, below */
 
 .rst-row:hover .rst-cell select.rst-select, .rst-row .rst-cell select.rst-select:focus { border-color: var(--border); background-color: var(--panel); background-size: 11px 7px; }
-.rst-row .rst-cell:focus-within input.inline-edit:focus, .rst-row .rst-cell:focus-within select.rst-select:focus { border-color: transparent; background-color: transparent; outline: none; }   /* the ring is the focus mark: no second, thinner border or white box inside it */
+.rst-row .rst-cell:focus-within select.rst-select:focus { border-color: transparent; background-color: transparent; outline: none; }
+.rst-row .rst-cell input.inline-edit:focus { border-color: var(--accent); background-color: var(--panel); color: var(--text); outline: none; box-shadow: none; border-radius: var(--r-xs); }   /* editing a text box looks like editing a task cell: a compact box on the panel colour with a 1px accent border */
 .rst-row .rst-remove { opacity: 0; }
 .rst-row:hover .rst-remove, .rst-row:focus-within .rst-remove { opacity: 1; }
 .rst-cell input.inline-edit::placeholder { color: var(--text-faint); opacity: .7; }
@@ -1883,7 +1884,6 @@ html.time12 :is(#calendarModalBg) :is(.wh-day-row, .wh-break-add) input.dt-time 
 .insp .fs-text ul { margin: 6px 0 0; padding-left: 18px; }
 .insp .tgrp > .tadd + .tadd::before { content: ""; position: absolute; left: 14px; right: 0; top: 0; height: 1px; background: var(--border); }
 .insp .tgrp > .tadd.hidden { display: none; }
-.insp .file-sync-help { margin: 0 14px; font-size: var(--fs-12); color: var(--text-faint); }
 #resDayList .pred-empty, #resDayList:empty::before { border: 0; background: none; text-align: left; padding: 0 14px; line-height: 40px; color: var(--text-faint); font-size: var(--fs-14); }
 .print-opts .print-range { flex-wrap: nowrap; }
 .print-opts .print-range .dt-date { flex: 0 0 auto; width: 96px; padding-right: 26px; }
@@ -2136,9 +2136,6 @@ html:has(.modal-bg.open) #toast.show { transform: translateY(0); }
 #toast button { border: none; background: none; color: var(--accent); font-weight: 600; font-size: var(--fs-13); }
 #toast #toastCloseBtn { color: var(--text-dim); font-weight: 400; padding: 0 2px; }
 
-.file-sync-help { margin-top: 10px; border-top: 1px solid var(--border); padding-top: 10px; }
-.file-sync-help summary {font-size: var(--fs-12); color: var(--text-dim); font-weight: 600; }
-.file-sync-help-body { font-size: var(--fs-12); color: var(--text-dim); margin-top: 8px; line-height: 1.5; }
 /* Every dropdown: a drawn chevron with room to the right edge (the native one sat right against it). Last in the sheet so it wins over the per-dialog select rules. */
 select:not([multiple]):not([size]) {
   -webkit-appearance: none; appearance: none; padding-right: 32px;
@@ -2241,6 +2238,7 @@ html.sidebar-collapsed .bar-title { display: block; }
 a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every control keeps the arrow */
 /* Reduce Motion (System Settings → Accessibility): nothing moves on its own and nothing slides: the spinner and the jump flash stop, state changes are instant. */
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; transition-delay: 0s !important; scroll-behavior: auto !important; } }
+#fileSyncModalBg .modal-body { padding-bottom: 20px; }   /* the note under the button is the last thing in the dialog: room below it */
 </style>
 </head>
 <body>
@@ -2723,10 +2721,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
     <div class="modal-body">
       <div id="fileSyncModalText" class="cal-hint fs-text"></div>
       <div class="tgrp"><button class="trow tadd" type="button" id="linkFolderBtn" onclick="chooseFolderForPlan('link')">Choose Folder…</button><button class="trow tadd hidden" type="button" id="linkSameFolderBtn" onclick="chooseFolderForPlan('link', true)">Pick a File in the Same Folder</button></div>
-      <details class="file-sync-help">
-        <summary>My plan isn't syncing across devices</summary>
-        <div class="file-sync-help-body">Choose a folder your cloud provider (iCloud Drive, OneDrive, Dropbox, …) actually syncs — a folder that only exists on this computer stays local. Milestone rereads the file every 45s and on every save and merges changes, so two devices editing at once won't lose work; and because it can see the whole folder it also merges the “conflicted copies” a sync service makes when two devices save at the same moment. Chrome does not allow Desktop, Documents or Downloads themselves — pick a folder inside them.</div>
-      </details>
+      <p class="cal-hint fs-sync-note">To use your plans on other devices, choose a folder your cloud service syncs, such as iCloud Drive. Chrome doesn’t allow Desktop, Documents or Downloads themselves; pick a folder inside them.</p>
     </div>
   </div>
 </div>
