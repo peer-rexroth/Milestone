@@ -2925,7 +2925,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
   <div class="modal mid insp">
     <div class="modal-header"><h2>Baselines</h2><button onclick="closeBaselineModal()" aria-label="Close">&times;</button></div>
     <div class="modal-body">
-      <p class="cal-hint">Compares against a saved copy of the schedule.</p>
+      <p class="cal-hint">A baseline saves a copy of the schedule to compare against.</p>
       <section class="cal-sec">
         <div class="cal-sec-title">Save a Baseline </div>
         <div class="tgrp">
@@ -2933,7 +2933,8 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
           <label class="trow tpick"><span>The entire plan</span><input type="radio" class="tick" name="baselineScope" id="baselineScopeAll" value="all" checked></label>
           <label class="trow tpick"><span id="baselineScopeSelLabel">The selected task</span><input type="radio" class="tick" name="baselineScope" id="baselineScopeSel" value="selected"></label>
         </div>
-        <div class="bl-status"><span id="baselineSlotInfo"></span><button class="btn-link danger" id="baselineClearBtn" onclick="clearBaselineFromDialog()">Clear This Baseline</button></div>
+        <div class="tgrp"><button class="trow tadd" id="baselineSetBtn" type="button" onclick="setBaselineFromDialog()">Set Baseline</button></div>
+        <div class="bl-status" id="baselineStatus"><span id="baselineSlotInfo"></span><button class="btn-link danger" id="baselineClearBtn" onclick="clearBaselineFromDialog()">Clear This Baseline</button></div>
       </section>
       <section class="cal-sec">
         <div class="cal-sec-title">Compare the Chart and Columns With </div>
@@ -2948,8 +2949,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
     </div>
     <div class="modal-footer">
       <span class="foot-note" id="baselineFootNote"></span>
-      <button class="btn" onclick="closeBaselineModal()">Close</button>
-      <button class="btn btn-primary" id="baselineSetBtn" onclick="setBaselineFromDialog()">Set baseline</button>
+      <button class="btn btn-primary" onclick="closeBaselineModal()">Done</button>
     </div>
   </div>
 </div>
@@ -2994,7 +2994,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
   <div class="modal mid insp">
     <div class="modal-header"><h2>Reschedule Remaining Work</h2><button onclick="closeRescheduleModal()" aria-label="Close">&times;</button></div>
     <div class="modal-body">
-      <p class="cal-hint">Moves unfinished work to start from a date.</p>
+      <p class="cal-hint">Moves unfinished work to start from the status date.</p>
       <section class="cal-sec">
         <div class="tgrp"><div class="trow"><label for="rescheduleDateInput" class="tgrow">Status date</label><div class="field-dt" id="rescheduleWhen"><input type="text" class="dt-date" id="rescheduleDateInput" aria-label="Status date" onchange="onRescheduleDateChange()"><input type="text" id="rescheduleTimeInput" class="hidden dt-time" aria-label="Status time" onchange="rescheduleTimeTouched = true; renderRescheduleModal()"></div></div></div>
         <p class="cal-hint" id="rescheduleHint"></p>
@@ -3022,7 +3022,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
       <section class="cal-sec">
         <div class="cal-sec-title">Scope</div>
         <div class="tgrp">
-          <div class="trow"><label for="levelFromOn" class="tgrow">Only from a date on</label><input type="checkbox" class="tsw" role="switch" id="levelFromOn" onchange="renderLevelModal()"></div>
+          <div class="trow"><label for="levelFromOn" class="tgrow">Start from a date</label><input type="checkbox" class="tsw" role="switch" id="levelFromOn" onchange="renderLevelModal()"></div>
           <div class="trow" id="levelFromRow"><label for="levelFromInput" class="tgrow">From</label><div class="field-dt" id="levelFromWhen"><input type="text" class="dt-date hidden" id="levelFromInput" aria-label="From date" onchange="renderLevelModal()"></div></div>
         </div>
         <p class="cal-hint" id="levelHint"></p>
@@ -3035,7 +3035,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
     </div>
     <div class="modal-footer">
       <button class="btn" onclick="closeLevelModal()">Cancel</button>
-      <button class="btn btn-primary" id="levelBtn" onclick="runLevel()">Level resources</button>
+      <button class="btn btn-primary" id="levelBtn" onclick="runLevel()">Level Resources</button>
     </div>
   </div>
 </div>
@@ -3232,7 +3232,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
           <div class="help-row"><i class="fa-solid fa-users"></i><span>The <strong>Resources</strong> tab lists everyone: type, Max Units (how much of a resource is available: 100% is one full-time person, 300% three people pooled into one; only Work resources have it), rates and cost per use. Renaming or removing someone there updates every task that names them; <strong>Days off</strong> on a row opens that person's own days off, on top of the plan's working week.</span></div>
           <div class="help-row"><i class="fa-solid fa-table-columns"></i><span>Its <strong>Columns</strong> button shows or hides columns — Material Label, Ovt Rate and Code start hidden and appear by themselves once a resource uses them. Resize the columns like the task list's: drag a header's edge, double-click it to fit, right-click for more.</span></div>
           <div class="help-row"><i class="fa-solid fa-chart-column"></i><span>The <strong>Resource Plan</strong> tab shows each person's load as bars with the % written in (of their Max Units), red where they're over capacity — <strong>click a red bar</strong> to see the tasks behind it and jump to one. Its toolbar has a legend, <strong>Level…</strong> and <strong>Over-allocated only</strong>; the people themselves are edited in the <strong>Resources</strong> tab next to it.</span></div>
-          <div class="help-row"><i class="fa-solid fa-scale-balanced"></i><span><strong>Schedule → Level resources…</strong> delays an over-allocated task to the next span with room, never earlier than its own dependencies allow and, by default, never past its own slack (so the plan's finish doesn't move) — turn that off, or scope it to a date on, then Apply. Undo brings it back.</span></div>
+          <div class="help-row"><i class="fa-solid fa-scale-balanced"></i><span><strong>Schedule → Level Resources…</strong> delays an over-allocated task to the next span with room, never earlier than its own dependencies allow and, by default, never past its own slack (so the plan's finish doesn't move) — turn that off, or scope it to a date on, then Apply. Undo brings it back.</span></div>
           <div class="help-row"><i class="fa-solid fa-table-list"></i><span>The <strong>Resources</strong> tab is MS Project's Resource Sheet: Type (Work, Material or Cost), Std/Ovt Rate, Cost per Use, Accrue At and more, editable directly in the grid. A task's <strong>Cost</strong> column (hidden by default) adds up its assigned resources' rates; a group shows the total of everything in it. The currency is a plan setting: the money columns show it — "Std Rate (€)" — and a click on it opens <strong>Plan settings → Currency</strong>.</span></div>
         </div>
         <div class="help-divider"></div>
@@ -8707,7 +8707,7 @@ function openBaselineModal() {
   sel.value = String(firstFree == null ? 0 : firstFree);
   const hasSel = !!(selectedTaskId && byId(selectedTaskId));
   document.getElementById('baselineScopeSel').disabled = !hasSel;
-  document.getElementById('baselineScopeSelLabel').textContent = hasSel ? `The selected task “${byId(selectedTaskId).name.trim()}”${hasChildren(selectedTaskId) ? ' and the tasks in it' : ''}` : 'The selected task (none selected)';
+  document.getElementById('baselineScopeSelLabel').textContent = hasSel ? `The selected task “${byId(selectedTaskId).name.trim()}”${hasChildren(selectedTaskId) ? ' and the tasks in it' : ''}` : 'The selected task';
   document.getElementById('baselineScopeSel').closest('label').title = hasSel ? '' : 'Select a task in the list first to baseline only that task';
   document.getElementById('baselineScopeAll').checked = true;
   renderBaselineModal();
@@ -8718,14 +8718,14 @@ function closeBaselineModal() { document.getElementById('baselineModalBg').class
 function renderBaselineModal() {   // labels and buttons follow the chosen slot (called on open, on change and after every set/clear)
   const slot = Number(document.getElementById('baselineSlotSelect').value), meta = project.baselines && project.baselines[slot], count = baselineTasksWith(slot).length;
   const sel = document.getElementById('baselineSlotSelect'), cmp = document.getElementById('baselineCompareSelect');
-  for (const o of sel.options) { const n = Number(o.value), c = baselineTasksWith(n).length, m = project.baselines && project.baselines[n]; o.textContent = `${baselineName(n)} — ${c ? `set${m ? ' ' + fmtDate(m.setAt) : ''} · ${c} task${c === 1 ? '' : 's'}` : 'not set'}`; }
+  for (const o of sel.options) { const n = Number(o.value), c = baselineTasksWith(n).length, m = project.baselines && project.baselines[n]; o.textContent = `${baselineName(n)} (${c ? 'set' : 'not set'})`; }
   const setSlots = setBaselineSlots();
-  cmp.innerHTML = setSlots.length ? setSlots.map(n => { const m = project.baselines && project.baselines[n]; return `<option value="${n}">${baselineName(n)}${m ? ' — set ' + fmtDate(m.setAt) : ''}</option>`; }).join('') : '<option value="0">— none set yet —</option>';
+  cmp.innerHTML = setSlots.length ? setSlots.map(n => { const m = project.baselines && project.baselines[n]; return `<option value="${n}">${baselineName(n)}${m ? ' (set ' + fmtDate(m.setAt) + ')' : ''}</option>`; }).join('') : '<option value="0">None</option>';
   document.getElementById('baselineCompareHint').textContent = setSlots.length ? 'Drawn under the Gantt bars and used by the Baseline and Variance columns.' : 'Set a baseline first.';
   cmp.disabled = !setSlots.length; if (setSlots.length) cmp.value = String(setSlots.includes(compareBaseline()) ? compareBaseline() : setSlots[0]);
-  document.getElementById('baselineSlotInfo').textContent = count ? `${baselineName(slot)} was set${meta ? ' on ' + fmtDate(meta.setAt) : ''} for ${count} task${count === 1 ? '' : 's'}.` : `${baselineName(slot)} is not set.`;
-  document.getElementById('baselineSetBtn').textContent = count ? `Set ${baselineName(slot)} again` : `Set ${baselineName(slot)}`;
-  document.getElementById('baselineClearBtn').disabled = !count; document.getElementById('baselineClearBtn').classList.toggle('hidden', !count);   // (nothing to clear: no faint dead link)
+  document.getElementById('baselineSlotInfo').textContent = count ? `${baselineName(slot)} was set${meta ? ' on ' + fmtDate(meta.setAt) : ''} for ${count} task${count === 1 ? '' : 's'}.` : '';   // (not set: the pop-up already says so)
+  document.getElementById('baselineSetBtn').textContent = count ? `Set ${baselineName(slot)} Again` : `Set ${baselineName(slot)}`;
+  document.getElementById('baselineClearBtn').disabled = !count; document.getElementById('baselineClearBtn').classList.toggle('hidden', !count); document.getElementById('baselineStatus').classList.toggle('hidden', !count);   // (nothing to clear: no faint dead link)
   document.getElementById('baselineFootNote').textContent = minuteModeActive() ? 'A baseline keeps each task\'s time of day too.' : '';
   const stale = actualsNotApplied();
   document.getElementById('baselineActualsInfo').textContent = stale.length ? `${stale.length} task${stale.length === 1 ? ' has' : 's have'} an actual date that is not in the schedule yet (plans from before this version kept them beside it). Applying them moves Start / Finish to the actual dates (a running task keeps its duration) and re-plans what follows. Set a baseline first if you want to keep the plan.` : 'Every actual date is already in the schedule.';
@@ -8877,7 +8877,7 @@ function renderLevelModal() {
   const dry = hasPool ? levelDryRun(levelOpts()) : { rows: [], unresolved: [] };
   const rows = dry.rows.slice().sort((a, b) => taskDisplayId(a.id) - taskDisplayId(b.id));
   const n = rows.length, u = dry.unresolved.length;
-  document.getElementById('levelHint').textContent = !hasPool ? 'No resources yet.'
+  document.getElementById('levelHint').textContent = !hasPool ? 'No resources yet. Add some in the Resource Sheet.'
     : (!n && !u) ? 'Nothing to level.'
     : `${n} task${n === 1 ? '' : 's'} would move.${u ? ` ${u} conflict${u === 1 ? '' : 's'} can't be resolved.` : ''}`;
   document.getElementById('levelBtn').disabled = !n;

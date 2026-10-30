@@ -65,7 +65,7 @@ with sync_playwright() as p:
     cell("Test", "start").click(); pg.wait_for_selector(".inline-edit"); pg.keyboard.press("Escape"); pg.wait_for_timeout(150)
     check("Escape cancels an inline edit without changing anything", pg.locator(".inline-edit").count() == 0 and dates("Test") == ["2026-10-01", "2026-10-05"])
     # ============================================================ 6. baseline, actuals, variance
-    pg.click("#scheduleMenuBtn"); pg.click("#planBaselineItem"); pg.wait_for_selector("#baselineModalBg.open"); pg.click("#baselineSetBtn"); pg.wait_for_timeout(250); pg.click("#baselineModalBg .modal-footer .btn >> text=Close"); pg.wait_for_timeout(150)
+    pg.click("#scheduleMenuBtn"); pg.click("#planBaselineItem"); pg.wait_for_selector("#baselineModalBg.open"); pg.click("#baselineSetBtn"); pg.wait_for_timeout(250); pg.click("#baselineModalBg .modal-footer .btn >> text=Done"); pg.wait_for_timeout(150)
     check("Set baseline: every scheduled task keeps its dates as Baseline (groups roll up), toast with Undo", T("Build")["baselines"]["0"] == ["2026-09-17", "2026-09-30"] and "Baseline set" in toast())
     pg.click("#columnsBtn"); pg.wait_for_selector("#columnsMenu.open")
     for col in ("baselineStart", "startVariance", "finishVariance", "actualStart", "actualFinish"): pg.locator(f"#columnsMenu input[data-col='{col}']").set_checked(True)

@@ -8,7 +8,7 @@ HIG base URL: `https://developer.apple.com/design/human-interface-guidelines/` (
 
 ## Status (2026-10-30)
 
-The five most important issues are **built** (tests: `tests/verify_audit_top5.py`, full suite: every suite passes except `verify_stress` seed 5, which fails intermittently on the code from before these changes as well, 3 of 5 runs): **F-01** Reduce Motion, **F-02 / F-03 / F-04** title-style wording, **F-05 / F-06** context menus for plan rows and Resource Sheet rows, **F-10** colour tokens, **F-14** ⌥⌘F on a Mac. Still open: F-07 to F-09, F-11 to F-13, F-15 to F-18. Wording note: the older CLAUDE.md line "titles are sentence case" was replaced by the design guide's rule (sheet titles in title style).
+The five most important issues are **built** (tests: `tests/verify_audit_top5.py`, full suite: every suite passes except `verify_stress` seed 5, which fails intermittently on the code from before these changes as well, 3 of 5 runs): **F-01** Reduce Motion, **F-02 / F-03 / F-04** title-style wording, **F-05 / F-06** context menus for plan rows and Resource Sheet rows, **F-10** colour tokens, **F-14** ⌥⌘F on a Mac. F-12 (Baselines footer) is also done: Done instead of Close, and Set Baseline moved into the dialog. **F-16 is ignored at the owner's request.** Still open: F-07 to F-09, F-11, F-13, F-15, F-17, F-18. Wording note: the older CLAUDE.md line "titles are sentence case" was replaced by the design guide's rule (sheet titles in title style).
 
 ---
 

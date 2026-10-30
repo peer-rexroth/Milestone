@@ -2,7 +2,7 @@
 """Resource levelling, Stage 6 — the "Level resources" dialog (`#levelModalBg`, Schedule menu, next to Reschedule).
 Wraps `levelResources()`/`levelDryRun()` exactly the way the Reschedule dialog wraps its own engine function: a live
 dry-run preview (hint line + a "Which tasks" list sorted by display id), the "Keep within existing slack" checkbox
-(default on) and a "Only from a date on" scope, Apply + a toast Undo. Reached from the Schedule menu, whose own item
+(default on) and a "Start from a date" scope, Apply + a toast Undo. Reached from the Schedule menu, whose own item
 shows a live over-allocated count (there is no separate top-bar badge for it — removed at the user's request). See
 "Resource levelling" in CLAUDE.md."""
 import os
@@ -85,7 +85,7 @@ with sync_playwright() as p:
     check("it actually resolves the conflict this time", ev("() => overallocatedResources()") == [])
     check("G (the shared successor) is unaffected in position relative to its own predecessors — no dependency violation", ev("() => tasks.find(t => t.name === 'G').startDate") >= max(dates()['E'][1], dates()['F'][1]))
 
-    # ---------------------------------------------------------------- scope: "Only from a date on" filters what's eligible
+    # ---------------------------------------------------------------- scope: "Start from a date" filters what's eligible
     seed([
         {"name": "LongBranch", "s": "2026-09-07", "e": "2026-09-16"},
         {"name": "C", "s": "2026-09-08", "e": "2026-09-09", "r": "Anna"},

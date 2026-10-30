@@ -96,10 +96,10 @@ with sync_playwright() as p:
     bx = pg.locator("#baselineModalBg .modal").bounding_box()
     check("the baseline dialog is 560px wide (the shared 'mid' width) and fits without scrolling", round(bx["width"]) == 560 and fits("#baselineModalBg"), bx)
     check("...'Which baseline' and 'Apply to' are rows of one group, one under the other; the 'Actual dates' section is hidden while there is nothing to apply", top("#baselineScopeAll") > top("#baselineSlotSelect") and not pg.locator("#baselineActualsSec").is_visible())
-    check("...nothing set yet: the compare list says so and the hint tells what to do first", "none set" in pg.inner_text("#baselineCompareSelect") and "Set a baseline" in pg.inner_text("#baselineCompareHint") and pg.is_disabled("#baselineCompareSelect"))
+    check("...nothing set yet: the compare list says so and the hint tells what to do first", "None" in pg.inner_text("#baselineCompareSelect") and "Set a baseline" in pg.inner_text("#baselineCompareHint") and pg.is_disabled("#baselineCompareSelect"))
     check("...the 'selected task' choice is disabled with a reason", pg.is_disabled("#baselineScopeSel") and "Select a task" in (ev("() => document.getElementById('baselineScopeSel').closest('label').title")))
     pg.click("#baselineSetBtn"); pg.wait_for_timeout(200)
-    check("after setting one, the compare list names it with its date and the hint explains the chart", "Baseline — set" in pg.inner_text("#baselineCompareSelect") and "Gantt bars" in pg.inner_text("#baselineCompareHint") and not pg.is_disabled("#baselineCompareSelect"), pg.inner_text("#baselineCompareSelect"))
+    check("after setting one, the compare list names it with its date and the hint explains the chart", "Baseline (set" in pg.inner_text("#baselineCompareSelect") and "Gantt bars" in pg.inner_text("#baselineCompareHint") and not pg.is_disabled("#baselineCompareSelect"), pg.inner_text("#baselineCompareSelect"))
     ev("() => { byId('b').actualStart = '2025-01-15'; byId('b').startDate = '2025-01-13'; renderBaselineModal(); }"); pg.wait_for_timeout(100)
     check("a task with an actual date that is not in the schedule brings the 'Actual dates' section back", pg.locator("#baselineActualsSec").is_visible() and not pg.is_disabled("#baselineApplyBtn"))
 
