@@ -230,7 +230,7 @@ with sync_playwright() as p:
     def ids_shown(): return set(names())
     pg.locator(".col-filter-btn[data-col='status']").click(); pg.wait_for_selector("#filterMenu.open")
     labels = pg.locator("#filterTree .ft-label").all_inner_texts()
-    check("Status filter: a list in the order Late, On Schedule, Future Task, Complete (+ (Blanks) for the task with none)", [l for l in labels if l not in ("(Select All)",)] == [x for x in ["Late", "On Schedule", "Future Task", "Complete"] if x in labels] + ["(Blanks)"], labels)
+    check("Status filter: a list in the order Late, On Schedule, Future Task, Complete (+ Blanks for the task with none)", [l for l in labels if l not in ("Select All",)] == [x for x in ["Late", "On Schedule", "Future Task", "Complete"] if x in labels] + ["Blanks"], labels)
     pg.locator("#filterTree .ft-cb[data-key='all']").uncheck(); pg.locator("#filterTree .ft-label:has-text('Late') .ft-cb").check(); pg.click("#filterOkBtn"); pg.wait_for_timeout(120)
     want = {sp["name"] for sp in specs if sp["name"] not in ("Group", "tbd") and py_status(sp["s"], sp["e"], sp.get("p", 0), sp.get("extra", {}).get("actualStart"), sp.get("extra", {}).get("actualFinish")) == "Late"}
     got = ids_shown() - {"Group"}
@@ -246,12 +246,12 @@ with sync_playwright() as p:
     pg.evaluate("() => { for (const c of ['resource', 'actualStart']) colHidden.delete(c); save(); render(); }"); pg.wait_for_timeout(100)
     pg.locator(".col-filter-btn[data-col='resource']").click(); pg.wait_for_selector("#filterMenu.open")
     lab = pg.locator("#filterTree .ft-label").all_inner_texts()
-    check("Resource filter: a value list with (Blanks) for tasks that have none", lab == ["(Select All)", "Anna, Ben", "Ben", "Carla", "(Blanks)"], lab)
+    check("Resource filter: a value list with Blanks for tasks that have none", lab == ["Select All", "Anna, Ben", "Ben", "Carla", "Blanks"], lab)
     pg.select_option("#filterRuleSel", "contains"); pg.fill("#filterInputA", "ben"); pg.click("#filterOkBtn"); pg.wait_for_timeout(120)
     check("...'contains ben' (any case) finds tasks with Ben among their resources", ids_shown() == {"R1", "R2"}, ids_shown())
     pg.evaluate("() => { colFilters = newColFilters(); render(); }")
     pg.locator(".col-filter-btn[data-col='resource']").click(); pg.wait_for_selector("#filterMenu.open"); pg.locator("#filterTree .ft-cb[data-key='all']").uncheck(); pg.locator("#filterTree .ft-cb[data-key='blank']").check(); pg.click("#filterOkBtn"); pg.wait_for_timeout(120)
-    check("...(Blanks) finds the unassigned tasks", ids_shown() == {"R4"}, ids_shown())
+    check("...Blanks finds the unassigned tasks", ids_shown() == {"R4"}, ids_shown())
     pg.evaluate("() => { colFilters = newColFilters(); render(); }")
     pg.locator(".col-filter-btn[data-col='actualStart']").click(); pg.wait_for_selector("#filterMenu.open"); pg.select_option("#filterRuleSel", "before"); pg.fill("#filterInputA", d(-2)); pg.click("#filterOkBtn"); pg.wait_for_timeout(120)
     check("Actual Start takes date rules (before …): only R1 started that early", ids_shown() == {"R1"}, ids_shown())

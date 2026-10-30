@@ -76,7 +76,7 @@ with sync_playwright() as p:
     # ---------------------------------------------------------------- Sort
     seed()
     pg.click("#gridHeader .col-filter-btn[data-col='end']"); pg.wait_for_timeout(120)
-    check("a column's filter panel starts with Sort buttons (dates: oldest / newest first)", [x.strip() for x in pg.locator("#filterMenu .filter-sort-btn").all_inner_texts()] == ["Sort Oldest first", "Sort Newest first"])
+    check("a column's filter panel starts with Sort buttons (dates: oldest / newest first)", [x.strip() for x in pg.locator("#filterMenu .filter-sort-btn").all_inner_texts()] == ["Oldest First", "Newest First"])
     pg.click("#filterMenu .filter-sort-btn[data-dir='-1']"); pg.wait_for_timeout(150)
     order = ev("() => visibleTaskList().map(v => v.task.id)")
     check("sorting by Finish, newest first, keeps the outline: the phase's tasks are ordered inside it", order == ["p", "d", "b", "c", "a", "m"], order)

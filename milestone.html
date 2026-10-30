@@ -865,14 +865,18 @@ body.col-moving, body.col-moving * { cursor: grabbing !important; user-select: n
 .btn-link:disabled { color: var(--text-faint); cursor: default; }
 .filter-menu { width: 300px; padding: 0; overflow: hidden; z-index: 90; flex-direction: column; }
 .filter-menu.open { display: flex; }
-.filter-sort { display: flex; gap: 6px; padding: 0 0 8px; }   /* (the next section draws the line below) */
-.filter-sort-btn { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 4px 8px; border: 1px solid var(--border); border-radius: var(--r-s); background: var(--panel); color: var(--text); font-size: var(--fs-12);white-space: nowrap; }
-.filter-sort-btn:hover { background: var(--panel-2); }
-.filter-sort-btn.active { border-color: var(--accent); color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--panel)); }
-.filter-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px 8px; font-size: var(--fs-13); }
-.filter-section { padding: 6px 12px 10px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 6px; }
+.filter-sort { display: flex; gap: 2px; margin: 0 14px 10px; padding: 2px; border-radius: 999px; background: var(--cap-fill); }   /* a two-part control, like the Notes and Prompts bars: the chosen order is the raised part */
+.filter-sort-btn { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 4px 8px; border: 0; border-radius: 999px; background: transparent; color: var(--text-dim); font-size: var(--fs-12); white-space: nowrap; }
+.filter-sort-btn:hover { color: var(--text); }
+.filter-sort-btn.active { background: var(--panel); color: var(--text); box-shadow: 0 1px 2px var(--shadow-ink-soft); }
+.filter-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px 10px; }
+.filter-head strong { font-size: var(--fs-14); font-weight: 600; }
+.filter-head .btn-link { font-size: var(--fs-13); color: var(--text-faint); }
+.filter-head .btn-link:not(:disabled) { color: var(--blue-text); }
+.filter-section { padding: 10px 14px 12px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
 .filter-label { font-size: var(--fs-12); font-weight: 600; color: var(--text-dim); }
-.filter-menu select, .filter-menu input[type=date], .filter-menu input[type=text], .filter-menu input[type=number], .filter-menu input[type=search] { width: 100%; padding: 6px 8px; border: 1px solid var(--border); border-radius: var(--r-s); background: var(--panel); color: var(--text); font-size: var(--fs-12); }
+.filter-menu select, .filter-menu input[type=date], .filter-menu input[type=text], .filter-menu input[type=number], .filter-menu input[type=search] { width: 100%; padding: 7px 10px; border: 0; border-radius: var(--r-m); background-color: color-mix(in srgb, var(--text) 6%, transparent); color: var(--text); font-size: var(--fs-13); }
+.filter-menu input[type=search] { border-radius: 999px; padding-inline: 14px; }
 .filter-rule-inputs { display: flex; align-items: center; gap: 6px; font-size: var(--fs-12); color: var(--text-dim); }
 .filter-rule-inputs input { flex: 1; min-width: 0; }
 .filter-rule-inputs:empty { display: none; }
@@ -882,11 +886,11 @@ body.col-moving, body.col-moving * { cursor: grabbing !important; user-select: n
 .ft-row { display: flex; align-items: center; gap: 2px; padding: 1px 0; }
 .ft-l1 { padding-left: 16px; } .ft-l2 { padding-left: 32px; }
 .ft-exp { flex-shrink: 0; width: 16px; height: 16px; padding: 0; border: none; background: transparent; color: var(--text-faint); font-size: var(--fs-11); }
-.ft-label { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; padding: 2px 4px; border-radius: var(--r-xs); font-size: var(--fs-12);}
+.ft-label { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; padding: 3px 4px; border-radius: var(--r-xs); font-size: var(--fs-13); }
 .ft-label:hover { background: var(--panel-2); }
-.ft-cb { flex-shrink: 0; width: 14px; height: 14px; margin: 0; }
+.ft-cb { flex-shrink: 0; width: 16px; height: 16px; margin: 0; accent-color: var(--accent); }
 .ft-empty { padding: 10px 4px; font-size: var(--fs-12); color: var(--text-faint); }
-.filter-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--border); }
+.filter-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--border); }
 .dropdown-item:disabled { opacity: .45; cursor: default; }
 .dropdown-item:disabled:hover { background: transparent; }
 .plan-menu { min-width: 290px; max-width: 380px; }
@@ -1441,7 +1445,7 @@ svg.gantt-deps path.hl.critical { stroke: var(--danger); }
    the Gantt view needs for its own, taller job. Reuses ganttXAt()/ganttSpan()/renderGanttHeaderTicks()/ZOOMS/rowWindow()
    exactly as the Gantt chart does — same timescale, same tick markup, same non-working shading. */
 .resource-pane-outer { flex: 1; min-width: 0; position: relative; background: var(--page-bg); }
-.resource-scroll { position: absolute; inset: 0; overflow: auto; }
+.resource-scroll { position: absolute; inset: 0 0 32px 0; overflow: auto; }   /* the legend is a quiet line under the chart, not a toolbar item */
 .resource-header-row { position: sticky; top: 0; z-index: 5; display: flex; height: var(--head-h); background: var(--panel-2); border-bottom: 1px solid var(--border); }
 .resource-name-cell { position: sticky; left: 0; z-index: 6; flex: 0 0 var(--res-name-w, 180px); width: var(--res-name-w, 180px); padding: 0 10px; display: flex; align-items: center; font-size: var(--fs-12); font-weight: 600; color: var(--text-dim); background: var(--panel-2); border-right: 1px solid var(--border); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .resource-name-cell.head { font-size: var(--fs-12); color: var(--text-dim); }
@@ -1458,6 +1462,8 @@ svg.gantt-deps path.hl.critical { stroke: var(--danger); }
 .res-legend { display: flex; align-items: center; gap: 6px; font-size: var(--fs-12); color: var(--text-dim); white-space: nowrap; }
 .res-legend .sw { width: 12px; height: 12px; border-radius: var(--r-xs); background: color-mix(in srgb, var(--accent) 55%, var(--panel)); }
 .res-legend .sw.over { background: color-mix(in srgb, var(--danger) 65%, var(--panel)); margin-left: 8px; }
+.resource-pane-outer > .res-legend { position: absolute; left: 0; right: 0; bottom: 0; height: 32px; padding: 0 var(--gutter); border-top: 1px solid var(--border); background: var(--page-bg); z-index: 3; }
+.res-legend-hint { margin-left: 16px; color: var(--text-faint); }
 #loadMenu { min-width: 300px; max-width: 420px; }
 #loadMenu .dropdown-item .item-hint { margin-left: auto; }
 .main.view-resources .grid-pane, .main.view-resources .gantt-pane-outer { display: none; }
@@ -1486,7 +1492,12 @@ svg.gantt-deps text.status-label { fill: var(--task-purple); font-size: var(--fs
 .rst-header { position: sticky; top: 0; z-index: 3; height: var(--head-h); font-size: var(--fs-12); font-weight: 600; color: var(--text-dim); border-bottom: 1px solid var(--border); --row-bg: var(--panel); background: var(--row-bg); }
 .rst-row { height: var(--row-h); border-bottom: 1px solid var(--border); font-size: var(--fs-12); --row-bg: var(--panel); background: var(--row-bg); }
 .rst-row:hover { --row-bg: var(--panel-2); }
-.rst-row:focus-within { --row-bg: var(--sel-inactive); }   /* the row you are in, with the cursor in a field: the same neutral grey as a selected task row while typing */
+.rst-row:focus-within { --row-bg: var(--sel-inactive); }
+html:not(.sel-inactive) .rst-row.selected { --row-bg: var(--accent); --text: var(--on-accent); --text-dim: var(--sel-text-2); --text-faint: var(--sel-text-3); --border: var(--sel-line); color: var(--on-accent); }   /* the selected resource: the same solid accent as a selected task */
+html:not(.sel-inactive) .rst-row.selected :is(input, select, .rst-days-link, .rst-remove) { color: var(--on-accent); }
+html:not(.sel-inactive) .rst-row.selected .rst-cell input.inline-edit::placeholder { color: var(--sel-text-3); }
+html:not(.sel-inactive) .rst-row.selected .rst-remove { opacity: 1; }
+html.sel-inactive .rst-row.selected { --row-bg: var(--sel-inactive); }   /* the cursor is in a box, or the window is not active: the neutral grey, as for a task row */   /* the row you are in, with the cursor in a field: the same neutral grey as a selected task row while typing */
 /* The column lines: not cell borders (see the comment above) — a gradient painted on a pseudo-element from the
    resolved track positions, the identical mechanism the task list itself uses, so the header and every row agree
    pixel-for-pixel even though the tracks are a px/fr mix. */
@@ -2332,7 +2343,6 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
   </div>
   <div class="tb-group" data-views="resources">
     <span class="tb-sep"></span>
-    <span class="res-legend" id="resLegend" data-more="8" title="Each bar is a person's load on those days, as a % of their Max Units"><span class="sw"></span>Within capacity<span class="sw over"></span>Over capacity — click a red bar</span>
     <button class="btn btn-sm" id="levelResBtn" data-more="5" onclick="openLevelModal()" title="Level resources — delay tasks so nobody is overbooked"><i class="fa-solid fa-scale-balanced"></i>Level…</button>
     <button class="btn btn-sm tb-toggle" id="overOnlyBtn" data-more="4" onclick="toggleOverOnly()" aria-pressed="false" title="Show only the resources that are over-allocated somewhere"><i class="fa-solid fa-triangle-exclamation"></i>Over-allocated only</button>
   </div>
@@ -2359,7 +2369,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
   <button class="dropdown-item" id="addRecurBtn" role="menuitem" title="A meeting every week, a report every month" onclick="closeAddMenu();openRecurModal()"><i class="fa-solid fa-repeat"></i>Recurring Task…</button>
   <button class="dropdown-item" id="pasteBtn" role="menuitem" onclick="closeAddMenu();pasteButton()"><i class="fa-regular fa-paste"></i>Paste Tasks<span class="item-hint" data-kbd="V"></span></button>
   <div class="dropdown-sep"></div>
-  <div class="menu-head">New tasks are</div>
+  <div class="menu-head">New Tasks</div>
   <button class="dropdown-item" id="newModeAuto" role="menuitemradio" onclick="setNewTaskMode('auto')"></button>
   <button class="dropdown-item" id="newModeManual" role="menuitemradio" onclick="setNewTaskMode('manual')"></button>
 </div>
@@ -2392,6 +2402,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
       </div>
       <div class="resource-body" id="resourceBody"></div>
     </div>
+    <div class="res-legend" id="resLegend" title="Each bar is a person's load on those days, as a % of their Max Units"><span class="sw"></span>Within capacity<span class="sw over"></span>Over capacity<span class="res-legend-hint">Click a red bar to see why.</span></div>
   </div>
   <div class="resourceSheet-pane-outer" id="resourceSheetPaneOuter">
     <div class="rst-scroll" id="resourceSheetScroll">
@@ -3230,7 +3241,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
         <div class="help-section">
           <div class="help-section-title">Filtering</div>
           <div class="help-row"><i class="fa-solid fa-filter"></i><span>Click the <strong>funnel</strong> in a column header (every column has one) for an Excel-style filter. Dates get rules — equals, before, after, between, or relative to today such as this week, next month or year to date — and a Year › Month › Day list. Text columns get contains / begins with / ends with / equals and their negatives; numbers get equals, greater or less than, and between.</span></div>
-          <div class="help-row"><i class="fa-solid fa-list-check"></i><span>Every column also has a list of its values to tick, with a search box and <strong>(Blanks)</strong> for tasks that have no value.</span></div>
+          <div class="help-row"><i class="fa-solid fa-list-check"></i><span>Every column also has a list of its values to tick, with a search box and <strong>Blanks</strong> for tasks that have no value.</span></div>
           <div class="help-row"><i class="fa-solid fa-layer-group"></i><span>Filters on several columns combine, so a task must match all of them. A group stays visible while any sub-task inside it matches, and stays open while a filter is on.</span></div>
           <div class="help-row"><i class="fa-solid fa-tag"></i><span>The bar under the toolbar shows what is filtered and how many tasks are showing; click <strong>×</strong> on a chip, or <strong>Clear all</strong>, to remove it. Filters are only for looking — they aren't saved, and a task you add or edit stays visible until you filter again.</span></div>
         </div>
@@ -5694,7 +5705,7 @@ function statusColorVar(t) {
 // a value list (Task Name, Predecessors), number rules + a value list (Duration, %), and just a value list (Task Mode).
 // Pure view state, like the selection: not saved, not synced, cleared when the plan is switched. A `spec` is either
 //   { type: 'rule',   rule, a, b }          e.g. between 01.09.2026 and 30.09.2026, "this month", contains "test", > 5
-//   { type: 'values', values: Set, blanks }  the ticked values of the list, plus "(Blanks)"
+//   { type: 'values', values: Set, blanks }  the ticked values of the list, plus "Blanks"
 // Rows are filtered by what they *display* (a summary shows its roll-up); a task with no real value — a manual task with
 // a free-text "TBD" date, an empty name, no predecessors — is a blank. A summary stays visible while any of its
 // sub-tasks match, so a match keeps its context; tasks added or edited since the filter was applied stay visible too
@@ -5910,7 +5921,7 @@ function describeSpec(col, spec) {
   const vals = [...spec.values], parts = [];
   if (vals.length === 1) parts.push(filterValueLabel(col, vals[0]));
   else if (vals.length > 1) parts.push(`${vals.length} ${kind === 'date' ? 'dates' : 'values'}`);
-  if (spec.blanks) parts.push('(Blanks)');
+  if (spec.blanks) parts.push('Blanks');
   return parts.join(' + ') || 'nothing';
 }
 // Which edge of a column moves when it is resized. Task Name stretches to fill the pane, so the columns to its right are pinned to the
@@ -5977,12 +5988,12 @@ function openColumnFilter(event, col) {
     (groups.length ? groups.map(g => `<optgroup label="${g}">${rules.filter(r => r.group === g).map(opt).join('')}</optgroup>`).join('') : rules.map(opt).join('')) +
     `</select><div class="filter-rule-inputs" id="filterRuleInputs"></div></div>`;
   menu.innerHTML =
-    `<div class="filter-head"><strong>Filter ${escapeHtml(FILTER_COLS[col].label)}</strong><button class="btn-link" id="filterClearBtn" onclick="clearColFilter('${col}')"${spec ? '' : ' disabled'}>Clear filter</button></div>` +
-    (() => { const L = kind === 'date' ? ['Oldest first', 'Newest first'] : kind === 'number' ? ['Smallest first', 'Largest first'] : ['A → Z', 'Z → A'], on = d => sortSpec && sortSpec.col === col && sortSpec.dir === d;
-      return `<div class="filter-sort">${[1, -1].map((d, i) => `<button type="button" class="filter-sort-btn${on(d) ? ' active' : ''}" data-dir="${d}" aria-pressed="${on(d)}" onclick="setSort(${on(d) ? 'null, 0' : `'${col}', ${d}`})"><i class="fa-solid fa-arrow-${d > 0 ? 'up' : 'down'}-short-wide"></i>Sort ${L[i]}</button>`).join('')}</div>`; })() +
+    `<div class="filter-head"><strong>Filter ${escapeHtml(FILTER_COLS[col].label)}</strong><button class="btn-link" id="filterClearBtn" onclick="clearColFilter('${col}')"${spec ? '' : ' disabled'}>Clear</button></div>` +
+    (() => { const L = kind === 'date' ? ['Oldest First', 'Newest First'] : kind === 'number' ? ['Smallest First', 'Largest First'] : ['A to Z', 'Z to A'], on = d => sortSpec && sortSpec.col === col && sortSpec.dir === d;
+      return `<div class="filter-sort" role="group" aria-label="Sort">${[1, -1].map((d, i) => `<button type="button" class="filter-sort-btn${on(d) ? ' active' : ''}" data-dir="${d}" aria-pressed="${on(d)}" aria-label="Sort ${L[i]}" onclick="setSort(${on(d) ? 'null, 0' : `'${col}', ${d}`})"><i class="fa-solid fa-arrow-${d > 0 ? 'up' : 'down'}-short-wide"></i>${L[i]}</button>`).join('')}</div>`; })() +
     ruleSelect +
     `<div class="filter-section filter-list"><input type="search" id="filterSearch" placeholder="Search" autocomplete="off" oninput="onFilterSearch(this.value)"><div class="filter-tree" id="filterTree"></div></div>` +
-    `<div class="filter-actions"><button class="btn" onclick="closeFilterMenu()">Cancel</button><button class="btn btn-primary" id="filterOkBtn" onclick="applyFilterDraft()">OK</button></div>`;
+    `<div class="filter-actions"><button class="btn" onclick="closeFilterMenu()">Cancel</button><button class="btn btn-primary" id="filterOkBtn" onclick="applyFilterDraft()">Apply</button></div>`;
   if (rules.length) document.getElementById('filterRuleSel').value = filterDraft.rule;
   renderFilterRuleInputs(); renderFilterTree();
   const rect = event.currentTarget.getBoundingClientRect();
@@ -6002,7 +6013,7 @@ function filterLeaves() {
 }
 function filterShowBlank() {
   const q = filterDraft.search.trim().toLowerCase();
-  return filterDraft.hasBlank && (!q || '(blanks)'.includes(q));
+  return filterDraft.hasBlank && (!q || 'blanks'.includes(q));
 }
 function filterOkEnabled() {
   const d = filterDraft;
@@ -6058,7 +6069,7 @@ function renderFilterTree() {
   const cb = (key, st, label) => `<label class="ft-label"><input type="checkbox" class="ft-cb" data-key="${key}" data-state="${st}"${st === 'all' ? ' checked' : ''} onchange="filterToggle('${key}', this.checked)"><span>${label}</span></label>`;
   const exp = (key, open) => `<button class="ft-exp" onclick="filterToggleExpand('${key}')" aria-label="${open ? 'Collapse' : 'Expand'}"><i class="fa-solid fa-chevron-${open ? 'down' : 'right'}"></i></button>`;
   const allItems = leaves.length + (showBlank ? 1 : 0), allOn = leaves.filter(x => d.values.has(x)).length + (showBlank && d.blanks ? 1 : 0);
-  let html = `<div class="ft-row">${cb('all', allOn === 0 ? 'none' : allOn === allItems ? 'all' : 'mixed', searching ? '(Select All Search Results)' : '(Select All)')}</div>`;
+  let html = `<div class="ft-row">${cb('all', allOn === 0 ? 'none' : allOn === allItems ? 'all' : 'mixed', searching ? 'Select All Search Results' : 'Select All')}</div>`;
   if (!allItems) html = `<div class="ft-empty">Nothing matches “${escapeHtml(d.search.trim())}”.</div>`;
   else if (d.kind === 'date') {
     const byYear = new Map();
@@ -6081,7 +6092,7 @@ function renderFilterTree() {
   } else {
     for (const v of leaves) html += `<div class="ft-row">${cb('v:' + d.index.get(v), d.values.has(v) ? 'all' : 'none', escapeHtml(filterValueLabel(d.col, v)))}</div>`;
   }
-  if (showBlank) html += `<div class="ft-row">${cb('blank', d.blanks ? 'all' : 'none', '(Blanks)')}</div>`;
+  if (showBlank) html += `<div class="ft-row">${cb('blank', d.blanks ? 'all' : 'none', 'Blanks')}</div>`;
   const tree = document.getElementById('filterTree');
   tree.innerHTML = html;
   tree.classList.toggle('dimmed', !!d.rule);
@@ -8011,6 +8022,7 @@ function renderResourceSheet() {
   document.getElementById('resourceSheetBody').innerHTML = pool.length ? pool.map((r, i) => resourceSheetRowHtml(r, i)).join('') + '<button type="button" class="rst-add-row" onclick="addResourceSheetRow()"><i class="fa-solid fa-plus"></i>Add resource</button>'
     : `<div class="empty-state rst-empty">${emptyIcon('users')}No Resources<span class="empty-sub">Choose Add Resource above.</span></div>`;
   updateResourceSheetColumnLines();
+  paintRstSelection();
 }
 // The column lines (see the CSS comment above .resourceSheet-pane-outer): reads the HEADER's and a real ROW's own
 // resolved grid-template-columns and publishes the track boundaries as CSS custom properties — the exact technique
@@ -8067,6 +8079,30 @@ function resourceSheetRowHtml(r, i) {
    is passed over to the next row that has one. ---- */
 // Esc puts a typed value back (a dropdown has already saved its choice — Undo is the way back for that); ← / → leave a box that is "fresh" (just
 // entered, so its whole content is selected) or whose caret is at that end, and move to the neighbouring cell's control; on a dropdown they always do.
+// A selected resource row, as in the task list: click the number (or the blank part of a row), or enter any cell, and the row is the selection (the accent
+// colour while you are not typing, the neutral grey while a box has the cursor). ↑ ↓ move it, Return or F2 edits its name, Delete removes it (Undo is in the
+// toast), Esc lets go. The cells stay live boxes, as the sheet always had them.
+let rstSelId = null;
+function paintRstSelection() {
+  const rows = [...document.querySelectorAll('#resourceSheetBody .rst-row')];
+  if (rstSelId && !rows.some(r => r.dataset.id === rstSelId)) rstSelId = null;
+  for (const r of rows) r.classList.toggle('selected', r.dataset.id === rstSelId);
+}
+function rstSelect(id) { if (rstSelId === id) return; rstSelId = id; paintRstSelection(); }
+function rstKey(e) {
+  if (currentView !== 'resourceSheet' || !rstSelId || e.ctrlKey || e.metaKey || e.altKey) return false;
+  if (document.querySelector('.modal-bg.open') || NAV_MENUS.some(id => { const m = document.getElementById(id); return m && m.classList.contains('open'); })) return false;
+  const t = e.target; if (t && t.matches && t.matches('input, select, textarea, button, [contenteditable]')) return false;
+  const rows = [...document.querySelectorAll('#resourceSheetBody .rst-row')], i = rows.findIndex(r => r.dataset.id === rstSelId);
+  if (i < 0) return false;
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { const n = rows[Math.max(0, Math.min(rows.length - 1, i + (e.key === 'ArrowDown' ? 1 : -1)))]; e.preventDefault(); rstSelect(n.dataset.id); n.scrollIntoView({ block: 'nearest' }); return true; }
+  if (e.key === 'Enter' || e.key === 'F2') { const f = rows[i].querySelector('input:not([disabled]), select:not([disabled])'); if (f) { e.preventDefault(); f.focus(); if (f.select && f.tagName === 'INPUT') f.select(); } return true; }
+  if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); const id = rstSelId, n = rows[i + 1] || rows[i - 1]; removeResourceSheetRow(id); rstSelId = n ? n.dataset.id : null; paintRstSelection(); return true; }
+  if (e.key === 'Escape') { rstSelId = null; paintRstSelection(); return true; }
+  return false;
+}
+document.getElementById('resourceSheetBody').addEventListener('mousedown', e => { const row = e.target.closest && e.target.closest('.rst-row'); if (row) rstSelect(row.dataset.id); }, true);
+document.getElementById('resourceSheetBody').addEventListener('focusin', e => { const row = e.target.closest && e.target.closest('.rst-row'); if (row) rstSelect(row.dataset.id); });
 function rsFocusIn(e) { const el = e.target; if (el && el.tagName === 'INPUT' && el.closest && el.closest('.rst-row')) { el._rsOrig = el.value; el._rsFresh = true; } }
 function rsSideCell(row, ci, step) {
   for (let c = ci + step; c >= 0 && c < row.children.length; c += step) {
@@ -11735,8 +11771,8 @@ function toggleSbModeMenu(event) {
   if (menu.classList.contains('open')) { closeSbModeMenu(); return; }
   closeMoreMenu(); closeAddMenu(); closeDataMenu(); closePlanMenu(); closeScheduleMenu();
   const cur = project.newTaskMode === 'manual' ? 'manual' : 'auto';
-  menu.innerHTML = '<div class="menu-head">New tasks are</div>' + [['auto', 'Auto Scheduled', 'fa-chart-gantt', 'placed by their links and constraints'], ['manual', 'Manually Scheduled', 'fa-thumbtack', 'kept where you put them']].map(([id, label, icon, hint]) =>
-    `<button class="dropdown-item${cur === id ? ' active' : ''}" role="menuitemradio" aria-checked="${cur === id}" onclick="closeSbModeMenu(); setNewTaskMode('${id}')"><i class="fa-solid ${icon}"></i>${label}<i class="fa-solid fa-check mode-check" style="visibility:${cur === id ? 'visible' : 'hidden'}"></i><span class="item-hint">${hint}</span></button>`).join('');
+  menu.innerHTML = '<div class="menu-head">New Tasks</div>' + [['auto', 'Auto Scheduled', 'fa-chart-gantt', 'Placed by their links and constraints'], ['manual', 'Manually Scheduled', 'fa-thumbtack', 'Kept where you put them']].map(([id, label, icon, hint]) =>
+    `<button class="dropdown-item${cur === id ? ' active' : ''}" role="menuitemradio" aria-checked="${cur === id}" title="${hint}" onclick="closeSbModeMenu(); setNewTaskMode('${id}')"><i class="fa-solid ${icon}"></i>${label}<i class="fa-solid fa-check mode-check" style="visibility:${cur === id ? 'visible' : 'hidden'}"></i></button>`).join('');
   const r = document.getElementById('sbMode').getBoundingClientRect();
   placeMenu(menu, r.left, r.top - 4);
   menu.style.top = Math.max(8, r.top - menu.offsetHeight - 4) + 'px';   // it opens upwards, from the bottom of the window
@@ -11884,7 +11920,7 @@ function onResourceRowContextMenu(e) {
   if (document.querySelector('.modal-bg.open')) return;
   const t = e.target, row = t.closest && t.closest('.rst-row'); if (!row || !isSafeId(row.dataset.id)) return;
   if (t.matches && t.matches('input[type=text], input[type=number], textarea') && t.selectionStart !== t.selectionEnd) return;
-  e.preventDefault(); showResourceRowMenu(e.clientX, e.clientY, row.dataset.id);
+  e.preventDefault(); rstSelect(row.dataset.id); showResourceRowMenu(e.clientX, e.clientY, row.dataset.id);
 }
 function showRowMenu(x, y, onRow) {
   const ids = onRow ? selectedIds() : [], n = ids.length, real = ids.filter(id => !byId(id).spacer).length, menu = document.getElementById('rowMenu');
@@ -14116,7 +14152,7 @@ function wireGlobalEvents() {
     if (e.key === '?' && !typingNow && !modalOpen && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); openShortcuts(); return; }
     if (e.key === '/' && !typingNow && !modalOpen && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); openSearch(); return; }
     if ((e.key === 'Delete' || e.key === 'Backspace') && !typingNow && !modalOpen && !editingCell && selectedIds().length) { e.preventDefault(); deleteSelected(); return; }
-    if (handleCellNavKey(e) || sheetEntryKey(e)) return;
+    if (handleCellNavKey(e) || rstKey(e) || sheetEntryKey(e)) return;
     if (e.key !== 'Escape') return;
     if (document.getElementById('cfAddMenu').classList.contains('open')) { closeCfAddMenu(); return; }
     if (document.getElementById('confirmModalBg').classList.contains('open')) { closeConfirmModal(true); return; }   // a question closes ALONE and first; the dialog that asked stays open underneath
