@@ -13356,7 +13356,7 @@ async function maybeWriteDailyBackup() {
   try {
     if ((await dir.queryPermission({ mode: 'readwrite' })) !== 'granted') return;   // best-effort: a lapsed grant just means no backup today, never a prompt
     const backups = await dir.getDirectoryHandle('Backups', { create: true });
-    const name = `${fh.name.replace(/\.json$/i, '')} ${today}.json`;
+    const name = `${fh.name.replace(/\.json$/i, '')}-${today}.json`;
     let exists = true;
     try { await backups.getFileHandle(name); } catch (e) { exists = false; }   // no {create:true}: an existence probe, so a second session (or tab) sharing the folder never clobbers the first writer's file
     if (!exists) {

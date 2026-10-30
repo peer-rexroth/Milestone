@@ -25,23 +25,23 @@ with sync_playwright() as p:
     pg.click("#linkFolderBtn"); pg.wait_for_selector("#folderFilesModalBg.open"); pg.fill("#folderNewName", "cbm.json"); pg.click("#folderFilesOkBtn"); settle()
     today = ev("() => todayStr()")
     check("linking a plan's folder creates a 'Backups' subfolder", ls() == ["Backups", "cbm.json"], ls())
-    check("...with one file for today, named after the plan file plus the date", ls("Backups") == [f"cbm {today}.json"], ls("Backups"))
-    saved = json.loads(readf(f"Backups/cbm {today}.json"))
+    check("...with one file for today, named after the plan file plus the date", ls("Backups") == [f"cbm-{today}.json"], ls("Backups"))
+    saved = json.loads(readf(f"Backups/cbm-{today}.json"))
     check("...and it holds the plan's own data", saved.get("project", {}).get("name") == "My Project" and isinstance(saved.get("tasks"), list))
 
     # ---------------------------------------------------------------- edits the same day do not add a second file
     ev("() => { tasks.push({id: 't-new', name: 'New task', parentId: null, order: tasks.length, startDate: '2026-09-07', endDate: '2026-09-11', progress: 0, milestone: false, color: null, predecessors: [], collapsed: false, updatedAt: Date.now(), constraintType: 'ASAP', constraintDate: null, taskMode: 'auto', resource: '', actualStart: null, actualFinish: null}); save(); }")
     settle()
-    check("editing the plan later the same day does not add a second backup file", ls("Backups") == [f"cbm {today}.json"], ls("Backups"))
-    saved2 = json.loads(readf(f"Backups/cbm {today}.json"))
+    check("editing the plan later the same day does not add a second backup file", ls("Backups") == [f"cbm-{today}.json"], ls("Backups"))
+    saved2 = json.loads(readf(f"Backups/cbm-{today}.json"))
     check("...the day's file also isn't rewritten once it exists (still the empty plan from before the edit — first writer wins, per the session gate)", len(saved2["tasks"]) == 0, saved2)
 
     # ---------------------------------------------------------------- a new day gets its own file, and nothing old is ever deleted
     ev("() => { window.__realTodayStr = todayStr; todayStr = () => '2099-01-01'; }")
     ev("() => { tasks.push({id: 't-new2', name: \"Tomorrow's task\", parentId: null, order: tasks.length, startDate: '2026-09-07', endDate: '2026-09-11', progress: 0, milestone: false, color: null, predecessors: [], collapsed: false, updatedAt: Date.now(), constraintType: 'ASAP', constraintDate: null, taskMode: 'auto', resource: '', actualStart: null, actualFinish: null}); save(); }")
     settle()
-    check("a later calendar day (simulated) gets its own dated file, and the first day's file is kept", sorted(ls("Backups")) == sorted([f"cbm {today}.json", "cbm 2099-01-01.json"]), ls("Backups"))
-    saved3 = json.loads(readf("Backups/cbm 2099-01-01.json"))
+    check("a later calendar day (simulated) gets its own dated file, and the first day's file is kept", sorted(ls("Backups")) == sorted([f"cbm-{today}.json", "cbm-2099-01-01.json"]), ls("Backups"))
+    saved3 = json.loads(readf("Backups/cbm-2099-01-01.json"))
     check("...the new day's file has the plan as it stood then (2 tasks)", len(saved3["tasks"]) == 2, saved3)
     ev("() => { todayStr = window.__realTodayStr; }")
 
