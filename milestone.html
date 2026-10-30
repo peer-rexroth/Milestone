@@ -1541,7 +1541,7 @@ select.rst-select:disabled { opacity: .5; }
 .rst-row .rst-cell input, .rst-row .rst-cell select { pointer-events: none; }   /* cells are plain text until edited: only the cell being edited takes the pointer */
 .rst-row .rst-cell.rs-live input, .rst-row .rst-cell.rs-live select { pointer-events: auto; }
 .rst-row > .rst-cell.cursor:not(.rs-live) { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: var(--r-xs); }   /* the cell cursor: the same 2px ring as the task list's */
-html:not(.sel-inactive) .rst-row.selected > .rst-cell.cursor:not(.rs-live) { outline-color: var(--on-accent); }
+html:not(.sel-inactive) .rst-row.selected > .rst-cell.cursor:not(.rs-live) { outline-color: var(--sel-line); }   /* on the accent row the ring is a soft line, so it is not mistaken for an edit box */
 
 .rst-row .rst-cell.rs-live select.rst-select { border-color: var(--border); background-color: var(--panel); background-size: 11px 7px; }   /* a dropdown shows its box only while it is being edited */
 .rst-row .rst-cell:focus-within select.rst-select:focus { border-color: transparent; background-color: transparent; outline: none; }
@@ -2344,8 +2344,8 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
   </div>
   <div class="tb-group" data-views="resources">
     <span class="tb-sep"></span>
-    <button class="btn btn-sm" id="levelResBtn" data-more="5" onclick="openLevelModal()" title="Level resources — delay tasks so nobody is overbooked"><i class="fa-solid fa-scale-balanced"></i>Level…</button>
-    <button class="btn btn-sm tb-toggle" id="overOnlyBtn" data-more="4" onclick="toggleOverOnly()" aria-pressed="false" title="Show only the resources that are over-allocated somewhere"><i class="fa-solid fa-triangle-exclamation"></i>Over-allocated only</button>
+    <button class="icon-btn" id="levelResBtn" data-more="5" data-more-label="Level Resources…" onclick="openLevelModal()" title="Level Resources… — delay tasks so nobody is overbooked" aria-label="Level Resources"><i class="fa-solid fa-scale-balanced"></i></button>
+    <button class="icon-btn tb-toggle" id="overOnlyBtn" data-more="4" data-more-label="Show Only Over-Allocated" onclick="toggleOverOnly()" aria-pressed="false" title="Show only the resources that are over-allocated somewhere" aria-label="Show only over-allocated resources"><i class="fa-solid fa-filter"></i></button>
   </div>
   <div class="tb-group" data-views="resourceSheet">
   </div>
@@ -8081,7 +8081,7 @@ function resourceSheetRowHtml(r, i) {
 // Cells are plain text. Click a row and it is the selection (the accent, the neutral grey while a box has the cursor); the cell cursor (a 2px ring) sits on one
 // cell. Arrows move the cursor; Return, F2, a double-click or just typing edits that cell (a box like a task cell's); Tab goes to the next cell; Esc puts typed
 // text back, then lets go; Delete removes the row (Undo is in the toast). Only the cell being edited (.rs-live) takes the pointer.
-let rstSelId = null, rsCursor = null;   // rsCursor = { id, key } of the cell the ring is on (always in the selected row)
+let rstSelId = null, rsCursor = null;   // rsCursor = { id, key, shown }: the remembered cell; like the task list, a mouse click only remembers it (shown: false), the ring is drawn once the keyboard is used
 function rsRowEls() { return [...document.querySelectorAll('#resourceSheetBody .rst-row')]; }
 function rsColKeyAt(i) { const c = rsVisibleCols()[i]; return c ? c.key : null; }
 function rsCellEl(id, key) { const row = rsRowEls().find(r => r.dataset.id === id), i = rsVisibleCols().findIndex(c => c.key === key); return row && i >= 0 ? row.children[i] : null; }
@@ -8092,11 +8092,11 @@ function paintRstSelection() {
   if (rsCursor && rsCursor.id !== rstSelId) rsCursor = null;
   for (const r of rows) {
     r.classList.toggle('selected', r.dataset.id === rstSelId);
-    [...r.children].forEach((c, i) => c.classList.toggle('cursor', !!rsCursor && r.dataset.id === rsCursor.id && keys[i] === rsCursor.key));
+    [...r.children].forEach((c, i) => c.classList.toggle('cursor', !!rsCursor && rsCursor.shown && r.dataset.id === rsCursor.id && keys[i] === rsCursor.key));
     for (const el of r.querySelectorAll('input, select')) el.tabIndex = -1;   // (the cursor, not Tab, walks the cells)
   }
 }
-function rstSelect(id, key) { rstSelId = id; if (key) rsCursor = { id, key }; paintRstSelection(); }
+function rstSelect(id, key, shown) { rstSelId = id; if (key) rsCursor = { id, key, shown: shown === undefined ? !!(rsCursor && rsCursor.shown) : shown }; paintRstSelection(); }
 function rsBeginEdit(cell, opts) {
   const el = rsControl(cell);
   if (!el) { const b = cell && cell.querySelector('button:not(.rst-remove)'); if (b) b.click(); return false; }
@@ -8105,8 +8105,8 @@ function rsBeginEdit(cell, opts) {
   else if (!(opts && opts.typing) && el.showPicker) { try { el.showPicker(); } catch (err) { /* needs a user gesture */ } }
   return true;
 }
-function rsGo(id, key, edit, opts) {
-  rstSelect(id, key); const cell = rsCellEl(id, key); if (!cell) return false;
+function rsGo(id, key, edit, opts, shown) {
+  rstSelect(id, key, shown); const cell = rsCellEl(id, key); if (!cell) return false;
   if (cell.scrollIntoView) cell.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   if (edit) rsBeginEdit(cell, opts);
   return true;
@@ -8130,10 +8130,10 @@ function rstKey(e) {
   const rows = rsRowEls(), keys = rsVisibleCols().map(c => c.key); if (!rows.length) return false;
   if (!rstSelId || !rsCursor) {   // nothing selected: ↓ / ↑ step into the list (first / last resource, its name)
     if (e.shiftKey || (e.key !== 'ArrowDown' && e.key !== 'ArrowUp')) return false;
-    e.preventDefault(); const r = e.key === 'ArrowDown' ? rows[0] : rows[rows.length - 1]; rsGo(r.dataset.id, keys.includes('name') ? 'name' : keys[1]); return true;
+    e.preventDefault(); const r = e.key === 'ArrowDown' ? rows[0] : rows[rows.length - 1]; rsGo(r.dataset.id, keys.includes('name') ? 'name' : keys[1], false, undefined, true); return true;
   }
   const ri = rows.findIndex(r => r.dataset.id === rstSelId), ci = keys.indexOf(rsCursor.key); if (ri < 0 || ci < 0) return false;
-  const go = (r, c) => { r = Math.max(0, Math.min(rows.length - 1, r)); c = Math.max(0, Math.min(keys.length - 1, c)); rsGo(rows[r].dataset.id, keys[c]); };
+  const go = (r, c) => { r = Math.max(0, Math.min(rows.length - 1, r)); c = Math.max(0, Math.min(keys.length - 1, c)); rsGo(rows[r].dataset.id, keys[c], false, undefined, true); };
   switch (e.key) {
     case 'ArrowDown': case 'ArrowUp': e.preventDefault(); go(ri + (e.key === 'ArrowDown' ? 1 : -1), ci); return true;
     case 'ArrowLeft': case 'ArrowRight': e.preventDefault(); go(ri, ci + (e.key === 'ArrowRight' ? 1 : -1)); return true;
@@ -8163,12 +8163,12 @@ function rsNavKey(e) {   // keys inside the box being edited
     const key = rsColKeyAt(ci);
     el.blur();   // saves — the sheet redraws, so the target is looked up again afterwards
     const t = rsFind(ri, ci, dr, dc, wrap);
-    if (t) rsGo(t.id, t.key, true); else if (stay) rsGo(id, key, true); else rsGo(id, key);
+    if (t) rsGo(t.id, t.key, true, undefined, true); else if (stay) rsGo(id, key, true, undefined, true); else rsGo(id, key, false, undefined, true);
   };
   if (e.key === 'Escape') {
     e.preventDefault(); e.stopPropagation();
     if (isInput && el._rsOrig != null && el.value !== el._rsOrig) { el.value = el._rsOrig; el._rsFresh = true; el.select && el.select(); }   // (nothing was committed: the change event only comes with a different value on leaving)
-    else { const key = rsColKeyAt(ci); el.blur(); rsGo(id, key); }   // nothing to put back: Esc lets go of the box, the ring stays
+    else { const key = rsColKeyAt(ci); el.blur(); rsGo(id, key, false, undefined, true); }   // nothing to put back: Esc lets go of the box, the ring stays
     return;
   }
   if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && !e.shiftKey) {

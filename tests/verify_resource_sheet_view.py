@@ -131,7 +131,7 @@ with sync_playwright() as p:
       return [cs.borderRadius, cs.borderTopWidth, el.className]; }""")
     check("the Type dropdown has the dialog-field look: 8px rounded corners, a real 1px border, its own .rst-select class (not .inline-edit)",
           select_style[0] == "8px" and select_style[1] == "1px" and "rst-select" in select_style[2] and "inline-edit" not in select_style[2], select_style)
-    type_select.evaluate("el => { const c = el.closest('.rst-cell'); rstSelect(c.closest('.rst-row').dataset.id, rsColKeyAt([...c.parentElement.children].indexOf(c))); }")
+    type_select.evaluate("el => { const c = el.closest('.rst-cell'); rstSelect(c.closest('.rst-row').dataset.id, rsColKeyAt([...c.parentElement.children].indexOf(c)), true); }")
     check("...and the cell the cursor is on shows its 2px accent ring, the same as the task list's cursor (never no indicator at all)", type_select.evaluate("el => { const c = getComputedStyle(el.closest('.rst-cell')); return c.outlineStyle !== 'none' && parseFloat(c.outlineWidth) >= 2; }"))
     name_style = ev("""() => { const el = document.querySelector('.rst-row input[aria-label="Resource name"]'); return el.className; }""")
     check("...while a text cell (Resource Name) is deliberately UNCHANGED — still the task grid's own .inline-edit, not .rst-select/.rst-field", "inline-edit" in name_style and "rst-select" not in name_style and "rst-field" not in name_style, name_style)
