@@ -1538,9 +1538,12 @@ select.rst-select:disabled { opacity: .5; }
    point at, or the one you are in), the remove button only on that row, an empty rate a faint 0.00. (The more specific
    selectors beat the global select rule, which comes last in the sheet.) */
 .rst-row .rst-cell select.rst-select { border-color: transparent; background-color: transparent; background-size: 0 0; }
-.rst-row > .rst-cell:focus-within:not(:has(input.inline-edit:focus)) { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: var(--r-xs); }   /* a dropdown or button you are on: the 2px cursor ring of the task list; a text box edits as it does there, below */
+.rst-row .rst-cell input, .rst-row .rst-cell select { pointer-events: none; }   /* cells are plain text until edited: only the cell being edited takes the pointer */
+.rst-row .rst-cell.rs-live input, .rst-row .rst-cell.rs-live select { pointer-events: auto; }
+.rst-row > .rst-cell.cursor:not(.rs-live) { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: var(--r-xs); }   /* the cell cursor: the same 2px ring as the task list's */
+html:not(.sel-inactive) .rst-row.selected > .rst-cell.cursor:not(.rs-live) { outline-color: var(--on-accent); }
 
-.rst-row:hover .rst-cell select.rst-select, .rst-row .rst-cell select.rst-select:focus { border-color: var(--border); background-color: var(--panel); background-size: 11px 7px; }
+.rst-row .rst-cell.rs-live select.rst-select { border-color: var(--border); background-color: var(--panel); background-size: 11px 7px; }   /* a dropdown shows its box only while it is being edited */
 .rst-row .rst-cell:focus-within select.rst-select:focus { border-color: transparent; background-color: transparent; outline: none; }
 .rst-row .rst-cell input.inline-edit:focus { border-color: var(--accent); background-color: var(--panel); color: var(--text); outline: none; box-shadow: none; border-radius: var(--r-xs); }   /* editing a text box looks like editing a task cell: a compact box on the panel colour with a 1px accent border */
 .rst-row .rst-remove { opacity: 0; }
@@ -8074,92 +8077,131 @@ function resourceSheetRowHtml(r, i) {
    is passed over to the next row that has one. ---- */
 // Esc puts a typed value back (a dropdown has already saved its choice — Undo is the way back for that); ← / → leave a box that is "fresh" (just
 // entered, so its whole content is selected) or whose caret is at that end, and move to the neighbouring cell's control; on a dropdown they always do.
-// A selected resource row, as in the task list: click the number (or the blank part of a row), or enter any cell, and the row is the selection (the accent
-// colour while you are not typing, the neutral grey while a box has the cursor). ↑ ↓ move it, Return or F2 edits its name, Delete removes it (Undo is in the
-// toast), Esc lets go. The cells stay live boxes, as the sheet always had them.
-let rstSelId = null;
+// ---- The Resource Sheet works like the task grid ----
+// Cells are plain text. Click a row and it is the selection (the accent, the neutral grey while a box has the cursor); the cell cursor (a 2px ring) sits on one
+// cell. Arrows move the cursor; Return, F2, a double-click or just typing edits that cell (a box like a task cell's); Tab goes to the next cell; Esc puts typed
+// text back, then lets go; Delete removes the row (Undo is in the toast). Only the cell being edited (.rs-live) takes the pointer.
+let rstSelId = null, rsCursor = null;   // rsCursor = { id, key } of the cell the ring is on (always in the selected row)
+function rsRowEls() { return [...document.querySelectorAll('#resourceSheetBody .rst-row')]; }
+function rsColKeyAt(i) { const c = rsVisibleCols()[i]; return c ? c.key : null; }
+function rsCellEl(id, key) { const row = rsRowEls().find(r => r.dataset.id === id), i = rsVisibleCols().findIndex(c => c.key === key); return row && i >= 0 ? row.children[i] : null; }
+function rsControl(cell) { return cell ? cell.querySelector('input:not([disabled]), select:not([disabled])') : null; }
 function paintRstSelection() {
-  const rows = [...document.querySelectorAll('#resourceSheetBody .rst-row')];
-  if (rstSelId && !rows.some(r => r.dataset.id === rstSelId)) rstSelId = null;
-  for (const r of rows) r.classList.toggle('selected', r.dataset.id === rstSelId);
+  const rows = rsRowEls(), keys = rsVisibleCols().map(c => c.key);
+  if (rstSelId && !rows.some(r => r.dataset.id === rstSelId)) { rstSelId = null; rsCursor = null; }
+  if (rsCursor && rsCursor.id !== rstSelId) rsCursor = null;
+  for (const r of rows) {
+    r.classList.toggle('selected', r.dataset.id === rstSelId);
+    [...r.children].forEach((c, i) => c.classList.toggle('cursor', !!rsCursor && r.dataset.id === rsCursor.id && keys[i] === rsCursor.key));
+    for (const el of r.querySelectorAll('input, select')) el.tabIndex = -1;   // (the cursor, not Tab, walks the cells)
+  }
 }
-function rstSelect(id) { if (rstSelId === id) return; rstSelId = id; paintRstSelection(); }
-function rstKey(e) {
-  if (currentView !== 'resourceSheet' || !rstSelId || e.ctrlKey || e.metaKey || e.altKey) return false;
-  if (document.querySelector('.modal-bg.open') || NAV_MENUS.some(id => { const m = document.getElementById(id); return m && m.classList.contains('open'); })) return false;
-  const t = e.target; if (t && t.matches && t.matches('input, select, textarea, button, [contenteditable]')) return false;
-  const rows = [...document.querySelectorAll('#resourceSheetBody .rst-row')], i = rows.findIndex(r => r.dataset.id === rstSelId);
-  if (i < 0) return false;
-  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { const n = rows[Math.max(0, Math.min(rows.length - 1, i + (e.key === 'ArrowDown' ? 1 : -1)))]; e.preventDefault(); rstSelect(n.dataset.id); n.scrollIntoView({ block: 'nearest' }); return true; }
-  if (e.key === 'Enter' || e.key === 'F2') { const f = rows[i].querySelector('input:not([disabled]), select:not([disabled])'); if (f) { e.preventDefault(); f.focus(); if (f.select && f.tagName === 'INPUT') f.select(); } return true; }
-  if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); const id = rstSelId, n = rows[i + 1] || rows[i - 1]; removeResourceSheetRow(id); rstSelId = n ? n.dataset.id : null; paintRstSelection(); return true; }
-  if (e.key === 'Escape') { rstSelId = null; paintRstSelection(); return true; }
-  return false;
+function rstSelect(id, key) { rstSelId = id; if (key) rsCursor = { id, key }; paintRstSelection(); }
+function rsBeginEdit(cell, opts) {
+  const el = rsControl(cell);
+  if (!el) { const b = cell && cell.querySelector('button:not(.rst-remove)'); if (b) b.click(); return false; }
+  cell.classList.add('rs-live'); el.focus();
+  if (el.tagName === 'INPUT') { if (el.select) el.select(); el._rsFresh = !(opts && opts.typing); }
+  else if (!(opts && opts.typing) && el.showPicker) { try { el.showPicker(); } catch (err) { /* needs a user gesture */ } }
+  return true;
 }
-document.getElementById('resourceSheetBody').addEventListener('mousedown', e => { const row = e.target.closest && e.target.closest('.rst-row'); if (row) rstSelect(row.dataset.id); }, true);
-document.getElementById('resourceSheetBody').addEventListener('focusin', e => { const row = e.target.closest && e.target.closest('.rst-row'); if (row) rstSelect(row.dataset.id); });
-function rsFocusIn(e) { const el = e.target; if (el && el.tagName === 'INPUT' && el.closest && el.closest('.rst-row')) { el._rsOrig = el.value; el._rsFresh = true; } }
-function rsSideCell(row, ci, step) {
-  for (let c = ci + step; c >= 0 && c < row.children.length; c += step) {
-    const t = row.children[c].querySelector('input:not([disabled]), select:not([disabled]), button:not([disabled])');
-    if (t) return t;
+function rsGo(id, key, edit, opts) {
+  rstSelect(id, key); const cell = rsCellEl(id, key); if (!cell) return false;
+  if (cell.scrollIntoView) cell.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  if (edit) rsBeginEdit(cell, opts);
+  return true;
+}
+// The next cell that has a box: along the row (dr = 0, optionally wrapping to the next row, as Tab does) or down / up the column.
+function rsFind(ri, ci, dr, dc, wrap) {
+  const rows = rsRowEls(), n = rsVisibleCols().length;
+  let r = ri, c = ci;
+  for (let guard = 0; guard < rows.length * n + 2; guard++) {
+    if (dr) r += dr; else { c += dc; if (c >= n || c < 0) { if (!wrap) return null; r += dc; c = dc > 0 ? 0 : n - 1; } }
+    if (r < 0 || r >= rows.length) return null;
+    if (rsControl(rows[r].children[c])) return { id: rows[r].dataset.id, key: rsColKeyAt(c) };
+    if (dr && !rows[r].children[c]) return null;
   }
   return null;
 }
-// With nothing focused in the Resource Sheet, ↓ (or ↑) jumps into the list: the first (last) resource's name.
-function sheetEntryKey(e) {
-  if (currentView !== 'resourceSheet' || e.target !== document.body || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return false;
-  if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return false;
+function rstKey(e) {
+  if (currentView !== 'resourceSheet' || e.ctrlKey || e.metaKey || e.altKey) return false;
   if (document.querySelector('.modal-bg.open') || NAV_MENUS.some(id => { const m = document.getElementById(id); return m && m.classList.contains('open'); })) return false;
-  const rows = [...document.querySelectorAll('#resourceSheetBody .rst-row')]; if (!rows.length) return false;
-  const t = (e.key === 'ArrowDown' ? rows[0] : rows[rows.length - 1]).querySelector('input:not([disabled]), select:not([disabled])');
-  if (!t) return false;
-  e.preventDefault(); t.focus(); if (t.select && t.tagName === 'INPUT') t.select();
-  return true;
+  const t = e.target; if (t && t.matches && t.matches('input, select, textarea, button, [contenteditable]')) return false;
+  const rows = rsRowEls(), keys = rsVisibleCols().map(c => c.key); if (!rows.length) return false;
+  if (!rstSelId || !rsCursor) {   // nothing selected: ↓ / ↑ step into the list (first / last resource, its name)
+    if (e.shiftKey || (e.key !== 'ArrowDown' && e.key !== 'ArrowUp')) return false;
+    e.preventDefault(); const r = e.key === 'ArrowDown' ? rows[0] : rows[rows.length - 1]; rsGo(r.dataset.id, keys.includes('name') ? 'name' : keys[1]); return true;
+  }
+  const ri = rows.findIndex(r => r.dataset.id === rstSelId), ci = keys.indexOf(rsCursor.key); if (ri < 0 || ci < 0) return false;
+  const go = (r, c) => { r = Math.max(0, Math.min(rows.length - 1, r)); c = Math.max(0, Math.min(keys.length - 1, c)); rsGo(rows[r].dataset.id, keys[c]); };
+  switch (e.key) {
+    case 'ArrowDown': case 'ArrowUp': e.preventDefault(); go(ri + (e.key === 'ArrowDown' ? 1 : -1), ci); return true;
+    case 'ArrowLeft': case 'ArrowRight': e.preventDefault(); go(ri, ci + (e.key === 'ArrowRight' ? 1 : -1)); return true;
+    case 'Home': e.preventDefault(); go(ri, 0); return true;
+    case 'End': e.preventDefault(); go(ri, keys.length - 1); return true;
+    case 'Enter': case 'F2': e.preventDefault(); rsBeginEdit(rsCellEl(rstSelId, rsCursor.key)); return true;
+    case 'Tab': {
+      e.preventDefault(); let r = ri, c = ci + (e.shiftKey ? -1 : 1);
+      if (c >= keys.length) { r++; c = 0; } else if (c < 0) { r--; c = keys.length - 1; }
+      if (r >= 0 && r < rows.length) go(r, c); return true;
+    }
+    case 'Delete': case 'Backspace': { e.preventDefault(); const id = rstSelId, key = rsCursor.key, n = rows[ri + 1] || rows[ri - 1]; removeResourceSheetRow(id); rstSelId = n ? n.dataset.id : null; rsCursor = n ? { id: n.dataset.id, key } : null; paintRstSelection(); return true; }
+    case 'Escape': rstSelId = null; rsCursor = null; paintRstSelection(); return true;
+  }
+  if (e.key.length === 1 && !e.shiftKey || e.key.length === 1) { const cell = rsCellEl(rstSelId, rsCursor.key); if (rsControl(cell)) { rsBeginEdit(cell, { typing: true }); return true; } }   // (the typed letter lands in the box: the focus moved before the key is inserted)
+  return false;
 }
-function rsNavKey(e) {
+function rsFocusIn(e) { const el = e.target; if (el && el.tagName === 'INPUT' && el.closest && el.closest('.rst-row')) { el._rsOrig = el.value; el._rsFresh = true; } }
+function rsNavKey(e) {   // keys inside the box being edited
   const el = e.target;
   if (!el || !el.closest || e.ctrlKey || e.metaKey || e.altKey) return;
   const cell = el.closest('.rst-row > *'), row = el.closest('.rst-row'); if (!cell || !row) return;
-  const isInput = el.tagName === 'INPUT', isSelect = el.tagName === 'SELECT';
-  if (e.key === 'Escape' && (isInput || isSelect)) {
+  const isInput = el.tagName === 'INPUT', isSelect = el.tagName === 'SELECT'; if (!isInput && !isSelect) return;
+  const id = row.dataset.id, rows = rsRowEls(), ri = rows.indexOf(row), ci = [...row.children].indexOf(cell);
+  const leaveTo = (dr, dc, wrap, stay) => {   // save the box, then edit the next one (or this one again when there is nowhere to go)
+    e.preventDefault(); e.stopPropagation();
+    const key = rsColKeyAt(ci);
+    el.blur();   // saves — the sheet redraws, so the target is looked up again afterwards
+    const t = rsFind(ri, ci, dr, dc, wrap);
+    if (t) rsGo(t.id, t.key, true); else if (stay) rsGo(id, key, true); else rsGo(id, key);
+  };
+  if (e.key === 'Escape') {
     e.preventDefault(); e.stopPropagation();
     if (isInput && el._rsOrig != null && el.value !== el._rsOrig) { el.value = el._rsOrig; el._rsFresh = true; el.select && el.select(); }   // (nothing was committed: the change event only comes with a different value on leaving)
-    else el.blur();   // nothing to put back: Esc lets go of the cell, like the task list's
+    else { const key = rsColKeyAt(ci); el.blur(); rsGo(id, key); }   // nothing to put back: Esc lets go of the box, the ring stays
     return;
   }
-  if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && (isInput || isSelect) && !e.shiftKey) {
+  if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && !e.shiftKey) {
     const step = e.key === 'ArrowRight' ? 1 : -1;
     let leave = isSelect || el._rsFresh;
     if (!leave && isInput && el.type === 'text') { const a = el.selectionStart, b = el.selectionEnd; leave = a === b && a === (step > 0 ? el.value.length : 0); }
-    if (leave) {
-      const t = rsSideCell(row, [...row.children].indexOf(cell), step);
-      e.preventDefault(); e.stopPropagation();
-      if (t) { t.focus(); if (t.select && t.tagName === 'INPUT') t.select(); }
-      return;
-    }
+    if (leave) { if (rsFind(ri, ci, 0, step, false)) leaveTo(0, step, false, false); else e.preventDefault(); return; }
     el._rsFresh = false;   // (a caret moved inside the box: no longer "fresh")
     return;
   }
   if (isInput && el._rsFresh && e.key.length === 1) el._rsFresh = false;   // typing — the box is being edited now
-  let dir = 0;
-  if (e.key === 'Enter' && (isInput || isSelect) && !e.isComposing) dir = e.shiftKey ? -1 : 1;
-  else if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && isInput && !e.shiftKey) dir = e.key === 'ArrowDown' ? 1 : -1;
-  if (!dir) return;
-  e.preventDefault(); e.stopPropagation();   // (the box's own Enter handler is not needed: this saves it)
-  const body = document.getElementById('resourceSheetBody'), ri = [...body.querySelectorAll('.rst-row')].indexOf(row), ci = [...row.children].indexOf(cell);
-  el.blur();   // saves — the sheet redraws, so the target is looked up again afterwards
-  const rows = [...body.querySelectorAll('.rst-row')];
-  for (let r = ri + dir; r >= 0 && r < rows.length; r += dir) {
-    const t = rows[r].children[ci] && rows[r].children[ci].querySelector('input:not([disabled]), select:not([disabled]), button:not([disabled])');
-    if (t) { t.focus(); if (t.select && t.tagName === 'INPUT') t.select(); return; }
-  }
-  const same = rows[ri] && rows[ri].children[ci] && rows[ri].children[ci].querySelector('input:not([disabled]), select:not([disabled]), button:not([disabled])');   // nowhere further to go: stay on the cell
-  if (same) same.focus();
+  if (e.key === 'Tab') return leaveTo(0, e.shiftKey ? -1 : 1, true, true);
+  if (e.key === 'Enter' && !e.isComposing) return leaveTo(e.shiftKey ? -1 : 1, 0, false, true);
+  if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && isInput && !e.shiftKey) return leaveTo(e.key === 'ArrowDown' ? 1 : -1, 0, false, true);
 }
-document.getElementById('resourceSheetBody').addEventListener('keydown', rsNavKey, true);
-document.getElementById('resourceSheetBody').addEventListener('focusin', rsFocusIn);
-document.getElementById('resourceSheetBody').addEventListener('mousedown', e => { if (e.target && e.target._rsFresh) e.target._rsFresh = false; }, true);   // (a click places a caret: not "fresh")
+{
+  const body = document.getElementById('resourceSheetBody');
+  body.addEventListener('keydown', rsNavKey, true);
+  body.addEventListener('focusin', rsFocusIn);
+  body.addEventListener('focusin', e => { const row = e.target.closest && e.target.closest('.rst-row'); if (row && row.dataset.id !== rstSelId) rstSelect(row.dataset.id); });
+  body.addEventListener('focusout', e => { const c = e.target.closest && e.target.closest('.rst-cell'); if (c) setTimeout(() => { if (!c.contains(document.activeElement)) c.classList.remove('rs-live'); }, 0); });
+  body.addEventListener('mousedown', e => {
+    if (e.target && e.target._rsFresh) e.target._rsFresh = false;   // (a click in a box places a caret: not "fresh")
+    const row = e.target.closest && e.target.closest('.rst-row'); if (!row) return;
+    const cell = e.target.closest('.rst-row > *'); if (cell && cell.classList.contains('rs-live')) return;   // inside the box being edited: just a caret
+    if (e.target.closest('button')) { rstSelect(row.dataset.id); return; }
+    const i = cell ? [...row.children].indexOf(cell) : -1; rstSelect(row.dataset.id, i >= 0 ? rsColKeyAt(i) : null);
+  }, true);
+  body.addEventListener('dblclick', e => {
+    const row = e.target.closest && e.target.closest('.rst-row'), cell = e.target.closest && e.target.closest('.rst-row > *'); if (!row || !cell || e.target.closest('button') || cell.classList.contains('rs-live')) return;
+    rsGo(row.dataset.id, rsColKeyAt([...row.children].indexOf(cell)), true);
+  });
+}   // (a click places a caret: not "fresh")
 function commitResourceCell(id, field, value) {
   const pool = project.resources || [], r = pool.find(x => x.id === id); if (!r) return;
   if (field === 'name') {
@@ -8198,10 +8240,10 @@ function addResourceSheetRow() {
   const taken = new Set((project.resources || []).map(x => x.name.toLowerCase()));
   let name = 'New resource', n = 1; while (taken.has(name.toLowerCase())) { n++; name = `New resource ${n}`; }
   const r = { id: genId(), name, maxUnits: 100 };
-  project.resources = [...(project.resources || []), r];
+  project.resources = [...(project.resources || []), r];   // (normalizeData() keeps the pool sorted by name, so the row lands where its name sorts)
   project.updatedAt = Date.now();
   save(); render();
-  setTimeout(() => { const el = document.querySelector(`.rst-row[data-id="${r.id}"] input`); if (el) { el.focus(); el.select(); } }, 40);
+  setTimeout(() => rsGo(r.id, 'name', true), 40);   // the new resource is the selection, its name open for typing
 }
 function setCurrencyCode(code) {
   if (!CURRENCIES.some(c => c.code === code) || code === 'EUR') delete project.currencyCode; else project.currencyCode = code;
@@ -14146,8 +14188,8 @@ function wireGlobalEvents() {
     if (isFindReplaceKey(e) && !document.querySelector('.modal-bg.open:not(#searchModalBg):not(#replaceModalBg)')) { e.preventDefault(); if (document.getElementById('replaceModalBg').classList.contains('open')) closeReplace(); else openReplaceFromFind(); return; }   // Ctrl+H on every platform (Cmd+H hides the browser on a Mac)
     if (e.key === '?' && !typingNow && !modalOpen && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); openShortcuts(); return; }
     if (e.key === '/' && !typingNow && !modalOpen && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); openSearch(); return; }
-    if ((e.key === 'Delete' || e.key === 'Backspace') && !typingNow && !modalOpen && !editingCell && selectedIds().length) { e.preventDefault(); deleteSelected(); return; }
-    if (handleCellNavKey(e) || rstKey(e) || sheetEntryKey(e)) return;
+    if ((e.key === 'Delete' || e.key === 'Backspace') && currentView !== 'resourceSheet' && !typingNow && !modalOpen && !editingCell && selectedIds().length) { e.preventDefault(); deleteSelected(); return; }
+    if (handleCellNavKey(e) || rstKey(e)) return;
     if (e.key !== 'Escape') return;
     if (document.getElementById('cfAddMenu').classList.contains('open')) { closeCfAddMenu(); return; }
     if (document.getElementById('confirmModalBg').classList.contains('open')) { closeConfirmModal(true); return; }   // a question closes ALONE and first; the dialog that asked stays open underneath

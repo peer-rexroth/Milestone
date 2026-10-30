@@ -60,7 +60,7 @@ with sync_playwright() as p:
     check("at rest a dropdown reads as text (no box, no chevron) and the remove button is hidden", rest[0] in ("rgba(0, 0, 0, 0)", "transparent") and rest[1] == "0px 0px" and rest[2] == "0", rest)
     pg.hover(".rst-row >> nth=0"); pg.wait_for_timeout(80)
     hov = ev("() => { const s = document.querySelector('.rst-row select.rst-select'), cs = getComputedStyle(s), x = getComputedStyle(document.querySelector('.rst-row .rst-remove')); return [cs.borderTopColor, cs.backgroundSize, x.opacity]; }")
-    check("...on the row you point at: the box, the chevron and the remove button", hov[0] not in ("rgba(0, 0, 0, 0)", "transparent") and hov[1] == "11px 7px" and hov[2] == "1", hov)
+    check("...on the row you point at only the remove button shows (a dropdown gets its box and chevron while it is being edited, as a task cell gets its box)", hov[0] in ("rgba(0, 0, 0, 0)", "transparent") and hov[1] == "0px 0px" and hov[2] == "1", hov)
     check("an empty rate shows a faint 0.00, not a blank", ev("() => document.querySelector('.rst-row input[aria-label=\"Cost per use\"]').placeholder") == "0.00")
     check("Days off is a link (accent colour)", ev("() => (() => { const p = document.createElement('span'); p.style.color = 'var(--accent)'; document.body.appendChild(p); const a = getComputedStyle(p).color; p.remove(); return getComputedStyle(document.querySelector('.rst-days-link')).color === a; })()"))
     # ---------------------------------------------------------------- resizable columns (the task list's treatment)
@@ -118,11 +118,11 @@ with sync_playwright() as p:
     accrue_select = pg.locator(".rst-row select[aria-label='Accrue at']").first
     check("a select cell's own chosen option isn't clipped either (e.g. 'Prorated', once cut to 'Proratec')", accrue_select.evaluate("el => el.scrollWidth <= el.clientWidth + 1"))
     type_select = pg.locator(".rst-row select[aria-label='Type']").first
-    type_select.evaluate("el => el.focus()")
+    type_select.evaluate("el => { el.closest('.rst-cell').classList.add('rs-live'); el.focus(); }")
     focus_bg = type_select.evaluate("el => { const cs = getComputedStyle(el); return [cs.backgroundRepeat, cs.backgroundSize, cs.backgroundPosition]; }")
     check("a select's own chevron keeps its single, right-aligned position when focused/hovered (the hover/focus rule sets background-COLOR only, never the `background` shorthand — that shorthand once silently reset the chevron's background-repeat/position/size to their initial values, tiling it across the whole box)",
           focus_bg[0] == "no-repeat" and focus_bg[1] == "11px 7px", focus_bg)
-    type_select.evaluate("el => el.blur()")
+    type_select.evaluate("el => { el.blur(); el.closest('.rst-cell').classList.remove('rs-live'); }")
     # Only the two DROPDOWNS (Type, Accrue At) get the app's own dialog-field look — Bulk edit's .bulk-ctl, Calendar's .cal-sec (7px rounded corners, a real 1px border always visible,
     # a native focus ring). An earlier pass over-applied this to every text/number cell too and was scoped back to
     # just the dropdowns, per explicit feedback — text/number cells deliberately keep the task grid's own
@@ -131,9 +131,8 @@ with sync_playwright() as p:
       return [cs.borderRadius, cs.borderTopWidth, el.className]; }""")
     check("the Type dropdown has the dialog-field look: 8px rounded corners, a real 1px border, its own .rst-select class (not .inline-edit)",
           select_style[0] == "8px" and select_style[1] == "1px" and "rst-select" in select_style[2] and "inline-edit" not in select_style[2], select_style)
-    type_select.evaluate("el => el.focus()")
-    check("...and a focus ring actually shows on a dropdown when focused: its cell's 2px accent ring, the same as the task list's cursor (never no indicator at all)", type_select.evaluate("el => { const c = getComputedStyle(el.closest('.rst-cell')); return getComputedStyle(el).outlineStyle !== 'none' || (c.outlineStyle !== 'none' && parseFloat(c.outlineWidth) >= 2); }"))
-    type_select.evaluate("el => el.blur()")
+    type_select.evaluate("el => { const c = el.closest('.rst-cell'); rstSelect(c.closest('.rst-row').dataset.id, rsColKeyAt([...c.parentElement.children].indexOf(c))); }")
+    check("...and the cell the cursor is on shows its 2px accent ring, the same as the task list's cursor (never no indicator at all)", type_select.evaluate("el => { const c = getComputedStyle(el.closest('.rst-cell')); return c.outlineStyle !== 'none' && parseFloat(c.outlineWidth) >= 2; }"))
     name_style = ev("""() => { const el = document.querySelector('.rst-row input[aria-label="Resource name"]'); return el.className; }""")
     check("...while a text cell (Resource Name) is deliberately UNCHANGED — still the task grid's own .inline-edit, not .rst-select/.rst-field", "inline-edit" in name_style and "rst-select" not in name_style and "rst-field" not in name_style, name_style)
 
