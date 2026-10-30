@@ -743,7 +743,10 @@ button:focus:not(:focus-visible) { outline: none; }
 .fld-name:disabled { opacity: .5; text-decoration: line-through; }
 .fld-name.bad { border-color: var(--danger); }
 .fld-uses { flex: none; min-width: 64px; font-size: var(--fs-13); color: var(--text-faint); text-align: right; white-space: nowrap; }
-.fld-uses:empty { display: none; }
+.fld-uses:empty { display: block; }   /* keeps its width, so the kind, the switch and the remove button line up from row to row */
+/* The name takes the room; kind, uses, switch and remove sit at the right edge in fixed columns (the generic .trow text-box rule sizes a box to its text, up to 220px). */
+.fld-row .fld-show { flex: none !important; }   /* (a generic .trow label rule gave the switch half of the free width) */
+.fld-row .fld-name { field-sizing: fixed !important; flex: 1 1 0 !important; max-width: none !important; }
 .fld-remove { flex: none; width: var(--ib-s); height: var(--ib-s); border: none; border-radius: 50%; background: transparent; color: var(--text-faint); }
 .fld-remove:hover { background: var(--pressed); color: var(--danger); }
 .fld-row.removed .fld-remove:hover { color: var(--accent); }
@@ -7739,6 +7742,8 @@ function progressLineSvg(list, totalH, px) {
 // independently-scrollable panes.
 const RESOURCE_NAME_W = 180;
 let resourceRenderedWin = { from: 0, to: 0, n: 0, virtual: false };
+// The empty message sits in the middle of what you SEE (the chart is wider than the pane and scrolls), like the empty Tasks list: sticky at the left edge, as wide as the pane.
+function resEmptyStyle() { const pane = document.getElementById('resourceBody').parentElement; return `position:sticky;left:0;box-sizing:border-box;width:${pane ? pane.clientWidth : 600}px`; }
 function renderResourceUsage() {
   const z = currentZoom();
   dateRange = computeDateRange();
@@ -7760,12 +7765,12 @@ function renderResourceUsage() {
   }).join('');
 
   if (!resources.length && overIds && (project.resources || []).length) {
-    document.getElementById('resourceBody').innerHTML = `<div class="empty-state" style="position:static;width:${RESOURCE_NAME_W + totalW}px">${emptyIcon('circle-check')}Nobody Is Over-Allocated<span class="empty-sub"><button class="btn-link" onclick="toggleOverOnly()">Show Everyone</button></span></div>`;
+    document.getElementById('resourceBody').innerHTML = `<div class="empty-state" style="${resEmptyStyle()}">${emptyIcon('circle-check')}Nobody Is Over-Allocated<span class="empty-sub"><button class="btn-link" onclick="toggleOverOnly()">Show Everyone</button></span></div>`;
     resourceRenderedWin = { from: 0, to: 0, n: 0, virtual: false };
     return;
   }
   if (!resources.length) {
-    document.getElementById('resourceBody').innerHTML = `<div class="empty-state" style="position:static;width:${RESOURCE_NAME_W + totalW}px">${emptyIcon('users')}No Resources<span class="empty-sub">Add resources on the Resources tab.</span></div>`;
+    document.getElementById('resourceBody').innerHTML = `<div class="empty-state" style="${resEmptyStyle()}">${emptyIcon('users')}No Resources<span class="empty-sub">Add resources on the Resources tab.</span></div>`;
     resourceRenderedWin = { from: 0, to: 0, n: 0, virtual: false };
     return;
   }
@@ -8611,7 +8616,7 @@ function taskModalDirty() {
 }
 function requestCloseTaskModal() {
   if (!taskModalDirty()) { closeTaskModal(); return; }
-  openConfirmModal({ title: 'Discard your changes?', body: 'You changed this task but did not save it.', icon: 'triangle-exclamation', confirmLabel: 'Discard changes', cancelLabel: 'Keep editing', action() { closeTaskModal(); } });
+  openConfirmModal({ title: 'Discard your changes?', body: 'You changed this task but did not save it.', icon: 'triangle-exclamation', confirmLabel: 'Discard', cancelLabel: 'Keep Editing', action() { closeTaskModal(); } });
 }
 function closeTaskModal() {
   document.getElementById('taskModalBg').classList.remove('open');
@@ -9031,7 +9036,7 @@ function openSettingsTab(id) {
   const go = () => swap(() => { settingsTab = id; target.open(); if (from) from.close(); });
   // Three ways out: keep editing, throw the edits away, or save them and carry on (stays put when the save is refused or asks its own question).
   const saveAndGo = () => { from.save(); if (!document.getElementById(from.bg).classList.contains('open')) swap(() => { settingsTab = id; target.open(); }); };
-  if (from && from.dirty()) openConfirmModal({ title: 'Save your changes?', body: `You changed ${from.what} but did not save it.`, icon: 'triangle-exclamation', confirmLabel: 'Discard changes', confirmClass: 'btn', cancelLabel: 'Keep editing', action: go, altLabel: 'Save and continue', altAction: saveAndGo });
+  if (from && from.dirty()) openConfirmModal({ title: 'Save your changes?', body: `You haven’t saved your changes to ${from.what}.`, confirmLabel: 'Discard', confirmClass: 'btn', cancelLabel: 'Keep Editing', action: go, altLabel: 'Save', altAction: saveAndGo });
   else go();
 }
 function openPlanSettings(tab) { closeScheduleMenu(); closePlanMenu(); openSettingsTab(tab || settingsTab || 'calendar'); }
@@ -9052,7 +9057,7 @@ function closeRulesModal() { document.getElementById('rulesModalBg').classList.r
 function rulesDirty() { return rulesSnapshot !== null && document.getElementById('rulesModalBg').classList.contains('open') && rulesState() !== rulesSnapshot; }
 function requestCloseRulesModal() {
   if (!rulesDirty()) { closeRulesModal(); return; }
-  openConfirmModal({ title: 'Discard your changes?', body: 'You changed the scheduling rules but did not save them.', icon: 'triangle-exclamation', confirmLabel: 'Discard changes', cancelLabel: 'Keep editing', action() { closeRulesModal(); } });
+  openConfirmModal({ title: 'Discard your changes?', body: 'You changed the scheduling rules but did not save them.', icon: 'triangle-exclamation', confirmLabel: 'Discard', cancelLabel: 'Keep Editing', action() { closeRulesModal(); } });
 }
 function saveRulesModal() {
   const honor = document.getElementById('honorConstraintDatesInput').checked;
@@ -9135,7 +9140,7 @@ function calendarDraftState() { return JSON.stringify([[...document.querySelecto
 function calendarDirty() { return calSnapshot !== null && document.getElementById('calendarModalBg').classList.contains('open') && calendarDraftState() !== calSnapshot; }
 function requestCloseCalendarModal() {
   if (!calendarDirty()) { closeCalendarModal(); return; }
-  openConfirmModal({ title: 'Discard your changes?', body: 'You changed the working calendar but did not save it.', icon: 'triangle-exclamation', confirmLabel: 'Discard changes', cancelLabel: 'Keep editing', action() { closeCalendarModal(); } });
+  openConfirmModal({ title: 'Discard your changes?', body: 'You changed the working calendar but did not save it.', icon: 'triangle-exclamation', confirmLabel: 'Discard', cancelLabel: 'Keep Editing', action() { closeCalendarModal(); } });
 }
 function updateCalendarSummary() {}   // (the header chip that summarised the calendar was dropped: the Working week row and the day count already say it)
 function clearHolidays() { if (!calHolidays.length) return; calHolidays = []; renderHolidayList(); }
@@ -9395,14 +9400,14 @@ function closeFieldsModal() { document.getElementById('fieldsModalBg').classList
 function fieldsDirty() { return fieldsDraft !== null && document.getElementById('fieldsModalBg').classList.contains('open') && JSON.stringify(fieldsDraft) !== fieldsOrig; }
 function requestCloseFieldsModal() {
   if (!fieldsDirty()) { closeFieldsModal(); return; }
-  openConfirmModal({ title: 'Discard your changes?', body: 'You changed the custom fields but did not save them.', icon: 'triangle-exclamation', confirmLabel: 'Discard changes', cancelLabel: 'Keep editing', action() { closeFieldsModal(); } });
+  openConfirmModal({ title: 'Discard your changes?', body: 'You changed the custom fields but did not save them.', icon: 'triangle-exclamation', confirmLabel: 'Discard', cancelLabel: 'Keep Editing', action() { closeFieldsModal(); } });
 }
 function renderFieldsRows() {
   const box = document.getElementById('fieldsRows'), has = fieldsDraft.length > 0;
   box.classList.toggle('tgrp', has);
   box.innerHTML = fieldsDraft.map((r, i) => {
     const info = FIELD_KIND_INFO[r.kind], uses = r.isNew ? '' : r.uses ? `${r.uses} task${r.uses === 1 ? '' : 's'}` : '—';
-    return `<div class="trow fld-row${r.removed ? ' removed' : ''}" data-i="${i}"><input type="text" class="fld-name" maxlength="40" value="${escapeHtml(r.name)}" ${r.removed ? 'disabled ' : ''}placeholder="Name" aria-label="Name of the ${info.label.toLowerCase()} field" oninput="fieldsNameInput(${i}, this)" onkeydown="if(event.key==='Enter'){event.preventDefault();saveFieldsModal();}"><span class="fld-kind"><i class="fa-solid ${info.icon}"></i>${info.label}</span><span class="fld-uses">${uses}</span><label class="fld-show" title="Show this field as a column in the Tasks list — on this device; the Gantt view keeps its own columns"><span>In List</span><input type="checkbox" class="fld-show-in"${r.show ? ' checked' : ''} aria-label="Show ${escapeHtml(r.name || info.label)} in the list" onchange="fieldsDraft[${i}].show = this.checked"><span class="fld-switch"></span></label><button type="button" class="fld-remove" onclick="fieldsToggleRemove(${i})" title="${r.removed ? 'Keep this field' : r.isNew ? 'Discard this new field' : 'Remove this field' + (r.uses ? ' and its values' : '')}" aria-label="${r.removed ? 'Keep' : 'Remove'} ${escapeHtml(r.name || info.label)}"><i class="fa-solid ${r.removed ? 'fa-rotate-left' : 'fa-xmark'}"></i></button></div>`;
+    return `<div class="trow fld-row${r.removed ? ' removed' : ''}" data-i="${i}"><input type="text" class="fld-name" maxlength="40" value="${escapeHtml(r.name)}" ${r.removed ? 'disabled ' : ''}placeholder="Name" aria-label="Name of the ${info.label.toLowerCase()} field" oninput="fieldsNameInput(${i}, this)" onkeydown="if(event.key==='Enter'){event.preventDefault();saveFieldsModal();}"><span class="fld-kind"><i class="fa-solid ${info.icon}"></i>${info.label}</span><span class="fld-uses">${uses}</span><label class="fld-show" title="Show this field as a column in the Tasks list — on this device; the Gantt view keeps its own columns"><span>In list</span><input type="checkbox" class="fld-show-in"${r.show ? ' checked' : ''} aria-label="Show ${escapeHtml(r.name || info.label)} in the list" onchange="fieldsDraft[${i}].show = this.checked"><span class="fld-switch"></span></label><button type="button" class="fld-remove" onclick="fieldsToggleRemove(${i})" title="${r.removed ? 'Keep this field' : r.isNew ? 'Discard this new field' : 'Remove this field' + (r.uses ? ' and its values' : '')}" aria-label="${r.removed ? 'Keep' : 'Remove'} ${escapeHtml(r.name || info.label)}"><i class="fa-solid ${r.removed ? 'fa-rotate-left' : 'fa-xmark'}"></i></button></div>`;
   }).join('');
   // adding: one button that opens the type menu (Text, Number, Date, Yes / No; a kind with all five used says so)
   document.getElementById('fieldsAdd').innerHTML = !has
@@ -9483,7 +9488,7 @@ function applyFieldsDraft() {
 const TASK_FORM_MIN_H = 190;
 let tfTaskId = null, tfSnapshot = null, tfRes = [], tfPreds = [], tfOrig = null;
 function toggleTaskForm() {
-  if (showTaskForm && tfDirty()) { openConfirmModal({ title: 'Discard your changes?', body: 'The Task Form has changes that were not applied.', icon: 'triangle-exclamation', confirmLabel: 'Discard changes', cancelLabel: 'Keep editing', action() { tfSnapshot = null; showTaskForm = false; save(); render(); } }); return; }
+  if (showTaskForm && tfDirty()) { openConfirmModal({ title: 'Discard your changes?', body: 'The Task Form has changes that were not applied.', icon: 'triangle-exclamation', confirmLabel: 'Discard', cancelLabel: 'Keep Editing', action() { tfSnapshot = null; showTaskForm = false; save(); render(); } }); return; }
   showTaskForm = !showTaskForm; tfSnapshot = null; tfTaskId = null; save(); render();
 }
 function applyTaskFormHeight() {
@@ -9976,7 +9981,7 @@ function closeResourceDaysModal() { document.getElementById('resourceDaysModalBg
 function resourceDaysDirty() { return resourceDaysDraft !== null && document.getElementById('resourceDaysModalBg').classList.contains('open') && JSON.stringify(resourceDaysDraft) !== resourceDaysOrig; }
 function requestCloseResourceDaysModal() {
   if (!resourceDaysDirty()) { closeResourceDaysModal(); return; }
-  openConfirmModal({ title: 'Discard your changes?', body: 'You changed the days off but did not save them.', icon: 'triangle-exclamation', confirmLabel: 'Discard changes', cancelLabel: 'Keep editing', action() { closeResourceDaysModal(); } });
+  openConfirmModal({ title: 'Discard your changes?', body: 'You changed the days off but did not save them.', icon: 'triangle-exclamation', confirmLabel: 'Discard', cancelLabel: 'Keep Editing', action() { closeResourceDaysModal(); } });
 }
 function renderResourceDays() {
   const list = document.getElementById('resDayList');
@@ -11960,7 +11965,7 @@ function closeBulkModal() { document.getElementById('bulkModalBg').classList.rem
 function bulkDirty() { return document.getElementById('bulkModalBg').classList.contains('open') && [...document.querySelectorAll('#bulkModalBg .bulk-on input[type=checkbox]')].some(cb => cb.checked); }
 function requestCloseBulkModal() {
   if (!bulkDirty()) { closeBulkModal(); return; }
-  openConfirmModal({ title: 'Discard your changes?', body: 'You ticked fields to change but did not apply them.', icon: 'triangle-exclamation', confirmLabel: 'Discard changes', cancelLabel: 'Keep editing', action() { closeBulkModal(); } });
+  openConfirmModal({ title: 'Discard your changes?', body: 'You ticked fields to change but did not apply them.', icon: 'triangle-exclamation', confirmLabel: 'Discard', cancelLabel: 'Keep Editing', action() { closeBulkModal(); } });
 }
 function wouldCreateCycle(taskId, predId) {   // does predId (through its own predecessors) already depend on taskId?
   const seen = new Set(), stack = [predId];

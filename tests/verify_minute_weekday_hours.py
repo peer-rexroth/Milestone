@@ -125,7 +125,7 @@ with sync_playwright() as p:
     fri.locator(".whd-end").fill("13:00"); fri.locator(".whd-breaks").fill("")
     pg.keyboard.press("Escape")
     check("changing a day and pressing Escape asks before discarding", pg.locator("#confirmModalBg.open").count() == 1)
-    pg.click("#confirmModalBg button:has-text('Keep editing')")
+    pg.click("#confirmModalBg button:has-text('Keep Editing')")
     fri.locator(".whd-breaks").fill("12:00-x")
     pg.click("#calendarModalBg .modal-footer button.btn-primary"); pg.wait_for_timeout(150)
     check("an unreadable break is refused with a message and the dialog stays open", "breaks are written like" in toast() and pg.locator("#calendarModalBg.open").count() == 1, toast())

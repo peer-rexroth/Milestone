@@ -194,7 +194,7 @@ with sync_playwright() as p:
     ev("() => closeCfAddMenu()"); pg.wait_for_timeout(100)
     ev("() => document.activeElement && document.activeElement.blur()")
     pg.keyboard.press("Escape"); pg.wait_for_timeout(150)
-    check("Escape in the Manage dialog with unsaved fields asks to discard (the add buttons are not a menu any more, so there is no menu to close first)", modal_open("confirmModalBg")); pg.click("#confirmModalBg button:has-text('Keep editing')"); pg.wait_for_timeout(100)
+    check("Escape in the Manage dialog with unsaved fields asks to discard (the add buttons are not a menu any more, so there is no menu to close first)", modal_open("confirmModalBg")); pg.click("#confirmModalBg button:has-text('Keep Editing')"); pg.wait_for_timeout(100)
     pg.click("#fieldsModalBg .modal-footer .btn:has-text('Cancel')"); pg.wait_for_timeout(200)
     # names are user text: escaped
     ev("() => { project.fieldNames = { text1: '<img src=x onerror=window.__pwned=1>' }; normalizeData(); colHidden.delete('text1'); save(); render(); }"); pg.wait_for_timeout(100)

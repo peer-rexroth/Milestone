@@ -31,7 +31,7 @@ with sync_playwright() as p:
     pg.uncheck("#honorConstraintDatesInput")
     pg.click("#rulesModalBg .modal-header button")
     check("unchecking it and closing without saving asks first", pg.locator("#confirmModalBg.open").count() == 1)
-    pg.click("#confirmModalBg button:has-text('Keep editing')")
+    pg.click("#confirmModalBg button:has-text('Keep Editing')")
     pg.click("#rulesModalBg .modal-footer button.btn-primary"); pg.wait_for_timeout(150)
     check("saved: project.honorConstraintDates is false", ev("() => project.honorConstraintDates") == False)
     pg.click("#planSettingsBtn"); pg.click(".modal-bg.open [data-settings-tab='rules']"); pg.wait_for_selector("#rulesModalBg.open")

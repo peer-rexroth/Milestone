@@ -106,7 +106,7 @@ with sync_playwright() as p:
     pg.click("#bulkModalBg .modal-header button"); pg.wait_for_timeout(150)
     check("with a field ticked, the header × asks first", pg.locator("#confirmModalBg.open").count() == 1 and "did not apply" in pg.inner_text("#confirmModalBody"), pg.inner_text("#confirmModalBody") if pg.locator("#confirmModalBg.open").count() else None)
     pg.click("#confirmModalCancelBtn"); pg.wait_for_timeout(100)
-    check("Keep editing leaves the dialog open with the tick still there", pg.locator("#bulkModalBg.open").count() == 1 and pg.is_checked("#bulkOn-progress"))
+    check("Keep Editing leaves the dialog open with the tick still there", pg.locator("#bulkModalBg.open").count() == 1 and pg.is_checked("#bulkOn-progress"))
     pg.click("#bulkModalBg", position={"x": 5, "y": 5}); pg.wait_for_timeout(150)
     check("the backdrop asks too, the same way", pg.locator("#confirmModalBg.open").count() == 1)
     pg.click("#confirmModalActionBtn"); pg.wait_for_timeout(150)

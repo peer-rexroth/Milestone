@@ -55,7 +55,7 @@ with sync_playwright() as p:
     pg.click("#precisionDay")
     pg.click("#calendarModalBg .modal-header button")   # the × close button
     check("switching precision without saving triggers the discard-changes confirmation", pg.locator("#confirmModalBg.open").count() == 1)
-    pg.click("#confirmModalBg button:has-text('Keep editing')")
+    pg.click("#confirmModalBg button:has-text('Keep Editing')")
     pg.check("#precisionMinute"); pg.keyboard.press("Escape")   # back to the saved state -> no longer dirty
     check("returning to the saved state before closing asks nothing", pg.locator("#calendarModalBg.open").count() == 0 and pg.locator("#confirmModalBg.open").count() == 0)
 

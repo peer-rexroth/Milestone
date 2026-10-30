@@ -57,7 +57,8 @@ with sync_playwright() as p:
 
     pg.locator("#fieldsRows .fld-row").nth(1).locator(".fld-switch").click()
     pg.keyboard.press("Escape"); pg.wait_for_timeout(200)
-    check("switching 'In list' counts as a change: closing asks 'Discard your changes?'", modal_open("confirmModalBg")); pg.click("#confirmModalBg button:has-text('Keep editing')"); pg.wait_for_timeout(100)
+    check("the rows give the name the room: it is the widest part, and kind, usage, switch and remove line up from row to row", ev("() => { const rows = [...document.querySelectorAll('#fieldsRows .fld-row')]; if (rows.length < 2) return true; const x = (r, s) => Math.round(r.querySelector(s).getBoundingClientRect().x); return rows[0].querySelector('.fld-name').getBoundingClientRect().width > 150 && ['.fld-kind', '.fld-show', '.fld-remove'].every(s => rows.every(r => Math.abs(x(r, s) - x(rows[0], s)) <= 1)); }"))
+    check("switching 'In list' counts as a change: closing asks 'Discard your changes?'", modal_open("confirmModalBg")); pg.click("#confirmModalBg button:has-text('Keep Editing')"); pg.wait_for_timeout(100)
     pg.click("#fieldsModalBg .btn-primary"); pg.wait_for_timeout(250)
     check("saving applies it: Story points is a column now; Squad (unchanged) still is", ev("() => [colHidden.has('number1'), colHidden.has('text1')]") == [False, False])
     ev("() => { openFieldsModal(); }"); pg.wait_for_selector("#fieldsModalBg.open"); pg.wait_for_timeout(150)

@@ -90,7 +90,7 @@ with sync_playwright() as p:
     pg.keyboard.press("Escape")
     check("Escape on that question keeps editing", is_open() and pg.locator("#confirmModalBg.open").count() == 0)
     pg.keyboard.press("Escape"); pg.wait_for_timeout(80)
-    pg.click("#confirmModalBg button:has-text('Discard changes')"); pg.wait_for_timeout(120)
+    pg.click("#confirmModalBg button:has-text('Discard')"); pg.wait_for_timeout(120)
     check("discarding closes without saving", not is_open() and len(days("Ben")) == 2, days("Ben"))
 
     ben_row().locator(".rst-days-link").click(); pg.wait_for_timeout(120)
