@@ -13694,7 +13694,7 @@ function renderPlanMenu() {
     `<button class="dropdown-item" id="planMenuSettingsItem" onclick="openPlanSettings()"><i class="fa-solid fa-gear"></i>Plan Settings…<span class="item-hint">${escapeHtml(planSettingsHint())}</span></button>` +
     `<button class="dropdown-item" id="planDuplicateItem" onclick="duplicatePlan()"><i class="fa-regular fa-copy"></i>Duplicate Plan…</button>` +
     (fileSyncSupported() ? `<button class="dropdown-item" id="planDisconnectItem" onclick="disconnectFile()"${syncFileHandle ? '' : ' disabled title="This plan isn’t linked to a file"'}><i class="fa-solid fa-link-slash"></i>Disconnect Folder…</button>` : '') +
-    `<button class="dropdown-item" id="planDeleteItem" onclick="deleteCurrentPlan()"${idx.plans.length < 2 ? ' disabled title="You need at least one plan"' : ''}><i class="fa-solid fa-trash"></i>Delete Plan…</button>`;
+    `<button class="dropdown-item" id="planDeleteItem" onclick="deleteCurrentPlan()"><i class="fa-solid fa-trash"></i>Delete Plan…</button>`;
 }
 
 function openPlanModal(mode) {
@@ -13777,32 +13777,41 @@ async function duplicatePlan() {
 function deleteCurrentPlan() {
   closePlanMenu();
   const idx = readPlansIndex();
-  if (!idx || idx.plans.length < 2) { showToast('You need at least one plan', true); return; }
-  const file = syncFileHandle ? syncFileHandle.name : null;
+  if (!idx) return;
+  const file = syncFileHandle ? syncFileHandle.name : null, last = idx.plans.length < 2;
   openConfirmModal({
     title: 'Delete plan',
     body: `Remove <strong>${escapeHtml(project.name)}</strong> from this browser?` + (file
       ? ` Its linked file <strong>${escapeHtml(file)}</strong> is <em>not</em> deleted — you can open it again any time with “Open file as plan”.`
-      : ` It isn’t linked to a file, so this is the only copy — you can undo for a few seconds afterwards.`),
+      : ` It isn’t linked to a file, so this is the only copy — you can undo for a few seconds afterwards.`)
+      + (last ? ' An empty plan takes its place.' : ''),
     confirmLabel: 'Delete plan',
     action: doDeleteCurrentPlan
   });
 }
 async function doDeleteCurrentPlan() {
-  const idx = readPlansIndex();
-  if (!idx || idx.plans.length < 2 || planSwitching) return;
+  let idx = readPlansIndex();
+  if (!idx || planSwitching) return;
+  let blankId = null;
+  if (idx.plans.length < 2) { blankId = createPlanRecord(uniquePlanName('New plan'), null); idx = readPlansIndex(); }   // the last plan: an empty one takes its place, so a plan is always open
   const id = currentPlanId, pos = idx.plans.findIndex(p => p.id === id);
   const rec = Object.assign({}, planRecord(idx, id), { name: project.name });
   const next = idx.plans[pos + 1] || idx.plans[pos - 1];
   persistLocal();
-  const saved = { rec, pos, data: localStorage.getItem(planDataKey(id)), backups: localStorage.getItem(planBackupsKey(id)), handle: syncFileHandle, dir: syncDirHandle };
-  if (!(await switchPlan(next.id))) return;   // also flushes the file one last time
+  const saved = { blankId, rec, pos, data: localStorage.getItem(planDataKey(id)), backups: localStorage.getItem(planBackupsKey(id)), handle: syncFileHandle, dir: syncDirHandle };
+  if (!(await switchPlan(next.id))) { if (blankId) removePlanRecord(blankId); return; }   // also flushes the file one last time
   localStorage.removeItem(planDataKey(id));
   localStorage.removeItem(planBackupsKey(id));
   try { localStorage.removeItem(SYNC_BASE_PREFIX + id); } catch (e) { /* ignore */ }
   try { await _fsDel(planHandleKey(id)); await _fsDel(planDirKey(id)); } catch (e) { /* handle already gone */ }
   updatePlansIndex(i => { i.plans = i.plans.filter(p => p.id !== id); });
+  if (blankId) enforceFileLink();   // the empty plan has no file yet: the usual folder dialog
   showToast(`Deleted “${rec.name}”`, false, () => undoDeletePlan(saved), 'Undo');
+}
+function removePlanRecord(id) {   // forget a plan that was never opened by the user (the empty stand-in)
+  if (id === currentPlanId) return;
+  localStorage.removeItem(planDataKey(id)); localStorage.removeItem(planBackupsKey(id));
+  updatePlansIndex(i => { i.plans = i.plans.filter(p => p.id !== id); });
 }
 async function undoDeletePlan(saved) {
   const id = saved.rec.id;
@@ -13811,7 +13820,9 @@ async function undoDeletePlan(saved) {
   if (saved.handle) { try { await _fsPut(planHandleKey(id), saved.handle); } catch (e) { /* plan comes back unlinked */ } }
   if (saved.dir) { try { await _fsPut(planDirKey(id), saved.dir); } catch (e) { /* the folder is simply not watched any more */ } }
   updatePlansIndex(i => { if (!planRecord(i, id)) i.plans.splice(Math.min(saved.pos, i.plans.length), 0, saved.rec); });
+  document.getElementById('fileSyncModalBg').classList.remove('open');
   await switchPlan(id);
+  if (saved.blankId) removePlanRecord(saved.blankId);   // the empty stand-in is no longer needed
   showToast('Plan restored');
 }
 
