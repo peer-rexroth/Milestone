@@ -743,7 +743,8 @@ button:focus:not(:focus-visible) { outline: none; }
 .fld-name:disabled { opacity: .5; text-decoration: line-through; }
 .fld-name.bad { border-color: var(--danger); }
 .fld-uses { flex: none; min-width: 64px; font-size: var(--fs-13); color: var(--text-faint); text-align: right; white-space: nowrap; }
-.fld-uses:empty { display: block; }   /* keeps its width, so the kind, the switch and the remove button line up from row to row */
+.fld-uses:empty { display: block; }
+.fld-nouses .fld-uses { display: none; }   /* keeps its width, so the kind, the switch and the remove button line up from row to row */
 /* The name takes the room; kind, uses, switch and remove sit at the right edge in fixed columns (the generic .trow text-box rule sizes a box to its text, up to 220px). */
 .fld-row .fld-show { flex: none !important; }   /* (a generic .trow label rule gave the switch half of the free width) */
 .fld-row .fld-name { field-sizing: fixed !important; flex: 1 1 0 !important; max-width: none !important; }
@@ -9478,6 +9479,7 @@ function requestCloseFieldsModal() {
 function renderFieldsRows() {
   const box = document.getElementById('fieldsRows'), has = fieldsDraft.length > 0;
   box.classList.toggle('tgrp', has);
+  box.classList.toggle('fld-nouses', !fieldsDraft.some(r => !r.isNew));   // only new fields: no usage column to line up, so no gap for it
   box.innerHTML = fieldsDraft.map((r, i) => {
     const info = FIELD_KIND_INFO[r.kind], uses = r.isNew ? '' : r.uses ? `${r.uses} task${r.uses === 1 ? '' : 's'}` : '—';
     return `<div class="trow fld-row${r.removed ? ' removed' : ''}" data-i="${i}"><input type="text" class="fld-name" maxlength="40" value="${escapeHtml(r.name)}" ${r.removed ? 'disabled ' : ''}placeholder="Name" aria-label="Name of the ${info.label.toLowerCase()} field" oninput="fieldsNameInput(${i}, this)" onkeydown="if(event.key==='Enter'){event.preventDefault();saveFieldsModal();}"><span class="fld-kind"><i class="fa-solid ${info.icon}"></i>${info.label}</span><span class="fld-uses">${uses}</span><label class="fld-show" title="Show this field as a column in the Tasks list — on this device; the Gantt view keeps its own columns"><span>In list</span><input type="checkbox" class="fld-show-in"${r.show ? ' checked' : ''} aria-label="Show ${escapeHtml(r.name || info.label)} in the list" onchange="fieldsDraft[${i}].show = this.checked"><span class="fld-switch"></span></label><button type="button" class="fld-remove" onclick="fieldsToggleRemove(${i})" title="${r.removed ? 'Keep this field' : r.isNew ? 'Discard this new field' : 'Remove this field' + (r.uses ? ' and its values' : '')}" aria-label="${r.removed ? 'Keep' : 'Remove'} ${escapeHtml(r.name || info.label)}"><i class="fa-solid ${r.removed ? 'fa-rotate-left' : 'fa-xmark'}"></i></button></div>`;
