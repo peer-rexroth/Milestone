@@ -146,7 +146,7 @@ with sync_playwright() as p:
       tasks.push(__mkTask('h1', X + ' Task', 0, { resource: X + ' res', custom: { text1: X + ' cf' } }), __mkTask('h2', 'Child ' + X, 0, { parentId: 'h1', predecessors: [] }), __mkTask('h3', 'Other', 1, { predecessors: [{ id: 'h2', type: 'FS', lag: 0 }] }));
       project.name = X + ' Plan'; project.holidays = [{ date: '2026-10-05', name: X }]; project.fieldNames = { text1: X + ' Field' }; normalizeData(); save(); colHidden.delete('text1'); render(); resetHistory(); window.__xss = undefined; }""", X)
     pg.wait_for_timeout(150)
-    pg.keyboard.press("Control+k"); pg.wait_for_timeout(150); pg.fill("#searchInput", "task"); pg.wait_for_timeout(150)
+    pg.evaluate("() => openSearch()"); pg.wait_for_timeout(150); pg.fill("#searchInput", "task"); pg.wait_for_timeout(150)
     res_html = ev("() => document.getElementById('searchResults').innerHTML")
     check("Find: a hostile task name and resource are shown as text, not as markup", "<img" not in res_html.replace("&lt;img", "") and ev("() => window.__xss") is None and "&lt;img" in res_html, res_html[:200])
     pg.keyboard.press("Escape"); pg.wait_for_timeout(200)

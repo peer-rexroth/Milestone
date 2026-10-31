@@ -236,7 +236,7 @@ with sync_playwright() as p:
 
     # ---------------------------------------------------------------- UX review #11 / #12
     ev("() => { setView('tasks'); colFilters = {}; render(); }"); pg.wait_for_timeout(150)
-    check("#11 the Tasks list ends with a quiet 'Add task' row", pg.locator("#gridRows .grid-add-row").count() == 1 and "Add task" in pg.inner_text("#gridRows .grid-add-row"))
+    check("#11 the Tasks list ends with a quiet 'Add Task' row", pg.locator("#gridRows .grid-add-row").count() == 1 and "Add Task" in pg.inner_text("#gridRows .grid-add-row"))
     n0 = ev("() => tasks.length")
     ev("() => { setSelection([(tasks.find(t => t.parentId && !hasChildren(t.id)) || tasks.find(t => !hasChildren(t.id))).id]); render(); }"); sid = ev("() => selectedTaskId")
     pg.click("#gridRows .grid-add-row"); pg.wait_for_timeout(150)
@@ -247,7 +247,7 @@ with sync_playwright() as p:
     check("...but not in the Gantt view (list and chart stay row for row)", pg.locator("#gridRows .grid-add-row").count() == 0)
     ev("() => setView('resourceSheet')"); pg.wait_for_timeout(150)
     nr = ev("() => (project.resources || []).length")
-    check("#11 the Resource Sheet ends with an 'Add resource' row", pg.locator("#resourceSheetBody .rst-add-row").count() == (1 if nr else 0))
+    check("#11 the Resource Sheet ends with an 'Add Resource' row", pg.locator("#resourceSheetBody .rst-add-row").count() == (1 if nr else 0))
     if nr:
         pg.click("#resourceSheetBody .rst-add-row"); pg.wait_for_timeout(150)
         check("...which adds a resource", ev("() => project.resources.length") == nr + 1); ev("() => historyUndo()")

@@ -109,7 +109,7 @@ with sync_playwright() as p:
     pg.keyboard.press("Escape"); pg.wait_for_timeout(100)
     ev("() => { for (const k of Object.keys(colFilters)) colFilters[k] = null; render(); }")
     # find palette link
-    pg.keyboard.press("Control+k"); pg.wait_for_timeout(250); pg.fill("#searchInput", "Test"); pg.wait_for_timeout(150)
+    pg.evaluate("() => openSearch()"); pg.wait_for_timeout(250); pg.fill("#searchInput", "Test"); pg.wait_for_timeout(150)
     check("the Find window has a 'Find and replace…' link", pg.locator("#searchFoot button:has-text('Replace')").count() == 1)
     pg.click("#searchFoot button:has-text('Replace')"); pg.wait_for_timeout(250)
     check("it opens the dialog with what was typed in Find already filled in, and closes the palette", isopen() and pg.input_value("#frFind") == "Test" and not ev("() => document.getElementById('searchModalBg').classList.contains('open')"))

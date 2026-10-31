@@ -1486,7 +1486,8 @@ svg.gantt-deps text.status-label { fill: var(--task-purple); font-size: var(--fs
    this feature's own review: the task list's later ".rs-row { display:flex }" rule was silently overriding this
    grid's ".rs-row { display:grid }", since both features independently chose the same "rs-" shorthand). */
 .resourceSheet-pane-outer { flex: 1; min-width: 0; display: flex; flex-direction: column; background: var(--page-bg); }
-.rst-cur { border: none; background: transparent; padding: 0 2px; margin-left: 2px; font: inherit; color: var(--accent);border-radius: var(--r-xs); letter-spacing: 0; }
+.rst-cur { position: relative; border: none; background: transparent; padding: 0 2px; margin-left: 2px; font: inherit; color: var(--blue-text);border-radius: var(--r-xs); letter-spacing: 0; }
+.rst-cur::before { content: ""; position: absolute; inset: -4px -3px; }   /* the 22 x 15 link keeps its look; its hit area is 28 x 23 (>= 20) */
 .rst-cur:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); }
 .rst-scroll { flex: 1; overflow: auto; position: relative; }
 .rst-header, .rst-row { display: grid; grid-template-columns: var(--rs-cols, 40px minmax(160px,1fr) 111px 75px 93px 108px 110px 114px 88px 40px); column-gap: 0; min-width: max-content; align-items: center; }
@@ -1531,7 +1532,7 @@ select.rst-select { padding: 4px 8px; border: 1px solid var(--border); border-ra
    other dialog select in this app (none of them override it with a custom border-color either). */
 .rst-cell select.rst-select { width: calc(100% - 4px); margin-inline: 2px; }
 select.rst-select:disabled { opacity: .5; }
-.rst-days-link { background: none; border: none; color: var(--accent); font-size: var(--fs-12);padding: 4px 6px; border-radius: var(--r-xs); white-space: nowrap; }   /* a link: it opens that person's days off */
+.rst-days-link { background: none; border: none; color: var(--blue-text); font-size: var(--fs-12);padding: 4px 6px; border-radius: var(--r-xs); white-space: nowrap; }   /* a link: it opens that person's days off */
 .rst-days-link:hover { text-decoration: underline; background: color-mix(in srgb, var(--accent) 8%, transparent); }
 .rst-days-link.has { font-weight: 600; }
 .rst-remove { background: none; border: none; color: var(--text-faint);width: 26px; height: 26px; border-radius: var(--r-xs); display: flex; align-items: center; justify-content: center; }
@@ -1997,7 +1998,7 @@ html.time12 :is(#calendarModalBg) :is(.wh-day-row, .wh-break-add) input.dt-time 
 .dt-cal:hover:not(:disabled) { background: var(--pressed); }
 .dt-cal:disabled { opacity: .4; cursor: default; }
 .dt-native { position: absolute; right: 0; bottom: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
-input.dt-date.dt-err, input.dt-time.dt-err { border-color: var(--danger); }
+input.dt-date.dt-err, input.dt-time.dt-err, .bulk-ctl .dt-err { border-color: var(--danger); }
 .dt-err-bubble { position: fixed; z-index: 500; background: var(--danger); color: var(--on-accent); font-size: var(--fs-12); padding: 4px 8px; border-radius: var(--r-s); box-shadow: var(--shadow); opacity: 0; pointer-events: none; transform: translateY(-3px); transition: opacity .12s ease, transform .12s ease; max-width: 220px; }
 .dt-err-bubble.show { opacity: 1; transform: translateY(0); }
 input.dt-time { width: 84px; flex: 0 0 84px; text-align: center; }
@@ -2429,7 +2430,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
   <span class="sb-spacer"></span>
   <span class="sb-views sb-zoom" data-sb-views="gantt resources"><span class="sb-sep"></span>
     <button class="sb-btn" id="sbTodayBtn" onclick="goToToday()" title="Scroll the chart to today"><i class="fa-solid fa-calendar-day"></i>Today</button>
-    <button class="sb-btn" id="sbScrollTaskBtn" onclick="scrollToSelectedTask()" title="Scroll the chart to the selected task's bar"><i class="fa-solid fa-crosshairs"></i>Scroll to task</button>
+    <button class="sb-btn" id="sbScrollTaskBtn" onclick="scrollToSelectedTask()" title="Scroll the chart to the selected task's bar"><i class="fa-solid fa-crosshairs"></i>Scroll to Task</button>
     <span class="sb-sep"></span>
     <span class="sb-scale" role="group" aria-label="Timescale"><button class="sb-seg" id="fitZoomBtn" onclick="fitZoom()" aria-pressed="false" title="Fit the whole plan to the chart width; Week, Month and Year are fixed">Fit</button><span class="view-tabs" id="zoomTabs"></span></span>
     <button class="sb-icon" onclick="nudgeZoom(-1)" title="Zoom out" aria-label="Zoom out"><i class="fa-solid fa-minus"></i></button>
@@ -3102,7 +3103,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
         <div class="help-section">
           <div class="help-section-title">Find a task</div>
           <div class="help-row"><i class="fa-regular fa-keyboard"></i><span>Press <strong>?</strong> anywhere (or use <strong>Keyboard shortcuts</strong> at the top of this window) for the list of keyboard shortcuts.</span></div>
-          <div class="help-row"><i class="fa-solid fa-magnifying-glass"></i><span><strong>Ctrl/Cmd+K</strong>, <code>/</code> or the <strong>Find</strong> field in the sidebar starts a search: part of a name or a note (every word must match), a WBS code such as <code>2.1</code>, <code>#12</code> for the task with that ID, or <code>@anna</code> for a resource, and <code>status:late</code> for the late tasks (also <code>complete</code>, <code>future</code>, <code>on</code>). <strong>Enter</strong> goes to the task — folded groups open, a filter that would hide it steps aside, the row (and in the Gantt view the bar) scrolls into view and flashes. <strong>Shift+Enter</strong> shows only the matches.</span></div>
+          <div class="help-row"><i class="fa-solid fa-magnifying-glass"></i><span><code>/</code> or the <strong>Find</strong> field in the sidebar starts a search: part of a name or a note (every word must match), a WBS code such as <code>2.1</code>, <code>#12</code> for the task with that ID, or <code>@anna</code> for a resource, and <code>status:late</code> for the late tasks (also <code>complete</code>, <code>future</code>, <code>on</code>). <strong>Enter</strong> goes to the task — folded groups open, a filter that would hide it steps aside, the row (and in the Gantt view the bar) scrolls into view and flashes. <strong>Shift+Enter</strong> shows only the matches.</span></div>
           <div class="help-row"><i class="fa-solid fa-arrows-left-right"></i><span><strong>Find and replace</strong> (<kbd>Ctrl</kbd>+<kbd>H</kbd>, or the link in the Find window) changes text in one field of many tasks at once — <strong>Task Name</strong>, <strong>Resource</strong>, <strong>Notes</strong> or a custom text field — for all tasks, the filtered ones or the selected ones. The preview shows every change first; one Undo takes it all back.</span></div>
         </div>
         <div class="help-divider"></div>
@@ -3217,7 +3218,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
         <div class="help-section">
           <div class="help-section-title">Columns</div>
           <div class="help-row"><i class="fa-solid fa-table-columns"></i><span>Click <strong>Columns</strong> in the toolbar to tick the columns you want and reorder them. The <strong>Tasks view and the Gantt view each remember their own set</strong> on this device; Task Name always stays.</span></div>
-          <div class="help-row"><i class="fa-solid fa-plus"></i><span><strong>Add task</strong> under the last row (Tasks view) and the toolbar's <strong>Add Task</strong> both add a task below the selected one, or at the end of the plan when nothing is selected. The Resource Sheet ends with <strong>Add resource</strong>.</span></div>
+          <div class="help-row"><i class="fa-solid fa-plus"></i><span><strong>Add Task</strong> under the last row (Tasks view) and the toolbar's <strong>Add Task</strong> both add a task below the selected one, or at the end of the plan when nothing is selected. The Resource Sheet ends with <strong>Add resource</strong>.</span></div>
           <div class="help-row"><i class="fa-solid fa-keyboard"></i><span><strong>Use the keyboard in the list</strong>: the <strong>arrow keys</strong> move from cell to cell (the row becomes the selection; <strong>Shift+↑/↓</strong> extends it), <strong>Enter</strong> or <strong>F2</strong> edits the cell, typing replaces its content, and <strong>Tab</strong> / <strong>Enter</strong> save and move on. <strong>Esc</strong> puts the cursor away. The same in the Gantt view's list; in the Resource Sheet <strong>Enter</strong> or <strong>↓</strong> moves down a column, <strong>←/→</strong> across, and <strong>Esc</strong> puts back what you typed. Press <strong>?</strong> for every shortcut.</span></div>
           <div class="help-row"><i class="fa-solid fa-grip-lines-vertical"></i><span><strong>Move a column</strong> by dragging its header sideways; a blue line shows where it lands. The arrows in the Columns menu do the same, and Reset there restores the standard order. Tasks and Gantt keep their own order; the Resource Sheet’s columns move the same way.</span></div>
           <div class="help-row"><i class="fa-solid fa-left-right"></i><span><strong>Resize a column</strong> by dragging the edge of its header (the left edge for columns right of Task Name, the right edge for the others); <strong>double-click the edge</strong> to fit it to its content. <strong>Right-click a header</strong> for <em>Fit to content</em>, <em>Fit all columns</em>, <em>Default width</em> and <em>Reset all column widths</em> (also in the Columns menu). Widths are remembered on this device and shared by the Tasks and Gantt lists; a resized Task Name keeps its width instead of filling the pane.</span></div>
@@ -3249,7 +3250,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
         <div class="help-section">
           <div class="help-section-title">The view</div>
           <div class="help-row"><i class="fa-solid fa-repeat"></i><span><strong>Recurring task…</strong> (the arrow beside Add Task) makes a meeting or report that repeats — daily, weekly on chosen days, monthly or yearly, a number of times or until a date. It becomes a group of tasks, each pinned to its date; a date on a day off moves to the next working day. Click the ↻ by its name to change the pattern.</span></div>
-          <div class="help-row"><i class="fa-solid fa-crosshairs"></i><span>In the status bar, <strong>Today</strong> scrolls the chart to today and <strong>Scroll to task</strong> to the selected task's bar.</span></div>
+          <div class="help-row"><i class="fa-solid fa-crosshairs"></i><span>In the status bar, <strong>Today</strong> scrolls the chart to today and <strong>Scroll to Task</strong> to the selected task's bar.</span></div>
           <div class="help-row"><i class="fa-solid fa-table-list"></i><span>The left side is the <strong>same task list</strong> as in the Tasks view — the same filters, editing and buttons — with the chart to its right. Drag the thin strip between them to change how much room the list gets. It scrolls sideways when it has more columns than fit, and its ID … Task Name columns stay in place.</span></div>
           <div class="help-row"><i class="fa-solid fa-calendar"></i><span><strong>Fit</strong> (the standard) spreads the whole plan across the chart's width and follows the window; <strong>Week / Month / Year</strong> are fixed scales — all of them at the right of the <strong>status bar</strong>, next to the <strong>zoom slider</strong> (or its − / +), which gives any scale in between. A bar too short for its name has it written beside it, and a milestone's name sits next to it. Year shows quarters; Week is labelled by calendar week (CW — weeks start on Monday, ISO 8601). Days off are shaded.</span></div>
         </div>
@@ -3918,7 +3919,6 @@ function dateHint() { return dateFormat; }
 function timeHint() { return timeFormat === '12h' ? 'h:mm AM/PM' : 'hh:mm'; }
 function dateExample() { return fmtDate('2026-12-24'); }
 function timeExample() { return fmtTime('14:30'); }
-function fmtDateY(iso) { if (!iso) return ''; return parseLocalDate(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }); }
 // The grid's date(+time) display: in a minute-mode plan an absent time field shows the working day's own open/close (the
 // same default taskMoment() uses), so the cell reflects exactly what the scheduler treats the task as, not a blank.
 function gridDateTimeText(iso, time, showTime, isEnd) { if (!iso) return ''; return showTime ? `${fmtDate(iso)} ${fmtTime(time || (isEnd ? wEnd(iso) : wStart(iso)))}` : fmtDate(iso); }   // (an absent time is that day's own open — or close for a finish)
@@ -6790,7 +6790,7 @@ function renderGrid() {
       ${cols.map(c => marks && marks.has(c) ? cells[c].replace(/^(\s*<div class=")/, '$1chg ') : cells[c]).join('')}
     </div>`;
   }).join('') + (win.virtual ? spacer((list.length - win.to) * ROW_H) : '')
-    + (currentView === 'tasks' ? '<button type="button" class="grid-add-row" onclick="addTask()" title="Add a task below the selected one, or at the end of the plan when nothing is selected"><i class="fa-solid fa-plus"></i>Add task</button>' : '');
+    + (currentView === 'tasks' ? '<button type="button" class="grid-add-row" onclick="addTask()" title="Add a task below the selected one, or at the end of the plan when nothing is selected"><i class="fa-solid fa-plus"></i>Add Task</button>' : '');
   paintActiveCell();
 }
 /* ---- Keyboard navigation in the task list (Tasks view): a cell cursor. Arrow keys move it (the row becomes the selection), Enter or F2 edits the cell,
@@ -8018,7 +8018,7 @@ function renderResourceSheet() {
   applyRsColTemplate();
   document.getElementById('resourceSheetHeader').innerHTML = cols.map(c => `<div data-rskey="${c.key}" class="rz-${rsResizeEdge(c.key)}">${c.label}${c.money ? cur : ''}${c.key === 'id' || c.key === 'remove' ? '' : `<div class="col-resizer" data-rscol="${c.key}" title="Drag to resize · double-click to fit the content · right-click for more"></div>`}</div>`).join('');
   const pool = project.resources || [];
-  document.getElementById('resourceSheetBody').innerHTML = pool.length ? pool.map((r, i) => resourceSheetRowHtml(r, i)).join('') + '<button type="button" class="rst-add-row" onclick="addResourceSheetRow()"><i class="fa-solid fa-plus"></i>Add resource</button>'
+  document.getElementById('resourceSheetBody').innerHTML = pool.length ? pool.map((r, i) => resourceSheetRowHtml(r, i)).join('') + '<button type="button" class="rst-add-row" onclick="addResourceSheetRow()"><i class="fa-solid fa-plus"></i>Add Resource</button>'
     : `<div class="empty-state rst-empty">${emptyIcon('users')}No Resources<span class="empty-sub">Choose Add Resource above.</span></div>`;
   updateResourceSheetColumnLines();
   paintRstSelection();
@@ -11223,7 +11223,7 @@ function parseMspdi(xmlText) {
 }
 
 /* ============================ Find a task / jump ============================
-   Ctrl/Cmd+K (or "/", or the Find button) opens a palette: type part of a name (every word must match), a WBS code (2.1 or 2.1.3), #12 for the
+   "/" (or the Find button) opens a palette: type part of a name (every word must match), a WBS code (2.1 or 2.1.3), #12 for the
    task with that ID, or @anna for a resource. Enter goes to the task: its groups open, a filter that would hide it is bypassed (the task is
    pinned, like one you just added), it becomes the selection and scrolls into view — in the Gantt view the bar too — with a short flash.
    Shift+Enter turns the matches into a Task Name filter instead. */
@@ -11294,7 +11294,7 @@ function searchFocus() { const pop = document.getElementById('searchModalBg'); c
 function searchBlur() {
   setTimeout(() => { if (document.activeElement !== document.getElementById('searchInput')) closeSearch(); }, 120);
 }
-function openSearch() {   // the toolbar's Find, Ctrl+K and "/": into the field in the sidebar
+function openSearch() {   // the toolbar's Find and "/": into the field in the sidebar
   closeDataMenu && closeDataMenu();
   const root = document.documentElement;
   if (root.classList.contains('sidebar-collapsed')) { root.classList.remove('sidebar-collapsed'); searchRevealed = true; }
@@ -11978,8 +11978,8 @@ function showRowMenu(x, y, onRow) {
   if (parts.length) parts.push(sep);   // (what you can do to this task, then what you can add)
   const addLabel = !n ? 'Add Task' : ids.length === 1 && hasChildren(ids[0]) ? 'Add Sub-task' : 'Add Task Below';   // (under a group the new task becomes its first sub-task)
   parts.push(item('fa-solid fa-plus', addLabel, 'addTask()'), item('fa-solid fa-grip-lines', 'Add Empty Line', 'addSpacer()'));
-  if (n) parts.push(sep, item('fa-regular fa-duplicate', 'Duplicate', 'cloneSelected()'), item('fa-regular fa-copy', 'Copy', 'copySelectionButton()', { kbd: MOD_KEY + 'C' }), item('fa-solid fa-scissors', 'Cut', 'copySelection(null, true)', { kbd: MOD_KEY + 'X' }));
-  parts.push(n ? '' : sep, item('fa-regular fa-paste', 'Paste', 'pasteButton()', { kbd: MOD_KEY + 'V' }));
+  if (n) parts.push(sep, item('fa-regular fa-duplicate', 'Duplicate', 'cloneSelected()'), item('fa-regular fa-copy', 'Copy', 'copySelectionButton()'), item('fa-solid fa-scissors', 'Cut', 'copySelection(null, true)'));
+  parts.push(n ? '' : sep, item('fa-regular fa-paste', 'Paste', 'pasteButton()'));
   if (n) parts.push(sep, item('fa-solid fa-indent', 'Indent', 'indentSelected()'), item('fa-solid fa-outdent', 'Outdent', 'outdentSelected()', { off: !ids.some(id => byId(id).parentId) }), sep, item('fa-solid fa-trash', n > 1 ? `Delete ${n} Tasks` : 'Delete', 'deleteSelected()', { danger: true, kbd: 'Del' }));
   menu.innerHTML = tidyMenuSeps(parts.join(''));   // (a command that does not apply to these rows is left out, not dimmed)
   closeDataMenu(); closePlanMenu(); closeColumnsMenu(); closeFilterMenu(); closeTaskModeMenu(); closeTaskTypeMenu(); closeAddMenu();
@@ -12058,29 +12058,34 @@ function shiftTaskByMinutes(t, k) {   // a minute-mode plan: k working minutes l
   if (t.milestone) copyTaskField(t, 'start', 'end'); else setTaskMoment(t, 'end', finishMoment(ns, dur));
   if (t.taskMode !== 'manual') pinToDate(t, 'start');
 }
+// A refusal in the Edit Tasks dialog: the toast, plus the red border and bubble on the field that is wrong (cleared as soon as it is retyped).
+function bulkFail(f, msg) {
+  showToast(msg, true);
+  const el = document.getElementById('bulkVal-' + f); if (el) { showDtError(el, msg); el.focus(); }
+}
 function applyBulkEdit() {
   const ids = selectedIds().filter(id => !byId(id).spacer); if (!ids.length) { closeBulkModal(); return; }
   const on = f => { const c = document.getElementById('bulkOn-' + f); return !!(c && c.checked); }, val = f => document.getElementById('bulkVal-' + f).value;
   const customOn = bulkCustomCols().filter(c => on(c));
   if (!['progress', 'resource', 'mode', 'worktype', 'work', 'color', 'shift', 'pred'].some(on) && !customOn.length) { showToast('Tick at least one field to change', true); return; }
   let pct = null, shift = 0, predTarget = null, lag = 0, predType = val('predType'), workMin = null;
-  if (on('progress')) { pct = Number(val('progress')); if (val('progress').trim() === '' || !Number.isFinite(pct) || pct < 0 || pct > 100) { showToast('% complete must be between 0 and 100', true); return; } pct = Math.round(pct); }
-  if (on('work')) { workMin = parseDurationMinutes(val('work')); if (workMin === null) { showToast(`Can't read "${val('work')}" as work — try 4h, 90m, 2d or 1w`, true); return; } }
-  if (on('shift') && minuteModeActive()) { shift = val('shift').trim() === '' ? null : parseLagInput(val('shift')); if (shift === null) { showToast('Give the working time to move by, such as 2h, -30m or 1d', true); return; } }
-  else if (on('shift')) { shift = Number(val('shift')); if (val('shift').trim() === '' || !Number.isInteger(shift) || Math.abs(shift) > 5000) { showToast('Give the number of working days to move by, such as 5 or -2', true); return; } }
+  if (on('progress')) { pct = Number(val('progress')); if (val('progress').trim() === '' || !Number.isFinite(pct) || pct < 0 || pct > 100) { bulkFail('progress', '% complete must be between 0 and 100'); return; } pct = Math.round(pct); }
+  if (on('work')) { workMin = parseDurationMinutes(val('work')); if (workMin === null) { bulkFail('work', `Can't read "${val('work')}" as work — try 4h, 90m, 2d or 1w`); return; } }
+  if (on('shift') && minuteModeActive()) { shift = val('shift').trim() === '' ? null : parseLagInput(val('shift')); if (shift === null) { bulkFail('shift', 'Give the working time to move by, such as 2h, -30m or 1d'); return; } }
+  else if (on('shift')) { shift = Number(val('shift')); if (val('shift').trim() === '' || !Number.isInteger(shift) || Math.abs(shift) > 5000) { bulkFail('shift', 'Give the number of working days to move by, such as 5 or -2'); return; } }
   if (on('pred')) {
     const n = parseInt(val('predId'), 10); predTarget = Number.isFinite(n) ? taskIdByDisplayId(n) : null;
-    if (minuteModeActive()) { lag = parseLagInput(val('predLag')); if (lag === null) { showToast(`Can't read "${val('predLag')}" as a lag — try 2h, -30m, 1d or 1w`, true); return; } }
+    if (minuteModeActive()) { lag = parseLagInput(val('predLag')); if (lag === null) { bulkFail('predLag', `Can't read "${val('predLag')}" as a lag — try 2h, -30m, 1d or 1w`); return; } }
     else lag = val('predLag').trim() === '' ? 0 : Number(val('predLag'));
-    if (!predTarget) { showToast(`No task #${val('predId')}`, true); return; }
-    if (hasChildren(predTarget)) { showToast("A summary task can't be a predecessor. Pick one of its tasks instead.", true); return; }
-    if (byId(predTarget).spacer) { showToast("Can't depend on an empty line", true); return; }
-    if (!minuteModeActive() && (!Number.isInteger(lag) || Math.abs(lag) > MAX_LAG_DAYS)) { showToast(`The lag must be a whole number of days, at most ${MAX_LAG_DAYS.toLocaleString('en')}`, true); return; }
+    if (!predTarget) { bulkFail('predId', `No task #${val('predId')}`); return; }
+    if (hasChildren(predTarget)) { bulkFail('predId', "A summary task can't be a predecessor. Pick one of its tasks instead."); return; }
+    if (byId(predTarget).spacer) { bulkFail('predId', "Can't depend on an empty line"); return; }
+    if (!minuteModeActive() && (!Number.isInteger(lag) || Math.abs(lag) > MAX_LAG_DAYS)) { bulkFail('predLag', `The lag must be a whole number of days, at most ${MAX_LAG_DAYS.toLocaleString('en')}`); return; }
   }
   const customVals = {};
   for (const c of customOn) {
     const kind = CUSTOM_FIELDS[c].kind, raw = val(c);
-    if (kind === 'number') { if (raw.trim() === '') customVals[c] = null; else { const nn = Number(raw.replace(',', '.')); if (!Number.isFinite(nn)) { showToast(`"${raw}" isn't a number`, true); return; } customVals[c] = nn; } }
+    if (kind === 'number') { if (raw.trim() === '') customVals[c] = null; else { const nn = Number(raw.replace(',', '.')); if (!Number.isFinite(nn)) { bulkFail(c, `"${raw}" isn't a number`); return; } customVals[c] = nn; } }
     else if (kind === 'flag') customVals[c] = raw ? true : null;
     else customVals[c] = raw.trim() === '' ? null : raw.trim();
   }
@@ -13087,7 +13092,7 @@ function openBackupsModal() {
   const keys = Object.keys(backups).sort().reverse();
   const el = document.getElementById('backupsList');
   el.innerHTML = keys.length === 0 ? '<div class="pred-empty">No backups yet — one is taken automatically each day you use Milestone.</div>' :
-    keys.map(k => { const b = backups[k] || {}, n = Array.isArray(b.tasks) ? b.tasks.filter(t => !t.spacer).length : 0; return `<div class="backup-row"><span>${escapeHtml(fmtDateY ? fmtDateY(k) : k)}<span class="backup-info"> · ${n} task${n === 1 ? '' : 's'}${b.project && b.project.name ? ' · ' + escapeHtml(b.project.name) : ''}</span></span><button class="btn" onclick="restoreBackup('${k}')" aria-label="Restore the backup of ${escapeHtml(k)}">Restore</button></div>`; }).join('');
+    keys.map(k => { const b = backups[k] || {}, n = Array.isArray(b.tasks) ? b.tasks.filter(t => !t.spacer).length : 0; return `<div class="backup-row"><span>${escapeHtml(fmtDate ? fmtDate(k) : k)}<span class="backup-info"> · ${n} task${n === 1 ? '' : 's'}${b.project && b.project.name ? ' · ' + escapeHtml(b.project.name) : ''}</span></span><button class="btn" onclick="restoreBackup('${k}')" aria-label="Restore the backup of ${escapeHtml(k)}">Restore</button></div>`; }).join('');
   document.getElementById('backupsModalBg').classList.add('open');
   closeDataMenu();
 }
@@ -13934,7 +13939,7 @@ let helpTab = 'start';   // the topic last read (this session): the dialog reope
 const SHORTCUTS = [
   ['Anywhere', [
     [['?'], 'Show this sheet'],
-    [['Mod+K', '/'], 'Find a task'],
+    [['/'], 'Find a task'],
     [[IS_MAC ? 'Alt+Mod+F' : 'Ctrl+H'], 'Find and replace in many tasks'],
     [['Mod+P'], 'Print'],
     [['Esc'], 'Close the open dialog or menu; otherwise clear the selection'],
@@ -14025,7 +14030,7 @@ function helpTabKey(e) {   // arrow keys / Home / End move between the topics, l
 }
 function closeHelpModal() { document.getElementById('helpModalBg').classList.remove('open'); }
 function openAboutModal() {
-  document.getElementById('aboutVersionLine').textContent = `Version ${APP_VERSION} · ${fmtDateY(APP_BUILD_DATE)}`;
+  document.getElementById('aboutVersionLine').textContent = `Version ${APP_VERSION} · ${fmtDate(APP_BUILD_DATE)}`;
   document.getElementById('aboutModalBg').classList.add('open');
 }
 function closeAboutModal() { document.getElementById('aboutModalBg').classList.remove('open'); }
@@ -14185,7 +14190,6 @@ function wireGlobalEvents() {
     }
     const typingNow = /^(INPUT|TEXTAREA|SELECT)$/.test((e.target || {}).tagName || '') || (e.target || {}).isContentEditable, modalOpen = !!document.querySelector('.modal-bg.open');
     if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'a' && !typingNow && !modalOpen) { e.preventDefault(); setSelection(displayedTaskIds()); render(); return; }   // select every visible task
-    if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'k' && !document.querySelector('.modal-bg.open:not(#searchModalBg)')) { e.preventDefault(); if (document.getElementById('searchModalBg').classList.contains('open')) closeSearch(); else openSearch(); return; }
     if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'p' && !document.querySelector('.modal-bg.open:not(#printModalBg)')) { e.preventDefault(); if (!document.getElementById('printModalBg').classList.contains('open')) openPrintModal(); return; }   // Ctrl/Cmd+P opens our print dialog instead of printing the screen
     if (isFindReplaceKey(e) && !document.querySelector('.modal-bg.open:not(#searchModalBg):not(#replaceModalBg)')) { e.preventDefault(); if (document.getElementById('replaceModalBg').classList.contains('open')) closeReplace(); else openReplaceFromFind(); return; }   // Ctrl+H on every platform (Cmd+H hides the browser on a Mac)
     if (e.key === '?' && !typingNow && !modalOpen && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); openShortcuts(); return; }
@@ -14318,7 +14322,7 @@ function clearDtError(el) {
   el.classList.remove('dt-err'); el.removeAttribute('aria-invalid');
   if (dtErrBubble && dtErrBubble._for === el) { dtErrBubble.classList.remove('show'); dtErrBubble._for = null; }
 }
-document.addEventListener('input', e => { if (e.target && e.target.dataset && e.target.dataset.dt) clearDtError(e.target); });
+document.addEventListener('input', e => { if (e.target && e.target.dataset && e.target.dataset.dt || e.target.classList && e.target.classList.contains('dt-err')) clearDtError(e.target); });
 document.addEventListener('change', e => {
   const el = e.target;
   if (!el || !el.dataset || !el.dataset.dt) return;

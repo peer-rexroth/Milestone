@@ -30,13 +30,11 @@ with sync_playwright() as p:
 
     # ------------------------------------------------------------ opening and closing
     ev("() => document.activeElement && document.activeElement.blur()")
-    pg.keyboard.press("Control+k"); pg.wait_for_timeout(120)
-    check("Ctrl+K opens the palette with the cursor in the search box", is_open() and ev("() => document.activeElement.id") == "searchInput")
+    pg.keyboard.press("/"); pg.wait_for_timeout(120)
+    check("/ opens the palette with the cursor in the search box", is_open() and ev("() => document.activeElement.id") == "searchInput")
     check("...an empty search is just the field: no instructions or footer in the window (the tooltip explains the syntax)", pg.inner_text("#searchResults").strip() == "" and not pg.locator("#searchFoot").is_visible() and "#12" in (pg.get_attribute("#searchInput", "title") or ""))
     pg.keyboard.press("Control+k"); pg.wait_for_timeout(120)
-    check("Ctrl+K again closes it", not is_open())
-    pg.keyboard.press("Meta+k"); pg.wait_for_timeout(120)
-    check("Cmd+K opens it too", is_open())
+    check("Ctrl+K does nothing any more (the palette stays as it was)", is_open())
     pg.keyboard.press("Escape"); pg.wait_for_timeout(200)
     check("Escape closes it", not is_open())
     ev("() => document.activeElement && document.activeElement.blur()"); pg.keyboard.press("/"); pg.wait_for_timeout(120)
@@ -52,8 +50,8 @@ with sync_playwright() as p:
     ev("() => startInlineEdit(tasks[0].id, 'name')"); pg.wait_for_timeout(150); pg.keyboard.type("/")
     check("typing a slash in a cell being edited does not open the palette", not is_open())
     pg.keyboard.press("Escape"); ev("() => document.activeElement && document.activeElement.blur()")
-    ev("() => openTaskModal(tasks[0].id)"); pg.wait_for_timeout(250); pg.keyboard.press("Control+k"); pg.wait_for_timeout(120)
-    check("with the task dialog open Ctrl+K does nothing", not is_open())
+    ev("() => openTaskModal(tasks[0].id)"); pg.wait_for_timeout(250); pg.keyboard.press("/"); pg.wait_for_timeout(120)
+    check("with the task dialog open / does nothing", not is_open())
     ev("() => closeTaskModal()"); pg.wait_for_timeout(250)
 
     # ------------------------------------------------------------ matching

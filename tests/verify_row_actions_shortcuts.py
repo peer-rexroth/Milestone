@@ -99,7 +99,7 @@ with sync_playwright() as p:
     pg.keyboard.press("?"); pg.wait_for_timeout(150)
     check("pressing ? again while it is open does nothing (it stays one dialog)", isopen() and ev("() => document.querySelectorAll('.modal-bg.open').length") == 1)
     ev("() => closeShortcuts()")
-    pg.keyboard.press("Control+k"); pg.wait_for_timeout(200)
+    pg.evaluate("() => openSearch()"); pg.wait_for_timeout(200)
     check("with Find open, ? is just a character in its box (the sheet stays closed)", ev("() => document.getElementById('searchModalBg').classList.contains('open')"))
     pg.keyboard.type("?"); pg.wait_for_timeout(150)
     check("...typing ? into the search box does not open the sheet", not isopen())

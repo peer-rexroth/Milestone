@@ -76,7 +76,7 @@ with sync_playwright() as p:
     check("...every word must match, across name and notes ('discovery contract' → Discovery: name + note)", S("discovery contract") == [["a", True]], S("discovery contract"))
     check("...a word in nobody's notes finds nothing; @resource searches are unaffected (notes aren't searched there)", S("zzzz") == [] and S("@vendor") == [] and S("@anna") == [["d", False]])
     check("...a task whose name matches shows no snippet", all(not n for i, n in S("launch")))
-    pg.keyboard.press("Control+k"); pg.fill("#searchInput", "vendor contract"); pg.wait_for_timeout(250)
+    pg.evaluate("() => openSearch()"); pg.fill("#searchInput", "vendor contract"); pg.wait_for_timeout(250)
     snip = pg.locator("#searchResults .sr").first.locator(".sr-note")
     check("the result shows the matching stretch of the note under the path, with the words marked", snip.count() == 1 and "Waiting for the vendor contract" in snip.inner_text() and snip.locator("mark").count() >= 1, snip.inner_text() if snip.count() else "")
     check("...on one line (the note's line breaks are flattened to spaces), cut with an ellipsis when long", "\n" not in snip.inner_text() and ev("() => { const e = document.querySelector('#searchResults .sr-note'); return e.scrollHeight <= e.clientHeight + 2; }"))
