@@ -844,7 +844,9 @@ body.col-moving, body.col-moving * { cursor: grabbing !important; user-select: n
 .col-head:hover .col-filter-btn, .col-head:focus-within .col-filter-btn, .col-filter-btn.menu-open { opacity: .55; }
 @media (hover: none) { .col-filter-btn { opacity: .55; } }   /* a touch screen has no hover */
 .col-head .col-filter-btn:hover { background: var(--pressed); color: var(--text); opacity: 1; }
-.col-filter-btn { position: relative; }
+.col-filter-btn { position: relative; top: -1px; margin-left: 2px; }
+.col-filter-btn { display: flex; align-items: center; justify-content: center; }
+.col-filter-btn > i { font-size: var(--ico-14); vertical-align: 0; }   /* a lighter funnel, and centred on the label's capitals rather than on its line box (which carries descender space) */
 .col-filter-btn::before { content: ""; position: absolute; inset: -4px; }   /* the 18px button keeps its look; its hit area is 26px (≥ 20) */
 .col-filter-btn.active { color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--panel)); opacity: 1; }
 .filter-bar { display: flex; align-items: center; gap: 8px; font-size: var(--fs-12); color: var(--text-dim); min-width: 0; overflow: hidden; }
@@ -1216,13 +1218,12 @@ html.time12 .tf-dt input.dt-time { flex: 0 0 104px; min-width: 104px; width: 104
 .bulk-sep { border-top: 1px solid var(--border); margin: 2px 0; }
 .bulk-hint { font-size: var(--fs-12); color: var(--text-dim); margin: 0; }
 .modal.print-modal { width: 1040px; max-width: 96vw; height: min(780px, 92vh); max-height: none; }
-.print-layout { display: flex; flex: 1; min-height: 0; }
-.print-opts { width: 340px; flex-shrink: 0; overflow-y: auto; padding: 16px 16px; border-right: 1px solid var(--border); display: flex; flex-direction: column; gap: 18px; }
+.print-modal .modal-header { padding-bottom: 14px; }
+.print-layout { display: flex; flex: 1; min-height: 0; border-top: 1px solid var(--border); }
+.print-opts { width: 340px; flex-shrink: 0; overflow-y: auto; padding: 16px 16px; -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 14px, black calc(100% - 14px), transparent 100%); mask-image: linear-gradient(to bottom, transparent 0, black 14px, black calc(100% - 14px), transparent 100%); border-right: 1px solid var(--border); display: flex; flex-direction: column; gap: 18px; }
 .print-two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .print-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; }
 .print-chk { display: flex; align-items: center; gap: 6px; font-size: var(--fs-13); color: var(--text);margin-top: 2px; flex-wrap: wrap; }
-.print-range { display: flex; align-items: center; gap: 6px; margin: 4px 0 0 24px; font-size: var(--fs-12); color: var(--text-dim); }
-.print-range .dt-wrap { flex: 1; min-width: 0; }
 .print-side { flex: 1; min-width: 0; display: flex; flex-direction: column; background: var(--panel-2); }
 .print-preview { flex: 1; min-height: 0; overflow: auto; padding: 16px; display: flex; align-items: flex-start; justify-content: center; }
 .print-sheet { background: var(--on-accent); box-shadow: 0 1px 8px var(--shadow-ink-strong); width: 100%; max-width: 100%; }
@@ -1933,10 +1934,6 @@ html.time12 :is(#calendarModalBg) :is(.wh-day-row, .wh-break-add) input.dt-time 
 .insp .tgrp > .tadd + .tadd::before { content: ""; position: absolute; left: 14px; right: 0; top: 0; height: 1px; background: var(--border); }
 .insp .tgrp > .tadd.hidden { display: none; }
 #resDayList .pred-empty, #resDayList:empty::before { border: 0; background: none; text-align: left; padding: 0 14px; line-height: 40px; color: var(--text-faint); font-size: var(--fs-14); }
-.print-opts .print-range { flex-wrap: nowrap; }
-.print-opts .print-range .dt-date { flex: 0 0 auto; width: 96px; padding-right: 26px; }
-.print-opts .print-range .tgrow { flex: 1 1 0; min-width: 0; }
-.print-opts .print-range .tunit { flex: none; }
 .print-opts .trow .dt-wrap { flex: 0 0 auto; width: auto; }
 
 
@@ -2734,14 +2731,15 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
           <label class="trow tpick"><span>Start</span><input type="checkbox" class="tick" id="printCol-start"></label>
           <label class="trow tpick"><span>Finish</span><input type="checkbox" class="tick" id="printCol-end"></label>
           <label class="trow tpick"><span>Days</span><input type="checkbox" class="tick" id="printCol-duration"></label>
-          <label class="trow tpick"><span>% complete</span><input type="checkbox" class="tick" id="printCol-progress"></label>
+          <label class="trow tpick"><span>% Complete</span><input type="checkbox" class="tick" id="printCol-progress"></label>
           <label class="trow tpick"><span>Resource</span><input type="checkbox" class="tick" id="printCol-resource"></label>
           <label class="trow tpick"><span>Predecessors</span><input type="checkbox" class="tick" id="printCol-preds"></label>
         </div></section>
         <section class="cal-sec"><div class="cal-sec-title">Time range</div><div class="tgrp">
           <label class="trow tpick"><span>The whole plan</span><input type="radio" class="tick" id="printRangeAll" name="printRange" checked></label>
           <label class="trow tpick"><span>A custom range</span><input type="radio" class="tick" id="printRangeCustom" name="printRange"></label>
-          <div class="trow print-range"><label for="printFrom" class="tgrow">From – to</label><input type="text" class="dt-date" id="printFrom" aria-label="From" onfocus="document.getElementById('printRangeCustom').checked = true"><span class="tunit">to</span><input type="text" class="dt-date" id="printTo" aria-label="To" onfocus="document.getElementById('printRangeCustom').checked = true"></div>
+          <div class="trow"><label for="printFrom" class="tgrow">From</label><input type="text" class="dt-date" id="printFrom" onfocus="document.getElementById('printRangeCustom').checked = true"></div>
+          <div class="trow"><label for="printTo" class="tgrow">To</label><input type="text" class="dt-date" id="printTo" onfocus="document.getElementById('printRangeCustom').checked = true"></div>
         </div></section>
         <section class="cal-sec"><div class="cal-sec-title">Show</div><div class="tgrp">
           <label class="trow tpick"><span>Baseline under the bars</span><input type="checkbox" class="tick" id="printBaseline"></label>
@@ -2757,7 +2755,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
         <div class="print-nav"><button class="btn" id="printPrev" onclick="printPage(-1)" aria-label="Previous page"><i class="fa-solid fa-chevron-left"></i></button><span id="printPageInfo"></span><button class="btn" id="printNext" onclick="printPage(1)" aria-label="Next page"><i class="fa-solid fa-chevron-right"></i></button><span class="print-summary" id="printSummary"></span></div>
       </div>
     </div>
-    <div class="modal-footer"><span class="print-img" role="group" aria-label="Picture of the whole chart"><span class="print-img-label" title="One picture with every row, whatever the paper — for slides and documents">Picture:</span><button class="btn" id="printCopyImg" onclick="exportPrintImage('copy')" title="Copy the chart as a PNG picture"><i class="fa-regular fa-copy"></i>Copy</button><button class="btn" id="printPng" onclick="exportPrintImage('png')" title="Download the chart as a PNG picture"><i class="fa-regular fa-image"></i>PNG</button><button class="btn" id="printSvg" onclick="exportPrintImage('svg')" title="Download the chart as an editable SVG drawing"><i class="fa-solid fa-vector-square"></i>SVG</button></span><span class="print-tip" title="Your browser's print dialog has “Save as PDF”.">Pictures show every row on one image.</span><button class="btn" onclick="closePrintModal()">Cancel</button><button class="btn btn-primary" id="printGo" onclick="doPrint()"><i class="fa-solid fa-print"></i>Print / Save as PDF…</button></div>
+    <div class="modal-footer"><span class="print-img" role="group" aria-label="Picture of the whole chart" title="One picture with every row on one image, whatever the paper"><span class="print-img-label" title="One picture with every row, whatever the paper — for slides and documents">Picture:</span><button class="btn" id="printCopyImg" onclick="exportPrintImage('copy')" title="Copy the chart as a PNG picture"><i class="fa-regular fa-copy"></i>Copy</button><button class="btn" id="printPng" onclick="exportPrintImage('png')" title="Download the chart as a PNG picture"><i class="fa-regular fa-image"></i>PNG</button><button class="btn" id="printSvg" onclick="exportPrintImage('svg')" title="Download the chart as an editable SVG drawing"><i class="fa-solid fa-vector-square"></i>SVG</button></span><span class="print-tip"></span><button class="btn" onclick="closePrintModal()">Cancel</button><button class="btn btn-primary" id="printGo" onclick="doPrint()"><i class="fa-solid fa-print"></i>Print / Save as PDF…</button></div>
   </div>
 </div>
 
