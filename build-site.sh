@@ -7,4 +7,6 @@ rm -rf dist
 mkdir dist
 cp index.html sw.js manifest.json _headers dist/
 cp -R icons dist/icons
+cp robots.txt dist/
+cp -R .well-known dist/.well-known
 echo "Built dist/ ($(ls dist | wc -l | tr -d ' ') entries)"

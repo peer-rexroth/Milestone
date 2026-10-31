@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>Milestone</title>
+<meta name="description" content="A local-first project planner with Gantt chart, task dependencies, auto-scheduling and resource planning. Plans are stored on your own device; there are no accounts and nothing is sent to a server.">
+<meta property="og:title" content="Milestone — local-first project planner">
+<meta property="og:description" content="A local-first project planner with Gantt chart, task dependencies, auto-scheduling and resource planning. Plans are stored on your own device; there are no accounts and nothing is sent to a server.">
+<meta property="og:type" content="website">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="icon" href="icons/icon-192.png">
@@ -2122,7 +2126,7 @@ input.dt-time { width: 84px; flex: 0 0 84px; text-align: center; }
 .sc-group { margin: 0 0 18px; }
 
 .help-row { display: flex; gap: 12px; align-items: flex-start; font-size: var(--fs-13); line-height: 1.6; color: var(--text-dim); }
-.help-row > i { flex: 0 0 18px; margin-top: 2px; text-align: center; font-size: var(--ico-16); color: var(--text-faint); }
+.help-row > i { flex: 0 0 18px; width: 18px; height: 18px; margin-top: 1px;   /* (a square box: the icon is a mask, and an 18 x 13 one cut off its top and bottom) */ text-align: center; font-size: var(--ico-16); color: var(--text-faint); }
 .help-row strong { color: var(--text); font-weight: 600; }
 .help-row em { font-style: normal; color: var(--text); }
 .help-row code, .help-keys kbd { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: var(--fs-12); padding: 0 4px; border: 1px solid var(--border); border-radius: var(--r-xs); background: var(--panel-2); color: var(--text); white-space: nowrap; }
@@ -2284,6 +2288,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 </style>
 </head>
 <body>
+<noscript><main style="font:16px/1.5 -apple-system,system-ui,sans-serif;max-width:640px;margin:15vh auto;padding:0 20px"><h1>Milestone</h1><p>Milestone is a project planner that runs entirely in your browser: a task list and Gantt chart with dependencies, auto-scheduling, resources and baselines. Your plans stay on your own device (or in a file you choose); there are no accounts, no tracking and no data is sent to a server.</p><p>Milestone needs JavaScript to run. Questions: <a href="mailto:peer.rexroth@gmail.com">peer.rexroth@gmail.com</a>.</p></main></noscript>
 
 <div class="window" id="window">
 <aside class="sidebar" id="sidebar" aria-label="Plans and views">
@@ -2329,8 +2334,8 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
     <button class="dropdown-item" role="menuitem" onclick="closeHelpMenu();openHelpModal()"><i class="fa-regular fa-circle-question"></i>Milestone Help</button>
     <button class="dropdown-item" role="menuitem" onclick="closeHelpMenu();openShortcuts()"><i class="fa-regular fa-keyboard"></i>Keyboard Shortcuts<span class="item-hint">?</span></button>
     <div class="dropdown-sep"></div>
-    <button class="dropdown-item" role="menuitem" onclick="closeHelpMenu();checkForUpdatesNow()"><i class="fa-solid fa-rotate-right"></i>Check for Updates</button>
-    <button class="dropdown-item" role="menuitem" onclick="closeHelpMenu();openAboutModal()"><i class="fa-solid fa-circle-info"></i>About Milestone</button></div></div>
+    <button class="dropdown-item" role="menuitem" onclick="closeHelpMenu();openAboutModal()"><i class="fa-solid fa-circle-info"></i>About Milestone</button>
+    <button class="dropdown-item" role="menuitem" onclick="closeHelpMenu();checkForUpdatesNow()"><i class="fa-solid fa-rotate-right"></i>Check for Updates</button></div></div>
   </div>
   </div>
   <div class="sb-foot" id="sbFoot"></div>
