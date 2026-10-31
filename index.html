@@ -566,6 +566,7 @@ html.sidebar-collapsed .sidebar { display: none; }
 html:has(.sb-resizer.dragging), html:has(.sb-resizer.dragging) * { cursor: col-resize !important; user-select: none !important; }
 html:has(.sb-resizer.dragging) .sidebar { transition: none; }
 html.sidebar-collapsed .sb-resizer { display: none; }
+html:has(.dropdown-menu.open) .sb-resizer { visibility: hidden; }   /* its accent line and tooltip must not cut through an open menu */
 .sidebar { position: relative; z-index: 60; }   /* above the content, so the tools bar's menus (wider than the sidebar) are not painted over by it */
 .sb-head { display: flex; align-items: center; gap: 8px; height: 52px; flex: none; padding: 0 12px; }   /* just the round hide button (the views are rows below) */
 .sb-head #sidebarToggleBtn, .sb-float { background: var(--cap-fill); border-radius: 50%; width: 36px; height: 36px; flex: none; box-shadow: inset 0 1px 0 var(--sheen), 0 1px 4px var(--shadow-ink-soft); }   /* ClearDesk's round hide / show button: the same glyph (a 16px outline svg), the same lit edge */
@@ -2070,7 +2071,6 @@ input.dt-time { width: 84px; flex: 0 0 84px; text-align: center; }
 .fs-points { margin: 8px 0 0; padding-left: 16px; display: flex; flex-direction: column; gap: 4px; }
 .id-badge { font-size: var(--fs-12); font-weight: 600; color: var(--text-faint); margin-left: 8px; vertical-align: middle; }
 
-.about-body { display: flex; flex-direction: column; gap: 14px; font-size: var(--fs-13); line-height: 1.5; }
 /* Help: a tabbed dialog — a rail of topics on the left, short icon rows under small section titles on the right (like Pulse's help) */
 .modal.help-modal { width: 840px; max-width: 94vw; height: min(690px, 88vh); max-height: none; position: relative; overflow: hidden; }   /* a fixed height, so switching topics never resizes the dialog */
 /* System-Settings layout (design-system 6.4): a tinted rail on the left (round close, search, the topics as inset rows with the accent on the current one) and on the right a large title that follows the topic. */
@@ -2079,7 +2079,7 @@ input.dt-time { width: 84px; flex: 0 0 84px; text-align: center; }
 .help-modal .modal-header h2 { font-size: var(--fs-22); font-weight: 700; letter-spacing: -.01em; }
 .help-modal .modal-header .hdr-link { margin: 0; padding: 5px 12px; border-radius: 999px; background: var(--cap-fill); color: var(--text); font-weight: 500; }
 .help-modal .modal-header .hdr-link:hover { background: var(--cap-hover); }
-.help-modal .modal-header button:not(.hdr-link)[aria-label="Close"] { position: absolute; left: -210px; top: 14px; width: 28px; height: 28px; border-radius: 50%; background: var(--cap-fill); color: var(--text-dim); }
+.help-modal .modal-header button:not(.hdr-link)[aria-label="Close"] { position: absolute; left: -210px; top: 14px; width: 28px; height: 28px; padding: 0; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--cap-fill); color: var(--text-dim); font-size: var(--fs-12); }
 .help-modal .modal-header button:not(.hdr-link)[aria-label="Close"]:hover { background: var(--cap-hover); }
 .help-modal .modal-footer { display: none; }
 .help-layout { display: flex; flex: 1; min-height: 0; }
@@ -2125,8 +2125,8 @@ input.dt-time { width: 84px; flex: 0 0 84px; text-align: center; }
 .sc-group h3 + .sc-row:last-child { border-radius: var(--r-m); }
 .sc-group { margin: 0 0 18px; }
 
-.help-row { display: flex; gap: 12px; align-items: flex-start; font-size: var(--fs-13); line-height: 1.6; color: var(--text-dim); }
-.help-row > i { flex: 0 0 18px; width: 18px; height: 18px; margin-top: 1px;   /* (a square box: the icon is a mask, and an 18 x 13 one cut off its top and bottom) */ text-align: center; font-size: var(--ico-16); color: var(--text-faint); }
+.help-row { display: flex; gap: 12px; align-items: flex-start; font-size: var(--fs-14); line-height: 1.6; color: var(--text-dim); }   /* long reading text: 14px, as in ClearDesk */
+.help-row > i { flex: 0 0 18px; width: 18px; height: 18px; margin-top: 1px;   /* (a square box: the icon is a mask, and an 18 x 13 one cut off its top and bottom) */ text-align: center; font-size: var(--ico-16); color: var(--text-faint); -webkit-mask-size: calc(1em * var(--ico-k)); mask-size: calc(1em * var(--ico-k)); }   /* drawn at 16px whatever the box (as in ClearDesk), not 126% of it */
 .help-row strong { color: var(--text); font-weight: 600; }
 .help-row em { font-style: normal; color: var(--text); }
 .help-row code, .help-keys kbd { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: var(--fs-12); padding: 0 4px; border: 1px solid var(--border); border-radius: var(--r-xs); background: var(--panel-2); color: var(--text); white-space: nowrap; }
@@ -2162,8 +2162,17 @@ input.dt-time { width: 84px; flex: 0 0 84px; text-align: center; }
   .help-nav button { width: auto; white-space: nowrap; }
   .help-pane { padding: 16px 16px 20px; }
 }
-.about-body { align-items: center; text-align: center; }
-.about-body svg { width: 44px; height: 44px; color: var(--accent); }
+/* About: ClearDesk's layout — the round close button top left, the app icon, the name, a tagline, credits and a line of fine print */
+.about-modal { width: 320px; padding: 40px 28px 24px; display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; }
+.about-close { position: absolute; top: 14px; left: 14px; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--cap-fill); color: var(--text-dim); font-size: var(--fs-12); }
+.about-close:hover { background: var(--cap-hover); color: var(--text); }
+.about-icon { width: 88px; height: 88px; border-radius: 22%; box-shadow: 0 6px 18px var(--shadow-ink-soft), 0 0 0 .5px var(--border); }
+.about-name { margin: 16px 0 0; font-size: var(--fs-22); font-weight: 700; letter-spacing: -.01em; }
+.about-tag { margin-top: 4px; font-size: var(--fs-13); color: var(--text-faint); }
+.about-ver { margin-top: 2px; font-size: var(--fs-12); color: var(--text-faint); font-variant-numeric: tabular-nums; }
+.about-credits { margin-top: 24px; font-size: var(--fs-13); color: var(--text-dim); }
+.about-credits strong { color: var(--text); font-weight: 600; }
+.about-fine { margin-top: 24px; font-size: var(--fs-11); color: var(--text-faint); text-wrap: balance; }
 
 .backup-row, .import-mode-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 4px; border-bottom: 1px solid var(--border); font-size: var(--fs-13); }
 .backup-row:last-child { border-bottom: none; }
@@ -3097,7 +3106,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 <!-- Help modal -->
 <div class="modal-bg" id="helpModalBg" onclick="if(event.target===this) closeHelpModal()">
   <div class="modal help-modal" role="dialog" aria-labelledby="helpTitle">
-    <div class="modal-header"><h2 id="helpTitle">Help</h2><button type="button" class="btn-link hdr-link" onclick="closeHelpModal();openShortcuts()" title="Press ? anywhere"><i class="fa-regular fa-keyboard"></i> Keyboard shortcuts</button><button onclick="closeHelpModal()" aria-label="Close">&times;</button></div>
+    <div class="modal-header"><h2 id="helpTitle">Help</h2><button type="button" class="btn-link hdr-link" onclick="closeHelpModal();openShortcuts()" title="Press ? anywhere"><i class="fa-regular fa-keyboard"></i> Keyboard Shortcuts</button><button onclick="closeHelpModal()" aria-label="Close" title="Close (Esc)"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="help-layout">
       <div class="help-rail">
         <div class="help-search-bar"><input type="search" id="helpSearch" placeholder="Search help…" aria-label="Search help" autocomplete="off" oninput="helpSearch(this.value)" onkeydown="helpSearchKey(event)"></div>
@@ -3372,17 +3381,14 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 </div>
 
 <div class="modal-bg" id="aboutModalBg" onclick="if(event.target===this) closeAboutModal()">
-  <div class="modal narrow">
-    <div class="modal-header"><h2>About</h2><button onclick="closeAboutModal()">&times;</button></div>
-    <div class="modal-body about-body">
-      <svg viewBox="0 0 120 120" aria-hidden="true"><mask id="logoMaskAbout"><rect width="120" height="120" fill="#fff"/><rect x="40" y="34" width="40" height="14" rx="7" fill="#000"/><rect x="26" y="53" width="58" height="14" rx="7" fill="#000"/><rect x="50" y="72" width="34" height="14" rx="7" fill="#000"/></mask><polygon mask="url(#logoMaskAbout)" points="60,3 117,60 60,117 3,60" fill="currentColor"/></svg>
-      <div style="font-weight:700;font-size: var(--fs-15)">Milestone</div>
-      <div style="color:var(--text-dim);font-size: var(--fs-13)">A local-first project planner — Gantt chart, dependencies, no account, no server.</div>
-      <div id="aboutVersionLine" style="color:var(--text-faint);font-size: var(--fs-12)"></div>
-      <div style="border-top:1px solid var(--border);width:100%;margin:6px 0"></div>
-      <div style="font-size: var(--fs-12);color:var(--text-dim)">Created by Peer Rexroth</div>
-      <a href="mailto:peer.rexroth@gmail.com" style="font-size: var(--fs-12);color:var(--accent)">Send feedback</a>
-    </div>
+  <div class="modal about-modal" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
+    <button type="button" class="about-close" aria-label="Close" title="Close (Esc)" onclick="closeAboutModal()"><i class="fa-solid fa-xmark"></i></button>
+    <img class="about-icon" src="icons/icon-192.png" alt="" width="88" height="88">
+    <h3 class="about-name" id="aboutTitle">Milestone</h3>
+    <div class="about-tag">A local-first project planner</div>
+    <div class="about-ver" id="aboutVersionLine"></div>
+    <div class="about-credits">Created by <strong>Peer Rexroth</strong></div>
+    <div class="about-fine">Your plans stay in this browser or in a file you choose. No server, no account.</div>
   </div>
 </div>
 
@@ -14504,7 +14510,7 @@ function initDialogAccessibility() {
   for (const bg of document.querySelectorAll('.modal-bg')) {
     const m = bg.querySelector('.modal'); if (!m) continue;
     if (!m.getAttribute('role')) m.setAttribute('role', bg.id === 'confirmModalBg' ? 'alertdialog' : 'dialog');
-    for (const x of bg.querySelectorAll('.modal-header > button')) if (!x.getAttribute('aria-label')) x.setAttribute('aria-label', 'Close');
+    for (const x of bg.querySelectorAll('.modal-header > button:not(.hdr-link)')) if (!x.getAttribute('aria-label')) x.setAttribute('aria-label', 'Close');   // (the Help dialog's Keyboard shortcuts link is a header button too, but not the close one)
     m.setAttribute('aria-modal', 'true');
     if (!m.getAttribute('aria-labelledby') && !m.getAttribute('aria-label')) { const h = m.querySelector('h2'); if (h) { if (!h.id) h.id = bg.id + 'Title'; m.setAttribute('aria-labelledby', h.id); } }
     let wasOpen = bg.classList.contains('open');
