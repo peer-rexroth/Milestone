@@ -10,7 +10,8 @@
 <meta property="og:type" content="website">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
-<link rel="icon" href="icons/icon-192.png">
+<link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
 <meta name="theme-color" content="#f6f8fa">
 <script id="icons">
 // Icon drawings, 24 grid, 2-unit stroke, round caps, currentColor (design-system/icons.json plus the planner's own). The markup keeps its
@@ -2040,7 +2041,7 @@ html.time12 :is(#calendarModalBg) :is(.wh-day-row, .wh-break-add) input.dt-time 
 .dt-cal:hover:not(:disabled) { background: var(--pressed); }
 .dt-cal:disabled { opacity: .4; cursor: default; }
 .dt-native { position: absolute; right: 0; bottom: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
-input.dt-date.dt-err, input.dt-time.dt-err, .bulk-ctl .dt-err { border-color: var(--danger); }
+input.dt-date.dt-err, input.dt-time.dt-err, input.dt-err, .bulk-ctl .dt-err { border-color: var(--danger); }
 .dt-err-bubble { position: fixed; z-index: 500; background: var(--danger); color: var(--on-accent); font-size: var(--fs-12); padding: 4px 8px; border-radius: var(--r-s); box-shadow: var(--shadow); opacity: 0; pointer-events: none; transform: translateY(-3px); transition: opacity .12s ease, transform .12s ease; max-width: 220px; }
 .dt-err-bubble.show { opacity: 1; transform: translateY(0); }
 input.dt-time { width: 84px; flex: 0 0 84px; text-align: center; }
@@ -2169,7 +2170,6 @@ input.dt-time { width: 84px; flex: 0 0 84px; text-align: center; }
 .about-icon { width: 88px; height: 88px; border-radius: 22%; box-shadow: 0 6px 18px var(--shadow-ink-soft), 0 0 0 .5px var(--border); }
 .about-name { margin: 16px 0 0; font-size: var(--fs-22); font-weight: 700; letter-spacing: -.01em; }
 .about-tag { margin-top: 4px; font-size: var(--fs-13); color: var(--text-faint); }
-.about-ver { margin-top: 2px; font-size: var(--fs-12); color: var(--text-faint); font-variant-numeric: tabular-nums; }
 .about-credits { margin-top: 24px; font-size: var(--fs-13); color: var(--text-dim); }
 .about-credits strong { color: var(--text); font-weight: 600; }
 .about-fine { margin-top: 24px; font-size: var(--fs-11); color: var(--text-faint); text-wrap: balance; }
@@ -3386,7 +3386,6 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
     <img class="about-icon" src="icons/icon-192.png" alt="" width="88" height="88">
     <h3 class="about-name" id="aboutTitle">Milestone</h3>
     <div class="about-tag">A local-first project planner</div>
-    <div class="about-ver" id="aboutVersionLine"></div>
     <div class="about-credits">Created by <strong>Peer Rexroth</strong></div>
     <div class="about-fine">Your plans stay in this browser or in a file you choose. No server, no account.</div>
   </div>
@@ -3398,7 +3397,6 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 /* ============================== Constants ============================== */
 const APP_VERSION = 5;   // every save carries it (syncPayload). 5 = a Resource assignment is written "Anna[50%]" (an older build would read that as a name); 2 = minute/hour-level scheduling (project.timeUnit/workHours, five per-task time fields); 3 = the version-skew guard (checkVersionSkew) — no format change; 4 = a minute-mode plan's lags are working minutes (project.lagUnit), per-weekday hours (project.workHoursByDay), a custom date field's time (custom.<id>Time)
 const MINUTE_MODE_VERSION = 2;   // the first build that knows minute mode: a minute-mode plan last written by an OLDER build (a stale cached copy of the app, a device not yet updated) may have had its dates moved by a day-only scheduler
-const APP_BUILD_DATE = '2026-09-13';
 const STORAGE_KEY = 'milestone-v1';
 const BACKUPS_KEY = 'milestone-backups';
 // Plans. Before plans existed the app kept ONE project under STORAGE_KEY / BACKUPS_KEY and one file handle
@@ -7666,6 +7664,15 @@ function setupVersionCheck() {
     navigator.serviceWorker.addEventListener('controllerchange', () => { if (hadController) showUpdateBanner(); });
   }
 }
+// The installed app's shortcuts (manifest.json): ?new=task adds a task, ?view=gantt (or tasks, resources, resourceSheet) opens that view. The address is cleaned
+// straight away so a reload does not start another task.
+function runLaunchAction() {
+  const q = new URLSearchParams(location.search), view = q.get('view'), act = q.get('new');
+  if (!view && !act) return;
+  try { history.replaceState(null, '', location.pathname + location.hash); } catch (e) { /* best effort */ }
+  if (MAIN_VIEWS.some(v => v.id === view)) setView(view);
+  if (act === 'task') { setView('tasks'); addTask(); }
+}
 function renderGantt() {
   const z = currentZoom();
   dateRange = computeDateRange();
@@ -9535,10 +9542,11 @@ function hoursByDayRaw() { return [...document.querySelectorAll('#whDayRows .whd
 // The rows as { weekday: { start, end, breaks } }, or null with a message when one of them can't be read.
 function readHoursByDay() {
   const by = {};
-  for (const [wd, start, end, br] of hoursByDayRaw()) {
-    const breaks = parseBreaksText(br);
-    if (!start || !end || end <= start) { showToast(`${WEEKDAY_NAMES[wd]}: the day must end after it starts`, true); return null; }
-    if (breaks === null) { showToast(`${WEEKDAY_NAMES[wd]}: breaks are written like 12:00-13:00, 15:00-15:15`, true); return null; }
+  for (const r of document.querySelectorAll('#whDayRows .whd-row')) {
+    const wd = r.dataset.wd, sEl = r.querySelector('.whd-start'), eEl = r.querySelector('.whd-end'), bEl = r.querySelector('.whd-breaks');
+    const start = sEl.value, end = eEl.value, breaks = parseBreaksText(bEl.value);
+    if (!start || !end || end <= start) { fieldFail(!start ? sEl : eEl, `${WEEKDAY_NAMES[wd]}: the day must end after it starts`); return null; }
+    if (breaks === null) { fieldFail(bEl, `${WEEKDAY_NAMES[wd]}: breaks are written like 12:00-13:00, 15:00-15:15`); return null; }
     by[wd] = { start, end, breaks };
   }
   return by;
@@ -9554,9 +9562,9 @@ function renderWorkBreaks() {
   ).join('');
 }
 function addWorkBreak() {
-  const from = document.getElementById('whBreakFrom').value, to = document.getElementById('whBreakTo').value;
-  if (!from || !to) { showToast('Pick both a start and an end time for the break', true); return; }
-  if (to <= from) { showToast('The break must end after it starts', true); return; }
+  const fEl = document.getElementById('whBreakFrom'), tEl = document.getElementById('whBreakTo'), from = fEl.value, to = tEl.value;
+  if (!from || !to) { fieldFail(!from ? fEl : tEl, 'Pick both a start and an end time for the break'); return; }
+  if (to <= from) { fieldFail(tEl, 'The break must end after it starts'); return; }
   calWorkHours.breaks.push({ start: from, end: to });
   renderWorkBreaks();
   document.getElementById('whBreakFrom').value = ''; document.getElementById('whBreakTo').value = '';
@@ -12216,10 +12224,7 @@ function shiftTaskByMinutes(t, k) {   // a minute-mode plan: k working minutes l
   if (t.taskMode !== 'manual') pinToDate(t, 'start');
 }
 // A refusal in the Edit Tasks dialog: the toast, plus the red border and bubble on the field that is wrong (cleared as soon as it is retyped).
-function bulkFail(f, msg) {
-  showToast(msg, true);
-  const el = document.getElementById('bulkVal-' + f); if (el) { showDtError(el, msg); el.focus(); }
-}
+function bulkFail(f, msg) { fieldFail(document.getElementById('bulkVal-' + f), msg); }
 function applyBulkEdit() {
   const ids = selectedIds().filter(id => !byId(id).spacer); if (!ids.length) { closeBulkModal(); return; }
   const on = f => { const c = document.getElementById('bulkOn-' + f); return !!(c && c.checked); }, val = f => document.getElementById('bulkVal-' + f).value;
@@ -14187,7 +14192,6 @@ function helpTabKey(e) {   // arrow keys / Home / End move between the topics, l
 }
 function closeHelpModal() { document.getElementById('helpModalBg').classList.remove('open'); }
 function openAboutModal() {
-  document.getElementById('aboutVersionLine').textContent = `Version ${APP_VERSION} · ${fmtDate(APP_BUILD_DATE)}`;
   document.getElementById('aboutModalBg').classList.add('open');
 }
 function closeAboutModal() { document.getElementById('aboutModalBg').classList.remove('open'); }
@@ -14475,6 +14479,8 @@ function showDtError(el, msg) {
   dtErrBubble.classList.add('show');
   dtErrBubble._for = el;
 }
+// A refusal in a dialog: the toast, plus the red border and bubble on the field that is wrong (cleared as soon as it is retyped).
+function fieldFail(el, msg) { showToast(msg, true); if (el) { showDtError(el, msg); el.focus(); } }
 function clearDtError(el) {
   el.classList.remove('dt-err'); el.removeAttribute('aria-invalid');
   if (dtErrBubble && dtErrBubble._for === el) { dtErrBubble.classList.remove('show'); dtErrBubble._for = null; }
@@ -14580,6 +14586,7 @@ document.addEventListener('DOMContentLoaded', () => {
   render();
   initFileSync();
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+  runLaunchAction();
   setupVersionCheck();
 });
 </script>

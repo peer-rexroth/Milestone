@@ -1,10 +1,12 @@
-const CACHE_NAME = 'milestone-cache-v6';
+const CACHE_NAME = 'milestone-cache-v7';
 const APP_SHELL = [
   './',
   'manifest.json',
   'icons/icon-180.png',
   'icons/icon-192.png',
   'icons/icon-512.png',
+  'icons/icon-maskable-512.png',
+  'icons/favicon.svg',
   'icons/icon.svg'
 ];
 

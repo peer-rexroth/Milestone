@@ -63,7 +63,9 @@ async ([seed, steps, allowCalendar]) => {
         const cs = targetStart(t);
         if (cs && !everStarted.has(t.id) && dayNumber(cs) !== dayNumber(t.startDate)) bad.push('Auto task is not where its links put it: ' + t.name + ' ' + t.startDate + ' < ' + cs);
       }
-      if (!isWorkDay(t.startDate) || (!t.milestone && !isWorkDay(t.endDate))) bad.push('Auto task on a day off: ' + t.name + ' ' + t.startDate + '..' + t.endDate);
+      // (an ELAPSED link — "+2ed", "+1ew" — is real calendar time, so it can put the start on a day off and leave it there, exactly as MS Project does; see lagShiftMoment(). Only the start can be off then: the finish is counted in working days.)
+      const elapsedStart = t.predecessors.some(p => p.elapsed);
+      if ((!elapsedStart && !isWorkDay(t.startDate)) || (!t.milestone && !isWorkDay(t.endDate))) bad.push('Auto task on a day off: ' + t.name + ' ' + t.startDate + '..' + t.endDate);
     }
     const dispIds = tasks.map(t => taskDisplayId(t.id)); if (new Set(dispIds).size !== dispIds.length) bad.push('display ids not unique');
     return bad;
