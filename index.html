@@ -2783,6 +2783,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
             <div class="trow hidden" id="scWRow"><label for="scW" class="tgrow">Width</label><input type="number" id="scW" class="tin" min="3" max="80" step="0.1"><span class="tunit">cm</span></div>
             <div class="trow hidden" id="scHRow"><label for="scH" class="tgrow">Height</label><input type="number" id="scH" class="tin" min="2" max="60" step="0.1"><span class="tunit">cm</span></div>
             <div class="trow"><label for="scMaxRows" class="tgrow">Most rows on a chart</label><input type="number" id="scMaxRows" class="tin" min="1" max="60" step="1"></div>
+            <div class="trow"><label for="scSplit" class="tgrow">When rows don’t fit</label><select id="scSplit" class="tin" title="Even Charts: every chart gets about the same number of rows, cut near group boundaries. Fill Each Chart: each chart is filled, the last one takes what is left."><option value="even">Even Charts</option><option value="fill">Fill Each Chart</option></select></div>
           </div><p class="cal-hint hidden" id="scNote"></p></section>
           <section class="cal-sec"><div class="cal-sec-title">Tasks</div><div class="tgrp">
             <label class="trow tpick"><span>The whole plan</span><input type="radio" class="tick" name="scScope" value="all" checked></label>
@@ -11980,10 +11981,10 @@ const SC_PALETTES = {   // block colours 1-4 (then round again) and the text col
   milestone: { colors: ['#00a3a1', '#0b2a4a', '#f2a541', '#5aa9e6'], ink: '#1d2733' } };
 const SC_MS = '#F28011', SC_TODAY = '#E7001D';   // milestone diamonds: Sundown Orange; the today marker: Bright Red
 function scDefaults() {
-  return { preset: 'content', w: 30, h: 13.4, maxRows: 16, minPt: 9, scope: 'all', hier: 'blocks', levels: 3, msLabel: 'both', msPlace: 'group', scale: 'auto',
+  return { preset: 'content', w: 30, h: 13.4, maxRows: 16, minPt: 9, scope: 'all', hier: 'blocks', levels: 3, msLabel: 'both', msPlace: 'group', split: 'even', scale: 'auto',
     palette: 'corporate', colors: SC_PALETTES.corporate.colors.slice(), bg: 'transparent', ink: SC_PALETTES.corporate.ink, font: '', today: true, pct: true, legend: false, more: false, pick: [] };
 }
-function scLoad() { try { const o = JSON.parse(localStorage.getItem(SC_KEY) || 'null'); if (o && typeof o === 'object' && !o.palette) o.palette = 'custom'; return Object.assign(scDefaults(), o && typeof o === 'object' ? o : {}, { pick: [] }); } catch (e) { return scDefaults(); } }
+function scLoad() { try { const o = JSON.parse(localStorage.getItem(SC_KEY) || 'null'); if (o && typeof o === 'object' && !o.palette) o.palette = 'custom'; if (o && o.split !== 'fill') o.split = 'even'; return Object.assign(scDefaults(), o && typeof o === 'object' ? o : {}, { pick: [] }); } catch (e) { return scDefaults(); } }
 function scSave(o) { try { const c = Object.assign({}, o); delete c.pick; localStorage.setItem(SC_KEY, JSON.stringify(c)); } catch (e) { /* a convenience only */ } }
 // The tasks to draw, as a tree of { id, name, level, kids | ms, s, e, p } (day numbers, progress 0-100). A group's dates and progress come from the tasks drawn.
 function scTree(o) {
@@ -12040,16 +12041,23 @@ function scRows(tree, o) {
   }
   return { rows, blocks };
 }
-// Splits the rows into charts of at most `cap` rows: at a block boundary if one fits, else at a label-cell boundary, else wherever.
-function scSplit(rows, cap) {
-  const out = []; let a = 0;
+// Splits the rows into charts of at most `cap` rows. 'fill': cut exactly at the cap (the last chart may hold a single row). Otherwise ('even'): as many
+// charts as needed, each about the same size; each cut moves up to two rows to a block boundary, or failing that a label-cell boundary, when one is there.
+function scSplit(rows, cap, mode) {
+  const n = rows.length, out = [];
+  if (mode === 'fill') { for (let a = 0; a < n; a += cap) out.push(rows.slice(a, a + cap)); return out; }
   const newBlock = i => i === 0 || rows[i].blk !== rows[i - 1].blk;
   const newCell = i => newBlock(i) || ((rows[i].cell && rows[i].cell.id) || '') !== ((rows[i - 1].cell && rows[i - 1].cell.id) || '');
-  while (a < rows.length) {
-    let z = Math.min(rows.length, a + cap);
-    if (z < rows.length) { let b = z; while (b > a && !newBlock(b)) b--; if (b === a) { b = z; while (b > a && !newCell(b)) b--; } if (b > a) z = b; }
-    out.push(rows.slice(a, z)); a = z;
+  const charts = Math.max(1, Math.ceil(n / cap)); let prev = 0;
+  for (let i = 1; i < charts; i++) {
+    const ideal = Math.round(i * n / charts);
+    const fits = c => c > prev && c - prev <= cap && n - c <= cap * (charts - i);   // this chart and the rest still fit under the cap
+    let cut = ideal;
+    for (const test of [newBlock, newCell]) { let best = null; for (let d = 0; d <= 2; d++) for (const c of [ideal - d, ideal + d]) if (c > 0 && c < n && fits(c) && test(c) && best === null) best = c; if (best !== null) { cut = best; break; } }
+    if (!fits(cut)) cut = Math.min(Math.max(ideal, prev + 1), prev + cap);
+    out.push(rows.slice(prev, cut)); prev = cut;
   }
+  out.push(rows.slice(prev));
   return out;
 }
 function scWrap(text, maxW, size, bold) {   // words onto lines no wider than maxW
@@ -12067,7 +12075,7 @@ function scBuild(o) {
   const textCap = Math.max(1, Math.floor((H - headH - legendH - 16) / (minFs / .46)));
   const cap = Math.max(1, Math.min(Math.round(o.maxRows) || 16, textCap));
   if (!rows.length) return { charts: [], W, H, rows: 0, cap, textCap, empty: true };
-  const chunks = scSplit(rows, cap), FONT = o.font && o.font.trim() ? `${o.font.trim().replace(/["<>&]/g, '')}, ${PRINT_FONT}` : PRINT_FONT, esc = escapeHtml, INK = o.ink || '#1d2733';
+  const chunks = scSplit(rows, cap, o.split), FONT = o.font && o.font.trim() ? `${o.font.trim().replace(/["<>&]/g, '')}, ${PRINT_FONT}` : PRINT_FONT, esc = escapeHtml, INK = o.ink || '#1d2733';
   // ---- the timeline: every drawn task (and hosted milestone), a little padding, the same on every chart
   let d0 = Infinity, d1 = -Infinity;
   const seen = n => { d0 = Math.min(d0, n.s); d1 = Math.max(d1, n.e); };
@@ -12174,7 +12182,7 @@ function scBuild(o) {
 let scOpts = null, scBuilt = null, scPageNo = 0, scTimer = null;
 function scEl(id) { return document.getElementById(id); }
 function scWrite(o) {
-  scEl('scPreset').value = o.preset; scEl('scW').value = o.w; scEl('scH').value = o.h; scEl('scMaxRows').value = o.maxRows; scEl('scMinPt').value = o.minPt;
+  scEl('scPreset').value = o.preset; scEl('scSplit').value = o.split; scEl('scW').value = o.w; scEl('scH').value = o.h; scEl('scMaxRows').value = o.maxRows; scEl('scMinPt').value = o.minPt;
   document.querySelector(`input[name=scScope][value="${o.scope}"]`).checked = true;
   scEl('scHier').value = o.hier; scEl('scLevels').value = String(o.levels); scEl('scMsLabel').value = o.msLabel; scEl('scMsPlace').value = o.msPlace; scEl('scScale').value = o.scale;
   o.colors.forEach((c, i) => { scEl('scCol' + i).value = c; });
@@ -12182,7 +12190,7 @@ function scWrite(o) {
 }
 function scRead() {
   const num = (id, lo, hi, d) => { const v = parseFloat(scEl(id).value); return Number.isFinite(v) ? Math.max(lo, Math.min(hi, v)) : d; };
-  return { preset: scEl('scPreset').value, w: num('scW', 3, 80, 30), h: num('scH', 2, 60, 13.4), maxRows: Math.round(num('scMaxRows', 1, 60, 16)), minPt: num('scMinPt', 6, 24, 9),
+  return { preset: scEl('scPreset').value, w: num('scW', 3, 80, 30), h: num('scH', 2, 60, 13.4), maxRows: Math.round(num('scMaxRows', 1, 60, 16)), split: scEl('scSplit').value, minPt: num('scMinPt', 6, 24, 9),
     scope: (document.querySelector('input[name=scScope]:checked') || {}).value || 'all', hier: scEl('scHier').value, levels: +scEl('scLevels').value, msLabel: scEl('scMsLabel').value, msPlace: scEl('scMsPlace').value, scale: scEl('scScale').value,
     palette: scEl('scPalette').value, colors: [0, 1, 2, 3].map(i => scEl('scCol' + i).value), bg: scEl('scBg').value, ink: scEl('scInk').value, font: scEl('scFont').value, today: scEl('scToday').checked, pct: scEl('scPct').checked, legend: scEl('scLegend').checked, more: !scEl('scMore').classList.contains('hidden'), pick: [...scPick] };
 }
