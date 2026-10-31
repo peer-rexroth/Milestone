@@ -143,7 +143,7 @@ with sync_playwright() as p:
     pg.click("#helpTab-progress"); pg.wait_for_timeout(100); ht3 = pg.inner_text("#helpPane-progress")
     check("...it documents undo/redo (Getting started) and holidays (Calendar & progress)", "Undo and redo" in ht and "holidays" in ht3.lower(), (ht[:60], ht3[:60]))
     pg.keyboard.press("Escape"); pg.wait_for_timeout(150)
-    pg.click("#helpMenuBtn"); pg.click("#helpMenu .dropdown-item >> nth=2"); pg.wait_for_selector("#aboutModalBg.open"); pg.keyboard.press("Escape"); pg.wait_for_timeout(120)
+    pg.click("#helpMenuBtn"); pg.click("#helpMenu .dropdown-item:has-text(\"About Milestone\")"); pg.wait_for_selector("#aboutModalBg.open"); pg.keyboard.press("Escape"); pg.wait_for_timeout(120)
     state = pg.evaluate("() => ({ tasks: tasks.length, view: currentView, cols: visibleTaskCols('tasks').join(), gcols: visibleTaskCols('gantt').join(), text: canonicalText() })")
     pg.reload(); pg.wait_for_selector("#undoBtn"); pg.wait_for_timeout(400)
     after = pg.evaluate("() => ({ tasks: tasks.length, view: currentView, cols: visibleTaskCols('tasks').join(), gcols: visibleTaskCols('gantt').join(), text: canonicalText() })")

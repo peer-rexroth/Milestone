@@ -1380,6 +1380,13 @@ input.inline-edit[type=date]::-webkit-calendar-picker-indicator { margin: 0 0 0 
 .gantt-pane-outer { flex: 1; min-width: 0; overflow: auto; position: relative; background: var(--panel); }   /* flat, like the list beside it */
 .gantt-content { position: relative; }
 .gantt-header { position: sticky; top: 0; z-index: 5; height: var(--head-h); background: color-mix(in srgb, var(--panel) 80%, transparent); backdrop-filter: blur(20px) saturate(1.4); -webkit-backdrop-filter: blur(20px) saturate(1.4); border-bottom: 1px solid var(--border); }   /* frosted: bars scroll under it */
+.update-banner { display: none; align-items: center; gap: 10px; flex: none; padding: 6px 20px; background: var(--panel-2); color: var(--text-dim); border-bottom: 1px solid var(--border); font-size: var(--fs-13); }
+.update-banner.show { display: flex; }
+.update-banner > span { flex: 1; }
+.update-banner > i:first-child { color: var(--accent); font-size: var(--ico-16); }
+.update-banner strong { color: var(--text); font-weight: 600; }
+.update-banner .btn { border-radius: 999px; }
+.update-banner .icon-btn { color: var(--text-faint); }
 .gantt-today-pill { position: absolute; bottom: 3px; transform: translateX(-50%); z-index: 2; background: var(--danger); color: var(--on-accent); font-size: var(--fs-11); font-weight: 600; line-height: 15px; padding: 0 7px; border-radius: 999px; white-space: nowrap; pointer-events: none; }
 .gantt-today-pill.dot { width: 8px; height: 8px; padding: 0; bottom: 5px; }
 .gantt-tick { position: absolute; top: 0; bottom: 0; border-left: 1px solid var(--border); font-size: var(--fs-11); color: var(--text-faint); padding: 8px 0 0 4px; white-space: nowrap; }
@@ -2322,6 +2329,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
     <button class="dropdown-item" role="menuitem" onclick="closeHelpMenu();openHelpModal()"><i class="fa-regular fa-circle-question"></i>Milestone Help</button>
     <button class="dropdown-item" role="menuitem" onclick="closeHelpMenu();openShortcuts()"><i class="fa-regular fa-keyboard"></i>Keyboard Shortcuts<span class="item-hint">?</span></button>
     <div class="dropdown-sep"></div>
+    <button class="dropdown-item" role="menuitem" onclick="closeHelpMenu();checkForUpdatesNow()"><i class="fa-solid fa-rotate-right"></i>Check for Updates</button>
     <button class="dropdown-item" role="menuitem" onclick="closeHelpMenu();openAboutModal()"><i class="fa-solid fa-circle-info"></i>About Milestone</button></div></div>
   </div>
   </div>
@@ -2331,6 +2339,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 <div class="dropdown-menu" id="scheduleMenu"></div>   <!-- (outside the sidebar: its scroll area would clip a menu that is wider than the sidebar) -->
 <div class="sb-resizer" id="sidebarResizer" role="separator" aria-orientation="vertical" aria-label="Resize the sidebar" tabindex="0" title="Drag to resize · double-click to reset"></div>
 <div class="content" id="content">
+<div class="update-banner" id="updateBanner" role="status"></div>
 
 <!-- The toolbar belongs to the view you are in: each .tb-group lists the views it shows in (data-views). A button with
      data-more goes into the "More" menu when the toolbar is too narrow for everything (the higher the number, the sooner). -->
@@ -7594,6 +7603,57 @@ function outLabelHtml(name, gap, left, right, top, grp, totalW) {
   const w = printTextWidth(name, 12, grp) + 4, cls = 'gantt-out-label' + (grp ? ' grp' : '');
   if (right + gap + w <= totalW || left - gap - w < 0) return `<div class="${cls}" style="left:${right + gap}px;top:${top}px;max-width:${Math.max(40, totalW - right - gap)}px;overflow:hidden;text-overflow:ellipsis">${escapeHtml(name)}</div>`;
   return `<div class="${cls}" style="right:${totalW - left + 8}px;top:${top}px">${escapeHtml(name)}</div>`;
+}
+// ── New version notice ──────────────────────────────────────────────────────
+// The page you have open keeps running the code it loaded, so when a newer copy is published the app says so (a banner that stays until you act, with Reload).
+// A copy is "newer" when its server headers differ from the ones seen when this page loaded (ETag, else Last-Modified, else Content-Length); a service worker
+// taking over from an older one says the same. Checked when you come back to the tab and every hour; Help → Check for Updates asks on request.
+const versionStampOf = h => { if (!h || !h.get) return ''; return h.get('etag') || h.get('last-modified') || h.get('content-length') || ''; };
+let loadedVersionStamp = null, updateBannerDismissed = false;
+function showUpdateBanner() {
+  const el = document.getElementById('updateBanner'); if (!el || updateBannerDismissed) return;
+  el.innerHTML = `<i class="fa-solid fa-rotate-right"></i><span>A new version of <strong>Milestone</strong> is ready.</span><button class="btn btn-sm btn-primary" onclick="reloadForUpdate()">Reload</button><button class="icon-btn" onclick="dismissUpdateBanner()" title="Not now" aria-label="Not now"><i class="fa-solid fa-xmark"></i></button>`;
+  el.classList.add('show');
+}
+function dismissUpdateBanner() { updateBannerDismissed = true; const el = document.getElementById('updateBanner'); if (el) { el.classList.remove('show'); el.innerHTML = ''; } }
+async function reloadForUpdate() { try { await flushFileSync(); } catch (e) { /* the plan is in the browser either way */ } location.reload(); }
+const versionDiffers = (loaded, now) => !!loaded && !!now && loaded !== now;
+// The reference is the copy this page actually loaded, which only the service worker knows (it remembers the stamp and whether it served the network or its saved copy).
+function askLoadedStamp() {
+  return new Promise(resolve => {
+    const sw = navigator.serviceWorker && navigator.serviceWorker.controller; if (!sw) { resolve(null); return; }
+    const t = setTimeout(() => resolve(null), 1500), on = e => { if (e.data && e.data.type === 'nav-stamp') { clearTimeout(t); navigator.serviceWorker.removeEventListener('message', on); resolve(e.data); } };
+    navigator.serviceWorker.addEventListener('message', on); sw.postMessage({ type: 'nav-stamp' });
+  });
+}
+async function currentVersionStamps() {   // {loaded, server}; the server stamp throws when it cannot be reached
+  if (loadedVersionStamp === null) { const info = await askLoadedStamp(); if (info && info.stamp) loadedVersionStamp = info.stamp; }
+  const server = versionStampOf((await fetch(location.pathname, { method: 'HEAD', cache: 'no-store' })).headers);
+  if (loadedVersionStamp === null) loadedVersionStamp = server;
+  return { loaded: loadedVersionStamp, server };
+}
+async function checkForNewVersion() {
+  if (location.protocol === 'file:' || !window.fetch) return;
+  try { const v = await currentVersionStamps(); if (versionDiffers(v.loaded, v.server)) showUpdateBanner(); }
+  catch (e) { /* offline: nothing to compare */ }
+}
+async function checkForUpdatesNow() {
+  if (location.protocol === 'file:' || !window.fetch) { showToast('Updates are checked when Milestone runs from a server, not from a file', true); return; }
+  try {
+    const v = await currentVersionStamps();
+    if (navigator.serviceWorker && navigator.serviceWorker.getRegistration) navigator.serviceWorker.getRegistration().then(r => r && r.update()).catch(() => {});
+    if (versionDiffers(v.loaded, v.server)) { updateBannerDismissed = false; showUpdateBanner(); showToast('A new version is ready: use Reload'); }
+    else showToast('Milestone is up to date');
+  } catch (e) { showToast('Could not reach the server to check for updates', true); }
+}
+function setupVersionCheck() {
+  checkForNewVersion();
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkForNewVersion(); });
+  setInterval(checkForNewVersion, 60 * 60 * 1000);
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+    const hadController = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.addEventListener('controllerchange', () => { if (hadController) showUpdateBanner(); });
+  }
 }
 function renderGantt() {
   const z = currentZoom();
@@ -14509,6 +14569,7 @@ document.addEventListener('DOMContentLoaded', () => {
   render();
   initFileSync();
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+  setupVersionCheck();
 });
 </script>
 </body>
