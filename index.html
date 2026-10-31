@@ -548,7 +548,7 @@ button { cursor: default; }
 .window { flex: 1; min-height: 0; display: flex; }
 .content { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
 .sidebar {
-  flex: 0 0 var(--sidebar-w, 260px); width: var(--sidebar-w, 260px); display: flex; flex-direction: column; min-height: 0;
+  flex: 0 0 var(--sidebar-w, 268px); width: var(--sidebar-w, 268px); display: flex; flex-direction: column; min-height: 0;
   background: var(--bg); border-right: 1px solid var(--border);   /* the glass chrome: ClearDesk's translucent fill (white 46% / 34,36,52 at 50%), not the lighter --bg-2 */
   backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
 }
@@ -1379,7 +1379,9 @@ input.inline-edit[type=date]::-webkit-calendar-picker-indicator { margin: 0 0 0 
 
 .gantt-pane-outer { flex: 1; min-width: 0; overflow: auto; position: relative; background: var(--panel); }   /* flat, like the list beside it */
 .gantt-content { position: relative; }
-.gantt-header { position: sticky; top: 0; z-index: 5; height: var(--head-h); background: var(--panel); border-bottom: 1px solid var(--border); }
+.gantt-header { position: sticky; top: 0; z-index: 5; height: var(--head-h); background: color-mix(in srgb, var(--panel) 80%, transparent); backdrop-filter: blur(20px) saturate(1.4); -webkit-backdrop-filter: blur(20px) saturate(1.4); border-bottom: 1px solid var(--border); }   /* frosted: bars scroll under it */
+.gantt-today-pill { position: absolute; bottom: 3px; transform: translateX(-50%); z-index: 2; background: var(--danger); color: var(--on-accent); font-size: var(--fs-11); font-weight: 600; line-height: 15px; padding: 0 7px; border-radius: 999px; white-space: nowrap; pointer-events: none; }
+.gantt-today-pill.dot { width: 8px; height: 8px; padding: 0; bottom: 5px; }
 .gantt-tick { position: absolute; top: 0; bottom: 0; border-left: 1px solid var(--border); font-size: var(--fs-11); color: var(--text-faint); padding: 8px 0 0 4px; white-space: nowrap; }
 /* Ticks span their whole period (a calendar week, a month, a quarter), so overflow is clipped rather than
    spilling into the next tick. Week and Year labels are two lines. Week: "CW 37" over the Monday's date. Year: the year
@@ -1405,30 +1407,43 @@ input.inline-edit[type=date]::-webkit-calendar-picker-indicator { margin: 0 0 0 
 .gantt-deadline::after { content: ''; position: absolute; left: 5px; top: 7px; width: 2px; height: 19px; background: var(--task-green); }
 .gantt-deadline.missed::before { border-top-color: var(--danger); }
 .gantt-deadline.missed::after { background: var(--danger); }
-.gantt-today-line { position: absolute; top: 0; width: 2px; background: var(--danger); opacity: .6; z-index: 3; pointer-events: none; }
+.gantt-today-line { position: absolute; top: 0; width: 1px; background: var(--danger); opacity: .55; z-index: 3; pointer-events: none; }
 .gantt-bar {
-  position: absolute; height: 20px; border-radius: 5px; cursor: grab;
-  border: 1.5px solid var(--bar-color, var(--accent));
-  background: var(--bar-color, var(--accent));   /* a solid bar; the finished part is a lighter band across it (as in the layout mock), the label is white */
+  position: absolute; height: 20px; border-radius: 7px; cursor: grab;
+  background: color-mix(in srgb, var(--bar-color, var(--accent)) 24%, var(--panel));   /* a rounded pill: the planned span is a pale tint of its colour, the finished part a solid fill; the name sits beside it */
   overflow: hidden;
 }
-.gantt-bar.critical { box-shadow: 0 0 0 2px var(--danger); }
-.gantt-bar.manual { border-style: dashed; background: color-mix(in srgb, var(--bar-color, var(--accent)) 10%, var(--panel)); }
+.gantt-bar:not(.sel):not(.group):not(.manual) { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--bar-color, var(--accent)) 38%, transparent); }   /* a hairline keeps a pale (not started) bar visible on any row colour */
+.gantt-bar.critical, .gantt-milestone.critical { outline: 2px solid var(--danger); outline-offset: 1px; }
+.gantt-bar.mismatch, .gantt-milestone.mismatch { outline: 2px solid var(--task-amber); outline-offset: 1px; }
+.gantt-bar.manual { border: 1.5px dashed var(--bar-color, var(--accent)); background: color-mix(in srgb, var(--bar-color, var(--accent)) 10%, var(--panel)); }
 .gantt-bar.manual .fill { opacity: .5; }
-.gantt-bar.mismatch { box-shadow: 0 0 0 2px var(--task-amber); }
+.gantt-bar.sel, .gantt-milestone.sel { box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--accent), 0 4px 10px color-mix(in srgb, var(--accent) 30%, transparent); }   /* the selected task: a ring, and grips to drag its ends */
+/* a group (a task with sub-tasks, not manually scheduled): a thin bracket with small end caps, so the hierarchy reads at a glance */
+.gantt-bar.group { height: 8px; margin-top: 6px; border-radius: 2px; overflow: visible; background: color-mix(in srgb, var(--text-dim) 40%, var(--panel)); }
+.gantt-bar.group .fill { background: var(--text-dim); border-radius: 2px 0 0 2px; }
+.gantt-bar.group::before, .gantt-bar.group::after { content: ''; position: absolute; top: 8px; border-top: 6px solid var(--text-dim); border-left: 3.5px solid transparent; border-right: 3.5px solid transparent; }
+.gantt-bar.group::before { left: 0; } .gantt-bar.group::after { right: 0; }
+.gantt-bar.group .resize-handle { display: none; }
+.gantt-bar.group .fill.full { border-radius: 2px; }
 .gantt-rollup { position: absolute; height: 4px; border-radius: var(--r-xs); background: var(--bar-color, var(--accent)); opacity: .75; pointer-events: none; }
 .gantt-base { position: absolute; height: 4px; border-radius: var(--r-xs); background: var(--text-faint); opacity: .85; pointer-events: none; z-index: 1; }
 .gantt-base-ms { position: absolute; width: 7px; height: 7px; transform: rotate(45deg); border: 1.5px solid var(--text-faint); background: var(--panel); pointer-events: none; z-index: 1; }
 .gantt-bracket { position: absolute; width: 10px; height: 20px; border: 2px solid var(--text-dim);}
 .gantt-bracket.br-start { border-right: none; }
 .gantt-bracket.br-end { border-left: none; }
-.gantt-bar .fill { position: absolute; top: 0; left: 0; bottom: 0; background: var(--on-fill-soft); }
+.gantt-bar .fill { position: absolute; top: 0; left: 0; bottom: 0; background: var(--bar-color, var(--accent)); border-radius: 7px 0 0 7px; }
+.gantt-bar .fill[style*="width: 100%"], .gantt-bar .fill.full { border-radius: 7px; }
 .gantt-bar.manual .fill { background: var(--bar-color, var(--accent)); }
-.gantt-out-label { position: absolute; height: 20px; line-height: 20px; font-size: var(--fs-11); color: var(--text-dim); white-space: nowrap; pointer-events: none; z-index: 1; }
+.gantt-out-label { position: absolute; height: 20px; line-height: 20px; font-size: var(--fs-12); color: var(--text-dim); white-space: nowrap; pointer-events: none; z-index: 1; }
 .gantt-bar .bar-label { position: absolute; left: 6px; top: 0; line-height: 20px; font-size: var(--fs-11); font-weight: 500; color: var(--on-accent); white-space: nowrap; pointer-events: none; mix-blend-mode: normal; }
 .gantt-bar.manual .bar-label { color: var(--text); }
 .resize-handle { position: absolute; top: 0; bottom: 0; width: 7px; cursor: ew-resize; }
 .resize-handle.left { left: 0; } .resize-handle.right { right: 0; }
+.gantt-bar.sel .resize-handle::after, .gantt-bar:hover .resize-handle::after { content: ''; position: absolute; top: 5px; width: 4px; height: 10px; border-radius: 2px; background: #fff; box-shadow: 0 0 0 .5px rgba(0,0,0,.25); pointer-events: none; }
+.gantt-bar.manual .resize-handle::after { top: 3.5px; }
+.resize-handle.left::after { left: 3px; } .resize-handle.right::after { right: 3px; }
+.gantt-out-label.grp { font-weight: 600; color: var(--text); }
 .link-handle {
   position: absolute; right: -6px; top: 50%; transform: translateY(-50%); width: 11px; height: 11px;
   border-radius: 50%; background: var(--panel); border: 2px solid var(--bar-color, var(--accent));
@@ -1437,19 +1452,24 @@ input.inline-edit[type=date]::-webkit-calendar-picker-indicator { margin: 0 0 0 
 .gantt-bar:hover .link-handle { opacity: 1; }
 .gantt-milestone {
   position: absolute; width: 16px; height: 16px; transform: rotate(45deg); cursor: grab;
-  background: var(--bar-color, var(--task-purple)); border: 1.5px solid color-mix(in srgb, var(--bar-color, var(--task-purple)) 60%, black);
+  background: var(--bar-color, var(--task-purple)); border-radius: 3.5px; box-shadow: 0 1px 3px color-mix(in srgb, var(--bar-color, var(--task-purple)) 45%, transparent);
 }
-.gantt-milestone.critical { box-shadow: 0 0 0 2px var(--danger); }
 .gantt-milestone.manual { background: transparent; border-style: dashed; border-color: var(--bar-color, var(--task-purple)); }
-.gantt-milestone.mismatch { box-shadow: 0 0 0 2px var(--task-amber); }
 .gantt-link-preview { position: absolute; z-index: 6; pointer-events: none; }
+/* the hover card of a bar (replaces the browser's tooltip while it is open) */
+.gantt-card { position: fixed; z-index: 390; width: 216px; padding: 10px 12px; border-radius: 12px; background: var(--glass-strong, var(--panel)); backdrop-filter: blur(24px) saturate(1.4); -webkit-backdrop-filter: blur(24px) saturate(1.4); border: 1px solid var(--border); box-shadow: 0 8px 24px var(--shadow-ink-strong); font-size: var(--fs-12); pointer-events: none; opacity: 0; transform: translateY(-2px); transition: opacity var(--dur-fast, .12s) ease, transform var(--dur-fast, .12s) ease; }
+.gantt-card.show { opacity: 1; transform: none; }
+.gantt-card h4 { margin: 0 0 4px; font-size: var(--fs-13); font-weight: 600; color: var(--text); overflow-wrap: anywhere; }
+.gantt-card .gc-row { display: flex; justify-content: space-between; gap: 12px; padding: 1px 0; color: var(--text-dim); }
+.gantt-card .gc-row span:last-child { color: var(--text); font-variant-numeric: tabular-nums; text-align: right; }
+.gantt-card .gc-note { margin-top: 4px; padding-top: 4px; border-top: 1px solid var(--border); color: var(--text-dim); }
 svg.gantt-deps { position: absolute; top: var(--head-h); left: 0;   /* its y-axis starts at the first row, i.e. below the header (it used to sit at 0, drawing every arrow a row too high) */ overflow: visible; pointer-events: none; z-index: 2; }
-svg.gantt-deps path { fill: none; stroke: var(--text-faint); stroke-width: 1.25; stroke-linejoin: round; stroke-linecap: round; }
-svg.gantt-deps marker path { fill: var(--text-faint); stroke: none; }   /* (the head is a small FILLED triangle — it used to inherit the line's fill:none and showed as an open, outlined V) */
-svg.gantt-deps marker.crit path { fill: var(--danger); }
-svg.gantt-deps marker.hl path { fill: var(--text); }
+svg.gantt-deps path { fill: none; stroke: var(--text-faint); stroke-width: 1; stroke-linejoin: round; stroke-linecap: round; }
+svg.gantt-deps marker path { fill: none; stroke: var(--text-faint); stroke-width: 1.2; stroke-linecap: round; stroke-linejoin: round; }   /* the head is a small open chevron */
+svg.gantt-deps marker.crit path { stroke: var(--danger); }
+svg.gantt-deps marker.hl path { stroke: var(--accent); stroke-width: 1.5; }
 svg.gantt-deps.has-hl path[data-from]:not(.hl) { opacity: .2; }   /* hovering or selecting a task: its own links stand out, the rest step back */
-svg.gantt-deps path.hl { stroke: var(--text); stroke-width: 1.75; }
+svg.gantt-deps path.hl { stroke: var(--accent); stroke-width: 1.5; }
 svg.gantt-deps path.hl.critical { stroke: var(--danger); }
 /* Resources view: one scroll container (no separate synced pane the way the task list/Gantt chart need — a flat list, no
    hierarchy), a sticky header row and a sticky-left name column standing in for the frozen-column/synced-scroll machinery
@@ -7560,6 +7580,21 @@ function baselineBarHtml(t, idx, px) {
   const sp = ganttSpan(b.start, b.startTime, b.end, b.endTime, px, 3);
   return `<div class="gantt-base" data-base-for="${t.id}" style="left:${sp.left}px;width:${sp.width}px;top:${rowTop + ROW_H - 5}px"></div>`;
 }
+// The header's "today" marker: a small red pill with the weekday and day (just the day when days are narrow, a dot when they are tiny).
+function todayPillHtml(px) {
+  const left = (dayNumber(todayStr()) - dateRange.start + 0.5) * px; if (left < 0 || left > (dateRange.end - dateRange.start) * px) return '';
+  if (hourZoomOn()) return '';
+  const d = parseLocalDate(todayStr());
+  const text = px >= 22 ? `${WEEKDAY_NAMES[d.getDay()]} ${d.getDate()}` : px >= 11 ? String(d.getDate()) : '';
+  return `<div class="gantt-today-pill${text ? '' : ' dot'}" style="left:${left}px" title="Today">${text}</div>`;
+}
+// A bar's (or milestone's) name beside it: to its right, or — when that would run past the end of the chart — to its left (the Fit scale
+// has no sideways scrolling, so the name must not widen the chart).
+function outLabelHtml(name, gap, left, right, top, grp, totalW) {
+  const w = printTextWidth(name, 12, grp) + 4, cls = 'gantt-out-label' + (grp ? ' grp' : '');
+  if (right + gap + w <= totalW || left - gap - w < 0) return `<div class="${cls}" style="left:${right + gap}px;top:${top}px;max-width:${Math.max(40, totalW - right - gap)}px;overflow:hidden;text-overflow:ellipsis">${escapeHtml(name)}</div>`;
+  return `<div class="${cls}" style="right:${totalW - left + 8}px;top:${top}px">${escapeHtml(name)}</div>`;
+}
 function renderGantt() {
   const z = currentZoom();
   dateRange = computeDateRange();
@@ -7578,7 +7613,7 @@ function renderGantt() {
     const left = Math.max(0, t.left), width = Math.min(t.width - (left - t.left), totalW - left);   // clipped to the chart at both ends (a scale's first and last week/month/quarter run past it)
     if (width <= 0) return '';
     return `<div class="gantt-tick zoom-${z.id}${t.cls ? ' ' + t.cls : ''}${t.yearStart ? ' year-start' : ''}" style="left:${left}px;width:${width}px"${t.title ? ` title="${escapeHtml(t.title)}"` : ''}>${width < 18 ? '' : t.html || escapeHtml(t.label)}</div>`;   // (a sliver of a period has no room for its name; the tooltip keeps it)
-  }).join('');
+  }).join('') + todayPillHtml(px);
 
   if (list.length === 0) {
     document.getElementById('ganttRows').innerHTML = filtersActive() && tasks.length
@@ -7644,7 +7679,8 @@ function renderGantt() {
     const isCritical = critical.has(t.id);
     const color = statusColorVar(t);
     const manual = t.taskMode === 'manual';
-    const cls = `${isCritical ? ' critical' : ''}${manual ? ' manual' : ''}${scheduleMismatch(t) ? ' mismatch' : ''}`;
+    const group = !manual && !t.milestone && hasChildren(t.id);
+    const cls = `${isCritical ? ' critical' : ''}${manual ? ' manual' : ''}${scheduleMismatch(t) ? ' mismatch' : ''}${group ? ' group' : ''}${isSelected(t.id) ? ' sel' : ''}`;
     const modeNote = manual ? ' — Manually Scheduled' : '';
     if (manual && eff.rollStart && eff.rollEnd) {
       const rsp = ganttSpan(eff.rollStart, eff.rollStartTime, eff.rollEnd, eff.rollEndTime, px), rl = rsp.left, rw = rsp.width;
@@ -7653,20 +7689,19 @@ function renderGantt() {
     if (t.milestone) {
       const cx = left; const cy = idx * ROW_H + ROW_H / 2;
       barGeom[t.id] = { left: cx - 8, width: 16, top: cy - 8, right: cx + 8, midY: cy, milestone: true };
-      html += `<div class="gantt-out-label" style="left:${cx + 12}px;top:${cy - 10}px">${escapeHtml(t.name)}</div>`;   // a milestone's name beside it, as in MS Project
+      html += outLabelHtml(t.name, 14, cx - 8, cx + 8, cy - 10, false, totalW);   // a milestone's name beside it, as in MS Project
       html += `<div class="gantt-milestone${cls}" data-id="${t.id}" style="left:${cx - 8}px;top:${cy - 8}px;--bar-color:${color}" title="${escapeHtml(t.name)}${escapeHtml(barTimeNote(eff))}${modeNote}${escapeHtml(baselineNote(t))}" onmousedown="onBarMouseDown(event,'${t.id}','move')"></div>`;
     } else {
       const width = span.width;
       const midY = top + 10;
       barGeom[t.id] = { left, width, top, right: left + width, midY };
       html += `<div class="gantt-bar${cls}" data-id="${t.id}" style="left:${left}px;width:${width}px;top:${top}px;--bar-color:${color}" title="${escapeHtml(t.name)} (${Math.round(eff.progress)}%)${escapeHtml(barTimeNote(eff))}${modeNote}${escapeHtml(baselineNote(t))}" onmousedown="onBarMouseDown(event,'${t.id}','move')">
-        <div class="fill" style="width:${Math.min(100, Math.max(0, eff.progress))}%"></div>
-        ${barLabelInside(t.name, width) ? `<div class="bar-label">${escapeHtml(t.name)}</div>` : ''}
+        <div class="fill${eff.progress >= 100 ? ' full' : ''}" style="width:${Math.min(100, Math.max(0, eff.progress))}%"></div>
         <div class="resize-handle left" onmousedown="event.stopPropagation();onBarMouseDown(event,'${t.id}','resize-left')"></div>
         <div class="resize-handle right" onmousedown="event.stopPropagation();onBarMouseDown(event,'${t.id}','resize-right')"></div>
         <div class="link-handle" onmousedown="event.stopPropagation();onLinkHandleMouseDown(event,'${t.id}')"></div>
       </div>`;
-      if (!barLabelInside(t.name, width)) html += `<div class="gantt-out-label" style="left:${left + width + 8}px;top:${top}px">${escapeHtml(t.name)}</div>`;   // too short for its name: beside it
+      html += outLabelHtml(t.name, 24, left, left + width, top, group, totalW);   // the name sits beside the bar (clear of the arrows that leave it)
     }
   });
   list.slice(win.from, win.to).forEach(({ task: t }, k) => { html += baselineBarHtml(t, win.from + k, px); });   // under the bars
@@ -7689,12 +7724,12 @@ function renderGantt() {
       const isCritical = critical.has(t.id) && critical.has(p.id);
       // a diamond's tips reach 4px past its box; the head stops 2px short of whatever it points at
       const x1 = from.right + (from.milestone ? 4 : 0), y1 = from.midY, x2 = to.left - (to.milestone ? 4 : 0) - 2, y2 = to.midY, dy = y2 > y1 ? 14 : -14;
-      const midX = x1 + Math.max(14, (x2 - x1) / 2);
-      const pts = x2 >= x1 + 6 ? [[x1, y1], [midX, y1], [midX, y2], [x2, y2]] : [[x1, y1], [x1 + 14, y1], [x1 + 14, y1 + dy], [x2 - 14, y1 + dy], [x2 - 14, y2], [x2, y2]];
+      const midX = x1 + 10;   // the drop is right at the source: the bar's name sits clear of it, and the run to the target is in the target's own row
+      const pts = x2 >= x1 + 24 ? [[x1, y1], [midX, y1], [midX, y2], [x2, y2]] : [[x1, y1], [x1 + 14, y1], [x1 + 14, y1 + dy], [x2 - 14, y1 + dy], [x2 - 14, y2], [x2, y2]];
       paths += `<path class="${isCritical ? 'critical' : ''}" data-from="${p.id}" data-to="${t.id}" d="${roundedElbow(pts, 4)}" marker-end="url(#${isCritical ? 'arrowhead-crit' : 'arrowhead'})"></path>`;
     }
   }
-  const head = (id, cls) => `<marker id="${id}" class="${cls}" markerUnits="userSpaceOnUse" markerWidth="7" markerHeight="6" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z"></path></marker>`;
+  const head = (id, cls) => `<marker id="${id}" class="${cls}" markerUnits="userSpaceOnUse" markerWidth="7" markerHeight="6" refX="5.6" refY="3" orient="auto"><path d="M0.8,0.8 L5.6,3 L0.8,5.2"></path></marker>`;
   svg.innerHTML = `<defs>${head('arrowhead', '')}${head('arrowhead-crit', 'crit')}${head('arrowhead-hl', 'hl')}</defs>${paths}${showProgressLine ? progressLineSvg(list, totalH, px) : ''}`;
   setLinkHighlight(selectedTaskId);
 }
@@ -7723,6 +7758,47 @@ function setLinkHighlight(id) {
   const rows = document.getElementById('ganttRows');
   rows.addEventListener('mouseover', e => { const el = e.target.closest('.gantt-bar, .gantt-milestone'); if (el && el.dataset.id) setLinkHighlight(el.dataset.id); });
   rows.addEventListener('mouseout', e => { if (e.target.closest('.gantt-bar, .gantt-milestone') && !(e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest('.gantt-bar, .gantt-milestone'))) setLinkHighlight(selectedTaskId); });
+}
+// The hover card: while the pointer rests on a bar the browser's own tooltip (its title) is swapped for a small card with the task's dates,
+// duration and progress; the title is put back as soon as the pointer leaves, so it is still there for anything that reads it.
+let ganttCardEl = null, ganttCardTimer = null, ganttCardFor = null;
+function hideGanttCard() {
+  clearTimeout(ganttCardTimer); ganttCardTimer = null;
+  if (ganttCardEl) ganttCardEl.classList.remove('show');
+  const el = ganttCardFor; ganttCardFor = null;
+  if (el && el.dataset && el.dataset.tip != null) { el.title = el.dataset.tip; delete el.dataset.tip; }
+}
+function showGanttCard(el) {
+  if (!el.isConnected || !el.dataset.id) return;
+  const t = byId(el.dataset.id); if (!t) return;
+  const eff = effectiveDates(t.id), row = (k, v) => `<div class="gc-row"><span>${k}</span><span>${v}</span></div>`;
+  const tipParts = (el.dataset.tip || '').split(' — ').slice(1);   // the bar's extra notes: times of day, "Manually Scheduled", the baseline comparison
+  let rows = '';
+  if (eff.start && !minuteModeActive()) rows += t.milestone ? row('Date', fmtDate(eff.start)) : row('Start', fmtDate(eff.start)) + row('Finish', fmtDate(eff.end));
+  if (eff.start && eff.end && !isUnscheduled(t) && !t.milestone) {
+    const grp = hasChildren(t.id);
+    rows += row('Duration', t.durText != null && !grp ? escapeHtml(t.durText) : minuteModeActive() ? (grp && t.taskMode !== 'manual' ? fmtDuration(durationDays(eff.start, eff.end)) : fmtDurationMinutes(durationMinutes(taskMoment(t, 'start'), taskMoment(t, 'end')))) : fmtDuration(durationDays(eff.start, eff.end)));
+  }
+  if (!t.milestone) rows += row('Complete', Math.round(eff.progress) + '%');
+  if (!ganttCardEl) { ganttCardEl = document.createElement('div'); ganttCardEl.className = 'gantt-card'; ganttCardEl.setAttribute('aria-hidden', 'true'); document.body.appendChild(ganttCardEl); }
+  ganttCardEl.innerHTML = `<h4>${escapeHtml(t.name)}</h4>${rows}${tipParts.map(p => `<div class="gc-note">${escapeHtml(p)}</div>`).join('')}`;
+  const r = el.getBoundingClientRect(), w = 216, h = ganttCardEl.offsetHeight || 120;
+  let left = Math.max(8, Math.min(window.innerWidth - w - 8, r.left)), top = r.bottom + 10;
+  if (top + h > window.innerHeight - 8) top = Math.max(8, r.top - h - 10);
+  ganttCardEl.style.left = left + 'px'; ganttCardEl.style.top = top + 'px';
+  requestAnimationFrame(() => ganttCardEl && ganttCardEl.classList.add('show'));
+}
+{
+  const rows = document.getElementById('ganttRows');
+  rows.addEventListener('mouseover', e => {
+    const el = e.target.closest('.gantt-bar, .gantt-milestone'); if (!el || el === ganttCardFor || !el.dataset.id) return;
+    hideGanttCard(); ganttCardFor = el;
+    if (el.title) { el.dataset.tip = el.title; el.removeAttribute('title'); }
+    ganttCardTimer = setTimeout(() => showGanttCard(el), 450);
+  });
+  rows.addEventListener('mouseout', e => { if (ganttCardFor && !(e.relatedTarget && ganttCardFor.contains(e.relatedTarget))) hideGanttCard(); });
+  rows.addEventListener('mousedown', hideGanttCard);
+  document.getElementById('ganttPaneOuter').addEventListener('scroll', hideGanttCard, { passive: true });
 }
 // The progress line (MS Project's "Progress Lines"): a vertical line at the status date, bent to the right through every task that is
 // ahead of it and to the left through every one that is behind. Each row's point: a task in progress → the end of its progress fill;
@@ -14065,7 +14141,7 @@ document.addEventListener('keydown', e => { if (/^Arrow/.test(e.key) && !(e.targ
 window.addEventListener('blur', () => { selWindowActive = false; applySelActive(); });
 window.addEventListener('focus', () => { selWindowActive = true; applySelActive(); });
 /* ---- the sidebar's width: drag the edge, double-click resets, arrow keys nudge (16px, Shift 48); per device ---- */
-const SIDEBAR_W_KEY = 'milestone-sidebar-w', SIDEBAR_W = { min: 220, def: 260, max: 480 };
+const SIDEBAR_W_KEY = 'milestone-sidebar-w', SIDEBAR_W = { min: 268, def: 268, max: 480 };   // 268 = the widest the tools row needs (the Locate-file chip + the three tool buttons = 266px), so it never wraps onto a second row
 function setSidebarWidth(w, save = true) {
   w = Math.max(SIDEBAR_W.min, Math.min(SIDEBAR_W.max, Math.round(w)));
   if (w === SIDEBAR_W.def) document.documentElement.style.removeProperty('--sidebar-w'); else document.documentElement.style.setProperty('--sidebar-w', w + 'px');

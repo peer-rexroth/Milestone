@@ -169,8 +169,8 @@ with sync_playwright() as p:
     check("...and it follows the window: still no sideways scrolling after a resize", ev("() => { const e = document.getElementById('ganttPaneOuter'); return e.scrollWidth <= e.clientWidth; }"))
     pg.set_viewport_size({"width": 1500, "height": 900}); pg.wait_for_timeout(250)
     lab = ev("""() => ({ qaInside: !!document.querySelector('.gantt-bar[data-id="b"] .bar-label'), outside: [...document.querySelectorAll('.gantt-out-label')].map(e => e.textContent), longInside: !!document.querySelector('.gantt-bar[data-id="a"] .bar-label') })""")
-    check("a bar too short for its name gets it beside the bar (QA), a milestone gets its name beside it (Launch), a long bar keeps it inside",
-          not lab["qaInside"] and "QA" in lab["outside"] and "Launch" in lab["outside"] and lab["longInside"], lab)
+    check("every bar and milestone has its name beside it (QA, Launch, the long bar too), none inside the bar",
+          not lab["qaInside"] and "QA" in lab["outside"] and "Launch" in lab["outside"] and "A long discovery phase" in lab["outside"] and not lab["longInside"], lab)
     ev("() => setView('tasks')"); pg.wait_for_timeout(100)
     check("Work always reads in hours (a 40-day task at 100% = 320 hrs)", ev("() => fmtWorkHours(byId('a').work)") == "320 hrs", ev("() => fmtWorkHours(byId('a').work)"))
     check("the plan menu is a small sliders button in the Plans section (with a name for screen readers and a tooltip)", pg.locator("#planMenuBtn .plan-ico").count() == 1 and ev("() => document.getElementById('planMenuBtn').getAttribute('aria-label')") == "Plan menu")

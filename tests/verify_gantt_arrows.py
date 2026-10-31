@@ -26,9 +26,9 @@ with sync_playwright() as p:
 
     head = ev("""() => { const m = document.querySelector('#ganttDeps marker#arrowhead'), p = m.querySelector('path'), cs = getComputedStyle(p);
       return { fill: cs.fill, stroke: cs.stroke, w: m.getAttribute('markerWidth'), h: m.getAttribute('markerHeight'), units: m.getAttribute('markerUnits') }; }""")
-    check("the arrowhead is a FILLED triangle with no outline (not an open V)", head["fill"] != "none" and head["stroke"] == "none", head)
+    check("the arrowhead is a small open chevron (a stroke, no fill)", head["fill"] == "none" and head["stroke"] != "none", head)
     check("...small: 7 × 6 px, whatever the line's width", head["w"] == "7" and head["h"] == "6" and head["units"] == "userSpaceOnUse", head)
-    check("the line is a thin 1.25px stroke", ev("() => getComputedStyle(document.querySelector('#ganttDeps path[data-from]')).strokeWidth") == "1.25px")
+    check("the line is a thin 1px stroke", ev("() => getComputedStyle(document.querySelector('#ganttDeps path[data-from]')).strokeWidth") == "1px")
     check("every arrow knows its two ends (data-from / data-to)", ev("() => [...document.querySelectorAll('#ganttDeps path[data-from]')].map(p => p.dataset.from + '>' + p.dataset.to).sort().join()") == "a>b,a>c,b>m")
     check("elbows are rounded (a curve at each corner)", ev("() => [...document.querySelectorAll('#ganttDeps path[data-from]')].filter(p => /Q/.test(p.getAttribute('d'))).length") >= 2)
 
@@ -41,7 +41,7 @@ with sync_playwright() as p:
     # ---- critical arrows
     ev("() => { showCriticalPath = true; render(); }"); pg.wait_for_timeout(150)
     crit = ev("() => { const p = document.querySelector('#ganttDeps path.critical'); return p ? p.getAttribute('marker-end') : null; }")
-    check("a critical arrow uses the critical head (red)", crit == "url(#arrowhead-crit)" and ev("() => getComputedStyle(document.querySelector('#ganttDeps marker.crit path')).fill") != ev("() => getComputedStyle(document.querySelector('#ganttDeps marker#arrowhead path')).fill"), crit)
+    check("a critical arrow uses the critical head (red)", crit == "url(#arrowhead-crit)" and ev("() => getComputedStyle(document.querySelector('#ganttDeps marker.crit path')).stroke") != ev("() => getComputedStyle(document.querySelector('#ganttDeps marker#arrowhead path')).stroke"), crit)
     ev("() => { showCriticalPath = false; render(); }"); pg.wait_for_timeout(100)
 
     # ---- own links stand out
