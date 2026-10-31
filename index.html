@@ -485,6 +485,7 @@ html[data-theme="dark"] {
 }
 
 html[data-theme="light"] {
+  --focus-ring: #9bbcf6; --focus-edge: #89aae6;   /* the field focus ring (as in ClearDesk) */
   --cap-fill: rgba(60,60,67,.08);
   --cap-hover: rgba(60,60,67,.16);
   --cap-on: rgba(60,60,67,.18);
@@ -493,6 +494,7 @@ html[data-theme="light"] {
 }
 
 html[data-theme="dark"] {
+  --focus-ring: #417391; --focus-edge: #3c6f8c;
   --cap-fill: rgba(255,255,255,.10);
   --cap-hover: rgba(255,255,255,.19);
   --cap-on: rgba(255,255,255,.22);
@@ -593,7 +595,7 @@ html[data-theme="dark"] .sb-head #sidebarToggleBtn, html[data-theme="dark"] .sb-
 .sb-search input { flex: 1; min-width: 0; border: 0; outline: none; box-shadow: none !important; background: transparent; color: var(--text); font: inherit; padding: 0; }
 .sb-search input::placeholder { color: var(--text-faint); }
 .sb-search input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; cursor: default; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='8' fill='%23a1a2aa'/%3E%3Cpath d='M5.2 5.2l5.6 5.6M10.8 5.2l-5.6 5.6' stroke='white' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat; }
-.sb-search:focus-within { background: var(--bg); box-shadow: 0 0 0 3px var(--focus-ring); }
+.sb-search:focus-within { background: var(--cap-hover); box-shadow: 0 0 0 3px var(--focus-ring); }   /* the capsule keeps its fill and gains the accent ring */
 .sb-search i { font-size: var(--ico-16); }
 .sb-sec { display: flex; align-items: center; gap: 2px; padding: 12px 6px 4px 10px; }
 .sb-sec .sb-label { padding: 0; }
@@ -1901,10 +1903,6 @@ label.trow.tpick:hover { background: var(--hover); }
 .insp .rs-row + .rs-row { border-top: 1px solid var(--border); }
 .insp .conflict-card { border: 0; background: color-mix(in srgb, var(--text) 5%, transparent); border-radius: var(--r-m); padding: 12px 14px; margin-bottom: 8px; }
 .insp .conflict-card .cal-hint { margin: 0 0 8px; }
-.insp #backupsList.tgrp { overflow: hidden; }
-.insp .backup-row { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 40px; padding: 4px 14px; border: 0; font-size: var(--fs-14); }
-.insp .backup-row + .backup-row::before { content: ""; position: absolute; left: 14px; right: 0; top: 0; height: 1px; background: var(--border); }
-.insp #backupsList .pred-empty { padding: 0 14px; line-height: 40px; color: var(--text-faint); font-size: var(--fs-14); }
 .insp .modal-body > .tgrp:empty { display: none; }
 #calendarModalBg #workHoursEditor { padding: 0; margin-top: 8px; gap: 18px; background: none; border-radius: 0; }
 :is(#calendarModalBg) .workhours-editor > * { padding: 0; }
@@ -2058,7 +2056,6 @@ input.dt-time { width: 84px; flex: 0 0 84px; text-align: center; }
 .pred-row, .pred-head { display: grid; grid-template-columns: 72px 1fr 68px 88px 26px; gap: 6px; align-items: center; margin-bottom: 6px; }
 .pred-head { margin-bottom: 2px; font-size: var(--fs-11); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--text-faint); }
 .pred-name { min-height: 34px; display: flex; align-items: center; padding: 6px 10px; border: 1px dashed var(--border); border-radius: var(--r-s); background: var(--panel-2); color: var(--text-dim); font-size: var(--fs-13); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-sizing: border-box; }   /* the same read-only look as Remaining and Status */
-.backup-info { color: var(--text-dim); font-size: var(--fs-12); }
 .pred-name.none { color: var(--text-faint); }
 .pred-row select, .pred-row input { padding: 6px 8px; border: 1px solid var(--border); border-radius: var(--r-s); background: var(--panel); font-size: var(--fs-12); }
 .pred-row input.pred-id-input::-webkit-outer-spin-button, .pred-row input.pred-id-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
@@ -2171,8 +2168,7 @@ input.dt-time { width: 84px; flex: 0 0 84px; text-align: center; }
 .about-credits strong { color: var(--text); font-weight: 600; }
 .about-fine { margin-top: 24px; font-size: var(--fs-11); color: var(--text-faint); text-wrap: balance; }
 
-.backup-row, .import-mode-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 4px; border-bottom: 1px solid var(--border); font-size: var(--fs-13); }
-.backup-row:last-child { border-bottom: none; }
+.import-mode-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 4px; border-bottom: 1px solid var(--border); font-size: var(--fs-13); }
 
 #toast {
   position: fixed; bottom: 44px; right: 20px; transform: translateY(20px);
@@ -2318,10 +2314,10 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
   </div>
   <div class="tool-group sb-cap" role="group" aria-label="Tools">
   <div class="dropdown-wrap">
-    <button class="btn" id="dataMenuBtn" aria-label="Data" onclick="toggleDataMenu()" title="Data: import, export, print, backups"><i class="fa-solid fa-hard-drive"></i><span class="btn-label">Data</span></button>
+    <button class="btn" id="dataMenuBtn" aria-label="Data" onclick="toggleDataMenu()" title="Data: import, export, print"><i class="fa-solid fa-hard-drive"></i><span class="btn-label">Data</span></button>
     <div class="dropdown-menu" id="dataMenu">
       <button class="dropdown-item" onclick="triggerImport()"><i class="fa-solid fa-arrow-down-to-bracket"></i>Import Plan (JSON)…</button>
-      <button class="dropdown-item" id="foreignImportItem" onclick="triggerForeignImport()" title="Add tasks from MS Project XML, Excel or CSV (needs a header row)"><i class="fa-solid fa-arrow-down-to-bracket"></i>Import Tasks…</button>
+      <button class="dropdown-item" id="foreignImportItem" onclick="triggerForeignImport()" title="Add tasks from MS Project XML, Excel or CSV (needs a header row)"><i class="fa-solid fa-arrow-down-to-bracket"></i>Import Tasks (MS Project, Excel, CSV)…</button>
       <div class="dropdown-sep"></div>
       <button class="dropdown-item" onclick="exportProject()"><i class="fa-solid fa-arrow-up-from-bracket"></i>Export Plan (JSON)</button>
       <button class="dropdown-item" id="excelExportItem" onclick="openExcelExport()"><i class="fa-solid fa-file-excel"></i>Export to Excel…</button>
@@ -2330,7 +2326,6 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
       <div class="dropdown-sep"></div>
       <button class="dropdown-item" id="printItem" onclick="openPrintModal()"><i class="fa-solid fa-print"></i>Print / PDF / Picture…</button>
       <div class="dropdown-sep"></div>
-      <button class="dropdown-item" onclick="openBackupsModal()"><i class="fa-solid fa-clock-rotate-left"></i>Local Backups…</button>
     </div>
   </div>
   <input type="file" id="fileInput" accept="application/json" class="hidden" onchange="handleFileImport(event)">
@@ -2756,15 +2751,6 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
       </div>
     </div>
     <div class="modal-footer"><span class="print-img" role="group" aria-label="Picture of the whole chart" title="One picture with every row on one image, whatever the paper"><span class="print-img-label" title="One picture with every row, whatever the paper — for slides and documents">Picture:</span><button class="btn" id="printCopyImg" onclick="exportPrintImage('copy')" title="Copy the chart as a PNG picture"><i class="fa-regular fa-copy"></i>Copy</button><button class="btn" id="printPng" onclick="exportPrintImage('png')" title="Download the chart as a PNG picture"><i class="fa-regular fa-image"></i>PNG</button><button class="btn" id="printSvg" onclick="exportPrintImage('svg')" title="Download the chart as an editable SVG drawing"><i class="fa-solid fa-vector-square"></i>SVG</button></span><span class="print-tip"></span><button class="btn" onclick="closePrintModal()">Cancel</button><button class="btn btn-primary" id="printGo" onclick="doPrint()"><i class="fa-solid fa-print"></i>Print / Save as PDF…</button></div>
-  </div>
-</div>
-
-<!-- Backups modal -->
-<div class="modal-bg" id="backupsModalBg" onclick="if(event.target===this) closeBackupsModal()">
-  <div class="modal narrow insp">
-    <div class="modal-header"><h2>Local Backups</h2><button onclick="closeBackupsModal()" aria-label="Close">&times;</button></div>
-    <div class="modal-body"><p class="cal-hint">One snapshot a day.</p><div class="tgrp" id="backupsList"></div></div>
-    <div class="modal-footer"><button class="btn" onclick="closeBackupsModal()">Close</button></div>
   </div>
 </div>
 
@@ -3348,16 +3334,15 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
         </div>
         <div class="help-divider"></div>
         <div class="help-section">
-          <div class="help-section-title">Import, export and backups</div>
-          <div class="help-row"><i class="fa-solid fa-arrow-up-from-bracket"></i><span><strong>Data → Export / Import</strong> moves a full JSON snapshot of the current plan out or in.</span></div>
-          <div class="help-row"><i class="fa-solid fa-file-csv"></i><span><strong>Export to CSV</strong> saves the task list as a plain text table: the columns you choose, dates and durations as the list shows them, sub-tasks indented. Pick the separator your Excel expects (comma or semicolon). Import it again with <strong>Import tasks (MS Project XML, CSV)…</strong>.</span></div>
+          <div class="help-section-title">Import and export</div>
+          <div class="help-row"><i class="fa-solid fa-arrow-up-from-bracket"></i><span><strong>Data → Export / Import</strong> moves a full JSON snapshot of the current plan out or in. <strong>Import Tasks (MS Project, Excel, CSV)…</strong> adds the tasks of another tool's file to this plan.</span></div>
+          <div class="help-row"><i class="fa-solid fa-file-csv"></i><span><strong>Export to CSV</strong> saves the task list as a plain text table: the columns you choose, dates and durations as the list shows them, sub-tasks indented. Pick the separator your Excel expects (comma or semicolon). Import it again with <strong>Import Tasks (MS Project, Excel, CSV)…</strong>.</span></div>
           <div class="help-row"><i class="fa-solid fa-file-excel"></i><span><strong>Export to Excel</strong> saves a formatted .xlsx workbook: a task list plus an optional Gantt chart sheet, each sheet using the columns you chose in its own view.</span></div>
-          <div class="help-row"><i class="fa-solid fa-sitemap"></i><span><strong>Import tasks (MS Project XML, Excel, CSV)…</strong> reads a plan saved from MS Project as XML (File → Save As → XML Format): tasks and their outline, dates, % complete, actual dates, links with lags, manual mode, constraints, resources, baselines, the working week and the holidays. A file with real times of day switches the plan to <strong>Hours &amp; minutes</strong> scheduling too (when "Import working calendar" is ticked), recovering the working hours and breaks from it.</span></div>
+          <div class="help-row"><i class="fa-solid fa-sitemap"></i><span><strong>Import Tasks (MS Project, Excel, CSV)…</strong> reads a plan saved from MS Project as XML (File → Save As → XML Format): tasks and their outline, dates, % complete, actual dates, links with lags, manual mode, constraints, resources, baselines, the working week and the holidays. A file with real times of day switches the plan to <strong>Hours &amp; minutes</strong> scheduling too (when "Import working calendar" is ticked), recovering the working hours and breaks from it.</span></div>
           <div class="help-row"><i class="fa-solid fa-file-excel"></i><span><strong>An Excel (.xlsx) sheet</strong> is read like a CSV table: a header row with Task Name, Start, Finish, Duration, % Complete, Predecessors, Resource, Notes (English or German names; lines above it are skipped). Dates and percentages arrive as real values, an indented name or Excel’s own row grouping becomes the outline, and only the first sheet with data is read. An old .xls must be saved as .xlsx first.</span></div>
           <div class="help-row"><i class="fa-solid fa-file-code"></i><span><strong>Export MS Project XML</strong> (Data menu) saves the whole plan as a <code>.xml</code> file that MS Project opens: <em>File → Open</em>, file type “XML Format”. Outline, dates, durations, links with lag, constraints, actual dates, baselines, resources, the working week and holidays go along, each task's real time of day included for an hours &amp; minutes plan; empty lines are left out, and custom-field values and TBD dates go into the task’s Notes.</span></div>
           <div class="help-row"><i class="fa-solid fa-file-csv"></i><span>It also reads a <strong>CSV</strong> with a header row — English or German column names such as Task Name, Start, Finish, Duration, Predecessors, Outline Level. A preview shows what was found; you add the tasks to this plan or replace its tasks (a backup file is downloaded first).</span></div>
           <div class="help-row"><i class="fa-solid fa-print"></i><span><strong>Print / PDF…</strong> is under Data as well — see the Gantt chart topic.</span></div>
-          <div class="help-row"><i class="fa-solid fa-clock-rotate-left"></i><span><strong>Local Backups</strong> keeps a rolling daily snapshot of every plan in this browser.</span></div>
         </div>
         <div class="help-tip">Nothing here ever leaves your machine except into the files you choose.</div>
       </div>
@@ -3396,32 +3381,31 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 const APP_VERSION = 5;   // every save carries it (syncPayload). 5 = a Resource assignment is written "Anna[50%]" (an older build would read that as a name); 2 = minute/hour-level scheduling (project.timeUnit/workHours, five per-task time fields); 3 = the version-skew guard (checkVersionSkew) — no format change; 4 = a minute-mode plan's lags are working minutes (project.lagUnit), per-weekday hours (project.workHoursByDay), a custom date field's time (custom.<id>Time)
 const MINUTE_MODE_VERSION = 2;   // the first build that knows minute mode: a minute-mode plan last written by an OLDER build (a stale cached copy of the app, a device not yet updated) may have had its dates moved by a day-only scheduler
 const STORAGE_KEY = 'milestone-v1';
-const BACKUPS_KEY = 'milestone-backups';
-// Plans. Before plans existed the app kept ONE project under STORAGE_KEY / BACKUPS_KEY and one file handle
-// under _FS_KEY; those three are now only the migration source (see initPlans()). Layout today:
+// Plans. Before plans existed the app kept ONE project under STORAGE_KEY and one file handle
+// under _FS_KEY; those two are now only the migration source (see initPlans()). Layout today:
 //   PLANS_KEY                  { current, plans: [{ id, name, fileName }] }   name/fileName are cached for the switcher
 //   PLAN_DATA_PREFIX + id      { version, project, tasks, deletedTaskIds }    exactly what is synced to that plan's file
-//   PLAN_BACKUPS_PREFIX + id   { 'YYYY-MM-DD': snapshot }
 //   PREFS_KEY                  { theme, zoom, view, gridPaneWidth }           per device, shared by every plan
 //   IndexedDB handles store    'plan:' + id -> FileSystemFileHandle
 const PLANS_KEY = 'milestone-plans';
 const PREFS_KEY = 'milestone-prefs';
 const PLAN_DATA_PREFIX = 'milestone-plan-';
-const PLAN_BACKUPS_PREFIX = 'milestone-backups-';
 const LEGACY_PLAN_ID = 'plan1';
 const HANDLE_MIGRATED_KEY = 'milestone-handle-migrated';
 // The app was originally named dbPlanner. Copy (not move) data saved under
 // the old keys forward once, so an existing project/backups survive the
 // rename; the old entries are left in place as a rollback safety net.
+(function dropLocalBackups() {   // the browser-only daily snapshots were removed (the linked folder's Backups subfolder is the backup); free what they held
+  try { for (const k of Object.keys(localStorage)) if (k.startsWith('milestone-backups') || k === 'dbplanner-backups') localStorage.removeItem(k); } catch (e) { /* storage unavailable */ }
+})();
 (function migrateLegacyStorage() {
   try {
-    for (const [oldKey, newKey] of [['dbplanner-v1', STORAGE_KEY], ['dbplanner-backups', BACKUPS_KEY]]) {
+    for (const [oldKey, newKey] of [['dbplanner-v1', STORAGE_KEY]]) {
       const old = localStorage.getItem(oldKey);
       if (old !== null && localStorage.getItem(newKey) === null) localStorage.setItem(newKey, old);
     }
   } catch (e) { console.warn('Milestone: legacy storage migration failed', e); }
 })();
-const MAX_BACKUPS = 7;
 const FILE_SYNC_POLL_MS = 45000;
 const DAY_MS = 86400000;
 const ROW_H = 32, HEAD_H = 42;   // (HEAD_H = --head-h)
@@ -3979,7 +3963,6 @@ function prefsPayload() { return { df: dateFormat, tf: timeFormat, theme, themeP
 function syncPayload() { return { version: APP_VERSION, project, tasks, deletedTaskIds }; }
 
 function planDataKey(id) { return PLAN_DATA_PREFIX + id; }
-function planBackupsKey(id) { return PLAN_BACKUPS_PREFIX + id; }
 function planHandleKey(id) { return 'plan:' + id; }
 
 function readPlansIndex() {
@@ -4015,8 +3998,6 @@ function initPlans() {
       const id = LEGACY_PLAN_ID;
       localStorage.setItem(planDataKey(id), JSON.stringify({ version: APP_VERSION, project: legacy.project, tasks: legacy.tasks, deletedTaskIds: legacy.deletedTaskIds }));
       localStorage.setItem(PREFS_KEY, JSON.stringify({ theme: legacy.theme, zoom: legacy.zoom, view: legacy.view, gridPaneWidth: legacy.gridPaneWidth }));
-      const oldBackups = localStorage.getItem(BACKUPS_KEY);
-      if (oldBackups !== null) localStorage.setItem(planBackupsKey(id), oldBackups);
       idx.plans.push({ id, name: (legacy.project && legacy.project.name) || 'My Project', fileName: null });
       idx.current = id;
     } else {
@@ -4214,7 +4195,6 @@ function save() {
   normalizeData();
   recordHistory();
   persistLocal();
-  maybeSnapshotBackup();
   queueFileSyncWrite();
 }
 /* ============================== Undo / redo ================================
@@ -13234,49 +13214,6 @@ function runExcelExport() {
   } catch (e) { console.error('Milestone: Excel export failed', e); showToast('Excel export failed', true); }
 }
 
-/* ============================== Local backups ============================== */
-function maybeSnapshotBackup() {
-  try {
-    const backups = listBackups();
-    const key = todayStr();
-    if (backups[key]) return;
-    backups[key] = syncPayload();
-    const keys = Object.keys(backups).sort();
-    while (keys.length > MAX_BACKUPS) delete backups[keys.shift()];
-    localStorage.setItem(planBackupsKey(currentPlanId), JSON.stringify(backups));
-  } catch (e) { console.warn('Milestone: backup snapshot failed', e); }
-}
-function listBackups() { try { return JSON.parse(localStorage.getItem(planBackupsKey(currentPlanId)) || '{}') || {}; } catch (e) { return {}; } }
-function openBackupsModal() {
-  const backups = listBackups();
-  const keys = Object.keys(backups).sort().reverse();
-  const el = document.getElementById('backupsList');
-  el.innerHTML = keys.length === 0 ? '<div class="pred-empty">No backups yet — one is taken automatically each day you use Milestone.</div>' :
-    keys.map(k => { const b = backups[k] || {}, n = Array.isArray(b.tasks) ? b.tasks.filter(t => !t.spacer).length : 0; return `<div class="backup-row"><span>${escapeHtml(fmtDate ? fmtDate(k) : k)}<span class="backup-info"> · ${n} task${n === 1 ? '' : 's'}${b.project && b.project.name ? ' · ' + escapeHtml(b.project.name) : ''}</span></span><button class="btn" onclick="restoreBackup('${k}')" aria-label="Restore the backup of ${escapeHtml(k)}">Restore</button></div>`; }).join('');
-  document.getElementById('backupsModalBg').classList.add('open');
-  closeDataMenu();
-}
-function closeBackupsModal() { document.getElementById('backupsModalBg').classList.remove('open'); }
-function restoreBackup(dateKey) {
-  const backups = listBackups(); const snap = backups[dateKey]; if (!snap) return;
-  closeBackupsModal();   // the confirm dialog is earlier in the page than this one and would open *behind* it, out of reach
-  openConfirmModal({
-    title: 'Restore backup',
-    body: `Restore the snapshot from ${escapeHtml(dateKey)}? Your current data will be downloaded as a safety copy first.`,
-    confirmLabel: 'Restore',
-    confirmClass: 'btn btn-primary',   // replaces the data (after a safety download) but isn't a delete, so not red
-    action() {
-      downloadData(syncPayload(), `milestone-backup-before-restore-${todayStr()}.json`);
-      project = snap.project || project;
-      tasks = Array.isArray(snap.tasks) ? snap.tasks : [];
-      deletedTaskIds = Array.isArray(snap.deletedTaskIds) ? snap.deletedTaskIds : [];
-      normalizeData(); save(); render();
-      closeBackupsModal();
-      showToast('Backup restored');
-    }
-  });
-}
-
 /* ==================== File System Access API single-file sync ============= */
 const _FS_DB = 'milestone-fs', _FS_STORE = 'handles', _FS_KEY = 'syncFile';
 const _FS_LEGACY_DB = 'dbplanner-fs';
@@ -14062,10 +13999,9 @@ async function doDeleteCurrentPlan() {
   const rec = Object.assign({}, planRecord(idx, id), { name: project.name });
   const next = idx.plans[pos + 1] || idx.plans[pos - 1];
   persistLocal();
-  const saved = { blankId, rec, pos, data: localStorage.getItem(planDataKey(id)), backups: localStorage.getItem(planBackupsKey(id)), handle: syncFileHandle, dir: syncDirHandle };
+  const saved = { blankId, rec, pos, data: localStorage.getItem(planDataKey(id)), handle: syncFileHandle, dir: syncDirHandle };
   if (!(await switchPlan(next.id))) { if (blankId) removePlanRecord(blankId); return; }   // also flushes the file one last time
   localStorage.removeItem(planDataKey(id));
-  localStorage.removeItem(planBackupsKey(id));
   try { localStorage.removeItem(SYNC_BASE_PREFIX + id); } catch (e) { /* ignore */ }
   try { await _fsDel(planHandleKey(id)); await _fsDel(planDirKey(id)); } catch (e) { /* handle already gone */ }
   updatePlansIndex(i => { i.plans = i.plans.filter(p => p.id !== id); });
@@ -14074,13 +14010,12 @@ async function doDeleteCurrentPlan() {
 }
 function removePlanRecord(id) {   // forget a plan that was never opened by the user (the empty stand-in)
   if (id === currentPlanId) return;
-  localStorage.removeItem(planDataKey(id)); localStorage.removeItem(planBackupsKey(id));
+  localStorage.removeItem(planDataKey(id));
   updatePlansIndex(i => { i.plans = i.plans.filter(p => p.id !== id); });
 }
 async function undoDeletePlan(saved) {
   const id = saved.rec.id;
   if (saved.data !== null) localStorage.setItem(planDataKey(id), saved.data);
-  if (saved.backups !== null) localStorage.setItem(planBackupsKey(id), saved.backups);
   if (saved.handle) { try { await _fsPut(planHandleKey(id), saved.handle); } catch (e) { /* plan comes back unlinked */ } }
   if (saved.dir) { try { await _fsPut(planDirKey(id), saved.dir); } catch (e) { /* the folder is simply not watched any more */ } }
   updatePlansIndex(i => { if (!planRecord(i, id)) i.plans.splice(Math.min(saved.pos, i.plans.length), 0, saved.rec); });
@@ -14368,7 +14303,7 @@ function wireGlobalEvents() {
     // Escape closes whatever overlay is open first; only when there is none — and
     // the user isn't typing in a field, where Escape already means "cancel this
     // edit" — does it clear the task selection.
-    const modalIds = ['recurModalBg', 'taskModalBg', 'folderFilesModalBg', 'confirmModalBg', 'calendarModalBg', 'rulesModalBg', 'formatModalBg', 'baselineModalBg', 'rescheduleModalBg', 'levelModalBg', 'syncConflictsModalBg', 'planModalBg', 'excelModalBg', 'importModalBg', 'foreignImportModalBg', 'bulkModalBg', 'searchModalBg', 'printModalBg', 'backupsModalBg', 'helpModalBg', 'aboutModalBg', 'shortcutsModalBg', 'csvModalBg', 'replaceModalBg'];
+    const modalIds = ['recurModalBg', 'taskModalBg', 'folderFilesModalBg', 'confirmModalBg', 'calendarModalBg', 'rulesModalBg', 'formatModalBg', 'baselineModalBg', 'rescheduleModalBg', 'levelModalBg', 'syncConflictsModalBg', 'planModalBg', 'excelModalBg', 'importModalBg', 'foreignImportModalBg', 'bulkModalBg', 'searchModalBg', 'printModalBg', 'helpModalBg', 'aboutModalBg', 'shortcutsModalBg', 'csvModalBg', 'replaceModalBg'];
     const overlayOpen = modalIds.some(id => document.getElementById(id).classList.contains('open'))
       || document.getElementById('fileSyncModalBg').classList.contains('open')   // mandatory: Escape can't close it
       || document.getElementById('dataMenu').classList.contains('open')

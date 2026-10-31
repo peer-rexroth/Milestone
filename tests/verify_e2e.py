@@ -108,7 +108,7 @@ with sync_playwright() as p:
     pg.locator(f".grid-row[data-id='{T('Project kick-off')['id']}']").locator("> div").first.dblclick(); pg.wait_for_selector("#taskModalBg.open"); pg.wait_for_timeout(150)
     pg.check("#taskMilestoneInput"); pg.click("#taskModalBg .btn-primary"); pg.wait_for_timeout(200)
     check("marking a task as a milestone gives it one date", T("Project kick-off")["milestone"] and dates("Project kick-off")[0] == dates("Project kick-off")[1])
-    # ============================================================ 12. share: Excel and JSON, import, backups
+    # ============================================================ 12. share: Excel and JSON, import
     pg.click("#dataMenuBtn"); pg.click("#dataMenu >> text=Export to Excel"); pg.wait_for_selector("#excelModalBg.open")
     with pg.expect_download() as dl: pg.click("#excelExportBtn")
     path = os.path.join(tempfile.mkdtemp(), "plan.xlsx"); dl.value.save_as(path); wb = openpyxl.load_workbook(path)
@@ -121,8 +121,6 @@ with sync_playwright() as p:
     pg.click("#dataMenuBtn"); pg.set_input_files("#fileInput", jpath); pg.wait_for_selector("#importModalBg.open"); pg.click("#importModalBg button:has-text('Replace')"); pg.wait_for_timeout(400)
     if pg.locator("#confirmModalBg.open").count(): pg.click("#confirmModalActionBtn"); pg.wait_for_timeout(300)
     check("Import -> Replace restores the exported plan (the renamed task is back to 'Build')", T("Build") is not None and T("Build (changed)") is None, [t["name"] for t in pg.evaluate("() => tasks")])
-    pg.click("#dataMenuBtn"); pg.click("#dataMenu .dropdown-item:has-text('Backups')"); pg.wait_for_selector("#backupsModalBg.open")
-    check("Local backups: today's snapshot is listed", pg.locator("#backupsList .backup-row").count() >= 1)
     pg.keyboard.press("Escape"); pg.wait_for_timeout(150)
     # ============================================================ 13. plans
     pg.click("#planMenuBtn"); pg.click("#planNewItem"); pg.wait_for_selector("#planModalBg.open"); pg.fill("#planNameInput", "Second plan"); pg.click("#planSubmitBtn"); pg.wait_for_timeout(500)
