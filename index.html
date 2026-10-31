@@ -14336,7 +14336,7 @@ function wireGlobalEvents() {
   for (const id of ['gridRows', 'ganttRows']) document.getElementById(id).addEventListener('contextmenu', onListContextMenu);
   document.getElementById('sbPlans').addEventListener('contextmenu', onPlanRowContextMenu);
   document.getElementById('resourceSheetBody').addEventListener('contextmenu', onResourceRowContextMenu);
-  { const si = document.getElementById('searchInput'), rb = document.getElementById('searchReplaceBtn'); if (si) si.placeholder = si.placeholder.replace('Ctrl+H', FIND_REPLACE_HINT); if (rb) rb.title = rb.title.replace('Ctrl+H', FIND_REPLACE_HINT); }   // the shortcut is platform-specific (isFindReplaceKey)
+  { const si = document.getElementById('searchInput'), rb = document.getElementById('searchReplaceBtn'); if (si) { si.placeholder = si.placeholder.replace('Ctrl+H', FIND_REPLACE_HINT); si.title = si.title.replace('Ctrl+H', FIND_REPLACE_HINT); } if (rb) rb.title = rb.title.replace('Ctrl+H', FIND_REPLACE_HINT); }   // the shortcut is platform-specific (isFindReplaceKey)
   window.addEventListener('blur', closeToolbarMenus);
   document.addEventListener('keydown', (e) => {
     if ((e.ctrlKey || e.metaKey) && !e.altKey && (e.key.toLowerCase() === 'z' || e.key.toLowerCase() === 'y')) {   // Ctrl/Cmd+Z undo, +Shift+Z or Ctrl+Y redo
