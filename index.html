@@ -1231,6 +1231,12 @@ html.time12 .tf-dt input.dt-time { flex: 0 0 104px; min-width: 104px; width: 104
 .print-sheet { background: var(--on-accent); box-shadow: 0 1px 8px var(--shadow-ink-strong); width: 100%; max-width: 100%; }
 .print-sheet svg { display: block; width: 100%; height: 100%; }
 .print-nav .btn { border-radius: 999px; }
+.sc-sheet { background: var(--on-accent); box-shadow: 0 1px 8px var(--shadow-ink-strong); width: 100%; max-width: 100%; }   /* a white slide behind the (transparent) chart */
+.sc-sheet svg { display: block; width: 100%; height: 100%; }
+.sc-tree { max-height: 230px; overflow-y: auto; }
+.sc-col { appearance: none; -webkit-appearance: none; width: 34px; height: 24px; padding: 0; border: 1px solid var(--border-2, var(--border)); border-radius: var(--r-xs); background: none; }
+.sc-col::-webkit-color-swatch-wrapper { padding: 2px; } .sc-col::-webkit-color-swatch { border: 0; border-radius: var(--r-xs); }
+.insp .trow input.sc-font { flex: 0 1 200px; }
 .print-nav { display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-top: 1px solid var(--border); font-size: var(--fs-12); color: var(--text-dim); }
 .print-summary { margin-left: auto; text-align: right; }
 .print-img { display: flex; align-items: center; gap: 6px; }
@@ -2325,6 +2331,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
       <button class="dropdown-item" id="mspdiExportItem" onclick="exportMspdi()"><i class="fa-solid fa-file-code"></i>Export MS Project XML</button>
       <div class="dropdown-sep"></div>
       <button class="dropdown-item" id="printItem" onclick="openPrintModal()"><i class="fa-solid fa-print"></i>Print / PDF / Picture…</button>
+      <button class="dropdown-item" id="slideChartItem" onclick="openSlideChart()" title="A chart sized for a slide, to paste into a presentation"><i class="fa-solid fa-display"></i>Chart for Slides…</button>
       <div class="dropdown-sep"></div>
     </div>
   </div>
@@ -2751,6 +2758,60 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
       </div>
     </div>
     <div class="modal-footer"><span class="print-img" role="group" aria-label="Picture of the whole chart" title="One picture with every row on one image, whatever the paper"><span class="print-img-label" title="One picture with every row, whatever the paper — for slides and documents">Picture:</span><button class="btn" id="printCopyImg" onclick="exportPrintImage('copy')" title="Copy the chart as a PNG picture"><i class="fa-regular fa-copy"></i>Copy</button><button class="btn" id="printPng" onclick="exportPrintImage('png')" title="Download the chart as a PNG picture"><i class="fa-regular fa-image"></i>PNG</button><button class="btn" id="printSvg" onclick="exportPrintImage('svg')" title="Download the chart as an editable SVG drawing"><i class="fa-solid fa-vector-square"></i>SVG</button></span><span class="print-tip"></span><button class="btn" onclick="closePrintModal()">Cancel</button><button class="btn btn-primary" id="printGo" onclick="doPrint()"><i class="fa-solid fa-print"></i>Print / Save as PDF…</button></div>
+  </div>
+</div>
+
+<!-- Chart for Slides -->
+<div class="modal-bg" id="slideChartModalBg" onclick="if(event.target===this) closeSlideChart()">
+  <div class="modal print-modal insp" role="dialog" aria-labelledby="scTitle">
+    <div class="modal-header"><h2 id="scTitle">Chart for Slides</h2><button onclick="closeSlideChart()" aria-label="Close">&times;</button></div>
+    <div class="print-layout">
+      <div class="print-opts" oninput="scChanged(event)" onchange="scChanged(event)">
+        <section class="cal-sec"><div class="cal-sec-title">Size</div><div class="tgrp">
+          <div class="trow"><label for="scPreset" class="tgrow">Shape</label><select id="scPreset" class="tin"><option value="content">Full Content Area</option><option value="half">Half Slide</option><option value="strip">Wide Strip</option><option value="custom">Custom</option></select></div>
+          <div class="trow"><label for="scW" class="tgrow">Width</label><input type="number" id="scW" class="tin" min="3" max="80" step="0.1"><span class="tunit">cm</span></div>
+          <div class="trow"><label for="scH" class="tgrow">Height</label><input type="number" id="scH" class="tin" min="2" max="60" step="0.1"><span class="tunit">cm</span></div>
+          <div class="trow"><label for="scMaxRows" class="tgrow">Most rows on a chart</label><input type="number" id="scMaxRows" class="tin" min="1" max="60" step="1"></div>
+          <div class="trow"><label for="scMinPt" class="tgrow">Smallest text</label><input type="number" id="scMinPt" class="tin" min="6" max="24" step="0.5"><span class="tunit">pt</span></div>
+        </div><p class="cal-hint hidden" id="scNote"></p></section>
+        <section class="cal-sec"><div class="cal-sec-title">Tasks</div><div class="tgrp">
+          <label class="trow tpick"><span>The whole plan</span><input type="radio" class="tick" name="scScope" value="all" checked></label>
+          <label class="trow tpick hidden" id="scScopeFiltered"><span>The filtered tasks<span class="tsub" id="scScopeFilteredN"></span></span><input type="radio" class="tick" name="scScope" value="filtered"></label>
+          <label class="trow tpick hidden" id="scScopeSelected"><span>The selected tasks<span class="tsub" id="scScopeSelectedN"></span></span><input type="radio" class="tick" name="scScope" value="selected"></label>
+          <label class="trow tpick"><span>Groups I tick</span><input type="radio" class="tick" name="scScope" value="pick"></label>
+        </div>
+        <div class="tgrp hidden" id="scTreeBox"><div class="sc-tree" id="scTree" onchange="scTreeChanged(event)"></div></div></section>
+        <section class="cal-sec"><div class="cal-sec-title">Outline</div><div class="tgrp">
+          <div class="trow"><label for="scHier" class="tgrow">Shown as</label><select id="scHier" class="tin"><option value="blocks">Blocks and Label Cells</option><option value="block-rows">Blocks, Then Rows</option><option value="rows">All Rows</option></select></div>
+          <div class="trow"><label for="scLevels" class="tgrow">Levels</label><select id="scLevels" class="tin"><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">All</option></select></div>
+          <div class="trow"><label for="scScale" class="tgrow">Timescale</label><select id="scScale" class="tin"><option value="auto">Automatic</option><option value="week">Weeks</option><option value="month">Months</option><option value="quarter">Quarters</option></select></div>
+        </div></section>
+        <section class="cal-sec"><div class="cal-sec-title">Milestones</div><div class="tgrp">
+          <div class="trow"><label for="scMsLabel" class="tgrow">Label</label><select id="scMsLabel" class="tin"><option value="both">Name and Date</option><option value="name">Name</option><option value="date">Date</option><option value="none">None</option></select></div>
+          <div class="trow"><label for="scMsPlace" class="tgrow">Placed on</label><select id="scMsPlace" class="tin"><option value="group">Their Group’s Row</option><option value="own">Their Own Row</option></select></div>
+        </div></section>
+        <section class="cal-sec"><div class="cal-sec-title">Look</div><div class="tgrp">
+          <div class="trow"><label for="scPalette" class="tgrow">Palette</label><select id="scPalette" class="tin"><option value="corporate">Corporate</option><option value="milestone">Milestone</option><option value="custom">Custom</option></select></div>
+          <div class="trow"><label for="scCol0" class="tgrow">First Colour</label><input type="color" id="scCol0" class="sc-col"></div>
+          <div class="trow"><label for="scCol1" class="tgrow">Second Colour</label><input type="color" id="scCol1" class="sc-col"></div>
+          <div class="trow"><label for="scCol2" class="tgrow">Third Colour</label><input type="color" id="scCol2" class="sc-col"></div>
+          <div class="trow"><label for="scCol3" class="tgrow">Fourth Colour</label><input type="color" id="scCol3" class="sc-col"></div>
+          <div class="trow"><label for="scInk" class="tgrow">Text Colour</label><input type="color" id="scInk" class="sc-col"></div>
+          <div class="trow"><label for="scBg" class="tgrow">Background</label><select id="scBg" class="tin"><option value="transparent">Transparent</option><option value="white">White</option></select></div>
+          <div class="trow"><label for="scFont" class="tgrow">Font</label><input type="text" id="scFont" class="tin sc-font" placeholder="System font" maxlength="60" spellcheck="false"></div>
+        </div></section>
+        <section class="cal-sec"><div class="cal-sec-title">Show</div><div class="tgrp">
+          <div class="trow"><label for="scToday" class="tgrow">Today marker</label><input type="checkbox" class="tsw" id="scToday" role="switch"></div>
+          <div class="trow"><label for="scPct" class="tgrow">Percent complete</label><input type="checkbox" class="tsw" id="scPct" role="switch"></div>
+          <div class="trow"><label for="scLegend" class="tgrow">Legend</label><input type="checkbox" class="tsw" id="scLegend" role="switch"></div>
+        </div></section>
+      </div>
+      <div class="print-side">
+        <div class="print-preview" id="scPreview"></div>
+        <div class="print-nav"><button class="btn" id="scPrev" onclick="scPage(-1)" aria-label="Previous chart"><i class="fa-solid fa-chevron-left"></i></button><span id="scPageInfo"></span><button class="btn" id="scNext" onclick="scPage(1)" aria-label="Next chart"><i class="fa-solid fa-chevron-right"></i></button><span class="print-summary" id="scSummary"></span></div>
+      </div>
+    </div>
+    <div class="modal-footer"><span class="print-img" role="group" aria-label="Picture of the chart" title="The chart as a picture with a transparent background, to paste into a slide"><span class="print-img-label">Picture:</span><button class="btn" id="scCopy" onclick="scExport('copy')" title="Copy the chart as a PNG picture"><i class="fa-regular fa-copy"></i>Copy</button><button class="btn" id="scPng" onclick="scExport('png')" title="Download the chart as a PNG picture"><i class="fa-regular fa-image"></i>PNG</button><button class="btn" id="scSvg" onclick="scExport('svg')" title="Download the chart as an editable SVG drawing"><i class="fa-solid fa-vector-square"></i>SVG</button><button class="btn hidden" id="scSaveAll" onclick="scExport('png', true)" title="Download every chart as a PNG picture">Save All</button></span><span class="print-tip"></span><button class="btn" onclick="closeSlideChart()">Close</button></div>
   </div>
 </div>
 
@@ -3305,6 +3366,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
           <div class="help-section-title">Printing</div>
           <div class="help-row"><i class="fa-solid fa-print"></i><span><strong>Print / PDF…</strong> (the Data menu, or Ctrl/Cmd+P) lays the list and the chart out on pages of the paper you choose — A4, A3, Letter, Legal or Tabloid, landscape or portrait. The whole timeline is fitted to the page width, long plans continue on the next page with the heading repeated, and a live preview shows every page.</span></div>
           <div class="help-row"><i class="fa-regular fa-image"></i><span>In the Print window, <strong>Picture: Copy / PNG / SVG</strong> makes the chart as <em>one</em> picture with every row, with the same columns and options — for a slide or a document. <strong>SVG</strong> keeps the text as text, so PowerPoint, Illustrator or Inkscape can edit it; <strong>PNG</strong> is 2× sharp; <strong>Copy</strong> puts the PNG on the clipboard.</span></div>
+          <div class="help-row"><i class="fa-solid fa-display"></i><span><strong>Chart for Slides…</strong> (the Data menu) makes a picture to paste into a presentation: only the chart, transparent, in the size you set in cm. Set the most rows a chart may have (more rows make several charts on the same timeline), the smallest text, how the outline is drawn, how many levels, and how milestones are labelled. <strong>Copy</strong>, <strong>PNG</strong> and <strong>SVG</strong> save it; <strong>Save All</strong> saves every chart.</span></div>
           <div class="help-row"><i class="fa-solid fa-sliders"></i><span>Choose the list columns, the time range, the timescale (weeks, months or quarters — automatic by default), and whether to show the baseline, the critical path, dependency arrows, the today line and days off. Tasks print as the list shows them (folded groups and filters apply) unless you expand every group. In your browser's print dialog choose <strong>Save as PDF</strong> for a file.</span></div>
         </div>
         <div class="help-divider"></div>
@@ -9303,6 +9365,7 @@ function applyDisplayFormat(df, tf) {
   try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefsPayload())); } catch (e) { /* prefs are a convenience */ }
   closeFilterMenu(); resetEffectiveCache(); render();
   if (document.getElementById('printModalBg').classList.contains('open')) refreshPrintPreview();
+  if (document.getElementById('slideChartModalBg').classList.contains('open')) scRefresh();
 }
 // The format of this browser's own region: the order and separator of its numeric date and whether its clock is 12-hour, mapped to the nearest of ours.
 function detectSystemFormat() {
@@ -11840,13 +11903,13 @@ function printImageSvg() {
   const svg = built.pages[0].replace('width="100%" height="100%" preserveAspectRatio="xMidYMin meet"', `width="${built.W}" height="${built.H}"`);
   return { svg: '<?xml version="1.0" encoding="UTF-8"?>\n' + svg, W: built.W, H: built.H, rows: built.rows };
 }
-function svgToPng(svg, W, H, scale) {
+function svgToPng(svg, W, H, scale, bg) {   // bg: a colour, or null for a transparent picture (omitted = white)
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' })), img = new Image();
     img.onload = () => {
       try {
         const c = document.createElement('canvas'); c.width = Math.round(W * scale); c.height = Math.round(H * scale);
-        const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
+        const g = c.getContext('2d'); if (bg !== null) { g.fillStyle = bg || '#fff'; g.fillRect(0, 0, c.width, c.height); } g.drawImage(img, 0, 0, c.width, c.height);
         c.toBlob(b => b ? resolve(b) : reject(new Error('no PNG')), 'image/png');
       } catch (e) { reject(e); } finally { URL.revokeObjectURL(url); }
     };
@@ -11880,6 +11943,312 @@ function doPrint() {
   window.addEventListener('afterprint', done);
   setTimeout(() => window.print(), 60);
   setTimeout(() => { if (document.getElementById('printRoot') && !document.hidden) { /* the dialog was dismissed without an afterprint event */ } }, 4000);
+}
+
+/* ============================== Chart for Slides ==============================
+   A picture of the plan made to be pasted into a slide template: only the chart (no title, no page furniture), a transparent background, a size you
+   choose (cm), at most N rows per chart (more rows split into several charts, the same timeline on each), the text never below a set size. The outline
+   is drawn one of three ways (`hier`): "blocks" (level 1 a vertical coloured block, level 2 a merged label cell, level 3 and below rows), "block-rows"
+   (level 1 a block, everything below rows) or "rows" (every group a row with a bracket). `levels` is how deep to go — a group at that level is one bar.
+   Milestones carry their name and date on the chart, on a row of their own or on their group's row. The tasks come from the whole plan, the filter, the
+   selection, or groups ticked in the dialog. Settings are kept per device (not in the plan). Drawing is one pure function, scBuild(opts) → SVG strings. */
+const SC_KEY = 'milestone-slidechart', SC_CM = 37.7953;   // px per cm at 96 dpi
+const SC_PRESETS = { content: [30, 13.4], half: [14.7, 13.4], strip: [30, 7] };   // cm: a 16:9 slide's content area, half of it, a wide strip
+const SC_PALETTES = {   // block colours 1-4 (then round again) and the text colour
+  corporate: { colors: ['#1E2A78', '#0069B1', '#34A6DC', '#3BB8B8'], ink: '#16184E' },   // Deep Blue, Mid Blue, Bright Blue, Turquoise; text Dark Blue (orange stays for milestones)
+  milestone: { colors: ['#00a3a1', '#0b2a4a', '#f2a541', '#5aa9e6'], ink: '#1d2733' } };
+const SC_MS = '#F28011', SC_TODAY = '#E7001D';   // milestone diamonds: Sundown Orange; the today marker: Bright Red
+function scDefaults() {
+  return { preset: 'content', w: 30, h: 13.4, maxRows: 16, minPt: 9, scope: 'all', hier: 'blocks', levels: 3, msLabel: 'both', msPlace: 'group', scale: 'auto',
+    palette: 'corporate', colors: SC_PALETTES.corporate.colors.slice(), bg: 'transparent', ink: SC_PALETTES.corporate.ink, font: '', today: true, pct: true, legend: false, pick: [] };
+}
+function scLoad() { try { const o = JSON.parse(localStorage.getItem(SC_KEY) || 'null'); if (o && typeof o === 'object' && !o.palette) o.palette = 'custom'; return Object.assign(scDefaults(), o && typeof o === 'object' ? o : {}, { pick: [] }); } catch (e) { return scDefaults(); } }
+function scSave(o) { try { const c = Object.assign({}, o); delete c.pick; localStorage.setItem(SC_KEY, JSON.stringify(c)); } catch (e) { /* a convenience only */ } }
+// The tasks to draw, as a tree of { id, name, level, kids | ms, s, e, p } (day numbers, progress 0-100). A group's dates and progress come from the tasks drawn.
+function scTree(o) {
+  const selSet = o.scope === 'selected' ? new Set(selectedIds()) : o.scope === 'pick' ? new Set(o.pick) : null;
+  const shown = o.scope === 'filtered' && filtersActive() ? new Set(exportTaskRows('filtered').map(r => r.task.id)) : null;
+  const node = (t, level, inside) => {
+    if (t.spacer || (shown && !shown.has(t.id))) return null;
+    const take = inside || !selSet || selSet.has(t.id);   // a picked / selected group takes everything below it
+    if (!hasChildren(t.id)) {
+      if (!take || isUnscheduled(t)) return null;
+      const e = effectiveDates(t.id); if (!e.start) return null;
+      return { id: t.id, name: t.name || '', level, ms: !!t.milestone, s: dayNumber(e.start), e: dayNumber(e.end), p: effectiveProgressOf(t.id) };
+    }
+    const kids = childrenOf(t.id).map(k => node(k, level + 1, take)).filter(Boolean);
+    if (!kids.length) return null;
+    let s = Infinity, e = -Infinity, w = 0, pw = 0;
+    for (const k of kids) { s = Math.min(s, k.s); e = Math.max(e, k.e); const len = Math.max(1, k.e - k.s + 1); w += len; pw += len * k.p; }
+    return { id: t.id, name: t.name || '', level, kids, s, e, p: w ? pw / w : 0 };
+  };
+  return childrenOf(null).map(t => node(t, 1, false)).filter(Boolean);
+}
+// The tree as rows: [{ kind: 'group' | 'bar' | 'ms', n, blk, cell, indent, hosted }] and the blocks [{ name, ci }] (one per top-level group: its colour and its block).
+function scRows(tree, o) {
+  const maxL = o.levels >= 6 ? 99 : Math.max(2, o.levels), mode = o.hier, rows = [], blocks = [], base = mode === 'blocks' ? 3 : mode === 'block-rows' ? 2 : 1;
+  let blk = -1;
+  const newBlock = (name, grey) => { blocks.push({ name, ci: grey ? -1 : blocks.filter(b => b.ci >= 0).length }); blk = blocks.length - 1; };
+  const push = r => { r.blk = blk; rows.push(r); return r; };
+  const indentOf = n => Math.max(0, n.level - base);
+  const emitKids = (n, cell, host) => {
+    const own = o.msPlace !== 'group';
+    for (const k of n.kids) if (own || !k.ms) emit(k, cell);
+    if (!own) {
+      const ms = n.kids.filter(k => k.ms);
+      if (ms.length) { const h = host || rows.find((r, i) => i >= firstOf(n) && (r.kind === 'bar' || r.kind === 'group')); if (h) (h.hosted = h.hosted || []).push(...ms); else ms.forEach(m => emit(m, cell)); }
+    }
+  };
+  const starts = new Map(); const firstOf = n => starts.get(n.id);
+  const emit = (n, cell) => {
+    const cellHere = mode === 'blocks' && n.level === 2;
+    if (cellHere) cell = { id: n.id, name: n.name };   // level 2 is the merged label cell
+    if (n.ms) { push({ kind: 'ms', n, cell, indent: indentOf(n) }); return; }
+    const group = n.kids && n.level < maxL;
+    if (!group) { push({ kind: 'bar', n, cell, indent: indentOf(n), cellOnly: cellHere }); return; }
+    starts.set(n.id, rows.length);
+    const host = cellHere ? null : push({ kind: 'group', n, cell, indent: indentOf(n) });
+    emitKids(n, cell, host);
+  };
+  let lastLoose = false;
+  for (const n of tree) {
+    if (mode === 'rows') { newBlock(n.name, false); lastLoose = false; emit(n, null); continue; }
+    if (n.kids) { newBlock(n.name, false); lastLoose = false; starts.set(n.id, rows.length); emitKids(n, null, null); continue; }
+    if (!lastLoose) newBlock('', true);   // tasks outside any group share one grey, unnamed block
+    lastLoose = true; emit(n, null);
+  }
+  return { rows, blocks };
+}
+// Splits the rows into charts of at most `cap` rows: at a block boundary if one fits, else at a label-cell boundary, else wherever.
+function scSplit(rows, cap) {
+  const out = []; let a = 0;
+  const newBlock = i => i === 0 || rows[i].blk !== rows[i - 1].blk;
+  const newCell = i => newBlock(i) || ((rows[i].cell && rows[i].cell.id) || '') !== ((rows[i - 1].cell && rows[i - 1].cell.id) || '');
+  while (a < rows.length) {
+    let z = Math.min(rows.length, a + cap);
+    if (z < rows.length) { let b = z; while (b > a && !newBlock(b)) b--; if (b === a) { b = z; while (b > a && !newCell(b)) b--; } if (b > a) z = b; }
+    out.push(rows.slice(a, z)); a = z;
+  }
+  return out;
+}
+function scWrap(text, maxW, size, bold) {   // words onto lines no wider than maxW
+  const lines = []; let cur = '';
+  for (const w of String(text).split(/\s+/).filter(Boolean)) { const t = cur ? cur + ' ' + w : w; if (cur && printTextWidth(t, size, bold) > maxW) { lines.push(cur); cur = w; } else cur = t; }
+  if (cur) lines.push(cur);
+  return lines;
+}
+function scLum(hex) { const n = parseInt(String(hex).replace('#', ''), 16) || 0, c = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map(v => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }); return .2126 * c[0] + .7152 * c[1] + .0722 * c[2]; }
+// Everything: { charts: [svg], W, H, rows, cap, textCap, empty }. All charts share the timeline, the row height and the text size.
+function scBuild(o) {
+  const tree = scTree(o), { rows, blocks } = scRows(tree, o);
+  const W = Math.max(200, Math.round(o.w * SC_CM)), H = Math.max(120, Math.round(o.h * SC_CM));
+  const tierH = Math.max(16, Math.min(24, Math.round(H * .04))), headH = tierH * 2 + 8, legendH = o.legend ? 26 : 0, minFs = o.minPt * 96 / 72;
+  const textCap = Math.max(1, Math.floor((H - headH - legendH - 16) / (minFs / .46)));
+  const cap = Math.max(1, Math.min(Math.round(o.maxRows) || 16, textCap));
+  if (!rows.length) return { charts: [], W, H, rows: 0, cap, textCap, empty: true };
+  const chunks = scSplit(rows, cap), FONT = o.font && o.font.trim() ? `${o.font.trim().replace(/["<>&]/g, '')}, ${PRINT_FONT}` : PRINT_FONT, esc = escapeHtml, INK = o.ink || '#1d2733';
+  // ---- the timeline: every drawn task (and hosted milestone), a little padding, the same on every chart
+  let d0 = Infinity, d1 = -Infinity;
+  const seen = n => { d0 = Math.min(d0, n.s); d1 = Math.max(d1, n.e); };
+  for (const r of rows) { seen(r.n); for (const m of r.hosted || []) seen(m); }
+  const pad = Math.max(2, Math.round((d1 - d0) * .02)); d0 -= pad; d1 += pad;
+  const days = d1 - d0 + 1, unit = o.scale && o.scale !== 'auto' ? o.scale : days <= 120 ? 'week' : days <= 1100 ? 'month' : 'quarter';
+  // ---- geometry
+  const mostRows = Math.max(...chunks.map(c => c.length)), gaps = Math.max(...chunks.map(c => new Set(c.map(r => r.blk)).size - 1)) * 6;
+  const rowH = Math.min(H * .115, (H - headH - legendH - 10 - gaps) / mostRows), fs = Math.max(minFs, Math.min(rowH * .46, H * .036)), barH = Math.min(rowH * .52, 22);
+  const X0 = 2, X1 = W - 2, mode = o.hier, b1 = Math.round(fs * 2.1);
+  let longWord = 0; for (const r of rows) if (r.cell) for (const w of r.cell.name.split(/\s+/)) longWord = Math.max(longWord, printTextWidth(w, Math.max(9, fs * .95), true));   // a label cell is as wide as its longest word needs
+  const cellW = Math.round(Math.min(W * .22, Math.max(90, W * .1, longWord + 26)));
+  const step = Math.round(fs * .95);
+  let labelW = 80;
+  for (const r of rows) { if (r.kind === 'ms' && /^(both|name)$/.test(o.msLabel)) continue; if (r.cellOnly) continue; labelW = Math.max(labelW, r.indent * step + printTextWidth(r.n.name, fs, r.kind === 'group') + 12); }
+  labelW = Math.min(labelW, W * .3);
+  const leftW = (mode === 'blocks' ? b1 + 4 + cellW + 8 : mode === 'block-rows' ? b1 + 4 + 8 : 0) + labelW;
+  const gx0 = X0 + leftW + 10, gw = Math.max(100, X1 - gx0 - 6), pxd = gw / days, xOf = d => gx0 + (d - d0) * pxd;
+  const labelX = X0 + (mode === 'blocks' ? b1 + 4 + cellW + 8 : mode === 'block-rows' ? b1 + 4 + 8 : 0);
+  const seg = printScaleSegments(unit, d0, d1, pxd), today = dayNumber(todayStr());
+  const colorOf = b => b.ci < 0 ? '#8a96a3' : o.colors[b.ci % o.colors.length];
+  const charts = chunks.map(chunk => {
+    const out = [], bodyTop = headH + 4;
+    out.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" font-family='${FONT}' font-size="${fs.toFixed(1)}">`);
+    if (o.bg === 'white') out.push(`<rect width="${W}" height="${H}" fill="#fff"/>`);
+    // the timescale: a tint on alternate bottom segments, the two tiers, hairlines
+    const bodyBottom = bodyTop + chunk.length * rowH + (new Set(chunk.map(r => r.blk)).size - 1) * 6;
+    seg.bottom.forEach((b, i) => { if (i % 2 === 0) out.push(`<rect x="${xOf(b.s).toFixed(1)}" y="${bodyTop - 4}" width="${((b.e - b.s + 1) * pxd).toFixed(1)}" height="${(bodyBottom - bodyTop + 4).toFixed(1)}" fill="#6e7d91" opacity=".09"/>`); });
+    for (const b of seg.top) { const x = xOf(b.s), w = (b.e - b.s + 1) * pxd; if (printTextWidth(b.label, tierH * .62, true) + 8 <= w) out.push(`<text x="${(x + 6).toFixed(1)}" y="${(tierH * .72).toFixed(1)}" font-size="${(tierH * .62).toFixed(1)}" font-weight="600" fill="${INK}">${esc(b.label)}</text>`); }
+    for (const b of seg.bottom) {
+      const x = xOf(b.s), w = (b.e - b.s + 1) * pxd, label = typeof b.label === 'object' ? String(b.label.week) : b.label;
+      if (printTextWidth(label, tierH * .56) + 4 <= w) out.push(`<text x="${(x + w / 2).toFixed(1)}" y="${(tierH * 1.72).toFixed(1)}" font-size="${(tierH * .56).toFixed(1)}" text-anchor="middle" fill="${INK}" opacity=".62">${esc(label)}</text>`);
+      out.push(`<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${(tierH * 1.15).toFixed(1)}" y2="${(tierH * 2 + 2).toFixed(1)}" stroke="#6e7d91" opacity=".35"/>`);
+    }
+    out.push(`<line x1="${gx0}" x2="${X1}" y1="${tierH * 2 + 4}" y2="${tierH * 2 + 4}" stroke="#6e7d91" opacity=".35"/>`);
+    // the rows
+    let y = bodyTop, prevBlk = null; const ys = [];
+    chunk.forEach(r => { if (prevBlk !== null && r.blk !== prevBlk) y += 6; prevBlk = r.blk; ys.push(y); y += rowH; });
+    const runs = (keyOf) => { const res = []; chunk.forEach((r, i) => { const k = keyOf(r); const last = res[res.length - 1]; if (last && last.k === k && last.blk === r.blk) last.to = i; else res.push({ k, blk: r.blk, from: i, to: i }); }); return res; };
+    for (const run of runs(r => r.blk)) {   // block bands, then the vertical blocks
+      const b = blocks[run.blk], col = colorOf(b), top = ys[run.from], h = ys[run.to] + rowH - top;
+      out.push(`<rect x="${X0 + b1 + 4}" y="${top.toFixed(1)}" width="${(X1 - X0 - b1 - 4).toFixed(1)}" height="${(h - 2).toFixed(1)}" rx="4" fill="${col}" opacity=".045"/>`);
+      if (mode !== 'rows') {
+        out.push(`<rect x="${X0}" y="${top.toFixed(1)}" width="${b1}" height="${(h - 2).toFixed(1)}" rx="6" fill="${col}"/>`);
+        if (b.name) { const cx = X0 + b1 / 2, cy = top + (h - 2) / 2, f = Math.max(9, fs * .95), t = printFit(b.name, h - 14, f, true); if (t) out.push(`<text x="${cx}" y="${cy.toFixed(1)}" font-size="${f.toFixed(1)}" font-weight="650" fill="${scLum(col) > .45 ? '#1d2733' : '#fff'}" text-anchor="middle" dominant-baseline="central" transform="rotate(-90 ${cx} ${cy.toFixed(1)})">${esc(t)}</text>`); }
+      }
+    }
+    if (mode === 'blocks') for (const run of runs(r => r.cell ? r.cell.id : '')) {   // the merged label cells
+      if (!run.k) continue;
+      const r0 = chunk[run.from], col = colorOf(blocks[run.blk]), top = ys[run.from], h = ys[run.to] + rowH - top, f = Math.max(9, fs * .95), lh = f * 1.22;
+      out.push(`<rect x="${X0 + b1 + 4}" y="${(top + 1).toFixed(1)}" width="${cellW}" height="${(h - 2).toFixed(1)}" rx="5" fill="${col}" opacity=".13"/>`);
+      let lines = scWrap(r0.cell.name, cellW - 18, f, true); const fit = Math.max(1, Math.floor((h - 6) / lh));
+      if (lines.length > fit) { lines = lines.slice(0, fit); lines[fit - 1] = printFit(lines[fit - 1] + ' …', cellW - 18, f, true); }
+      const ty = top + h / 2 - (lines.length - 1) * lh / 2, tcol = scLum(col) > .45 ? '#1d2733' : col;
+      lines.forEach((ln, i) => out.push(`<text x="${X0 + b1 + 14}" y="${(ty + i * lh).toFixed(1)}" font-size="${f.toFixed(1)}" font-weight="650" fill="${tcol}" dominant-baseline="central">${esc(ln)}</text>`));
+    }
+    const diamonds = [], labels = [];   // [row, x0, x1] used on a row, so that milestone labels stay apart
+    const diamond = (x, cy, d) => `<path d="M${x.toFixed(1)},${(cy - d).toFixed(1)} L${(x + d).toFixed(1)},${cy.toFixed(1)} L${x.toFixed(1)},${(cy + d).toFixed(1)} L${(x - d).toFixed(1)},${cy.toFixed(1)} Z" fill="${SC_MS}" stroke="#fff" stroke-width="1.5"/>`;
+    const msText = m => o.msLabel === 'none' ? '' : o.msLabel === 'name' ? m.name : o.msLabel === 'date' ? fmtDate(dayNumberToIso(m.s)) : `${m.name} · ${fmtDate(dayNumberToIso(m.s))}`;
+    const placeMs = (m, i, barSpan) => {
+      const cy = ys[i] + rowH / 2, d = Math.min(9, rowH * .3), x = xOf(m.s) + pxd / 2, txt = msText(m), f = fs * .86, w = txt ? printTextWidth(txt, f, true) : 0;
+      out.push(diamond(x, cy, d)); diamonds.push([i, x - d, x + d]);
+      if (!txt) return;
+      const clash = (a, b, above) => labels.some(l => l[0] === i && l[3] === above && a < l[2] && b > l[1]) || (!above && diamonds.some(q => q[0] === i && a < q[2] && b > q[1] && !(q[1] === x - d))) || (!above && barSpan && a < barSpan[1] && b > barSpan[0]);
+      const cands = [[x + d + 6, false, 'start'], [x - d - 6 - w, false, 'end'], [x + d + 6, true, 'start'], [x - d - 6 - w, true, 'end']];
+      let pick = null;
+      for (const [a, above, anchor] of cands) { const b = a + w; if (a >= X0 && b <= X1 && !clash(a, b, above)) { pick = [a, above, anchor]; break; } }
+      if (!pick) pick = [Math.min(Math.max(X0, x + d + 6), X1 - w), true, 'start'];
+      const [a, above] = pick; labels.push([i, a, a + w, above]);
+      out.push(`<text x="${(a + (pick[2] === 'end' ? w : 0)).toFixed(1)}" y="${(cy + (above ? -rowH * .4 : f * .34)).toFixed(1)}" font-size="${f.toFixed(1)}" font-weight="600" fill="${INK}" text-anchor="${pick[2]}" stroke="${o.bg === 'white' ? '#fff' : '#fff'}" stroke-width="3.5" stroke-opacity="${o.bg === 'white' ? 1 : .85}" paint-order="stroke" stroke-linejoin="round">${esc(txt)}</text>`);
+    };
+    chunk.forEach((r, i) => {
+      const b = blocks[r.blk], col = colorOf(b), cy = ys[i] + rowH / 2, n = r.n;
+      if (r.kind === 'ms') { if (!(/^(both|name)$/.test(o.msLabel))) out.push(`<text x="${labelX + r.indent * step}" y="${(cy + fs * .34).toFixed(1)}" font-size="${fs.toFixed(1)}" font-weight="600" fill="${INK}">${esc(printFit(n.name, labelW - r.indent * step, fs, true))}</text>`); placeMs(n, i, null); return; }
+      if (!r.cellOnly) out.push(`<text x="${labelX + r.indent * step}" y="${(cy + fs * .34).toFixed(1)}" font-size="${fs.toFixed(1)}" font-weight="${r.kind === 'group' ? 650 : 400}" fill="${INK}"${r.indent > 1 && r.kind !== 'group' ? ' opacity=".8"' : ''}>${esc(printFit(n.name, labelW - r.indent * step, fs, r.kind === 'group'))}</text>`);
+      const x = xOf(n.s), w = Math.max(pxd, (n.e - n.s + 1) * pxd);
+      if (r.kind === 'group') {
+        const a = Math.max(.45, 1 - r.indent * .18), t = r.indent === 0 ? 3 : 2;
+        out.push(`<path d="M${x.toFixed(1)},${(cy - 6).toFixed(1)} V${(cy + 1).toFixed(1)} L${(x + 6).toFixed(1)},${(cy - t + 1).toFixed(1)} H${(x + w - 6).toFixed(1)} L${(x + w).toFixed(1)},${(cy + 1).toFixed(1)} V${(cy - 6).toFixed(1)} Z" fill="${col}" opacity="${a.toFixed(2)}"/>`);
+      } else {
+        const bh = barH * (r.indent > 1 ? .8 : 1);
+        out.push(`<rect x="${x.toFixed(1)}" y="${(cy - bh / 2).toFixed(1)}" width="${w.toFixed(1)}" height="${bh.toFixed(1)}" rx="${(bh / 2).toFixed(1)}" fill="${col}" opacity=".22"/>`);
+        if (n.p > 0) out.push(`<rect x="${x.toFixed(1)}" y="${(cy - bh / 2).toFixed(1)}" width="${Math.min(w, Math.max(bh, w * n.p / 100)).toFixed(1)}" height="${bh.toFixed(1)}" rx="${(bh / 2).toFixed(1)}" fill="${col}"/>`);
+        const nearMs = (r.hosted || []).some(m => { const mx = xOf(m.s) + pxd / 2; return mx > x + w - 4 && mx < x + w + 48; });   // a milestone just after the bar takes the room of its percent label
+        if (o.pct && !nearMs && n.p > 0 && n.p < 100 && rowH >= fs * 1.9 && x + w + 40 < X1) out.push(`<text x="${(x + w + 7).toFixed(1)}" y="${(cy + fs * .3).toFixed(1)}" font-size="${(fs * .78).toFixed(1)}" fill="${INK}" opacity=".62">${Math.round(n.p)}%</text>`);
+      }
+      const span = [x - 2, x + w + (r.kind === 'bar' && o.pct && n.p > 0 && n.p < 100 ? 44 : 6)];   // (a bar or a group's bracket: a milestone label does not sit on it)
+      for (const m of (r.hosted || []).slice().sort((a, b) => a.s - b.s)) placeMs(m, i, span);
+    });
+    if (o.today && today >= d0 && today <= d1) {
+      const tx = xOf(today) + pxd / 2;
+      out.push(`<line x1="${tx.toFixed(1)}" x2="${tx.toFixed(1)}" y1="${tierH * 2 + 4}" y2="${bodyBottom.toFixed(1)}" stroke="${SC_TODAY}" stroke-width="1.5" stroke-dasharray="4 4"/>`);
+      const tw = printTextWidth('Today', tierH * .5, true) + 14;
+      out.push(`<rect x="${(tx - tw / 2).toFixed(1)}" y="2" width="${tw.toFixed(1)}" height="${(tierH - 2).toFixed(1)}" rx="${(tierH / 2 - 1).toFixed(1)}" fill="${SC_TODAY}"/><text x="${tx.toFixed(1)}" y="${(tierH * .7).toFixed(1)}" font-size="${(tierH * .5).toFixed(1)}" font-weight="600" fill="#fff" text-anchor="middle">Today</text>`);
+    }
+    if (o.legend) { let lx = X0; for (const b of blocks.filter(b => b.name)) { const col = colorOf(b), tw = printTextWidth(b.name, fs * .8); if (lx + tw + 30 > X1) break; out.push(`<rect x="${lx}" y="${H - 14}" width="16" height="8" rx="4" fill="${col}"/><text x="${lx + 22}" y="${H - 6}" font-size="${(fs * .8).toFixed(1)}" fill="${INK}" opacity=".7">${esc(b.name)}</text>`); lx += tw + 44; } }
+    out.push('</svg>');
+    return out.join('');
+  });
+  return { charts, W, H, rows: rows.length, cap, textCap, empty: false };
+}
+
+/* ---- the dialog ---- */
+let scOpts = null, scBuilt = null, scPageNo = 0, scTimer = null;
+function scEl(id) { return document.getElementById(id); }
+function scWrite(o) {
+  scEl('scPreset').value = o.preset; scEl('scW').value = o.w; scEl('scH').value = o.h; scEl('scMaxRows').value = o.maxRows; scEl('scMinPt').value = o.minPt;
+  document.querySelector(`input[name=scScope][value="${o.scope}"]`).checked = true;
+  scEl('scHier').value = o.hier; scEl('scLevels').value = String(o.levels); scEl('scMsLabel').value = o.msLabel; scEl('scMsPlace').value = o.msPlace; scEl('scScale').value = o.scale;
+  o.colors.forEach((c, i) => { scEl('scCol' + i).value = c; });
+  scEl('scPalette').value = o.palette; scEl('scBg').value = o.bg; scEl('scInk').value = o.ink; scEl('scFont').value = o.font; scEl('scToday').checked = o.today; scEl('scPct').checked = o.pct; scEl('scLegend').checked = o.legend;
+}
+function scRead() {
+  const num = (id, lo, hi, d) => { const v = parseFloat(scEl(id).value); return Number.isFinite(v) ? Math.max(lo, Math.min(hi, v)) : d; };
+  return { preset: scEl('scPreset').value, w: num('scW', 3, 80, 30), h: num('scH', 2, 60, 13.4), maxRows: Math.round(num('scMaxRows', 1, 60, 16)), minPt: num('scMinPt', 6, 24, 9),
+    scope: (document.querySelector('input[name=scScope]:checked') || {}).value || 'all', hier: scEl('scHier').value, levels: +scEl('scLevels').value, msLabel: scEl('scMsLabel').value, msPlace: scEl('scMsPlace').value, scale: scEl('scScale').value,
+    palette: scEl('scPalette').value, colors: [0, 1, 2, 3].map(i => scEl('scCol' + i).value), bg: scEl('scBg').value, ink: scEl('scInk').value, font: scEl('scFont').value, today: scEl('scToday').checked, pct: scEl('scPct').checked, legend: scEl('scLegend').checked, pick: [...scPick] };
+}
+let scPick = new Set();
+function scCovered(id) { for (let t = byId(id); t; t = t.parentId ? byId(t.parentId) : null) if (scPick.has(t.id)) return true; return false; }
+function scLeafCount(id) { const k = childrenOf(id); return k.length ? k.reduce((a, c) => a + scLeafCount(c.id), 0) : 1; }
+function scRenderTree() {
+  const box = scEl('scTree'), rows = [];
+  (function walk(pid, depth) {
+    for (const t of childrenOf(pid)) {
+      if (t.spacer) continue;
+      const group = hasChildren(t.id);
+      if (!group && depth > 0) continue;   // single tasks are chosen with the selection or the filter; groups (and loose top-level tasks) are ticked here
+      const covered = scCovered(t.id), own = scPick.has(t.id);
+      rows.push(`<label class="trow tpick sc-tr" style="padding-left:${14 + depth * 16}px"><span>${escapeHtml(t.name || 'Untitled')}<span class="tsub">${group ? scLeafCount(t.id) + ' tasks' : 'task'}</span></span><input type="checkbox" class="tick" data-id="${t.id}"${covered ? ' checked' : ''}${covered && !own ? ' disabled' : ''}></label>`);
+      if (group && depth < 3) walk(t.id, depth + 1);
+    }
+  })(null, 0);
+  box.innerHTML = rows.join('') || '<div class="pred-empty">No tasks yet.</div>';
+}
+function scTreeChanged(e) {
+  const cb = e.target.closest('input[data-id]'); if (!cb) return;
+  if (cb.checked) scPick.add(cb.dataset.id); else scPick.delete(cb.dataset.id);
+  scRenderTree(); scChanged();
+}
+function scSyncScopes() {
+  const fa = filtersActive(), sel = selectedIds().length, nf = fa ? exportTaskRows('filtered').filter(r => !r.task.spacer && !hasChildren(r.task.id)).length : 0;
+  scEl('scScopeFiltered').classList.toggle('hidden', !fa); scEl('scScopeSelected').classList.toggle('hidden', !sel);
+  scEl('scScopeFilteredN').textContent = fa ? `${nf} task${nf === 1 ? '' : 's'}` : ''; scEl('scScopeSelectedN').textContent = sel ? `${sel} selected` : '';
+  const cur = (document.querySelector('input[name=scScope]:checked') || {}).value;
+  if ((cur === 'filtered' && !fa) || (cur === 'selected' && !sel)) document.querySelector('input[name=scScope][value=all]').checked = true;
+  scEl('scTreeBox').classList.toggle('hidden', (document.querySelector('input[name=scScope]:checked') || {}).value !== 'pick');
+}
+function openSlideChart() {
+  closeDataMenu && closeDataMenu();
+  scOpts = scLoad(); scPick = new Set(childrenOf(null).filter(t => hasChildren(t.id)).map(t => t.id));
+  if (scOpts.scope === 'filtered' && !filtersActive()) scOpts.scope = 'all';
+  if (scOpts.scope === 'selected') scOpts.scope = 'all';
+  scWrite(scOpts); scSyncScopes(); scRenderTree(); scPageNo = 0;
+  scEl('slideChartModalBg').classList.add('open'); scRefresh();
+}
+function closeSlideChart() { scEl('slideChartModalBg').classList.remove('open'); scBuilt = null; }
+function scChanged(e) {
+  if (e && e.target) {
+    if (e.target.id === 'scPreset' && SC_PRESETS[e.target.value]) { scEl('scW').value = SC_PRESETS[e.target.value][0]; scEl('scH').value = SC_PRESETS[e.target.value][1]; }
+    else if (e.target.id === 'scW' || e.target.id === 'scH') scEl('scPreset').value = 'custom';
+    else if (e.target.id === 'scPalette' && SC_PALETTES[e.target.value]) { const pal = SC_PALETTES[e.target.value]; pal.colors.forEach((c, i) => { scEl('scCol' + i).value = c; }); scEl('scInk').value = pal.ink; }
+    else if (/^scCol\d$|^scInk$/.test(e.target.id)) scEl('scPalette').value = 'custom';
+  }
+  clearTimeout(scTimer); scTimer = setTimeout(scRefresh, 60);
+}
+function scRefresh() {
+  scSyncScopes();
+  const o = scRead(); scOpts = o; scSave(o);
+  try { scBuilt = scBuild(o); } catch (e) { console.error('Milestone: slide chart failed', e); scBuilt = { charts: [], W: 0, H: 0, rows: 0, empty: true }; }
+  scPageNo = Math.min(scPageNo, Math.max(0, scBuilt.charts.length - 1)); scDraw();
+}
+function scPage(d) { if (!scBuilt) return; scPageNo = Math.max(0, Math.min(scBuilt.charts.length - 1, scPageNo + d)); scDraw(); }
+function scDraw() {
+  const b = scBuilt, box = scEl('scPreview'), many = b.charts.length > 1;
+  box.innerHTML = b.empty ? '<div class="pred-empty">There are no tasks to draw with these choices.</div>' : `<div class="sc-sheet" style="aspect-ratio:${b.W}/${b.H}">${b.charts[scPageNo].replace(/ width="\d+" height="\d+"/, ' width="100%" height="100%"')}</div>`;
+  scEl('scPageInfo').textContent = b.empty ? '' : `Chart ${scPageNo + 1} of ${b.charts.length}`;
+  scEl('scPrev').disabled = scPageNo === 0; scEl('scNext').disabled = scPageNo >= b.charts.length - 1;
+  scEl('scPrev').classList.toggle('hidden', !many); scEl('scNext').classList.toggle('hidden', !many); scEl('scSaveAll').classList.toggle('hidden', !many);
+  for (const id of ['scCopy', 'scPng', 'scSvg', 'scSaveAll']) scEl(id).disabled = !!b.empty;
+  const o = scOpts, cm = x => (Math.round(x / SC_CM * 10) / 10);
+  scEl('scSummary').textContent = b.empty ? '' : `${b.rows} row${b.rows === 1 ? '' : 's'} · ${b.charts.length} chart${b.charts.length === 1 ? '' : 's'} · ${cm(b.W)} × ${cm(b.H)} cm`;
+  scEl('scNote').textContent = !b.empty && b.cap < o.maxRows ? `At ${cm(b.H)} cm high, ${o.minPt} pt text fits ${b.cap} rows, so charts are cut at ${b.cap}.` : '';
+  scEl('scNote').classList.toggle('hidden', !scEl('scNote').textContent);
+}
+async function scExport(kind, all) {
+  const b = scBuilt; if (!b || b.empty) return;
+  const idx = all ? b.charts.map((_, i) => i) : [scPageNo], base = `${fileBase(project.name)}-slide`, scale = Math.min(2, PNG_MAX_SIDE / b.H, PNG_MAX_SIDE / b.W);
+  const svgOf = i => '<?xml version="1.0" encoding="UTF-8"?>\n' + b.charts[i];
+  const name = (i, ext) => `${base}${b.charts.length > 1 ? '-' + (i + 1) : ''}.${ext}`;
+  try {
+    if (kind === 'copy') {
+      if (!(navigator.clipboard && window.ClipboardItem)) { showToast('This browser can’t copy a picture — use PNG', true); return; }
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': svgToPng(b.charts[scPageNo], b.W, b.H, scale, scOpts.bg === 'white' ? '#fff' : null) })]);
+      showToast(`Copied the chart (${Math.round(b.W * scale)} × ${Math.round(b.H * scale)} px, transparent) — paste it into a slide`); return;
+    }
+    for (const i of idx) {
+      if (kind === 'svg') downloadBlob(new Blob([svgOf(i)], { type: 'image/svg+xml' }), name(i, 'svg'));
+      else downloadBlob(await svgToPng(b.charts[i], b.W, b.H, scale, scOpts.bg === 'white' ? '#fff' : null), name(i, 'png'));
+    }
+    showToast(idx.length > 1 ? `Saved ${idx.length} charts` : `Saved ${name(idx[0], kind)}`);
+  } catch (e) { if (e && e.name !== 'NotAllowedError') console.error('Milestone: slide chart export failed', e); showToast(kind === 'copy' ? 'Copying the picture was refused — use PNG' : 'The picture could not be made — use SVG', true); }
 }
 
 /* ============================== Bulk edit ================================
@@ -14303,7 +14672,7 @@ function wireGlobalEvents() {
     // Escape closes whatever overlay is open first; only when there is none — and
     // the user isn't typing in a field, where Escape already means "cancel this
     // edit" — does it clear the task selection.
-    const modalIds = ['recurModalBg', 'taskModalBg', 'folderFilesModalBg', 'confirmModalBg', 'calendarModalBg', 'rulesModalBg', 'formatModalBg', 'baselineModalBg', 'rescheduleModalBg', 'levelModalBg', 'syncConflictsModalBg', 'planModalBg', 'excelModalBg', 'importModalBg', 'foreignImportModalBg', 'bulkModalBg', 'searchModalBg', 'printModalBg', 'helpModalBg', 'aboutModalBg', 'shortcutsModalBg', 'csvModalBg', 'replaceModalBg'];
+    const modalIds = ['recurModalBg', 'taskModalBg', 'folderFilesModalBg', 'confirmModalBg', 'calendarModalBg', 'rulesModalBg', 'formatModalBg', 'baselineModalBg', 'rescheduleModalBg', 'levelModalBg', 'syncConflictsModalBg', 'planModalBg', 'excelModalBg', 'importModalBg', 'foreignImportModalBg', 'bulkModalBg', 'searchModalBg', 'printModalBg', 'slideChartModalBg', 'helpModalBg', 'aboutModalBg', 'shortcutsModalBg', 'csvModalBg', 'replaceModalBg'];
     const overlayOpen = modalIds.some(id => document.getElementById(id).classList.contains('open'))
       || document.getElementById('fileSyncModalBg').classList.contains('open')   // mandatory: Escape can't close it
       || document.getElementById('dataMenu').classList.contains('open')
