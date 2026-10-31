@@ -14,7 +14,7 @@ LOG_FILE="$DIR/.milestone-server.log"
 URL="http://127.0.0.1:$PORT/milestone.html"
 
 is_up() {
-  curl -s -o /dev/null --max-time 1 "http://127.0.0.1:$PORT/manifest.json"
+  curl -fs -o /dev/null --max-time 1 "http://127.0.0.1:$PORT/manifest.json"
 }
 
 if ! is_up; then

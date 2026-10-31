@@ -1,12 +1,11 @@
-const CACHE_NAME = 'milestone-cache-v4';
+const CACHE_NAME = 'milestone-cache-v5';
 const APP_SHELL = [
   'milestone.html',
   'manifest.json',
+  'icons/icon-180.png',
   'icons/icon-192.png',
   'icons/icon-512.png',
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css',
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/webfonts/fa-solid-900.woff2',
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/webfonts/fa-regular-400.woff2'
+  'icons/icon.svg'
 ];
 
 self.addEventListener('install', (event) => {
@@ -37,7 +36,7 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(req)
         .then((res) => {
-          caches.open(CACHE_NAME).then((cache) => cache.put(req, res.clone()));
+          if (res.ok) caches.open(CACHE_NAME).then((cache) => cache.put(req, res.clone()));   // an error page must not replace the good saved copy
           return res;
         })
         .catch(() => caches.match(req).then((cached) => cached || caches.match('milestone.html')))
@@ -49,7 +48,7 @@ self.addEventListener('fetch', (event) => {
     caches.match(req).then((cached) => {
       const fetchPromise = fetch(req)
         .then((res) => {
-          caches.open(CACHE_NAME).then((cache) => cache.put(req, res.clone()));
+          if (res.ok) caches.open(CACHE_NAME).then((cache) => cache.put(req, res.clone()));   // an error page must not replace the good saved copy
           return res;
         })
         .catch(() => cached);
