@@ -553,6 +553,15 @@ button { cursor: default; }
   backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
 }
 html.sidebar-collapsed .sidebar { display: none; }
+/* the sidebar's drag edge (as ClearDesk's): no width of its own, a 9px grab area centred on the sidebar's border and a 2px accent line while it is hovered, focused or dragged */
+.sb-resizer { position: relative; flex: none; width: 0; z-index: 61; }
+.sb-resizer::before { content: ""; position: absolute; top: 0; bottom: 0; left: -4px; width: 9px; cursor: col-resize; }
+.sb-resizer::after { content: ""; position: absolute; top: 0; bottom: 0; left: -1px; width: 2px; background: var(--accent); opacity: 0; transition: opacity var(--dur-fast, .12s) ease; pointer-events: none; }
+.sb-resizer:hover::after, .sb-resizer:focus-visible::after, .sb-resizer.dragging::after { opacity: .7; }
+.sb-resizer:focus { outline: none; }
+html:has(.sb-resizer.dragging), html:has(.sb-resizer.dragging) * { cursor: col-resize !important; user-select: none !important; }
+html:has(.sb-resizer.dragging) .sidebar { transition: none; }
+html.sidebar-collapsed .sb-resizer { display: none; }
 .sidebar { position: relative; z-index: 60; }   /* above the content, so the tools bar's menus (wider than the sidebar) are not painted over by it */
 .sb-head { display: flex; align-items: center; gap: 8px; height: 52px; flex: none; padding: 0 12px; }   /* just the round hide button (the views are rows below) */
 .sb-head #sidebarToggleBtn, .sb-float { background: var(--cap-fill); border-radius: 50%; width: 36px; height: 36px; flex: none; box-shadow: inset 0 1px 0 var(--sheen), 0 1px 4px var(--shadow-ink-soft); }   /* ClearDesk's round hide / show button: the same glyph (a 16px outline svg), the same lit edge */
@@ -623,6 +632,7 @@ html:not(.sidebar-collapsed) .sb-float { display: none; }   /* (the show button 
 /* narrow windows: the sidebar floats over the content (and starts hidden, see applySidebarState) */
 @media (max-width: 800px) {
   .sidebar { position: fixed; z-index: 70; top: 0; bottom: 0; left: 0; box-shadow: var(--shadow); }
+  .sb-resizer { display: none; }   /* the floating sidebar keeps its width */
 }
 /* view tabs: the task views, a divider, the resource views */
 .view-tab-sep { height: 1px; align-self: stretch; margin: 6px 8px; background: var(--border); }

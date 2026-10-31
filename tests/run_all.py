@@ -5,7 +5,7 @@
     python3 tests/run_all.py verify_pull undo   # only suites whose name contains one of these words
     python3 tests/run_all.py --stress 100       # a long stress run (seeds 1-100); --stress 0 skips it
     python3 tests/run_all.py --jobs 4           # how many suites run at once (default 3)
-    python3 tests/run_all.py --url http://127.0.0.1:8937/milestone.html
+    python3 tests/run_all.py --url http://127.0.0.1:8937/index.html
 
 If nothing answers at the URL, a static server for the repository folder is started on port 8937 for the run.
 Needs:  pip install playwright openpyxl  &&  python3 -m playwright install chromium
@@ -46,7 +46,7 @@ def main():
     ap.add_argument("only", nargs="*", help="run only suites whose name contains one of these words")
     ap.add_argument("--jobs", type=int, default=3)
     ap.add_argument("--stress", type=int, default=6, help="number of stress seeds (0 = skip)")
-    ap.add_argument("--url", default=os.environ.get("MILESTONE_URL", "http://127.0.0.1:8937/milestone.html"))
+    ap.add_argument("--url", default=os.environ.get("MILESTONE_URL", "http://127.0.0.1:8937/index.html"))
     a = ap.parse_args()
     server = None
     if not reachable(a.url):

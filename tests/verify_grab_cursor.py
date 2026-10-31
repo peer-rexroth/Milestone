@@ -1,6 +1,6 @@
 from playwright.sync_api import sync_playwright
 import os
-URL = os.environ.get("MILESTONE_URL", "http://127.0.0.1:8937/milestone.html")
+URL = os.environ.get("MILESTONE_URL", "http://127.0.0.1:8937/index.html")
 res = []
 def check(n, c, d=""): res.append(bool(c)); print(("PASS  " if c else "FAIL  ") + n + (f"  [{d}]" if not c else ""))
 with sync_playwright() as p:

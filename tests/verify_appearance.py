@@ -4,7 +4,7 @@ Appearance (Light | Dark, only while Match System is off) and the Match System s
 (#window), not the menus and dialogs; the theme follows the system until a choice is made."""
 import os
 from playwright.sync_api import sync_playwright
-URL = os.environ.get("MILESTONE_URL", "http://127.0.0.1:8937/milestone.html")
+URL = os.environ.get("MILESTONE_URL", "http://127.0.0.1:8937/index.html")
 errors, results = [], []
 def check(name, cond, detail=""):
     results.append(bool(cond)); print(("PASS  " if cond else "FAIL  ") + name + (f"   [{str(detail)[:300]}]" if not cond and detail else ""))

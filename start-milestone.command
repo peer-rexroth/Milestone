@@ -11,7 +11,7 @@ cd "$DIR"
 PORT=8937
 PID_FILE="$DIR/.milestone-server.pid"
 LOG_FILE="$DIR/.milestone-server.log"
-URL="http://127.0.0.1:$PORT/milestone.html"
+URL="http://127.0.0.1:$PORT/"
 
 is_up() {
   curl -fs -o /dev/null --max-time 1 "http://127.0.0.1:$PORT/manifest.json"

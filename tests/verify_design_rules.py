@@ -7,8 +7,8 @@ import os, re, io
 from collections import Counter
 from playwright.sync_api import sync_playwright
 from PIL import Image
-URL = os.environ.get("MILESTONE_URL", "http://127.0.0.1:8937/milestone.html")
-HERE = os.path.dirname(os.path.abspath(__file__)); SRC = open(os.path.join(HERE, "..", "milestone.html"), encoding="utf-8").read()
+URL = os.environ.get("MILESTONE_URL", "http://127.0.0.1:8937/index.html")
+HERE = os.path.dirname(os.path.abspath(__file__)); SRC = open(os.path.join(HERE, "..", "index.html"), encoding="utf-8").read()
 errors, results = [], []
 def check(name, cond, detail=""):
     results.append(bool(cond)); print(("PASS  " if cond else "FAIL  ") + name + (f"   [{str(detail)[:500]}]" if not cond and detail else ""))

@@ -3,7 +3,7 @@
 for a very tall plan, refused past that), Copy to the clipboard, the Print dialog's options honoured. See "The chart as a picture" in CLAUDE.md."""
 import os, re, struct, tempfile, xml.dom.minidom
 from playwright.sync_api import sync_playwright
-URL = os.environ.get("MILESTONE_URL", "http://127.0.0.1:8937/milestone.html")
+URL = os.environ.get("MILESTONE_URL", "http://127.0.0.1:8937/index.html")
 errors, results = [], []
 def check(name, cond, detail=""):
     results.append(bool(cond)); print(("PASS  " if cond else "FAIL  ") + name + (f"   [{str(detail)[:500]}]" if not cond and detail else ""))

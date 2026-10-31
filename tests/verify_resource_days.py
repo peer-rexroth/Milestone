@@ -5,7 +5,7 @@ the Resource Sheet is a view tab. Rename/remove cascades are
 covered by verify_resource_sheet_view.py. See "Resource levelling" and "Resource Sheet" in CLAUDE.md."""
 import os
 from playwright.sync_api import sync_playwright
-URL = os.environ.get("MILESTONE_URL", "http://127.0.0.1:8937/milestone.html")
+URL = os.environ.get("MILESTONE_URL", "http://127.0.0.1:8937/index.html")
 errors, results = [], []
 def check(name, cond, detail=""):
     results.append(bool(cond)); print(("PASS  " if cond else "FAIL  ") + name + (f"   [{str(detail)[:400]}]" if not cond and detail else ""))

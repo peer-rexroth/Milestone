@@ -1,0 +1,8 @@
+{
+  // Cloudflare static-asset deploy: publishes the dist/ folder that ./build-site.sh builds.
+  "name": "milestone",
+  "compatibility_date": "2026-10-31",
+  "assets": {
+    "directory": "./dist"
+  }
+}

@@ -1,7 +1,7 @@
 """A refusal in the Edit Tasks dialog is shown on the field that is wrong (red border + bubble), not only as a toast; retyping clears it."""
 from playwright.sync_api import sync_playwright
 import os
-URL = os.environ.get("MILESTONE_URL", "http://127.0.0.1:8937/milestone.html")
+URL = os.environ.get("MILESTONE_URL", "http://127.0.0.1:8937/index.html")
 results = []
 def check(name, cond, detail=""):
     results.append(bool(cond)); print(("PASS  " if cond else "FAIL  ") + name + (f"   [{detail}]" if not cond and detail else ""))

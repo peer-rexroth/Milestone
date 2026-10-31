@@ -1,6 +1,6 @@
 const CACHE_NAME = 'milestone-cache-v5';
 const APP_SHELL = [
-  'milestone.html',
+  './',
   'manifest.json',
   'icons/icon-180.png',
   'icons/icon-192.png',
@@ -34,12 +34,13 @@ self.addEventListener('fetch', (event) => {
 
   if (req.mode === 'navigate') {
     event.respondWith(
-      fetch(req)
+      // no-cache: always revalidate with the server — the plain dev server sends no cache headers, so Chrome's HTTP cache would otherwise keep handing back an old page after an edit.
+      fetch(req.url, { cache: 'no-cache' })
         .then((res) => {
           if (res.ok) caches.open(CACHE_NAME).then((cache) => cache.put(req, res.clone()));   // an error page must not replace the good saved copy
           return res;
         })
-        .catch(() => caches.match(req).then((cached) => cached || caches.match('milestone.html')))
+        .catch(() => caches.match(req).then((cached) => cached || caches.match('./')))
     );
     return;
   }

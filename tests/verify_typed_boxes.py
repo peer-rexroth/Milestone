@@ -7,7 +7,7 @@ control runs past its dialog, Name/Mode stack, the Print panes stack, the precis
 Edit-tasks dialog, sentence-case titles, no dead 'Clear this baseline'. (5) Help: an Hours & minutes topic and a search."""
 import os, re
 from playwright.sync_api import sync_playwright
-URL = os.environ.get("MILESTONE_URL", "http://127.0.0.1:8937/milestone.html")
+URL = os.environ.get("MILESTONE_URL", "http://127.0.0.1:8937/index.html")
 errors, results = [], []
 def check(name, cond, detail=""):
     results.append(bool(cond)); print(("PASS  " if cond else "FAIL  ") + name + (f"   [{str(detail)[:400]}]" if not cond and detail else ""))

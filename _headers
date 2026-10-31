@@ -1,0 +1,15 @@
+# Cloudflare Pages response headers (copied into dist/ by build-site.sh).
+# The page and the service worker are always revalidated, so a new deploy is seen on the next open.
+/
+  Cache-Control: no-cache
+/index.html
+  Cache-Control: no-cache
+/sw.js
+  Cache-Control: no-cache
+/manifest.json
+  Cache-Control: no-cache
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: no-referrer
+  Permissions-Policy: camera=(), microphone=(), geolocation=()

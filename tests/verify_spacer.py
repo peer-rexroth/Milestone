@@ -3,7 +3,7 @@
 feature that has to cope with one: clone, delete + undo, copy/paste, bulk edit, find, filters, print, Excel, history, reload, hand-made bad data."""
 from playwright.sync_api import sync_playwright
 import os, io, base64, openpyxl
-URL = os.environ.get("MILESTONE_URL", "http://127.0.0.1:8937/milestone.html")
+URL = os.environ.get("MILESTONE_URL", "http://127.0.0.1:8937/index.html")
 errors, results = [], []
 def check(name, cond, detail=""):
     results.append(bool(cond)); print(("PASS  " if cond else "FAIL  ") + name + (f"   [{str(detail)[:600]}]" if not cond and detail else ""))

@@ -3,7 +3,7 @@
 every batch that the plan is still valid, nothing threw and the app still answers.  python3 tests/verify_monkey.py [seeds]  (default 1 2 3)"""
 from playwright.sync_api import sync_playwright
 import os, random, re, sys, json, signal, time
-URL = os.environ.get("MILESTONE_URL", "http://127.0.0.1:8937/milestone.html")
+URL = os.environ.get("MILESTONE_URL", "http://127.0.0.1:8937/index.html")
 errors, results = [], []
 def check(name, cond, detail=""):
     results.append(bool(cond)); print(("PASS  " if cond else "FAIL  ") + name + (f"   [{str(detail)[:900]}]" if not cond and detail else ""))

@@ -2,7 +2,7 @@
 """Robustness: garbage into every parser, hostile names into every new dialog, big plans, features used together, accessibility basics."""
 from playwright.sync_api import sync_playwright
 import os, re, io, json
-URL = os.environ.get("MILESTONE_URL", "http://127.0.0.1:8937/milestone.html")
+URL = os.environ.get("MILESTONE_URL", "http://127.0.0.1:8937/index.html")
 errors, results = [], []
 def check(name, cond, detail=""):
     results.append(bool(cond)); print(("PASS  " if cond else "FAIL  ") + name + (f"   [{str(detail)[:600]}]" if not cond and detail else ""))

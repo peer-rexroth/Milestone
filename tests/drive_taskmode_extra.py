@@ -4,7 +4,7 @@ sys.path.insert(0, __import__('os').path.dirname(__import__('os').path.abspath(_
 from _legacy_cols import LEGACY_COLS
 
 import os
-URL = os.environ.get("MILESTONE_URL", "http://127.0.0.1:8937/milestone.html")
+URL = os.environ.get("MILESTONE_URL", "http://127.0.0.1:8937/index.html")
 errors = []
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=True)

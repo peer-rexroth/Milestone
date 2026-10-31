@@ -1,7 +1,7 @@
 # Tests
 
 Milestone has no build step, and its tests match: each `verify_*.py` / `drive_*.py` is a Playwright script that opens
-`milestone.html` in headless Chromium, drives the real UI and internals, and prints `PASS` / `FAIL` lines and a
+`index.html` in headless Chromium, drives the real UI and internals, and prints `PASS` / `FAIL` lines and a
 `N/M passed` summary (exit status 0 = passed).
 
 ```sh

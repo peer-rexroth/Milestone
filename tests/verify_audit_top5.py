@@ -2,7 +2,7 @@
 no colour literals outside tokens, and the platform-specific Find and replace shortcut."""
 from playwright.sync_api import sync_playwright
 import os, re
-URL = os.environ.get("MILESTONE_URL", "http://127.0.0.1:8937/milestone.html")
+URL = os.environ.get("MILESTONE_URL", "http://127.0.0.1:8937/index.html")
 HERE = os.path.dirname(os.path.abspath(__file__))
 results = []
 def check(name, cond, detail=""):
@@ -79,7 +79,7 @@ with sync_playwright() as p:
     check("every task-row menu item is in title style", not bad, bad)
     check("...with the new wording (Edit Task…, Add Task Below)", "Edit Task…" in labels and "Add Task Below" in labels, labels)
     pg.keyboard.press("Escape")
-    html = open(os.path.join(HERE, "..", "milestone.html"), encoding="utf-8").read()
+    html = open(os.path.join(HERE, "..", "index.html"), encoding="utf-8").read()
     heads = re.findall(r"<h2[^>]*>([^<]+)(?:</h2>|<span)", html)
     sent = [h for h in heads if re.search(r"\b(?:task|plan|work|backups|settings|resources|replace|pdf|shortcuts|sides)\b", h) and h not in ("Plan file",)]
     check("sheet titles carry no lower-case noun (Local Backups, Plan Settings, Level Resources …)", not sent, sent)
