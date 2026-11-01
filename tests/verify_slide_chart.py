@@ -112,6 +112,17 @@ with sync_playwright() as p:
     s = build("{ hier: 'block-rows' }")["svg"][0]
     check("Blocks, then rows: workstreams turned, groups as rows", "rotate(-90" in s)
 
+    # ---- without the parent groups
+    flat = build("{ parents: false, levels: 6, hier: 'blocks', msPlace: 'group', maxRows: 60, h: 24 }")
+    n_tasks = 4 * 3 * 4 + 1 + 12   # every task, the gates on rows of their own, and the loose task
+    check("Show parent groups off: only tasks and milestones take rows (no group rows, no blocks, no cells)", flat["rows"] == n_tasks and "rotate(-90" not in flat["svg"][0] and "Workstream 1<" not in flat["svg"][0] and "Group 1.1<" not in flat["svg"][0], flat["rows"])
+    check("...and the parent groups really are named on the default chart", "Group 1.1" in build("{ maxRows: 60, h: 24 }")["svg"][0])
+    fl = ev("() => { const o = Object.assign(scDefaults(), { parents: false, levels: 6, scope: 'selected' }); selectedTaskIds.clear(); selectedTaskIds.add('t000'); const r = scRows(scTree(o), o); selectedTaskIds.clear(); return r.rows.map(x => x.n.name); }")
+    check("one marked / selected deep task alone gives one row, not its ancestors", fl == ["Task 1.1.1"], fl)
+    deep = ev("() => { const o = Object.assign(scDefaults(), { levels: 6, scope: 'selected' }); selectedTaskIds.clear(); selectedTaskIds.add('t000'); const r = scRows(scTree(o), o); selectedTaskIds.clear(); return r.rows.length; }")
+    check("...with the parents on it is the task in its block and cell (one row, the group names around it)", deep == 1, deep)
+    lv = build("{ parents: false, levels: 2, hier: 'blocks', maxRows: 60, h: 24 }")
+    check("with the parents off, Levels still rolls a group into one bar (12 groups + the loose task)", lv["rows"] == 13, lv["rows"])
     # ---- milestones
     s = " ".join(build("{ msLabel: 'both', maxRows: 60, h: 20 }")["svg"])
     check("milestones carry name and date: 'Gate 1.1 · 04.01.2027 + …'", re.search(r"Gate 1\.1 · \d\d\.\d\d\.\d{4}", s))

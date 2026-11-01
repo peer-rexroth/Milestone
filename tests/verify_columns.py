@@ -340,7 +340,7 @@ with sync_playwright() as p:
     geo = pg.evaluate("() => { const m = document.querySelector('#taskModalBg .modal').getBoundingClientRect(); const b = document.querySelector('#taskModalBg .modal-body'); b.scrollTop = b.scrollHeight; const btn = document.querySelector('#taskModalBg .modal-body .tadd').getBoundingClientRect(); const bb = b.getBoundingClientRect(); return {modalH: m.height, vh: innerHeight, btnVisible: btn.bottom <= bb.bottom + 1 && btn.top >= bb.top}; }")
     check("dialog: fits the window (at most 94% of its height) and the last field is reachable by scrolling", geo["modalH"] <= geo["vh"] * 0.94 + 1 and geo["btnVisible"], geo)
     close_dialog()
-    pg.set_viewport_size({"width": 1500, "height": 1100}); open_dialog("Solo")
+    pg.set_viewport_size({"width": 1500, "height": 1200}); open_dialog("Solo")   # (1100 before On Slide got its row)
     fits = pg.evaluate("() => { const b = document.querySelector('#taskModalBg .modal-body'); return b.scrollHeight <= b.clientHeight + 1; }")
     check("on a normal-height window the whole dialog is visible without scrolling", fits); close_dialog()
     pg.set_viewport_size({"width": 1500, "height": 820})

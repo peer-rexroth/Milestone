@@ -42,6 +42,8 @@ with sync_playwright() as p:
     # the task dialog
     ev("() => openTaskModal('b1')"); pg.wait_for_timeout(200)
     check("the task dialog has an 'On Slide' switch, off for an unmarked task", pg.is_visible("#taskOnSlideInput") and not pg.is_checked("#taskOnSlideInput"))
+    pos = ev("() => { const r = id => document.getElementById(id).getBoundingClientRect().top; return [r('taskColorSwatches'), r('taskOnSlideInput'), r('taskMilestoneInput')]; }")
+    check("...it sits right under Color (with how the task shows), not beside Milestone (what kind of task it is)", 0 < pos[1] - pos[0] < 60 and pos[1] > pos[2], pos)
     pg.check("#taskOnSlideInput", force=True); ev("() => saveTaskFromModal()"); pg.wait_for_timeout(250)
     check("saving the dialog with it on marks the task", "B one" in marked(), marked())
     ev("() => openTaskModal('b1')"); pg.wait_for_timeout(150)
@@ -59,15 +61,12 @@ with sync_playwright() as p:
     pg.check("#bulkOn-onSlide", force=True); pg.select_option("#bulkVal-onSlide", "no"); pg.click("#bulkApplyBtn"); pg.wait_for_timeout(300)
     check("applying 'No' takes them off again", marked() == ["Solo"], marked())
 
-    # right-click menu
+    # right-click menu: On Slide is not there (too much for a menu that is already long)
     ev("() => { selectedTaskIds.clear(); setSelection(['a1']); }")
     pg.locator(".grid-row:has-text('A one')").first.click(button="right"); pg.wait_for_selector("#rowMenu.open")
-    check("the right-click menu offers 'Put On Slide' for an unmarked task", "Put On Slide" in pg.inner_text("#rowMenu"))
-    pg.locator("#rowMenu .dropdown-item:has-text('Put On Slide')").click(); pg.wait_for_timeout(250)
-    check("...and it marks the selection", sorted(marked()) == ["A one", "Solo"], marked())
-    pg.locator(".grid-row:has-text('A one')").first.click(button="right"); pg.wait_for_selector("#rowMenu.open")
-    check("a marked task's menu says 'Take Off Slide'", "Take Off Slide" in pg.inner_text("#rowMenu"))
+    check("the right-click menu has no On Slide item", "Slide" not in pg.inner_text("#rowMenu"))
     pg.keyboard.press("Escape"); pg.wait_for_timeout(100)
+    ev("() => { toggleOnSlide('a1'); toggleOnSlide('c'); }"); pg.wait_for_timeout(100)
 
     # the filter
     ev("() => { colFilters = newColFilters(); }")
