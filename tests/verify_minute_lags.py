@@ -100,7 +100,7 @@ with sync_playwright() as p:
     plan(AB, minute=False)
     ev("() => { tasks.find(t => t.name === 'B').predecessors[0].lag = 3; save(); render(); }")
     pg.click(f".grid-row[data-id='{tid('B')}'] .icon-btn[title=Edit]"); pg.wait_for_selector("#taskModalBg.open")
-    check("a day-mode plan keeps the number box (days)", pg.locator("#predecessorRows input[type=number][placeholder='Lead/Lag']").count() == 1 and pg.locator("#predecessorRows .pred-lag-input").count() == 0)
+    check("a day-mode plan has the same text box, showing the lag in days (+3)", pg.locator("#predecessorRows .pred-lag-input").count() == 1 and pg.input_value("#predecessorRows .pred-lag-input") == "+3")
     pg.keyboard.press("Escape")
 
     # ---------------------------------------------------------------- the Edit-tasks (bulk) dialog

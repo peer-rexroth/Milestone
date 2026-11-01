@@ -1983,7 +1983,7 @@ html.time12 :is(#calendarModalBg) :is(.wh-day-row, .wh-break-add) input.dt-time 
 .modal-header button { border: none; background: none; font-size: var(--fs-17); color: var(--text-faint); width: var(--ib-m); height: var(--ib-m); border-radius: 50%; }
 .modal-header button:hover { background: var(--pressed); color: var(--text); }
 .modal-header .hdr-link { width: auto; height: auto; margin: 0 8px 0 auto; padding: 4px 8px; font-size: var(--fs-12); color: var(--accent); }
-.modal-body { padding: 16px 24px 0; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; color: var(--text-dim); line-height: 1.6; }
+.modal-body { padding: 16px 24px 4px; overflow-y: auto;   /* (4px below: the 3px focus ring of a last row would be cut by the scroll box) */ display: flex; flex-direction: column; gap: 14px; color: var(--text-dim); line-height: 1.6; }
 .modal-body :is(input, select, textarea, .field label) { line-height: normal; }
 .modal-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 16px 24px 24px; border-top: 0; }
 .modal-footer .btn:not(.btn-primary) { background: var(--bg-2); box-shadow: var(--elev-1); border-color: transparent; }
@@ -6286,6 +6286,14 @@ function parseLagInput(str) {
   const lag = n * (LAG_MIN_UNIT.test(u) ? 1 : /^(h|hr|hrs|hour|hours|std|stunde|stunden|)$/.test(u) ? 60 : /^(w|wk|wks|week|weeks|wo|woche|wochen)$/.test(u) ? 5 * per : per);
   return lag <= MAX_LAG_MINUTES ? Math.round(lag) * (m[1] === '-' ? -1 : 1) : null;
 }
+// One lead/lag typed in the task dialog or the Task Form, read the way the Predecessors cell reads it (parsePredText): "2", "-1d", "+1w", "4h", "30m" (a bare number is days, or
+// hours in a minute-mode plan). Blank is 0. null = not a lag; elapsed units (ed, ew…) are refused: these boxes keep working time only.
+function parseLagField(str) {
+  const v = String(str == null ? '' : str).trim().toLowerCase(); if (v === '') return 0;
+  const m = /^([+-])?\s*(\d+(?:[.,]\d+)?)\s*([a-zäöü%]*)$/.exec(v); if (!m) return null;
+  const r = parsePredText('1FS' + (m[1] || '+') + m[2] + m[3], true, minuteModeActive());
+  return r.bad.length || !r.links.length || r.links[0].elapsed ? null : r.links[0].lag;
+}
 function predecessorLabel(t) {
   return t.predecessors.map(p => {
     const pt = byId(p.id);
@@ -10043,7 +10051,7 @@ function tfPredRowHtml(p, i) {
   return `<div class="tf-row" data-i="${i}"><input type="number" class="tf-cell" min="1" step="1" value="${escapeHtml(p.num)}" placeholder="Task #" aria-label="Predecessor task number" style="text-align:right" oninput="tfPredInput(${i}, 'num', this.value)">
       <span class="tf-pred-name${pt ? '' : ' none'}" data-i="${i}" title="${pt ? escapeHtml(pt.name) : ''}">${pt ? escapeHtml(pt.name) : (p.num ? 'no such task' : '')}</span>
       <select class="tf-cell" aria-label="Link type" title="FS finish-to-start, SS start-to-start, FF finish-to-finish, SF start-to-finish" onchange="tfPredInput(${i}, 'type', this.value)">${DEP_TYPES.map(dt => `<option value="${dt}"${dt === p.type ? ' selected' : ''}>${dt}</option>`).join('')}</select>
-      <input type="text" class="tf-cell tf-lag" value="${escapeHtml(p.lag)}" placeholder="0" aria-label="Lead or lag" title="${minuteModeActive() ? 'Working time — 2h, -30m, 1d; a bare number is hours' : 'Working days — negative is a lead'}. Positive delays the task (lag), negative lets it overlap (lead)" oninput="tfPredInput(${i}, 'lag', this.value)">
+      <input type="text" class="tf-cell tf-lag" value="${escapeHtml(p.lag)}" placeholder="0" aria-label="Lead or lag" title="Lead or lag: 2d, -1w, 4h; a bare number is ${minuteModeActive() ? 'hours' : 'days'}" oninput="tfPredInput(${i}, 'lag', this.value)">
       <button type="button" class="tf-remove" aria-label="Remove this predecessor" title="Remove" onclick="tfPredRemove(${i})"><i class="fa-solid fa-xmark"></i></button></div>`;
 }
 function renderTfPredRows() {
@@ -10097,8 +10105,7 @@ function applyTaskForm() {
       const lagText = String(p.lag).trim() || '0';
       let lag, elapsed = false;
       if (p.orig && p.orig.id === pt.id && lagText === p.orig.lagText) { lag = p.orig.lag; elapsed = p.orig.elapsed; }   // untouched: keep it exactly (an elapsed lag too)
-      else if (mm) { lag = parseLagInput(lagText); if (lag === null) return fail(`Can't read "${lagText}" as a lag — try 2h, -30m, 1d or 1w`); }
-      else { const m = /^([+-]?\d+)\s*(d|days?)?$/i.exec(lagText); lag = m ? parseInt(m[1], 10) : NaN; if (!Number.isFinite(lag) || Math.abs(lag) > MAX_LAG_DAYS) return fail(`Can't read "${lagText}" as a lag in working days`); }
+      else { lag = parseLagField(lagText); if (lag === null) return fail(`Can't read "${lagText}" as a lag — try 2d, -1w or 4h`); }
       const link = { id: pt.id, type: DEP_TYPES.includes(p.type) ? p.type : 'FS', lag }; if (elapsed) link.elapsed = true;
       preds.push(link);
     }
@@ -10590,17 +10597,16 @@ function renderPredecessorRows() {
       <select aria-label="Link type" title="FS finish-to-start, SS start-to-start, FF finish-to-finish, SF start-to-finish" onchange="editingPredecessors[${i}].type=this.value">
         ${DEP_TYPES.map(dt => `<option value="${dt}"${dt === p.type ? ' selected' : ''}>${dt}</option>`).join('')}
       </select>
-      ${minuteModeActive()
-        ? `<input type="text" class="pred-lag-input" value="${p.lag ? fmtLagMinutes(p.lag) : '0'}" placeholder="Lead/Lag" aria-label="Lead or lag" title="Lead/Lag in working time — 2h, -30m, 1d, 1w; a bare number is hours. Positive delays the start (lag), negative overlaps it (lead)" onchange="onPredLagChange(${i}, this)">`
-        : `<input type="number" value="${p.lag || 0}" placeholder="Lead/Lag" aria-label="Lead or lag in days" title="Lead/Lag (days) — positive delays the start (lag), negative overlaps it (lead)" onchange="editingPredecessors[${i}].lag=parseInt(this.value)||0">`}
+      <input type="text" class="pred-lag-input" value="${p.lag ? fmtLag(p.lag, p.elapsed) : '0'}" placeholder="Lead/Lag" aria-label="Lead or lag" title="Lead or lag: 2d, -1w, 4h; a bare number is ${minuteModeActive() ? 'hours' : 'days'}" onchange="onPredLagChange(${i}, this)">
       <button class="pred-remove" onclick="removePredecessorRow(${i})" aria-label="Remove this predecessor" title="Remove"><i class="fa-solid fa-xmark"></i></button>
     </div>`;
   }).join('');
 }
-function onPredLagChange(i, el) {   // a minute-mode plan's lag box: "2h", "-30m", "1d"
-  const v = parseLagInput(el.value);
-  if (v === null) { showToast(`Can't read "${el.value}" as a lag — try 2h, -30m, 1d or 1w`, true); el.value = editingPredecessors[i].lag ? fmtLagMinutes(editingPredecessors[i].lag) : '0'; return; }
-  editingPredecessors[i].lag = v; el.value = v ? fmtLagMinutes(v) : '0';
+function onPredLagChange(i, el) {   // the lag box: "2", "-1d", "1w", "4h" (the same reader as the Predecessors cell)
+  const v = parseLagField(el.value), cur = editingPredecessors[i];
+  if (v === null) { showToast(`Can't read "${el.value}" as a lag — try 2d, -1w or 4h`, true); el.value = cur.lag ? fmtLag(cur.lag, cur.elapsed) : '0'; return; }
+  if (v !== cur.lag) cur.elapsed = undefined;   // a lag typed here is working time
+  cur.lag = v; el.value = v ? fmtLag(v) : '0';
 }
 function onPredecessorIdChange(i, value) {
   value = value.trim();
