@@ -1234,7 +1234,11 @@ html.time12 .tf-dt input.dt-time { flex: 0 0 104px; min-width: 104px; width: 104
 .sc-sheet { background: var(--on-accent); box-shadow: 0 1px 8px var(--shadow-ink-strong); width: 100%; max-width: 100%; }   /* a white slide behind the (transparent) chart */
 .sc-sheet svg { display: block; width: 100%; height: 100%; }
 .sc-tree { overflow: hidden; }
-.sc-tr .sc-n { margin-left: auto; margin-right: 12px; color: var(--text-faint); font-size: var(--fs-12); white-space: nowrap; }
+.sc-tr { gap: 2px; } .sc-tr .sc-lab { display: flex; flex: 1; align-items: center; align-self: stretch; min-width: 0; padding-right: 14px; }
+.sc-tr .sc-lab > span:first-child { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sc-tr .sc-n { margin-left: 8px; margin-right: 12px; color: var(--text-faint); font-size: var(--fs-12); white-space: nowrap; }
+.sc-exp { flex: none; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--text-faint); display: inline-flex; align-items: center; justify-content: center; }
+button.sc-exp:hover { background: var(--hover); } .sc-exp i { font-size: var(--ico-12); transition: transform var(--dur-fast) ease; } .sc-exp.open i { transform: rotate(90deg); }
 .sc-more, .sc-back { display: inline-flex; align-items: center; gap: 6px; margin: 14px 14px 4px; padding: 4px 0; font-size: var(--fs-13); font-weight: 500; }
 .sc-back { margin: 2px 14px 6px; } .sc-more:hover, .sc-back:hover { text-decoration: none; opacity: .85; }
 .sc-more i { font-size: var(--ico-12); transition: transform var(--dur-fast) ease; } .sc-more.open i { transform: rotate(90deg); }
@@ -1868,6 +1872,7 @@ html.settings-switching .modal-bg { transition: none; }
 .insp .trow:has(+ .trow)::after { content: none; }
 .tick { appearance: none; -webkit-appearance: none; flex: none; width: 16px; height: 16px; margin: 0; background: none; }
 .tick:checked { background: var(--accent); -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M3 8.5l3.2 3L13 4.5'/></svg>") center/16px no-repeat; mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M3 8.5l3.2 3L13 4.5'/></svg>") center/16px no-repeat; }
+.tick:indeterminate { background: var(--accent); -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'><path d='M4 8h8'/></svg>") center/16px no-repeat; mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'><path d='M4 8h8'/></svg>") center/16px no-repeat; }   /* some of what is below is taken, some is left out */
 .tick:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; border-radius: 4px; }
 label.trow.tpick { justify-content: space-between; cursor: default; }
 label.trow.tpick { padding-block: 8px; }
@@ -2824,7 +2829,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
         </div>
         <div id="scPickPane" class="hidden">
           <button type="button" class="btn-link sc-back" onclick="scClosePick()"><i class="fa-solid fa-chevron-left"></i><span>Tasks</span></button>
-          <section class="cal-sec"><div class="cal-sec-title">Choose Groups</div><div class="tgrp"><div class="sc-tree" id="scTree" onchange="scTreeChanged(event)"></div></div><p class="cal-hint" id="scPickNote">Tick a group to take all of its tasks. For single tasks, select them in the list or use a filter.</p></section>
+          <section class="cal-sec"><div class="cal-sec-title">Choose Groups</div><div class="tgrp"><div class="sc-tree" id="scTree" onchange="scTreeChanged(event)" onclick="scTreeClick(event)"></div></div><p class="cal-hint" id="scPickNote">Tick a group to take all of its tasks; unfold it to leave single tasks or sub-groups out.</p></section>
         </div>
       </div>
       <div class="print-side">
@@ -11987,11 +11992,12 @@ function scLoad() { try { const o = JSON.parse(localStorage.getItem(SC_KEY) || '
 function scSave(o) { try { const c = Object.assign({}, o); delete c.pick; localStorage.setItem(SC_KEY, JSON.stringify(c)); } catch (e) { /* a convenience only */ } }
 // The tasks to draw, as a tree of { id, name, level, kids | ms, s, e, p } (day numbers, progress 0-100). A group's dates and progress come from the tasks drawn.
 function scTree(o) {
-  const selSet = o.scope === 'selected' ? new Set(selectedIds()) : o.scope === 'pick' ? new Set(o.pick) : null;
+  // pick: id → true (taken) / false (left out); a task follows its nearest ancestor with a choice. 'selected' is the same with every selected task taken.
+  const picks = o.scope === 'pick' ? new Map((o.pick || []).map(x => Array.isArray(x) ? x : [x, true])) : o.scope === 'selected' ? new Map(selectedIds().map(i => [i, true])) : null;
   const shown = o.scope === 'filtered' && filtersActive() ? new Set(exportTaskRows('filtered').map(r => r.task.id)) : null;
   const node = (t, level, inside) => {
     if (t.spacer || (shown && !shown.has(t.id))) return null;
-    const take = inside || !selSet || selSet.has(t.id);   // a picked / selected group takes everything below it
+    const take = !picks || (picks.has(t.id) ? picks.get(t.id) : inside);   // a taken group takes everything below it, unless a task or group below is left out
     if (!hasChildren(t.id)) {
       if (!take || isUnscheduled(t)) return null;
       const e = effectiveDates(t.id); if (!e.start) return null;
@@ -12193,26 +12199,34 @@ function scRead() {
     scope: (document.querySelector('input[name=scScope]:checked') || {}).value || 'all', hier: scEl('scHier').value, levels: +scEl('scLevels').value, msLabel: scEl('scMsLabel').value, msPlace: scEl('scMsPlace').value, scale: scEl('scScale').value,
     palette: scEl('scPalette').value, colors: [0, 1, 2, 3].map(i => scEl('scCol' + i).value), bg: scEl('scBg').value, ink: scEl('scInk').value, font: scEl('scFont').value, today: scEl('scToday').checked, pct: scEl('scPct').checked, legend: scEl('scLegend').checked, more: !scEl('scMore').classList.contains('hidden'), pick: [...scPick] };
 }
-let scPick = new Set();
-function scCovered(id) { for (let t = byId(id); t; t = t.parentId ? byId(t.parentId) : null) if (scPick.has(t.id)) return true; return false; }
+let scPick = new Map(), scOpen = new Set();   // scPick: id → true / false, the choices made in "Choose Groups…"; scOpen: the groups shown opened
+function scEffective(id) { for (let t = byId(id); t; t = t.parentId ? byId(t.parentId) : null) if (scPick.has(t.id)) return scPick.get(t.id); return false; }
 function scLeafCount(id) { const k = childrenOf(id); return k.length ? k.reduce((a, c) => a + scLeafCount(c.id), 0) : 1; }
+function scDiffBelow(id, v) { return childrenOf(id).some(k => !k.spacer && (scEffective(k.id) !== v || scDiffBelow(k.id, v))); }   // some task below is treated differently from this one: the box shows a dash
 function scRenderTree() {
   const box = scEl('scTree'), rows = [];
   (function walk(pid, depth) {
     for (const t of childrenOf(pid)) {
       if (t.spacer) continue;
-      const group = hasChildren(t.id);
-      if (!group && depth > 0) continue;   // single tasks are chosen with the selection or the filter; groups (and loose top-level tasks) are ticked here
-      const covered = scCovered(t.id), own = scPick.has(t.id);
-      rows.push(`<label class="trow tpick sc-tr" style="padding-left:${14 + depth * 16}px"><span>${escapeHtml(t.name || 'Untitled')}</span><span class="sc-n">${group ? scLeafCount(t.id) + ' tasks' : 'task'}</span><input type="checkbox" class="tick" data-id="${t.id}"${covered ? ' checked' : ''}${covered && !own ? ' disabled' : ''}></label>`);
-      if (group && depth < 3) walk(t.id, depth + 1);
+      const group = hasChildren(t.id), on = scEffective(t.id), open = group && scOpen.has(t.id), mixed = group && scDiffBelow(t.id, on);
+      rows.push(`<div class="trow sc-tr" style="padding-left:${10 + depth * 16}px">${group ? `<button type="button" class="sc-exp${open ? ' open' : ''}" data-exp="${t.id}" aria-label="${open ? 'Fold' : 'Unfold'} ${escapeHtml(t.name || 'Untitled')}"><i class="fa-solid fa-chevron-right"></i></button>` : '<span class="sc-exp"></span>'}<label class="sc-lab"><span>${escapeHtml(t.name || 'Untitled')}</span><span class="sc-n">${group ? scLeafCount(t.id) + ' tasks' : t.milestone ? 'milestone' : 'task'}</span><input type="checkbox" class="tick" data-id="${t.id}"${on ? ' checked' : ''}${mixed ? ' data-mixed="1"' : ''}></label></div>`);
+      if (open) walk(t.id, depth + 1);
     }
   })(null, 0);
   box.innerHTML = rows.join('') || '<div class="pred-empty">No tasks yet.</div>';
+  for (const cb of box.querySelectorAll('input[data-mixed]')) cb.indeterminate = true;
 }
+function scTreeClick(e) {
+  const b = e.target.closest('button[data-exp]'); if (!b) return;
+  const id = b.dataset.exp; if (scOpen.has(id)) scOpen.delete(id); else scOpen.add(id);
+  scRenderTree();
+}
+function scDrop(id) { for (const k of childrenOf(id)) { scPick.delete(k.id); scDrop(k.id); } }
 function scTreeChanged(e) {
   const cb = e.target.closest('input[data-id]'); if (!cb) return;
-  if (cb.checked) scPick.add(cb.dataset.id); else scPick.delete(cb.dataset.id);
+  const id = cb.dataset.id, t = byId(id), parentOn = t && t.parentId ? scEffective(t.parentId) : false;
+  scDrop(id);   // a choice on a group replaces the choices below it
+  if (cb.checked === parentOn) scPick.delete(id); else scPick.set(id, cb.checked);
   scRenderTree(); scChanged();
 }
 function scSyncScopes() {
@@ -12222,11 +12236,12 @@ function scSyncScopes() {
   const cur = (document.querySelector('input[name=scScope]:checked') || {}).value;
   if ((cur === 'filtered' && !fa) || (cur === 'selected' && !sel)) document.querySelector('input[name=scScope][value=all]').checked = true;
   const now = (document.querySelector('input[name=scScope]:checked') || {}).value;
-  scEl('scPickN').textContent = now === 'pick' ? `${scPick.size} group${scPick.size === 1 ? '' : 's'}` : '';
+  const taken = [...scPick.values()].filter(Boolean).length, left = scPick.size - taken;
+  scEl('scPickN').textContent = now === 'pick' ? `${taken} chosen${left ? `, ${left} left out` : ''}` : '';
 }
 function openSlideChart() {
   closeDataMenu && closeDataMenu();
-  scOpts = scLoad(); scPick = new Set(childrenOf(null).filter(t => hasChildren(t.id)).map(t => t.id));
+  scOpts = scLoad(); scPick = new Map(childrenOf(null).filter(t => hasChildren(t.id)).map(t => [t.id, true])); scOpen = new Set(childrenOf(null).filter(t => hasChildren(t.id)).map(t => t.id));
   if (scOpts.scope === 'filtered' && !filtersActive()) scOpts.scope = 'all';
   if (scOpts.scope === 'selected') scOpts.scope = 'all';
   scWrite(scOpts); scClosePick(true); scSyncScopes(); scRenderTree(); scPageNo = 0;
@@ -12261,7 +12276,7 @@ function scDraw() {
   scEl('scSummary').textContent = b.empty ? '' : `${b.rows} row${b.rows === 1 ? '' : 's'} · ${b.charts.length} chart${b.charts.length === 1 ? '' : 's'} · ${cm(b.W)} × ${cm(b.H)} cm`;
   scEl('scNote').textContent = !b.empty && b.cap < o.maxRows ? `At ${cm(b.H)} cm high, ${o.minPt} pt text fits ${b.cap} rows, so charts are cut at ${b.cap}.` : '';
   scEl('scNote').classList.toggle('hidden', !scEl('scNote').textContent);
-  scEl('scPickNote').textContent = b.empty ? 'Nothing is ticked.' : `${b.rows} row${b.rows === 1 ? '' : 's'} on ${b.charts.length} chart${b.charts.length === 1 ? '' : 's'}. Tick a group to take all of its tasks; for single tasks, select them in the list or use a filter.`;
+  scEl('scPickNote').textContent = b.empty ? 'Nothing is ticked.' : `${b.rows} row${b.rows === 1 ? '' : 's'} on ${b.charts.length} chart${b.charts.length === 1 ? '' : 's'}. Tick a group to take all of its tasks; unfold it to leave single tasks or sub-groups out.`;
 }
 // What follows the controls: the size line (or the two size fields for a Custom shape), the palette's dots and its colour pickers (Custom only).
 function scLook() {
