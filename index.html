@@ -1742,7 +1742,8 @@ html.settings-switching .modal-bg { transition: none; }
 .field-grid-tt .tt-check { display: flex; align-items: center; gap: 6px; font-weight: 500; color: var(--text); }
 .field-grid-4 > .span2 { grid-column: span 2; } .field-grid-4 > .span3 { grid-column: span 3; }
 .field-grid-4 input[type=date], .field-grid-4 input[type=number], .field-grid-4 input[type=text], .field-grid-4 select { padding: 8px 8px; }
-.ms-field { align-self: end; padding-bottom: 8px; }   /* the task dialog: a lot of fields, so more room before it scrolls */
+.ms-field { align-self: end; padding-bottom: 8px; }
+.trow.pair { gap: 28px; } .trow.pair > .pr { display: flex; flex: 1; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; }   /* the task dialog: a lot of fields, so more room before it scrolls */
 .modal.wide { width: 560px; }
 #taskModalInner { height: min(1020px, 94vh); }   /* one height for every tab: the General tab's, so switching tabs never makes the dialog jump */
 #taskModalInner .modal-body { flex: 1 1 auto; min-height: 0; }
@@ -2523,7 +2524,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
         <div class="trow"><input type="text" class="tin tname" id="taskNameInput" placeholder="Task Name" aria-label="Task Name" onkeydown="if(event.key==='Enter'){event.preventDefault();saveTaskFromModal();}"></div>
         <div class="trow"><label for="taskModeInput">Mode</label><select id="taskModeInput" class="tin"><option value="manual">Manually Scheduled</option><option value="auto">Auto Scheduled</option></select></div>
         <div class="trow"><label for="taskResourceInput">Resource</label><input type="text" class="tin" id="taskResourceInput" maxlength="200" placeholder="None"></div>
-        <div class="trow ms-field"><label for="taskMilestoneInput">Milestone</label><input type="checkbox" class="tsw" id="taskMilestoneInput" role="switch" onchange="onMilestoneToggle()"></div>
+        <div class="trow ms-field pair"><span class="pr"><label for="taskMilestoneInput">Milestone</label><input type="checkbox" class="tsw" id="taskMilestoneInput" role="switch" onchange="onMilestoneToggle()"></span><span class="pr"><label for="taskOnSlideInput">On Slide</label><input type="checkbox" class="tsw" id="taskOnSlideInput" role="switch" title="The Chart for Slides can take just the tasks marked On Slide"></span></div>
       </div>
       <div id="taskDatesBlock" class="tgrp">
         <div class="trow" id="taskStartField"><label for="taskStartInput">Start</label><div class="field-dt"><input type="text" class="dt-date" id="taskStartInput" onchange="onTaskStartChange()"><input type="text" id="taskStartTimeInput" class="task-time-input hidden dt-time" aria-label="Start time" onchange="onTaskStartChange()"></div></div>
@@ -2685,6 +2686,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
       <div class="trow bulk-row"><label class="bulk-on tgrow"><input type="checkbox" id="bulkOn-worktype"> Task Type</label><div class="bulk-ctl"><select id="bulkVal-worktype" aria-label="Task Type"><option value="fixedUnits">Fixed Units</option><option value="fixedDuration">Fixed Duration</option><option value="fixedWork">Fixed Work</option></select></div></div>
       <div class="trow bulk-row"><label class="bulk-on tgrow"><input type="checkbox" id="bulkOn-work"> Work</label><div class="bulk-ctl"><input type="text" id="bulkVal-work" placeholder="Work" aria-label="Work"></div></div>
       <div class="trow bulk-row"><label class="bulk-on tgrow"><input type="checkbox" id="bulkOn-color"> Row colour</label><div class="bulk-ctl"><select id="bulkVal-color" aria-label="Row colour"></select></div></div>
+      <div class="trow bulk-row"><label class="bulk-on tgrow"><input type="checkbox" id="bulkOn-onSlide"> On Slide</label><div class="bulk-ctl"><select id="bulkVal-onSlide" aria-label="On Slide"><option value="yes">Yes</option><option value="no">No</option></select></div></div>
       <div class="trow bulk-row"><label class="bulk-on tgrow"><input type="checkbox" id="bulkOn-shift"> Move dates by</label><div class="bulk-ctl"><input type="number" id="bulkVal-shift" step="1" placeholder="− earlier, + later" aria-label="Working days to move by"><span class="bulk-hint" id="bulkShiftHint">working days</span></div></div>
       <div class="trow bulk-row"><label class="bulk-on tgrow"><input type="checkbox" id="bulkOn-pred"> Add predecessor</label><div class="bulk-ctl"><input type="number" id="bulkVal-predId" min="1" step="1" placeholder="task #" aria-label="Predecessor task number"><select id="bulkVal-predType" aria-label="Link type: Finish-to-Start, Start-to-Start, Finish-to-Finish or Start-to-Finish" title="FS finish-to-start · SS start-to-start · FF finish-to-finish · SF start-to-finish"><option value="FS" title="Finish-to-Start">FS</option><option value="SS" title="Start-to-Start">SS</option><option value="FF" title="Finish-to-Finish">FF</option><option value="SF" title="Start-to-Finish">SF</option></select><input type="number" id="bulkVal-predLag" step="1" placeholder="lag" aria-label="Lag in working days" title="Lag — positive delays the start, negative overlaps it"></div></div>
       </div>
@@ -2794,6 +2796,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
             <label class="trow tpick"><span>The whole plan</span><input type="radio" class="tick" name="scScope" value="all" checked></label>
             <label class="trow tpick hidden" id="scScopeFiltered"><span>The filtered tasks<span class="tsub" id="scScopeFilteredN"></span></span><input type="radio" class="tick" name="scScope" value="filtered"></label>
             <label class="trow tpick hidden" id="scScopeSelected"><span>The selected tasks<span class="tsub" id="scScopeSelectedN"></span></span><input type="radio" class="tick" name="scScope" value="selected"></label>
+            <label class="trow tpick hidden" id="scScopeMarked"><span>The tasks marked On Slide<span class="tsub" id="scScopeMarkedN"></span></span><input type="radio" class="tick" name="scScope" value="marked"></label>
             <label class="trow tpick" id="scScopePickRow" onclick="scOpenPick()"><span>Choose Groups…<span class="tsub" id="scPickN"></span></span><i class="fa-solid fa-chevron-right sc-go"></i><input type="radio" class="tick" name="scScope" value="pick"></label>
           </div></section>
           <section class="cal-sec"><div class="cal-sec-title">Outline</div><div class="tgrp">
@@ -3394,6 +3397,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
           <div class="help-row"><i class="fa-solid fa-print"></i><span><strong>Print / PDF…</strong> (the Data menu, or Ctrl/Cmd+P) lays the list and the chart out on pages of the paper you choose — A4, A3, Letter, Legal or Tabloid, landscape or portrait. The whole timeline is fitted to the page width, long plans continue on the next page with the heading repeated, and a live preview shows every page.</span></div>
           <div class="help-row"><i class="fa-regular fa-image"></i><span>In the Print window, <strong>Picture: Copy / PNG / SVG</strong> makes the chart as <em>one</em> picture with every row, with the same columns and options — for a slide or a document. <strong>SVG</strong> keeps the text as text, so PowerPoint, Illustrator or Inkscape can edit it; <strong>PNG</strong> is 2× sharp; <strong>Copy</strong> puts the PNG on the clipboard.</span></div>
           <div class="help-row"><i class="fa-solid fa-display"></i><span><strong>Chart for Slides…</strong> (the Data menu) makes a picture to paste into a presentation: only the chart, transparent, in the size you choose. Pick the shape, the most rows a chart may have (more rows make several charts on the same timeline), the tasks (<strong>Choose Groups…</strong> for a part of a big plan) and how the outline is drawn. <strong>More Options</strong> has the timescale, text size, milestone labels and colours. <strong>Copy Picture</strong> is the quick way; <strong>Save As…</strong> writes PNG or SVG.</span></div>
+          <div class="help-row"><i class="fa-solid fa-display"></i><span><strong>On Slide</strong> is a Yes / No mark for the tasks you want in a slide chart. Click its cell (tick it in Columns), use the switch in the task dialog, <strong>Edit Tasks</strong>, or <strong>Put On Slide</strong> on the right-click menu. A marked group takes everything below it. In Chart for Slides choose <strong>The tasks marked On Slide</strong>; it appears once something is marked.</span></div>
           <div class="help-row"><i class="fa-solid fa-sliders"></i><span>Choose the list columns, the time range, the timescale (weeks, months or quarters — automatic by default), and whether to show the baseline, the critical path, dependency arrows, the today line and days off. Tasks print as the list shows them (folded groups and filters apply) unless you expand every group. In your browser's print dialog choose <strong>Save as PDF</strong> for a file.</span></div>
         </div>
         <div class="help-divider"></div>
@@ -3564,6 +3568,7 @@ const TASK_COLS = {
   durationVariance: { label: 'Duration Variance', width: '104px', dflt: false },
   // Notes: free text, last of the standard columns
   notes:        { label: 'Notes',         width: '200px',             dflt: false },   // the first line of t.notes; a click opens the task's Notes tab   // taskCost(t), read-only, computed from the resource pool's own rates (see "Resource Sheet" in CLAUDE.md) — an empty line/unassigned task shows €0.00
+  onSlide:      { label: 'On Slide',      width: '80px',              dflt: false },   // a Yes / No mark: the tasks the Chart for Slides takes (a click toggles it)
 };
 // ---- Custom fields: Text1-5, Number1-5, Date1-5, Flag1-5. A task keeps its values in `task.custom` ({ text1: 'x', number2: 4.5,
 // date3: '2026-09-01', flag4: true } — only fields that have a value are present). The field NAMES live on the plan
@@ -4488,6 +4493,7 @@ function normalizeData() {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(t.startDate || '')) t.startDate = todayStr();
     if (!/^\d{4}-\d{2}-\d{2}$/.test(t.endDate || '') || dayNumber(t.endDate) < dayNumber(t.startDate)) t.endDate = t.startDate;
     t.milestone = !!t.milestone;
+    if (t.onSlide) t.onSlide = true; else delete t.onSlide;   // On Slide: present only when set (a task, or a group that takes everything below it, for the Chart for Slides)
     if (t.milestone) t.endDate = t.startDate;
     t.progress = Math.max(0, Math.min(100, Math.round(Number(t.progress) || 0)));
     if (!Array.isArray(t.predecessors)) t.predecessors = [];
@@ -5849,7 +5855,8 @@ const FILTER_COLS = {
   worktype:     { label: 'Task Type',     kind: 'list' },
   work:         { label: 'Work',          kind: 'number' },
   cost:         { label: 'Cost',          kind: 'number' },
-  notes:        { label: 'Notes',         kind: 'text' }
+  notes:        { label: 'Notes',         kind: 'text' },
+  onSlide:      { label: 'On Slide',      kind: 'list' }
 };
 for (const f of Object.values(CUSTOM_FIELDS)) FILTER_COLS[f.id] = { get label() { return customFieldName(f.id); }, kind: CUSTOM_KINDS.find(x => x.kind === f.kind).filter };
 function newColFilters() { return Object.fromEntries(Object.keys(FILTER_COLS).map(c => [c, null])); }
@@ -5909,6 +5916,7 @@ function filterColValue(t, col) {
     case 'deadline': return t.deadline || null;
     case 'totalSlack': return taskTotalSlack(t);
     case 'notes': return t.notes || null;
+    case 'onSlide': return t.onSlide ? 'Yes' : 'No';
     default:
       if (isCustomField(col)) {
         const v = customValue(t, col);
@@ -5936,7 +5944,7 @@ function filterValueLabel(col, v) {
 function filterCompare(kind, col) {
   if (col === 'status') return (a, b) => STATUS_ORDER.indexOf(a) - STATUS_ORDER.indexOf(b);
   if (col === 'worktype') return (a, b) => TASK_TYPES.findIndex(m => m.id === a) - TASK_TYPES.findIndex(m => m.id === b);
-  if (col && isCustomField(col) && CUSTOM_FIELDS[col].kind === 'flag') return (a, b) => (a === b ? 0 : a === 'Yes' ? -1 : 1);   // Yes, No   // Late, On Schedule, Future Task, Complete
+  if (col === 'onSlide' || (col && isCustomField(col) && CUSTOM_FIELDS[col].kind === 'flag')) return (a, b) => (a === b ? 0 : a === 'Yes' ? -1 : 1);   // Yes, No   // Late, On Schedule, Future Task, Complete
   return kind === 'number' ? (a, b) => a - b : kind === 'date' ? (a, b) => (a < b ? -1 : a > b ? 1 : 0) : (a, b) => String(a).localeCompare(String(b), undefined, { sensitivity: 'base', numeric: true });
 }
 
@@ -6763,7 +6771,7 @@ function renderGrid() {
     startVariance: colHeadHtml('Start\nVariance', 'startVariance'), finishVariance: colHeadHtml('Finish\nVariance', 'finishVariance'), durationVariance: colHeadHtml('Duration\nVariance', 'durationVariance'),
     preds: colHeadHtml('Predecessors', 'preds'), resource: colHeadHtml('Resource', 'resource'),
     worktype: colHeadHtml('Task\nType', 'worktype'), work: colHeadHtml('Work', 'work'), cost: colHeadHtml('Cost', 'cost'),
-    deadline: colHeadHtml('Deadline', 'deadline'), totalSlack: colHeadHtml('Total\nSlack', 'totalSlack'), notes: colHeadHtml('Notes', 'notes'),
+    deadline: colHeadHtml('Deadline', 'deadline'), totalSlack: colHeadHtml('Total\nSlack', 'totalSlack'), notes: colHeadHtml('Notes', 'notes'), onSlide: colHeadHtml('On Slide', 'onSlide'),
     ...Object.fromEntries(Object.keys(CUSTOM_FIELDS).map(id => [id, colHeadHtml(customFieldName(id), id)]))
   };
   applyColTemplate(cols);
@@ -6894,6 +6902,7 @@ function renderGrid() {
         : `<div class="grid-cell-dim${summaryCls} editable${deadlineMissed(t) ? ' deadline-late' : ''}" onclick="event.stopPropagation();startInlineEdit('${t.id}','deadline')"${deadlineMissed(t) ? ' title="Finishes after its deadline"' : ''}>${t.deadline ? fmtDate(t.deadline) : ''}</div>`,
       totalSlack: (() => { const v = taskTotalSlack(t); return `<div class="grid-cell-dim${summaryCls}${v != null && v < 0 ? ' var-late' : ''}"${v != null && v <= 0 ? ' title="No slack: a delay here moves the plan\'s finish"' : ''}>${fmtSlack(v)}</div>`; })(),
       notes: `<div class="grid-cell-dim editable" title="${escapeHtml(t.notes || 'Click to add a note')}" onclick="event.stopPropagation();openTaskNotes('${t.id}')">${escapeHtml((t.notes || '').split('\n')[0])}</div>`,
+      onSlide: `<div class="grid-cell-dim custom-flag editable${summaryCls}" title="On Slide: ${t.onSlide ? 'Yes' : 'No'} — click to change" onclick="event.stopPropagation();toggleOnSlide('${t.id}')">${t.onSlide ? '<i class="fa-solid fa-check"></i>' : ''}</div>`,
       ...Object.fromEntries(cols.filter(isCustomField).map(id => [id, customCellHtml(t, id, summaryCls, editing(id), blurAttr(id), (f, iso, time) => dateEditor(f, iso, null, dateHint(), minuteModeActive() ? time : undefined, true))]))
     };
     if (t.spacer) {   // an empty line: the ID and a blank cell in every column (nothing to edit)
@@ -7158,6 +7167,11 @@ function customCellHtml(t, id, summaryCls, editingNow, blur, dateEd) {
   }
   const shown = v === undefined ? '' : kind === 'date' ? customDateText(t, id) : String(v);
   return `<div class="grid-cell-dim editable${summaryCls}" title="${escapeHtml(shown)}" onclick="event.stopPropagation();startInlineEdit('${t.id}','${id}')">${escapeHtml(shown)}</div>`;
+}
+function toggleOnSlide(id) {
+  const t = byId(id); if (!t || t.spacer) return;
+  if (t.onSlide) delete t.onSlide; else t.onSlide = true;
+  t.updatedAt = Date.now(); filterPinned.add(id); save(); render();
 }
 function toggleCustomFlag(id, field) {
   const t = byId(id); if (!t || t.spacer || !isCustomField(field)) return;
@@ -8852,6 +8866,7 @@ function openTaskModal(id, isNew) {
   note.textContent = textBits.length ? `Free text on this task — ${textBits.join(', ')}. Changing a date field below replaces that text; leave it alone to keep it.` : '';
   note.classList.toggle('hidden', !textBits.length);
   document.getElementById('taskMilestoneInput').checked = t.milestone;
+  document.getElementById('taskOnSlideInput').checked = !!t.onSlide;
   document.getElementById('taskStartInput').value = t.startDate;
   document.getElementById('taskEndInput').value = t.endDate;
   const minuteMode = minuteModeActive();
@@ -10575,6 +10590,7 @@ function saveTaskFromModal() {
   const name = document.getElementById('taskNameInput').value.trim() || 'Untitled Task';
   t.name = name;
   t.milestone = document.getElementById('taskMilestoneInput').checked;
+  if (document.getElementById('taskOnSlideInput').checked) t.onSlide = true; else delete t.onSlide;
   t.startDate = document.getElementById('taskStartInput').value || todayStr();
   t.endDate = t.milestone ? t.startDate : (document.getElementById('taskEndInput').value || t.startDate);
   t.startTime = document.getElementById('taskStartTimeInput').value || null;
@@ -11992,8 +12008,8 @@ function scLoad() { try { const o = JSON.parse(localStorage.getItem(SC_KEY) || '
 function scSave(o) { try { const c = Object.assign({}, o); delete c.pick; localStorage.setItem(SC_KEY, JSON.stringify(c)); } catch (e) { /* a convenience only */ } }
 // The tasks to draw, as a tree of { id, name, level, kids | ms, s, e, p } (day numbers, progress 0-100). A group's dates and progress come from the tasks drawn.
 function scTree(o) {
-  // pick: id → true (taken) / false (left out); a task follows its nearest ancestor with a choice. 'selected' is the same with every selected task taken.
-  const picks = o.scope === 'pick' ? new Map((o.pick || []).map(x => Array.isArray(x) ? x : [x, true])) : o.scope === 'selected' ? new Map(selectedIds().map(i => [i, true])) : null;
+  // pick: id → true (taken) / false (left out); a task follows its nearest ancestor with a choice. 'selected' and 'marked' are the same with every selected / On Slide task taken.
+  const picks = o.scope === 'pick' ? new Map((o.pick || []).map(x => Array.isArray(x) ? x : [x, true])) : o.scope === 'selected' ? new Map(selectedIds().map(i => [i, true])) : o.scope === 'marked' ? new Map(tasks.filter(t => t.onSlide && !t.spacer).map(t => [t.id, true])) : null;
   const shown = o.scope === 'filtered' && filtersActive() ? new Set(exportTaskRows('filtered').map(r => r.task.id)) : null;
   const node = (t, level, inside) => {
     if (t.spacer || (shown && !shown.has(t.id))) return null;
@@ -12231,10 +12247,12 @@ function scTreeChanged(e) {
 }
 function scSyncScopes() {
   const fa = filtersActive(), sel = selectedIds().length, nf = fa ? exportTaskRows('filtered').filter(r => !r.task.spacer && !hasChildren(r.task.id)).length : 0;
-  scEl('scScopeFiltered').classList.toggle('hidden', !fa); scEl('scScopeSelected').classList.toggle('hidden', !sel);
+  const marked = tasks.filter(t => t.onSlide && !t.spacer).length;
+  scEl('scScopeFiltered').classList.toggle('hidden', !fa); scEl('scScopeSelected').classList.toggle('hidden', !sel); scEl('scScopeMarked').classList.toggle('hidden', !marked);
+  scEl('scScopeMarkedN').textContent = marked ? `${marked} task${marked === 1 ? '' : 's'}` : '';
   scEl('scScopeFilteredN').textContent = fa ? `${nf} task${nf === 1 ? '' : 's'}` : ''; scEl('scScopeSelectedN').textContent = sel ? `${sel} selected` : '';
   const cur = (document.querySelector('input[name=scScope]:checked') || {}).value;
-  if ((cur === 'filtered' && !fa) || (cur === 'selected' && !sel)) document.querySelector('input[name=scScope][value=all]').checked = true;
+  if ((cur === 'filtered' && !fa) || (cur === 'selected' && !sel) || (cur === 'marked' && !marked)) document.querySelector('input[name=scScope][value=all]').checked = true;
   const now = (document.querySelector('input[name=scScope]:checked') || {}).value;
   const taken = [...scPick.values()].filter(Boolean).length, left = scPick.size - taken;
   scEl('scPickN').textContent = now === 'pick' ? `${taken} chosen${left ? `, ${left} left out` : ''}` : '';
@@ -12501,6 +12519,11 @@ function rowSubPlace(w) {   // beside the row, or to its left when the window en
 }
 function setSelectedMode(mode) { for (const id of selectedIds()) setTaskMode(id, mode); }
 function setSelectedType(type) { for (const id of selectedIds()) setTaskTypeOf(id, type); }
+function setSelectedOnSlide(on) {
+  const ts = selectedIds().map(byId).filter(t => t && !t.spacer), now = Date.now();
+  for (const t of ts) { if (on) t.onSlide = true; else delete t.onSlide; t.updatedAt = now; }
+  if (ts.length) { save(); render(); showToast(on ? `${ts.length} task${ts.length === 1 ? '' : 's'} put on the slide` : `${ts.length} task${ts.length === 1 ? '' : 's'} taken off the slide`); }
+}
 function setSelectedColor(c) {
   const ts = selectedIds().map(byId).filter(t => t && !t.spacer), now = Date.now();
   for (const t of ts) { t.color = c || null; t.updatedAt = now; }
@@ -12549,6 +12572,7 @@ function showRowMenu(x, y, onRow) {
   if (real) parts.push(item('fa-solid fa-pen', real === 1 ? 'Edit Task…' : `Edit ${real} Tasks…`, 'editSelected()'));
   { const one = ids.length === 1 && byId(ids[0]); if (one && one.recurrence) parts.push(item('fa-solid fa-repeat', 'Change Recurrence…', `openRecurModal('${one.id}')`)); }
   if (real) parts.push(item('fa-regular fa-circle-check', 'Mark Complete', 'markSelectedComplete()', { off: !ids.some(id => { const t = byId(id); return !t.spacer && !hasChildren(id) && t.progress < 100; }) }));   // (with Edit: both change the task you clicked)
+  if (real) { const allOn = ids.every(id => { const t = byId(id); return t.spacer || t.onSlide; }); parts.push(item('fa-solid fa-display', allOn ? 'Take Off Slide' : 'Put On Slide', `setSelectedOnSlide(${!allOn})`)); }
   if (real) {
     const ts = ids.map(byId).filter(t => t && !t.spacer), same = f => ts.every(t => f(t) === f(ts[0])) ? f(ts[0]) : null;
     const m = same(t => t.taskMode || 'auto'), ty = same(t => (t.taskType === 'fixedDuration' || t.taskType === 'fixedWork') ? t.taskType : 'fixedUnits'), co = same(t => t.color || '');
@@ -12597,7 +12621,7 @@ function openBulkModal() {
   const groups = ids.filter(id => hasChildren(id)).length;
   document.getElementById('bulkTitle').textContent = ids.length === 1 ? 'Edit Task' : `Edit ${ids.length} Tasks`;
   document.getElementById('bulkHint').textContent = `Tick the fields to change.${groups ? ' Groups keep their worked-out progress and dates.' : ''}`;
-  for (const f of ['progress', 'resource', 'mode', 'worktype', 'work', 'color', 'shift', 'pred']) document.getElementById('bulkOn-' + f).checked = false;
+  for (const f of ['progress', 'resource', 'mode', 'worktype', 'work', 'color', 'onSlide', 'shift', 'pred']) document.getElementById('bulkOn-' + f).checked = false;
   for (const id of ['bulkVal-progress', 'bulkVal-resource', 'bulkVal-work', 'bulkVal-shift', 'bulkVal-predId', 'bulkVal-predLag']) document.getElementById(id).value = '';
   { const sh = document.getElementById('bulkVal-shift'), mm = minuteModeActive(); sh.type = mm ? 'text' : 'number'; sh.placeholder = mm ? '− earlier, + later' : '− earlier, + later'; sh.setAttribute('aria-label', mm ? 'Working time to move by, such as 2h, -30m or 1d' : 'Working days to move by'); document.getElementById('bulkShiftHint').textContent = mm ? 'e.g. 2h, -30m, 1d' : 'working days'; }
   { const bl = document.getElementById('bulkVal-predLag'), mm = minuteModeActive(); bl.type = mm ? 'text' : 'number'; bl.placeholder = 'lag'; bl.title = mm ? 'Lag in working time, like 2h, -30m or 1d — negative overlaps the start' : 'Lag in working days — negative overlaps the start'; bl.setAttribute('aria-label', mm ? 'Lag in working time, such as 2h or 30m' : 'Lag in working days'); }   // (a minute-mode plan's lags are typed with a unit)
@@ -12645,7 +12669,7 @@ function applyBulkEdit() {
   const ids = selectedIds().filter(id => !byId(id).spacer); if (!ids.length) { closeBulkModal(); return; }
   const on = f => { const c = document.getElementById('bulkOn-' + f); return !!(c && c.checked); }, val = f => document.getElementById('bulkVal-' + f).value;
   const customOn = bulkCustomCols().filter(c => on(c));
-  if (!['progress', 'resource', 'mode', 'worktype', 'work', 'color', 'shift', 'pred'].some(on) && !customOn.length) { showToast('Tick at least one field to change', true); return; }
+  if (!['progress', 'resource', 'mode', 'worktype', 'work', 'color', 'onSlide', 'shift', 'pred'].some(on) && !customOn.length) { showToast('Tick at least one field to change', true); return; }
   let pct = null, shift = 0, predTarget = null, lag = 0, predType = val('predType'), workMin = null;
   if (on('progress')) { pct = Number(val('progress')); if (val('progress').trim() === '' || !Number.isFinite(pct) || pct < 0 || pct > 100) { bulkFail('progress', '% complete must be between 0 and 100'); return; } pct = Math.round(pct); }
   if (on('work')) { workMin = parseDurationMinutes(val('work')); if (workMin === null) { bulkFail('work', `Can't read "${val('work')}" as work — try 4h, 90m, 2d or 1w`); return; } }
@@ -12681,6 +12705,7 @@ function applyBulkEdit() {
     if (on('worktype')) { if (hasChildren(id) || t.milestone) skipped.worktype++; else { t.taskType = val('worktype'); touched.push(id); did = true; } }
     if (on('work')) { if (hasChildren(id) || t.milestone) skipped.work++; else { t.work = workMin; if (recalcTaskType(t, 'work')) worktypeAdjusted++; touched.push(id); did = true; } }
     if (on('color')) { t.color = val('color') || null; did = true; }
+    if (on('onSlide')) { if (val('onSlide') === 'yes') t.onSlide = true; else delete t.onSlide; did = true; }
     if (on('shift') && shift !== 0) { if (hasChildren(id) || isStarted(t) || isUnscheduled(t)) skipped.shift++; else { if (minuteModeActive()) shiftTaskByMinutes(t, shift); else shiftTaskBy(t, shift); touched.push(id); did = true; } }
     if (on('pred')) {
       if (hasChildren(id) || id === predTarget || t.predecessors.some(p => p.id === predTarget) || wouldCreateCycle(id, predTarget)) skipped.pred++;
@@ -12726,6 +12751,7 @@ function clipCell(t, c, depth) {
     case 'deadline': return t.deadline ? fmtDate(t.deadline) : '';
     case 'totalSlack': return fmtSlack(taskTotalSlack(t));
     case 'notes': return (t.notes || '').replace(/\s*\n\s*/g, ' ');
+    case 'onSlide': return t.onSlide ? 'Yes' : '';
     case 'baselineStart': { const b = baselineDates(t.id); return b.start ? baselineDateText(t.id, b.start, b.startTime, false) : ''; }
     case 'baselineFinish': { const b = baselineDates(t.id); return b.end ? baselineDateText(t.id, b.end, b.endTime, true) : ''; }
     case 'baselineDuration': { const v = scheduleVariance(t.id).baseDuration; return v == null ? '' : varianceIsMinutes(t.id) ? fmtDurationMinutes(v) : String(v); }
@@ -13253,7 +13279,7 @@ function buildXlsx(opts) {
     id: ['ID', 6], mode: ['Mode', 10], wbs: ['WBS', 15], name: ['Task Name', 46], start: ['Start', 13], end: ['Finish', 13], actualStart: ['Actual Start', 13],
     actualFinish: ['Actual Finish', 13], baselineStart: ['Baseline Start', 13], baselineFinish: ['Baseline Finish', 13], baselineDuration: ['Baseline Duration', 13], startVariance: ['Start Variance', 13], finishVariance: ['Finish Variance', 13], durationVariance: ['Duration Variance', 13], duration: ['Duration', 12], progress: ['% Complete', 13], remaining: ['Remaining Duration', 13], status: ['Status', 13], preds: ['Predecessors', 18], resource: ['Resource', 22], worktype: ['Task Type', 14], work: ['Work', 12], cost: ['Cost', 13]
   };
-  Object.assign(XCOLS, { deadline: ['Deadline', 13], totalSlack: ['Total Slack', 12], notes: ['Notes', 40] });
+  Object.assign(XCOLS, { deadline: ['Deadline', 13], totalSlack: ['Total Slack', 12], notes: ['Notes', 40], onSlide: ['On Slide', 10] });
   if (minuteModeActive()) for (const k of ['start', 'end', 'actualStart', 'actualFinish', 'baselineStart', 'baselineFinish']) XCOLS[k][1] = timeFormat === '12h' ? 24 : 19;   // (a date with a time of day: Excel shows ##### in a column too narrow for it)
   for (const id of Object.keys(CUSTOM_FIELDS)) XCOLS[id] = [customFieldName(id), { text: 22, number: 13, date: minuteModeActive() ? (timeFormat === '12h' ? 24 : 19) : 13, flag: 9 }[CUSTOM_FIELDS[id].kind]];
   // "All columns" adds the custom fields that are in use (renamed, or holding a value somewhere) — not twenty empty columns.
@@ -13337,6 +13363,7 @@ function buildXlsx(opts) {
         case 'deadline': if (t.deadline) sheet.cell(r, c, xlsxSerial(t.deadline), S(Object.assign({ h: 'center', num: dateFmt }, deadlineMissed(t) ? { color: 'C4281F', bold: true } : {}))); else sheet.cell(r, c, null, S({})); break;   // red once Finish runs past it
         case 'totalSlack': { const v = taskTotalSlack(t); if (v == null) sheet.cell(r, c, null, S({})); else if (minuteModeActive()) sheet.cell(r, c, fmtSlack(v), S({ h: 'center', italic: true, color: v < 0 ? 'C4281F' : DIM, bold: false })); else sheet.cell(r, c, v, S({ h: 'center', num: '0" days";-0" days";0" days"', color: v < 0 ? 'C4281F' : undefined })); break; }
         case 'notes': sheet.cell(r, c, t.notes || null, S({ h: 'left' })); break;
+        case 'onSlide': sheet.cell(r, c, t.onSlide ? 'Yes' : null, S({ h: 'center' })); break;
         case 'cost': sheet.cell(r, c, taskCost(t), S({ h: 'center', num: `"${currencySymbol().replace(/"/g, '')}"#,##0.00` })); break;
         default:
           if (isCustomField(k)) {
