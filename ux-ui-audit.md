@@ -1,32 +1,27 @@
-# Milestone – UX/UI audit (consistency and Apple HIG)
+# Milestone: UX/UI audit (consistency, design system, Apple HIG, documentation)
 
-Audit date: 2026-10-30. **Read-only: no application, test or design-system file was changed.** The only file written is this report. Measuring scripts and screenshots live outside the project (scratchpad).
+Audited 2026-11-01 against `/Users/peer/Documents/Dev/Milestone` at commit `12ac393` (working tree clean). Read-only: the only file written is this report; measuring scripts and screenshots live outside the project.
 
-HIG base URL: `https://developer.apple.com/design/human-interface-guidelines/` (pages fetched in Markdown form, see "HIG pages used"). IDs: root causes **R-**, findings **F-**.
+**Status (2026-11-01, later the same day): the four quick wins are built: M-01, M-02, M-03 and M-05** (test: `tests/verify_audit_wins.py`, 16 checks; the full suite passes, 129 / 129). One correction to M-05 found while building it: the 12 dialogs did not put focus on the ✕; they did not move focus at all (it stayed on whatever the page had, usually the body), because my first measurement ran with a toolbar button still focused. The fix is the same. M-04 and M-06 to M-23 are open.
 
----
+This replaces the 2026-10-30 report (F-01 … F-18, all built, decided or ignored at the owner's request; it is kept in git history, last at commit `8db430a`). Findings here are **M-xx**, root causes **RC-x**. I did not re-report any closed F-item; where one has partly come back it is marked in section 7.
 
-## Status (2026-10-30)
-
-The five most important issues are **built** (tests: `tests/verify_audit_top5.py`, full suite: every suite passes except `verify_stress` seed 5, which fails intermittently on the code from before these changes as well, 3 of 5 runs): **F-01** Reduce Motion, **F-02 / F-03 / F-04** title-style wording, **F-05 / F-06** context menus for plan rows and Resource Sheet rows, **F-10** colour tokens, **F-14** ⌥⌘F on a Mac. F-12 (Baselines footer) is also done: Done instead of Close, and Set Baseline moved into the dialog. **F-16 is ignored at the owner's request.** Also done: F-17 (the Edit Tasks dialog marks the wrong field with a red border and bubble as well as the toast; Reschedule, Level and Plan have no validation of that kind; the Calendar sheet's day and break errors stay toast-only; test `tests/verify_bulk_field_errors.py`), F-08 and F-09 (the Resource Sheet's currency and Days off links use the readable link blue and a 28 x 23 hit area), F-13 (About and the backup list use the chosen date format) and the title-style button labels (Add Task, Add Resource, Scroll to Task). **F-11 was a misreading**: the Print footer's Picture group is a separate cluster on the leading edge (the Help-button pattern) and Cancel / Print are still the trailing pair; moving it into the options column put it below the fold, so it was left as it was. F-07 and F-15 are decided and written into CLAUDE.md ("Keyboard decisions"). F-18 is decided: keep the toolbar as it is (an explicit request, documented in CLAUDE.md). Nothing in the audit is open. Wording note: the older CLAUDE.md line "titles are sentence case" was replaced by the design guide's rule (sheet titles in title style).
+Two things about the brief: Milestone has no `cleardesk.html` (its source of truth is `index.html`), and the brief's "Tasks / Notes / Prompts" modes are ClearDesk's. For Milestone I audited its own screens: Tasks (list), Gantt, Resource Sheet / Resource Plan, the sidebar, the status bar, the Task Form, and the dialogs. The dialog gap in the brief (14 px) differs from `DESIGN.md` / `DIALOG-SHELL.md` (16 px); Milestone's dialogs do not use a gap at all (they are header / body / footer bars, see M-18).
 
 ---
 
 ## 1. Summary
 
-**Target platform.** A web app / installable PWA written to look and behave like a macOS app (Chrome/Edge on macOS is the primary target; Safari is only supported without file linking). HIG guidance for **macOS** is applied. Because it runs in a browser, the native menu bar, multiple windows and system text-size (Dynamic Type) do not exist; those categories are skipped or treated as accepted deviations.
-
-**UI stack.** One file, `index.html` (14,323 lines: CSS lines 196–2237, markup, then script), no build step, no dependencies. Icons: Font Awesome class names mapped to an inline outline-SVG registry (121 distinct icons, one family). Design tokens: `:root` custom properties in the same file (`--fs-*`, `--ico-*`, `--r-*`, `--dur-*`, `--hover`, `--pressed`, `--cap-*`, light and dark); the design system is documented in `design-system/DESIGN.md`, `DIALOG-SHELL.md`, `tokens.css`.
-
-**Overall assessment.** The app is unusually consistent for a single hand-written file. All 19 dialogs I could open share one shell (16px radius, 17/600 title, Cancel then primary at the trailing end), every dialog closes with Esc and with a click outside, the confirmation alert follows the HIG (Cancel leading, destructive action trailing, no default button on a destructive question, filled red only for the destructive choice), type and icon sizes come from a scale, there is no `transition: all`, no native `alert()`/`confirm()`, every icon-only button I swept has a name, and light-mode text contrast has no failures in Tasks, Gantt or Resource Sheet. The remaining problems are small and cluster around three things: **wording and capitalization that drifted between menus, dialog titles and the sibling app ClearDesk**, **context menus built only for task rows**, and **a few accessibility baselines that were never added** (Reduce Motion above all).
-
-**The 5 most important issues**
-
-1. **F-01** No `prefers-reduced-motion` handling anywhere (0 matches in the file), while the app animates (spinner, jump flash, 13 transitions). HIG: respond to Reduce Motion.
-2. **F-05 / F-06** Context menus exist only on task rows, group headers and column headers. Sidebar plan rows and Resource Sheet rows give the browser's own menu, although the plan commands (Rename, Duplicate, Unlink, Delete) exist elsewhere. HIG: support context menus consistently.
-3. **F-02 / F-03** Menu and dialog wording is mixed: the row context menu mixes sentence style ("Edit task…", "Add task below", "Delete 3 tasks") with title style ("Mark Complete", "Add Empty Line"); sheet titles are sentence style ("Local backups") while the menu item that opens them is title style ("Local Backups…"), and ClearDesk's rule is title-style sheet titles.
-4. **F-10** Colours still hard-coded in rules (`#fff`, `#bf8700`, rgba shadows: 25 lines), so these do not follow the theme tokens.
-5. **F-14** Find and replace is **Ctrl+H** on every platform. HIG: avoid Control as a modifier; on a Mac Ctrl+H is also "delete backward" in text fields.
+- **Target platform:** a local-first PWA (Chrome / Edge on macOS first) that imitates macOS. macOS HIG applied.
+- **UI stack:** one file, `index.html` (15,086 lines: icon registry in `<head>`, CSS lines 201–2325, script from line 3491), no build step. The design system is a **copy of ClearDesk's** (`design-system/DESIGN.md` is ClearDesk's guide with one line changed; `tokens.css` differs from the app by 43 variables; `icons.json` has 118 of the 171 icons the app draws).
+- **Verified:** code and browser. Static scans of the whole file (colour, size, weight, radius, spacing, cursor, transition, z-index, icon and tooltip inventories); then headless Chrome (Playwright, light and dark): computed styles of every visible element in Tasks, Gantt and Resource Sheet; contrast sampled from rendered pixels for every visible text run in the three views (selected and unselected) and in 9 dialogs; accessible names; hit areas by `elementFromPoint`; focus order and focus rings by real Tab presses; 19 dialogs opened and closed with Esc and a scrim click; reduced motion; sidebar thresholds at 1400 / 1101 / 1100 / 1099 / 800 / 700 px; platform strings rewritten for Windows. HIG pages fetched: Keyboards, Toolbars, Sheets, Accessibility, Icons, Context menus.
+- **Overall assessment:** very consistent for a single hand-written file, and visibly tidier than at the last audit. No `transition: all`, only `--dur-fast` / `--dur-base` plus one `.12s`, no native `alert()` / `confirm()`, the arrow cursor on every control (79 buttons and rows measured in Gantt), Tab walks the whole page in order (unlike ClearDesk, nothing swallows it), one 3 px focus ring on every control tried, Reduce Motion handled, all 26 dialogs carry `role`, `aria-modal` and a label. Contrast passes everywhere except three places. The weak spots are (1) **link-style buttons are unreadable in dark dialogs**, (2) **the group chevrons in the task list are unnamed, tiny buttons**, (3) **eleven dialogs open without moving focus in**, and above all (4) **the design-system documents describe ClearDesk, not Milestone**: the Gantt, the Print / Chart for Slides dialogs, the task dialog and Milestone's own tokens have no written rules.
+- **Top 5 issues**
+  1. **M-01 (High):** `.btn-link` text uses `--accent`: 2.58 : 1 on the dark dialog surface (Chart for Slides "More Options", "Add Slide Names…"; 14 uses in all). Same class of bug as old F-08, fixed only for the Resource Sheet links.
+  2. **M-02 (Medium):** the expand / collapse chevron of every group row is a focusable `<button>` with no name, no `aria-expanded` and a 14 × 14 px hit area.
+  3. **M-03 (Medium):** the "On Schedule" status pill on a selected (blue) row is 4.07 : 1 in both themes.
+  4. **M-05 (Medium):** 11 of 18 dialogs measured did not move focus into themselves when they opened (Print, Chart for Slides, Rules, Format, Fields, Reschedule, Level, Import, Help, Shortcuts, About); Print has a Title field it should have focused.
+  5. **M-16 (Medium, documentation):** `DESIGN.md`, `tokens.css`, `icons.json` and `DIALOG-SHELL.md` describe ClearDesk; Milestone's 30 own tokens, 53 own icons, 8 dialog widths and the whole Gantt are undocumented.
 
 ---
 
@@ -34,234 +29,213 @@ The five most important issues are **built** (tests: `tests/verify_audit_top5.py
 
 | ID | Root cause | Related findings | Recommended fix | Effort |
 |---|---|---|---|---|
-| R-01 | No single list of menu / dialog labels; each was written where it was needed, so capitalization and wording drift | 5 (F-02, F-03, F-04, F-12, F-07) | One `LABELS` pass: title style for menu items and sheet titles, sentence style only for alert questions; copy the rule into `design-system/DESIGN.md` and add a test that scans `item(` / `<h2>` strings | S |
-| R-02 | The context menu was designed for the task list and never generalised to the other surfaces | 3 (F-05, F-06, F-07) | Add menus for sidebar plan rows and Resource Sheet rows, built from the same `showRowMenu` item helpers; keep shortcut hints out of them | M |
-| R-03 | Accessibility baselines (media queries, minimum sizes) were handled per component, not globally | 4 (F-01, F-08, F-09, F-16) | Add one `@media (prefers-reduced-motion: reduce)` block; re-measure the two small resource-sheet links; keep the text-size choice documented as an accepted deviation | S |
-| R-04 | Token set is complete for surfaces and text but not for a few fixed colours (white on accent, amber warning, shadows) | 1 (F-10) | Use `--on-accent`, a `--warning` token with a defined value, and `--shadow*` tokens; add the "no colour literal outside token definitions" scan ClearDesk already has | S |
-| R-05 | Dialog footers are built per dialog, so the two with extra buttons differ from the rule | 2 (F-11, F-12) | Put secondary actions (Copy / PNG / SVG) in the dialog body or a pull-down; make Baselines end *Cancel · Set Baseline* | S |
-| R-06 | Two date formatters: the user's chosen format (`fmtDate`) and the browser locale (`fmtDateY`) | 1 (F-13) | Route `fmtDateY` through `dateFmtInfo()` | S |
-| R-07 | Keyboard shortcuts chosen to avoid browser conflicts rather than to follow macOS | 2 (F-14, F-15) | Add `Mod+Alt+F` for Find and replace (keep Ctrl+H on Windows only); document why ⌘F stays with the browser | S |
-| R-08 | Form errors are reported through the toast (92 error-toast call sites) instead of beside the field | 1 (F-17) | Needs a visual check first; if confirmed, show the message under the field in dialogs and keep the toast for page-level events | M |
-| R-09 | Toolbar grew by requested additions (labelled selection buttons, chip, Find, Columns) | 1 (F-18) | Decision, not a defect: keep, or move Edit / Duplicate / Copy / Delete icon-only into one group | M |
+| RC-A | The design system was copied from ClearDesk and never adapted: it documents ClearDesk's modes, widths, tokens and exceptions | M-16, M-17, M-18, M-19, M-20, M-21 | Write a Milestone chapter (Gantt, bars, timeline, list, task dialog, Print / Chart for Slides, exports) and regenerate `tokens.css` / `icons.json` from the app; move Milestone's exceptions (now in CLAUDE.md) into a `DESIGN.md` §12 of its own | L |
+| RC-B | One-off controls rendered without the shared accessibility helpers (name, state, hit-area growth) | M-02, M-11 | Give chevrons and Gantt handles the same treatment `.col-filter-btn` has (title → `aria-label`, `aria-expanded`, invisible `::before`) | S |
+| RC-C | Link and pill colours are chosen per component from `--accent` instead of the text-blue token that is readable on both themes | M-01, M-03 | `.btn-link` and links use `--blue-text`; the selected-row pill gets its own darker fill; add both to the contrast test | S |
+| RC-D | Dialog openers set focus by hand, each in its own way | M-05 | One focus rule driven by the `open` class (the way ClearDesk does, audit V-01): first text field, else primary button; never the ✕ | S |
+| RC-E | The Gantt added its own radii, weights and cursors outside the scales | M-08, M-09, M-10, M-22 | Add `--r-bar` (7), a weight token or use 600, and write the grab / crosshair cursors into the guide | S |
+| RC-F | A few strings written outside the tooltip rules | M-14 | Shorten the 10 long titles, run the glyph rewrite over `title` attributes | S |
 
 ---
 
-## 3. Quick wins (High or Medium severity, effort S)
+## 3. Quick wins (High or Medium severity, Effort S)
 
 | ID | Finding | Fix |
 |---|---|---|
-| F-01 | No Reduce Motion handling | One media query that stops `fa-spin`, `jumpFlash` and the `--dur-*` transitions |
-| F-02 | Row context menu mixes sentence and title style | Title-style the 7 labels in `showRowMenu` |
-| F-03 | Sheet titles are sentence style, the menu items that open them are title style | Title-style the 8 sheet titles |
+| M-01 | Dark-mode link text 2.58 : 1 (built) | `.btn-link { color: var(--blue-text) }` (index.html:884) and the same for `a[href]` |
+| M-02 | Unnamed 14 px group chevrons (built) | add `title`, `aria-expanded` and a `::before` hit area (index.html:6904, 4881, CSS 1120) |
+| M-03 | "On Schedule" pill 4.07 : 1 on the selected row (built) | darker pill fill or white text on the selected state |
+| M-05 | Focus stays outside the dialog | focus the first field, else the primary button (built) |
 
 ---
 
 ## 4. Inventory
 
-Counts come from the stylesheet and markup of `index.html` and from computed styles measured in headless Chrome (1400×900; Tasks, Gantt and Resource Sheet views; light and dark).
+### 4.1 Component duplication, colour and surfaces (§2.1, §2.4, §5, §11)
 
-**Component duplication and drift**
-
-| Variant | Where | Count |
+| Variant | Source | Where / how often |
 |---|---|---|
-| Dialog shell (`.modal-bg` > `.modal`) | 26 `.modal-bg` ids (task, plan, excel, csv, import, foreign import, bulk, replace, print, backups, file sync, folder files, fields, resource days, calendar, rules, format, baseline, recur, reschedule, level, sync conflicts, help, shortcuts, about, confirm) | 26 |
-| Confirmation | `openConfirmModal({…})` | 12 call sites |
-| Toast | `showToast` | 161 calls, 92 of them errors |
+| Surfaces, text, borders, status, glass | token (154 variables; 139 shared names with ClearDesk, but Milestone also uses `--panel`, `--panel-2`, `--text-dim`, `--text-faint`, `--task-*`, `--status-*`, `--warning`, `--row-h`, `--head-h`, `--accent-hover`, `--primary`: none in `tokens.css`) | everywhere (M-16) |
+| Colour literals in rules outside a token definition | **literal**: 6 lines (down from 25 at the last audit): 328 / 329 (dropdown border re-definitions), 576 (`rgba(255,255,255,.22)` dark sidebar toggle), 1270 (print `#fff`), 1492 (`#fff`, `rgba(0,0,0,.25)` on the Gantt resize handle), 2060 (`#000` mask gradient) | 2 allowed, 2 are token-style, 2 are literals (M-22) |
+| Inline `style="…"` | 66 lines, **0 with a colour** | |
+| JS hex strings | **literal** (needed because SVG, Excel, print and PNG leave the app): 30 (Gantt / print palette, the Chart for Slides Corporate palette `#1E2A78 #0069B1 #34A6DC #3BB8B8 #24778D`, orange `#F28011`, red `#E7001D`, status colours) | documented? no (M-21) |
 | Native `alert` / `confirm` / `prompt` | none | 0 |
-| Inline `style="…"` in markup / JS | | 68 |
-| `!important` in CSS | | 52 |
-| `transition: all` | none | 0 |
+| Dialog shells | 26 `.modal-bg`: `.modal.insp` (inspector groups), `.modal.wide.settings-modal` ×4, `.modal.alert` ×2, `.modal.help-modal` ×2, one `about` | 26 |
+| `!important` | 34 | |
+| Light / dark | both themes measured; contrast: 0 failures except M-01, M-03 | |
+| Glass | 7 lines with `backdrop-filter`; chrome only (sidebar, menus, dialogs, toast) | as documented |
+| Reduced transparency / contrast / motion | all three media queries exist (345, 2323) | |
 
-**Background colours and surfaces**
+### 4.2 Typography (§2.2)
 
-| Variant | Source | Notes |
+| Variant | Source | Count |
 |---|---|---|
-| Dialog `rgba(255,255,255,.97)` light | token | all dialogs identical |
-| Sidebar: translucent glass over a gradient wallpaper | tokens | body `background-color` is transparent, so tools that read it get the wrong base (see "Needs visual check") |
-| Hard-coded colour literals outside token definitions | 14 lines with hex, 11 with rgba | listed in F-10 |
+| `--fs-11 / 12 / 13 / 14 / 15 / 17 / 22` | token | 45 (11) · 129 (12) · 58 (13) · 32 (14) · 5 (15) · 4 (17) · 2 (22) |
+| Literal px font sizes | none | 0 |
+| Weights | 600 ×83, 500 ×31, 400 ×11, 700 ×9, **650 ×1** (`.gantt-slip`, line 1496) | M-08 |
+| Computed sizes on screen | 11, 12, 13, 14, 15, 17 | none off-scale, none below 10 |
+| Help / Shortcuts / About titles | 22 / 700 (documented as a window title) | |
 
-**Modals** (measured, 19 openable dialogs)
+### 4.3 Radius, spacing, depth (§2.3)
 
-| Property | Result |
-|---|---|
-| Radius | 16px on all 19 |
-| Title | 17px / 600 / start on 16; 22px / 700 on Help and Shortcuts (windows); centred 17/600 on the alert |
-| Width | 340 (alert), 380 (About), 440, 560, 680, 840 (Help, Shortcuts), 1040 (Print) |
-| Esc closes | 19 of 19 |
-| Click outside closes | 19 of 19 (changed edits ask first, per `dirty()` checks) |
-| Roles | `dialog` on 18, `alertdialog` on the confirmation; set by script at line 14249 |
-| Footer | Cancel + primary on 11; Done only on Format; Close only on Backups; Close + primary on Baselines; five buttons on Print |
-
-**Placement within modals**
-
-| Pattern | Dialogs |
-|---|---|
-| *Cancel · Save* | Task, Calendar, Rules, Fields |
-| *Cancel · Create / Apply / Export / Reschedule / Level resources* | Plan (new), Bulk, Excel, CSV, Recur, Reschedule, Level |
-| *Done* | Format |
-| *Close* | Backups |
-| *Close · Set Baseline* | Baselines (F-12) |
-| *Copy · PNG · SVG · Cancel · Print / Save as PDF…* | Print (F-11) |
-| Destructive confirmation | *Cancel · Delete plan* (filled red, focus on the dialog, no default button) |
-
-**Context menus**
-
-| Surface | Menu |
-|---|---|
-| Task row (list and Gantt rows) | yes (`showRowMenu`, 11865) |
-| Group header (Group by) | yes (`showGroupHeaderMenu`, 11889) |
-| Column header (Tasks, Resource Sheet) | yes (column width menu) |
-| Sidebar plan row | no |
-| Resource Sheet row | no |
-| Toolbar, status bar | no |
-
-**Typography** (computed over visible text)
-
-| Size / weight | Use | Notes |
+| Variant | Source | Count |
 |---|---|---|
-| 12/400, 12/600, 12/500 | grid, labels, sidebar | most used |
-| 11/600, 11/500, 11/400 | counts, captions | above the HIG macOS minimum of 10 pt |
-| 13/500, 14/500, 14/600, 15/400 | toolbar, buttons | |
-| 17/600 | dialog titles, toolbar title | |
-| 22 | Help / Shortcuts title | one use |
-| Weights in CSS | 600 ×81, 500 ×30, 400 ×12, 700 ×9 | four weights only |
-| Font sizes written as literal px in CSS | 0 | all through `--fs-*` / `--ico-*` |
-| Uppercase transform | 9 rules | section captions |
+| `--r-xs / s / m / l / xl` | token | 38 / 37 / 23 / 4 / 3 |
+| `999px`, `50%` | documented | 39, 33 |
+| `7px` ×3 (Gantt bar 20 px high; `.ap-btn`), `3.5px` (milestone diamond), `2px` ×3 (group bar, handles), `12px` (`.gantt-card`: equals `--r-l`), `4px` (the focus ring on `.tick`: equals `--r-xs`), `var(--radius)` (retired alias, `.help-tip` line 2168) | **literal / off-scale** | 11 (M-09) |
+| `22%` | documented (About icon) | 1 |
+| Spacing values off the 2…40 scale | 3 (9), 5 (4), 7 (5), 15, 18 (7), 22 (3), 26 (2), 30 (5), 52 (2), 56 (4), 60 | 43 uses, none documented (M-19) |
+| z-index | 0–6, 60, 61, 70, 80, 81, 90, 95, 100, 130, 200, 210, 390, 400, 500, **9998, 9999** (column-drag ghost) | 23 values; only 200 / 210 documented (M-19) |
 
-**Icons**
+### 4.4 Icons (§4)
 
-| Item | Result |
+| Variant | Source | Count |
+|---|---|---|
+| Masked `fa-NAME` icons from the registry | registry (171 names in the app) | 116 names used; every registry name referenced; 0 unknown |
+| `icons.json` | 118 names, **53 fewer** than the app (`chart-gantt`, `route`, `file-excel`, `gear`, `moon`, `toggle-on`, …) | M-17 |
+| Rendered boxes 10 / 11 / 13 / 14 px (= 12 / 14 / 16 / 18 drawn) | token sizes | no other size |
+| Inline `<svg>` | 4 drawings outside the registry: a book / panel glyph (line 2333), a folder (2886), two chevron strokes (9920) | M-23 |
+| Stroke weight measured | 1.33 at 16 px | on the scale |
+
+### 4.5 Motion and interaction (§2.5, §3)
+
+| Variant | Source | Count |
+|---|---|---|
+| Declared transitions | 17: `--dur-fast`, `--dur-base`, one literal `.12s` (line 2075), spin 1 s, jump flash 1.4 s | |
+| Transitions on rows / bars | `.grid-row`, `.gantt-bar`: none (0 s) | pass |
+| Computed durations in the three views | only the toast (0.2 s) | |
+| Reduced motion | all durations → 1e-6 s | pass |
+| `cursor` | default ×21 (every control), pointer ×1 (links), `grab` ×2 and `grabbing` ×2 (Gantt bars, row drag, column ghost), `ew-resize` ×2, `col-resize` ×4, `row-resize`, `text`, `crosshair` (link handle), `not-allowed` | M-10 |
+| Focus ring | 3 px `--focus-ring` outline on `button.view-tab`, `.icon-btn`, `.sb-plan-main`, `.btn`, `.id-toggle`, `.col-filter-btn`, `.chevron`; the sidebar resizer shows none (`outline: none`, opacity change only) | consistent; resizer needs visual check |
+
+### 4.6 Dialogs and controls (§5, §6)
+
+| Item | Measured |
 |---|---|
-| Source | one inline-SVG registry behind Font Awesome class names, 121 icons, outline style |
-| Drawn sizes | box 10 / 11 / 13 / 14px (draws 12 / 14 / 16 / 18 through the 1.26× mask) |
-| Mixed libraries | none |
-
-**Hover and interaction states**
-
-| Mechanism | Rules using it |
-|---|---|
-| `var(--cap-hover)` | 13 |
-| `var(--pressed)` | 12 |
-| `var(--hover)` | 11 |
-| `var(--bg-3)`, `brightness`, opacity | 1 each |
-| `:hover` rules in total | 114 |
-| Cursor on buttons and selects | `default` (the arrow, as on macOS) on every button and select measured in the three views; the hand only on links |
-| `:focus-visible` rules | 20 |
-| Transitions on visible elements in the three views | none (hover is instant) |
-| Declared transition durations | `var(--dur-fast)` ×11, `var(--dur-base)` ×2, `.12s` literal ×2, `1s` spin, `1.4s` jump flash |
-
-**Spacing and layout, shapes and depth**
-
-| Radius | Count |
-|---|---|
-| `var(--r-s)` 39, `var(--r-xs)` 37, `999px` 33, `50%` 26, `var(--r-m)` 22, `var(--r-l)` 4, `var(--r-xl)` 3 | tokens |
-| Literal `5px`, `4px`, `7px`, `var(--radius)` (old alias) | 4 one-offs |
-
-**Feedback and notifications**
-
-| Type | Behaviour |
-|---|---|
-| Toast (`#toast`) | status role; errors stay until dismissed (✕), success 2.6 s, Undo 6 s, with action 14 s; held while hovered or focused |
-| Alert / confirmation | 12 sites |
-| Banner / inline | the sync-conflict and "Linked" chips; date errors as a bubble (`.dt-err-bubble`, 1992) |
-
-**Empty, loading and error states**
-
-| State | Result |
-|---|---|
-| Empty | icon + title + one line ("No Tasks / Choose Add Task to start planning.", 6659); 11 references |
-| Loading | one spinner (`fa-spin`) for the file check; nothing else waits long |
-| Error | toast (92 sites) |
-
-**Keyboard**: shortcuts live in one table (`SHORTCUTS`, 13851 ff.) shown in a Shortcuts dialog; modifier is `Mod` (⌘ or Ctrl) except Ctrl+H.
-
-**Wording** (menu labels extracted): 33 title style, 5 sentence style ("Add resource", "Add task", "Link folder", "Over-allocated only", "Scroll to task"), 14 single words; plus template-literal labels in `showRowMenu` ("Edit task…", "Edit N tasks…", "Add task below", "Add sub-task", "Delete N tasks") and the group menu ("Expand this group", "Collapse this group").
+| Widths | 320 About, 340 alert, 400 Import, 440 Plan / Sync, 560 Task / Baseline / Reschedule / Level / Recurring / Edit Tasks, 680 Rules / Format / Calendar / Fields, 840 Help / Shortcuts, 1040 Print / Chart for Slides |
+| Padding / gap | `.modal` padding 0 and no gap: the three bars (header, body, footer) carry their own |
+| Titles | 17 / 600 start on sheets, 17 / 600 centred on the alert and Import, 22 / 700 on Help, Shortcuts and About |
+| Radius | 16 px on all |
+| Buttons | Cancel · primary (Task, Plan, Reschedule, Level, Rules, Calendar, Fields, Recurring, Edit Tasks); Done only (Baselines, Format); Cancel · Picture ▾ · Print (Print); Close · Save As… ▾ · Copy Picture (Chart for Slides); Cancel · Merge · Replace (Import: Replace is red) |
+| Esc and scrim close | 18 of 19 measured; the folder-link dialog (`#fileSyncModalBg`) is a mandatory first-run gate and ignores both (M-20) |
+| Focus on open | first field: Task, Plan, Baselines, Edit Tasks, Recurring, Calendar; dialog itself: confirm; **nothing (focus stays on the page): the other 11** (M-05) |
+| Roles | `dialog` ×25, `alertdialog` ×1 (the confirmation). Import is `dialog` although it is an alert shell (M-06) |
+| Hit areas | column filter 18 → 24 effective; Resource Sheet currency link 22 × 15 → 28 × 22; **group chevron 14 × 14 → 14** (M-02); Gantt link handle 11 × 11 (M-11) |
+| Context menu (task row) | 14 top-level items, 5 groups, 3 one-level submenus (Task Mode, Task Type, Color), Delete last and red with "Del" |
+| Toast | `role="status"`, `aria-live="polite"`, errors `role="alert"` and stay |
+| Tooltips | 135 static `title`s: 10 over 75 characters (up to 192), none lowercase-initial; 1 shows ⌘ on Windows |
 
 ---
 
 ## 5. Findings
 
-Type: **I** = Inconsistency, **H** = HIG deviation, **B** = both. HIG URLs are under `https://developer.apple.com/design/human-interface-guidelines/`.
+Type: **Inc** Inconsistency, **DS** Design-system deviation, **HIG** HIG deviation, **Doc** Doc gap. HIG pages (fetched): Keyboards <https://developer.apple.com/design/human-interface-guidelines/keyboards>, Toolbars <…/toolbars>, Sheets <…/sheets>, Accessibility <…/accessibility>, Icons <…/icons>, Context menus <…/context-menus>.
 
-| ID | Category | Finding | Type | Locations | HIG reference | Severity | Effort | Root cause | Recommendation |
-|---|---|---|---|---|---|---|---|---|---|
-| F-01 | Motion / Accessibility | No reduced-motion handling. `prefers-reduced-motion` appears nowhere in the file (`prefers-reduced-transparency` and `prefers-contrast` appear once each). The app has `fa-spin` (526), `jumpFlash` (1256) and 13 transitions. ClearDesk collapses all durations under Reduce Motion. | H | index.html:526, 1256, whole stylesheet | `accessibility` ("When Reduce Motion is active, … reduce automatic and repetitive animations") | Medium | S | R-03 | Add one `@media (prefers-reduced-motion: reduce)` block: stop the spinner and jump flash, set transition durations to 0 |
-| F-02 | Wording | The row context menu mixes styles: sentence style "Edit task…", "Edit N tasks…", "Add task", "Add task below", "Add sub-task", "Delete N tasks" next to title style "Mark Complete", "Add Empty Line", "Change Recurrence…", "Task Mode", "Duplicate". | B | index.html:11869, 11880, 11885 (Delete) | `menus` ("use title-style capitalization") | Medium | S | R-01 | "Edit Task…", "Edit 3 Tasks…", "Add Task", "Add Task Below", "Add Sub-task", "Delete 3 Tasks" |
-| F-03 | Wording | Sheet titles are sentence style ("Local backups", "Level resources", "Recurring task", "Reschedule remaining work", "New plan", "Export to Excel", "Plan settings", "Print or save as PDF") while the menu items that open them are title style ("Local Backups…", "Level Resources…", "Recurring Task…", "Reschedule Remaining Work…", "New Plan…"). ClearDesk's own rule is title-style sheet titles, alert titles are questions. | B | index.html:2704, 3010 and the other `.modal-header h2` lines; menu items at 2275 ff. | `alerts` (fragment titles take title-style capitalization), `menus` | Medium | S | R-01 | Title-style every sheet title; leave the alert titles ("Discard your changes?", "Unlink file") as sentences |
-| F-04 | Wording | Group-header menu: "Expand this group" / "Collapse this group" are sentence style next to "Collapse All Groups", "Clear Grouping". | I | index.html:11892 | `menus` | Low | S | R-01 | "Expand Group" / "Collapse Group" |
-| F-05 | Context menus | The sidebar plan rows have no context menu (only 3 `contextmenu` listeners exist: column headers ×2, task rows). Rename / Duplicate / Unlink / Delete exist only in the plan menu. ClearDesk gives every sidebar row a menu. | B | index.html:2253 (`#sbPlans`), 586 ff. (`.sb-plan-row`), 6555, 8009, 14073 | `context-menus` ("Support context menus consistently throughout your app") | Medium | M | R-02 | Right-click on a plan row: Switch To, Rename Plan…, Duplicate Plan…, Unlink File…, Delete Plan… (same actions as the plan menu) |
-| F-06 | Context menus | Resource Sheet rows (and the Resource Plan rows) have no context menu, although Tasks rows have one and the sheet has Add / Remove commands. | B | index.html:8009 (only the header listens) | `context-menus` | Medium | M | R-02 | Row menu: Add Resource, Remove, Days Off… |
-| F-07 | Context menus | The task row menu shows keyboard hints (⌘C, ⌘X, ⌘V). The HIG puts them in the main menus. (There is no menu bar in a web app, so the hint also helps discovery; this is a judgement call.) | H | index.html:11885 | `context-menus` ("Show keyboard shortcuts in your app's main menus, not in context menus") | Low | S | R-02 | Keep as is (documented), or drop the hints; decide once and write it in `DESIGN.md` |
-| F-08 | Contrast | In dark mode the two resource-sheet links (`.rst-cur` "(€)" and `.rst-days-link` "Days off") estimate at 2.85:1 against a 4.5:1 minimum. Estimated with an assumed dark base colour; the glass backgrounds make an exact figure impossible from code. | H | index.html:1482, 1521 | `accessibility` (4.5:1 up to 17 pt) | Low | S | R-03 | **Needs visual check**, then use `--blue-text` (the dark-mode text blue) instead of `--accent` for link text |
-| F-09 | Hit targets | `.rst-cur` measures 22×15 px (below the macOS minimum 20×20); the sidebar search input measures 186×17 (its wrapper is larger). `.col-filter-btn` is 18×18 but has an invisible `::before` that makes the target 26px (lines 819–824), so it is fine. | H | index.html:1482 (`.rst-cur`), 2246 (`#searchInput`) | `accessibility` (macOS minimum control size 20×20 pt) | Low | S | R-03 | Give `.rst-cur` the same invisible `::before` growth as the filter button |
-| F-10 | Colours | Colour literals outside token definitions: `color:#fff` at 1270, 1456, 1992, 2173–2181 (should be `--on-accent`), `#bf8700` at 921, 1307, 1841 (a `--warning` fallback and two warning boxes), and rgba shadows at 554, 555, 674, 1031, 1040, 1207, 1410. ClearDesk requires tokens. | I | index.html:921, 1270, 1307, 1456, 1841, 1992, 2173–2181 | `accessibility` ("Prefer system-defined colors") | Low | S | R-04 | Replace with the tokens; add the literal-colour scan to the tests |
-| F-11 | Placement in modals | The Print dialog footer is *Copy · PNG · SVG · Cancel · Print / Save as PDF…*: three secondary actions sit before Cancel, so Cancel is not the leading button. Every other dialog is *Cancel · primary*. | B | index.html:2697 | `alerts` / `sheets` (Cancel leading, default trailing) | Low | S | R-05 | Move Copy / PNG / SVG into the dialog body or a "Save Picture" pull-down; footer becomes *Cancel · Print…* |
-| F-12 | Placement in modals | Baselines ends *Close · Set Baseline*; the neutral button is "Close" where every other two-button dialog says "Cancel". (Compare / Clear apply immediately inside it, which is why it says Close; the mix is what is inconsistent.) | I | index.html:2945 | `sheets` (Cancel dismisses without saving; Done after completing) | Low | S | R-05 | Either *Cancel · Set Baseline* with Compare moved out, or *Done* only, as Format and Backups do |
-| F-13 | Localization | `fmtDateY` formats with `toLocaleDateString(undefined, …)` and ignores the date format the person chose, so the About line and each backup row show a different date format from the grid. | I | index.html:3920 (definition), 12991, 13929 (uses) | – (internal) | Low | S | R-06 | Build it from `dateFmtInfo()` like `fmtDate` |
-| F-14 | Keyboard | Find and replace is **Ctrl+H** on every platform. HIG: avoid Control as a modifier; on a Mac Ctrl+H is "delete backward" in text fields. | H | index.html:11301 (comment), 13851 ff. (`SHORTCUTS` row) | `keyboards` ("Avoid using the Control key as a modifier") | Medium | S | R-07 | On a Mac use ⌥⌘F (the HIG lists Option-Command-F for the search field, the nearest standard slot), keep Ctrl+H only on Windows; show the right one in the sheet |
-| F-15 | Keyboard | "Find a task" is `/` (the ⌘K shortcut was removed), not ⌘F (the standard). ⌘F stays with the browser's page find, which is a sensible choice in a web app. | H | `SHORTCUTS` 'Anywhere' group | `keyboards` (Command-F opens Find) | Low | S | R-07 | Keep, and say so in `DESIGN.md` so it is a decision, not a gap |
-| F-16 | Typography / Accessibility | Text size offers 90 / 100 / 115 / 130 % (`uiScale`). The HIG asks for at least 200 %. The page is zoomable with the browser, and ClearDesk records the same limit as accepted. | H | index.html:3586, 10419 | `accessibility` ("enlarge text by at least 200 percent") | Low | M | R-03 | Accepted deviation; keep it listed |
-| F-17 | Forms and validation | 92 of 161 toast calls are errors. Whether a bad value in a dialog (for example an end before a start, an empty plan name) is shown beside the field or only as a toast over the dialog could not be confirmed from code. Dates do get an inline bubble (`.dt-err-bubble`). | I | index.html:1992, 10358 | `alerts` ("avoid using an alert merely to provide information") | Medium | M | R-08 | **Needs visual check** in the Reschedule, Level, Recurring and Bulk dialogs; keep errors next to the field |
-| F-18 | Toolbar | The Tasks toolbar carries text-labelled buttons next to icon buttons, more than three groups (Undo/Redo, Add Task split button, Indent/Outdent, selection chip with four labelled buttons, Find, Columns). The design was an explicit request, documented in CLAUDE.md. | H | index.html:2206, 2306; CLAUDE.md "Toolbar" section | `toolbars` ("aim for a maximum of three" groups; "prefer symbols"; "keep actions with text labels separate") | Low | M | R-09 | **Decided: keep** (owner's choice) |
+| ID | Category | Finding | Type | Locations | DESIGN.md | HIG | Prev. | Sev | Eff | RC | Recommendation |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| M-01 | Contrast | `.btn-link` text is `--accent` (`#2c62c9` on dark): 2.58 : 1 on the dark dialog surface (`More Options`, `Add Slide Names…` in Chart for Slides, measured); 12 px / 600, so 4.5 : 1 applies. Light is fine (≈ 5.8). 14 `.btn-link` uses. | HIG, DS | `index.html:884` (also `:895–896` where the filter-head link already uses `--blue-text`, `:1675`, `:1741`) | §2.1 ("text ≥ 4.5 : 1 on every surface in both themes"; the status-text blues exist for this) | Accessibility (4.5 : 1 for text up to 17 pt; check light and dark) | F-08 (same cause, only `.rst-cur` fixed) | **H** | S | RC-C | `color: var(--blue-text)`; extend `verify_design_rules.py` to sample one `.btn-link` in a dark dialog. |
+| M-02 | Accessibility | The group chevron is a tabbable `<button class="chevron">` with no `title`, `aria-label` or `aria-expanded`, 14 × 14 px, and shows a focus ring when tabbed to. Group-header rows built by "Group by" use `aria-hidden` + `tabindex=-1` (4881), so the two disagree. | HIG, DS | `index.html:6904` (rows), `:4881` (group headers), `:1120` (CSS) | §9 (accessible name, expanded state), §5.1 / §9 (hit areas under 20 px get an invisible `::before`), §5.7 | Accessibility (macOS minimum control 20 × 20 pt; label custom controls) | none | M | S | RC-B | `title="Collapse"` / `"Expand"` (the observer copies it to `aria-label`), `aria-expanded`, and a `::before` that grows the target to 24 px. |
+| M-03 | Contrast | On a selected (blue) row the "On Schedule" status pill is 4.07 : 1 (white-ish text on the translucent pill over the accent band), in light and dark. Other pills pass (4.67–5.8). | DS, HIG | `.status-pill.st-on-schedule` inside `.grid-row.selected` | §3 (pills keep ≥ 4.5 : 1 in the blue and grey states) | Accessibility | none | M | S | RC-C | Give the selected-row pill a stronger fill or solid white text. |
+| M-04 | Context menu | The task row menu has 14 top-level items in **5 groups** (Edit / Mark / modes / Color; Add Task Below, Add Empty Line; Duplicate / Copy / Cut / Paste; Indent / Outdent; Delete) and shows "Del" as text. The guide allows ≤ 3 groups (ClearDesk wrote its four into §12 as exception U-07); Milestone has no such entry. The shortcut-hint rule itself is decided (old F-07). | DS, HIG, Doc | `showRowMenu` (the `rowMenu` element); row menu screenshot | §5.5 (≤ 3 groups, ⌫ not "Del") | Context menus ("about three groups", "small number of items") | F-07 (hints decided) | L | S | RC-A | Merge "Add Task Below / Add Empty Line" into the Duplicate group and Indent / Outdent into the first, or record the 5 groups as a decision; use ⌫ for the Delete hint. |
+| M-05 | Dialogs | 11 of 18 dialogs measured open without moving focus into the dialog (activeElement stays on the body / the last page control): Reschedule, Level, Rules, Format, Fields, Print (which has a Title field), Chart for Slides, Import, Help, Shortcuts, About. A keyboard user has to Tab into the dialog; the Tab trap only engages on the first press. **Built:** `focusIntoDialog()` in the dialog observer (first text field or list, else the primary button, else the dialog itself; never a close button; the folder picker excluded). Task, Plan, Baselines, Edit Tasks, Recurring and Calendar focus their first field. | DS, HIG | each dialog's opener; `printModalBg`, `slideChartModalBg`, `rescheduleModalBg`, `levelModalBg`, … | §6.3 (first text field, else primary button, else first control; destructive: none), DIALOG-SHELL §3.4 | Sheets (Cancel / Done placement); Keyboards (full keyboard access) | none (ClearDesk V-01 did this centrally) | M | S | RC-D | Built: one focus rule on `open` (see the finding). |
+| M-06 | Dialogs | Import (`.modal.alert.alert-wide`) is `role="dialog"`; the guide says `alertdialog` for Import. Its buttons read Cancel · Merge · Replace; the guide says Cancel · Replace · Merge. | DS | `#importModalBg` | §6.2 / §6.3 | Alerts (not re-fetched) | none | L | S | RC-A | Make it `alertdialog`; document the button order Milestone chose. |
+| M-07 | Toolbar | The Gantt / Tasks bar now holds seven capsules (sidebar toggle, Add Task ▾, indent / outdent, undo / redo, Edit / Duplicate / Copy / Delete, view switch, table, calendar / settings). The recorded decision (old F-18) was "keep the labelled toolbar"; the labelled buttons are gone, so the stated reason no longer fits, but the group count is still well over three. | DS, HIG | `index.html:2397` (`#addTaskBtn`) and the toolbar markup around it | §19.4 (≤ 3 groups, one primary action, ⋯ overflow defined) | Toolbars ("aim for a maximum of three" groups; define the overflow menu) | F-18 | L | M | RC-A | Re-decide and rewrite the F-18 note; the HIG-friendly shape is leading (toggle, title, Add Task), centre (edit group, view switch), trailing (undo / redo, settings). |
+| M-08 | Typography | `.gantt-slip` (the baseline-slip badge) uses weight 650; the system has four weights (400 / 500 / 600 / 700). | DS | `index.html:1496` | §2.2 | — | none | L | S | RC-E | `font-weight: 600`. |
+| M-09 | Radius | Eleven radii off the ladder: Gantt bars `7px` (15 elements), `.ap-btn` `7px`, milestone `3.5px`, group bar / handles `2px`, `.gantt-card` `12px` (= `--r-l`), the `.tick` focus ring `4px` (= `--r-xs`, added in the last session), and `.help-tip` still reads the retired alias `var(--radius)`. | DS | `index.html:1461, 1472, 1485, 1505, 1510, 1891, 2168, 2276` | §2.3 ("one name per value; do not invent radii") | — | U-14 (ClearDesk; the alias was removed there) | L | S | RC-E | Use `--r-l` / `--r-xs`; add `--r-bar: 7px` (or `calc(var(--bar-h) * .35)`) for bars and write it down. |
+| M-10 | Cursor | The Gantt uses `grab` / `grabbing` on bars and the row drag, `ew-resize` on bar handles, `crosshair` on the link handle, and a `grabbing` cursor on the whole page while a column moves. The guide says "no `grab` cursor". These are visible draggable objects, so the cursors are reasonable; they are just not written down. | Doc | `index.html:825, 1024, 1108, 1461, 1490, 1500, 1504` | §1.5 (list of allowed exceptions) | Pointing devices (not fetched) | none | L | S | RC-A | Add them to §1.5 as the Gantt exceptions. |
+| M-11 | Hit areas | The Gantt link-drag handle is 11 × 11 px (hit area could not be grown by `elementFromPoint` probing), the bar resize edges are 7 px wide. These are precision drag handles, not click targets, but §9 asks for ≥ 20 × 20 measured. | HIG, DS | `.link-handle`, `.resize-handle` (`index.html:1490–1505`) | §9, §5.1 (invisible `::before`) | Accessibility (20 × 20 pt minimum on macOS) | none | L | S | RC-B | Grow the handle's hit area with a `::before` (visually unchanged). Needs visual check on hover. |
+| M-12 | Gantt header | At Fit zoom the first timeline labels are clipped to "2.." and "Q.." at the left edge (tick 19 px wide, text wider). | Inc | `.gantt-tick` (`index.html:1430–1435`) | §5.4 ("truncate with an ellipsis and give the full text as a `title`") | — | none | L | S | — | Drop the first label if it cannot fit, or give the tick a `title`. |
+| M-13 | Responsive | With the sidebar hidden (≤ 800 px) the plan title in the toolbar shrinks to 7–25 px (a single letter, "M") at some widths between 740 and 800 px in Tasks and Gantt, and is whole at others (700 px in Tasks); the value changes with the resize timing. | Inc | toolbar title (`#barTitle`, `.bar-title`) at ≤ 800 px | §19.4 (a bar steps down by its own width, nothing clipped) | Toolbars (titles under about 15 characters; leave room for controls) | none | L | S | — | Hide the title below the width where it cannot show 8 characters. Needs visual check. |
+| M-14 | Tooltips | 10 `title`s are longer than 75 characters (up to 192: the predecessor syntax hint at line 6868, the Even Charts hint 159); the Plan-settings tooltip shows "(⌘,)" on Windows while the search tooltip is rewritten to "Ctrl+H". | DS | `index.html:2335, 2444, 2556, 2709, 2794, 2812, 3026, 6868, 6942, 8184` | §5.7 (75 characters at most), §15 | Keyboards (symbols localised) | none | L | S | RC-F | Shorten or move the long ones into the dialog text; rewrite glyphs in `title`s with the same helper as the Shortcuts sheet. |
+| M-15 | PWA | `theme-color` is a single static `#f6f8fa` (manifest `theme_color` / `background_color` the same); the script sets `#f2f3f7` for light and `#171925` for dark after load. Three different light values, and no per-scheme metas. | DS | `index.html:15`, `:10776`, `manifest.json` | §14 (two `theme-color` metas, one per scheme, matching the chrome colour) | — | none | L | S | RC-A | Two metas (`#f2f3f7` light, `#171925` dark), manifest to match. |
+| M-16 | Documentation | The design system describes ClearDesk: modes (Tasks / Notes / Prompts), board tile, detail panel, find bar, 300 px sidebar floating at 1100 px, `cleardesk.html`. Milestone's sidebar is 268 px and docks down to 800 px; the Gantt chart, bar colours and states, timeline header, link arrows, Today line, list columns, task dialog groups, Print and Chart for Slides dialogs, exports and the Slide Name / On Slide marks are not described anywhere in `design-system/`. `tokens.css` lacks 30 variables the app uses (`--panel`, `--panel-2`, `--text-dim`, `--text-faint`, `--task-*`, `--status-*`, `--warning`, `--row-h`, `--head-h`, `--accent-hover`, `--primary`, …) and defines 13 the app does not (`--sel-band`, `--sel-sub-tint`, `--find-*`, `--pill-plate`, …). The rules live in CLAUDE.md (≈ 1,400 lines). | Doc | `design-system/DESIGN.md`, `tokens.css` | whole guide; §2.6, §12, §19 | — | none (ClearDesk U-/V-series do not apply) | **M** | L | RC-A | See section 8. |
+| M-17 | Documentation | `icons.json` has 118 icons; the app's registry has 171 (53 planner icons are missing: `chart-gantt`, `route`, `calendar-check`, `gear`, `moon`, `file-excel`, `toggle-on`, …). `DESIGN.md` says 118. | Doc | `design-system/icons.json`, `DESIGN.md:11` | file table, §4 | — | none | L | S | RC-A | Regenerate `icons.json` from the app and say "171". |
+| M-18 | Documentation | `DIALOG-SHELL.md` describes a sheet as `.modal` with 24 px padding, 16 px gap, `.modal-head` and `.modal-actions`; Milestone's dialogs are three bars (header, body, footer) with hairlines, padding on the children, an ✕ in the header and eight widths (320, 340, 400, 440, 560, 680, 840, 1040). `DESIGN.md` §6.2 lists 380 / 360 / 420 / 860. Footers also carry things the shells do not (Picture ▾, Save As… ▾, Close). | Doc | `design-system/DIALOG-SHELL.md`, `DESIGN.md` §6.2 | §6.1–6.2 | Sheets | none | M | M | RC-A | Describe Milestone's shell and widths. |
+| M-19 | Documentation | 43 padding / margin / gap values off the 2…40 scale (3, 5, 7, 15, 18, 22, 26, 30, 52, 56, 60) and 23 z-index values (up to 9999) are not documented, although the guide says reserved widths must be. | Doc | e.g. `index.html:630, 910, 1056, 1779, 1903, 2059`; z-index lines 827–828 (9998 / 9999), 1510 (390) | §2.3 | — | none | L | S | RC-A | Add a "measured values" and a z-index table. |
+| M-20 | Documentation | The folder-link dialog ("Welcome to Milestone" / "Choose a folder to continue") cannot be closed with Esc or the scrim and has no Cancel; it is a deliberate gate, but §6.3 says Esc cancels and §12 does not list it. | Doc | `openFileSyncModal` (`index.html:13820`) | §6.3, §12 | Sheets ("always provide a way out"; not quoted exactly in the fetched page: "provide an alternative to the Done button") | none | L | S | RC-A | Write it into the exceptions table with its reason. |
+| M-21 | Documentation | 30 hex strings live in the script (Gantt, print, PNG / SVG chart, Excel palettes, the Corporate brand palette). §2.1 allows literals only in token definitions, the note palette, print CSS and e-mail HTML. They have to be literal because the output leaves the app, but the guide does not say so. | Doc | `index.html` (Print, Chart for Slides, Excel export code) | §2.1 | — | none | L | S | RC-A | Add "export palettes" to the allowed list and name where they live. |
+| M-22 | Colours | Two residual colour literals in rules: `#fff` and `rgba(0,0,0,.25)` on the Gantt resize handle, `rgba(255,255,255,.22)` on the dark sidebar toggle. | DS | `index.html:1492, 576` | §2.1 | — | F-10 (partly back) | L | S | RC-E | `var(--on-accent)` and a token for the shadow. |
+| M-23 | Icons | Four inline `<svg>` drawings are outside the registry (a panel glyph, a folder, two chevron strokes). | DS | `index.html:2333, 2886, 9920` | §4.1, §11 step 3 | Icons | none | L | S | RC-A | Move them into the registry. |
 
----
-
-## 6. Proposed consistency rules
-
-| Category | Rule |
-|---|---|
-| Components | A new dialog uses `.modal-bg > .modal` with `.modal-header` and `.modal-footer`; a question uses `openConfirmModal`; no new footer layouts |
-| Colours | No colour literal outside a token definition; text on an accent fill is `--on-accent` |
-| Modals | Sheets: title-style title, ✕, Cancel then primary; "Done" only when changes apply as you type; Esc and a click outside close (asking first when changed) |
-| Modal placement | Cancel leading, the default action trailing; extra actions go in the body or a pull-down, never before Cancel |
-| Context menus | Every row-like object (task, plan, resource) has one; unavailable items are hidden; groups: change, add, copy, structure, delete last; no more than three groups; no shortcut hints |
-| Placement of controls | Primary action trailing; icon-only buttons have a `title`, copied to `aria-label` |
-| Navigation | One selected row in the sidebar (neutral fill); the view tabs keep the same selected look |
-| Forms | Error text beside the field, not only in a toast; a field's error clears on the next valid input |
-| Lists and tables | Truncated text ends in an ellipsis and has the full text as tooltip |
-| Empty / loading / error | Icon + title-style title + one line; spinner only for waits over about a second; errors name the next step |
-| Feedback | Success toast 2.6 s, Undo 6 s, errors stay until dismissed |
-| Destructive actions | Undoable deletes act at once and offer Undo; unrecoverable ones use the alert with a filled red button and no default |
-| Typography | Sizes only from `--fs-11…22`; weights 400 / 500 / 600 / 700 |
-| Icons | One outline family, drawn at 12 / 14 / 16 / 18 |
-| Hover and focus | Fill from `--hover`, `--pressed` or `--cap-hover`; a keyboard ring on `:focus-visible`; arrow cursor on controls, hand only on links |
-| Tooltips | Sentence case starting with a verb; a command keeps its name and shortcut |
-| Spacing, shapes | Radii from `--r-xs … --r-xl`, 999px and 50% only for pills and circles |
-| Motion | Durations from `--dur-fast` / `--dur-base`; all motion stops under Reduce Motion |
-| Keyboard | Modifier is ⌘ (Ctrl elsewhere); never Control alone on a Mac; list shortcuts only in the Shortcuts sheet |
-| Wording | Menu items and sheet titles in title style; alert titles as sentences; "Unlink", "Duplicate", "Cancel" everywhere |
+No finding for: Tab order (the whole page is reachable, with a 3 px ring on every control tried), Reduce Motion, text sizes and weights (apart from M-08), hover / selection transitions (none on rows or bars), arrow cursor on controls, accessible names (apart from M-02), toast roles, dialog `aria-modal` and labels, one-level submenus, hide-not-dim in the row menu.
 
 ---
 
-## 7. Needs visual check
+## 6. Documented exceptions
 
-- **F-08** Dark-mode contrast of `.rst-cur` and `.rst-days-link` (estimated 2.85:1; glass backgrounds make it code-uncheckable).
-- **F-09** Rendered size of the `.rst-cur` hit area and the sidebar search field.
-- **F-17** Where validation messages appear in the Reschedule, Level, Recurring, Bulk and Plan dialogs.
-- Dark-mode contrast in general: the sweep assumed a dark base of rgb(30,33,45) taken from a screenshot; three further low values ("Change folder…", "Clear all", "Send feedback") belong to menus that were not open, so they are not findings.
-- Dialog heights on a short window (the Task dialog measured 846 px tall in a 900 px window; the Calendar, Rules, Format and Fields sheets are all 810 px whatever their content).
-- Truncation tooltips in the grid and the sidebar, and drag-and-drop feedback (grab / grabbing cursors, drop lines): **not audited in depth in this pass**.
-- Responsive behaviour below 1100 px: CLAUDE.md records measurements at six widths; **not re-measured here**.
+`DESIGN.md` §12 is ClearDesk's table. Milestone's own decisions live in CLAUDE.md; this is how they hold.
 
----
-
-## 8. Skipped categories
-
-| Category | Reason |
-|---|---|
-| Menu bar | A web app has no native menu bar; its commands live in the toolbar, the Data / Help menus and the right-click menus |
-| Window behaviour (macOS) | A single page in a browser tab or PWA window; the browser owns minimum size, full screen and windows |
-| Text overflow and localization (languages) | The app is English only (`lang="en"`, no string table); only the date and time formatting is user-configurable (F-13) |
+| Decision (Milestone) | Does the code still follow it? | Does the reason still hold? | Note |
+|---|---|---|---|
+| Keyboard shortcut hints stay in the row menu (old F-07) | Yes ("Del" on Delete) | Yes (no menu bar) | use ⌫ per §5.5 (M-04) |
+| Find a task is `/`, ⌥⌘F on a Mac, Ctrl+H on Windows (F-14, F-15) | Yes (search tooltip rewritten per platform) | Yes | |
+| Text size 90 / 100 / 115 / 130 %, 200 % ignored at the owner's request (F-16) | Yes | Yes | |
+| Toolbar kept as is (F-18) | The toolbar changed (labelled buttons are now icon-only) | **No longer as written** | M-07 |
+| No "Add Task" row in the Gantt view | Yes (Tasks view only) | Yes (list and chart scroll together) | |
+| Mandatory folder dialog without Esc / Cancel | Yes | Yes | not written into the guide (M-20) |
+| Selected row = solid accent with white text | Yes | Yes | pill fails 4.5 : 1 (M-03) |
+| Filled red button in confirmations only | Yes (Delete, Replace) | Yes | |
+| Sidebar icons neutral grey | Yes | Yes | |
 
 ---
 
-## HIG pages used
+## 7. Regressions
 
-alerts, sheets, context-menus, menus, toolbars, typography (default 13 pt / minimum 10 pt for macOS), accessibility (contrast 4.5:1, control sizes 28 / 20 pt, Reduce Motion, 200 % text), undo-and-redo, keyboards (standard shortcuts, Control as a modifier), the-menu-bar. Fetched as `…/<page>.md` on 2026-10-30. Colour, materials, motion and pointing-devices pages were not fetched; claims on those topics are limited to the accessibility page above.
+- **Old audit F-01 … F-18:** F-01 (Reduce Motion) holds: all durations collapse under `prefers-reduced-motion`. F-02 / F-03 / F-04 (title style): sheet titles are title style ("Rename Plan", "Level Resources"). F-09 (hit areas) holds (`.rst-cur` 28 × 22). F-12 holds (Baselines ends **Done**). F-14 holds. **Back in part:** F-08 (readable link blue): only `.rst-cur` / `.rst-days-link` were changed, so `.btn-link` fails in dark dialogs (M-01). F-10 (colour tokens): 6 literal lines left, 2 of them new in the Gantt (M-22).
+- **`DESIGN.md` §10 mistakes:** 4 (a transition on selection / hover): none, rows and bars have `0s`. 11 (`cursor: pointer` on controls): one rule, for links. 14 (literals in inline styles): 66 inline styles, none with a colour. 2 (`width: auto` on a masked icon), 13 (unscoped variables), 17–19: not seen in the screens driven.
 
-## Method and limits
+---
 
-- Code facts (counts, line numbers) from `index.html` as of commit `8d2bae5` plus one uncommitted line (the Unlink icon).
-- Rendered facts from Playwright (headless Chromium, 1400×900, no file-system API so the mandatory folder dialog does not cover the app): every dialog opened with its real opener and measured; computed-style sweep over the Tasks, Gantt and Resource Sheet views; WCAG contrast over every visible text element in light and dark.
-- 19 of 26 dialogs measured; the remaining ones (file sync, folder files, import, foreign import, replace, sync conflicts, resource days) need data or file state that the sweep did not set up. They use the same `.modal` shell.
-- No screenshots are embedded; one dark-mode screenshot was used to correct a measuring error.
+## 8. Proposed changes to `DESIGN.md` (paste-ready)
+
+1. **Title and file table:** *"# Design system (ClearDesk and Milestone) … Source of truth: `index.html` of each app. Milestone-specific rules are in section 21."* (and replace `cleardesk.html` with `index.html` in the first paragraph).
+2. **New §21 "Milestone: the planner" (outline to fill):** *list and Gantt share one row height (`--row-h` 32) and scroll together; bar colours come from `--task-*` and status from `--status-*`; a manual task's bar is dashed; the group bar is 8 px; link arrows, the Today line and the baseline slip badge (weight 600); handles: bar resize edges 7 px, link handle 11 px with a `::before` hit area; the sidebar is 268 px and floats at or below 800 px; the row menu has five groups; exports (Print, Chart for Slides, Excel, CSV, XML) use their own literal palettes.*
+3. **§1.5 cursors:** add *"Gantt: `grab` / `grabbing` on a draggable bar or row, `ew-resize` on a bar edge, `crosshair` on the link handle."*
+4. **§2.1:** add *"Links use `--blue-text` (readable on both themes); `--accent` is for fills."* and *"Exports (print, PNG / SVG, Excel) keep their own literal palettes."*
+5. **§2.3 radius:** add `--r-bar` 7 for bars and *"nested radius = parent − inset"*; list the measured values (3, 5, 7, 15, 18, 22, 26, 30, 52, 56, 60 px) and a z-index ladder (0–6 content, 60–95 chrome, 100 dialogs in Milestone, 130 / 200 / 210 confirm, 390–500 floating cards and menus, 9998–9999 drag ghost).
+6. **§6.2 widths:** *"320 About, 340 alert, 400 Import, 440 Plan / Sync, 560 inspector dialogs, 680 settings dialogs, 840 Help / Shortcuts, 1040 Print / Chart for Slides."* and describe the header / body / footer bars.
+7. **§6.3:** *"A first-run gate (the folder dialog) has no Esc, scrim or Cancel; it closes only when a folder is chosen."* Also *"A dialog puts focus on its first field (else its primary button, else itself), never on its ✕."*
+8. **§5.5:** *"The task row menu has up to five groups and three one-level submenus (decided)."* (or reduce, see M-04).
+9. **§12:** replace the ClearDesk table by one table per app, or add a Milestone table with the nine rows in section 6.
+10. **§14:** *"`theme-color` has two metas (`#f2f3f7` light, `#171925` dark); the manifest uses the light one."*
+11. **`tokens.css`:** regenerate from `index.html` (Milestone's 154 variables) and list the per-pane hooks (`--sidebar-w`, `--task-cols`, `--grid-pane-width`, `--task-form-h`, `--rs-cols`, …).
+12. **`icons.json`:** regenerate from the app (171 icons).
+
+---
+
+## 9. Porting checklist status (`DESIGN.md` §11)
+
+| Step | Status | Note |
+|---|---|---|
+| 1 `tokens.css`, theme by `data-theme` | **Partial** | the app has its own 154 variables; `tokens.css` is ClearDesk's (M-16) |
+| 2 System font, 7 sizes, 4 weights, `cursor: default` | **Done** | weight 650 once (M-08); Gantt cursors (M-10) |
+| 3 Icon registry, one render function, four sizes | **Done** | 4 inline drawings (M-23); `icons.json` stale (M-17) |
+| 4 Shell: sidebar, bars, gutter, glass on chrome | **Partial** | sidebar 268 / 800 px, not 300 / 1100 (M-16); toolbar title squeezed at 740–800 px (M-13) |
+| 5 Components in order | **Done** | |
+| 6 Selection with blue / grey zones, one focus ring | **Partial** | ring consistent; one pill fails on the blue row (M-03) |
+| 7 Behaviours: undo toast, soft delete, hide-not-dim, Esc / Return, focus return | **Partial** | focus now moves in for every dialog (M-05, built) |
+| 8 Two durations, reduced motion / transparency / contrast | **Done** | all three media queries present |
+| 9 Contrast pass, hit-area pass, automated scan | **Done** | `tests/verify_design_rules.py` has the scan, contrast and hit areas; add the dark `.btn-link` and the pill (M-01, M-03) |
+| 10 Exceptions written down | **Partial** | in CLAUDE.md, not in the guide (M-16, M-20) |
+
+---
+
+## 10. Needs visual check
+
+- The sidebar resizer shows no ring on keyboard focus (`outline: none`, measured "none 3px"); confirm its `:focus-visible` hint is visible.
+- The Gantt link handle hit area on hover (11 × 11 px) and the 7 px bar edges.
+- The toolbar title width at 740–800 px: the measured width changed between runs (7 to 72 px), so the cause may be resize timing.
+- Contrast of icons and focus rings (3 : 1): only text was sampled. The Chart for Slides and Print preview text in the dark theme is SVG on a white sheet and was excluded from the sample.
+- Dialogs not opened: Export to Excel, CSV, foreign import, Replace, folder files, resource days, sync conflicts (they need data or file state; they use the same shell).
+- Drag and drop feedback in the list and Gantt (the drop line, the ghost, the not-allowed pointer), the Task Form, the Resource Plan view, and the one-menu-at-a-time rule for the toolbar menus were not exercised.
+- Print and the exported files were not rendered; the update banner, install and the service worker were not run on an installed copy.
+- VoiceOver reading order.
+
+---
+
+## 11. Skipped categories
+
+- **Menu bar:** a web app has none; its commands are in the toolbar, the Data / Help menus and the context menus.
+- **Window behaviour (macOS):** a single page in a tab or PWA window.
+- **Text overflow and localisation:** English only; dates and numbers follow the date format chosen in Plan settings.
+- **Compact screens and mobile (§19.6):** HIG-only in the guide, not built.

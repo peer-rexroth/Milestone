@@ -881,7 +881,7 @@ body.col-moving, body.col-moving * { cursor: grabbing !important; user-select: n
 .filter-chip button { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; padding: 0; border: none; border-radius: 50%; background: transparent; color: inherit; font-size: var(--fs-11); }
 .filter-chip button:hover { background: color-mix(in srgb, var(--accent) 22%, var(--panel)); }
 .filter-count { white-space: nowrap; }
-.btn-link { border: none; background: transparent; padding: 2px 4px; font-size: var(--fs-12); font-weight: 600; color: var(--accent); }
+.btn-link { border: none; background: transparent; padding: 2px 4px; font-size: var(--fs-12); font-weight: 600; color: var(--blue-text); }   /* (--accent is 2.6:1 on the dark dialog surface; the text blue holds 4.5:1 in both themes) */
 .btn-link:hover:not(:disabled) { text-decoration: underline; }
 .btn-link:disabled { color: var(--text-faint); cursor: default; }
 .filter-menu { width: 300px; padding: 0; overflow: hidden; z-index: 90; flex-direction: column; }
@@ -1118,6 +1118,8 @@ input.tf-cell[type=number] { -moz-appearance: textfield; }
 input.inline-edit { width: 100%; min-width: 0; padding: 2px 6px; border: 1px solid var(--accent); outline: none; border-radius: var(--r-xs); background: var(--panel); color: var(--text); font-size: var(--fs-12); font-family: inherit; }
 .grid-name input.inline-edit { flex: 1; }
 .grid-name .chevron { width: 14px; height: 14px; border: none; background: none; color: var(--text-faint); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: var(--ico-12); }
+.grid-name .chevron { position: relative; }
+.grid-name .chevron::before { content: ""; position: absolute; inset: -6px; }   /* a 26px target for the 14px glyph (the macOS minimum is 20) */
 .grid-name .chevron.empty { visibility: hidden; }
 .grid-name .name-text { overflow: hidden; text-overflow: ellipsis; }
 .grid-name .name-text.summary { font-weight: 600; }
@@ -2255,7 +2257,7 @@ html[data-theme="light"] select:not([multiple]):not([size]) {
    is on and the row is just a neutral grey with everything inside looking unselected: every white-on-blue rule is prefixed
    html:not(.sel-inactive), so a new selected-state rule needs that prefix too. */
 html:not(.sel-inactive) .grid-row.selected { --text: var(--on-accent); --text-dim: var(--sel-text-2); --text-faint: var(--sel-text-3); --border: var(--sel-line); }
-html:not(.sel-inactive) .grid-row.selected .status-pill { background: var(--sel-fill); color: var(--on-accent); }
+html:not(.sel-inactive) .grid-row.selected .status-pill { background: color-mix(in srgb, black 14%, transparent); color: var(--on-accent); }   /* a darker pill on the blue band: white on the lighter one was 4.07:1 */
 html:not(.sel-inactive) .grid-row.selected i { color: inherit; }
 html:not(.sel-inactive) .grid-row.selected > .chg { background-color: var(--sel-fill); }
 html:not(.sel-inactive) .grid-row.selected :is(input, select, textarea, .inline-wrap) { --text: var(--ink); --text-dim: var(--ink-2); --text-faint: var(--ink-3); --border: var(--border-2); color: var(--ink); }
@@ -6901,7 +6903,7 @@ function renderGrid() {
       mode: modeCell,
       wbs: `<div class="grid-cell-dim${summaryCls}">${escapeHtml(wbsCode(t.id))}</div>`,
       name: `<div class="grid-name" style="--depth:${depth}">
-        <button class="chevron${summary ? '' : ' empty'}" onclick="event.stopPropagation();toggleCollapse('${t.id}')"><i class="fa-solid fa-chevron-${t.collapsed && !filtersActive() ? 'right' : 'down'}"></i></button>
+        <button class="chevron${summary ? '' : ' empty'}"${summary ? ` title="${t.collapsed && !filtersActive() ? 'Expand' : 'Collapse'} group" aria-label="${t.collapsed && !filtersActive() ? 'Expand' : 'Collapse'} group" aria-expanded="${!(t.collapsed && !filtersActive())}"` : ' tabindex="-1" aria-hidden="true"'} onclick="event.stopPropagation();toggleCollapse('${t.id}')"><i class="fa-solid fa-chevron-${t.collapsed && !filtersActive() ? 'right' : 'down'}"></i></button>
         ${t.milestone ? '<i class="fa-solid fa-diamond milestone-dot"></i>' : ''}
         ${cyclic.has(t.id) ? '<i class="fa-solid fa-triangle-exclamation cycle-warn" title="Circular dependency — not auto-scheduled"></i>' : ''}
         ${mismatchDate ? `<i class="fa-solid fa-triangle-exclamation mismatch-warn" title="${t.taskMode === 'manual' ? `Manually scheduled and starts before its predecessors allow — Auto Scheduled it would start ${fmtDate(mismatchDate)}` : `Started before its predecessors allow — they say no earlier than ${fmtDate(mismatchDate)}. Tasks that have started or finished are not rescheduled`}"></i>` : ''}
@@ -7769,7 +7771,9 @@ async function currentVersionStamps() {   // {loaded, server}; the server stamp 
     return { loaded: BUILD_ID, server: String((await r.json()).id || '') };
   }
   if (loadedVersionStamp === null) { const info = await askLoadedStamp(); if (info && info.stamp) loadedVersionStamp = info.stamp; }
-  const server = versionStampOf((await fetch(location.pathname, { method: 'HEAD', cache: 'no-store' })).headers);
+  const head = await fetch('./', { method: 'HEAD', cache: 'no-store' });   // the app's home address, whatever name this page was opened under; an error reply is not a version
+  if(!head.ok) throw new Error('version check ' + head.status);
+  const server = versionStampOf(head.headers);
   if (loadedVersionStamp === null) loadedVersionStamp = server;
   return { loaded: loadedVersionStamp, server };
 }
@@ -15006,6 +15010,14 @@ let lastOutsideFocus = null;
 const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]):not([type=hidden]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 function topOpenModal() { const open = document.querySelectorAll('.modal-bg.open'); return open.length ? open[open.length - 1] : null; }   // (a dialog that opens above another comes later in the page)
 function modalFocusables(bg) { return [...bg.querySelectorAll(FOCUSABLE)].filter(el => el.getClientRects().length && getComputedStyle(el).visibility !== 'hidden'); }
+// A dialog that did not put focus inside itself gets it here: the first text field or list, else the primary button, else the dialog itself (an alert or a
+// window with nothing to fill in). Never the close button. Same rule as ClearDesk's design guide (DESIGN §6.3).
+function focusIntoDialog(bg, m) {
+  if (!bg.classList.contains('open') || topOpenModal() !== bg || bg.contains(document.activeElement) || bg.id === 'folderFilesModalBg') return;   // (the folder picker manages its own focus: a focused name box there switches it to "new file")
+  const f = modalFocusables(bg).filter(el => !el.closest('.modal-header') && !/close/i.test(el.className + ' ' + (el.getAttribute('aria-label') || ''))), alert = m.classList.contains('alert');
+  const pick = alert ? null : f.find(el => /^(TEXTAREA|SELECT)$/.test(el.tagName) || (el.tagName === 'INPUT' && !/^(checkbox|radio|button|submit|range|color)$/.test(el.type))) || f.find(el => el.classList.contains('btn-primary')) || f[0];
+  if (pick) pick.focus({ preventScroll: true }); else { if (!m.hasAttribute('tabindex')) m.setAttribute('tabindex', '-1'); m.focus({ preventScroll: true }); }
+}
 function initDialogAccessibility() {
   for (const bg of document.querySelectorAll('.modal-bg')) {
     const m = bg.querySelector('.modal'); if (!m) continue;
@@ -15016,7 +15028,7 @@ function initDialogAccessibility() {
     let wasOpen = bg.classList.contains('open');
     new MutationObserver(() => {
       const now = bg.classList.contains('open');
-      if (now && !wasOpen) bg._opener = lastOutsideFocus;
+      if (now && !wasOpen) { bg._opener = lastOutsideFocus; setTimeout(() => focusIntoDialog(bg, m), 100); }   /* (after the openers that place focus themselves) */
       else if (!now && wasOpen) {
         const o = bg._opener; bg._opener = null;
         if (o && document.contains(o) && !topOpenModal() && (document.activeElement === document.body || bg.contains(document.activeElement))) try { o.focus({ preventScroll: true }); } catch (e) { /* gone */ }

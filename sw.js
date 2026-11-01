@@ -60,6 +60,9 @@ self.addEventListener('fetch', (event) => {
       fetch(req.url, { cache: 'no-cache' })
         .then((res) => {
           // An error page (404/500 from a dead or misconfigured server) must not replace the good saved copy or count as the running version.
+          // An old entry name (the app was cleardesk.html / milestone.html before index.html): an installed copy still opens it, the server has no such file, so send it to the app's home address
+          // instead of showing the saved copy under a URL the update check can never match.
+          if (res.status === 404 && /\.html$/.test(new URL(req.url).pathname) && !/\/index\.html$/.test(new URL(req.url).pathname)) return Response.redirect(new URL('./', self.registration.scope).href, 302);
           if (!res.ok) throw new Error('bad navigation response ' + res.status);
           remember(res, 'network');
           const copy = res.clone();   // clone before returning: cloning later races the page reading the body
