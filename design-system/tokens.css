@@ -125,6 +125,11 @@ html[data-scheme="glass"] :is(.content) {
 html[data-scheme="glass"][data-theme="light"] .dropdown-menu { --border: rgba(40,44,70,.13); --border-2: rgba(40,44,70,.24); }
 
 html[data-scheme="glass"][data-theme="dark"] .dropdown-menu { --border: rgba(255,255,255,.14); --border-2: rgba(255,255,255,.26); }
+/* a menu is chrome, not content: it keeps the glass surface (blur, light edge, rim) the way ClearDesk's menus do, which sit outside the flat content scope above */
+@media not all and ((prefers-reduced-transparency: reduce) or (prefers-contrast: more)) {
+html[data-scheme="glass"][data-theme="light"] .dropdown-menu { --glass-strong: rgba(255,255,255,.97); --glass-edge: rgba(255,255,255,.60); --glass-rim: rgba(255,255,255,.80); }
+html[data-scheme="glass"][data-theme="dark"] .dropdown-menu { --glass-strong: rgba(36,38,56,.97); --glass-edge: rgba(255,255,255,.16); --glass-rim: rgba(255,255,255,.22); }
+}
 
 html[data-scheme="glass"][data-theme="dark"] :is(.content) {
   --bg: #1e1f24;
