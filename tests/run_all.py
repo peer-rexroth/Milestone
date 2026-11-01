@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Runs the Milestone test suites (each is a Playwright script that drives the real app in headless Chromium).
 
-    python3 tests/run_all.py                    # every suite + a short stress run (seeds 1-6)
+    python3 tests/run_all.py                    # the quick set: every suite except the slow release ones (SLOW), no stress run
+    python3 tests/run_all.py --full             # everything: the slow suites too and a short stress run (seeds 1-6); do this before a release
     python3 tests/run_all.py verify_pull undo   # only suites whose name contains one of these words
-    python3 tests/run_all.py --stress 100       # a long stress run (seeds 1-100); --stress 0 skips it
+    python3 tests/run_all.py --stress 100       # a stress run (seeds 1-100); off in the quick set, 6 seeds with --full
     python3 tests/run_all.py --jobs 4           # how many suites run at once (default 3)
     python3 tests/run_all.py --url http://127.0.0.1:8937/index.html
 
@@ -16,6 +17,7 @@ import argparse, concurrent.futures as cf, os, re, subprocess, sys, tempfile, ti
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 STRESS = "verify_stress"
+SLOW = {"verify_monkey"}   # minutes of random clicking: the quick set leaves them out, --full (or naming one) runs them
 
 def suites():
     return sorted(f[:-3] for f in os.listdir(HERE) if re.match(r"(verify|drive)_.*\.py$", f) and f[:-3] != STRESS)
@@ -45,7 +47,8 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("only", nargs="*", help="run only suites whose name contains one of these words")
     ap.add_argument("--jobs", type=int, default=3)
-    ap.add_argument("--stress", type=int, default=6, help="number of stress seeds (0 = skip)")
+    ap.add_argument("--full", action="store_true", help="also the slow suites and a short stress run")
+    ap.add_argument("--stress", type=int, default=None, help="number of stress seeds (default: 6 with --full, otherwise none)")
     ap.add_argument("--url", default=os.environ.get("MILESTONE_URL", "http://127.0.0.1:8937/index.html"))
     a = ap.parse_args()
     server = None
@@ -57,7 +60,8 @@ def main():
             time.sleep(0.1)
         else:
             print("could not start a server for", a.url); return 2
-    names = [n for n in suites() if not a.only or any(w in n for w in a.only)]
+    if a.stress is None: a.stress = 6 if a.full else 0
+    names = [n for n in suites() if (a.only and any(w in n for w in a.only)) or (not a.only and (a.full or n not in SLOW))]
     jobs = [(n, ()) for n in names]
     if a.stress and (not a.only or any(w in STRESS for w in a.only)): jobs.append((STRESS, tuple(str(i) for i in range(1, a.stress + 1))))
     if not jobs: print("nothing matches", a.only); return 2

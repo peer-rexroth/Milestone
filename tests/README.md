@@ -6,7 +6,8 @@ Milestone has no build step, and its tests match: each `verify_*.py` / `drive_*.
 
 ```sh
 pip install playwright openpyxl && python3 -m playwright install chromium   # once
-python3 tests/run_all.py                    # everything + a short stress run
+python3 tests/run_all.py                    # the quick set (no verify_monkey, no stress run)
+python3 tests/run_all.py --full             # everything + a short stress run (before a release)
 python3 tests/run_all.py pull undo          # only suites whose name contains "pull" or "undo"
 python3 tests/run_all.py --stress 100       # a long stress run (seeds 1-100)
 python3 tests/verify_stress.py 35 36        # one suite, or particular stress seeds, directly

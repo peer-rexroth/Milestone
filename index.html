@@ -1250,6 +1250,15 @@ button.sc-exp:hover { background: var(--hover); } .sc-exp i { font-size: var(--i
 .sc-col { appearance: none; -webkit-appearance: none; width: 34px; height: 24px; padding: 0; border: 1px solid var(--border-2, var(--border)); border-radius: var(--r-xs); background: none; }
 .sc-col::-webkit-color-swatch-wrapper { padding: 2px; } .sc-col::-webkit-color-swatch { border: 0; border-radius: var(--r-xs); }
 .insp .trow input.sc-font { flex: 0 1 200px; }
+.sc-col { cursor: default; } .sc-col:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+#scColorPop { width: 216px; padding: 14px; margin: 0; z-index: 90; }
+.sc-sw { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; justify-items: center; }
+.sc-sw button { width: 24px; height: 24px; padding: 0; border: 0; border-radius: 50%; box-shadow: inset 0 0 0 1px var(--border); }
+.sc-sw button.selected { box-shadow: inset 0 0 0 1px var(--border), 0 0 0 2px var(--panel-2, var(--bg)), 0 0 0 4px var(--text-dim); }
+.sc-hex { display: flex; align-items: center; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); }
+.sc-hex i { flex: none; width: 20px; height: 20px; border-radius: 50%; box-shadow: inset 0 0 0 1px var(--border); }
+.sc-hex input { flex: 1; min-width: 0; height: 28px; padding: 0 10px; border: 0; border-radius: var(--r-s); background: var(--hover); color: var(--text); font-size: var(--fs-13); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; text-transform: uppercase; }
+.sc-hex-more { margin-top: 10px; font-size: var(--fs-13); }
 .print-nav { display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-top: 1px solid var(--border); font-size: var(--fs-12); color: var(--text-dim); }
 .print-summary { margin-left: auto; text-align: right; }
 .print-img { display: flex; align-items: center; gap: 6px; }
@@ -2844,6 +2853,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
     </div>
     <div class="modal-footer"><span class="print-tip"></span><button class="btn" onclick="closeSlideChart()">Close</button><button class="btn" id="scSaveBtn" onclick="scToggleSave(event)" aria-haspopup="menu">Save As…<i class="fa-solid fa-chevron-down"></i></button><button class="btn btn-primary" id="scCopy" onclick="scExport('copy')" title="Copy the chart as a PNG picture with a transparent background">Copy Picture</button></div>
     <div class="dropdown-menu" id="scSaveMenu" role="menu"><button class="dropdown-item" role="menuitem" id="scPng" onclick="scSaveClose();scExport('png')">Save Picture as PNG</button><button class="dropdown-item" role="menuitem" id="scSvg" onclick="scSaveClose();scExport('svg')">Save Picture as SVG</button><div class="dropdown-sep"></div><button class="dropdown-item hidden" role="menuitem" id="scSaveAll" onclick="scSaveClose();scExport('png', true)">Save All Charts as PNG</button></div>
+    <div class="dropdown-menu" id="scColorPop" role="dialog" aria-label="Choose a colour"><div class="sc-sw" id="scSw"></div><div class="sc-hex"><i id="scHexDot"></i><input id="scHex" maxlength="7" spellcheck="false" autocomplete="off" aria-label="Hex colour"></div><button class="btn-link sc-hex-more" id="scNative" type="button">More Colours…</button></div>
   </div>
 </div>
 
@@ -12277,7 +12287,7 @@ function openSlideChart() {
   scWrite(scOpts); scClosePick(true); scSyncScopes(); scRenderTree(); scPageNo = 0;
   scEl('slideChartModalBg').classList.add('open'); scRefresh();
 }
-function closeSlideChart() { scSaveClose(); scEl('slideChartModalBg').classList.remove('open'); scBuilt = null; }
+function closeSlideChart() { scSaveClose(); scColClose(); scEl('slideChartModalBg').classList.remove('open'); scBuilt = null; }
 function scChanged(e) {
   if (e && e.target) {
     if (e.target.id === 'scPreset' && SC_PRESETS[e.target.value]) { scEl('scW').value = SC_PRESETS[e.target.value][0]; scEl('scH').value = SC_PRESETS[e.target.value][1]; }
@@ -12330,6 +12340,31 @@ function scToggleSave(e) {
   m.classList.add('open'); const r = scEl('scSaveBtn').getBoundingClientRect();
   m.style.left = Math.max(8, Math.min(r.right - m.offsetWidth, window.innerWidth - m.offsetWidth - 8)) + 'px'; m.style.top = Math.max(8, r.top - m.offsetHeight - 8) + 'px';
 }
+const SC_SWATCHES = ['#1E2A78', '#0069B1', '#34A6DC', '#3BB8B8', '#24778D', '#25A62D', '#F28011', '#E7001D', '#8E3B8F', '#16184E', '#1D2733', '#8A96A3'];
+let scColTarget = null;
+function scColMark() {
+  const v = scColTarget ? scColTarget.value.toLowerCase() : '';
+  scEl('scSw').querySelectorAll('button').forEach(b => b.classList.toggle('selected', b.dataset.c.toLowerCase() === v));
+  scEl('scHexDot').style.background = v; if (document.activeElement !== scEl('scHex')) scEl('scHex').value = v.toUpperCase();
+}
+function scColSet(v) { if (!scColTarget) return; scColTarget.value = v; scColTarget.dispatchEvent(new Event('input', { bubbles: true })); scColMark(); }
+function scColClose() { const m = scEl('scColorPop'); if (m) m.classList.remove('open'); scColTarget = null; }
+function scColOpen(inp) {
+  const m = scEl('scColorPop'); if (scColTarget === inp) { scColClose(); return; }
+  scColTarget = inp; scEl('scSw').innerHTML = SC_SWATCHES.map(c => `<button type="button" data-c="${c}" style="background:${c}" aria-label="${c}"></button>`).join('');
+  m.classList.add('open'); scColMark(); const r = inp.getBoundingClientRect();
+  m.style.left = Math.max(8, Math.min(r.right - m.offsetWidth, window.innerWidth - m.offsetWidth - 8)) + 'px';
+  m.style.top = Math.max(8, Math.min(r.bottom + 6, window.innerHeight - m.offsetHeight - 8)) + 'px';
+}
+document.addEventListener('click', e => {
+  const inp = e.target.closest && e.target.closest('input.sc-col');
+  if (inp) { e.preventDefault(); e.stopPropagation(); scColOpen(inp); return; }   /* (the browser's own colour picker is not Apple style: ours opens instead) */
+  const sw = e.target.closest && e.target.closest('#scSw button'); if (sw) { scColSet(sw.dataset.c); return; }
+  if (e.target.closest && e.target.closest('#scNative')) { const t = scColTarget; scColClose(); if (t && t.showPicker) { try { t.showPicker(); } catch (x) { /* no native picker */ } } return; }
+  if (!e.target.closest('#scColorPop')) scColClose();
+}, true);
+document.addEventListener('input', e => { if (e.target.id === 'scHex' && /^#[0-9a-f]{6}$/i.test(e.target.value.trim())) scColSet(e.target.value.trim().toLowerCase()); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && scEl('scColorPop').classList.contains('open')) { e.stopImmediatePropagation(); e.preventDefault(); scColClose(); } }, true);
 function scSaveClose() { const m = scEl('scSaveMenu'); if (m) m.classList.remove('open'); }
 document.addEventListener('click', e => { if (!e.target.closest('#scSaveMenu') && !e.target.closest('#scSaveBtn')) scSaveClose(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && scEl('scSaveMenu').classList.contains('open')) { e.stopImmediatePropagation(); e.preventDefault(); scSaveClose(); } }, true);
