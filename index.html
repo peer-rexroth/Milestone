@@ -12,7 +12,8 @@
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
 <link rel="icon" type="image/png" href="icons/icon-192.png">
-<meta name="theme-color" content="#f6f8fa">
+<meta name="theme-color" content="#f2f3f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#171925" media="(prefers-color-scheme: dark)">
 <script id="icons">
 // Icon drawings, 24 grid, 2-unit stroke, round caps, currentColor (design-system/icons.json plus the planner's own). The markup keeps its
 // Font Awesome class names (<i class="fa-solid fa-trash">); this registry writes one `.fa-NAME { --fa: url(...) }` mask rule per name before first
@@ -420,6 +421,8 @@ html[data-scheme="glass"][data-theme="dark"] :is(.content) {
   --r-m: 10px;
   --r-l: 12px;
   --r-xl: 16px;
+  --r-bar: 7px;                    /* a Gantt bar (20px high) */
+  --r-mark: 2px;                   /* the thin marks: group bar, resize grip */
   --ico-k: 1.26;
   --ico-12: calc(12px / 1.26);
   --ico-14: calc(14px / 1.26);
@@ -509,7 +512,6 @@ html, :is(.content, .modal, .dropdown-menu) {
   --panel: var(--bg); --panel-2: var(--bg-2);
   --text-dim: var(--text-2); --text-faint: var(--text-3);
   --primary: var(--accent);
-  --radius: var(--r-m);
   --shadow: var(--elev-2);
   --row-h: 32px;
   --head-h: 42px;   /* the header of the task list and of the Gantt timescale: two lines of text, the same height in both so the rows line up */
@@ -1328,7 +1330,7 @@ button.sc-exp:hover { background: var(--hover); } .sc-exp i { font-size: var(--i
 .watch-hint { display: inline-flex; align-items: center; gap: 2px; }
 .watch-btn { color: var(--text-dim); border-style: dashed; padding: 6px 10px; font-size: var(--fs-12); }
 .watch-btn i { margin-right: 6px; }
-.watch-x { border: none; background: transparent; color: var(--text-faint); font-size: var(--fs-15); line-height: 1; padding: 2px 6px; border-radius: var(--r-xs); }
+.watch-x { border: none; background: transparent; color: var(--text-faint); font-size: var(--ico-12); line-height: 1; padding: 4px 6px; border-radius: var(--r-xs); display: inline-flex; align-items: center; }
 .watch-x:hover { color: var(--text); background: var(--panel-2); }
 .conflict-card { border: 1px solid var(--border); border-radius: var(--r-s); padding: 10px 12px; margin-bottom: 10px; }
 .conflict-title { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
@@ -1460,7 +1462,7 @@ input.inline-edit[type=date]::-webkit-calendar-picker-indicator { margin: 0 0 0 
 .gantt-deadline.missed::after { background: var(--danger); }
 .gantt-today-line { position: absolute; top: 0; width: 1px; background: var(--danger); opacity: .85; z-index: 3; pointer-events: none; }
 .gantt-bar {
-  position: absolute; height: 20px; border-radius: 7px; cursor: grab;
+  position: absolute; height: 20px; border-radius: var(--r-bar); cursor: grab;
   background: color-mix(in srgb, var(--bar-color, var(--accent)) 24%, var(--panel));   /* a rounded pill: the planned span is a pale tint of its colour, the finished part a solid fill; the name sits beside it */
   overflow: hidden;
 }
@@ -1471,31 +1473,31 @@ input.inline-edit[type=date]::-webkit-calendar-picker-indicator { margin: 0 0 0 
 .gantt-bar.manual .fill { opacity: .5; }
 .gantt-bar.sel, .gantt-milestone.sel { box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--accent), 0 4px 10px color-mix(in srgb, var(--accent) 30%, transparent); }   /* the selected task: a ring, and grips to drag its ends */
 /* a group (a task with sub-tasks, not manually scheduled): a thin bracket with small end caps, so the hierarchy reads at a glance */
-.gantt-bar.group { height: 8px; margin-top: 6px; border-radius: 2px; overflow: visible; background: color-mix(in srgb, var(--text-dim) 40%, var(--panel)); }
-.gantt-bar.group .fill { background: var(--text-dim); border-radius: 2px 0 0 2px; }
+.gantt-bar.group { height: 8px; margin-top: 6px; border-radius: var(--r-mark); overflow: visible; background: color-mix(in srgb, var(--text-dim) 40%, var(--panel)); }
+.gantt-bar.group .fill { background: var(--text-dim); border-radius: var(--r-mark) 0 0 var(--r-mark); }
 .gantt-bar.group::before, .gantt-bar.group::after { content: ''; position: absolute; top: 8px; border-top: 6px solid var(--text-dim); border-left: 3.5px solid transparent; border-right: 3.5px solid transparent; }
 .gantt-bar.group::before { left: 0; } .gantt-bar.group::after { right: 0; }
 .gantt-bar.group .resize-handle { display: none; }
-.gantt-bar.group .fill.full { border-radius: 2px; }
+.gantt-bar.group .fill.full { border-radius: var(--r-mark); }
 .gantt-rollup { position: absolute; height: 4px; border-radius: var(--r-xs); background: var(--bar-color, var(--accent)); opacity: .75; pointer-events: none; }
 .gantt-base { position: absolute; height: 4px; border-radius: var(--r-xs); background: var(--text-faint); opacity: .85; pointer-events: none; z-index: 1; }
 .gantt-base-ms { position: absolute; width: 7px; height: 7px; transform: rotate(45deg); border: 1.5px solid var(--text-faint); background: var(--panel); pointer-events: none; z-index: 1; }
 .gantt-bracket { position: absolute; width: 10px; height: 20px; border: 2px solid var(--text-dim);}
 .gantt-bracket.br-start { border-right: none; }
 .gantt-bracket.br-end { border-left: none; }
-.gantt-bar .fill { position: absolute; top: 0; left: 0; bottom: 0; background: var(--bar-color, var(--accent)); border-radius: 7px 0 0 7px; }
-.gantt-bar .fill[style*="width: 100%"], .gantt-bar .fill.full { border-radius: 7px; }
+.gantt-bar .fill { position: absolute; top: 0; left: 0; bottom: 0; background: var(--bar-color, var(--accent)); border-radius: var(--r-bar) 0 0 var(--r-bar); }
+.gantt-bar .fill[style*="width: 100%"], .gantt-bar .fill.full { border-radius: var(--r-bar); }
 .gantt-bar.manual .fill { background: var(--bar-color, var(--accent)); }
 .gantt-out-label { position: absolute; height: 20px; line-height: 20px; font-size: var(--fs-12); color: var(--text-dim); white-space: nowrap; pointer-events: none; z-index: 1; }
 .gantt-bar .bar-label { position: absolute; left: 6px; top: 0; line-height: 20px; font-size: var(--fs-11); font-weight: 500; color: var(--on-accent); white-space: nowrap; pointer-events: none; mix-blend-mode: normal; }
 .gantt-bar.manual .bar-label { color: var(--text); }
 .resize-handle { position: absolute; top: 0; bottom: 0; width: 7px; cursor: ew-resize; }
 .resize-handle.left { left: 0; } .resize-handle.right { right: 0; }
-.gantt-bar.sel .resize-handle::after, .gantt-bar:hover .resize-handle::after { content: ''; position: absolute; top: 5px; width: 4px; height: 10px; border-radius: 2px; background: #fff; box-shadow: 0 0 0 .5px rgba(0,0,0,.25); pointer-events: none; }
+.gantt-bar.sel .resize-handle::after, .gantt-bar:hover .resize-handle::after { content: ''; position: absolute; top: 5px; width: 4px; height: 10px; border-radius: var(--r-mark); background: var(--on-accent); box-shadow: 0 0 0 .5px color-mix(in srgb, black 25%, transparent); pointer-events: none; }
 .gantt-bar.manual .resize-handle::after { top: 3.5px; }
 .resize-handle.left::after { left: 3px; } .resize-handle.right::after { right: 3px; }
 .gantt-out-label.grp { font-weight: 600; color: var(--text); }
-.gantt-slip { margin-left: 8px; padding: 1px 7px; border-radius: 999px; font-size: var(--fs-11); font-weight: 650; line-height: 14px; color: var(--danger); background: color-mix(in srgb, var(--danger) 14%, transparent); }   /* the baseline slip: a quiet red pill after the name */
+.gantt-slip { margin-left: 8px; padding: 1px 7px; border-radius: 999px; font-size: var(--fs-11); font-weight: 600; line-height: 14px; color: var(--danger); background: color-mix(in srgb, var(--danger) 14%, transparent); }   /* the baseline slip: a quiet red pill after the name */
 .link-handle {
   position: absolute; right: -6px; top: 50%; transform: translateY(-50%); width: 11px; height: 11px;
   border-radius: 50%; background: var(--panel); border: 2px solid var(--bar-color, var(--accent));
@@ -1504,12 +1506,12 @@ input.inline-edit[type=date]::-webkit-calendar-picker-indicator { margin: 0 0 0 
 .gantt-bar:hover .link-handle { opacity: 1; }
 .gantt-milestone {
   position: absolute; width: 16px; height: 16px; transform: rotate(45deg); cursor: grab;
-  background: var(--bar-color, var(--task-purple)); border-radius: 3.5px; box-shadow: 0 1px 3px color-mix(in srgb, var(--bar-color, var(--task-purple)) 45%, transparent);
+  background: var(--bar-color, var(--task-purple)); border-radius: calc(var(--r-bar) / 2); box-shadow: 0 1px 3px color-mix(in srgb, var(--bar-color, var(--task-purple)) 45%, transparent);
 }
 .gantt-milestone.manual { background: transparent; border-style: dashed; border-color: var(--bar-color, var(--task-purple)); }
 .gantt-link-preview { position: absolute; z-index: 6; pointer-events: none; }
 /* the hover card of a bar (replaces the browser's tooltip while it is open) */
-.gantt-card { position: fixed; z-index: 390; width: 216px; padding: 10px 12px; border-radius: 12px; background: var(--glass-strong, var(--panel)); backdrop-filter: blur(24px) saturate(1.4); -webkit-backdrop-filter: blur(24px) saturate(1.4); border: 1px solid var(--border); box-shadow: 0 8px 24px var(--shadow-ink-strong); font-size: var(--fs-12); pointer-events: none; opacity: 0; transform: translateY(-2px); transition: opacity var(--dur-fast, .12s) ease, transform var(--dur-fast, .12s) ease; }
+.gantt-card { position: fixed; z-index: 390; width: 216px; padding: 10px 12px; border-radius: var(--r-l); background: var(--glass-strong, var(--panel)); backdrop-filter: blur(24px) saturate(1.4); -webkit-backdrop-filter: blur(24px) saturate(1.4); border: 1px solid var(--border); box-shadow: 0 8px 24px var(--shadow-ink-strong); font-size: var(--fs-12); pointer-events: none; opacity: 0; transform: translateY(-2px); transition: opacity var(--dur-fast, .12s) ease, transform var(--dur-fast, .12s) ease; }
 .gantt-card.show { opacity: 1; transform: none; }
 .gantt-card h4 { margin: 0 0 4px; font-size: var(--fs-13); font-weight: 600; color: var(--text); overflow-wrap: anywhere; }
 .gantt-card .gc-row { display: flex; justify-content: space-between; gap: 12px; padding: 1px 0; color: var(--text-dim); }
@@ -1890,7 +1892,7 @@ html.settings-switching .modal-bg { transition: none; }
 .tick { appearance: none; -webkit-appearance: none; flex: none; width: 16px; height: 16px; margin: 0; background: none; }
 .tick:checked { background: var(--accent); -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M3 8.5l3.2 3L13 4.5'/></svg>") center/16px no-repeat; mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M3 8.5l3.2 3L13 4.5'/></svg>") center/16px no-repeat; }
 .tick:indeterminate { background: var(--accent); -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'><path d='M4 8h8'/></svg>") center/16px no-repeat; mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'><path d='M4 8h8'/></svg>") center/16px no-repeat; }   /* some of what is below is taken, some is left out */
-.tick:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; border-radius: 4px; }
+.tick:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; border-radius: var(--r-xs); }
 label.trow.tpick { justify-content: space-between; cursor: default; }
 label.trow.tpick { padding-block: 8px; }
 label.trow.tpick > span { flex: 1; min-width: 0; }
@@ -1980,9 +1982,9 @@ html.time12 :is(#calendarModalBg) :is(.wh-day-row, .wh-break-add) input.dt-time 
    the buttons on the right with Cancel first; a quiet round x (Esc and Cancel close too). A dialog with tabs or a toolbar keeps the rule under them. */
 .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 24px 24px 0; border-bottom: 0; gap: 8px; }
 .modal-header h2 { margin: 0; font-size: var(--fs-17); font-weight: 600; }
-.modal-header button { border: none; background: none; font-size: var(--fs-17); color: var(--text-faint); width: var(--ib-m); height: var(--ib-m); border-radius: 50%; }
+.modal-header button { border: none; background: none; font-size: var(--ico-14); color: var(--text-faint); width: var(--ib-m); height: var(--ib-m); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; padding: 0; }
 .modal-header button:hover { background: var(--pressed); color: var(--text); }
-.modal-header .hdr-link { width: auto; height: auto; margin: 0 8px 0 auto; padding: 4px 8px; font-size: var(--fs-12); color: var(--accent); }
+.modal-header .hdr-link { width: auto; height: auto; margin: 0 8px 0 auto; padding: 4px 8px; gap: 6px; font-size: var(--fs-12); color: var(--accent); }
 .modal-body { padding: 16px 24px 4px; overflow-y: auto;   /* (4px below: the 3px focus ring of a last row would be cut by the scroll box) */ display: flex; flex-direction: column; gap: 14px; color: var(--text-dim); line-height: 1.6; }
 .modal-body :is(input, select, textarea, .field label) { line-height: normal; }
 .modal-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 16px 24px 24px; border-top: 0; }
@@ -2167,7 +2169,7 @@ input.dt-time { width: 84px; flex: 0 0 84px; text-align: center; }
 .help-keys { display: grid; grid-template-columns: max-content 1fr; gap: 8px 16px; align-items: center; font-size: var(--fs-13); color: var(--text-dim); }
 .help-keycombo { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 2px; white-space: nowrap; }
 .help-divider { height: 1px; background: var(--border); flex-shrink: 0; }
-.help-tip { background: var(--panel-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px; font-size: var(--fs-12); line-height: 1.6; color: var(--text-dim); }
+.help-tip { background: var(--panel-2); border: 1px solid var(--border); border-radius: var(--r-m); padding: 10px 14px; font-size: var(--fs-12); line-height: 1.6; color: var(--text-dim); }
 .help-tip strong { color: var(--text); font-weight: 600; }
 @media (max-width: 560px) {   /* a phone: dialogs stack instead of squeezing */
   .modal-body { padding: 14px 14px; }
@@ -2219,7 +2221,7 @@ html:has(.modal-bg.open) #toast.show { transform: translateY(0); }
 #toast.error { background: linear-gradient(var(--red-bg), var(--red-bg)), var(--glass-strong); border-color: transparent; }   /* a soft red tint like ClearDesk's, not an outline */
 #toast.error #toastMsg { color: var(--red-text); }
 #toast button { border: none; background: none; color: var(--accent); font-weight: 600; font-size: var(--fs-13); }
-#toast #toastCloseBtn { color: var(--text-dim); font-weight: 400; padding: 0 2px; }
+#toast #toastCloseBtn { color: var(--text-dim); font-weight: 400; padding: 0 2px; font-size: var(--ico-12); display: inline-flex; align-items: center; }
 
 /* Every dropdown: a drawn chevron with room to the right edge (the native one sat right against it). Last in the sheet so it wins over the per-dialog select rules. */
 select:not([multiple]):not([size]) {
@@ -2275,7 +2277,7 @@ html.sel-inactive .gantt-row-bg.selected { background: var(--cap-fill); }
 .ap-head { font-size: var(--fs-13); font-weight: 600; color: var(--text-dim); margin-bottom: 8px; }
 .ap-head.ap-gap { margin-top: 6px; }
 .ap-seg { display: inline-flex; padding: 4px; margin-bottom: 8px; border-radius: var(--r-m); background: transparent; }   /* no frame, as in ClearDesk: the chosen segment alone is drawn */
-.ap-btn { min-width: 30px; padding: 6px 12px; border: none; border-radius: 7px; background: transparent; color: var(--text-faint); font-weight: 600; font-size: var(--fs-12); text-align: center; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.ap-btn { min-width: 30px; padding: 6px 12px; border: none; border-radius: var(--r-s); background: transparent; color: var(--text-faint); font-weight: 600; font-size: var(--fs-12); text-align: center; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
 .ap-btn:hover:not(:disabled):not(.on) { color: var(--text); }
 .ap-btn.on { background: var(--glass-strong); color: var(--text); box-shadow: 0 2px 8px var(--shadow-ink); }
 .ap-btn i { font-size: var(--ico-16); }
@@ -2302,7 +2304,7 @@ html.sel-inactive .gantt-row-bg.selected { background: var(--cap-fill); }
 .subbar .tb-group:has(> .split-btn) > * { flex: none; }
 .subbar .sel-actions { flex-wrap: nowrap; }
 .subbar > :not(#sidebarShowBtn):not(.bar-title):not(.tb-group:has(> .split-btn)):not(.tool-group[aria-label="History"]) { order: 6; }
-.bar-title { display: none; order: 0; flex: 0 1 auto; min-width: 0; max-width: 240px; margin-right: 4px; line-height: 1.2; }   /* a quiet title only while the sidebar is hidden (it has no highlighted plan or view to say where you are) */
+.bar-title { display: none; order: 0; flex: 0 1 auto; min-width: 64px; max-width: 240px; margin-right: 4px; line-height: 1.2; }   /* a quiet title only while the sidebar is hidden (it has no highlighted plan or view to say where you are) */
 html.sidebar-collapsed .bar-title { display: block; }
 .bar-title b { display: block; font-size: var(--fs-14); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bar-title small { display: block; font-size: var(--fs-12); color: var(--text-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -2332,9 +2334,9 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 <div class="window" id="window">
 <aside class="sidebar" id="sidebar" aria-label="Plans and views">
   <div class="sb-head">
-    <button class="icon-btn" id="sidebarToggleBtn" onclick="toggleSidebar()" title="Hide sidebar (Alt+Cmd/Ctrl+S)" aria-label="Hide sidebar"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="11" rx="2.5"/><path d="M6 2.5v11"/></svg></button>
+    <button class="icon-btn" id="sidebarToggleBtn" onclick="toggleSidebar()" title="Hide sidebar (Alt+Cmd/Ctrl+S)" aria-label="Hide sidebar"><i class="fa-solid fa-sidebar"></i></button>
   </div>
-  <div class="sb-search" id="sbSearch"><i class="fa-solid fa-magnifying-glass"></i><input type="search" id="searchInput" role="combobox" aria-label="Find a task" aria-expanded="false" aria-controls="searchResults" autocomplete="off" spellcheck="false" placeholder="Search tasks…" title="Search names, codes, notes and fields: #12, @anna, status:late (Ctrl+H replaces)" oninput="renderSearch()" onfocus="searchFocus()" onblur="searchBlur()" onkeydown="searchKey(event)"></div>
+  <div class="sb-search" id="sbSearch"><i class="fa-solid fa-magnifying-glass"></i><input type="search" id="searchInput" role="combobox" aria-label="Find a task" aria-expanded="false" aria-controls="searchResults" autocomplete="off" spellcheck="false" placeholder="Search tasks…" title="Search names, notes, fields: #12, @anna, status:late (Ctrl+H replaces)" oninput="renderSearch()" onfocus="searchFocus()" onblur="searchBlur()" onkeydown="searchKey(event)"></div>
   <div class="sb-scroll">
     <div class="sb-sec"><span class="sb-label">Views</span></div>
     <div class="view-tabs" id="mainViewTabs" role="list" aria-label="Views"></div>
@@ -2347,7 +2349,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
   <div class="plan-status">
     <button class="btn" id="fileSyncBtn" onclick="onFileSyncBtnClick()"></button>
     <button class="btn conflict-btn hidden" id="syncConflictBtn" onclick="openSyncConflictsModal()"></button>
-    <span class="watch-hint hidden" id="watchHint"><button class="btn watch-btn" id="watchHintBtn" onclick="chooseWatchFolder()" title="Link this plan's folder so copies from other devices can be merged"><i class="fa-solid fa-folder-tree"></i>Link folder</button><button class="watch-x" onclick="declineWatch()" title="Don't remind me for this plan (the plan menu still has it)" aria-label="Don't remind me">&times;</button></span>
+    <span class="watch-hint hidden" id="watchHint"><button class="btn watch-btn" id="watchHintBtn" onclick="chooseWatchFolder()" title="Link this plan's folder so copies from other devices can be merged"><i class="fa-solid fa-folder-tree"></i>Link folder</button><button class="watch-x" onclick="declineWatch()" title="Don't remind me for this plan (the plan menu still has it)" aria-label="Don't remind me"><i class="fa-solid fa-xmark"></i></button></span>
   </div>
   <div class="tool-group sb-cap" role="group" aria-label="Tools">
   <div class="dropdown-wrap">
@@ -2388,7 +2390,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 <!-- The toolbar belongs to the view you are in: each .tb-group lists the views it shows in (data-views). A button with
      data-more goes into the "More" menu when the toolbar is too narrow for everything (the higher the number, the sooner). -->
 <div class="subbar" id="subbar">
-  <button class="icon-btn sb-float" id="sidebarShowBtn" onclick="toggleSidebar()" title="Show sidebar (Alt+Cmd/Ctrl+S)" aria-label="Show sidebar"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="11" rx="2.5"/><path d="M6 2.5v11"/></svg></button>
+  <button class="icon-btn sb-float" id="sidebarShowBtn" onclick="toggleSidebar()" title="Show sidebar (Alt+Cmd/Ctrl+S)" aria-label="Show sidebar"><i class="fa-solid fa-sidebar"></i></button>
   <div class="bar-title" data-more="3"><b id="barTitle"></b><small id="barSub"></small></div>
   <div class="tool-group" role="group" aria-label="History">
   <button class="icon-btn" id="undoBtn" onclick="historyUndo()" title="Undo (Ctrl+Z)" aria-label="Undo" disabled><i class="fa-solid fa-undo"></i></button>
@@ -2443,7 +2445,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
   </div>
   <div class="tool-group" role="group" aria-label="Plan">
     <div class="dropdown-wrap"><button class="btn ico" id="scheduleMenuBtn" data-more="1" data-more-label="Schedule" aria-label="Schedule" aria-haspopup="menu" onclick="toggleScheduleMenu()" title="Schedule: baselines, rescheduling, levelling"><i class="fa-solid fa-calendar-check"></i><span class="sr-only">Schedule</span></button></div>
-    <button class="icon-btn" id="planSettingsBtn" data-more="1" data-more-label="Plan settings" onclick="openPlanSettings()" aria-label="Plan settings" title="Plan settings — calendar, precision, scheduling rules, currency, custom fields (⌘,)"><i class="fa-solid fa-gear"></i></button>
+    <button class="icon-btn" id="planSettingsBtn" data-more="1" data-more-label="Plan settings" onclick="openPlanSettings()" aria-label="Plan settings" title="Plan settings: calendar, precision, rules, currency, fields"><i class="fa-solid fa-gear"></i></button>
   </div>
   <div class="dropdown-wrap hidden" id="moreWrap"><button class="btn ico" id="moreBtn" onclick="toggleMoreMenu(event)" aria-haspopup="menu" title="More — the toolbar buttons that don't fit this window"><i class="fa-solid fa-ellipsis"></i><span class="sr-only">More</span></button></div>
 </div>
@@ -2528,7 +2530,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 <!-- Task modal -->
 <div class="modal-bg" id="taskModalBg" onclick="if(event.target===this) requestCloseTaskModal()">
   <div class="modal wide" id="taskModalInner">
-    <div class="modal-header"><h2 id="taskModalTitle">Task<span id="taskModalIdBadge" class="id-badge"></span></h2><button onclick="requestCloseTaskModal()" aria-label="Close">&times;</button></div>
+    <div class="modal-header"><h2 id="taskModalTitle">Task<span id="taskModalIdBadge" class="id-badge"></span></h2><button onclick="requestCloseTaskModal()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-tabs" role="tablist">
       <button type="button" class="modal-tab active" id="taskTabBtnGeneral" role="tab" aria-selected="true" onclick="setTaskModalTab('general')">General</button>
       <button type="button" class="modal-tab" id="taskTabBtnNotes" role="tab" aria-selected="false" onclick="setTaskModalTab('notes')">Notes<span class="tab-dot hidden" id="taskNotesDot"></span></button>
@@ -2555,7 +2557,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
       <div class="baseline-info hidden" id="taskBaselineInfo" title="From the plan's baseline (Schedule menu → Baseline…)"></div>
       <div class="tgrp" id="taskTypeRow">
         <div class="trow"><label for="taskTypeInput">Type</label><select id="taskTypeInput" class="tin"><option value="fixedUnits">Fixed Units</option><option value="fixedDuration">Fixed Duration</option><option value="fixedWork">Fixed Work</option></select></div>
-        <div class="trow" id="taskEffortDrivenField" title="On: adding a resource keeps Work and moves the schedule. Off: it adds capacity"><label for="effortDrivenInput">Effort-Driven</label><input type="checkbox" class="tsw" id="effortDrivenInput" role="switch"></div>
+        <div class="trow" id="taskEffortDrivenField" title="On: adding a resource keeps Work. Off: it adds capacity"><label for="effortDrivenInput">Effort-Driven</label><input type="checkbox" class="tsw" id="effortDrivenInput" role="switch"></div>
         <div class="trow"><label for="taskWorkInput" title="Total effort, e.g. 4h, 2d, 1w; follows Duration and Type">Work</label><input type="text" class="tin" id="taskWorkInput"></div>
       </div>
       <div class="tgrp">
@@ -2604,7 +2606,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 <!-- Plan name modal (New plan / Rename plan) -->
 <div class="modal-bg" id="planModalBg" onclick="if(event.target===this) closePlanModal()">
   <div class="modal narrow insp">
-    <div class="modal-header"><h2 id="planModalTitle">New Plan</h2><button onclick="closePlanModal()" aria-label="Close">&times;</button></div>
+    <div class="modal-header"><h2 id="planModalTitle">New Plan</h2><button onclick="closePlanModal()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
       <div class="tgrp"><div class="trow"><label for="planNameInput" class="tgrow">Plan name</label><input type="text" id="planNameInput" class="tin" maxlength="80" onkeydown="if(event.key==='Enter'){event.preventDefault();submitPlanModal()}"></div></div>
       <p class="cal-hint" id="planModalHint"></p>
@@ -2619,7 +2621,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 <!-- Excel export modal -->
 <div class="modal-bg" id="excelModalBg" onclick="if(event.target===this) closeExcelModal()">
   <div class="modal narrow insp">
-    <div class="modal-header"><h2>Export to Excel</h2><button onclick="closeExcelModal()" aria-label="Close">&times;</button></div>
+    <div class="modal-header"><h2>Export to Excel</h2><button onclick="closeExcelModal()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
       <p class="cal-hint">Saves a formatted workbook (.xlsx).</p>
       <section class="cal-sec" id="excelScopeBlock"><div class="cal-sec-title">Which tasks</div><div class="tgrp">
@@ -2638,7 +2640,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 
 <div class="modal-bg" id="csvModalBg" onclick="if(event.target===this) closeCsvExport()">
   <div class="modal narrow insp" role="dialog" aria-labelledby="csvTitle">
-    <div class="modal-header"><h2 id="csvTitle">Export to CSV</h2><button onclick="closeCsvExport()" aria-label="Close">&times;</button></div>
+    <div class="modal-header"><h2 id="csvTitle">Export to CSV</h2><button onclick="closeCsvExport()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
       <p class="cal-hint">Saves a plain text table (.csv).</p>
       <section class="cal-sec" id="csvScopeBlock"><div class="cal-sec-title">Which tasks</div><div class="tgrp">
@@ -2672,7 +2674,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 
 <div class="modal-bg" id="foreignImportModalBg" onclick="if(event.target===this) closeForeignImport()">
   <div class="modal insp">
-    <div class="modal-header"><h2 id="foreignImportTitle">Import</h2><button onclick="closeForeignImport()" aria-label="Close">&times;</button></div>
+    <div class="modal-header"><h2 id="foreignImportTitle">Import</h2><button onclick="closeForeignImport()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
       <div class="fi-file" id="foreignImportFile"></div>
       <div class="fi-summary" id="foreignImportSummary"></div>
@@ -2696,7 +2698,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 
 <div class="modal-bg" id="bulkModalBg" onclick="if(event.target===this) requestCloseBulkModal()">
   <div class="modal mid insp">
-    <div class="modal-header"><h2 id="bulkTitle">Edit Tasks</h2><button onclick="requestCloseBulkModal()" aria-label="Close">&times;</button></div>
+    <div class="modal-header"><h2 id="bulkTitle">Edit Tasks</h2><button onclick="requestCloseBulkModal()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
       <p class="bulk-hint" id="bulkHint"></p>
       <div class="tgrp">
@@ -2708,7 +2710,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
       <div class="trow bulk-row"><label class="bulk-on tgrow"><input type="checkbox" id="bulkOn-color"> Row colour</label><div class="bulk-ctl"><select id="bulkVal-color" aria-label="Row colour"></select></div></div>
       <div class="trow bulk-row"><label class="bulk-on tgrow"><input type="checkbox" id="bulkOn-onSlide"> On Slide</label><div class="bulk-ctl"><select id="bulkVal-onSlide" aria-label="On Slide"><option value="yes">Yes</option><option value="no">No</option></select></div></div>
       <div class="trow bulk-row"><label class="bulk-on tgrow"><input type="checkbox" id="bulkOn-shift"> Move dates by</label><div class="bulk-ctl"><input type="number" id="bulkVal-shift" step="1" placeholder="− earlier, + later" aria-label="Working days to move by"><span class="bulk-hint" id="bulkShiftHint">working days</span></div></div>
-      <div class="trow bulk-row"><label class="bulk-on tgrow"><input type="checkbox" id="bulkOn-pred"> Add predecessor</label><div class="bulk-ctl"><input type="number" id="bulkVal-predId" min="1" step="1" placeholder="task #" aria-label="Predecessor task number"><select id="bulkVal-predType" aria-label="Link type: Finish-to-Start, Start-to-Start, Finish-to-Finish or Start-to-Finish" title="FS finish-to-start · SS start-to-start · FF finish-to-finish · SF start-to-finish"><option value="FS" title="Finish-to-Start">FS</option><option value="SS" title="Start-to-Start">SS</option><option value="FF" title="Finish-to-Finish">FF</option><option value="SF" title="Start-to-Finish">SF</option></select><input type="number" id="bulkVal-predLag" step="1" placeholder="lag" aria-label="Lag in working days" title="Lag — positive delays the start, negative overlaps it"></div></div>
+      <div class="trow bulk-row"><label class="bulk-on tgrow"><input type="checkbox" id="bulkOn-pred"> Add predecessor</label><div class="bulk-ctl"><input type="number" id="bulkVal-predId" min="1" step="1" placeholder="task #" aria-label="Predecessor task number"><select id="bulkVal-predType" aria-label="Link type: Finish-to-Start, Start-to-Start, Finish-to-Finish or Start-to-Finish" title="Link type: FS, SS, FF or SF"><option value="FS" title="Finish-to-Start">FS</option><option value="SS" title="Start-to-Start">SS</option><option value="FF" title="Finish-to-Finish">FF</option><option value="SF" title="Start-to-Finish">SF</option></select><input type="number" id="bulkVal-predLag" step="1" placeholder="lag" aria-label="Lag in working days" title="Lag — positive delays the start, negative overlaps it"></div></div>
       </div>
       <div id="bulkCustom"></div>
     </div>
@@ -2723,7 +2725,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 
 <div class="modal-bg" id="replaceModalBg" onclick="if(event.target===this) closeReplace()">
   <div class="modal mid insp" role="dialog" aria-labelledby="replaceTitle">
-    <div class="modal-header"><h2 id="replaceTitle">Find and Replace</h2><button onclick="closeReplace()" aria-label="Close">&times;</button></div>
+    <div class="modal-header"><h2 id="replaceTitle">Find and Replace</h2><button onclick="closeReplace()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
       <div class="tgrp">
         <div class="trow"><label for="frFind" class="tgrow">Find</label><input type="text" id="frFind" class="tin" autocomplete="off" spellcheck="false" oninput="renderReplace()"></div>
@@ -2753,7 +2755,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 
 <div class="modal-bg" id="printModalBg" onclick="if(event.target===this) closePrintModal()">
   <div class="modal print-modal insp" role="dialog" aria-labelledby="printModalTitle">
-    <div class="modal-header"><h2 id="printModalTitle">Print or Save as PDF</h2><button onclick="closePrintModal()" aria-label="Close">&times;</button></div>
+    <div class="modal-header"><h2 id="printModalTitle">Print or Save as PDF</h2><button onclick="closePrintModal()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="print-layout">
       <div class="print-opts" oninput="printOptionChanged()" onchange="printOptionChanged()">
         <section class="cal-sec"><div class="cal-sec-title">Page</div><div class="tgrp">
@@ -2793,7 +2795,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
         <div class="print-nav"><button class="btn" id="printPrev" onclick="printPage(-1)" aria-label="Previous page"><i class="fa-solid fa-chevron-left"></i></button><span id="printPageInfo"></span><button class="btn" id="printNext" onclick="printPage(1)" aria-label="Next page"><i class="fa-solid fa-chevron-right"></i></button><span class="print-summary" id="printSummary"></span></div>
       </div>
     </div>
-    <div class="modal-footer"><span class="print-tip"></span><button class="btn" onclick="closePrintModal()">Cancel</button><button class="btn" id="printImgBtn" onclick="printImgToggle(event)" aria-haspopup="menu" title="One picture with every row on one image, whatever the paper: for slides and documents">Picture<i class="fa-solid fa-chevron-down"></i></button><button class="btn btn-primary" id="printGo" onclick="doPrint()">Print / Save as PDF…</button></div>
+    <div class="modal-footer"><span class="print-tip"></span><button class="btn" onclick="closePrintModal()">Cancel</button><button class="btn" id="printImgBtn" onclick="printImgToggle(event)" aria-haspopup="menu" title="One picture with every row, whatever the paper size">Picture<i class="fa-solid fa-chevron-down"></i></button><button class="btn btn-primary" id="printGo" onclick="doPrint()">Print / Save as PDF…</button></div>
     <div class="dropdown-menu" id="printImgMenu" role="menu"><button class="dropdown-item" role="menuitem" id="printCopyImg" onclick="printImgClose();exportPrintImage('copy')" title="Copy the chart as a PNG picture">Copy Picture</button><div class="dropdown-sep"></div><button class="dropdown-item" role="menuitem" id="printPng" onclick="printImgClose();exportPrintImage('png')" title="Download the chart as a PNG picture">Save Picture as PNG</button><button class="dropdown-item" role="menuitem" id="printSvg" onclick="printImgClose();exportPrintImage('svg')" title="Download the chart as an editable SVG drawing">Save Picture as SVG</button></div>
   </div>
 </div>
@@ -2801,7 +2803,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 <!-- Chart for Slides -->
 <div class="modal-bg" id="slideChartModalBg" onclick="if(event.target===this) closeSlideChart()">
   <div class="modal print-modal insp" role="dialog" aria-labelledby="scTitle">
-    <div class="modal-header"><h2 id="scTitle">Chart for Slides</h2><button onclick="closeSlideChart()" aria-label="Close">&times;</button></div>
+    <div class="modal-header"><h2 id="scTitle">Chart for Slides</h2><button onclick="closeSlideChart()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="print-layout">
       <div class="print-opts" oninput="scChanged(event)" onchange="scChanged(event)">
         <div id="scMain">
@@ -2811,7 +2813,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
             <div class="trow hidden" id="scWRow"><label for="scW" class="tgrow">Width</label><input type="number" id="scW" class="tin" min="3" max="80" step="0.1"><span class="tunit">cm</span></div>
             <div class="trow hidden" id="scHRow"><label for="scH" class="tgrow">Height</label><input type="number" id="scH" class="tin" min="2" max="60" step="0.1"><span class="tunit">cm</span></div>
             <div class="trow"><label for="scMaxRows" class="tgrow">Most rows on a chart</label><input type="number" id="scMaxRows" class="tin" min="1" max="60" step="1"></div>
-            <div class="trow"><label for="scSplit" class="tgrow">When rows don’t fit</label><select id="scSplit" class="tin" title="Even Charts: every chart gets about the same number of rows, cut near group boundaries. Fill Each Chart: each chart is filled, the last one takes what is left."><option value="even">Even Charts</option><option value="fill">Fill Each Chart</option></select></div>
+            <div class="trow"><label for="scSplit" class="tgrow">When rows don’t fit</label><select id="scSplit" class="tin" title="Even: equal charts, cut near groups. Fill: fill each chart in turn"><option value="even">Even Charts</option><option value="fill">Fill Each Chart</option></select></div>
           </div><p class="cal-hint hidden" id="scNote"></p><p class="cal-hint hidden" id="scCutNote"><span id="scCutText"></span> <button type="button" class="btn-link" onclick="scEditCut()">Add Slide Names…</button></p></section>
           <section class="cal-sec"><div class="cal-sec-title">Tasks</div><div class="tgrp">
             <label class="trow tpick"><span>The whole plan</span><input type="radio" class="tick" name="scScope" value="all" checked></label>
@@ -2881,11 +2883,11 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 
 <div class="modal-bg" id="folderFilesModalBg">
   <div class="modal mid">
-    <div class="modal-header"><h2 id="folderFilesTitle">Plan file</h2><button onclick="closeFolderFiles()" aria-label="Close">&times;</button></div>
+    <div class="modal-header"><h2 id="folderFilesTitle">Plan file</h2><button onclick="closeFolderFiles()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
       <section class="cal-sec">
         <div class="cal-sec-title">Folder<button class="btn-link" onclick="changeFolder()">Change folder…</button></div>
-        <div class="fb-line"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h4.6l2 2.5h8.4A1.5 1.5 0 0 1 21 9v9.5a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5z"/></svg><span id="folderBarName"></span></div>
+        <div class="fb-line"><i class="fa-solid fa-folder"></i><span id="folderBarName"></span></div>
       </section>
       <section class="cal-sec">
         <div class="cal-sec-title">Plan file</div>
@@ -2900,7 +2902,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 <!-- Rename custom field (opens above the task dialog, so it sits after it in the page) -->
 <div class="modal-bg" id="fieldsModalBg" onclick="if(event.target===this) requestCloseFieldsModal()">
   <div class="modal wide settings-modal" id="fieldsModal">
-    <div class="modal-header"><div class="mh-title"><h2 id="fieldsModalTitle">Plan Settings</h2><span class="ps-plan" id="fieldsPlanChip" data-ps-plan></span></div><button onclick="requestCloseFieldsModal()" aria-label="Close">&times;</button></div>
+    <div class="modal-header"><div class="mh-title"><h2 id="fieldsModalTitle">Plan Settings</h2><span class="ps-plan" id="fieldsPlanChip" data-ps-plan></span></div><button onclick="requestCloseFieldsModal()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="settings-tabs" role="tablist" aria-label="Plan settings" data-current="fields"></div>
     <div class="modal-body">
       <div class="fields-rows" id="fieldsRows"></div>
@@ -2917,7 +2919,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 
 <div class="modal-bg" id="resourceDaysModalBg" onclick="if(event.target===this) requestCloseResourceDaysModal()">
   <div class="modal mid">
-    <div class="modal-header"><h2>Days off — <span id="resourceDaysName"></span></h2><button onclick="requestCloseResourceDaysModal()" aria-label="Close">&times;</button></div>
+    <div class="modal-header"><h2>Days off — <span id="resourceDaysName"></span></h2><button onclick="requestCloseResourceDaysModal()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
       <p class="cal-hint">On top of the plan's calendar.</p>
       <section class="cal-sec"><div class="res-days-add hol-add hol-fields">
@@ -2938,7 +2940,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 
 <div class="modal-bg" id="calendarModalBg" onclick="if(event.target===this) requestCloseCalendarModal()">
   <div class="modal wide settings-modal">
-    <div class="modal-header"><div class="mh-title"><h2>Plan Settings</h2><span class="ps-plan" data-ps-plan></span></div><button onclick="requestCloseCalendarModal()" aria-label="Close">&times;</button></div>
+    <div class="modal-header"><div class="mh-title"><h2>Plan Settings</h2><span class="ps-plan" data-ps-plan></span></div><button onclick="requestCloseCalendarModal()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="settings-tabs" role="tablist" aria-label="Plan settings" data-current="calendar"></div>
     <div class="modal-body">
       <section class="cal-sec">
@@ -3016,7 +3018,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 
 <div class="modal-bg" id="rulesModalBg" onclick="if(event.target===this) requestCloseRulesModal()">
   <div class="modal wide settings-modal">
-    <div class="modal-header"><div class="mh-title"><h2>Plan Settings</h2><span class="ps-plan" data-ps-plan></span></div><button onclick="requestCloseRulesModal()" aria-label="Close">&times;</button></div>
+    <div class="modal-header"><div class="mh-title"><h2>Plan Settings</h2><span class="ps-plan" data-ps-plan></span></div><button onclick="requestCloseRulesModal()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="settings-tabs" role="tablist" aria-label="Plan settings" data-current="rules"></div>
     <div class="modal-body">
       <section class="cal-sec">
@@ -3025,7 +3027,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
       </section>
       <details class="cal-sec rules-adv" id="rulesAdv">
         <summary>Advanced</summary>
-        <label class="hol-yearly" title="On: a constraint date wins over links. Off: links win, the constraint shows unmet"><input type="checkbox" id="honorConstraintDatesInput"> Tasks always honor their constraint dates</label>
+        <label class="hol-yearly" title="On: a constraint date wins over links. Off: links win"><input type="checkbox" id="honorConstraintDatesInput"> Tasks always honor their constraint dates</label>
         <p class="cal-hint" style="margin:0">A constraint date wins over links.</p>
       </details>
     </div>
@@ -3034,7 +3036,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 </div>
 <div class="modal-bg" id="formatModalBg" onclick="if(event.target===this) closeFormatModal()">
   <div class="modal wide settings-modal" role="dialog" aria-labelledby="formatTitle">
-    <div class="modal-header"><div class="mh-title"><h2 id="formatTitle">Plan Settings</h2><span class="ps-plan" data-ps-plan></span></div><button onclick="closeFormatModal()" aria-label="Close">&times;</button></div>
+    <div class="modal-header"><div class="mh-title"><h2 id="formatTitle">Plan Settings</h2><span class="ps-plan" data-ps-plan></span></div><button onclick="closeFormatModal()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="settings-tabs" role="tablist" aria-label="Plan settings" data-current="format"></div>
     <div class="modal-body">
       <section class="cal-sec">
@@ -3067,7 +3069,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 
 <div class="modal-bg" id="baselineModalBg" onclick="if(event.target===this) closeBaselineModal()">
   <div class="modal mid insp">
-    <div class="modal-header"><h2>Baselines</h2><button onclick="closeBaselineModal()" aria-label="Close">&times;</button></div>
+    <div class="modal-header"><h2>Baselines</h2><button onclick="closeBaselineModal()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
       <p class="cal-hint">A baseline saves a copy of the schedule to compare against.</p>
       <section class="cal-sec">
@@ -3100,7 +3102,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 
 <div class="modal-bg" id="recurModalBg" onclick="if(event.target===this) closeRecurModal()">
   <div class="modal mid insp">
-    <div class="modal-header"><h2 id="recurTitle">Recurring Task</h2><button onclick="closeRecurModal()" aria-label="Close">&times;</button></div>
+    <div class="modal-header"><h2 id="recurTitle">Recurring Task</h2><button onclick="closeRecurModal()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body" id="recurBody">
       <div class="tgrp">
         <div class="trow"><label for="recurName" class="tgrow">Task name</label><input type="text" id="recurName" class="tin" maxlength="200" placeholder="Name"></div>
@@ -3136,7 +3138,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 </div>
 <div class="modal-bg" id="rescheduleModalBg" onclick="if(event.target===this) closeRescheduleModal()">
   <div class="modal mid insp">
-    <div class="modal-header"><h2>Reschedule Remaining Work</h2><button onclick="closeRescheduleModal()" aria-label="Close">&times;</button></div>
+    <div class="modal-header"><h2>Reschedule Remaining Work</h2><button onclick="closeRescheduleModal()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
       <p class="cal-hint">Moves unfinished work to start from the status date.</p>
       <section class="cal-sec">
@@ -3157,7 +3159,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 
 <div class="modal-bg" id="levelModalBg" onclick="if(event.target===this) closeLevelModal()">
   <div class="modal mid insp">
-    <div class="modal-header"><h2>Level Resources</h2><button onclick="closeLevelModal()" aria-label="Close">&times;</button></div>
+    <div class="modal-header"><h2>Level Resources</h2><button onclick="closeLevelModal()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
       <p class="cal-hint">Delays tasks so no resource is over-allocated.</p>
       <section class="cal-sec">
@@ -3186,7 +3188,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 
 <div class="modal-bg" id="syncConflictsModalBg" onclick="if(event.target===this) closeSyncConflictsModal()">
   <div class="modal insp">
-    <div class="modal-header"><h2>Changes Made on Both Sides</h2><button onclick="closeSyncConflictsModal()" aria-label="Close">&times;</button></div>
+    <div class="modal-header"><h2>Changes Made on Both Sides</h2><button onclick="closeSyncConflictsModal()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="modal-body">
       <p class="cal-hint">The newer edit was kept.</p>
       <div id="syncConflictsBody"></div>
@@ -3469,7 +3471,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
 <!-- About modal -->
 <div class="modal-bg" id="shortcutsModalBg" onclick="if(event.target===this) closeShortcuts()">
   <div class="modal help-modal shortcuts-modal" role="dialog" aria-labelledby="shortcutsTitle">
-    <div class="modal-header"><h2 id="shortcutsTitle">Keyboard Shortcuts</h2><button onclick="closeShortcuts()" aria-label="Close">&times;</button></div>
+    <div class="modal-header"><h2 id="shortcutsTitle">Keyboard Shortcuts</h2><button onclick="closeShortcuts()" aria-label="Close"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="help-layout">
       <div class="help-rail"><div class="help-nav" id="scNav"></div></div>
       <div class="help-panes"><div class="help-pane" id="shortcutsBody"></div></div>
@@ -3488,7 +3490,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
   </div>
 </div>
 
-<div id="toast" role="status" aria-live="polite"><span id="toastMsg"></span><button id="toastUndoBtn" class="hidden"></button><button id="toastCloseBtn" class="hidden" onclick="dismissToast()" aria-label="Dismiss">&times;</button></div>
+<div id="toast" role="status" aria-live="polite"><span id="toastMsg"></span><button id="toastUndoBtn" class="hidden"></button><button id="toastCloseBtn" class="hidden" onclick="dismissToast()" aria-label="Dismiss"><i class="fa-solid fa-xmark"></i></button></div>
 
 <script>
 /* ============================== Constants ============================== */
@@ -6875,7 +6877,7 @@ function renderGrid() {
             : `<input type="number" min="1" step="1" class="inline-edit" value="${durNum != null ? durNum : ''}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" ${blurAttr('duration')}>`)
       : `<div class="grid-cell-dim${summaryCls}${canEditFinish ? ' editable' : ''}"${canEditFinish ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','duration')"` : ''}>${t.durText != null ? escapeHtml(t.durText) : (durMin != null ? fmtDurationMinutes(durMin) : durNum != null ? fmtDuration(durNum) : '')}</div>`;
     const predCell = editing('predecessors')
-      ? `<input type="text" class="inline-edit" title="Like MS Project: 3, 3FS, 3SS+2d, 5FF-1w (a lead), 4h — several separated by , or ;. Positive = lag (delay), negative = lead (overlap); days (d), weeks (w) or hours (h), counted in working days" value="${escapeHtml(predLabel)}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" ${blurAttr('predecessors')}>`
+      ? `<input type="text" class="inline-edit" title="Like MS Project: 3FS, 3SS+2d, 5FF-1w (a lead), 4h; split several by , or ;" value="${escapeHtml(predLabel)}" onclick="event.stopPropagation()" onkeydown="onInlineEditKeydown(event)" ${blurAttr('predecessors')}>`
       : `<div class="grid-cell-dim${summaryCls}${!summary ? ' editable' : ''}" title="${escapeHtml(predLabel)}"${!summary ? ` onclick="event.stopPropagation();startInlineEdit('${t.id}','predecessors')"` : ''}>${escapeHtml(predLabel)}</div>`;
     // MS Project-style Task Mode column: click for a picker with the two
     // named modes (see openTaskModeMenu()).
@@ -6949,7 +6951,7 @@ function renderGrid() {
       ${cols.map(c => marks && marks.has(c) ? cells[c].replace(/^(\s*<div class=")/, '$1chg ') : cells[c]).join('')}
     </div>`;
   }).join('') + (win.virtual ? spacer((list.length - win.to) * ROW_H) : '')
-    + (currentView === 'tasks' ? '<button type="button" class="grid-add-row" onclick="addTask()" title="Add a task below the selected one, or at the end of the plan when nothing is selected"><i class="fa-solid fa-plus"></i>Add Task</button>' : '');
+    + (currentView === 'tasks' ? '<button type="button" class="grid-add-row" onclick="addTask()" title="Add a task below the selected one, or at the end"><i class="fa-solid fa-plus"></i>Add Task</button>' : '');
   paintActiveCell();
 }
 /* ---- Keyboard navigation in the task list (Tasks view): a cell cursor. Arrow keys move it (the row becomes the selection), Enter or F2 edits the cell,
@@ -7834,7 +7836,7 @@ function renderGantt() {
   document.getElementById('ganttHeader').innerHTML = ticks.map(t => {
     const left = Math.max(0, t.left), width = Math.min(t.width - (left - t.left), totalW - left);   // clipped to the chart at both ends (a scale's first and last week/month/quarter run past it)
     if (width <= 0) return '';
-    return `<div class="gantt-tick zoom-${z.id}${t.cls ? ' ' + t.cls : ''}${t.yearStart ? ' year-start' : ''}" style="left:${left}px;width:${width}px"${t.title ? ` title="${escapeHtml(t.title)}"` : ''}>${width < 18 ? '' : (t.short && width < 80 ? t.short : t.html || escapeHtml(t.label))}</div>`;   // (a sliver of a period has no room for its name; the tooltip keeps it)
+    return `<div class="gantt-tick zoom-${z.id}${t.cls ? ' ' + t.cls : ''}${t.yearStart ? ' year-start' : ''}" style="left:${left}px;width:${width}px"${t.title ? ` title="${escapeHtml(t.title)}"` : ''}>${width < (/^(hour|day)$/.test(z.id) ? 18 : 26) ? '' : (t.short && width < 80 ? t.short : t.html || escapeHtml(t.label))}</div>`;   // (a sliver of a period has no room for its name; the tooltip keeps it)
   }).join('') + todayPillHtml(px);
 
   if (list.length === 0) {
@@ -8079,7 +8081,7 @@ function renderResourceUsage() {
   document.getElementById('resourceTimelineHead').innerHTML = ticks.map(t => {
     const left = Math.max(0, t.left), width = Math.min(t.width - (left - t.left), totalW - left);   // clipped to the chart at both ends (a scale's first and last week/month/quarter run past it)
     if (width <= 0) return '';
-    return `<div class="gantt-tick zoom-${z.id}${t.cls ? ' ' + t.cls : ''}${t.yearStart ? ' year-start' : ''}" style="left:${left}px;width:${width}px"${t.title ? ` title="${escapeHtml(t.title)}"` : ''}>${width < 18 ? '' : (t.short && width < 80 ? t.short : t.html || escapeHtml(t.label))}</div>`;   // (a sliver of a period has no room for its name; the tooltip keeps it)
+    return `<div class="gantt-tick zoom-${z.id}${t.cls ? ' ' + t.cls : ''}${t.yearStart ? ' year-start' : ''}" style="left:${left}px;width:${width}px"${t.title ? ` title="${escapeHtml(t.title)}"` : ''}>${width < (/^(hour|day)$/.test(z.id) ? 18 : 26) ? '' : (t.short && width < 80 ? t.short : t.html || escapeHtml(t.label))}</div>`;   // (a sliver of a period has no room for its name; the tooltip keeps it)
   }).join('');
 
   if (!resources.length && overIds && (project.resources || []).length) {
@@ -8193,7 +8195,7 @@ function moveRsColumnTo(key, targetKey, after) {
 function resetRsColumns() { rsColShow = {}; rsColOrder = []; save(); render(); renderRsColumnsMenu(); }
 function renderRsColumnsMenu() {
   const menu = document.getElementById('rsColumnsMenu'); if (!menu) return;
-  menu.innerHTML = `<div class="cols-head" title="Material Label, Ovt Rate and Code start hidden and show by themselves once a resource uses them."><strong>Columns · Resources</strong><button class="btn-link" onclick="resetRsColumns()">Reset to default</button></div>`
+  menu.innerHTML = `<div class="cols-head" title="Material Label, Ovt Rate and Code show once a resource uses them"><strong>Columns · Resources</strong><button class="btn-link" onclick="resetRsColumns()">Reset to default</button></div>`
     + rsAllCols().filter(c => !c.fixed).map(c => `<div class="cols-row" draggable="true" data-col-row="${c.key}" ondragstart="colDragStart(event, '${c.key}', 'rs')" ondragover="colDragOver(event, '${c.key}')" ondragleave="colDragClear()" ondrop="colDrop(event, '${c.key}')" ondragend="colDragEnd()"><label class="cols-check"><input type="checkbox" data-rscol="${c.key}"${rsColVisible(c) ? ' checked' : ''} onchange="toggleRsColumn('${c.key}', this.checked)"><i class="fa-solid fa-check cols-tick"></i><span>${escapeHtml(c.label)}</span></label></div>`).join('')
     + `<div class="cols-opts"><button class="cols-opt" onclick="closeRsColumnsMenu(); fitAllRsColumns()"><i></i>Fit Columns to Content</button>` + (Object.keys(rsColWidths).length ? `<button class="cols-opt" onclick="resetAllRsColWidths(); renderRsColumnsMenu()"><i></i>Reset Column Widths</button>` : '') + `</div>`;
 }
@@ -8366,7 +8368,7 @@ function resourceSheetRowHtml(r, i) {
     type: `<div class="rst-cell"><select class="rst-select" aria-label="Type" onchange="commitResourceCell('${r.id}','type',this.value)">${opts(RESOURCE_TYPES, type)}</select></div>`,
     materialLabel: cell('materialLabel', `<input type="text" class="inline-edit" maxlength="20" placeholder="e.g. tons" value="${escapeHtml(r.materialLabel || '')}" aria-label="Material label" onchange="commitResourceCell('${r.id}','materialLabel',this.value)">`),
     group: `<div class="rst-cell"><input type="text" class="inline-edit" maxlength="60" value="${escapeHtml(r.group || '')}" aria-label="Group" onchange="commitResourceCell('${r.id}','group',this.value)"></div>`,
-    maxUnits: cell('maxUnits', `<input type="text" inputmode="numeric" class="inline-edit rst-pct" value="${r.maxUnits}%" aria-label="Max units, percent" title="How much of this resource is available — 100% is one full-time person, 300% three people pooled into one resource" onchange="commitResourceCell('${r.id}','maxUnits',this.value)" onkeydown="if(event.key==='Enter')this.blur()">`),
+    maxUnits: cell('maxUnits', `<input type="text" inputmode="numeric" class="inline-edit rst-pct" value="${r.maxUnits}%" aria-label="Max units, percent" title="How much is available: 100% is one person, 300% three pooled" onchange="commitResourceCell('${r.id}','maxUnits',this.value)" onkeydown="if(event.key==='Enter')this.blur()">`),
     stdRate: cell('stdRate', money('stdRate', isMaterial ? 'Standard rate per unit' : 'Standard rate per hour')),
     ovtRate: cell('ovtRate', money('ovtRate', 'Overtime rate per hour')),
     costPerUse: `<div class="rst-cell">${money('costPerUse', 'Cost per use')}</div>`,
@@ -9424,7 +9426,7 @@ function openSettingsTab(id) {
   else go();
 }
 function openPlanSettings(tab) { closeScheduleMenu(); closePlanMenu(); openSettingsTab(tab || settingsTab || 'calendar'); }
-function updatePlanSettingsBtn() { const b = document.getElementById('planSettingsBtn'); if (b) b.title = `Plan settings — ${planSettingsHint()} (⌘,)`; }
+function updatePlanSettingsBtn() { const b = document.getElementById('planSettingsBtn'); if (b) b.title = `Plan settings — ${planSettingsHint()} (${IS_MAC ? '⌘,' : 'Ctrl+,'})`; }
 function planSettingsHint() { return calendarSummary() + (minuteModeActive() ? ' · Hours & minutes' : ''); }
 // Scheduling rules: whether a constraint date always wins over the links, and the default mode for new tasks.
 let rulesSnapshot = null;
@@ -9794,7 +9796,7 @@ function renderFieldsRows() {
   box.classList.toggle('fld-nouses', !fieldsDraft.some(r => !r.isNew));   // only new fields: no usage column to line up, so no gap for it
   box.innerHTML = fieldsDraft.map((r, i) => {
     const info = FIELD_KIND_INFO[r.kind], uses = r.isNew ? '' : r.uses ? `${r.uses} task${r.uses === 1 ? '' : 's'}` : '—';
-    return `<div class="trow fld-row${r.removed ? ' removed' : ''}" data-i="${i}"><input type="text" class="fld-name" maxlength="40" value="${escapeHtml(r.name)}" ${r.removed ? 'disabled ' : ''}placeholder="Name" aria-label="Name of the ${info.label.toLowerCase()} field" oninput="fieldsNameInput(${i}, this)" onkeydown="if(event.key==='Enter'){event.preventDefault();saveFieldsModal();}"><span class="fld-kind"><i class="fa-solid ${info.icon}"></i>${info.label}</span><span class="fld-uses">${uses}</span><label class="fld-show" title="Show this field as a column in the Tasks list — on this device; the Gantt view keeps its own columns"><span>In list</span><input type="checkbox" class="fld-show-in"${r.show ? ' checked' : ''} aria-label="Show ${escapeHtml(r.name || info.label)} in the list" onchange="fieldsDraft[${i}].show = this.checked"><span class="fld-switch"></span></label><button type="button" class="fld-remove" onclick="fieldsToggleRemove(${i})" title="${r.removed ? 'Keep this field' : r.isNew ? 'Discard this new field' : 'Remove this field' + (r.uses ? ' and its values' : '')}" aria-label="${r.removed ? 'Keep' : 'Remove'} ${escapeHtml(r.name || info.label)}"><i class="fa-solid ${r.removed ? 'fa-rotate-left' : 'fa-xmark'}"></i></button></div>`;
+    return `<div class="trow fld-row${r.removed ? ' removed' : ''}" data-i="${i}"><input type="text" class="fld-name" maxlength="40" value="${escapeHtml(r.name)}" ${r.removed ? 'disabled ' : ''}placeholder="Name" aria-label="Name of the ${info.label.toLowerCase()} field" oninput="fieldsNameInput(${i}, this)" onkeydown="if(event.key==='Enter'){event.preventDefault();saveFieldsModal();}"><span class="fld-kind"><i class="fa-solid ${info.icon}"></i>${info.label}</span><span class="fld-uses">${uses}</span><label class="fld-show" title="Show this field as a column in the Tasks list (this device only)"><span>In list</span><input type="checkbox" class="fld-show-in"${r.show ? ' checked' : ''} aria-label="Show ${escapeHtml(r.name || info.label)} in the list" onchange="fieldsDraft[${i}].show = this.checked"><span class="fld-switch"></span></label><button type="button" class="fld-remove" onclick="fieldsToggleRemove(${i})" title="${r.removed ? 'Keep this field' : r.isNew ? 'Discard this new field' : 'Remove this field' + (r.uses ? ' and its values' : '')}" aria-label="${r.removed ? 'Keep' : 'Remove'} ${escapeHtml(r.name || info.label)}"><i class="fa-solid ${r.removed ? 'fa-rotate-left' : 'fa-xmark'}"></i></button></div>`;
   }).join('');
   // adding: one button that opens the type menu (Text, Number, Date, Yes / No; a kind with all five used says so)
   document.getElementById('fieldsAdd').innerHTML = !has
@@ -9929,7 +9931,7 @@ function renderTaskForm(force) {
   const tfBtn = (id, label, title, cls = '') => `<button type="button" class="btn btn-sm${cls}" id="${id}" title="${title}">${label}</button>`;
   body.innerHTML = `<div class="tf-wrap">
     <div class="tf-foot">
-      <div class="tool-group tf-step"><button type="button" class="icon-btn" id="tfPrevBtn" title="Previous task (applies your changes first)" aria-label="Previous task"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3L5 8l5 5"/></svg></button><button type="button" class="icon-btn" id="tfNextBtn" title="Next task (applies your changes first)" aria-label="Next task"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg></button></div>
+      <div class="tool-group tf-step"><button type="button" class="icon-btn" id="tfPrevBtn" title="Previous task (applies your changes first)" aria-label="Previous task"><i class="fa-solid fa-chevron-left"></i></button><button type="button" class="icon-btn" id="tfNextBtn" title="Next task (applies your changes first)" aria-label="Next task"><i class="fa-solid fa-chevron-right"></i></button></div>
       <div class="tf-note" id="tfNote"></div>
       <div class="tf-btns tf-act">${tfBtn('tfCancelBtn', 'Cancel', 'Discard the changes in the form (Esc)')}${tfBtn('tfOkBtn', 'Save', 'Apply the changes (Enter) — one Undo step', ' btn-primary')}</div>
     </div>
@@ -9950,7 +9952,7 @@ function renderTaskForm(force) {
     ${textNote.length ? `<div class="tf-hint">Free text: ${escapeHtml(textNote.join(', '))}. Changing the date replaces it.</div>` : ''}
     ${group ? '<div class="tf-hint">A group takes its dates, % complete, resources and links from its tasks.</div>'
       : `<div class="tf-tables">
-           <div class="tf-sec"><div class="tf-cap"><span>Resources</span><button type="button" class="tf-head-btn" id="tfEditResourcesBtn" title="Edit resources… — open the Resources tab (the plan's people, rates and days off)" aria-label="Edit resources">Edit Resources…</button></div>
+           <div class="tf-sec"><div class="tf-cap"><span>Resources</span><button type="button" class="tf-head-btn" id="tfEditResourcesBtn" title="Edit resources… — open the Resources tab" aria-label="Edit resources">Edit Resources…</button></div>
              <div class="tgrp tf-table tf-res"><div class="tf-grid" id="tfResRows"></div><button type="button" class="trow tadd tf-add" id="tfResAdd" onclick="tfAddRow('res')">Add Resource…</button></div></div>
            <div class="tf-sec"><div class="tf-cap"><span>Predecessors</span></div>
              <div class="tgrp tf-table tf-pred"><div class="tf-grid" id="tfPredRows"></div><button type="button" class="trow tadd tf-add" id="tfPredAdd" onclick="tfAddRow('pred')">Add Predecessor…</button></div></div>
@@ -10050,7 +10052,7 @@ function tfPredRowHtml(p, i) {
   const pt = tfPredTask(p.num);
   return `<div class="tf-row" data-i="${i}"><input type="number" class="tf-cell" min="1" step="1" value="${escapeHtml(p.num)}" placeholder="Task #" aria-label="Predecessor task number" style="text-align:right" oninput="tfPredInput(${i}, 'num', this.value)">
       <span class="tf-pred-name${pt ? '' : ' none'}" data-i="${i}" title="${pt ? escapeHtml(pt.name) : ''}">${pt ? escapeHtml(pt.name) : (p.num ? 'no such task' : '')}</span>
-      <select class="tf-cell" aria-label="Link type" title="FS finish-to-start, SS start-to-start, FF finish-to-finish, SF start-to-finish" onchange="tfPredInput(${i}, 'type', this.value)">${DEP_TYPES.map(dt => `<option value="${dt}"${dt === p.type ? ' selected' : ''}>${dt}</option>`).join('')}</select>
+      <select class="tf-cell" aria-label="Link type" title="Link type: FS, SS, FF or SF" onchange="tfPredInput(${i}, 'type', this.value)">${DEP_TYPES.map(dt => `<option value="${dt}"${dt === p.type ? ' selected' : ''}>${dt}</option>`).join('')}</select>
       <input type="text" class="tf-cell tf-lag" value="${escapeHtml(p.lag)}" placeholder="0" aria-label="Lead or lag" title="Lead or lag: 2d, -1w, 4h; a bare number is ${minuteModeActive() ? 'hours' : 'days'}" oninput="tfPredInput(${i}, 'lag', this.value)">
       <button type="button" class="tf-remove" aria-label="Remove this predecessor" title="Remove" onclick="tfPredRemove(${i})"><i class="fa-solid fa-xmark"></i></button></div>`;
 }
@@ -10594,7 +10596,7 @@ function renderPredecessorRows() {
     <div class="pred-row">
       <input type="number" class="pred-id-input" min="1" step="1" placeholder="#" aria-label="Predecessor task number" value="${shown === '?' ? '' : shown}" onchange="onPredecessorIdChange(${i}, this.value)">
       <span class="pred-name${pt ? '' : ' none'}" title="${pt ? escapeHtml(pt.name) : ''}">${pt ? escapeHtml(pt.name) : 'No Task'}</span>
-      <select aria-label="Link type" title="FS finish-to-start, SS start-to-start, FF finish-to-finish, SF start-to-finish" onchange="editingPredecessors[${i}].type=this.value">
+      <select aria-label="Link type" title="Link type: FS, SS, FF or SF" onchange="editingPredecessors[${i}].type=this.value">
         ${DEP_TYPES.map(dt => `<option value="${dt}"${dt === p.type ? ' selected' : ''}>${dt}</option>`).join('')}
       </select>
       <input type="text" class="pred-lag-input" value="${p.lag ? fmtLag(p.lag, p.elapsed) : '0'}" placeholder="Lead/Lag" aria-label="Lead or lag" title="Lead or lag: 2d, -1w, 4h; a bare number is ${minuteModeActive() ? 'hours' : 'days'}" onchange="onPredLagChange(${i}, this)">
@@ -10783,7 +10785,7 @@ function systemTheme() { return window.matchMedia('(prefers-color-scheme: dark)'
 function resolveTheme() { return themePref === 'auto' ? systemTheme() : themePref; }
 function applyTheme() {
   document.documentElement.setAttribute('data-theme', theme);
-  const m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute('content', theme === 'dark' ? '#171925' : '#f2f3f7');
+  for (const m of document.querySelectorAll('meta[name="theme-color"]')) m.setAttribute('content', theme === 'dark' ? '#171925' : '#f2f3f7');   // (both scheme metas follow the chosen theme, not only the system one)
 }
 function setThemePref(pref) { themePref = pref === 'light' || pref === 'dark' ? pref : 'auto'; theme = resolveTheme(); applyTheme(); save(); }
 const UI_SCALE_STEPS = [{ v: .9, label: 'Small', px: 12 }, { v: 1, label: 'Medium', px: 14 }, { v: 1.15, label: 'Large', px: 18 }, { v: 1.3, label: 'Extra Large', px: 22 }];
@@ -14607,7 +14609,7 @@ const SHORTCUTS = [
     [['?'], 'Show this sheet'],
     [['/'], 'Find a task'],
     [[IS_MAC ? 'Alt+Mod+F' : 'Ctrl+H'], 'Find and replace in many tasks'],
-    [['Mod+P'], 'Print'],
+    [['Mod+P'], 'Print'], [['Mod+,'], 'Plan settings'],
     [['Esc'], 'Close the open dialog or menu; otherwise clear the selection'],
     [['Mod+Z'], 'Undo'], [['Mod+Shift+Z', 'Mod+Y'], 'Redo']]],
   ['Tasks', [
@@ -14767,6 +14769,7 @@ try { const v = localStorage.getItem(SIDEBAR_KEY); sidebarCollapsed = v === '1' 
 applySidebarState();
 window.matchMedia('(max-width: 800px)').addEventListener('change', applySidebarState);
 document.addEventListener('keydown', e => {   // Alt+Cmd+S (Alt+Ctrl+S), the same shortcut as ClearDesk
+  if (e.code === 'Comma' && (IS_MAC ? e.metaKey && !e.ctrlKey : e.ctrlKey && !e.metaKey) && !e.altKey && !e.shiftKey && !document.querySelector('.modal-bg.open')) { e.preventDefault(); openPlanSettings(); }   // ⌘, / Ctrl+,: the settings, as in every Mac app
   if (e.altKey && (e.metaKey || e.ctrlKey) && e.code === 'KeyS') { e.preventDefault(); toggleSidebar(); }
   const dv = e.altKey && (e.metaKey || e.ctrlKey) && /^Digit[1-4]$/.test(e.code) ? MAIN_VIEWS[Number(e.code.slice(5)) - 1] : null;   // Alt+Cmd/Ctrl+1-4: the four views
   if (dv) { e.preventDefault(); setView(dv.id); }
@@ -15027,7 +15030,7 @@ function focusIntoDialog(bg, m) {
 function initDialogAccessibility() {
   for (const bg of document.querySelectorAll('.modal-bg')) {
     const m = bg.querySelector('.modal'); if (!m) continue;
-    if (!m.getAttribute('role')) m.setAttribute('role', bg.id === 'confirmModalBg' ? 'alertdialog' : 'dialog');
+    if (!m.getAttribute('role')) m.setAttribute('role', m.classList.contains('alert') ? 'alertdialog' : 'dialog');   // (the confirmation and Import are alerts)
     for (const x of bg.querySelectorAll('.modal-header > button:not(.hdr-link)')) if (!x.getAttribute('aria-label')) x.setAttribute('aria-label', 'Close');   // (the Help dialog's Keyboard shortcuts link is a header button too, but not the close one)
     m.setAttribute('aria-modal', 'true');
     if (!m.getAttribute('aria-labelledby') && !m.getAttribute('aria-label')) { const h = m.querySelector('h2'); if (h) { if (!h.id) h.id = bg.id + 'Title'; m.setAttribute('aria-labelledby', h.id); } }

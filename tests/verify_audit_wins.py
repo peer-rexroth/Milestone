@@ -72,6 +72,26 @@ with sync_playwright() as p:
     gap = pg.evaluate("() => { const row = document.querySelector('#planModalBg .trow'); const body = row.closest('.modal-body'); return Math.round(body.getBoundingClientRect().bottom - row.getBoundingClientRect().bottom); }")
     check("the focus ring (3px) under the last row of Rename Plan fits inside the dialog body instead of being cut off", gap >= 3 and pg.evaluate("() => document.activeElement.id") == "planNameInput", gap)
     pg.close()
+    # icons: every close glyph is the registry's xmark, and the inline drawings that were outside the registry are registry icons now
+    src = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "index.html"), encoding="utf-8").read()
+    check("no text '×' is used as an icon any more (23 close buttons use the xmark icon)", "&times;" not in src and src.count('aria-label="Close"><i class="fa-solid fa-xmark"></i></button>') >= 20)
+    check("the sidebar toggle, the Task Form step buttons and the folder line use registry icons", all(x in src for x in ('fa-sidebar', 'fa-chevron-left', 'fa-chevron-right', 'fa-folder')) and 'M10 3L5 8l5 5' not in src and 'x="1.5" y="2.5" width="13"' not in src)
+    # small fixes (M-06, M-08, M-09, M-12, M-14, M-15, M-22): source checks
+    import re as _re
+    css = src[src.index("<style>"):src.index("</style>", src.index("<style>"))]
+    check("no font weight outside 400 / 500 / 600 / 700 in the stylesheet", not _re.findall(r"font-weight:\s*(?!400|500|600|700|inherit|normal|bold)\d+", css), _re.findall(r"font-weight:\s*\d+", css)[:5])
+    check("no px radius off the ladder (only the r-* tokens, 50%, 999px, 0, 22% for the app icon)", not [x for x in _re.findall(r"border-radius:\s*([^;}]+)", css) if _re.search(r"(?<![\w.-])\d+(\.\d+)?px", x) and "var(--r-" not in x and "999px" not in x and "calc(" not in x], [x for x in _re.findall(r"border-radius:\s*([^;}]+)", css) if _re.search(r"(?<![\w.-])\d+(\.\d+)?px", x) and "var(--r-" not in x and "999px" not in x][:5])
+    check("the retired --radius alias is gone", "var(--radius)" not in src and "--radius:" not in src)
+    titles = [t for t in _re.findall(r'\btitle="([^"$]*)"', src[src.index("</style>"):])]
+    check("no static tooltip is longer than 75 characters", not [t for t in titles if len(t) > 75], [t[:40] for t in titles if len(t) > 75][:5])
+    check("two theme-color metas (light, dark) and a manifest colour that matches the light one", len(_re.findall(r'<meta name="theme-color"', src)) == 2 and '"theme_color": "#f2f3f7"' in open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "manifest.json"), encoding="utf-8").read())
+    pg = b.new_page(viewport={"width": 1400, "height": 900}); pg.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
+    pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn"); pg.wait_for_timeout(300)
+    check("Import is an alert dialog (role alertdialog)", pg.evaluate("() => document.querySelector('#importModalBg .modal').getAttribute('role')") == "alertdialog")
+    pg.click("body", position={"x": 700, "y": 600}); pg.keyboard.press("Control+Comma" if not pg.evaluate("() => IS_MAC") else "Meta+Comma"); pg.wait_for_timeout(300)
+    check("Cmd+, (Ctrl+, off a Mac) opens Plan settings, as the tooltip says", pg.evaluate("() => !!document.querySelector('.modal-bg.open .settings-modal')"))
+    check("the Plan settings tooltip names the shortcut of this platform", pg.evaluate("() => document.getElementById('planSettingsBtn').title.endsWith(IS_MAC ? '(⌘,)' : '(Ctrl+,)')"))
+    pg.close()
     check("no page errors", not errors, errors[:3])
     b.close()
 print(f"{sum(results)}/{len(results)} passed"); raise SystemExit(0 if all(results) else 1)
