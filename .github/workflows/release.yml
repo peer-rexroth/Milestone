@@ -1,0 +1,49 @@
+# Every push to main: run the quick tests, build the publishable folder (./build-site.sh -> dist/), zip it and publish it as a GitHub Release.
+# The version is the date plus the commit (2026.11.01-f3e22b6). No secrets are needed: the built-in GITHUB_TOKEN creates the release.
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['**.md', 'tests/**', 'LICENSE', '.gitignore']   # a docs-only or tests-only push does not need a new release
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: pip install playwright openpyxl && python -m playwright install --with-deps chromium
+      - name: Quick test set (retried once: a runner is slower than a laptop)
+        run: python tests/run_all.py --jobs 2 || python tests/run_all.py --jobs 2
+
+  release:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and zip
+        run: |
+          ./build-site.sh
+          VERSION="$(date -u +%Y.%m.%d)-${GITHUB_SHA::7}"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          (cd dist && zip -qr "../milestone-$VERSION.zip" .)
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "v$VERSION" "milestone-$VERSION.zip" --target "$GITHUB_SHA" --title "Milestone $VERSION" --latest \
+            --notes "Unzip, then serve the folder (for example \`python3 -m http.server\` inside it) and open it in Chrome or Edge to install the app. Everything stays on your device." \
+            --generate-notes
+      - name: Keep the newest 30 releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release list --limit 200 --json tagName -q '.[30:][].tagName' | xargs -r -I{} gh release delete {} --cleanup-tag --yes
