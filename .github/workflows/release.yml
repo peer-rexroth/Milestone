@@ -22,7 +22,7 @@ jobs:
       - uses: actions/setup-python@v5
         with: { python-version: '3.12' }
       - run: pip install playwright openpyxl && python -m playwright install --with-deps chromium
-      - name: Quick test set (retried once: a runner is slower than a laptop)
+      - name: Quick test set (retried once, a runner is slower than a laptop)
         run: python tests/run_all.py --jobs 2 || python tests/run_all.py --jobs 2
 
   release:
