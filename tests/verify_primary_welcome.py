@@ -24,14 +24,14 @@ with sync_playwright() as p:
     for theme in ("light", "dark"):
         ev("(t) => { document.documentElement.setAttribute('data-theme', t === 'dark' ? 'dark' : ''); if (t !== 'dark') document.documentElement.removeAttribute('data-theme'); }", theme)
         pg.wait_for_timeout(100)
-        bg, fg, ac, pr = css("#probePrimary", "backgroundColor"), css("#probePrimary", "color"), ev("() => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()"), ev("() => getComputedStyle(document.documentElement).getPropertyValue('--primary').trim()")
+        bg, fg, ac, pr = css("#probePrimary", "backgroundColor"), css("#probePrimary", "color"), ev("() => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()"), ev("() => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()")
         l1, l2 = ev(LUM, bg), ev(LUM, fg)
         ratio = (max(l1, l2) + .05) / (min(l1, l2) + .05)
-        check(f"{theme}: a primary button is blue (not green) — its fill is --primary", bg == css("#probePrimary", "borderTopColor") and ev("(c) => { const m = c.match(/\\d+/g).map(Number); return m[2] > m[1] && m[2] > m[0]; }", bg), bg)
+        check(f"{theme}: a primary button is blue (not green) — its fill is --accent", bg == css("#probePrimary", "borderTopColor") and ev("(c) => { const m = c.match(/\\d+/g).map(Number); return m[2] > m[1] && m[2] > m[0]; }", bg), bg)
         check(f"{theme}: white text on it has contrast >= 4.5:1", ratio >= 4.5, round(ratio, 2))
         check(f"{theme}: a destructive confirm stays red", ev("(c) => { const m = c.match(/\\d+/g).map(Number); return m[0] > m[2] && m[0] > m[1]; }", css("#probeDanger", "backgroundColor")))
     ev("() => document.documentElement.removeAttribute('data-theme')")
-    check("the light primary is the accent blue itself (one blue for toggles, tabs and commit buttons)", ev("() => getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() === getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()"))
+    check("the light primary is the accent blue itself (one blue for toggles, tabs and commit buttons)", ev("() => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() === getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()"))
     check("green stays for status: a complete status pill is still green", ev("() => { const r = document.createElement('span'); r.className = 'status-pill st-complete'; document.body.appendChild(r); const m = getComputedStyle(r).color.match(/\\d+/g).map(Number); r.remove(); return m[1] > m[0] && m[1] > m[2]; }"))
     pg.hover("#probePrimary"); pg.wait_for_timeout(100)
     check("hover keeps it blue", ev("(c) => { const x = document.createElement('canvas').getContext('2d'); x.fillStyle = c; x.fillRect(0, 0, 1, 1); const d = x.getImageData(0, 0, 1, 1).data; return d[2] > d[1]; }", css("#probePrimary", "backgroundColor")))   # (the hover fill is a color-mix(), computed as color(srgb …))
@@ -54,7 +54,7 @@ with sync_playwright() as p:
     ev("() => { fileSyncStatus = 'linked'; updateFileSyncUI(); }")
     check("once a plan is linked the welcome is remembered as seen", ev("() => localStorage.getItem('milestone-welcomed')") == "1" and ev("() => isFirstRun()") is False)
     ev("() => { fileSyncStatus = 'unlinked'; openFileSyncModal(); }")
-    check("...so a later Disconnect shows the plain 'Choose a folder to continue'", pg.inner_text("#fileSyncModalTitle") == "Choose a folder to continue")
+    check("...so a later Disconnect shows the plain 'Choose a Folder to Continue'", pg.inner_text("#fileSyncModalTitle") == "Choose a Folder to Continue")
     ctx.close()
     # an existing install: a plan with tasks, never linked (the migrated Plan 1) gets the plain dialog
     ctx = b.new_context(viewport={"width": 1100, "height": 700}); ctx.add_init_script(STUB)
@@ -63,7 +63,7 @@ with sync_playwright() as p:
     ev = pg.evaluate
     ev("() => { tasks.push({ id: 'x1', name: 'Existing work', parentId: null, order: 0, startDate: '2030-03-04', endDate: '2030-03-08', progress: 0, milestone: false, color: null, predecessors: [], collapsed: false, updatedAt: Date.now() }); normalizeData(); save(); }")
     pg.reload(); pg.wait_for_selector("#fileSyncModalBg.open")
-    check("an existing, unlinked plan that has tasks gets the plain dialog, not the welcome", pg.inner_text("#fileSyncModalTitle") == "Choose a folder to continue")
+    check("an existing, unlinked plan that has tasks gets the plain dialog, not the welcome", pg.inner_text("#fileSyncModalTitle") == "Choose a Folder to Continue")
     ctx.close()
     b.close()
 

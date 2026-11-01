@@ -185,7 +185,7 @@ with sync_playwright() as p:
     check("two conflicts at once: the badge says '2 conflicts'", "2 conflicts" in B8.pg.inner_text("#syncConflictBtn"), B8.pg.inner_text("#syncConflictBtn"))
     B8.pg.click("#syncConflictBtn"); B8.pg.wait_for_selector("#syncConflictsModalBg.open"); B8.pg.click("#syncConflictsBody .conflict-card:first-child button:has-text('Dismiss')"); B8.pg.wait_for_timeout(150)
     check("'Dismiss' removes one entry without changing anything (badge '1 conflict')", "1 conflict" in B8.pg.inner_text("#syncConflictBtn"))
-    B8.pg.click("#syncConflictsModalBg button:has-text('Dismiss all')"); B8.pg.wait_for_timeout(150)
+    B8.pg.click("#syncConflictsModalBg button:has-text('Dismiss All')"); B8.pg.wait_for_timeout(150)
     check("'Dismiss all' clears the log, hides the badge and closes the modal", B8.conflicts() == [] and B8.pg.locator("#syncConflictBtn.hidden").count() == 1 and B8.pg.locator("#syncConflictsModalBg.open").count() == 0)
     B8.pg.evaluate("() => { syncConflictLog.push({kind: 'task', id: 'ta', name: 'Alpha', at: Date.now(), fields: [{key: 'resource', mine: 'x', theirs: 'y', kept: 'mine'}]}); updateSyncConflictsUI(); openSyncConflictsModal(); }"); B8.pg.wait_for_timeout(150)
     check("a task conflict's Dismiss is a full button, same as a file conflict's (not the plain text link it used to be)", B8.pg.eval_on_selector("#syncConflictsBody .conflict-actions button:has-text('Dismiss')", "e => e.className") == "btn")

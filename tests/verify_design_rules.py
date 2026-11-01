@@ -21,7 +21,19 @@ check("no px font sizes outside the --fs-* scale", not re.findall(r"font-size:\s
 rad = [m for m in re.findall(r"border-radius:\s*([^;}]+)", screen) if re.search(r"(?<![\d.])\d+px", m) and "var(" not in m and not re.fullmatch(r"\s*(99|999)px\s*", m)]
 check("radii are the --r-* tokens, 50% or a pill (999px)", not rad, rad[:5])
 hexes = re.findall(r"#[0-9a-fA-F]{3,8}\b", screen)
-check("colour literals in rules do not grow (the Gantt / row palette, change highlights and the dark-theme task colours are the known ones)", len(hexes) <= 36, len(hexes))
+KNOWN_HEX = {'#0a84ff': 2, '#0b6b5f': 1, '#1a7a36': 1, '#22272e': 2, '#2a5fcf': 2, '#30b0a0': 1, '#30d158': 1, '#6a6b73': 1, '#6b7280': 1, '#7a2fb0': 1, '#8a4b00': 1, '#8c959f': 1, '#8e8e93': 1, '#af52de': 1, '#b8286e': 1, '#c4281f': 1, '#f8e3a0': 2, '#fdf1c7': 2, '#ff375f': 1, '#ff453a': 1, '#ff9f0a': 3}   # the Gantt / row palette, change highlights and the dark-theme task colours: written out, so a new literal fails instead of being absorbed by a cap
+seen = {}
+for h in hexes: seen[h.lower()] = seen.get(h.lower(), 0) + 1
+extra = {h: n for h, n in seen.items() if n > KNOWN_HEX.get(h, 0)}
+check("no colour literal in a rule beyond the known list", not extra, extra)
+# the scans ClearDesk's tests/cases/tokens.test.js also runs (cross-app audit X-30)
+check("no rule animates every property with `transition: all`", not re.search(r"transition:\s*all\b", body))
+fb = re.findall(r"var\(--[a-z0-9-]+,\s*(?:rgba?\(|#[0-9a-f]{3,8})", body, re.I)
+check("no var() fallback hides a missing token behind a colour literal", not fb, fb[:4])
+defined = set(re.findall(r"--[a-z0-9-]+(?=\s*:)", css, re.I)) | set(re.findall(r"style\.setProperty\('(--[a-z0-9-]+)'", SRC)) | set(re.findall(r"setProperty\(\"(--[a-z0-9-]+)\"", SRC))
+RUNTIME = {"--fa", "--sidebar-w", "--task-cols", "--grid-pane-width", "--grid-min-w", "--task-form-h", "--rs-cols", "--res-name-w", "--depth", "--bar-color", "--row-accent", "--row-bg"}   # set by script on a pane (see tokens.css)
+missing = sorted({v for v in re.findall(r"var\((--[a-z0-9-]+)(?=[,)])", body, re.I) if v not in defined and v not in RUNTIME and not v.startswith(("--rst-col-", "--col-lines-", "--col-pos-"))})
+check("every var(--token) the stylesheet reads is defined somewhere", not missing, missing[:8])
 check("the Font Awesome CDN is gone (icons come from the inline registry)", "cdnjs.cloudflare.com" not in SRC and 'id="icons"' in SRC)
 
 LUM = """c => { const m = c.match(/[\\d.]+/g).map(Number); const f = v => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }; return .2126 * f(m[0]) + .7152 * f(m[1]) + .0722 * f(m[2]); }"""

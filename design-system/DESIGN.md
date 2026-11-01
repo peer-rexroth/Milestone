@@ -4,6 +4,8 @@ An Apple-style look for a web app (a PWA used mostly in desktop Chrome on macOS)
 
 **Two apps share this guide.** ClearDesk (tasks, notes, prompts) wrote it; Milestone (a Gantt planner) took it over and added section 21 plus a few lines marked *Milestone* in sections 1.5, 2.1, 2.3, 2.6, 6.2, 6.3, 12 and 14. Sections about the notes editor, the prompt editor, the board and the docked detail panel (5.8, 13, 19.2) describe ClearDesk only; everything else applies to both. Where the two differ, the text says which is which.
 
+**Synced with ClearDesk's `DESIGN.md` at commit `68bcce2` (2026-11-02).** The shared chapters (1–20) should differ from ClearDesk's only where a line says *Milestone*. After a change to ClearDesk's file, diff the two, copy what applies, and update this line. `tests/browser-checks.py` in ClearDesk fails when a token both apps define differs.
+
 **Files in this folder**
 
 | File | What it is |
@@ -244,6 +246,10 @@ One shape per job, so the same kind of thing always looks the same:
 - **Cell popovers** are appended *inside* the clicked cell and positioned with CSS, not from `getBoundingClientRect()` (unreliable under the UI zoom). The Due popover opens leftwards (it is the last column).
 - **One pop-up at a time.** Opening any menu, popover or dropdown (sidebar Data / Appearance / Help, toolbar menus, filter, a cell popover, a row menu) first closes every other one (`closeMenusExcept(keepId)`): buttons that stop the click from bubbling never reach the outside-click handler, so each opener must close the rest itself. Three menus open together was a real bug.
 - A popover opened inside a selected (blue) row must re-point its text and border variables to the un-selected values, or it inherits white text on a white surface.
+
+- **Class map for a port** (the two apps name the same parts differently; the look is what must match): `.row-menu` / `.row-menu-item` (ClearDesk) = `.dropdown-menu` / `.dropdown-item` (Milestone); `.split-btn-menu` = a `.dropdown-menu` opened from a button. Menus, dialogs, toasts and the update banner all use the glass surface; layers: float sidebar 140, dialog scrim 200, toast 300, menu 400.
+- **"Today"** is the local calendar day (`todayStr()` / `dayStr(d)`), never `toISOString().slice(0, 10)`, which is UTC.
+- **Base size:** 15px for the chrome (sidebar, menus, dialogs, toast, banners). Dense data (Milestone's task grid, Gantt and Resource Sheet) is the one deliberate exception and uses the `--fs-12` / `--fs-13` steps.
 
 ### 5.6 Feedback
 
@@ -706,13 +712,13 @@ Everything above applies to Milestone unless this chapter says otherwise. This c
 
 | Part | Rule |
 |---|---|
-| Bar | 20px high, radius `--r-bar` 7. The planned span is a pale tint (24 %) of its colour with a 1px hairline; the finished part is a solid fill. The name sits beside the bar (12px, `--text-dim`), never on it |
+| Bar | 20px high, radius `--r-bar` 7. The planned span is a pale tint (24 %) of its colour with a 1px hairline; the finished part is a solid fill. The name sits beside the bar (12px, `--text-2`), never on it |
 | Colour | `statusColorVar(task)`: complete `--status-complete`; past its finish and not done `--danger`; started (progress above 0) `--accent`; not started `--status-not-started`. A task's own colour (`--task-*`, eight hues) tints its **row** in the list and the chart band, never the bar |
 | Manual task | dashed 1.5px outline in the bar colour on a 10 % wash; progress fill at 50 % |
-| Group | an 8px bracket (`--text-dim`) with two small end caps and a progress fill; no resize handles |
+| Group | an 8px bracket (`--text-2`) with two small end caps and a progress fill; no resize handles |
 | Milestone | a 16px diamond (its radius is half of `--r-bar`) |
 | Critical path | a 2px `--danger` outline, offset 1px; a date mismatch the same in `--task-amber` |
-| Baseline | a 4px `--text-faint` bar under the task (a diamond for a milestone); the slip badge is a 999px pill, `--danger` text on a 14 % tint, weight 600 |
+| Baseline | a 4px `--text-3` bar under the task (a diamond for a milestone); the slip badge is a 999px pill, `--danger` text on a 14 % tint, weight 600 |
 | Deadline | a 12 × 26px flag, green, red once missed |
 | Today | a 1px `--danger` line at 85 % with a pill (a dot when the scale is tight) |
 | Dependencies | arrows between bars; the link handle is an 11px circle at a bar's right end, shown on hover |
@@ -720,11 +726,11 @@ Everything above applies to Milestone unless this chapter says otherwise. This c
 | Handles | resize edges 7px wide with a 4 × 10px grip; the link handle 11px (its hit area is smaller than the 20px minimum: audit item M-11, open) |
 | Cursors | `grab` on a bar, `grabbing` while dragging, `ew-resize` on an edge, `crosshair` on the link handle (section 1.5) |
 | Timeline | two tiers of ticks; a label that cannot fit its tick is left out (below 26px, below 18px on the Day and Hours scales) and the tick keeps a `title`; the first label may be clipped by the chart's left edge |
-| Motion | no transition on rows, bars or hover; a bar being dragged shows a drag tip (`--text` on `--panel`) |
+| Motion | no transition on rows, bars or hover; a bar being dragged shows a drag tip (`--text` on `--bg`) |
 
 ### 21.3 Dialogs
 
-Milestone's dialogs are three bars: a **header** (title, an `xmark` close button), a **body** (padding 16 / 24 / 4px) and a **footer** with the buttons; the 4px under the body keeps the focus ring of the last row from being cut. `DIALOG-SHELL.md` describes both shells. Inspector dialogs (`.modal.insp`: Task, Baselines, Reschedule, Level, Recurring, Edit Tasks, Print, Chart for Slides, Plan, Export) are **tinted groups of rows** (label left, value right, hairlines), each group under a 12px section title; booleans are switches, a choice from a few is a pop-up row, a multi-select list uses check marks, and a colour opens the app's own popover (round swatches, a hex field, "More Colours…"), never the browser's picker.
+Milestone's dialogs are three bars: a **header** (title, an `xmark` close button), a **body** (padding 16 / 24 / 4px: the 24px side gutter is the same as ClearDesk's sheet padding) and a **footer** with the buttons; the 4px under the body keeps the focus ring of the last row from being cut. `DIALOG-SHELL.md` describes both shells. Inspector dialogs (`.modal.insp`: Task, Baselines, Reschedule, Level, Recurring, Edit Tasks, Print, Chart for Slides, Plan, Export) are **tinted groups of rows** (label left, value right, hairlines), each group under a 12px section title; booleans are switches, a choice from a few is a pop-up row, a multi-select list uses check marks, and a colour opens the app's own popover (round swatches, a hex field, "More Colours…"), never the browser's picker.
 
 - **Task dialog**, in order: name, mode, resource, milestone | dates, duration, % complete, remaining, status | type, effort-driven, work | constraint, deadline, actual start and finish | colour, On Slide, Slide Name | predecessors. A lead / lag box reads `2`, `-1d`, `+1w`, `4h` like the Predecessors cell (a bare number is days, hours in a plan with hours and minutes).
 - **Print / Save as PDF** and **Chart for Slides**: options on the left (sections Page, Task list columns, Time range, Show, or Size, Tasks, Outline, Milestones, Look), the preview on the right with page navigation, and a footer of Cancel · Picture ▾ · Print (Print), or Close · Save As… ▾ · Copy Picture (the slide chart, whose primary is the picture). Both menus are pull-down buttons: Copy Picture, Save Picture as PNG, Save Picture as SVG.

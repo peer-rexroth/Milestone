@@ -1,6 +1,6 @@
 /* Milestone design tokens, extracted from index.html (light + dark, "Glass" look): every custom property the app defines, in the order it defines them.
-   It started as ClearDesk's tokens.css and now carries Milestone's own (--panel, --panel-2, --text-dim, --text-faint, --row-h, --head-h, --task-*, --status-*,
-   --warning, --accent-hover, --primary, --chg-*, --r-bar, --r-mark …). Regenerate it from the app, do not edit it by hand: the app is the source of truth.
+   It started as ClearDesk's tokens.css and now carries Milestone's own (--row-h, --head-h, --task-*, --status-*,
+   --warning, --accent-hover, --chg-*, --r-bar, --r-mark …; every name both apps share has the same value). Regenerate it from the app, do not edit it by hand: the app is the source of truth.
    Theme switch: data-theme="light"|"dark" on <html>; data-scheme="glass" is a styling hook only.
    Runtime hooks (set by script on a pane, not defaults): --sidebar-w, --task-cols, --grid-pane-width, --grid-min-w, --task-form-h, --rs-cols, --rst-col-*,
    --col-lines-*, --col-pos-*, --res-name-w, --depth, --bar-color, --row-accent, --row-bg (set per row for its tint and selection). */
@@ -125,10 +125,12 @@ html[data-scheme="glass"] :is(.content) {
 html[data-scheme="glass"][data-theme="light"] .dropdown-menu { --border: rgba(40,44,70,.13); --border-2: rgba(40,44,70,.24); }
 
 html[data-scheme="glass"][data-theme="dark"] .dropdown-menu { --border: rgba(255,255,255,.14); --border-2: rgba(255,255,255,.26); }
-/* a menu is chrome, not content: it keeps the glass surface (blur, light edge, rim) the way ClearDesk's menus do, which sit outside the flat content scope above */
+/* a menu and a dialog are chrome, not content: it keeps the glass surface (blur, light edge, rim) the way ClearDesk's menus do, which sit outside the flat content scope above */
 @media not all and ((prefers-reduced-transparency: reduce) or (prefers-contrast: more)) {
-html[data-scheme="glass"][data-theme="light"] .dropdown-menu { --glass-strong: rgba(255,255,255,.97); --glass-edge: rgba(255,255,255,.60); --glass-rim: rgba(255,255,255,.80); }
-html[data-scheme="glass"][data-theme="dark"] .dropdown-menu { --glass-strong: rgba(36,38,56,.97); --glass-edge: rgba(255,255,255,.16); --glass-rim: rgba(255,255,255,.22); }
+html[data-scheme="glass"][data-theme="light"] :is(.dropdown-menu, .modal) { --glass-strong: rgba(255,255,255,.97); --glass-edge: rgba(255,255,255,.60); --glass-rim: rgba(255,255,255,.80); }
+html[data-scheme="glass"][data-theme="dark"] :is(.dropdown-menu, .modal) { --glass-strong: rgba(36,38,56,.97); --glass-edge: rgba(255,255,255,.16); --glass-rim: rgba(255,255,255,.22); }
+html[data-scheme="glass"][data-theme="light"] .update-banner { --glass-fill: rgba(255,255,255,.46); }   /* the sidebar's translucent fill, like ClearDesk's banner */
+html[data-scheme="glass"][data-theme="dark"] .update-banner { --glass-fill: rgba(34,36,52,.50); }
 }
 
 html[data-scheme="glass"][data-theme="dark"] :is(.content) {
@@ -309,10 +311,6 @@ html[data-theme="dark"] {
 }
 
 html, :is(.content, .modal, .dropdown-menu) {
-  --page-bg: var(--bg-2);   /* what used to be the page behind the panels */
-  --panel: var(--bg); --panel-2: var(--bg-2);
-  --text-dim: var(--text-2); --text-faint: var(--text-3);
-  --primary: var(--accent);
   --row-h: 32px;
   --head-h: 42px;   /* the header of the task list and of the Gantt timescale: two lines of text, the same height in both so the rows line up */
 }
