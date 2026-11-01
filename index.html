@@ -1247,8 +1247,9 @@ button.sc-exp:hover { background: var(--hover); } .sc-exp i { font-size: var(--i
 #scMain, #scMore, #scPickPane { display: flex; flex-direction: column; gap: 18px; } #scMore { margin-top: 4px; }
 .insp .trow .sc-val { margin-left: auto; color: var(--text-faint); }
 .sc-go { margin-left: auto; margin-right: 10px; color: var(--text-faint); font-size: var(--ico-12); }
-.sc-col { appearance: none; -webkit-appearance: none; width: 34px; height: 24px; padding: 0; border: 1px solid var(--border-2, var(--border)); border-radius: var(--r-xs); background: none; }
-.sc-col::-webkit-color-swatch-wrapper { padding: 2px; } .sc-col::-webkit-color-swatch { border: 0; border-radius: var(--r-xs); }
+.sc-col { appearance: none; -webkit-appearance: none; flex: none; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 50%; background: none; box-shadow: 0 0 0 1px var(--border-2, var(--border)); }
+.sc-col::-webkit-color-swatch-wrapper { padding: 0; } .sc-col::-webkit-color-swatch { border: 0; border-radius: 50%; }
+.sc-wells { display: inline-flex; gap: 12px; margin-left: auto; }
 .insp .trow input.sc-font { flex: 0 1 200px; }
 .sc-col { cursor: default; } .sc-col:focus-visible { outline: none; box-shadow: var(--focus-ring); }
 #scColorPop { width: 216px; padding: 14px; margin: 0; z-index: 90; }
@@ -2826,12 +2827,8 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
             <section class="cal-sec"><div class="cal-sec-title">Look</div><div class="tgrp">
               <div class="trow"><label for="scPalette" class="tgrow">Palette</label><span class="sc-dots" id="scDots"></span><select id="scPalette" class="tin"><option value="corporate">Corporate</option><option value="custom">Custom</option></select></div>
               <div id="scCustom" class="hidden">
-                <div class="trow"><label for="scCol0" class="tgrow">First Colour</label><input type="color" id="scCol0" class="sc-col"></div>
-                <div class="trow"><label for="scCol1" class="tgrow">Second Colour</label><input type="color" id="scCol1" class="sc-col"></div>
-                <div class="trow"><label for="scCol2" class="tgrow">Third Colour</label><input type="color" id="scCol2" class="sc-col"></div>
-                <div class="trow"><label for="scCol3" class="tgrow">Fourth Colour</label><input type="color" id="scCol3" class="sc-col"></div>
-                <div class="trow"><label for="scCol4" class="tgrow">Fifth Colour</label><input type="color" id="scCol4" class="sc-col"></div>
-                <div class="trow"><label for="scInk" class="tgrow">Text Colour</label><input type="color" id="scInk" class="sc-col"></div>
+                <div class="trow"><label class="tgrow" id="scColsLbl">Colours</label><span class="sc-wells" role="group" aria-labelledby="scColsLbl"><input type="color" id="scCol0" class="sc-col" aria-label="Colour 1"><input type="color" id="scCol1" class="sc-col" aria-label="Colour 2"><input type="color" id="scCol2" class="sc-col" aria-label="Colour 3"><input type="color" id="scCol3" class="sc-col" aria-label="Colour 4"><input type="color" id="scCol4" class="sc-col" aria-label="Colour 5"></span></div>
+                <div class="trow"><label for="scInk" class="tgrow">Text Colour</label><span class="sc-wells"><input type="color" id="scInk" class="sc-col"></span></div>
               </div>
               <div class="trow"><label for="scBg" class="tgrow">Background</label><select id="scBg" class="tin"><option value="transparent">Transparent</option><option value="white">White</option></select></div>
               <div class="trow"><label for="scFont" class="tgrow">Font</label><input type="text" id="scFont" class="tin sc-font" placeholder="System font" maxlength="60" spellcheck="false"></div>
@@ -12323,7 +12320,7 @@ function scLook() {
   const custom = scEl('scPreset').value === 'custom', w = parseFloat(scEl('scW').value), h = parseFloat(scEl('scH').value), pal = scEl('scPalette').value;
   scEl('scSizeRow').classList.toggle('hidden', custom); scEl('scWRow').classList.toggle('hidden', !custom); scEl('scHRow').classList.toggle('hidden', !custom);
   scEl('scSizeVal').textContent = Number.isFinite(w) && Number.isFinite(h) ? `${w} × ${h} cm` : '';
-  scEl('scCustom').classList.toggle('hidden', pal !== 'custom');
+  scEl('scCustom').classList.toggle('hidden', pal !== 'custom'); scEl('scDots').classList.toggle('hidden', pal === 'custom');   /* (the wells show the colours then) */
   scEl('scHierRow').classList.toggle('hidden', !scEl('scParents').checked);
   scEl('scMsPlace').closest('.trow').classList.toggle('hidden', !scEl('scParents').checked);   // (milestones are rows of their own then)   // without the groups there is nothing to draw as blocks or brackets
   scEl('scDots').innerHTML = [0, 1, 2, 3, 4].map(i => `<i style="background:${scEl('scCol' + i).value}"></i>`).join('');
