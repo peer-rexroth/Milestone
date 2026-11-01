@@ -7701,6 +7701,9 @@ function outLabelHtml(name, gap, left, right, top, grp, totalW) {
 // taking over from an older one says the same. Checked when you come back to the tab and every hour; Help → Check for Updates asks on request.
 const versionStampOf = h => { if (!h || !h.get) return ''; return h.get('etag') || h.get('last-modified') || h.get('content-length') || ''; };
 let loadedVersionStamp = null, updateBannerDismissed = false;
+// A published build (build-site.sh) bakes its id in here and writes the same id to version.json, so "is there a newer copy" is a plain id comparison that no
+// host header quirk (a weak ETag on GET but not on HEAD, say) can turn into a false "new version". Run from source the placeholder stays and the headers are used.
+const BUILD_ID = '__BUILD_ID__', hasBuildId = BUILD_ID !== '__BUILD_' + 'ID__';
 function showUpdateBanner() {
   const el = document.getElementById('updateBanner'); if (!el || updateBannerDismissed) return;
   el.innerHTML = `<i class="fa-solid fa-rotate-right"></i><span>A new version of <strong>Milestone</strong> is ready.</span><button class="btn btn-sm btn-primary" onclick="reloadForUpdate()">Reload</button><button class="icon-btn" onclick="dismissUpdateBanner()" title="Not now" aria-label="Not now"><i class="fa-solid fa-xmark"></i></button>`;
@@ -7718,6 +7721,10 @@ function askLoadedStamp() {
   });
 }
 async function currentVersionStamps() {   // {loaded, server}; the server stamp throws when it cannot be reached
+  if (hasBuildId) {
+    const r = await fetch('version.json', { cache: 'no-store' }); if (!r.ok) throw new Error('version.json ' + r.status);
+    return { loaded: BUILD_ID, server: String((await r.json()).id || '') };
+  }
   if (loadedVersionStamp === null) { const info = await askLoadedStamp(); if (info && info.stamp) loadedVersionStamp = info.stamp; }
   const server = versionStampOf((await fetch(location.pathname, { method: 'HEAD', cache: 'no-store' })).headers);
   if (loadedVersionStamp === null) loadedVersionStamp = server;
