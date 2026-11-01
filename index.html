@@ -1753,7 +1753,7 @@ html.settings-switching .modal-bg { transition: none; }
 .field-grid-4 input[type=date], .field-grid-4 input[type=number], .field-grid-4 input[type=text], .field-grid-4 select { padding: 8px 8px; }
 .ms-field { align-self: end; padding-bottom: 8px; }   /* the task dialog: a lot of fields, so more room before it scrolls */
 .modal.wide { width: 560px; }
-#taskModalInner { height: min(1056px, 94vh); }   /* one height for every tab: the General tab's (1020 px, plus the On Slide row), so switching tabs never makes the dialog jump */
+#taskModalInner { height: min(1072px, 94vh); }   /* one height for every tab: the General tab's (1020 px, plus the On Slide row and the gap of the Color group), so switching tabs never makes the dialog jump */
 #taskModalInner .modal-body { flex: 1 1 auto; min-height: 0; }
 #taskModalInner .tab-pane:not(.hidden) { flex: 1 1 auto; min-height: 0; }
 #taskModalInner .task-notes { flex: 1 1 auto; min-height: 240px; resize: none; border: 0; background: color-mix(in srgb, var(--text) 5%, transparent); border-radius: var(--r-m); padding: 12px 14px; }
@@ -2556,6 +2556,8 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
         <div class="trow" id="taskDeadlineField" title="A target date; the task is flagged if it finishes later"><label for="taskDeadlineInput">Deadline<span class="deadline-note" id="taskDeadlineNote"></span></label><div class="field-dt"><input type="text" class="dt-date" id="taskDeadlineInput" onchange="updateDeadlineNote()"></div></div>
         <div class="trow" id="taskActualStartField"><label for="taskActualStartInput" id="taskActualsNote">Actual Start</label><div class="field-dt"><input type="text" class="dt-date" id="taskActualStartInput" onchange="onActualStartChange()"><input type="text" id="taskActualStartTimeInput" class="task-time-input hidden dt-time" aria-label="Actual start time" onchange="onActualStartChange()"></div></div>
         <div class="trow" id="taskActualFinishField" title="Recording an Actual Finish marks the task 100% complete"><label for="taskActualFinishInput">Actual Finish</label><div class="field-dt"><input type="text" class="dt-date" id="taskActualFinishInput" onchange="onActualFinishChange()"><input type="text" id="taskActualFinishTimeInput" class="task-time-input hidden dt-time" aria-label="Actual finish time" onchange="onActualFinishChange()"></div></div>
+      </div>
+      <div class="tgrp">
         <div class="trow" title="Colours the task's row in the list (and its stripe in the chart)"><label>Color</label><div class="color-swatches" id="taskColorSwatches"></div></div>
         <div class="trow"><label for="taskOnSlideInput">On Slide</label><input type="checkbox" class="tsw" id="taskOnSlideInput" role="switch" title="The Chart for Slides can take just the tasks marked On Slide"></div>
       </div>
