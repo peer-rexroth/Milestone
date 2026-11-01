@@ -84,3 +84,26 @@ a sheet has none in its header (icons live inside its list rows).
 - One gap (16) and one padding (24) for every `.modal`.
 - Move the confirm backdrop to the higher z-index and change its close path (point 1 and 2 above).
 - Leave sidebar-style windows alone.
+
+---
+
+## 5. Milestone's shell: header, body, footer
+
+Milestone's dialogs (26 of them) are not the padded `.modal` above. They are three bars inside one card, so a long body can scroll between a fixed header and a fixed footer:
+
+```html
+<div class="modal-bg" id="xModalBg">
+  <div class="modal narrow insp" role="dialog" aria-modal="true" aria-labelledby="xTitle">
+    <div class="modal-header"><h2 id="xTitle">Rename Plan</h2><button aria-label="Close"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="modal-body"><div class="tgrp"><div class="trow"><label class="tgrow">Plan name</label><input class="tin"></div></div></div>
+    <div class="modal-footer"><button class="btn">Cancel</button><button class="btn btn-primary">Rename</button></div>
+  </div>
+</div>
+```
+
+- **Card:** radius 16, `--glass-strong`, hairline, `--glass-shadow`; `.modal` has no padding. **Header:** the title (17 / 600, title style) and a 26px round close button with the `xmark` icon (never a text ×). **Body:** padding 16 / 24 / 4px (the 4px under it keeps the 3px focus ring of the last row from being cut), a gap of 14px (18px in `.insp`), scrolls. **Footer:** buttons right-aligned, Cancel then the primary; a leading group is allowed for secondary controls (Picture ▾). Only one primary button.
+- **Inspector dialogs** (`.insp`): the body is tinted groups (`.tgrp`) of rows (`.trow`: label left, value right, hairlines), each group optionally under a 12px section title (`.cal-sec-title`).
+- **Widths:** 320 About, 340 alert, 400 Import, 440 Plan and file-sync, 560 inspector, 680 settings, 840 Help and Shortcuts, 1040 Print and Chart for Slides.
+- **Alerts** (`.modal.alert`, `role="alertdialog"`): the confirmation and Import; z-index 210, above every other dialog (100).
+- **Focus and Esc:** the first text field or list gets focus on open, else the primary button, else the dialog itself; never the close button. Esc and a click on the scrim close it (asking first when something changed), except the first-run folder dialog.
+- **Done only** (Baselines, Format): every change is saved at once, so there is no Cancel; Esc and the scrim close it without losing anything.

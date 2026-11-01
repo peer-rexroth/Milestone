@@ -1,6 +1,9 @@
-/* ClearDesk design tokens, extracted from cleardesk.html (light + dark, "Glass" look).
-   Use as-is, or copy the values into your own token system. Names are kept so the guide (DESIGN.md) matches.
-   Theme switch: set data-theme="light"|"dark" on <html>; data-scheme="glass" is a styling hook only. */
+/* Milestone design tokens, extracted from index.html (light + dark, "Glass" look): every custom property the app defines, in the order it defines them.
+   It started as ClearDesk's tokens.css and now carries Milestone's own (--panel, --panel-2, --text-dim, --text-faint, --row-h, --head-h, --task-*, --status-*,
+   --warning, --accent-hover, --primary, --chg-*, --r-bar, --r-mark …). Regenerate it from the app, do not edit it by hand: the app is the source of truth.
+   Theme switch: data-theme="light"|"dark" on <html>; data-scheme="glass" is a styling hook only.
+   Runtime hooks (set by script on a pane, not defaults): --sidebar-w, --task-cols, --grid-pane-width, --grid-min-w, --task-form-h, --rs-cols, --rst-col-*,
+   --col-lines-*, --col-pos-*, --res-name-w, --depth, --bar-color, --row-accent, --row-bg (set per row for its tint and selection). */
 
 :root {
   --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
@@ -9,9 +12,6 @@
 
 html {
   --submenu-w: 164px;
-  --bar-ctl-h: 36px;                /* the height of every control in a column's 52px bar (capsule groups, selects, round buttons) */
-  /* Per-pane hooks, set on the pane that needs them and not defaults: --list-w (a list column's width, falls back to --notes-list-w: 300px),
-     --pdf-ruler-w (the Compare dialog's overview ruler, 14px). --fa is the icon mask mechanism, written by the icon registry, not a design value. */
   --ink: var(--text);
   --ink-2: var(--text-2);
   --ink-3: var(--text-3);
@@ -36,9 +36,7 @@ html[data-scheme="glass"] {
   --red-bg: rgba(255,69,58,.15);
   --red-text: #c4281f;
   --green-bg: rgba(52,199,89,.18);
-  --green-text: #17722f;
-  --diff-del: rgba(255,69,58,.38); --diff-add: rgba(52,199,89,.42);
-  --find-hit: rgba(255,204,0,.38); --find-cur: rgba(255,149,0,.62);
+  --green-text: #1a7a36;
   --md-dim: var(--text-3);
   --md-h: #3634a3;
   --md-li: #d30f45;
@@ -58,6 +56,8 @@ html[data-scheme="glass"] {
   --glass-strong: rgba(255,255,255,.97);
   --glass-rim: rgba(255,255,255,.80);
   --glass-edge: rgba(255,255,255,.60);
+  --glass-sheen: rgba(255,255,255,.26);
+  --glass-sheen-2: rgba(255,255,255,.10);
   --glass-shadow: 0 10px 40px rgba(40,50,110,.16), 0 2px 8px rgba(40,50,110,.08);
   --glass-blur: blur(26px);
   --wall: radial-gradient(55% 45% at 12% 10%, #dfe3ea 0, transparent 70%), radial-gradient(50% 45% at 88% 15%, #f3f4f7 0, transparent 70%), radial-gradient(60% 55% at 75% 95%, #cfd5df 0, transparent 70%), linear-gradient(160deg, #eef0f4, #e3e6ec);
@@ -83,8 +83,6 @@ html[data-scheme="glass"][data-theme="dark"] {
   --red-text: #ff9a92;
   --green-bg: rgba(52,199,89,.26);
   --green-text: #8ee6a4;
-  --diff-del: rgba(255,69,58,.38); --diff-add: rgba(52,199,89,.42);
-  --find-hit: rgba(255,214,10,.30); --find-cur: rgba(255,159,10,.58);
   --md-dim: var(--text-3);
   --md-h: #9b99ff;
   --md-li: #ff6482;
@@ -104,12 +102,14 @@ html[data-scheme="glass"][data-theme="dark"] {
   --glass-strong: rgba(36,38,56,.97);
   --glass-rim: rgba(255,255,255,.22);
   --glass-edge: rgba(255,255,255,.16);
+  --glass-sheen: rgba(255,255,255,.10);
+  --glass-sheen-2: rgba(255,255,255,.04);
   --glass-shadow: 0 12px 44px rgba(0,0,0,.45), 0 2px 10px rgba(0,0,0,.30);
   --glass-blur: blur(28px);
   --wall: radial-gradient(55% 45% at 12% 10%, #2a2f3a 0, transparent 70%), radial-gradient(50% 45% at 88% 15%, #1b1f29 0, transparent 70%), radial-gradient(60% 55% at 75% 95%, #343a48 0, transparent 70%), linear-gradient(160deg, #14161c, #1a1d26);
 }
 
-html[data-scheme="glass"] :is(.main, .drawer, .notes-main) {
+html[data-scheme="glass"] :is(.content) {
   --bg: #ffffff;
   --bg-2: #f6f6f9;
   --bg-3: #ececf1;
@@ -122,7 +122,11 @@ html[data-scheme="glass"] :is(.main, .drawer, .notes-main) {
   --ink-border-2: var(--border-2);
 }
 
-html[data-scheme="glass"][data-theme="dark"] :is(.main, .drawer, .notes-main) {
+html[data-scheme="glass"][data-theme="light"] .dropdown-menu { --border: rgba(40,44,70,.13); --border-2: rgba(40,44,70,.24); }
+
+html[data-scheme="glass"][data-theme="dark"] .dropdown-menu { --border: rgba(255,255,255,.14); --border-2: rgba(255,255,255,.26); }
+
+html[data-scheme="glass"][data-theme="dark"] :is(.content) {
   --bg: #1e1f24;
   --bg-2: #26272d;
   --bg-3: #31323a;
@@ -135,7 +139,6 @@ html[data-scheme="glass"][data-theme="dark"] :is(.main, .drawer, .notes-main) {
   --ink-border-2: var(--border-2);
 }
 
-/* solid fallback: reduced transparency / high contrast / no backdrop-filter */
 @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
   html[data-scheme="glass"] {
     --bg: #ffffff;
@@ -145,6 +148,8 @@ html[data-scheme="glass"][data-theme="dark"] :is(.main, .drawer, .notes-main) {
     --glass-blur: none;
     --glass-rim: transparent;
     --glass-edge: rgba(40,44,70,.18);
+    --glass-sheen: transparent;
+    --glass-sheen-2: transparent;
     --wall: linear-gradient(160deg, #e9eefc, #f3ebfa);
   }
 
@@ -156,9 +161,12 @@ html[data-scheme="glass"][data-theme="dark"] :is(.main, .drawer, .notes-main) {
     --glass-blur: none;
     --glass-rim: transparent;
     --glass-edge: rgba(255,255,255,.18);
+    --glass-sheen: transparent;
+    --glass-sheen-2: transparent;
     --wall: linear-gradient(160deg, #10121c, #171326);
   }
 }
+
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   html[data-scheme="glass"] {
     --bg: #ffffff;
@@ -168,6 +176,8 @@ html[data-scheme="glass"][data-theme="dark"] :is(.main, .drawer, .notes-main) {
     --glass-blur: none;
     --glass-rim: transparent;
     --glass-edge: rgba(40,44,70,.18);
+    --glass-sheen: transparent;
+    --glass-sheen-2: transparent;
     --wall: linear-gradient(160deg, #e9eefc, #f3ebfa);
   }
 
@@ -179,6 +189,8 @@ html[data-scheme="glass"][data-theme="dark"] :is(.main, .drawer, .notes-main) {
     --glass-blur: none;
     --glass-rim: transparent;
     --glass-edge: rgba(255,255,255,.18);
+    --glass-sheen: transparent;
+    --glass-sheen-2: transparent;
     --wall: linear-gradient(160deg, #10121c, #171326);
   }
 }
@@ -206,6 +218,8 @@ html[data-scheme="glass"][data-theme="dark"] :is(.main, .drawer, .notes-main) {
   --r-m: 10px;
   --r-l: 12px;
   --r-xl: 16px;
+  --r-bar: 7px;                    /* a Gantt bar (20px high) */
+  --r-mark: 2px;                   /* the thin marks: group bar, resize grip */
   --ico-k: 1.26;
   --ico-12: calc(12px / 1.26);
   --ico-14: calc(14px / 1.26);
@@ -231,31 +245,25 @@ html[data-scheme="glass"][data-theme="dark"] :is(.main, .drawer, .notes-main) {
   --sel-text-3: rgba(255,255,255,.85);
   --hover: color-mix(in srgb, var(--text) 8%, transparent);
   --pressed: color-mix(in srgb, var(--text) 14%, transparent);
+  --ib-s: 22px; --ib-m: 26px;   /* the icon button: a disc (22px; 26px for a dialog's close) */
   --accent: #2a5fcf;
+  --accent-hover: color-mix(in srgb, var(--accent) 88%, #000);
   --accent-tint: color-mix(in srgb, var(--accent) 24%, transparent);
-  --glass-accent: var(--accent);   /* a flat fill, no gradient */
+  --glass-accent: linear-gradient(180deg, color-mix(in srgb, var(--accent) 90%, #fff), var(--accent));
   --sel-bg: var(--accent);
   --sel-inactive: var(--cap-on);
   --on-accent: #fff;
-  --on-green: #fff;                 /* the tick on the green completed fill (dark theme: see below) */
-  --danger: #d92d20;                /* the FILL red; destructive TEXT uses --red-text */
-  --ib-s: 22px;                     /* icon-only buttons: row capsule disc */
-  --ib-m: 26px;                     /* icon-only buttons: panel close, tile more button */
-  --shadow: 0 1px 2px rgba(20,20,30,.04), 0 4px 16px rgba(20,20,30,.06);   /* resting button shadow (dark: below) */
-  --focus-ring: #9bbcf6;            /* Apple Mail's search-field ring: a 3px band ... */
-  --focus-edge: #89aae6;            /* ... and the control's own border, a little darker */
-  --sel-band: var(--sel-bg);        /* the solid part of a selected row / tile (grey state: --sel-inactive, see DESIGN §3) */
-  --sel-sub-tint: color-mix(in srgb, var(--accent) 9%, transparent);   /* the subtasks of a selected task */
-  --sel-sub-grey: color-mix(in srgb, var(--text) 6%, transparent);     /* ... in the grey (inactive) state */
-  --sel-pill: rgba(255,255,255,.10);
-  --pill-plate: 11%;                /* a badge on the grey selection: its own colour at this share over the page colour */
-  --sel-grey-mix: 14%;              /* the grey band: the text colour at this share over the page colour (opaque, so it never stacks) */
+  --danger: #d92d20;
+  --warning: #bf8700;   /* amber: a caution line, an unsaved-changes note */
+  --shadow-ink-soft: rgba(0,0,0,.08);
+  --sheen: rgba(255,255,255,.8);   /* the top highlight of a round glass button */
+  --on-fill-soft: rgba(255,255,255,.3);   /* a lighter wash over a coloured fill (a progress fill, a hovered chip) */
 }
 
 html {
   --nc-red: #d92d20;
   --nc-orange: #c2570c;
-  --nc-green: #1a7f37;
+  --nc-green: #1a7a36;
   --nc-blue: #2563eb;
   --nc-purple: #7c3aed;
   --nc-gray: #6b7280;
@@ -268,14 +276,6 @@ html {
 }
 
 html[data-theme="dark"] {
-  --accent: #2c62c9;
-  --on-green: #0b2a14;
-  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.35);
-  --focus-ring: #417391;
-  --focus-edge: #3c6f8c;
-  --sel-sub-tint: color-mix(in srgb, var(--accent) 16%, transparent);
-  --pill-plate: 20%;
-  --sel-grey-mix: 16%;
   --nc-red: #ff7b72;
   --nc-orange: #ffa657;
   --nc-green: #56d364;
@@ -285,15 +285,44 @@ html[data-theme="dark"] {
 }
 
 html[data-theme="light"] {
+  --focus-ring: #9bbcf6; --focus-edge: #89aae6;   /* the field focus ring (as in ClearDesk) */
   --cap-fill: rgba(60,60,67,.08);
   --cap-hover: rgba(60,60,67,.16);
   --cap-on: rgba(60,60,67,.18);
-  --bar-bg: rgba(244,245,248,.92);
+  --bar-bg: #f5f6f9;   /* the colours ClearDesk's toolbar shows over its wallpaper (measured), as solid values here */
+  --bar-line: #e0e1e6;
 }
 
 html[data-theme="dark"] {
+  --focus-ring: #417391; --focus-edge: #3c6f8c;
   --cap-fill: rgba(255,255,255,.10);
   --cap-hover: rgba(255,255,255,.19);
   --cap-on: rgba(255,255,255,.22);
-  --bar-bg: rgba(255,255,255,.04);
+  --bar-bg: #26272c;
+  --bar-line: #3c3d41;
+}
+
+html, :is(.content, .modal, .dropdown-menu) {
+  --page-bg: var(--bg-2);   /* what used to be the page behind the panels */
+  --panel: var(--bg); --panel-2: var(--bg-2);
+  --text-dim: var(--text-2); --text-faint: var(--text-3);
+  --primary: var(--accent);
+  --shadow: var(--elev-2);
+  --row-h: 32px;
+  --head-h: 42px;   /* the header of the task list and of the Gantt timescale: two lines of text, the same height in both so the rows line up */
+}
+
+:root {
+  --task-blue: #2a5fcf; --task-teal: #0b6b5f; --task-purple: #7a2fb0; --task-amber: #8a4b00; --chg-bg: #fdf1c7; --chg-bg-sel: #f8e3a0;
+  --task-pink: #b8286e; --task-green: #1a7a36; --task-red: #c4281f; --task-grey: #6a6b73;
+  --status-not-started: #8c959f; --status-complete: #2a5fcf;
+  --chg-bg: #fdf1c7; --chg-bg-sel: #f8e3a0;
+  color-scheme: light;   /* tells the browser how to draw its own controls (date picker, select menus, scrollbars) */
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --task-blue: #0a84ff; --task-teal: #30b0a0; --task-purple: #af52de; --task-amber: #ff9f0a; --chg-bg: color-mix(in srgb, #ff9f0a 20%, #22272e); --chg-bg-sel: color-mix(in srgb, #ff9f0a 30%, #22272e);   /* (dark: the system's mid-tone fills — white text and a tint both read on them; the -text tones are for text only) */
+  --task-pink: #ff375f; --task-green: #30d158; --task-red: #ff453a; --task-grey: #8e8e93;
+  --status-not-started: #6b7280; --status-complete: #0a84ff;
 }

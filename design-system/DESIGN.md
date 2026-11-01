@@ -1,18 +1,20 @@
-# ClearDesk design system: how it looks, how it behaves, and why
+# Design system (ClearDesk and Milestone): how it looks, how it behaves, and why
 
 An Apple-style look for a web app (a PWA used mostly in desktop Chrome on macOS), written down so it can be applied to another app. Everything here is taken from the finished ClearDesk app and the decisions made while building it. Where a decision was tried and rejected, that is said, so it is not tried again.
+
+**Two apps share this guide.** ClearDesk (tasks, notes, prompts) wrote it; Milestone (a Gantt planner) took it over and added section 21 plus a few lines marked *Milestone* in sections 1.5, 2.1, 2.3, 2.6, 6.2, 6.3, 12 and 14. Sections about the notes editor, the prompt editor, the board and the docked detail panel (5.8, 13, 19.2) describe ClearDesk only; everything else applies to both. Where the two differ, the text says which is which.
 
 **Files in this folder**
 
 | File | What it is |
 |---|---|
 | `DESIGN.md` | this guide |
-| `tokens.css` | every colour, size, radius, shadow and motion token, light and dark, extracted from the app |
-| `icons.json` | the whole icon set (118 icons): name → inner SVG markup on a 24 grid |
+| `tokens.css` | every colour, size, radius, shadow and motion token, light and dark, **extracted from the app** (this copy is Milestone's: 154 variables; ClearDesk's has 136) |
+| `icons.json` | the whole icon set (171 icons in Milestone, 118 of them shared with ClearDesk): name → inner SVG markup on a 24 grid |
 | `icon-sheet.html` | a preview of every icon at 32px and the four drawn sizes (open it in a browser) |
 | `assets/` | the app-icon masters (`icon.svg`, `icon-maskable.svg`, `favicon.svg`) and `manifest.json`, as examples for section 14 |
 
-Source of truth for everything: `cleardesk.html` (CSS tokens near the top of the `<style>`, the `ICONS` registry in `<head>`), and `CLAUDE.md` for the reasons.
+Source of truth for everything: the `index.html` of each app (CSS tokens near the top of the `<style>`, the `ICONS` registry in `<head>`), and its `CLAUDE.md` for the reasons. `tokens.css` and `icons.json` are generated from the app, never edited by hand.
 
 ---
 
@@ -22,7 +24,7 @@ Source of truth for everything: `cleardesk.html` (CSS tokens near the top of the
 2. **Quiet by default, controls appear when you point at them.** Row actions, remove buttons, hierarchy buttons and "add" toggles show on hover/focus only. The resting screen is text and a few pills.
 3. **Few boxes.** Inputs inside lists are "ghost" fields (no border, a faint tint on focus). Boxed fields exist only inside dialogs. The detail panel is grouped rows (label left, value right, hairlines), not a form.
 4. **Flat fills and crisp rings, no coloured glows.** No blurred coloured shadows, no gradients on buttons. Hover darkens or tints; it does not grow a shadow.
-5. **The arrow cursor, everywhere.** The hand is for links only. Never `cursor: pointer` on a control. The exceptions are the system's own: `text` over a text field or editor, `col-resize` / `row-resize` on a resize edge, `not-allowed` on a refused drop target; there is no `grab` cursor (an invisible handle must not change the pointer).
+5. **The arrow cursor, everywhere.** The hand is for links only. Never `cursor: pointer` on a control. The exceptions are the system's own: `text` over a text field or editor, `col-resize` / `row-resize` on a resize edge, `not-allowed` on a refused drop target; there is no `grab` cursor on an invisible handle (it must not change the pointer). *Milestone:* the Gantt is the exception for its visible, draggable objects: `grab` / `grabbing` on a bar, a row being dragged and a column being moved, `ew-resize` on a bar's edge, `crosshair` on the link handle that starts a dependency. Link-styled in-text buttons (`.btn-link`, `.help-jump`) count as links and may show the hand.
 6. **One icon per meaning, one family.** See section 4.
 7. **Undo instead of "Are you sure?"** for anything that can be undone (a toast with Undo, 6 seconds). Ask only for what cannot be undone.
 8. **Hide what does not apply, don't dim it** in context menus.
@@ -57,6 +59,8 @@ Roles, not colours. Always use the token, never a literal. The only literals all
 | Toolbar capsule fill | `--cap-fill` / `--cap-hover` / `--cap-on` | `rgba(60,60,67,.08 / .16 / .18)` | `rgba(255,255,255,.10 / .19 / .22)` |
 | Focus ring | `--focus-ring`, `--focus-edge` | `#9bbcf6`, `#89aae6` | `#417391`, `#3c6f8c` |
 
+- **Links and link-styled buttons use `--blue-text`**, not `--accent`: `--accent` (`#2c62c9` in the dark theme) is 2.6:1 on a dark dialog; `--blue-text` holds 4.5:1 in both themes. `--accent` is for fills, rings and the selection.
+- **Exports keep their own literal palettes.** Anything that leaves the app (print, PNG / SVG pictures, the Chart for Slides, Excel, e-mail HTML) is drawn with fixed colours, because a CSS variable cannot travel with the file. In Milestone these live in the script (Gantt and print colours, the Corporate palette `#1E2A78 #0069B1 #34A6DC #3BB8B8 #24778D`, the milestone orange `#F28011`, the Today red `#E7001D`); they are the second allowed place for literals.
 - **Contrast:** text ≥ 4.5:1 on every surface in both themes, including on the selected row (`--text-3` was raised to .62 for this). White text on `--accent` is ≥ 4.5:1. `--text-3` holds on content surfaces only; on the glass sidebar it measured 3.8:1, so sidebar and column counts use `--text-2`.
 - **Colour is never the only cue:** status has a dot and text, an unresolved include is red *and* wavy-underlined, overdue is a colour *and* a calendar glyph.
 - **Dark mode is a second full set of values**, not an inversion. Define the same variables in both blocks (a variable only the light block sets leaks into dark).
@@ -75,8 +79,9 @@ Roles, not colours. Always use the token, never a literal. The only literals all
 ### 2.3 Spacing, radius, elevation
 
 - **Spacing scale:** 2, 4, 6, 8, 10, 12, 14, 16, 20, 24, 28, 32, 40 (1px hairlines allowed). Odd values (3, 5, 7, 9…) are snapped to the nearest step. Reserved widths (for a capsule, a copy button) are measured, not spacing choices, and may be any number: document them.
+- **Measured values** that are not on the scale, kept on purpose (give a new one a comment where it is set): 3 (a flag's top margin, table rule), 5 (menu row padding, a dense row's band margin), 7 (a bar's resize edge), 15, 18 (a ghost row's left alignment with the drag handle), 22, 26, 30, 52, 56, 60 (empty-state and bar padding). Stacking ladder: 0–6 inside the content (rows, bars, handles), 60–95 chrome (sticky bars, menus), 100 dialogs in Milestone (200 in ClearDesk), 130 popovers over a dialog, 200 / 210 the confirmation, 390–500 floating cards, drag tips and toasts, 9998 / 9999 the column-drag ghost.
 - **One left gutter** `--gutter` 20px: every pane's content starts 20px in, so switching modes keeps the margin.
-- **Radius ladder:** `--r-xs` 4 (chips, tiny), `--r-s` 8 (rows, controls), `--r-m` 10 (cards, fields, buttons), `--r-l` 12 (bars), `--r-xl` 16 (menus, dialogs, columns), plus `999px` for pills and capsules and `50%` for circles. One name per value; do not invent radii.
+- **Radius ladder:** `--r-xs` 4 (chips, tiny), `--r-s` 8 (rows, controls), `--r-m` 10 (cards, fields, buttons), `--r-l` 12 (bars), `--r-xl` 16 (menus, dialogs, columns), plus `999px` for pills and capsules and `50%` for circles. One name per value; do not invent radii. *Milestone* adds two for the Gantt: `--r-bar` 7 (a bar, 20px high; the milestone diamond uses half of it) and `--r-mark` 2 (the group bar and the resize grip). A shape inside another takes the parent's radius minus the inset (`calc(var(--r-m) - 3px)`).
 - **Toolbar controls are capsules** (fully rounded); content uses the ladder.
 - **Elevation:** three levels `--elev-1/2/3` (only `--elev-2` is used so far; `--shadow` is the resting button shadow and `--glass-lift-1/2` lift a board tile) (`0 1px 2px .12`, `0 6px 18px .14`, `0 8px 32px .18`); menus and dialogs use `--glass-shadow` plus an inner top highlight `--glass-rim` (a 1px inset white line, the "lit edge"). Dark mode shadows are stronger, rims weaker.
 - **Hairlines, not borders:** 1px, `--border`. Cards and board tiles have *no* outline: they are set off by fill (`--bg` on a `--bg-2` column) and a whisper of shadow in light mode.
@@ -102,6 +107,7 @@ Roles, not colours. Always use the token, never a literal. The only literals all
 ### 2.6 Layout (a Notes-style window, no top bar)
 
 - The **sidebar runs the full window height**: header (toggle + a three-icon mode switch), search, lists, the tools bar (link-file chip + Data / Appearance / Help capsule), counts footer. Width 300 (clamp 260–480, draggable, double-click resets).
+- *Milestone:* the sidebar is 268px (minimum 268, maximum 480, draggable, double-click resets), it docks down to 800px and floats below (`max-width: 800px`), because Milestone's own toolbar steps down to a one-row bar at that width. ClearDesk's 300 / 1100 values apply to ClearDesk only.
 - Every column starts with its own **52px bar** with a hairline under it, so baselines line up across sidebar header, list header and editor toolbar.
 - A **docked detail panel** (420px) beside the list, not an overlay: the list stays visible, ↑/↓ move the selection and the panel together, Esc closes it. Under 800px it floats.
 - Three-pane shape for document modes: list (300, resizable 200–600) + editor (text capped at 900px, left-aligned) + optional inspector (340, resizable 260–560; floats over the editor under 740px).
@@ -284,15 +290,15 @@ An alert can open **over** a sheet (it stacks at a higher z-index and closes on 
 ### 6.2 Anatomy of a dialog
 - **Scrim:** `rgba(20,24,50,.22)` (`--scrim-glass`) plus `backdrop-filter: blur(4px)` over the whole window; fades in 120ms (`--dur-fast`); the dialog itself does not slide.
 - **Panel:** glass-strong (97%) with blur, 1px `--glass-edge`, **`--r-xl` 16px**, `--glass-shadow` and the inner top rim highlight. Padding **24px**, flex column, **gap 16px** (one padding and one gap for every `.modal`; Compare, a 1280px two-pane editor, is a window in all but name and keeps 20px / 10px).
-- **Width:** 380px standard (360 narrow lists, 420 link/sync, 860 × min(700px, 88vh) settings), `max-width: 90vw`.
+- **Width:** 380px standard (360 narrow lists, 420 link/sync, 860 × min(700px, 88vh) settings), `max-width: 90vw`. *Milestone* (its dialogs are header / body / footer bars, see `DIALOG-SHELL.md`): 320 About, 340 alert, 400 Import, 440 Plan and file-sync, 560 inspector dialogs (Task, Baselines, Reschedule, Level, Recurring, Edit Tasks), 680 settings dialogs (Calendar, Rules, Format, Fields), 840 Help and Shortcuts, 1040 Print and Chart for Slides.
 - **Title** 17px / 600, left-aligned, no close button on small dialogs. **Body** 14px, `--text-2`, line-height 1.6, complete sentences. An optional 13px `--text-3` sub-line under the title. A confirmation or a choice of actions is `role="alertdialog"` (Import included); a sheet is `role="dialog"`. Compare's dismiss is *Close* (it saves only on *Save*), every other sheet's is *Cancel*.
 - **Fields** boxed (5.3), full width, 15px.
 - **Button row:** right-aligned, gap 8px, **Cancel on the left, the primary action on the right** (the trailing side is the default). Title-style, one or two words, a verb that says the result ("Replace", "Create", "Save"), never "OK" except in a purely informational alert, never "Yes/No".
 
 ### 6.3 Behaviour
-- **Esc cancels; clicking the scrim cancels** (except where unsaved work would be lost: ask inline first).
+- **Esc cancels; clicking the scrim cancels** (except where unsaved work would be lost: ask inline first). *Milestone* has one deliberate exception, a first-run gate: the folder dialog ("Welcome to Milestone", "Choose a folder to continue") has no Esc, no scrim close and no Cancel; it closes when a folder is chosen, because the plan lives in a file and cannot be edited without one.
 - **Return = the default (primary) action.** A **destructive confirm has no default button** (focus goes to the dialog itself, so Return does nothing; Cancel is never made the default: the HIG says to give no button the default instead). A plain confirm focuses its button.
-- **Focus** moves into the dialog when it opens (its first text field, else its primary button, else its first control; the dialog itself when it has none) and **returns to where it came from** when it closes; Tab / Shift+Tab wrap inside. Do this once, from the `open` class of the dialog backdrop, not in each dialog's own opener: five dialogs once forgot (audit V-01).
+- **Focus** moves into the dialog when it opens (its first text field or list, else its primary button, else the dialog itself when it has nothing to fill in; **never the close button**: Return would close the dialog) and **returns to where it came from** when it closes; Tab / Shift+Tab wrap inside. Do this once, from the `open` class of the dialog backdrop, not in each dialog's own opener: five dialogs once forgot (audit V-01).
 - **One close path** (`closeModal(id)`) for every dialog, which also drops that dialog's pending state.
 - **Only one sheet at a time**, but a **confirmation alert stacks over a sheet**: it has its own return-focus and close path and Esc closes it first, then the sheet (Compare routes Esc through its own close request so unsaved edits ask first, wherever focus is).
 - **Dialogs that edit a draft end Cancel · Save (or Create)**; dialogs whose changes apply as you go end in **Done** only and say so ("Saved as you type").
@@ -415,6 +421,21 @@ The app was audited against Apple's Human Interface Guidelines (two passes: 29 f
 
 Table "+" and grips: closed (U-11, U-10). Their hit areas were measured at 20×20 or more with `elementFromPoint`, the "+" is a 10px glyph in a 14px disc, and there is a keyboard menu (Shift+F10).
 
+### Milestone's decisions (they replace the table above for Milestone; the reasons are in its CLAUDE.md)
+
+| Decision | HIG says | Milestone does | Why |
+|---|---|---|---|
+| Shortcut hints in the row menu (Del on Delete, ⌘C / ⌘X / ⌘V) | hints belong in the menu bar | keeps them | no menu bar; the hint is the only reminder |
+| Find a task is `/`; find and replace is ⌥⌘F on a Mac, Ctrl+H elsewhere | ⌘F finds | `/` | ⌘F stays with the browser's page find |
+| Text size 90 / 100 / 115 / 130 % | at least 200 % | four stops, 200 % ignored at the owner's request | browser zoom covers it |
+| The toolbar has more than three groups (Add Task, indent / outdent, undo / redo, edit group, view switch, columns, calendar and settings) | at most three | kept | an explicit request; the groups are one capsule each and step down into a ⋯ menu |
+| The task row menu has five groups and three one-level submenus (Task Mode, Task Type, Color) | about three groups, few items | kept | Edit, Add, Clipboard, Structure and Delete are the planner's everyday verbs |
+| No "Add Task" row under the Gantt | the list ends with an add row | only in the Tasks view | the list and the chart scroll together, an extra list row would put them out of step |
+| The folder dialog cannot be closed without choosing a folder | Esc cancels a sheet | first-run gate | the plan lives in a file |
+| Import ends Cancel · Merge · Replace, Replace red | Cancel · Replace · Merge (ClearDesk) | Merge is the safe default, Replace is trailing and red | a chosen destructive action is trailing |
+| Baselines and Format end with Done only | pair Done with Cancel | apply as you go | every change is saved at once |
+| Sheet titles are title style ("Rename Plan", "Level Resources") | — | as the rule in section 8 | decided in the 2026-10-30 audit |
+
 ---
 
 ## 13. Reusable patterns worth copying
@@ -451,6 +472,7 @@ Table "+" and grips: closed (U-11, U-10). Their hit areas were measured at 20×2
 - `assets/favicon.svg`: the same drawing on a rounded square with slightly heavier strokes, for tab size. `assets/icon-maskable.svg`: the same drawing with the glyph smaller, inside the safe zone.
 - **PNG renders:** 180, 192, 512 from `icon.svg`, plus a 512 maskable. Render with headless Chrome at the exact pixel size, and **bump the cache name in the service worker** (`CACHE_NAME`) whenever shell files change, so installed copies refresh.
 - **`manifest.json`** (`assets/manifest.json`): a stable `id`, `display: standalone`, categories, **separate `any` icons (192/512) and a `maskable` one**, `theme_color` / `background_color`, and three **jump-list `shortcuts`** (New Task / New Note / New Prompt → `?new=task|note|prompt`). A tiny launch function reads `?new=`, removes it from the address, and runs the action. Shortcuts only appear after the app is installed afresh.
+- *Milestone:* the two metas carry `#f2f3f7` (light) and `#171925` (dark), the manifest the light one; choosing a theme by hand rewrites both.
 - `<meta name="theme-color">` twice, one per colour scheme, matching the chrome colour (light `#ffffff`, dark `#1e1f24`). The manifest can hold only one colour (`#ffffff`), so the dark tint comes from the meta tags. The service worker precaches every icon the manifest and the page name (192, 512, 180, maskable 512, favicon).
 - **Not used on purpose:** window-controls-overlay, screenshots in the manifest.
 - **Safari cannot install this kind of PWA on macOS**; the launcher script opens it in Chrome/Edge. Offline support needs the http server (not `file://`).
@@ -665,3 +687,56 @@ A small layout function reads this, writes the CSS variables, persists them per 
 | Code / data / design workbench | D | navigator with switchable tabs, tabbed editor, inspector, bottom panel | add the tab strip, jump bar and bottom panel from 20.3 |
 | Settings or a configuration screen | E | sidebar of topics, grouped rows | ClearDesk's Help / Shortcuts windows |
 | Phone or narrow window | G | one pane, tab bar, sheets | see 19.6 |
+
+---
+
+## 21. Milestone: the planner
+
+Everything above applies to Milestone unless this chapter says otherwise. This chapter is what Milestone adds: the list and the Gantt chart, the task dialog, the picture dialogs, and the marks used by the Chart for Slides.
+
+### 21.1 Layout
+
+- **Sidebar** 268px (268–480, draggable): Views (Tasks, Gantt, Resource Plan, Resources), Plans, the tools row (Data, Appearance, Help), a counts footer. It floats at 800px and below.
+- **One bar** (`.subbar`) above the content, one row at every width: sidebar toggle, the plan's title while the sidebar is hidden (it keeps at least 64px), Add Task ▾, indent / outdent, undo / redo, the edit group (Edit, Duplicate, Copy, Delete), the view switch, columns, plan settings. It steps down into a ⋯ menu in a defined order (`data-more`).
+- **List and chart** share one row height `--row-h` 32px and one header height `--head-h` 42px, so rows line up; they scroll together.
+- **Status bar** (bottom): the Task Form switch, the scheduling mode for new tasks, counts and selection, the filter chips, and in the Gantt Today, Scroll to Task, the scale (Fit · Week · Month · Year) and the zoom slider.
+- **Task Form**: an optional bottom panel that edits the selected task (grouped rows, Cancel · Apply).
+
+### 21.2 The Gantt chart
+
+| Part | Rule |
+|---|---|
+| Bar | 20px high, radius `--r-bar` 7. The planned span is a pale tint (24 %) of its colour with a 1px hairline; the finished part is a solid fill. The name sits beside the bar (12px, `--text-dim`), never on it |
+| Colour | `statusColorVar(task)`: complete `--status-complete`; past its finish and not done `--danger`; started (progress above 0) `--accent`; not started `--status-not-started`. A task's own colour (`--task-*`, eight hues) tints its **row** in the list and the chart band, never the bar |
+| Manual task | dashed 1.5px outline in the bar colour on a 10 % wash; progress fill at 50 % |
+| Group | an 8px bracket (`--text-dim`) with two small end caps and a progress fill; no resize handles |
+| Milestone | a 16px diamond (its radius is half of `--r-bar`) |
+| Critical path | a 2px `--danger` outline, offset 1px; a date mismatch the same in `--task-amber` |
+| Baseline | a 4px `--text-faint` bar under the task (a diamond for a milestone); the slip badge is a 999px pill, `--danger` text on a 14 % tint, weight 600 |
+| Deadline | a 12 × 26px flag, green, red once missed |
+| Today | a 1px `--danger` line at 85 % with a pill (a dot when the scale is tight) |
+| Dependencies | arrows between bars; the link handle is an 11px circle at a bar's right end, shown on hover |
+| Selection | a bar gets a 2px ring in the panel colour plus a 2px accent ring and a soft glow, with grips at both ends; its row's band is the accent at 12 % (the chart stays a tint, the list row is the solid band) |
+| Handles | resize edges 7px wide with a 4 × 10px grip; the link handle 11px (its hit area is smaller than the 20px minimum: audit item M-11, open) |
+| Cursors | `grab` on a bar, `grabbing` while dragging, `ew-resize` on an edge, `crosshair` on the link handle (section 1.5) |
+| Timeline | two tiers of ticks; a label that cannot fit its tick is left out (below 26px, below 18px on the Day and Hours scales) and the tick keeps a `title`; the first label may be clipped by the chart's left edge |
+| Motion | no transition on rows, bars or hover; a bar being dragged shows a drag tip (`--text` on `--panel`) |
+
+### 21.3 Dialogs
+
+Milestone's dialogs are three bars: a **header** (title, an `xmark` close button), a **body** (padding 16 / 24 / 4px) and a **footer** with the buttons; the 4px under the body keeps the focus ring of the last row from being cut. `DIALOG-SHELL.md` describes both shells. Inspector dialogs (`.modal.insp`: Task, Baselines, Reschedule, Level, Recurring, Edit Tasks, Print, Chart for Slides, Plan, Export) are **tinted groups of rows** (label left, value right, hairlines), each group under a 12px section title; booleans are switches, a choice from a few is a pop-up row, a multi-select list uses check marks, and a colour opens the app's own popover (round swatches, a hex field, "More Colours…"), never the browser's picker.
+
+- **Task dialog**, in order: name, mode, resource, milestone | dates, duration, % complete, remaining, status | type, effort-driven, work | constraint, deadline, actual start and finish | colour, On Slide, Slide Name | predecessors. A lead / lag box reads `2`, `-1d`, `+1w`, `4h` like the Predecessors cell (a bare number is days, hours in a plan with hours and minutes).
+- **Print / Save as PDF** and **Chart for Slides**: options on the left (sections Page, Task list columns, Time range, Show, or Size, Tasks, Outline, Milestones, Look), the preview on the right with page navigation, and a footer of Cancel · Picture ▾ · Print (Print), or Close · Save As… ▾ · Copy Picture (the slide chart, whose primary is the picture). Both menus are pull-down buttons: Copy Picture, Save Picture as PNG, Save Picture as SVG.
+- **Focus on open**: the first text field or list, else the primary button, else the dialog itself; the folder picker manages its own.
+- **Widths**: section 6.2.
+
+### 21.4 Marks for the Chart for Slides
+
+- **On Slide**: a Yes / No mark on a task (a group takes everything below it); a column, a filter, a switch in the task dialog and in Edit Tasks. The chart offers "The tasks marked On Slide" only while something is marked.
+- **Slide Name**: an optional short label (120 characters) the chart draws instead of the name; a column, a task-dialog row, in the CSV / Excel exports. The dialog says how many labels were still shortened and offers "Add Slide Names…", which selects those tasks.
+- **Exports** (Print, picture, Excel, CSV, MS Project XML) use their own literal palettes (section 2.1).
+
+### 21.5 What is not documented here
+
+The Resource Plan and Resource Sheet views, the sync dialogs, and the detail of scheduling (calendars, constraints, minute mode) are described in Milestone's CLAUDE.md; they follow the sections above.
