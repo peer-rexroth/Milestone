@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""The chart as a picture (Print / PDF dialog → Picture: Copy / PNG / SVG): one image with every row, standalone SVG with text as text, PNG at 2x (less
+"""The chart as a picture (Print / PDF dialog → Picture menu: Copy / PNG / SVG): one image with every row, standalone SVG with text as text, PNG at 2x (less
 for a very tall plan, refused past that), Copy to the clipboard, the Print dialog's options honoured. See "The chart as a picture" in CLAUDE.md."""
 import os, re, struct, tempfile, xml.dom.minidom
 from playwright.sync_api import sync_playwright
@@ -26,11 +26,11 @@ with sync_playwright() as p:
     def open_print():
         pg.click("#dataMenuBtn"); pg.click("#printItem"); pg.wait_for_selector("#printModalBg.open"); pg.wait_for_timeout(300)
     def grab(kind):
-        with pg.expect_download() as d: pg.click({"png": "#printPng", "svg": "#printSvg"}[kind])
+        with pg.expect_download() as d: pg.click("#printImgBtn"); pg.click({"png": "#printPng", "svg": "#printSvg"}[kind])
         path = os.path.join(tempfile.mkdtemp(), "f." + kind); d.value.save_as(path); return d.value.suggested_filename, open(path, "rb").read()
     open_print()
-    check("the Print dialog has a Picture group: Copy, PNG and SVG", all(pg.locator(i).count() == 1 for i in ("#printCopyImg", "#printPng", "#printSvg")))
-    check("they are all in view in the dialog's footer (nothing cut off)", ev("() => ['printCopyImg', 'printPng', 'printSvg', 'printGo'].every(id => { const r = document.getElementById(id).getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth && r.bottom <= innerHeight; })"))
+    check("the Print dialog has a Picture menu: Copy, PNG and SVG", all(pg.locator(i).count() == 1 for i in ("#printCopyImg", "#printPng", "#printSvg")))
+    check("they are all in view in the dialog's footer (nothing cut off)", ev("() => ['printImgBtn', 'printGo'].every(id => { const r = document.getElementById(id).getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth && r.bottom <= innerHeight; })"))
     nm, raw = grab("svg"); svg = raw.decode("utf-8")
     check("SVG: named after the plan and the date", re.fullmatch(r".+-\d{4}-\d{2}-\d{2}\.svg", nm), nm)
     try: xml.dom.minidom.parseString(raw); ok = True
@@ -46,10 +46,10 @@ with sync_playwright() as p:
     check("PNG: a real PNG named .png", sz is not None and nmp.endswith(".png"), nmp)
     check("PNG: 2x — 2800 px wide, height 2 × the drawing's", sz == (2800, 2 * H), (sz, H))
     # options are honoured
-    pg.uncheck("#printDeps"); pg.wait_for_timeout(100)
+    pg.uncheck("#printDeps", force=True); pg.wait_for_timeout(100)
     _, raw2 = grab("svg"); s2 = raw2.decode("utf-8")
     check("the dialog's options apply: with 'Dependency arrows' off there are no arrows", "marker-end" not in s2 and "marker-end" in svg)
-    pg.check("#printDeps"); pg.uncheck("#printCol-duration"); pg.wait_for_timeout(100)
+    pg.check("#printDeps", force=True); pg.uncheck("#printCol-duration"); pg.wait_for_timeout(100)
     _, raw3 = grab("svg")
     check("...and an unticked column is gone from the picture", raw3.decode("utf-8").count("<text") < svg.count("<text"))
     pg.check("#printCol-duration")
@@ -61,7 +61,7 @@ with sync_playwright() as p:
     _, raw5 = grab("svg"); m5 = re.search(r'viewBox="0 0 (\d+) (\d+)"', raw5.decode("utf-8"))
     check("the picture ignores the paper and orientation (still 1400 wide, same height)", m5 and m5.group(1) == "1400" and int(m5.group(2)) == H)
     # copy
-    pg.click("#printCopyImg"); pg.wait_for_function("() => /Copied|refused|can.t copy/.test(document.getElementById('toastMsg').textContent)", timeout=8000)
+    pg.click("#printImgBtn"); pg.click("#printCopyImg"); pg.wait_for_function("() => /Copied|refused|can.t copy/.test(document.getElementById('toastMsg').textContent)", timeout=8000)
     toast = ev("() => document.getElementById('toastMsg').textContent")
     clip = ev("async () => { try { const items = await navigator.clipboard.read(); return items.length ? items[0].types : []; } catch (e) { return ['error:' + e.message]; } }")
     check("Copy puts a PNG on the clipboard and says so", "image/png" in clip and "Copied the chart" in toast, (clip, toast))
@@ -73,7 +73,7 @@ with sync_playwright() as p:
     check("a tall plan (1,005 rows): the PNG scale drops so no side passes 16,000 px, the shape stays", szt and max(szt) <= 16000 and abs(szt[1] / szt[0] - Ht / 1400) < 0.01, (szt, Ht))
     pg.keyboard.press("Escape"); pg.wait_for_timeout(150)
     ev(SEED, 2500); pg.wait_for_timeout(500); open_print()
-    pg.click("#printPng"); pg.wait_for_timeout(800)
+    pg.click("#printImgBtn"); pg.click("#printPng"); pg.wait_for_timeout(800)
     check("a plan too tall even for 0.5x refuses the PNG and points to SVG", "too tall" in ev("() => document.getElementById('toastMsg').textContent"), ev("() => document.getElementById('toastMsg').textContent"))
     nms, raws = grab("svg")
     check("...while the SVG still works for it", len(raws) > 100000 and b"</svg>" in raws[-10:])
