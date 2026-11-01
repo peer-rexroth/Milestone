@@ -2821,6 +2821,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
                 <div class="trow"><label for="scCol1" class="tgrow">Second Colour</label><input type="color" id="scCol1" class="sc-col"></div>
                 <div class="trow"><label for="scCol2" class="tgrow">Third Colour</label><input type="color" id="scCol2" class="sc-col"></div>
                 <div class="trow"><label for="scCol3" class="tgrow">Fourth Colour</label><input type="color" id="scCol3" class="sc-col"></div>
+                <div class="trow"><label for="scCol4" class="tgrow">Fifth Colour</label><input type="color" id="scCol4" class="sc-col"></div>
                 <div class="trow"><label for="scInk" class="tgrow">Text Colour</label><input type="color" id="scInk" class="sc-col"></div>
               </div>
               <div class="trow"><label for="scBg" class="tgrow">Background</label><select id="scBg" class="tin"><option value="transparent">Transparent</option><option value="white">White</option></select></div>
@@ -12005,14 +12006,14 @@ function doPrint() {
    selection, or groups ticked in the dialog. Settings are kept per device (not in the plan). Drawing is one pure function, scBuild(opts) → SVG strings. */
 const SC_KEY = 'milestone-slidechart', SC_CM = 37.7953;   // px per cm at 96 dpi
 const SC_PRESETS = { content: [30, 13.4], half: [14.7, 13.4], strip: [30, 7] };   // cm: a 16:9 slide's content area, half of it, a wide strip
-const SC_PALETTES = {   // block colours 1-4 (then round again) and the text colour
-  corporate: { colors: ['#1E2A78', '#0069B1', '#34A6DC', '#3BB8B8'], ink: '#16184E' } };   // Deep Blue, Mid Blue, Bright Blue, Turquoise; text Dark Blue (orange stays for milestones)
+const SC_PALETTES = {   // block colours 1-5 (then round again) and the text colour
+  corporate: { colors: ['#1E2A78', '#0069B1', '#34A6DC', '#3BB8B8', '#24778D'], ink: '#16184E' } };   // Deep Blue, Mid Blue, Bright Blue, Turquoise, Petrol; text Dark Blue (orange stays for milestones)
 const SC_MS = '#F28011', SC_TODAY = '#E7001D';   // milestone diamonds: Sundown Orange; the today marker: Bright Red
 function scDefaults() {
   return { preset: 'content', w: 30, h: 13.4, maxRows: 16, minPt: 9, scope: 'all', hier: 'blocks', parents: true, levels: 3, msLabel: 'both', msPlace: 'group', split: 'even', scale: 'auto',
     palette: 'corporate', colors: SC_PALETTES.corporate.colors.slice(), bg: 'transparent', ink: SC_PALETTES.corporate.ink, font: '', today: true, pct: true, legend: false, more: false, pick: [] };
 }
-function scLoad() { try { const o = JSON.parse(localStorage.getItem(SC_KEY) || 'null'); if (o && typeof o === 'object' && (!o.palette || o.palette === 'milestone')) o.palette = 'custom'; /* (the removed 'Milestone' palette keeps its colours as Custom) */ if (o && o.split !== 'fill') o.split = 'even'; return Object.assign(scDefaults(), o && typeof o === 'object' ? o : {}, { pick: [] }); } catch (e) { return scDefaults(); } }
+function scLoad() { try { const o = JSON.parse(localStorage.getItem(SC_KEY) || 'null'); if (o && typeof o === 'object' && (!o.palette || o.palette === 'milestone')) o.palette = 'custom'; /* (the removed 'Milestone' palette keeps its colours as Custom) */ if (o && o.split !== 'fill') o.split = 'even'; const r = Object.assign(scDefaults(), o && typeof o === 'object' ? o : {}, { pick: [] }); const d = scDefaults().colors; r.colors = d.map((c, i) => (r.palette !== 'corporate' && Array.isArray(r.colors) && r.colors[i]) || c); /* (a palette saved with four colours gets the fifth; Corporate is always the current Corporate) */ return r; } catch (e) { return scDefaults(); } }
 function scSave(o) { try { const c = Object.assign({}, o); delete c.pick; localStorage.setItem(SC_KEY, JSON.stringify(c)); } catch (e) { /* a convenience only */ } }
 // The tasks to draw, as a tree of { id, name, level, kids | ms, s, e, p } (day numbers, progress 0-100). A group's dates and progress come from the tasks drawn.
 function scTree(o) {
@@ -12224,7 +12225,7 @@ function scRead() {
   const num = (id, lo, hi, d) => { const v = parseFloat(scEl(id).value); return Number.isFinite(v) ? Math.max(lo, Math.min(hi, v)) : d; };
   return { preset: scEl('scPreset').value, w: num('scW', 3, 80, 30), h: num('scH', 2, 60, 13.4), maxRows: Math.round(num('scMaxRows', 1, 60, 16)), split: scEl('scSplit').value, minPt: num('scMinPt', 6, 24, 9),
     scope: (document.querySelector('input[name=scScope]:checked') || {}).value || 'all', hier: scEl('scHier').value, parents: scEl('scParents').checked, levels: +scEl('scLevels').value, msLabel: scEl('scMsLabel').value, msPlace: scEl('scMsPlace').value, scale: scEl('scScale').value,
-    palette: scEl('scPalette').value, colors: [0, 1, 2, 3].map(i => scEl('scCol' + i).value), bg: scEl('scBg').value, ink: scEl('scInk').value, font: scEl('scFont').value, today: scEl('scToday').checked, pct: scEl('scPct').checked, legend: scEl('scLegend').checked, more: !scEl('scMore').classList.contains('hidden'), pick: [...scPick] };
+    palette: scEl('scPalette').value, colors: [0, 1, 2, 3, 4].map(i => scEl('scCol' + i).value), bg: scEl('scBg').value, ink: scEl('scInk').value, font: scEl('scFont').value, today: scEl('scToday').checked, pct: scEl('scPct').checked, legend: scEl('scLegend').checked, more: !scEl('scMore').classList.contains('hidden'), pick: [...scPick] };
 }
 let scPick = new Map(), scOpen = new Set();   // scPick: id → true / false, the choices made in "Choose Groups…"; scOpen: the groups shown opened
 function scEffective(id) { for (let t = byId(id); t; t = t.parentId ? byId(t.parentId) : null) if (scPick.has(t.id)) return scPick.get(t.id); return false; }
@@ -12315,7 +12316,7 @@ function scLook() {
   scEl('scCustom').classList.toggle('hidden', pal !== 'custom');
   scEl('scHierRow').classList.toggle('hidden', !scEl('scParents').checked);
   scEl('scMsPlace').closest('.trow').classList.toggle('hidden', !scEl('scParents').checked);   // (milestones are rows of their own then)   // without the groups there is nothing to draw as blocks or brackets
-  scEl('scDots').innerHTML = [0, 1, 2, 3].map(i => `<i style="background:${scEl('scCol' + i).value}"></i>`).join('');
+  scEl('scDots').innerHTML = [0, 1, 2, 3, 4].map(i => `<i style="background:${scEl('scCol' + i).value}"></i>`).join('');
 }
 function scMore(open) { scEl('scMore').classList.toggle('hidden', !open); scEl('scMoreBtn').classList.toggle('open', !!open); scEl('scMoreBtn').setAttribute('aria-expanded', open ? 'true' : 'false'); scEl('scMoreBtn').querySelector('span').textContent = open ? 'Fewer Options' : 'More Options'; }
 function scToggleMore() { scMore(scEl('scMore').classList.contains('hidden')); scSave(scRead()); }

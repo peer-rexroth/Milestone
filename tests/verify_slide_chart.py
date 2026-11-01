@@ -209,14 +209,14 @@ with sync_playwright() as p:
     # ---- the corporate palette is the default; the older one and Custom are choices
     pg.click("#dataMenuBtn"); pg.click("#slideChartItem"); pg.wait_for_selector("#slideChartModalBg.open"); pg.wait_for_timeout(200)
     if not pg.is_visible("#scPalette"): pg.click("#scMoreBtn")
-    cols = lambda: [pg.input_value(f"#scCol{i}").lower() for i in range(4)] + [pg.input_value("#scInk").lower()]
+    cols = lambda: [pg.input_value(f"#scCol{i}").lower() for i in range(5)] + [pg.input_value("#scInk").lower()]
     pg.select_option("#scPalette", "corporate"); pg.wait_for_timeout(150)
-    check("Corporate: Deep Blue, Mid Blue, Bright Blue, Turquoise, text in Dark Blue", cols() == ["#1e2a78", "#0069b1", "#34a6dc", "#3bb8b8", "#16184e"], cols())
+    check("Corporate: Deep Blue, Mid Blue, Bright Blue, Turquoise, Petrol, text in Dark Blue", cols() == ["#1e2a78", "#0069b1", "#34a6dc", "#3bb8b8", "#24778d", "#16184e"], cols())
     check("the palette list offers Corporate and Custom only (no Milestone palette)", pg.eval_on_selector_all("#scPalette option", "o => o.map(x => x.value)") == ["corporate", "custom"])
     pg.fill("#scCol0", "#123456") if False else ev("() => { const i = document.getElementById('scCol0'); i.value = '#123456'; i.dispatchEvent(new Event('input', { bubbles: true })); }"); pg.wait_for_timeout(150)
     check("changing a colour switches the palette to Custom, which shows the colour pickers", pg.input_value("#scPalette") == "custom" and pg.is_visible("#scCol0"))
     pg.select_option("#scPalette", "corporate"); pg.wait_for_timeout(100)
-    check("a named palette hides the pickers and shows its four colours as dots", not pg.is_visible("#scCol0") and pg.locator("#scDots i").count() == 4)
+    check("a named palette hides the pickers and shows its five colours as dots", not pg.is_visible("#scCol0") and pg.locator("#scDots i").count() == 5)
     pg.select_option("#scPalette", "corporate"); pg.wait_for_timeout(200)
     svg = ev("() => scBuilt.charts[0]")
     check("the chart uses Deep Blue for the first workstream and orange for the milestones", "#1e2a78" in svg.lower() and "#f28011" in svg.lower())
