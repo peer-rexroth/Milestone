@@ -1753,7 +1753,7 @@ html.settings-switching .modal-bg { transition: none; }
 .field-grid-4 input[type=date], .field-grid-4 input[type=number], .field-grid-4 input[type=text], .field-grid-4 select { padding: 8px 8px; }
 .ms-field { align-self: end; padding-bottom: 8px; }   /* the task dialog: a lot of fields, so more room before it scrolls */
 .modal.wide { width: 560px; }
-#taskModalInner { height: min(1072px, 94vh); }   /* one height for every tab: the General tab's (1020 px, plus the On Slide row and the gap of the Color group), so switching tabs never makes the dialog jump */
+#taskModalInner { height: min(1112px, 94vh); }   /* one height for every tab: the General tab's (1020 px, plus the On Slide row the gap of the Color group and the Slide Name row), so switching tabs never makes the dialog jump */
 #taskModalInner .modal-body { flex: 1 1 auto; min-height: 0; }
 #taskModalInner .tab-pane:not(.hidden) { flex: 1 1 auto; min-height: 0; }
 #taskModalInner .task-notes { flex: 1 1 auto; min-height: 240px; resize: none; border: 0; background: color-mix(in srgb, var(--text) 5%, transparent); border-radius: var(--r-m); padding: 12px 14px; }
@@ -2560,6 +2560,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
       <div class="tgrp">
         <div class="trow" title="Colours the task's row in the list (and its stripe in the chart)"><label>Color</label><div class="color-swatches" id="taskColorSwatches"></div></div>
         <div class="trow"><label for="taskOnSlideInput">On Slide</label><input type="checkbox" class="tsw" id="taskOnSlideInput" role="switch" title="The Chart for Slides can take just the tasks marked On Slide"></div>
+        <div class="trow"><label for="taskSlideNameInput">Slide Name</label><input type="text" class="tin" id="taskSlideNameInput" maxlength="120" placeholder="Same as the name" title="The short label the Chart for Slides draws instead of the name"></div>
       </div>
       <div class="tcap">Predecessors</div>
       <div class="tgrp"><div id="predecessorRows"></div><button class="trow tadd" type="button" onclick="addPredecessorRow()">Add Predecessor…</button></div>
@@ -2803,7 +2804,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
             <div class="trow hidden" id="scHRow"><label for="scH" class="tgrow">Height</label><input type="number" id="scH" class="tin" min="2" max="60" step="0.1"><span class="tunit">cm</span></div>
             <div class="trow"><label for="scMaxRows" class="tgrow">Most rows on a chart</label><input type="number" id="scMaxRows" class="tin" min="1" max="60" step="1"></div>
             <div class="trow"><label for="scSplit" class="tgrow">When rows don’t fit</label><select id="scSplit" class="tin" title="Even Charts: every chart gets about the same number of rows, cut near group boundaries. Fill Each Chart: each chart is filled, the last one takes what is left."><option value="even">Even Charts</option><option value="fill">Fill Each Chart</option></select></div>
-          </div><p class="cal-hint hidden" id="scNote"></p></section>
+          </div><p class="cal-hint hidden" id="scNote"></p><p class="cal-hint hidden" id="scCutNote"><span id="scCutText"></span> <button type="button" class="btn-link" onclick="scEditCut()">Add Slide Names…</button></p></section>
           <section class="cal-sec"><div class="cal-sec-title">Tasks</div><div class="tgrp">
             <label class="trow tpick"><span>The whole plan</span><input type="radio" class="tick" name="scScope" value="all" checked></label>
             <label class="trow tpick hidden" id="scScopeFiltered"><span>The filtered tasks<span class="tsub" id="scScopeFilteredN"></span></span><input type="radio" class="tick" name="scScope" value="filtered"></label>
@@ -3409,6 +3410,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
           <div class="help-row"><i class="fa-regular fa-image"></i><span>In the Print window, <strong>Picture: Copy / PNG / SVG</strong> makes the chart as <em>one</em> picture with every row, with the same columns and options — for a slide or a document. <strong>SVG</strong> keeps the text as text, so PowerPoint, Illustrator or Inkscape can edit it; <strong>PNG</strong> is 2× sharp; <strong>Copy</strong> puts the PNG on the clipboard.</span></div>
           <div class="help-row"><i class="fa-solid fa-display"></i><span><strong>Chart for Slides…</strong> (the Data menu) makes a picture to paste into a presentation: only the chart, transparent, in the size you choose. Pick the shape, the most rows a chart may have (more rows make several charts on the same timeline), the tasks (<strong>Choose Groups…</strong> for a part of a big plan) and how the outline is drawn. <strong>More Options</strong> has the timescale, text size, milestone labels and colours. <strong>Copy Picture</strong> is the quick way; <strong>Save As…</strong> writes PNG or SVG.</span></div>
           <div class="help-row"><i class="fa-solid fa-display"></i><span><strong>On Slide</strong> is a Yes / No mark for the tasks you want in a slide chart. Click its cell (tick the column in Columns), or use the switch in the task dialog or <strong>Edit Tasks</strong>. A marked group takes everything below it. In Chart for Slides choose <strong>The tasks marked On Slide</strong>; it appears once something is marked.</span></div>
+          <div class="help-row"><i class="fa-solid fa-display"></i><span><strong>Slide Name</strong> is a short label for a task, used by Chart for Slides instead of its name. Type it in the task dialog, or tick the column in Columns and click a cell. Empty means the name is used. When the chart has to shorten labels it says how many and offers <strong>Add Slide Names…</strong>, which selects those tasks.</span></div>
           <div class="help-row"><i class="fa-solid fa-sliders"></i><span>Choose the list columns, the time range, the timescale (weeks, months or quarters — automatic by default), and whether to show the baseline, the critical path, dependency arrows, the today line and days off. Tasks print as the list shows them (folded groups and filters apply) unless you expand every group. In your browser's print dialog choose <strong>Save as PDF</strong> for a file.</span></div>
         </div>
         <div class="help-divider"></div>
@@ -3580,6 +3582,7 @@ const TASK_COLS = {
   // Notes: free text, last of the standard columns
   notes:        { label: 'Notes',         width: '200px',             dflt: false },   // the first line of t.notes; a click opens the task's Notes tab   // taskCost(t), read-only, computed from the resource pool's own rates (see "Resource Sheet" in CLAUDE.md) — an empty line/unassigned task shows €0.00
   onSlide:      { label: 'On Slide',      width: '80px',              dflt: false },   // a Yes / No mark: the tasks the Chart for Slides takes (a click toggles it)
+  slideName:    { label: 'Slide Name',    width: '160px',             dflt: false },   // the short label the Chart for Slides draws instead of the name (a click opens the task dialog on it)
 };
 // ---- Custom fields: Text1-5, Number1-5, Date1-5, Flag1-5. A task keeps its values in `task.custom` ({ text1: 'x', number2: 4.5,
 // date3: '2026-09-01', flag4: true } — only fields that have a value are present). The field NAMES live on the plan
@@ -4515,6 +4518,7 @@ function normalizeData() {
     // Notes (free text, MS Project's Notes) and a Deadline (a target date that never moves the task — it only flags it when it finishes
     // later, as in MS Project): both absent when empty, the usual convention.
     if (typeof t.notes === 'string' && t.notes.trim()) t.notes = t.notes.replace(/\s+$/, '').slice(0, 10000); else delete t.notes;
+    if (typeof t.slideName === 'string' && t.slideName.trim()) t.slideName = t.slideName.trim().slice(0, 120); else delete t.slideName;   // Slide Name: the short label the Chart for Slides draws instead of the name; absent when empty
     if (typeof t.deadline !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(t.deadline)) delete t.deadline;
     // Task Type (MS Project's Fixed Units/Fixed Duration/Fixed Work triangle — see "Task Type / Work" in CLAUDE.md):
     // absent = the default for each, the usual convention — only an explicit non-default value is ever stored.
@@ -4546,7 +4550,7 @@ function normalizeData() {
       t.name = ''; t.milestone = false; t.progress = 0; t.predecessors = []; t.color = null; t.resource = ''; delete t.custom; delete t.baselines;
       t.actualStart = t.actualFinish = null; t.constraintType = 'ASAP'; t.constraintDate = null; t.taskMode = 'manual'; t.startText = t.endText = t.durText = null; t.collapsed = false;
       t.startTime = t.endTime = t.actualStartTime = t.actualFinishTime = t.constraintTime = null;
-      delete t.notes; delete t.deadline;
+      delete t.notes; delete t.deadline; delete t.slideName;
     }
   }
 
@@ -5867,7 +5871,8 @@ const FILTER_COLS = {
   work:         { label: 'Work',          kind: 'number' },
   cost:         { label: 'Cost',          kind: 'number' },
   notes:        { label: 'Notes',         kind: 'text' },
-  onSlide:      { label: 'On Slide',      kind: 'list' }
+  onSlide:      { label: 'On Slide',      kind: 'list' },
+  slideName:    { label: 'Slide Name',    kind: 'text' }
 };
 for (const f of Object.values(CUSTOM_FIELDS)) FILTER_COLS[f.id] = { get label() { return customFieldName(f.id); }, kind: CUSTOM_KINDS.find(x => x.kind === f.kind).filter };
 function newColFilters() { return Object.fromEntries(Object.keys(FILTER_COLS).map(c => [c, null])); }
@@ -5928,6 +5933,7 @@ function filterColValue(t, col) {
     case 'totalSlack': return taskTotalSlack(t);
     case 'notes': return t.notes || null;
     case 'onSlide': return t.onSlide ? 'Yes' : 'No';
+    case 'slideName': return t.slideName || null;
     default:
       if (isCustomField(col)) {
         const v = customValue(t, col);
@@ -6782,7 +6788,7 @@ function renderGrid() {
     startVariance: colHeadHtml('Start\nVariance', 'startVariance'), finishVariance: colHeadHtml('Finish\nVariance', 'finishVariance'), durationVariance: colHeadHtml('Duration\nVariance', 'durationVariance'),
     preds: colHeadHtml('Predecessors', 'preds'), resource: colHeadHtml('Resource', 'resource'),
     worktype: colHeadHtml('Task\nType', 'worktype'), work: colHeadHtml('Work', 'work'), cost: colHeadHtml('Cost', 'cost'),
-    deadline: colHeadHtml('Deadline', 'deadline'), totalSlack: colHeadHtml('Total\nSlack', 'totalSlack'), notes: colHeadHtml('Notes', 'notes'), onSlide: colHeadHtml('On Slide', 'onSlide'),
+    deadline: colHeadHtml('Deadline', 'deadline'), totalSlack: colHeadHtml('Total\nSlack', 'totalSlack'), notes: colHeadHtml('Notes', 'notes'), onSlide: colHeadHtml('On Slide', 'onSlide'), slideName: colHeadHtml('Slide Name', 'slideName'),
     ...Object.fromEntries(Object.keys(CUSTOM_FIELDS).map(id => [id, colHeadHtml(customFieldName(id), id)]))
   };
   applyColTemplate(cols);
@@ -6913,6 +6919,7 @@ function renderGrid() {
         : `<div class="grid-cell-dim${summaryCls} editable${deadlineMissed(t) ? ' deadline-late' : ''}" onclick="event.stopPropagation();startInlineEdit('${t.id}','deadline')"${deadlineMissed(t) ? ' title="Finishes after its deadline"' : ''}>${t.deadline ? fmtDate(t.deadline) : ''}</div>`,
       totalSlack: (() => { const v = taskTotalSlack(t); return `<div class="grid-cell-dim${summaryCls}${v != null && v < 0 ? ' var-late' : ''}"${v != null && v <= 0 ? ' title="No slack: a delay here moves the plan\'s finish"' : ''}>${fmtSlack(v)}</div>`; })(),
       notes: `<div class="grid-cell-dim editable" title="${escapeHtml(t.notes || 'Click to add a note')}" onclick="event.stopPropagation();openTaskNotes('${t.id}')">${escapeHtml((t.notes || '').split('\n')[0])}</div>`,
+      slideName: `<div class="grid-cell-dim editable" title="${escapeHtml(t.slideName || 'Click to add a Slide Name: the short label for the Chart for Slides')}" onclick="event.stopPropagation();openTaskSlideName('${t.id}')">${escapeHtml(t.slideName || '')}</div>`,
       onSlide: `<div class="grid-cell-dim custom-flag editable${summaryCls}" title="On Slide: ${t.onSlide ? 'Yes' : 'No'} — click to change" onclick="event.stopPropagation();toggleOnSlide('${t.id}')">${t.onSlide ? '<i class="fa-solid fa-check"></i>' : ''}</div>`,
       ...Object.fromEntries(cols.filter(isCustomField).map(id => [id, customCellHtml(t, id, summaryCls, editing(id), blurAttr(id), (f, iso, time) => dateEditor(f, iso, null, dateHint(), minuteModeActive() ? time : undefined, true))]))
     };
@@ -8885,6 +8892,7 @@ function openTaskModal(id, isNew) {
   note.classList.toggle('hidden', !textBits.length);
   document.getElementById('taskMilestoneInput').checked = t.milestone;
   document.getElementById('taskOnSlideInput').checked = !!t.onSlide;
+  document.getElementById('taskSlideNameInput').value = t.slideName || '';
   document.getElementById('taskStartInput').value = t.startDate;
   document.getElementById('taskEndInput').value = t.endDate;
   const minuteMode = minuteModeActive();
@@ -10589,6 +10597,7 @@ function addPredecessorRow() {
 function removePredecessorRow(i) { editingPredecessors.splice(i, 1); renderPredecessorRows(); }
 
 // Opens the task dialog on its Notes tab (the note icon in the name cell, the Notes column).
+function openTaskSlideName(id) { openTaskModal(id); if (editingTaskId === id) setTimeout(() => { const i = document.getElementById('taskSlideNameInput'); if (i) { i.focus(); i.select(); } }, 80); }
 function openTaskNotes(id) { openTaskModal(id); if (editingTaskId === id) setTaskModalTab('notes'); }
 // The line beside the Deadline field: what a deadline is, or — with one set — whether the Finish in the dialog keeps it.
 function updateDeadlineNote() {
@@ -10609,6 +10618,7 @@ function saveTaskFromModal() {
   t.name = name;
   t.milestone = document.getElementById('taskMilestoneInput').checked;
   if (document.getElementById('taskOnSlideInput').checked) t.onSlide = true; else delete t.onSlide;
+  { const sn = document.getElementById('taskSlideNameInput').value.trim(); if (sn) t.slideName = sn.slice(0, 120); else delete t.slideName; }
   t.startDate = document.getElementById('taskStartInput').value || todayStr();
   t.endDate = t.milestone ? t.startDate : (document.getElementById('taskEndInput').value || t.startDate);
   t.startTime = document.getElementById('taskStartTimeInput').value || null;
@@ -10932,7 +10942,7 @@ function replanAfterMerge(touched) {
    A conflict = both sides changed the same field of the same task (or plan setting) since they last agreed. The merge has already
    picked the newer edit; this only makes that visible — and reversible: Review lists them and lets you take the other version. */
 let syncConflictLog = [];   // session only (a heads-up for whoever is at the keyboard, not history)
-const CONFLICT_LABELS = { name: 'Name', startDate: 'Start', endDate: 'Finish', progress: '% Complete', resource: 'Resource', predecessors: 'Predecessors', taskMode: 'Task mode', actualStart: 'Actual Start', actualFinish: 'Actual Finish', parentId: 'Parent', order: 'Position', color: 'Colour', milestone: 'Milestone', constraintType: 'Constraint', constraintDate: 'Constraint date', startTime: 'Start time', endTime: 'Finish time', actualStartTime: 'Actual Start time', actualFinishTime: 'Actual Finish time', constraintTime: 'Constraint time', timeUnit: 'Scheduling precision', workHours: 'Working hours', workHoursByDay: 'Working hours by day', lagUnit: 'Lag unit', startText: 'Start (text)', endText: 'Finish (text)', durText: 'Duration (text)', custom: 'Custom fields', baselines: 'Baselines', workDays: 'Working days', compareBaseline: 'Compared baseline', statusDate: 'Status date', fieldNames: 'Custom field names', newTaskMode: 'New task mode', honorConstraintDates: 'Honor constraint dates', resources: 'Resource pool', currencyCode: 'Currency', notes: 'Notes', deadline: 'Deadline', recurrence: 'Recurrence' };
+const CONFLICT_LABELS = { slideName: 'Slide Name', name: 'Name', startDate: 'Start', endDate: 'Finish', progress: '% Complete', resource: 'Resource', predecessors: 'Predecessors', taskMode: 'Task mode', actualStart: 'Actual Start', actualFinish: 'Actual Finish', parentId: 'Parent', order: 'Position', color: 'Colour', milestone: 'Milestone', constraintType: 'Constraint', constraintDate: 'Constraint date', startTime: 'Start time', endTime: 'Finish time', actualStartTime: 'Actual Start time', actualFinishTime: 'Actual Finish time', constraintTime: 'Constraint time', timeUnit: 'Scheduling precision', workHours: 'Working hours', workHoursByDay: 'Working hours by day', lagUnit: 'Lag unit', startText: 'Start (text)', endText: 'Finish (text)', durText: 'Duration (text)', custom: 'Custom fields', baselines: 'Baselines', workDays: 'Working days', compareBaseline: 'Compared baseline', statusDate: 'Status date', fieldNames: 'Custom field names', newTaskMode: 'New task mode', honorConstraintDates: 'Honor constraint dates', resources: 'Resource pool', currencyCode: 'Currency', notes: 'Notes', deadline: 'Deadline', recurrence: 'Recurrence' };
 function conflictLabel(key) { return CONFLICT_LABELS[key] || key; }
 function fmtConflictValue(key, v) {
   if (v === undefined || v === null || v === '') return '—';
@@ -11166,7 +11176,7 @@ const IMPORT_HEADERS = {
   actualStart: ['actual start', 'tatsächlicher anfang', 'tatsaechlicher anfang', 'ist-start', 'actual begin'],
   actualFinish: ['actual finish', 'tatsächliches ende', 'tatsaechliches ende', 'ist-ende', 'actual end'],
   constraintType: ['constraint type', 'einschränkungstyp'], constraintDate: ['constraint date', 'einschränkungsdatum'],
-  deadline: ['deadline', 'stichtag', 'due date', 'due'], notes: ['notes', 'notizen', 'note', 'comments', 'kommentar', 'description', 'beschreibung', 'additional details', 'details', 'status summary', 'additional details / status summary', 'status', 'remarks', 'bemerkungen']
+  slideName: ['slide name', 'folienname'], deadline: ['deadline', 'stichtag', 'due date', 'due'], notes: ['notes', 'notizen', 'note', 'comments', 'kommentar', 'description', 'beschreibung', 'additional details', 'details', 'status summary', 'additional details / status summary', 'status', 'remarks', 'bemerkungen']
 };
 function importHeaderField(cell) {
   const h = String(cell || '').replace(/^\uFEFF/, '').trim().toLowerCase().replace(/\s+/g, ' ');
@@ -11266,7 +11276,7 @@ function tasksFromTable(rows, opts = {}) {
       if (as) t.actualStartTime = parseTableTime(cell(x.r, 'actualStart')) || t.startTime;
       if (af) t.actualFinishTime = parseTableTime(cell(x.r, 'actualFinish')) || t.endTime;
     }
-    { const dl = parseTableDate(cell(x.r, 'deadline'), fmt); if (dl) t.deadline = dl; const nt = cell(x.r, 'notes').trim(); if (nt) t.notes = nt.slice(0, 10000); }
+    { const dl = parseTableDate(cell(x.r, 'deadline'), fmt); if (dl) t.deadline = dl; const nt = cell(x.r, 'notes').trim(); if (nt) t.notes = nt.slice(0, 10000); const sn = cell(x.r, 'slideName').trim(); if (sn) t.slideName = sn.slice(0, 120); }
     const ct = cell(x.r, 'constraintType').trim().toLowerCase();
     if (ct) { const c = CONSTRAINT_TYPES.find(k => k.id.toLowerCase() === ct || k.label.toLowerCase() === ct); if (c && c.id !== 'ASAP') { t.constraintType = c.id; if (c.hasDate) { t.constraintDate = parseTableDate(cell(x.r, 'constraintDate'), fmt) || t.startDate; if (mo) t.constraintTime = parseTableTime(cell(x.r, 'constraintDate')); } } }
     stack.push(t); made.push({ t, x });
@@ -12044,13 +12054,13 @@ function scTree(o) {
     if (!hasChildren(t.id)) {
       if (!take || isUnscheduled(t)) return null;
       const e = effectiveDates(t.id); if (!e.start) return null;
-      return { id: t.id, name: t.name || '', level, ms: !!t.milestone, s: dayNumber(e.start), e: dayNumber(e.end), p: effectiveProgressOf(t.id) };
+      return { id: t.id, name: t.slideName || t.name || '', level, ms: !!t.milestone, s: dayNumber(e.start), e: dayNumber(e.end), p: effectiveProgressOf(t.id) };
     }
     const kids = childrenOf(t.id).map(k => node(k, level + 1, take)).filter(Boolean);
     if (!kids.length) return null;
     let s = Infinity, e = -Infinity, w = 0, pw = 0;
     for (const k of kids) { s = Math.min(s, k.s); e = Math.max(e, k.e); const len = Math.max(1, k.e - k.s + 1); w += len; pw += len * k.p; }
-    return { id: t.id, name: t.name || '', level, kids, s, e, p: w ? pw / w : 0 };
+    return { id: t.id, name: t.slideName || t.name || '', level, kids, s, e, p: w ? pw / w : 0 };
   };
   return childrenOf(null).map(t => node(t, 1, false)).filter(Boolean);
 }
@@ -12058,7 +12068,7 @@ function scTree(o) {
 function scRows(tree, o) {
   const maxL = o.levels >= 6 ? 99 : Math.max(2, o.levels), mode = o.parents === false ? 'rows' : o.hier, rows = [], blocks = [], base = mode === 'blocks' ? 3 : mode === 'block-rows' ? 2 : 1;
   let blk = -1;
-  const newBlock = (name, grey) => { blocks.push({ name, ci: grey ? -1 : blocks.filter(b => b.ci >= 0).length }); blk = blocks.length - 1; };
+  const newBlock = (name, grey, id) => { blocks.push({ name, id, ci: grey ? -1 : blocks.filter(b => b.ci >= 0).length }); blk = blocks.length - 1; };
   const push = r => { r.blk = blk; rows.push(r); return r; };
   const indentOf = n => Math.max(0, n.level - base);
   const emitKids = (n, cell, host) => {
@@ -12083,10 +12093,10 @@ function scRows(tree, o) {
   // Without the parent groups: only the tasks (and groups cut off by Levels, which are one bar), in outline order, each in the colour of its top-level group.
   const flat = (n, cell) => { if (n.ms) { push({ kind: 'ms', n, cell, indent: 0 }); return; } if (n.kids && n.level < maxL) { n.kids.forEach(k => flat(k, cell)); return; } push({ kind: 'bar', n, cell, indent: 0 }); };
   let lastLoose = false;
-  if (o.parents === false) { for (const n of tree) { newBlock(n.kids ? n.name : '', !n.kids); flat(n, null); } return { rows, blocks }; }
+  if (o.parents === false) { for (const n of tree) { newBlock(n.kids ? n.name : '', !n.kids, n.id); flat(n, null); } return { rows, blocks }; }
   for (const n of tree) {
-    if (mode === 'rows') { newBlock(n.name, false); lastLoose = false; emit(n, null); continue; }
-    if (n.kids) { newBlock(n.name, false); lastLoose = false; starts.set(n.id, rows.length); emitKids(n, null, null); continue; }
+    if (mode === 'rows') { newBlock(n.name, false, n.id); lastLoose = false; emit(n, null); continue; }
+    if (n.kids) { newBlock(n.name, false, n.id); lastLoose = false; starts.set(n.id, rows.length); emitKids(n, null, null); continue; }
     if (!lastLoose) newBlock('', true);   // tasks outside any group share one grey, unnamed block
     lastLoose = true; emit(n, null);
   }
@@ -12125,7 +12135,8 @@ function scBuild(o) {
   const tierH = Math.max(16, Math.min(24, Math.round(H * .04))), headH = tierH * 2 + 8, legendH = o.legend ? 26 : 0, minFs = o.minPt * 96 / 72;
   const textCap = Math.max(1, Math.floor((H - headH - legendH - 16) / (minFs / .46)));
   const cap = Math.max(1, Math.min(Math.round(o.maxRows) || 16, textCap));
-  if (!rows.length) return { charts: [], W, H, rows: 0, cap, textCap, empty: true };
+  if (!rows.length) return { charts: [], W, H, rows: 0, cap, textCap, cut: [], empty: true };
+  const cut = new Set(), fit = (id, text, w, f, bold) => { const t = printFit(text, w, f, bold); if (id && t !== text) cut.add(id); return t; };   // (the tasks whose label had to be shortened: the dialog says so)
   const chunks = scSplit(rows, cap, o.split), FONT = o.font && o.font.trim() ? `${o.font.trim().replace(/["<>&]/g, '')}, ${PRINT_FONT}` : PRINT_FONT, esc = escapeHtml, INK = o.ink || '#1d2733';
   // ---- the timeline: every drawn task (and hosted milestone), a little padding, the same on every chart
   let d0 = Infinity, d1 = -Infinity;
@@ -12171,15 +12182,15 @@ function scBuild(o) {
       out.push(`<rect x="${X0 + b1 + 4}" y="${top.toFixed(1)}" width="${(X1 - X0 - b1 - 4).toFixed(1)}" height="${(h - 2).toFixed(1)}" rx="4" fill="${col}" opacity=".045"/>`);
       if (mode !== 'rows') {
         out.push(`<rect x="${X0}" y="${top.toFixed(1)}" width="${b1}" height="${(h - 2).toFixed(1)}" rx="6" fill="${col}"/>`);
-        if (b.name) { const cx = X0 + b1 / 2, cy = top + (h - 2) / 2, f = Math.max(9, fs * .95), t = printFit(b.name, h - 14, f, true); if (t) out.push(`<text x="${cx}" y="${cy.toFixed(1)}" font-size="${f.toFixed(1)}" font-weight="650" fill="${scLum(col) > .45 ? '#1d2733' : '#fff'}" text-anchor="middle" dominant-baseline="central" transform="rotate(-90 ${cx} ${cy.toFixed(1)})">${esc(t)}</text>`); }
+        if (b.name) { const cx = X0 + b1 / 2, cy = top + (h - 2) / 2, f = Math.max(9, fs * .95), t = fit(b.id, b.name, h - 14, f, true); if (t) out.push(`<text x="${cx}" y="${cy.toFixed(1)}" font-size="${f.toFixed(1)}" font-weight="650" fill="${scLum(col) > .45 ? '#1d2733' : '#fff'}" text-anchor="middle" dominant-baseline="central" transform="rotate(-90 ${cx} ${cy.toFixed(1)})">${esc(t)}</text>`); }
       }
     }
     if (mode === 'blocks') for (const run of runs(r => r.cell ? r.cell.id : '')) {   // the merged label cells
       if (!run.k) continue;
       const r0 = chunk[run.from], col = colorOf(blocks[run.blk]), top = ys[run.from], h = ys[run.to] + rowH - top, f = Math.max(9, fs * .95), lh = f * 1.22;
       out.push(`<rect x="${X0 + b1 + 4}" y="${(top + 1).toFixed(1)}" width="${cellW}" height="${(h - 2).toFixed(1)}" rx="5" fill="${col}" opacity=".13"/>`);
-      let lines = scWrap(r0.cell.name, cellW - 18, f, true); const fit = Math.max(1, Math.floor((h - 6) / lh));
-      if (lines.length > fit) { lines = lines.slice(0, fit); lines[fit - 1] = printFit(lines[fit - 1] + ' …', cellW - 18, f, true); }
+      let lines = scWrap(r0.cell.name, cellW - 18, f, true); const room = Math.max(1, Math.floor((h - 6) / lh));
+      if (lines.length > room) { lines = lines.slice(0, room); lines[room - 1] = printFit(lines[room - 1] + ' …', cellW - 18, f, true); cut.add(r0.cell.id); }
       const ty = top + h / 2 - (lines.length - 1) * lh / 2, tcol = scLum(col) > .45 ? '#1d2733' : col;
       lines.forEach((ln, i) => out.push(`<text x="${X0 + b1 + 14}" y="${(ty + i * lh).toFixed(1)}" font-size="${f.toFixed(1)}" font-weight="650" fill="${tcol}" dominant-baseline="central">${esc(ln)}</text>`));
     }
@@ -12200,8 +12211,8 @@ function scBuild(o) {
     };
     chunk.forEach((r, i) => {
       const b = blocks[r.blk], col = colorOf(b), cy = ys[i] + rowH / 2, n = r.n;
-      if (r.kind === 'ms') { if (!(/^(both|name)$/.test(o.msLabel))) out.push(`<text x="${labelX + r.indent * step}" y="${(cy + fs * .34).toFixed(1)}" font-size="${fs.toFixed(1)}" font-weight="600" fill="${INK}">${esc(printFit(n.name, labelW - r.indent * step, fs, true))}</text>`); placeMs(n, i, null); return; }
-      if (!r.cellOnly) out.push(`<text x="${labelX + r.indent * step}" y="${(cy + fs * .34).toFixed(1)}" font-size="${fs.toFixed(1)}" font-weight="${r.kind === 'group' ? 650 : 400}" fill="${INK}"${r.indent > 1 && r.kind !== 'group' ? ' opacity=".8"' : ''}>${esc(printFit(n.name, labelW - r.indent * step, fs, r.kind === 'group'))}</text>`);
+      if (r.kind === 'ms') { if (!(/^(both|name)$/.test(o.msLabel))) out.push(`<text x="${labelX + r.indent * step}" y="${(cy + fs * .34).toFixed(1)}" font-size="${fs.toFixed(1)}" font-weight="600" fill="${INK}">${esc(fit(n.id, n.name, labelW - r.indent * step, fs, true))}</text>`); placeMs(n, i, null); return; }
+      if (!r.cellOnly) out.push(`<text x="${labelX + r.indent * step}" y="${(cy + fs * .34).toFixed(1)}" font-size="${fs.toFixed(1)}" font-weight="${r.kind === 'group' ? 650 : 400}" fill="${INK}"${r.indent > 1 && r.kind !== 'group' ? ' opacity=".8"' : ''}>${esc(fit(n.id, n.name, labelW - r.indent * step, fs, r.kind === 'group'))}</text>`);
       const x = xOf(n.s), w = Math.max(pxd, (n.e - n.s + 1) * pxd);
       if (r.kind === 'group') {
         const a = Math.max(.45, 1 - r.indent * .18), t = r.indent === 0 ? 3 : 2;
@@ -12226,7 +12237,7 @@ function scBuild(o) {
     out.push('</svg>');
     return out.join('');
   });
-  return { charts, W, H, rows: rows.length, cap, textCap, empty: false };
+  return { charts, W, H, rows: rows.length, cap, textCap, cut: [...cut], empty: false };
 }
 
 /* ---- the dialog ---- */
@@ -12295,6 +12306,11 @@ function openSlideChart() {
   scWrite(scOpts); scClosePick(true); scSyncScopes(); scRenderTree(); scPageNo = 0;
   scEl('slideChartModalBg').classList.add('open'); scRefresh();
 }
+function scEditCut() {   // the shortened labels become the selection in the task list, with the Slide Name column showing, ready to be typed
+  const ids = scBuilt && scBuilt.cut ? scBuilt.cut.slice() : []; closeSlideChart(); if (!ids.length) return;
+  colHidden.delete('slideName'); setView('tasks'); setSelection(ids); save(); render();
+  showToast(`${ids.length} task${ids.length === 1 ? '' : 's'} selected: type a Slide Name in the new column`);
+}
 function closeSlideChart() { scSaveClose(); scColClose(); scEl('slideChartModalBg').classList.remove('open'); scBuilt = null; }
 function scChanged(e) {
   if (e && e.target) {
@@ -12324,6 +12340,7 @@ function scDraw() {
   scEl('scSummary').textContent = b.empty ? '' : `${b.rows} row${b.rows === 1 ? '' : 's'} · ${b.charts.length} chart${b.charts.length === 1 ? '' : 's'} · ${cm(b.W)} × ${cm(b.H)} cm`;
   scEl('scNote').textContent = !b.empty && b.cap < o.maxRows ? `At ${cm(b.H)} cm high, ${o.minPt} pt text fits ${b.cap} rows, so charts are cut at ${b.cap}.` : '';
   scEl('scNote').classList.toggle('hidden', !scEl('scNote').textContent);
+  const nCut = b.empty ? 0 : b.cut.length; scEl('scCutText').textContent = nCut ? `${nCut} label${nCut === 1 ? ' is' : 's are'} shortened to fit.` : ''; scEl('scCutNote').classList.toggle('hidden', !nCut);
   scEl('scPickNote').textContent = b.empty ? 'Nothing is ticked.' : `${b.rows} row${b.rows === 1 ? '' : 's'} on ${b.charts.length} chart${b.charts.length === 1 ? '' : 's'}. Tick a group to take all of its tasks; unfold it to leave single tasks or sub-groups out.`;
 }
 // What follows the controls: the size line (or the two size fields for a Custom shape), the palette's dots and its colour pickers (Custom only).
@@ -12803,6 +12820,7 @@ function clipCell(t, c, depth) {
     case 'totalSlack': return fmtSlack(taskTotalSlack(t));
     case 'notes': return (t.notes || '').replace(/\s*\n\s*/g, ' ');
     case 'onSlide': return t.onSlide ? 'Yes' : '';
+    case 'slideName': return t.slideName || '';
     case 'baselineStart': { const b = baselineDates(t.id); return b.start ? baselineDateText(t.id, b.start, b.startTime, false) : ''; }
     case 'baselineFinish': { const b = baselineDates(t.id); return b.end ? baselineDateText(t.id, b.end, b.endTime, true) : ''; }
     case 'baselineDuration': { const v = scheduleVariance(t.id).baseDuration; return v == null ? '' : varianceIsMinutes(t.id) ? fmtDurationMinutes(v) : String(v); }
@@ -13330,7 +13348,7 @@ function buildXlsx(opts) {
     id: ['ID', 6], mode: ['Mode', 10], wbs: ['WBS', 15], name: ['Task Name', 46], start: ['Start', 13], end: ['Finish', 13], actualStart: ['Actual Start', 13],
     actualFinish: ['Actual Finish', 13], baselineStart: ['Baseline Start', 13], baselineFinish: ['Baseline Finish', 13], baselineDuration: ['Baseline Duration', 13], startVariance: ['Start Variance', 13], finishVariance: ['Finish Variance', 13], durationVariance: ['Duration Variance', 13], duration: ['Duration', 12], progress: ['% Complete', 13], remaining: ['Remaining Duration', 13], status: ['Status', 13], preds: ['Predecessors', 18], resource: ['Resource', 22], worktype: ['Task Type', 14], work: ['Work', 12], cost: ['Cost', 13]
   };
-  Object.assign(XCOLS, { deadline: ['Deadline', 13], totalSlack: ['Total Slack', 12], notes: ['Notes', 40], onSlide: ['On Slide', 10] });
+  Object.assign(XCOLS, { deadline: ['Deadline', 13], totalSlack: ['Total Slack', 12], notes: ['Notes', 40], onSlide: ['On Slide', 10], slideName: ['Slide Name', 24] });
   if (minuteModeActive()) for (const k of ['start', 'end', 'actualStart', 'actualFinish', 'baselineStart', 'baselineFinish']) XCOLS[k][1] = timeFormat === '12h' ? 24 : 19;   // (a date with a time of day: Excel shows ##### in a column too narrow for it)
   for (const id of Object.keys(CUSTOM_FIELDS)) XCOLS[id] = [customFieldName(id), { text: 22, number: 13, date: minuteModeActive() ? (timeFormat === '12h' ? 24 : 19) : 13, flag: 9 }[CUSTOM_FIELDS[id].kind]];
   // "All columns" adds the custom fields that are in use (renamed, or holding a value somewhere) — not twenty empty columns.
@@ -13415,6 +13433,7 @@ function buildXlsx(opts) {
         case 'totalSlack': { const v = taskTotalSlack(t); if (v == null) sheet.cell(r, c, null, S({})); else if (minuteModeActive()) sheet.cell(r, c, fmtSlack(v), S({ h: 'center', italic: true, color: v < 0 ? 'C4281F' : DIM, bold: false })); else sheet.cell(r, c, v, S({ h: 'center', num: '0" days";-0" days";0" days"', color: v < 0 ? 'C4281F' : undefined })); break; }
         case 'notes': sheet.cell(r, c, t.notes || null, S({ h: 'left' })); break;
         case 'onSlide': sheet.cell(r, c, t.onSlide ? 'Yes' : null, S({ h: 'center' })); break;
+        case 'slideName': sheet.cell(r, c, t.slideName || null, S({ h: 'left' })); break;
         case 'cost': sheet.cell(r, c, taskCost(t), S({ h: 'center', num: `"${currencySymbol().replace(/"/g, '')}"#,##0.00` })); break;
         default:
           if (isCustomField(k)) {
