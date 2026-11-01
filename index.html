@@ -756,7 +756,7 @@ button:focus:not(:focus-visible) { outline: none; }
 .fld-show input:checked + .fld-switch::after { transform: translateX(16px); }
 .fld-show { flex: none; align-items: center; gap: 8px; margin-left: 4px; font-size: var(--fs-13); color: var(--text-faint); }
 .fld-show > span:first-child { white-space: nowrap; }
-.fld-show input:focus-visible + .fld-switch { outline: 2px solid var(--accent); outline-offset: 2px; }
+.fld-show input:focus-visible + .fld-switch { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
 .fld-row.removed .fld-show { opacity: .4; pointer-events: none; }
 .fld-name:disabled { opacity: .5; text-decoration: line-through; }
 .fld-name.bad { border-color: var(--danger); }
@@ -1095,7 +1095,7 @@ input.tf-cell[type=number] { -moz-appearance: textfield; }
 .folder-row .fr-tag { flex: none; font-size: var(--fs-11); font-weight: 600; padding: 1px 8px; border-radius: 999px; color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--panel)); white-space: nowrap; }
 .folder-row .fr-new { margin-top: 6px; }
 .folder-row .fr-new input[type=text] { width: 100%; box-sizing: border-box; padding: 6px 8px; border: 1px solid var(--border); border-radius: var(--r-s); background: var(--panel); color: var(--text); }
-.folder-row .fr-new input[type=text]:focus { outline: none; border-color: var(--accent); }
+.folder-row .fr-new input[type=text]:focus { outline: none; border-color: var(--focus-edge); }   /* (the ring itself is the shared one) */
 .grid-row.spacer-row { --row-bg: color-mix(in srgb, var(--panel-2) 50%, var(--panel)); }   /* an empty line: a blank row, faintly tinted so it reads as a separator */
 .grid-row:hover { --row-bg: var(--panel-2); }
 /* a task's colour: a 4px stripe at the row's left edge and a light tint of the same colour (list and chart row alike); selection and hover still show through */
@@ -1175,14 +1175,14 @@ html.time12 .tf-dt input.dt-time { flex: 0 0 104px; min-width: 104px; width: 104
 .fmt-tile b { font-size: var(--fs-15); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .fmt-tile small { font-size: var(--fs-12); color: var(--text-faint); white-space: nowrap; }
 .fmt-tile:hover { background: var(--panel-2); }
-.fmt-tile:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.fmt-tile:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 1px; }
 .fmt-tile[aria-checked="true"] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--panel)); box-shadow: 0 0 0 1px var(--accent); }
 .fmt-tile[aria-checked="true"] small { color: var(--text-dim); }
 .menu-foot { padding: 6px 10px 6px; font-size: var(--fs-12); color: var(--text-faint); border-top: 1px solid var(--border); margin-top: 4px; max-width: 240px; }
 /* Group by: a header row per value (Tasks view) — a band of its own, bold, the whole row folds on a click */
 .grid-row.group-head { --row-bg: var(--panel-2); font-weight: 600;border-top: 1px solid var(--border); }
 .grid-row.group-head:hover { --row-bg: color-mix(in srgb, var(--accent) 10%, var(--panel-2)); }
-.grid-row.group-head:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.grid-row.group-head:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: -3px; }
 .grid-row.group-head .grid-cell-dim { font-weight: 600; color: var(--text-dim); }
 .grid-name.group-head-name .name-text { font-weight: 700; color: var(--text); }
 .group-count { margin-left: 8px; font-weight: 400; font-size: var(--fs-12); color: var(--text-faint); flex-shrink: 0; }
@@ -1251,7 +1251,7 @@ button.sc-exp:hover { background: var(--hover); } .sc-exp i { font-size: var(--i
 .sc-col::-webkit-color-swatch-wrapper { padding: 0; } .sc-col::-webkit-color-swatch { border: 0; border-radius: 50%; }
 .sc-wells { display: inline-flex; gap: 12px; margin-left: auto; }
 .insp .trow input.sc-font { flex: 0 1 200px; }
-.sc-col { cursor: default; } .sc-col:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.sc-col { cursor: default; } .sc-col:focus-visible { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
 #scColorPop { width: 216px; padding: 14px; margin: 0; z-index: 90; }
 .sc-sw { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; justify-items: center; }
 .sc-sw button { width: 24px; height: 24px; padding: 0; border: 0; border-radius: 50%; box-shadow: inset 0 0 0 1px var(--border); }
@@ -1320,7 +1320,7 @@ button.sc-exp:hover { background: var(--hover); } .sc-exp i { font-size: var(--i
 .cal-day input { position: absolute; opacity: 0; inset: 0; margin: 0;}
 .cal-day span { display: inline-block; min-width: 44px; padding: 6px 0; text-align: center; border: 1px solid var(--border); border-radius: var(--r-s); background: var(--panel); color: var(--text-dim); font-size: var(--fs-12); font-weight: 600; }
 .cal-day input:checked + span { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
-.cal-day input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.cal-day input:focus-visible + span { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
 .conflict-btn { color: var(--task-amber); border-color: color-mix(in srgb, var(--task-amber) 50%, var(--border)); }
 .conflict-btn i { margin-right: 6px; }
 .watch-hint { display: inline-flex; align-items: center; gap: 2px; }
