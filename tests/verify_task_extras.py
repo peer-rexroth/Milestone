@@ -133,7 +133,7 @@ with sync_playwright() as p:
     pg.reload(); pg.wait_for_selector("#undoBtn")
     o = ev("() => colOrder"); g = ev("() => gColOrder")
     check("a saved order gets Deadline after Finish, Total Slack after Status, Notes after the variances — once, in both views", all(x[x.index("end") + 1] == "deadline" and x[x.index("status") + 1] == "totalSlack" and x[x.index("durationVariance") + 1] == "notes" for x in (o, g)), o)
-    check("...and every other column stays where the user put it (Task Name, Status first)", o[:2] == ["name", "status"], o[:4])
+    check("...and every other column stays where the user put it (Task Name, Status first)", o[:4] == ["name", "slideName", "onSlide", "status"], o[:5])   # a save from before the Slide fields moved: they join right after Task Name once, nothing else moves
     ev("() => { moveColumn('deadline', 1); }"); pg.reload(); pg.wait_for_selector("#undoBtn")
     check("...not again: a later move of those columns is kept", ev("() => colOrder.indexOf('deadline') !== colOrder.indexOf('end') + 1"))
     check("no console errors", not errors, errors[:5])

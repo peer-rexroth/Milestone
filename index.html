@@ -1371,7 +1371,7 @@ button.sc-exp:hover { background: var(--hover); } .sc-exp i { font-size: var(--i
 .hol-row button { background: none; border: 0; color: var(--text-dim); width: var(--ib-s); height: var(--ib-s); padding: 0; border-radius: 50%; }
 .hol-row button:hover { background: var(--pressed); color: var(--danger); }
 .cal-hint { font-size: var(--fs-12); color: var(--text-dim); margin: 12px 0 0; line-height: 1.5; }
-.gantt-nonwork { position: absolute; top: 0; background: color-mix(in srgb, var(--text) 3.5%, transparent); pointer-events: none; }
+.gantt-nonwork { position: absolute; top: 0; background: color-mix(in srgb, var(--text) 6%, transparent); pointer-events: none; }   /* days off: clear enough to read the working weeks at a glance */
 .grid-name .mismatch-warn { color: var(--task-amber); flex-shrink: 0; font-size: var(--fs-11); }
 .inline-wrap { position: relative; display: flex; align-items: center; }
 .inline-wrap .inline-edit { padding-right: 20px; }
@@ -1426,6 +1426,7 @@ input.inline-edit[type=date]::-webkit-calendar-picker-indicator { margin: 0 0 0 
 .update-banner .icon-btn { color: var(--text-faint); }
 .gantt-today-pill { position: absolute; bottom: 3px; transform: translateX(-50%); z-index: 2; background: var(--danger); color: var(--on-accent); font-size: var(--fs-11); font-weight: 600; line-height: 15px; padding: 0 7px; border-radius: 999px; white-space: nowrap; pointer-events: none; }
 .gantt-today-pill.dot { width: 8px; height: 8px; padding: 0; bottom: 5px; }
+.gantt-today-pill.top { bottom: auto; top: 3px; }   /* the Week scale has two rows of labels: the pill takes the month row, where a label is far rarer to hide than a week's */
 .gantt-tick { position: absolute; top: 0; bottom: 0; border-left: 1px solid var(--border); font-size: var(--fs-11); color: var(--text-faint); padding: 8px 0 0 4px; white-space: nowrap; }
 /* Ticks span their whole period (a calendar week, a month, a quarter), so overflow is clipped rather than
    spilling into the next tick. Week and Year labels are two lines. Week: "CW 37" over the Monday's date. Year: the year
@@ -1435,6 +1436,10 @@ input.inline-edit[type=date]::-webkit-calendar-picker-indicator { margin: 0 0 0 
 .gantt-tick.zoom-week, .gantt-tick.zoom-year { padding: 2px 0 0 4px; line-height: 12px; font-size: var(--fs-11); }
 .gantt-tick b { display: block; font-size: var(--fs-12); font-weight: 600; color: var(--text-dim); }
 .gantt-tick.year-start { border-left-color: var(--text-faint); }
+/* The Week scale: two rows — the month over its calendar weeks ("CW 37 · 07.09."). */
+.gantt-tick.wk-month { bottom: 50%; padding: 2px 0 0 6px; line-height: 15px; font-size: var(--fs-12); font-weight: 600; color: var(--text-dim); }
+.gantt-tick.wk-week { top: 50%; padding: 2px 0 0 4px; line-height: 15px; font-size: var(--fs-11); border-top: 1px solid var(--border); }
+.gantt-tick.wk-week b { display: inline; font-size: var(--fs-11); }
 /* The Hours scale (minute-mode plans): two rows — the day over its 24 hourly cells. */
 .gantt-tick.zoom-hour-day { bottom: 50%; padding: 2px 0 0 4px; line-height: 15px; font-size: var(--fs-11); }
 .gantt-tick.zoom-hour-day b { display: inline; font-size: var(--fs-11); }
@@ -1451,7 +1456,7 @@ input.inline-edit[type=date]::-webkit-calendar-picker-indicator { margin: 0 0 0 
 .gantt-deadline::after { content: ''; position: absolute; left: 5px; top: 7px; width: 2px; height: 19px; background: var(--task-green); }
 .gantt-deadline.missed::before { border-top-color: var(--danger); }
 .gantt-deadline.missed::after { background: var(--danger); }
-.gantt-today-line { position: absolute; top: 0; width: 1px; background: var(--danger); opacity: .55; z-index: 3; pointer-events: none; }
+.gantt-today-line { position: absolute; top: 0; width: 1px; background: var(--danger); opacity: .85; z-index: 3; pointer-events: none; }
 .gantt-bar {
   position: absolute; height: 20px; border-radius: 7px; cursor: grab;
   background: color-mix(in srgb, var(--bar-color, var(--accent)) 24%, var(--panel));   /* a rounded pill: the planned span is a pale tint of its colour, the finished part a solid fill; the name sits beside it */
@@ -1488,6 +1493,7 @@ input.inline-edit[type=date]::-webkit-calendar-picker-indicator { margin: 0 0 0 
 .gantt-bar.manual .resize-handle::after { top: 3.5px; }
 .resize-handle.left::after { left: 3px; } .resize-handle.right::after { right: 3px; }
 .gantt-out-label.grp { font-weight: 600; color: var(--text); }
+.gantt-slip { margin-left: 8px; padding: 1px 7px; border-radius: 999px; font-size: var(--fs-11); font-weight: 650; line-height: 14px; color: var(--danger); background: color-mix(in srgb, var(--danger) 14%, transparent); }   /* the baseline slip: a quiet red pill after the name */
 .link-handle {
   position: absolute; right: -6px; top: 50%; transform: translateY(-50%); width: 11px; height: 11px;
   border-radius: 50%; background: var(--panel); border: 2px solid var(--bar-color, var(--accent));
@@ -3557,6 +3563,8 @@ const TASK_COLS = {
   mode:         { label: 'Task Mode',     width: '76px',              dflt: false },   // its header is two lines (Task / Mode)
   wbs:          { label: 'WBS',           width: '104px',             dflt: false },   // sized for eight levels, 2.2.2.2.2.2.2.2 (83px of text in the widest digit) + the 8px inset on each side + a little slack
   name:         { label: 'Task Name',     width: 'minmax(160px,1fr)', dflt: true, locked: true },
+  slideName:    { label: 'Slide Name',    width: '160px',             dflt: false },   // the short label the Chart for Slides draws instead of the name (a click opens the task dialog on it)
+  onSlide:      { label: 'On Slide',      width: '80px',              dflt: false },   // a Yes / No mark: the tasks the Chart for Slides takes (a click toggles it)
   start:        { label: 'Start',         width: '104px',             dflt: true },
   end:          { label: 'Finish',        width: '104px',             dflt: true },
   deadline:     { label: 'Deadline',      width: '104px',             dflt: false },   // a target date (t.deadline): red once Finish runs past it
@@ -3581,8 +3589,6 @@ const TASK_COLS = {
   durationVariance: { label: 'Duration Variance', width: '104px', dflt: false },
   // Notes: free text, last of the standard columns
   notes:        { label: 'Notes',         width: '200px',             dflt: false },   // the first line of t.notes; a click opens the task's Notes tab   // taskCost(t), read-only, computed from the resource pool's own rates (see "Resource Sheet" in CLAUDE.md) — an empty line/unassigned task shows €0.00
-  onSlide:      { label: 'On Slide',      width: '80px',              dflt: false },   // a Yes / No mark: the tasks the Chart for Slides takes (a click toggles it)
-  slideName:    { label: 'Slide Name',    width: '160px',             dflt: false },   // the short label the Chart for Slides draws instead of the name (a click opens the task dialog on it)
 };
 // ---- Custom fields: Text1-5, Number1-5, Date1-5, Flag1-5. A task keeps its values in `task.custom` ({ text1: 'x', number2: 4.5,
 // date3: '2026-09-01', flag4: true } — only fields that have a value are present). The field NAMES live on the plan
@@ -3614,7 +3620,8 @@ const DEFAULT_COL_ORDER = Object.keys(TASK_COLS);
 const COLS_REV = 1;
 // Column order revisions: Deadline (after Finish), Total Slack (after Status) and Notes (after the variances) came in at the end
 // of everyone's saved order; revision 1 puts them where the default sequence has them.
-const COLS_ORDER_REV = 1, COLS_ORDER_MOVES = [['deadline', 'end'], ['totalSlack', 'status'], ['notes', 'durationVariance']];
+// Revision 2: Slide Name and On Slide (the Chart for Slides fields) sit right after Task Name, so a ticked one shows next to the name it stands in for.
+const COLS_ORDER_REV = 2, COLS_ORDER_MOVES = [['deadline', 'end'], ['totalSlack', 'status'], ['notes', 'durationVariance'], ['slideName', 'name'], ['onSlide', 'slideName']];
 const COLS_REV_SHOWN = { 1: ['wbs'] };
 const DEFAULT_ZOOM = 'fit';         // the standard scale: the whole plan across the chart's width (see currentZoom)
 const ZOOM_DEFAULT_REV = 2;         // bump to reset everybody's saved scale to DEFAULT_ZOOM once (see loadPrefs)
@@ -7640,14 +7647,24 @@ function renderGanttHeaderTicks(range, px) {
   } else if (z.id === 'week') {
     // One tick per calendar week, from the Monday on/before the range start. Shown: "CW 37" over the Monday's date
     // (with the year on the first tick and wherever the year changes); the tooltip gives the whole week.
-    let prevYear = null;
     for (let mon = isoWeekOf(range.start).monday; mon <= range.end; mon += 7) {
       const { week } = isoWeekOf(mon);
       const iso = dayNumberToIso(mon);
-      const year = iso.slice(0, 4);
-      const dateText = (prevYear === null || year !== prevYear) ? fmtDate(iso) : fmtDateShort(iso);   // "07.09." / "04.01.2027"
-      prevYear = year;
-      ticks.push({ left: (mon - range.start) * px, width: 7 * px, html: `<b>${CAL_WEEK_LABEL} ${week}</b>${dateText}`, title: `${CAL_WEEK_LABEL} ${week}: ${fmtDate(iso)} – ${fmtDate(dayNumberToIso(mon + 6))}` });
+      const dateText = fmtDateShort(iso);   // "07.09." — the month row above carries the year (the tooltip has the whole date)
+      ticks.push({ left: (mon - range.start) * px, width: 7 * px, cls: 'wk-week', html: `<b>${CAL_WEEK_LABEL} ${week}</b> ${dateText}`, short: `<b>${CAL_WEEK_LABEL} ${week}</b>`, title: `${CAL_WEEK_LABEL} ${week}: ${fmtDate(iso)} – ${fmtDate(dayNumberToIso(mon + 6))}` });
+    }
+    // The month over its weeks (the top row): a week that straddles two months sits under both.
+    const s0 = dayNumberToIso(range.start);
+    let y = parseInt(s0.slice(0, 4)), m = parseInt(s0.slice(5, 7));
+    for (let i = 0; i < 240; i++) {
+      const miso = `${y}-${pad2(m)}-01`, md = dayNumber(miso);
+      if (md > range.end) break;
+      const ny = m === 12 ? y + 1 : y, nm = m === 12 ? 1 : m + 1;
+      const mEnd = dayNumber(`${ny}-${pad2(nm)}-01`), vis = (Math.min(mEnd, range.end) - Math.max(md, range.start)) * px;   // the part of the month that is on the chart decides how much of its name fits
+      const mDate = parseLocalDate(miso), mFmt = o => mDate.toLocaleDateString(undefined, o);
+      ticks.push({ left: (md - range.start) * px, width: (mEnd - md) * px, cls: 'wk-month', title: mFmt({ month: 'long', year: 'numeric' }),
+        label: vis >= 150 ? mFmt({ month: 'long', year: 'numeric' }) : vis >= 90 ? mFmt({ month: 'short', year: 'numeric' }) : vis >= 44 ? mFmt({ month: 'short' }) : '' });   // a sliver of a month keeps only its tooltip
+      y = ny; m = nm;
     }
   } else if (z.id === 'month') {
     const startIso = dayNumberToIso(range.start);
@@ -7702,15 +7719,24 @@ function todayPillHtml(px) {
   const left = (dayNumber(todayStr()) - dateRange.start + 0.5) * px; if (left < 0 || left > (dateRange.end - dateRange.start) * px) return '';
   if (hourZoomOn()) return '';
   const d = parseLocalDate(todayStr());
-  const text = px >= 22 ? `${WEEKDAY_NAMES[d.getDay()]} ${d.getDate()}` : px >= 11 ? String(d.getDate()) : '';
-  return `<div class="gantt-today-pill${text ? '' : ' dot'}" style="left:${left}px" title="Today">${text}</div>`;
+  const text = px >= 2.8 ? 'Today' : '';   // the label says what it is (the tooltip has the date); a dot only when the scale is too small for a word
+  return `<div class="gantt-today-pill${text ? '' : ' dot'}${currentZoom().id === 'week' ? ' top' : ''}" style="left:${left}px" title="Today · ${escapeHtml(WEEKDAY_NAMES[d.getDay()])} ${escapeHtml(fmtDate(todayStr()))}">${text}</div>`;
 }
 // A bar's (or milestone's) name beside it: to its right, or — when that would run past the end of the chart — to its left (the Fit scale
 // has no sideways scrolling, so the name must not widen the chart).
-function outLabelHtml(name, gap, left, right, top, grp, totalW) {
-  const w = printTextWidth(name, 12, grp) + 4, cls = 'gantt-out-label' + (grp ? ' grp' : '');
-  if (right + gap + w <= totalW || left - gap - w < 0) return `<div class="${cls}" style="left:${right + gap}px;top:${top}px;max-width:${Math.max(40, totalW - right - gap)}px;overflow:hidden;text-overflow:ellipsis">${escapeHtml(name)}</div>`;
-  return `<div class="${cls}" style="right:${totalW - left + 8}px;top:${top}px">${escapeHtml(name)}</div>`;
+function outLabelHtml(name, gap, left, right, top, grp, totalW, slip) {
+  const badge = slip ? `<span class="gantt-slip" title="Finishes later than the baseline: ${escapeHtml(slip.long)}">${escapeHtml(slip.short)}</span>` : '';
+  const w = printTextWidth(name, 12, grp) + 4 + (slip ? printTextWidth(slip.short, 11, true) + 18 : 0), cls = 'gantt-out-label' + (grp ? ' grp' : '');
+  if (right + gap + w <= totalW || left - gap - w < 0) return `<div class="${cls}" style="left:${right + gap}px;top:${top}px;max-width:${Math.max(40, totalW - right - gap)}px;overflow:hidden;text-overflow:ellipsis">${escapeHtml(name)}${badge}</div>`;
+  return `<div class="${cls}" style="right:${totalW - left + 8}px;top:${top}px">${escapeHtml(name)}${badge}</div>`;
+}
+// The badge after a name when the finish has slipped past the baseline: "+2d" (days; minute-mode plans use their own unit). Only a real slip is flagged, and only while the baseline is shown and the task has one.
+function slipBadge(t) {
+  if (!showBaseline) return null;
+  if (hasChildren(t.id) && descendantIds(t.id).some(id => !hasChildren(id) && !byId(id).spacer && !baselineDates(id).end)) return null;   // a group's baseline is the rollup of its tasks': with a task that has none (added after the baseline) the gap is no slip
+  const v = scheduleVariance(t.id); if (v.finish == null || v.finish <= 0) return null;
+  const long = fmtVarianceFor(t.id, v.finish);
+  return { short: varianceIsMinutes(t.id) ? long : `+${v.finish}d`, long };
 }
 // ── New version notice ──────────────────────────────────────────────────────
 // The page you have open keeps running the code it loaded, so when a newer copy is published the app says so (a banner that stays until you act, with Reload).
@@ -7796,7 +7822,7 @@ function renderGantt() {
   document.getElementById('ganttHeader').innerHTML = ticks.map(t => {
     const left = Math.max(0, t.left), width = Math.min(t.width - (left - t.left), totalW - left);   // clipped to the chart at both ends (a scale's first and last week/month/quarter run past it)
     if (width <= 0) return '';
-    return `<div class="gantt-tick zoom-${z.id}${t.cls ? ' ' + t.cls : ''}${t.yearStart ? ' year-start' : ''}" style="left:${left}px;width:${width}px"${t.title ? ` title="${escapeHtml(t.title)}"` : ''}>${width < 18 ? '' : t.html || escapeHtml(t.label)}</div>`;   // (a sliver of a period has no room for its name; the tooltip keeps it)
+    return `<div class="gantt-tick zoom-${z.id}${t.cls ? ' ' + t.cls : ''}${t.yearStart ? ' year-start' : ''}" style="left:${left}px;width:${width}px"${t.title ? ` title="${escapeHtml(t.title)}"` : ''}>${width < 18 ? '' : (t.short && width < 80 ? t.short : t.html || escapeHtml(t.label))}</div>`;   // (a sliver of a period has no room for its name; the tooltip keeps it)
   }).join('') + todayPillHtml(px);
 
   if (list.length === 0) {
@@ -7873,7 +7899,7 @@ function renderGantt() {
     if (t.milestone) {
       const cx = left; const cy = idx * ROW_H + ROW_H / 2;
       barGeom[t.id] = { left: cx - 8, width: 16, top: cy - 8, right: cx + 8, midY: cy, milestone: true };
-      html += outLabelHtml(t.name, 14, cx - 8, cx + 8, cy - 10, false, totalW);   // a milestone's name beside it, as in MS Project
+      html += outLabelHtml(t.name, 14, cx - 8, cx + 8, cy - 10, false, totalW, slipBadge(t));   // a milestone's name beside it, as in MS Project
       html += `<div class="gantt-milestone${cls}" data-id="${t.id}" style="left:${cx - 8}px;top:${cy - 8}px;--bar-color:${color}" title="${escapeHtml(t.name)}${escapeHtml(barTimeNote(eff))}${modeNote}${escapeHtml(baselineNote(t))}" onmousedown="onBarMouseDown(event,'${t.id}','move')"></div>`;
     } else {
       const width = span.width;
@@ -7885,7 +7911,7 @@ function renderGantt() {
         <div class="resize-handle right" onmousedown="event.stopPropagation();onBarMouseDown(event,'${t.id}','resize-right')"></div>
         <div class="link-handle" onmousedown="event.stopPropagation();onLinkHandleMouseDown(event,'${t.id}')"></div>
       </div>`;
-      html += outLabelHtml(t.name, 24, left, left + width, top, group, totalW);   // the name sits beside the bar (clear of the arrows that leave it)
+      html += outLabelHtml(t.name, 24, left, left + width, top, group, totalW, slipBadge(t));   // the name sits beside the bar (clear of the arrows that leave it)
     }
   });
   list.slice(win.from, win.to).forEach(({ task: t }, k) => { html += baselineBarHtml(t, win.from + k, px); });   // under the bars
@@ -8041,7 +8067,7 @@ function renderResourceUsage() {
   document.getElementById('resourceTimelineHead').innerHTML = ticks.map(t => {
     const left = Math.max(0, t.left), width = Math.min(t.width - (left - t.left), totalW - left);   // clipped to the chart at both ends (a scale's first and last week/month/quarter run past it)
     if (width <= 0) return '';
-    return `<div class="gantt-tick zoom-${z.id}${t.cls ? ' ' + t.cls : ''}${t.yearStart ? ' year-start' : ''}" style="left:${left}px;width:${width}px"${t.title ? ` title="${escapeHtml(t.title)}"` : ''}>${width < 18 ? '' : t.html || escapeHtml(t.label)}</div>`;   // (a sliver of a period has no room for its name; the tooltip keeps it)
+    return `<div class="gantt-tick zoom-${z.id}${t.cls ? ' ' + t.cls : ''}${t.yearStart ? ' year-start' : ''}" style="left:${left}px;width:${width}px"${t.title ? ` title="${escapeHtml(t.title)}"` : ''}>${width < 18 ? '' : (t.short && width < 80 ? t.short : t.html || escapeHtml(t.label))}</div>`;   // (a sliver of a period has no room for its name; the tooltip keeps it)
   }).join('');
 
   if (!resources.length && overIds && (project.resources || []).length) {

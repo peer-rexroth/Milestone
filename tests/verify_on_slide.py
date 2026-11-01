@@ -75,7 +75,7 @@ with sync_playwright() as p:
 
     # CSV and Excel use the column
     csv = ev("() => { const o = { scope: 'all', columns: ['name', 'onSlide'], sep: ',' }; return buildCsv(o); }")
-    check("the CSV export carries the column: 'Yes' for a marked task, empty otherwise", "On Slide" in csv and __import__("re").search(r"A one,.*,Yes\s", csv) is not None and __import__("re").search(r"A two,.*,\s", csv) is not None, csv[:200])
+    check("the CSV export carries the column: 'Yes' for a marked task, empty otherwise", "On Slide" in csv and "A one,Yes," in csv and "A two,," in csv, csv[:200])
 
     # the chart: the scope appears only when something is marked
     ev("() => { tasks.forEach(t => delete t.onSlide); save(); render(); openSlideChart(); }"); pg.wait_for_timeout(300)

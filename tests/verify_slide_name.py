@@ -38,7 +38,7 @@ with sync_playwright() as p:
     check("Duplicate copies it", sorted(names()) == ["Short one (copy)=Short", "Short one=Short"], names())
     ev("() => { tasks = tasks.filter(t => !/copy/.test(t.name)); normalizeData(); save(); render(); }")
     csv = ev("() => buildCsv({ scope: 'all', columns: ['name', 'slideName'], sep: ',' })")
-    check("the CSV export carries the column", "Slide Name" in csv and __import__("re").search(r"Short one,.*,Short\s", csv) is not None, csv[:200])
+    check("the CSV export carries the column", "Slide Name" in csv and "Short one,Short," in csv, csv[:200])
 
     # the chart
     ev("() => { openSlideChart(); }"); pg.wait_for_timeout(300)

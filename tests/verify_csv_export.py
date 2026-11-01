@@ -46,7 +46,7 @@ with sync_playwright() as p:
     check("a text that Excel would take for a formula gets an apostrophe", "'=SUM(A1)" in text and ",=SUM" not in text)
     n2, raw2 = export(cols="all", sep=";")
     t2 = raw2.decode("utf-8").lstrip("﻿"); l2 = t2.split("\r\n")
-    check("all columns: WBS, Actual Start and the rest are there, separated by semicolons", l2[0].startswith("ID;Task Mode;WBS;Task Name;Start;Finish;Deadline;Actual Start;") and "Notes" in l2[0], l2[0])
+    check("all columns: WBS, Actual Start and the rest are there, separated by semicolons", l2[0].startswith("ID;Task Mode;WBS;Task Name;Slide Name;On Slide;Start;Finish;Deadline;Actual Start;") and "Notes" in l2[0], l2[0])
     check("...a name with a semicolon would be quoted; this one has none, but the comma is plain text now", 'Design, "final"' in t2 or '"  Design, ""final"""' in t2)
     check("...the note keeps one line: 'line one line two'", "line one line two" in t2)
     n3, raw3 = export(sep="\t")

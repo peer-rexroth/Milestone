@@ -28,16 +28,18 @@ with sync_playwright() as p:
               pg.evaluate("() => ['2025-12-29', '2026-12-28', '2027-01-04', '2026-09-07'].map(i => isoWeekOf(dayNumber(i)).week)") == [1, 53, 1, 37])
 
         # ---- Week scale
-        ticks = pg.evaluate("() => [...document.querySelectorAll('#ganttHeader .gantt-tick')].map(e => ({text: e.innerText.replace(/\\n/g, ' | '), title: e.title, w: e.getBoundingClientRect().width, l: parseFloat(e.style.left), over: [...e.children, e].some(c => c.scrollWidth > e.clientWidth + 0.5)}))")
+        ticks = pg.evaluate("() => [...document.querySelectorAll('#ganttHeader .gantt-tick.wk-week')].map(e => ({text: e.innerText.replace(/\\n/g, ' | '), title: e.title, w: e.getBoundingClientRect().width, l: parseFloat(e.style.left), over: [...e.children, e].some(c => c.scrollWidth > e.clientWidth + 0.5)}))")
         check("Week scale: every tick reads 'CW n'", len(ticks) > 20 and all(t["text"].startswith("CW ") for t in ticks), ticks[:2])
         check("Week scale: each tick is a full 7-day (98px) column, 98px apart", all(abs(t["w"] - 98) < 0.6 for t in ticks[1:-1]) and all(abs((ticks[i + 1]["l"] - ticks[i]["l"]) - 98) < 0.6 for i in range(1, len(ticks) - 2)), [(t["w"], t["l"]) for t in ticks[:4]])
         check("Week scale: no label is clipped or overflowing", not any(t["over"] for t in ticks), [t for t in ticks if t["over"]][:2])
         check("Week scale: tooltip names the whole week (Monday to Sunday)", all(" – " in t["title"] for t in ticks))
-        ok = pg.evaluate("""() => [...document.querySelectorAll('#ganttHeader .gantt-tick')].every(e => { const m = e.title.match(/^CW (\\d+): (\\d\\d)\\.(\\d\\d)\\.(\\d{4}) – /); if (!m) return false; const iso = m[4] + '-' + m[3] + '-' + m[2]; const dn = dayNumber(iso); return ((dn + 3) % 7 + 7) % 7 === 0 && isoWeekOf(dn).week === +m[1]; })""")
+        ok = pg.evaluate("""() => [...document.querySelectorAll('#ganttHeader .gantt-tick.wk-week')].every(e => { const m = e.title.match(/^CW (\\d+): (\\d\\d)\\.(\\d\\d)\\.(\\d{4}) – /); if (!m) return false; const iso = m[4] + '-' + m[3] + '-' + m[2]; const dn = dayNumber(iso); return ((dn + 3) % 7 + 7) % 7 === 0 && isoWeekOf(dn).week === +m[1]; })""")
         check("Week scale: each tick starts on a Monday and its number is that week's", ok)
         texts = [t["text"] for t in ticks]
-        check("Week scale: the first tick and the year change show the full date, the others dd.mm.", "CW 1 | 04.01.2027" in " || ".join(texts).replace(" || ", "\n").split("\n") or any(t.startswith("CW 1 | 04.01.2027") or t.startswith("CW 53 | 28.12.2026") for t in texts), texts[:3])
-        check("Week scale: a normal tick shows just day and month", any(t == "CW 38 | 14.09." for t in texts) or any(t.endswith("| 21.09.") for t in texts), texts[:6])
+        check("Week scale: a week tick shows 'CW n' and dd.mm. (a narrow last one just 'CW n'); the year is in the month row above", all(__import__("re").fullmatch(r"CW \d+( \d\d\.\d\d\.)?", t) for t in texts), [t for t in texts if not __import__("re").fullmatch(r"CW \d+( \d\d\.\d\d\.)?", t)][:3])
+        mrow = pg.evaluate("() => [...document.querySelectorAll('#ganttHeader .gantt-tick.wk-month')].map(e => e.innerText.trim())")
+        check("Week scale: the top row names the months with their year", len(mrow) >= 3 and any("2026" in m for m in mrow) and any(m.startswith("") and "2027" in m for m in mrow), mrow[:4])
+        check("Week scale: a normal tick shows just day and month", any(t == "CW 38 14.09." for t in texts) or any(t.endswith(" 21.09.") for t in texts), texts[:6])
         pg.screenshot(path=f"gantt_week_{loc}.png", clip={"x": 330, "y": 50, "width": 900, "height": 200})
 
         # ---- Year scale

@@ -9,7 +9,7 @@ SEED = re.search(r'SEED = """(.*?)"""', open(os.path.join(os.path.dirname(os.pat
 SPECS = [{"name": "Design", "s": "2026-09-07", "e": "2026-09-18"}, {"name": "Sketch", "parent": "Design", "s": "2026-09-07", "e": "2026-09-11"}, {"name": "Build", "s": "2026-09-21", "e": "2026-09-30"}]
 TASKS_DEFAULT = ["name", "start", "end", "duration", "progress", "preds", "resource", "status"]   # the Tasks view's default
 GANTT_DEFAULT = ["name", "start", "end", "duration", "progress"]   # the Gantt view's default: what fits the 640px list pane beside the chart
-GANTT_ORDER_HEAD = ["mode", "wbs", "name", "start", "end", "deadline", "actualStart", "actualFinish", "duration", "progress", "preds", "resource", "status", "totalSlack", "remaining", "worktype", "work", "cost", "baselineStart", "baselineFinish", "baselineDuration", "startVariance", "finishVariance", "durationVariance", "notes"]   # the same sequence as the Tasks view
+GANTT_ORDER_HEAD = ["mode", "wbs", "name", "slideName", "onSlide", "start", "end", "deadline", "actualStart", "actualFinish", "duration", "progress", "preds", "resource", "status", "totalSlack", "remaining", "worktype", "work", "cost", "baselineStart", "baselineFinish", "baselineDuration", "startVariance", "finishVariance", "durationVariance", "notes"]   # the same sequence as the Tasks view
 with sync_playwright() as p:
     b = p.chromium.launch(headless=True)
     def new_page(prefs=None, w=1500):
@@ -30,7 +30,7 @@ with sync_playwright() as p:
     # ================================================================ defaults
     check("the Tasks view's default columns: Mode, WBS, Name, Start, Finish, Actual Start, Actual Finish, Duration, %, Predecessors, Status", shown("tasks") == TASKS_DEFAULT, shown("tasks"))
     check("the Gantt view has its own default: Mode, WBS, Name, Start, Finish, Duration, Baseline Start, Baseline Finish, Duration Variance", shown("gantt") == GANTT_DEFAULT, shown("gantt"))
-    check("...and its own default ORDER of all columns (Duration in front of the actual dates; the custom fields at the end)", pg.evaluate("() => gColOrder.slice(0, 25)") == GANTT_ORDER_HEAD and pg.evaluate("() => gColOrder.length") == pg.evaluate("() => DEFAULT_COL_ORDER.length") and pg.evaluate("() => colOrder.indexOf('actualStart') < colOrder.indexOf('duration')"))
+    check("...and its own default ORDER of all columns (Duration in front of the actual dates; the custom fields at the end)", pg.evaluate("() => gColOrder.slice(0, 27)") == GANTT_ORDER_HEAD and pg.evaluate("() => gColOrder.length") == pg.evaluate("() => DEFAULT_COL_ORDER.length") and pg.evaluate("() => colOrder.indexOf('actualStart') < colOrder.indexOf('duration')"))
     tab("Gantt")
     check("switching to the Gantt view shows ITS columns in the list header", hdr() == GANTT_DEFAULT, hdr())
     tab("Tasks")
@@ -53,12 +53,12 @@ with sync_playwright() as p:
     # ================================================================ order
     tab("Gantt"); open_menu()
     before_t = pg.evaluate("() => [...colOrder]")
-    pg.click("#columnsMenu button[aria-label='Move Start up']"); pg.wait_for_timeout(150)
+    for _ in range(3): pg.click("#columnsMenu button[aria-label='Move Start up']"); pg.wait_for_timeout(150)   # past On Slide and Slide Name, which sit between Task Name and Start
     order_g = pg.evaluate("() => gColOrder"); pg.keyboard.press("Escape")
     check("moving a column in the Gantt view reorders the Gantt list (Start now before Task Name) and leaves the Tasks view's order alone", order_g.index("start") < order_g.index("name") and pg.evaluate("() => colOrder") == before_t and hdr().index("start") < hdr().index("name"), (hdr(), order_g[:6]))
     # ================================================================ reset
     open_menu(); pg.click("#columnsMenu .btn-link"); pg.wait_for_timeout(200); pg.keyboard.press("Escape")
-    check("'Reset to default' in the Gantt view restores the Gantt default (columns and order) and does not touch the Tasks view", shown("gantt") == GANTT_DEFAULT and pg.evaluate("() => gColOrder.slice(0, 25)") == GANTT_ORDER_HEAD and "baselineStart" in shown("tasks") and "start" not in shown("tasks"), (shown("gantt"), shown("tasks")))
+    check("'Reset to default' in the Gantt view restores the Gantt default (columns and order) and does not touch the Tasks view", shown("gantt") == GANTT_DEFAULT and pg.evaluate("() => gColOrder.slice(0, 27)") == GANTT_ORDER_HEAD and "baselineStart" in shown("tasks") and "start" not in shown("tasks"), (shown("gantt"), shown("tasks")))
     tab("Tasks"); open_menu(); pg.click("#columnsMenu .btn-link"); pg.wait_for_timeout(200); pg.keyboard.press("Escape")
     tab("Gantt"); open_menu(); tick("status", True); pg.keyboard.press("Escape")
     check("...and 'Reset to default' in the Tasks view restores the Tasks defaults, not the Gantt view's (which keeps Status)", shown("tasks") == TASKS_DEFAULT and "status" in shown("gantt"), (shown("tasks"), shown("gantt")))
@@ -70,6 +70,9 @@ with sync_playwright() as p:
     pg2 = new_page({"theme": "light", "zoom": "week", "zoomRev": 2, "view": "gantt", "cols": {"order": ["mode", "wbs", "name", "start", "end", "actualStart", "actualFinish", "duration", "progress", "preds", "remaining", "status", "resource"], "hidden": ["actualStart", "actualFinish", "remaining", "status", "resource"], "rev": 1}})
     g2 = pg2.evaluate("() => visibleTaskCols('gantt')"); t2 = pg2.evaluate("() => visibleTaskCols('tasks')")
     check("preferences saved before this version (a Tasks set only): the Tasks view keeps ITS saved choice (not the new default), the Gantt view starts with its default", g2 == GANTT_DEFAULT and t2 == ["mode", "wbs", "name", "start", "end", "duration", "progress", "preds"], (g2, t2))
+    pg4 = new_page({"theme": "light", "zoom": "week", "zoomRev": 2, "view": "tasks", "cols": {"order": ["mode", "wbs", "name", "start", "end", "deadline", "actualStart", "actualFinish", "duration", "progress", "preds", "resource", "status", "totalSlack", "remaining", "worktype", "work", "cost", "baselineStart", "baselineFinish", "baselineDuration", "startVariance", "finishVariance", "durationVariance", "notes", "text1", "onSlide", "slideName"], "hidden": [], "rev": 1, "orev": 1}})
+    o4 = pg4.evaluate("() => colOrder")
+    check("a saved order from before the move (On Slide and Slide Name at the end) puts them right after Task Name once, the rest of the user's order untouched", o4[:6] == ["mode", "wbs", "name", "slideName", "onSlide", "start"] and o4.index("notes") + 1 == o4.index("text1"), o4[:7])
     pg3 = new_page({"theme": "light", "zoom": "week", "zoomRev": 2, "view": "gantt", "gcols": {"order": ["resource", "bogus", "start", "name", "mode"], "hidden": ["name", "bogus", "mode", "end"]}})
     g3 = pg3.evaluate("() => visibleTaskCols('gantt')"); o3 = pg3.evaluate("() => gColOrder")
     check("garbage in the Gantt set is ignored: unknown columns dropped, Task Name can never be hidden, columns this version knows but the save doesn't are appended and follow the Gantt default (the default ones shown)", "name" in g3 and "bogus" not in o3 and g3 == ["resource", "start", "name", "duration", "progress"] and o3[:3] == ["resource", "start", "name"] and set(o3) == set(pg3.evaluate("() => DEFAULT_COL_ORDER")), (g3, o3[:6]))
