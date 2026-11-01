@@ -186,8 +186,7 @@ with sync_playwright() as p:
     cols = lambda: [pg.input_value(f"#scCol{i}").lower() for i in range(4)] + [pg.input_value("#scInk").lower()]
     pg.select_option("#scPalette", "corporate"); pg.wait_for_timeout(150)
     check("Corporate: Deep Blue, Mid Blue, Bright Blue, Turquoise, text in Dark Blue", cols() == ["#1e2a78", "#0069b1", "#34a6dc", "#3bb8b8", "#16184e"], cols())
-    pg.select_option("#scPalette", "milestone"); pg.wait_for_timeout(150)
-    check("Milestone: the earlier teal / navy / amber / sky", cols()[:2] == ["#00a3a1", "#0b2a4a"] and pg.input_value("#scPalette") == "milestone")
+    check("the palette list offers Corporate and Custom only (no Milestone palette)", pg.eval_on_selector_all("#scPalette option", "o => o.map(x => x.value)") == ["corporate", "custom"])
     pg.fill("#scCol0", "#123456") if False else ev("() => { const i = document.getElementById('scCol0'); i.value = '#123456'; i.dispatchEvent(new Event('input', { bubbles: true })); }"); pg.wait_for_timeout(150)
     check("changing a colour switches the palette to Custom, which shows the colour pickers", pg.input_value("#scPalette") == "custom" and pg.is_visible("#scCol0"))
     pg.select_option("#scPalette", "corporate"); pg.wait_for_timeout(100)

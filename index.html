@@ -2806,7 +2806,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
               <div class="trow"><label for="scMsPlace" class="tgrow">Placed on</label><select id="scMsPlace" class="tin"><option value="group">Their Group’s Row</option><option value="own">Their Own Row</option></select></div>
             </div></section>
             <section class="cal-sec"><div class="cal-sec-title">Look</div><div class="tgrp">
-              <div class="trow"><label for="scPalette" class="tgrow">Palette</label><span class="sc-dots" id="scDots"></span><select id="scPalette" class="tin"><option value="corporate">Corporate</option><option value="milestone">Milestone</option><option value="custom">Custom</option></select></div>
+              <div class="trow"><label for="scPalette" class="tgrow">Palette</label><span class="sc-dots" id="scDots"></span><select id="scPalette" class="tin"><option value="corporate">Corporate</option><option value="custom">Custom</option></select></div>
               <div id="scCustom" class="hidden">
                 <div class="trow"><label for="scCol0" class="tgrow">First Colour</label><input type="color" id="scCol0" class="sc-col"></div>
                 <div class="trow"><label for="scCol1" class="tgrow">Second Colour</label><input type="color" id="scCol1" class="sc-col"></div>
@@ -11977,14 +11977,13 @@ function doPrint() {
 const SC_KEY = 'milestone-slidechart', SC_CM = 37.7953;   // px per cm at 96 dpi
 const SC_PRESETS = { content: [30, 13.4], half: [14.7, 13.4], strip: [30, 7] };   // cm: a 16:9 slide's content area, half of it, a wide strip
 const SC_PALETTES = {   // block colours 1-4 (then round again) and the text colour
-  corporate: { colors: ['#1E2A78', '#0069B1', '#34A6DC', '#3BB8B8'], ink: '#16184E' },   // Deep Blue, Mid Blue, Bright Blue, Turquoise; text Dark Blue (orange stays for milestones)
-  milestone: { colors: ['#00a3a1', '#0b2a4a', '#f2a541', '#5aa9e6'], ink: '#1d2733' } };
+  corporate: { colors: ['#1E2A78', '#0069B1', '#34A6DC', '#3BB8B8'], ink: '#16184E' } };   // Deep Blue, Mid Blue, Bright Blue, Turquoise; text Dark Blue (orange stays for milestones)
 const SC_MS = '#F28011', SC_TODAY = '#E7001D';   // milestone diamonds: Sundown Orange; the today marker: Bright Red
 function scDefaults() {
   return { preset: 'content', w: 30, h: 13.4, maxRows: 16, minPt: 9, scope: 'all', hier: 'blocks', levels: 3, msLabel: 'both', msPlace: 'group', split: 'even', scale: 'auto',
     palette: 'corporate', colors: SC_PALETTES.corporate.colors.slice(), bg: 'transparent', ink: SC_PALETTES.corporate.ink, font: '', today: true, pct: true, legend: false, more: false, pick: [] };
 }
-function scLoad() { try { const o = JSON.parse(localStorage.getItem(SC_KEY) || 'null'); if (o && typeof o === 'object' && !o.palette) o.palette = 'custom'; if (o && o.split !== 'fill') o.split = 'even'; return Object.assign(scDefaults(), o && typeof o === 'object' ? o : {}, { pick: [] }); } catch (e) { return scDefaults(); } }
+function scLoad() { try { const o = JSON.parse(localStorage.getItem(SC_KEY) || 'null'); if (o && typeof o === 'object' && (!o.palette || o.palette === 'milestone')) o.palette = 'custom'; /* (the removed 'Milestone' palette keeps its colours as Custom) */ if (o && o.split !== 'fill') o.split = 'even'; return Object.assign(scDefaults(), o && typeof o === 'object' ? o : {}, { pick: [] }); } catch (e) { return scDefaults(); } }
 function scSave(o) { try { const c = Object.assign({}, o); delete c.pick; localStorage.setItem(SC_KEY, JSON.stringify(c)); } catch (e) { /* a convenience only */ } }
 // The tasks to draw, as a tree of { id, name, level, kids | ms, s, e, p } (day numbers, progress 0-100). A group's dates and progress come from the tasks drawn.
 function scTree(o) {
