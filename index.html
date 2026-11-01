@@ -12,8 +12,8 @@
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
 <link rel="icon" type="image/png" href="icons/icon-192.png">
-<meta name="theme-color" content="#f2f3f7" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#171925" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f5f6f9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#26272c" media="(prefers-color-scheme: dark)">
 <script id="icons">
 // Icon drawings, 24 grid, 2-unit stroke, round caps, currentColor (design-system/icons.json plus the planner's own). The markup keeps its
 // Font Awesome class names (<i class="fa-solid fa-trash">); this registry writes one `.fa-NAME { --fa: url(...) }` mask rule per name before first
@@ -239,7 +239,7 @@ html[data-scheme="glass"] {
   --red-bg: rgba(255,69,58,.15);
   --red-text: #c4281f;
   --green-bg: rgba(52,199,89,.18);
-  --green-text: #1a7a36;
+  --green-text: #17722f;
   --md-dim: var(--text-3);
   --md-h: #3634a3;
   --md-li: #d30f45;
@@ -450,9 +450,10 @@ html[data-scheme="glass"][data-theme="dark"] :is(.content) {
   --pressed: color-mix(in srgb, var(--text) 14%, transparent);
   --ib-s: 22px; --ib-m: 26px;   /* the icon button: a disc (22px; 26px for a dialog's close) */
   --accent: #2a5fcf;
+  --shadow: 0 1px 2px rgba(20,20,30,.04), 0 4px 16px rgba(20,20,30,.06);   /* resting button shadow, as in ClearDesk; a panel's elevation is --elev-2 */
   --accent-hover: color-mix(in srgb, var(--accent) 88%, #000);
   --accent-tint: color-mix(in srgb, var(--accent) 24%, transparent);
-  --glass-accent: linear-gradient(180deg, color-mix(in srgb, var(--accent) 90%, #fff), var(--accent));
+  --glass-accent: var(--accent);   /* a flat fill, no gradient (as in ClearDesk) */
   --sel-bg: var(--accent);
   --sel-inactive: var(--cap-on);
   --on-accent: #fff;
@@ -466,7 +467,7 @@ html[data-scheme="glass"][data-theme="dark"] :is(.content) {
 html {
   --nc-red: #d92d20;
   --nc-orange: #c2570c;
-  --nc-green: #1a7a36;
+  --nc-green: #1a7f37;
   --nc-blue: #2563eb;
   --nc-purple: #7c3aed;
   --nc-gray: #6b7280;
@@ -497,6 +498,8 @@ html[data-theme="light"] {
 }
 
 html[data-theme="dark"] {
+  --accent: #2c62c9;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.35);
   --focus-ring: #417391; --focus-edge: #3c6f8c;
   --cap-fill: rgba(255,255,255,.10);
   --cap-hover: rgba(255,255,255,.19);
@@ -512,7 +515,6 @@ html, :is(.content, .modal, .dropdown-menu) {
   --panel: var(--bg); --panel-2: var(--bg-2);
   --text-dim: var(--text-2); --text-faint: var(--text-3);
   --primary: var(--accent);
-  --shadow: var(--elev-2);
   --row-h: 32px;
   --head-h: 42px;   /* the header of the task list and of the Gantt timescale: two lines of text, the same height in both so the rows line up */
 }
@@ -641,7 +643,7 @@ html[data-theme="dark"] .sb-head #sidebarToggleBtn, html[data-theme="dark"] .sb-
 html:not(.sidebar-collapsed) .sb-float { display: none; }   /* (the show button only exists while the sidebar is hidden) */
 /* narrow windows: the sidebar floats over the content (and starts hidden, see applySidebarState) */
 @media (max-width: 800px) {
-  .sidebar { position: fixed; z-index: 70; top: 0; bottom: 0; left: 0; box-shadow: var(--shadow); }
+  .sidebar { position: fixed; z-index: 70; top: 0; bottom: 0; left: 0; box-shadow: var(--elev-2); }
   .sb-resizer { display: none; }   /* the floating sidebar keeps its width */
 }
 /* view tabs: the task views, a divider, the resource views */
@@ -826,7 +828,7 @@ button:focus:not(:focus-visible) { outline: none; }
 body.col-resizing, body.col-resizing * { cursor: col-resize !important; user-select: none !important; }
 body.col-moving, body.col-moving * { cursor: grabbing !important; user-select: none !important; }
 .col-head.moving, .rst-header > div.moving { opacity: .4; }
-.col-ghost { position: fixed; z-index: 9999; pointer-events: none; padding: 4px 10px; background: var(--panel); border: 1px solid var(--accent); border-radius: var(--r-s); box-shadow: var(--shadow); font-size: var(--fs-12); font-weight: 600; color: var(--text); white-space: nowrap; }
+.col-ghost { position: fixed; z-index: 9999; pointer-events: none; padding: 4px 10px; background: var(--panel); border: 1px solid var(--accent); border-radius: var(--r-s); box-shadow: var(--elev-2); font-size: var(--fs-12); font-weight: 600; color: var(--text); white-space: nowrap; }
 .col-drop-line { position: fixed; z-index: 9998; width: 2px; background: var(--accent); pointer-events: none; }
 /* the cells the last edit changed (MS Project's change highlighting) */
 .main .grid-row > .chg { background-color: var(--chg-bg); }
@@ -2076,7 +2078,7 @@ html.time12 :is(#calendarModalBg) :is(.wh-day-row, .wh-break-add) input.dt-time 
 .dt-cal:disabled { opacity: .4; cursor: default; }
 .dt-native { position: absolute; right: 0; bottom: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 input.dt-date.dt-err, input.dt-time.dt-err, input.dt-err, .bulk-ctl .dt-err { border-color: var(--danger); }
-.dt-err-bubble { position: fixed; z-index: 500; background: var(--danger); color: var(--on-accent); font-size: var(--fs-12); padding: 4px 8px; border-radius: var(--r-s); box-shadow: var(--shadow); opacity: 0; pointer-events: none; transform: translateY(-3px); transition: opacity .12s ease, transform .12s ease; max-width: 220px; }
+.dt-err-bubble { position: fixed; z-index: 500; background: var(--danger); color: var(--on-accent); font-size: var(--fs-12); padding: 4px 8px; border-radius: var(--r-s); box-shadow: var(--elev-2); opacity: 0; pointer-events: none; transform: translateY(-3px); transition: opacity .12s ease, transform .12s ease; max-width: 220px; }
 .dt-err-bubble.show { opacity: 1; transform: translateY(0); }
 input.dt-time { width: 84px; flex: 0 0 84px; text-align: center; }
 .field-dt .dt-wrap { flex: 1 1 130px; min-width: 130px; }   /* the date: room for dd.mm.yyyy and the calendar button; grows to fill any extra room */   /* 104px: the native editor's own ~95px plus a little slack, same figure the grid's date columns use; grows to fill any extra room */
@@ -10785,7 +10787,7 @@ function systemTheme() { return window.matchMedia('(prefers-color-scheme: dark)'
 function resolveTheme() { return themePref === 'auto' ? systemTheme() : themePref; }
 function applyTheme() {
   document.documentElement.setAttribute('data-theme', theme);
-  for (const m of document.querySelectorAll('meta[name="theme-color"]')) m.setAttribute('content', theme === 'dark' ? '#171925' : '#f2f3f7');   // (both scheme metas follow the chosen theme, not only the system one)
+  for (const m of document.querySelectorAll('meta[name="theme-color"]')) m.setAttribute('content', theme === 'dark' ? '#26272c' : '#f5f6f9');   // (both scheme metas follow the chosen theme, not only the system one)
 }
 function setThemePref(pref) { themePref = pref === 'light' || pref === 'dark' ? pref : 'auto'; theme = resolveTheme(); applyTheme(); save(); }
 const UI_SCALE_STEPS = [{ v: .9, label: 'Small', px: 12 }, { v: 1, label: 'Medium', px: 14 }, { v: 1.15, label: 'Large', px: 18 }, { v: 1.3, label: 'Extra Large', px: 22 }];

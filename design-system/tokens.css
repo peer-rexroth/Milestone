@@ -36,7 +36,7 @@ html[data-scheme="glass"] {
   --red-bg: rgba(255,69,58,.15);
   --red-text: #c4281f;
   --green-bg: rgba(52,199,89,.18);
-  --green-text: #1a7a36;
+  --green-text: #17722f;
   --md-dim: var(--text-3);
   --md-h: #3634a3;
   --md-li: #d30f45;
@@ -247,9 +247,10 @@ html[data-scheme="glass"][data-theme="dark"] :is(.content) {
   --pressed: color-mix(in srgb, var(--text) 14%, transparent);
   --ib-s: 22px; --ib-m: 26px;   /* the icon button: a disc (22px; 26px for a dialog's close) */
   --accent: #2a5fcf;
+  --shadow: 0 1px 2px rgba(20,20,30,.04), 0 4px 16px rgba(20,20,30,.06);   /* resting button shadow, as in ClearDesk; a panel's elevation is --elev-2 */
   --accent-hover: color-mix(in srgb, var(--accent) 88%, #000);
   --accent-tint: color-mix(in srgb, var(--accent) 24%, transparent);
-  --glass-accent: linear-gradient(180deg, color-mix(in srgb, var(--accent) 90%, #fff), var(--accent));
+  --glass-accent: var(--accent);   /* a flat fill, no gradient (as in ClearDesk) */
   --sel-bg: var(--accent);
   --sel-inactive: var(--cap-on);
   --on-accent: #fff;
@@ -263,7 +264,7 @@ html[data-scheme="glass"][data-theme="dark"] :is(.content) {
 html {
   --nc-red: #d92d20;
   --nc-orange: #c2570c;
-  --nc-green: #1a7a36;
+  --nc-green: #1a7f37;
   --nc-blue: #2563eb;
   --nc-purple: #7c3aed;
   --nc-gray: #6b7280;
@@ -307,7 +308,6 @@ html, :is(.content, .modal, .dropdown-menu) {
   --panel: var(--bg); --panel-2: var(--bg-2);
   --text-dim: var(--text-2); --text-faint: var(--text-3);
   --primary: var(--accent);
-  --shadow: var(--elev-2);
   --row-h: 32px;
   --head-h: 42px;   /* the header of the task list and of the Gantt timescale: two lines of text, the same height in both so the rows line up */
 }
@@ -321,6 +321,8 @@ html, :is(.content, .modal, .dropdown-menu) {
 }
 
 html[data-theme="dark"] {
+  --accent: #2c62c9;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.35);
   color-scheme: dark;
   --task-blue: #0a84ff; --task-teal: #30b0a0; --task-purple: #af52de; --task-amber: #ff9f0a; --chg-bg: color-mix(in srgb, #ff9f0a 20%, #22272e); --chg-bg-sel: color-mix(in srgb, #ff9f0a 30%, #22272e);   /* (dark: the system's mid-tone fills — white text and a tint both read on them; the -text tones are for text only) */
   --task-pink: #ff375f; --task-green: #30d158; --task-red: #ff453a; --task-grey: #8e8e93;

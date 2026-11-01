@@ -84,7 +84,7 @@ with sync_playwright() as p:
     check("the retired --radius alias is gone", "var(--radius)" not in src and "--radius:" not in src)
     titles = [t for t in _re.findall(r'\btitle="([^"$]*)"', src[src.index("</style>"):])]
     check("no static tooltip is longer than 75 characters", not [t for t in titles if len(t) > 75], [t[:40] for t in titles if len(t) > 75][:5])
-    check("two theme-color metas (light, dark) and a manifest colour that matches the light one", len(_re.findall(r'<meta name="theme-color"', src)) == 2 and '"theme_color": "#f2f3f7"' in open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "manifest.json"), encoding="utf-8").read())
+    check("two theme-color metas (light, dark) and a manifest colour that matches the light one", len(_re.findall(r'<meta name="theme-color"', src)) == 2 and '"theme_color": "#f5f6f9"' in open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "manifest.json"), encoding="utf-8").read())
     pg = b.new_page(viewport={"width": 1400, "height": 900}); pg.add_init_script("delete window.showOpenFilePicker; delete window.showSaveFilePicker; delete window.showDirectoryPicker")
     pg.goto(URL); pg.wait_for_selector("#undoBtn"); pg.evaluate("() => localStorage.clear()"); pg.reload(); pg.wait_for_selector("#undoBtn"); pg.wait_for_timeout(300)
     check("Import is an alert dialog (role alertdialog)", pg.evaluate("() => document.querySelector('#importModalBg .modal').getAttribute('role')") == "alertdialog")
