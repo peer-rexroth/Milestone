@@ -48,7 +48,7 @@ with sync_playwright() as p:
       normalizeData(); save(); setSelection(['c']); setView('tasks'); render(); document.querySelectorAll('.modal-bg.open').forEach(m => m.classList.remove('open')); }""")
     pg.mouse.click(700, 500); pg.wait_for_timeout(300)
     # ---- 2. icon sizes
-    off = ev("""() => [...document.querySelectorAll('i[class*="fa-"]')].filter(i => i.getBoundingClientRect().width).map(i => Math.round(parseFloat(getComputedStyle(i).fontSize) * 1.26 * 10) / 10).filter(d => ![12, 14, 16, 18].some(x => Math.abs(x - d) < .6))""")
+    off = ev("""() => [...document.querySelectorAll('i[class*="fa-"]')].filter(i => i.getBoundingClientRect().width).map(i => Math.round(parseFloat(getComputedStyle(i).fontSize) * (parseFloat(getComputedStyle(i).getPropertyValue('--ico-k')) || 1.26) * 10) / 10).filter(d => ![12, 14, 16, 18].some(x => Math.abs(x - d) < .6))""")
     check("every visible icon is drawn at 12, 14, 16 or 18px", not off, off)
     # ---- 3. contrast
     ROLES = [("selected row text", ".grid-row.selected .grid-name"), ("row text", ".grid-row:not(.selected) .grid-name"), ("secondary row text", ".grid-row:not(.selected) .grid-cell-dim"),
