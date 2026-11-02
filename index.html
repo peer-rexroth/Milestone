@@ -5789,12 +5789,14 @@ function renderSidebarPlans() {   // the plans as rows, so switching needs no me
       (cur ? `<button class="icon-btn sb-mini sb-plan-more" id="planMenuBtn" type="button" onclick="togglePlanMenu()" title="Plan menu — rename, duplicate, link a folder, delete" aria-label="Plan menu" aria-haspopup="menu"><i class="fa-solid fa-ellipsis plan-ico"></i><span id="planBtnName" class="sr-only">${escapeHtml(name)}</span></button>` : '') + `</div>`;
   }).join('');
 }
+// The tab title is "<plan> · Milestone"; an installed app's window puts the app's name in front of the page title itself ("Milestone - <title>"), so there the plan's name is enough.
+function pageTitle() { return window.matchMedia && matchMedia('(display-mode: standalone), (display-mode: window-controls-overlay), (display-mode: minimal-ui)').matches ? project.name : project.name + ' · Milestone'; }
 function updateProjectNameUI() {
   renderSidebarPlans();
   document.getElementById('planBtnName').textContent = project.name;
   document.getElementById('barTitle').textContent = project.name;
   for (const el of document.querySelectorAll('[data-ps-plan]')) el.textContent = '— ' + project.name;   // (Plan settings says which plan it is for)
-  document.title = project.name + ' · Milestone';
+  document.title = pageTitle();
 }
 function renameProject(name) {
   name = (name || '').trim() || 'My Project';
@@ -6802,6 +6804,18 @@ function syncDateColWidths() {
   try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefsPayload())); } catch (e) { /* prefs are a convenience */ }
   if (dropped && document.getElementById('columnsMenu').classList.contains('open')) renderColumnsMenu();
 }
+let gridRowHtml = null, gridRowItems = new Map();   // the last renderGrid's row template and rows
+// Draws ONE row again, in place, with the state as it is now: what an inline editor opening or closing needs (a full render() was ~50 ms). False when the row is
+// not on the page (scrolled out of the window, folded, filtered), or the page was not drawn by renderGrid: the caller then falls back to render().
+function refreshRow(id) {
+  const grid = document.getElementById('gridRows'), item = gridRowItems.get(id);
+  const el = grid && gridRowHtml && item && byId(id) ? [...grid.querySelectorAll('.grid-row[data-id]')].find(r => r.dataset.id === id) : null;
+  if (!el) return false;
+  el.outerHTML = gridRowHtml(item);
+  updateColumnLines(); updateFrozenColumns();   // (renderPass sets the frozen columns and the column lines after the rows: the new row needs them)
+  paintActiveCell();
+  return true;
+}
 function renderGrid() {
   syncDateColWidths();
   const full = true;   // the same full list in both views (before, the Gantt view had a compact four-column one)
@@ -6831,7 +6845,7 @@ function renderGrid() {
   if (list.length > VIRTUAL_THRESHOLD && currentView === 'gantt') { const outer = document.getElementById('ganttPaneOuter'); if (outer) el.scrollTop = outer.scrollTop; }   // (the chart drives the list)
   const win = rowWindow(list.length); renderedWin = { from: win.from, to: win.to, n: list.length, virtual: win.virtual };
   const spacer = px => px > 0 ? `<div class="virt-spacer" style="height:${px}px"></div>` : '';
-  el.innerHTML = (win.virtual ? spacer(win.from * ROW_H) : '') + list.slice(win.from, win.to).map((item) => {
+  const rowHtml = (item) => {
     if (item.header) return groupHeaderRowHtml(item, cols);
     const t = item.task, depth = item.depth;
     const eff = effectiveDates(t.id);
@@ -6958,7 +6972,9 @@ function renderGrid() {
       <div class="grid-cell-dim" style="text-align:center">${taskDisplayId(t.id)}</div>
       ${cols.map(c => marks && marks.has(c) ? cells[c].replace(/^(\s*<div class=")/, '$1chg ') : cells[c]).join('')}
     </div>`;
-  }).join('') + (win.virtual ? spacer((list.length - win.to) * ROW_H) : '')
+  };
+  gridRowHtml = rowHtml; gridRowItems = new Map(list.filter(i => !i.header).map(i => [i.task.id, i]));   // (refreshRow draws one row again from these)
+  el.innerHTML = (win.virtual ? spacer(win.from * ROW_H) : '') + list.slice(win.from, win.to).map(rowHtml).join('') + (win.virtual ? spacer((list.length - win.to) * ROW_H) : '')
     + (currentView === 'tasks' ? '<button type="button" class="grid-add-row" onclick="addTask()" title="Add a task below the selected one, or at the end"><i class="fa-solid fa-plus"></i>Add Task</button>' : '');
   paintActiveCell();
 }
@@ -7066,7 +7082,25 @@ function selectTask(id, ev) {
     const list = displayedTaskIds(), a = list.indexOf(selectedTaskId), b = list.indexOf(id);
     if (a >= 0 && b >= 0) setSelection(list.slice(Math.min(a, b), Math.max(a, b) + 1), selectedTaskId); else setSelection([id]);
   } else setSelection([id]);
-  render();
+  refreshSelection();
+}
+// A click that only moves the selection does not rebuild the list and the chart (a full render() was ~50 ms a click): it moves the
+// `selected` marks on the rows that are already there, then refreshes what the selection drives (cursor, toolbar, Task Form, status
+// bar, link highlight). Anything else (a view without the list, an open cell editor) takes the full render.
+function refreshSelection() {
+  const grid = document.getElementById('gridRows');
+  if (!navView() || editingCell || !grid) { render(); return; }
+  pruneSelection();
+  for (const row of grid.querySelectorAll('.grid-row[data-id]')) row.classList.toggle('selected', isSelected(row.dataset.id));
+  if (currentView === 'gantt') {
+    for (const el of document.querySelectorAll('#ganttRows .gantt-row-bg[data-row-id]')) el.classList.toggle('selected', isSelected(el.dataset.rowId));
+    for (const el of document.querySelectorAll('#ganttRows .gantt-bar[data-id], #ganttRows .gantt-milestone[data-id]')) el.classList.toggle('sel', isSelected(el.dataset.id));
+    setLinkHighlight(selectedTaskId);
+  }
+  paintActiveCell();
+  updateSelectionUI();
+  renderTaskForm();
+  updateStatusBar();
 }
 
 /* ---------------------- Drag-and-drop task reordering ---------------------- */
@@ -7377,8 +7411,9 @@ function startInlineEdit(id, field, opts) {
   if (!inlineEditAllowed(t, field)) return;
   const col = navColOfField(field);
   if (navView()) activeCell = { id, col, shown: !!(activeCell && activeCell.shown) };   // (the cell cursor sits on the cell being edited)
+  const other = editingCell && editingCell.id !== id;   // (another row's editor is still open: draw them all)
   editingCell = { id, field };
-  render();
+  if (other || !refreshRow(id)) render();
   requestAnimationFrame(() => {
     const input = document.querySelector('.inline-edit');
     if (!input) return;
@@ -7390,7 +7425,7 @@ function startInlineEdit(id, field, opts) {
   });
 }
 
-function cancelInlineEdit() { editingCell = null; render(); }
+function cancelInlineEdit() { const was = editingCell; editingCell = null; if (!(was && refreshRow(was.id))) render(); }
 
 function onInlineEditKeydown(e) {
   if (e.key === 'Enter' || e.key === 'Tab') {
@@ -8728,10 +8763,9 @@ function onLinkHandleMouseDown(event, fromId) {
 function addTask() {
   const sel = selectedTaskId ? byId(selectedTaskId) : null;
   let parentId = null, insertAt = childrenOf(null).length;
-  if (sel && hasChildren(sel.id)) {
+  if (sel && hasChildren(sel.id) && !(sel.collapsed && !filtersActive())) {   // an open group: the new task is its first sub-task
     parentId = sel.id; insertAt = 0;
-    if (sel.collapsed) { sel.collapsed = false; sel.updatedAt = Date.now(); } // otherwise the new task would be hidden
-  } else if (sel) {
+  } else if (sel) {   // a task, or a folded group (it is one row: the new task goes below it, not hidden inside it)
     parentId = sel.parentId || null;
     insertAt = childrenOf(parentId).findIndex(s => s.id === sel.id) + 1;
   }
@@ -11991,7 +12025,14 @@ function printImgToggle(e) {
   const m = document.getElementById('printImgMenu'); if (e) e.stopPropagation();
   if (m.classList.contains('open')) { printImgClose(); return; }
   m.classList.add('open'); const r = document.getElementById('printImgBtn').getBoundingClientRect();
-  m.style.left = Math.max(8, Math.min(r.right - m.offsetWidth, window.innerWidth - m.offsetWidth - 8)) + 'px'; m.style.top = Math.max(8, r.top - m.offsetHeight - 8) + 'px';
+  scPlace(m, Math.max(8, Math.min(r.right - m.offsetWidth, window.innerWidth - m.offsetWidth - 8)), Math.max(8, r.top - m.offsetHeight - 8));
+}
+// A popover inside a dialog (the Save As menus, the colour popover): the dialog's blur makes IT the reference of `position: fixed` (not the window): they were drawn off by the dialog's own
+// offset. Put the popover where the window coordinates say, then move it by however far it landed from there (right whatever the reference is).
+function scPlace(m, left, top) {
+  m.style.left = left + 'px'; m.style.top = top + 'px';
+  const r = m.getBoundingClientRect();
+  m.style.left = (left + (left - r.left)) + 'px'; m.style.top = (top + (top - r.top)) + 'px';
 }
 function printImgClose() { const m = document.getElementById('printImgMenu'); if (m) m.classList.remove('open'); }
 document.addEventListener('click', e => { if (!e.target.closest('#printImgMenu') && !e.target.closest('#printImgBtn')) printImgClose(); });
@@ -12085,7 +12126,7 @@ const SC_PALETTES = {   // block colours 1-5 (then round again) and the text col
   corporate: { colors: ['#1E2A78', '#0069B1', '#34A6DC', '#3BB8B8', '#24778D'], ink: '#16184E' } };   // Deep Blue, Mid Blue, Bright Blue, Turquoise, Petrol; text Dark Blue (orange stays for milestones)
 const SC_MS = '#F28011', SC_TODAY = '#E7001D';   // milestone diamonds: Sundown Orange; the today marker: Bright Red
 function scDefaults() {
-  return { preset: 'content', w: 30, h: 13.4, maxRows: 16, minPt: 9, scope: 'all', hier: 'blocks', parents: true, levels: 3, msLabel: 'both', msPlace: 'group', split: 'even', scale: 'auto',
+  return { preset: 'content', w: 30, h: 13.4, maxRows: 16, minPt: 9, scope: 'all', hier: 'blocks', parents: true, levels: 6, msLabel: 'both', msPlace: 'group', split: 'even', scale: 'auto',
     palette: 'corporate', colors: SC_PALETTES.corporate.colors.slice(), bg: 'transparent', ink: SC_PALETTES.corporate.ink, font: '', today: true, pct: true, legend: false, more: false, pick: [] };
 }
 function scLoad() { try { const o = JSON.parse(localStorage.getItem(SC_KEY) || 'null'); if (o && typeof o === 'object' && (!o.palette || o.palette === 'milestone')) o.palette = 'custom'; /* (the removed 'Milestone' palette keeps its colours as Custom) */ if (o && o.split !== 'fill') o.split = 'even'; const r = Object.assign(scDefaults(), o && typeof o === 'object' ? o : {}, { pick: [] }); const d = scDefaults().colors; r.colors = d.map((c, i) => (r.palette !== 'corporate' && Array.isArray(r.colors) && r.colors[i]) || c); /* (a palette saved with four colours gets the fifth; Corporate is always the current Corporate) */ return r; } catch (e) { return scDefaults(); } }
@@ -12410,7 +12451,7 @@ function scToggleSave(e) {
   const m = scEl('scSaveMenu'); if (e) e.stopPropagation();
   if (m.classList.contains('open')) { scSaveClose(); return; }
   m.classList.add('open'); const r = scEl('scSaveBtn').getBoundingClientRect();
-  m.style.left = Math.max(8, Math.min(r.right - m.offsetWidth, window.innerWidth - m.offsetWidth - 8)) + 'px'; m.style.top = Math.max(8, r.top - m.offsetHeight - 8) + 'px';
+  scPlace(m, Math.max(8, Math.min(r.right - m.offsetWidth, window.innerWidth - m.offsetWidth - 8)), Math.max(8, r.top - m.offsetHeight - 8));
 }
 const SC_SWATCHES = ['#1E2A78', '#0069B1', '#34A6DC', '#3BB8B8', '#24778D', '#25A62D', '#F28011', '#E7001D', '#8E3B8F', '#16184E', '#1D2733', '#8A96A3'];
 let scColTarget = null;
@@ -12425,8 +12466,7 @@ function scColOpen(inp) {
   const m = scEl('scColorPop'); if (scColTarget === inp) { scColClose(); return; }
   scColTarget = inp; scEl('scSw').innerHTML = SC_SWATCHES.map(c => `<button type="button" data-c="${c}" style="background:${c}" aria-label="${c}"></button>`).join('');
   m.classList.add('open'); scColMark(); const r = inp.getBoundingClientRect();
-  m.style.left = Math.max(8, Math.min(r.right - m.offsetWidth, window.innerWidth - m.offsetWidth - 8)) + 'px';
-  m.style.top = Math.max(8, Math.min(r.bottom + 6, window.innerHeight - m.offsetHeight - 8)) + 'px';
+  scPlace(m, Math.max(8, Math.min(r.right - m.offsetWidth, window.innerWidth - m.offsetWidth - 8)), Math.max(8, Math.min(r.bottom + 6, window.innerHeight - m.offsetHeight - 8)));
 }
 document.addEventListener('click', e => {
   const inp = e.target.closest && e.target.closest('input.sc-col');
@@ -15101,7 +15141,7 @@ document.addEventListener('DOMContentLoaded', () => {
   load();
   resetHistory();
   applyTheme(); applyGridPaneWidth();
-  document.title = project.name + ' · Milestone';
+  document.title = pageTitle();
   wireGlobalEvents();
   wireTaskForm();
   renderSettingsTabs();

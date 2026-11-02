@@ -92,6 +92,12 @@ with sync_playwright() as p:
     check("Cmd+, (Ctrl+, off a Mac) opens Plan settings, as the tooltip says", pg.evaluate("() => !!document.querySelector('.modal-bg.open .settings-modal')"))
     check("the Plan settings tooltip names the shortcut of this platform", pg.evaluate("() => document.getElementById('planSettingsBtn').title.endsWith(IS_MAC ? '(⌘,)' : '(Ctrl+,)')"))
     pg.close()
+    # an installed app's window puts the app name in front of the page title itself: the plan's name alone there, "<plan> · Milestone" in a tab
+    pg = b.new_page(); pg.goto(URL); pg.wait_for_selector("#undoBtn"); ev = pg.evaluate
+    tab = ev("() => document.title")
+    ev("() => { const m = window.matchMedia.bind(window); window.matchMedia = q => q.includes('standalone') ? { matches: true, media: q, addEventListener() {}, removeEventListener() {} } : m(q); updateProjectNameUI(); }")
+    inst = ev("() => document.title")
+    check("the page title is '<plan> · Milestone' in a tab and just the plan in an installed window (the window adds 'Milestone - ' itself)", tab.endswith(" · Milestone") and inst == tab[:-len(" · Milestone")], [tab, inst])
     check("no page errors", not errors, errors[:3])
     b.close()
 print(f"{sum(results)}/{len(results)} passed"); raise SystemExit(0 if all(results) else 1)
