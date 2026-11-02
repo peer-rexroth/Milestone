@@ -11,7 +11,7 @@ def check(name, cond, detail=""):
     results.append(bool(cond)); print(("PASS  " if cond else "FAIL  ") + name + (f"   [{str(detail)[:500]}]" if not cond and detail else ""))
 
 SEED = """() => { historyCoalesceMs = 0; project.workDays = [0,1,2,3,4,5,6]; delete project.statusDate; tasks.length = 0; let o = 0;
-  const d = n => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
+  const d = n => dayStr(new Date(Date.now() + n * 864e5));
   const mk = (id, name, s, e, x) => Object.assign({ id, name, parentId: null, order: o++, startDate: s, endDate: e, progress: 0, milestone: false, color: null, predecessors: [], collapsed: false, updatedAt: 1, constraintType: 'ASAP', constraintDate: null, taskMode: 'auto', resource: '', actualStart: null, actualFinish: null }, x || {});
   tasks.push(mk('g', 'Phase', d(-20), d(20)),
     mk('a', 'Behind', d(-20), d(-1), { parentId: 'g', progress: 40 }), mk('b', 'On track', d(-5), d(4), { parentId: 'g', progress: 50 }), mk('c', 'Ahead', d(-5), d(4), { parentId: 'g', progress: 80 }),
@@ -53,7 +53,7 @@ with sync_playwright() as p:
     check("a group and an empty line give no point (the line runs on between their neighbours)", o["g"] is None and o["sp"] is None and r["n"] == 2 + 10)
 
     # ---- the status date
-    ev("() => { project.statusDate = new Date(Date.now() - 10 * 864e5).toISOString().slice(0, 10); save(); render(); }"); pg.wait_for_timeout(200)
+    ev("() => { project.statusDate = dayStr(new Date(Date.now() - 10 * 864e5)); save(); render(); }"); pg.wait_for_timeout(200)
     r2 = ev("() => ({ pts: document.querySelector('#ganttDeps polyline.progress-line').getAttribute('points').split(' ')[0].split(',').map(Number), label: (document.querySelector('#ganttDeps text.status-label') || {}).textContent, line: !!document.querySelector('#ganttDeps line.status-line'), today: document.querySelector('.gantt-today-line').offsetLeft })")
     check("a status date other than today: the line moves there, with its own dashed line and a 'Status dd.mm.yyyy' label", r2["pts"][0] < r2["today"] - 100 and r2["line"] and (r2["label"] or "").startswith("Status "), r2)
     check("...today's red line stays where it is", abs(r2["today"] - sx) <= 1)
@@ -88,7 +88,7 @@ with sync_playwright() as p:
     check("the choice is remembered on this device (a preference, not part of the plan)", ev("() => showProgressLine") is True and ev("() => JSON.parse(localStorage.getItem('milestone-prefs')).showProgressLine") is True and 'showProgressLine' not in ev("() => JSON.parse(canonicalText()).project"))
 
     # ---- a large plan (rows outside the built window still give points)
-    ev(SEED); ev("""() => { const d = n => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
+    ev(SEED); ev("""() => { const d = n => dayStr(new Date(Date.now() + n * 864e5));
       for (let i = 0; i < 400; i++) tasks.push({ id: 'x' + i, name: 'Bulk ' + i, parentId: null, order: 100 + i, startDate: d(-10), endDate: d(10), progress: i % 100, milestone: false, color: null, predecessors: [], collapsed: false, updatedAt: 1, constraintType: 'ASAP', constraintDate: null, taskMode: 'auto', resource: '', actualStart: null, actualFinish: null });
       normalizeData(); save(); showProgressLine = true; render(); }"""); pg.wait_for_timeout(500)
     n = ev("() => document.querySelector('#ganttDeps polyline.progress-line').getAttribute('points').split(' ').length")

@@ -1204,7 +1204,7 @@ html.time12 .tf-dt input.dt-time { flex: 0 0 104px; min-width: 104px; width: 104
 .sub-wrap:hover > .row-sub, .sub-wrap.open > .row-sub { display: block; }
 .sub-wrap:hover > .has-sub, .sub-wrap.open > .has-sub { background: var(--accent); color: var(--on-accent); }
 .sub-wrap:hover > .has-sub i, .sub-wrap.open > .has-sub i { color: inherit; }
-.dropdown-item .sub-chev { margin-left: auto; font-size: var(--ico-12); color: var(--text-3); }
+.dropdown-item .sub-chev { margin-left: auto; width: 12px; height: 12px; font-size: var(--ico-12); color: var(--text-3); }   /* 12px, like ClearDesk's submenu arrow (the 15px icon box made it look heavier) */
 .row-sub .dropdown-item { padding: 6px 8px; gap: 8px; }
 .row-sub .dropdown-item .mode-check { order: -1; margin-left: 0; width: 18px; font-size: var(--ico-14); color: inherit; }
 .sub-dot { width: 12px; height: 12px; border-radius: 50%; flex: none; margin: 0 1px; }
@@ -2115,20 +2115,20 @@ input.dt-time { width: 84px; flex: 0 0 84px; text-align: center; }
 /* Help: a tabbed dialog — a rail of topics on the left, short icon rows under small section titles on the right (like Pulse's help) */
 .modal.help-modal { width: 860px; max-width: 94vw; height: min(700px, 88vh); max-height: none; position: relative; overflow: hidden; }   /* a fixed height, so switching topics never resizes the dialog */
 /* System-Settings layout (design-system 6.4): a tinted rail on the left (round close, search, the topics as inset rows with the accent on the current one) and on the right a large title that follows the topic. */
-.help-modal .modal-header { position: absolute; z-index: 3; top: 0; left: 224px; right: 0; padding: 20px 24px 0; background: transparent; pointer-events: none; }
+.help-modal .modal-header { position: absolute; z-index: 3; top: 0; left: 236px; right: 0; padding: 20px 24px 0; background: transparent; pointer-events: none; }
 .help-modal .modal-header > * { pointer-events: auto; }
 .help-modal .modal-header h2 { font-size: var(--fs-22); font-weight: 700; letter-spacing: -.01em; }
 .help-modal .modal-header .hdr-link { margin: 0; padding: 5px 12px; border-radius: 999px; background: var(--cap-fill); color: var(--text); font-weight: 500; }
 .help-modal .modal-header .hdr-link:hover { background: var(--cap-hover); }
-.help-modal .modal-header button:not(.hdr-link)[aria-label="Close"] { position: absolute; left: -210px; top: 14px; width: 28px; height: 28px; padding: 0; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--cap-fill); color: var(--text-2); font-size: var(--fs-12); }
+.help-modal .modal-header button:not(.hdr-link)[aria-label="Close"] { position: absolute; left: -222px; top: 14px; width: 28px; height: 28px; padding: 0; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--cap-fill); color: var(--text-2); font-size: var(--fs-12); }
 .help-modal .modal-header button:not(.hdr-link)[aria-label="Close"]:hover { background: var(--cap-hover); }
 .help-modal .modal-footer { display: none; }
 .help-layout { display: flex; flex: 1; min-height: 0; }
-.help-rail { width: 224px; flex-shrink: 0; display: flex; flex-direction: column; min-height: 0; background: var(--bg-2); }
+.help-rail { width: 236px; flex-shrink: 0; display: flex; flex-direction: column; min-height: 0; background: var(--bg-2); }
 .help-rail .help-search-bar { padding: 52px 12px 8px; }
-.help-rail .help-search-bar input { height: 32px; padding: 0 12px; border: none; border-radius: 999px; background: var(--cap-fill); }
-.help-nav { width: auto; flex: 1; min-height: 0; flex-shrink: 0; display: flex; flex-direction: column; gap: 2px; padding: 4px 12px 12px; border-right: 0; background: transparent; overflow-y: auto; }
-.help-nav button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 7px 10px; border: 0; border-radius: var(--r-m); background: transparent; color: var(--text); font: inherit; font-size: var(--fs-13); text-align: left; }
+.help-rail .help-search-bar input { height: 36px; padding: 0 14px; border: none; border-radius: var(--r-m); background: var(--cap-fill); }
+.help-nav { width: auto; flex: 1; min-height: 0; flex-shrink: 0; display: flex; flex-direction: column; gap: 2px; padding: 6px 10px 12px; border-right: 0; background: transparent; overflow-y: auto; }
+.help-nav button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border: 0; border-radius: var(--r-s); background: transparent; color: var(--text); font: inherit; font-size: var(--fs-13); text-align: left; }
 .help-nav button i { width: 16px; height: 16px; text-align: center; font-size: var(--ico-16); color: var(--text-3); flex-shrink: 0; }
 .help-nav button:hover { background: var(--hover); color: var(--text); }
 .help-nav button.active { background: var(--accent); color: var(--on-accent); font-weight: 600; box-shadow: none; }   /* the solid accent on the current topic, as in System Settings */
@@ -2151,8 +2151,8 @@ input.dt-time { width: 84px; flex: 0 0 84px; text-align: center; }
 .help-section > .help-row:last-child { border-radius: 0 0 var(--r-l) var(--r-l); }
 .help-section > .help-section-title + .help-row:last-child { border-radius: var(--r-l); }
 .help-section-title { font-size: var(--fs-11); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-2); }
-/* Help and Shortcuts as grouped inspectors: sentence-case captions over tinted cards, hairlines inset from the left */
-.help-section-title, .sc-group h3 { margin: 0; padding: 0 14px 6px; font-size: var(--fs-12); font-weight: 600; text-transform: none; letter-spacing: 0; color: var(--text-3); }
+/* Help and Shortcuts as grouped inspectors: small-caps captions over tinted cards, hairlines inset from the left */
+.help-section-title, .sc-group h3 { margin: 0; padding: 0 14px 6px; font-size: var(--fs-12); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-3); }   /* small capitals over the tinted cards, as in ClearDesk's Help */
 .help-section > .help-row, .help-section > .help-keys { background: color-mix(in srgb, var(--text) 5%, transparent); border-radius: 0; }
 .help-section > .help-row + .help-row { border-top: 0; position: relative; }
 .help-section > .help-row + .help-row::before { content: ""; position: absolute; left: 16px; right: 0; top: 0; height: 1px; background: var(--border); }
@@ -3213,7 +3213,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
     <div class="modal-header"><h2 id="helpTitle">Help</h2><button type="button" class="btn-link hdr-link" onclick="closeHelpModal();openShortcuts()" title="Press ? anywhere"><i class="fa-regular fa-keyboard"></i> Keyboard Shortcuts</button><button onclick="closeHelpModal()" aria-label="Close" title="Close (Esc)"><i class="fa-solid fa-xmark"></i></button></div>
     <div class="help-layout">
       <div class="help-rail">
-        <div class="help-search-bar"><input type="search" id="helpSearch" placeholder="Search help…" aria-label="Search help" autocomplete="off" oninput="helpSearch(this.value)" onkeydown="helpSearchKey(event)"></div>
+        <div class="help-search-bar"><input type="search" id="helpSearch" placeholder="Search" aria-label="Search help" autocomplete="off" oninput="helpSearch(this.value)" onkeydown="helpSearchKey(event)"></div>
       <div class="help-nav" role="tablist" aria-orientation="vertical" onkeydown="helpTabKey(event)">
         <button type="button" role="tab" id="helpTab-start" class="active" aria-selected="true" aria-controls="helpPane-start" tabindex="0" onclick="setHelpTab('start')"><i class="fa-solid fa-compass"></i><span>Getting started</span></button>
         <button type="button" role="tab" id="helpTab-scheduling" class="" aria-selected="false" aria-controls="helpPane-scheduling" tabindex="-1" onclick="setHelpTab('scheduling')"><i class="fa-solid fa-sitemap"></i><span>Scheduling</span></button>
@@ -3820,7 +3820,8 @@ let fileSyncPollTimer = null;
    two devices in different timezones compute identical values from the
    same ISO string; display formatting still parses as local time. */
 function pad2(n) { return String(n).padStart(2, '0'); }
-function todayStr() { const d = new Date(); return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; }
+function dayStr(d) { return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; }   // the LOCAL calendar day of a Date (toISOString() is UTC)
+function todayStr() { return dayStr(new Date()); }
 function parseLocalDate(iso) { return new Date(iso + 'T00:00:00'); }
 function dayNumber(iso) { const [y, m, d] = iso.split('-').map(Number); return Math.floor(Date.UTC(y, m - 1, d) / DAY_MS); }
 function dayNumberToIso(n) { const d = new Date(n * DAY_MS); return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}`; }

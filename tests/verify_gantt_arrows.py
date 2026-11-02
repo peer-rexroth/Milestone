@@ -10,7 +10,7 @@ def check(name, cond, detail=""):
     results.append(bool(cond)); print(("PASS  " if cond else "FAIL  ") + name + (f"   [{str(detail)[:400]}]" if not cond and detail else ""))
 
 SEED = """() => { historyCoalesceMs = 0; project.workDays = [0,1,2,3,4,5,6]; tasks.length = 0; let o = 0;
-  const d = n => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
+  const d = n => dayStr(new Date(Date.now() + n * 864e5));
   const mk = (id, name, s, e, x) => Object.assign({ id, name, parentId: null, order: o++, startDate: s, endDate: e, progress: 0, milestone: false, color: null, predecessors: [], collapsed: false, updatedAt: 1, constraintType: 'ASAP', constraintDate: null, taskMode: 'auto', resource: '', actualStart: null, actualFinish: null }, x || {});
   tasks.push(mk('a', 'WS1', d(0), d(8)), mk('b', 'WS7', d(9), d(16), { predecessors: [{ id: 'a', type: 'FS', lag: 0 }] }), mk('c', 'Narrow', d(11), d(11), { predecessors: [{ id: 'a', type: 'FS', lag: 0 }] }),
     mk('m', 'Milestone', d(17), d(17), { milestone: true, predecessors: [{ id: 'b', type: 'FS', lag: 0 }] }), mk('z', 'Loose', d(3), d(5)));
