@@ -2845,7 +2845,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
               <div class="trow"><label for="scMsPlace" class="tgrow">Placed on</label><select id="scMsPlace" class="tin"><option value="group">Their Group’s Row</option><option value="own">Their Own Row</option></select></div>
             </div></section>
             <section class="cal-sec"><div class="cal-sec-title">Look</div><div class="tgrp">
-              <div class="trow"><label for="scPalette" class="tgrow">Palette</label><span class="sc-dots" id="scDots"></span><select id="scPalette" class="tin"><option value="corporate">Corporate</option><option value="custom">Custom</option></select></div>
+              <div class="trow"><label for="scPalette" class="tgrow">Palette</label><span class="sc-dots" id="scDots"></span><select id="scPalette" class="tin"><option value="corporate">Corporate</option><option value="one">One Colour</option><option value="custom">Custom</option></select></div>
               <div id="scCustom" class="hidden">
                 <div class="trow"><label class="tgrow" id="scColsLbl">Colours</label><span class="sc-wells" role="group" aria-labelledby="scColsLbl"><input type="color" id="scCol0" class="sc-col" aria-label="Colour 1"><input type="color" id="scCol1" class="sc-col" aria-label="Colour 2"><input type="color" id="scCol2" class="sc-col" aria-label="Colour 3"><input type="color" id="scCol3" class="sc-col" aria-label="Colour 4"><input type="color" id="scCol4" class="sc-col" aria-label="Colour 5"></span></div>
                 <div class="trow"><label for="scInk" class="tgrow">Text Colour</label><span class="sc-wells"><input type="color" id="scInk" class="sc-col"></span></div>
@@ -12410,7 +12410,9 @@ function scChanged(e) {
     if (e.target.id === 'scPreset' && SC_PRESETS[e.target.value]) { scEl('scW').value = SC_PRESETS[e.target.value][0]; scEl('scH').value = SC_PRESETS[e.target.value][1]; }
     else if (e.target.id === 'scW' || e.target.id === 'scH') scEl('scPreset').value = 'custom';
     else if (e.target.id === 'scPalette' && SC_PALETTES[e.target.value]) { const pal = SC_PALETTES[e.target.value]; pal.colors.forEach((c, i) => { scEl('scCol' + i).value = c; }); scEl('scInk').value = pal.ink; }
-    else if (/^scCol\d$|^scInk$/.test(e.target.id)) scEl('scPalette').value = 'custom';
+    else if (e.target.id === 'scPalette' && e.target.value === 'one') { const c = scEl('scCol0').value; for (let i = 1; i < 5; i++) scEl('scCol' + i).value = c; }   // One Colour: every block in the first colour
+    else if (e.target.id === 'scCol0' && scEl('scPalette').value === 'one') { for (let i = 1; i < 5; i++) scEl('scCol' + i).value = e.target.value; }
+    else if (/^scCol\d$|^scInk$/.test(e.target.id) && !(e.target.id === 'scInk' && scEl('scPalette').value === 'one')) scEl('scPalette').value = 'custom';
   }
   scLook();
   clearTimeout(scTimer); scTimer = setTimeout(scRefresh, 60);
@@ -12441,7 +12443,10 @@ function scLook() {
   const custom = scEl('scPreset').value === 'custom', w = parseFloat(scEl('scW').value), h = parseFloat(scEl('scH').value), pal = scEl('scPalette').value;
   scEl('scSizeRow').classList.toggle('hidden', custom); scEl('scWRow').classList.toggle('hidden', !custom); scEl('scHRow').classList.toggle('hidden', !custom);
   scEl('scSizeVal').textContent = Number.isFinite(w) && Number.isFinite(h) ? `${w} × ${h} cm` : '';
-  scEl('scCustom').classList.toggle('hidden', pal !== 'custom'); scEl('scDots').classList.toggle('hidden', pal === 'custom');   /* (the wells show the colours then) */
+  const one = pal === 'one';
+  scEl('scCustom').classList.toggle('hidden', pal !== 'custom' && !one); scEl('scDots').classList.toggle('hidden', pal === 'custom' || one);
+  for (let i = 1; i < 5; i++) scEl('scCol' + i).classList.toggle('hidden', one);   // One Colour: a single well
+  scEl('scColsLbl').textContent = one ? 'Colour' : 'Colours';   /* (the wells show the colours then) */
   scEl('scHierRow').classList.toggle('hidden', !scEl('scParents').checked);
   scEl('scMsPlace').closest('.trow').classList.toggle('hidden', !scEl('scParents').checked);   // (milestones are rows of their own then)   // without the groups there is nothing to draw as blocks or brackets
   scEl('scDots').innerHTML = [0, 1, 2, 3, 4].map(i => `<i style="background:${scEl('scCol' + i).value}"></i>`).join('');
