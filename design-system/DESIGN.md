@@ -4,7 +4,7 @@ An Apple-style look for a web app (a PWA used mostly in desktop Chrome on macOS)
 
 **Two apps share this guide.** ClearDesk (tasks, notes, prompts) wrote it; Milestone (a Gantt planner) took it over and added section 21 plus a few lines marked *Milestone* in sections 1.5, 2.1, 2.3, 2.6, 6.2, 6.3, 12 and 14. Sections about the notes editor, the prompt editor, the board and the docked detail panel (5.8, 13, 19.2) describe ClearDesk only; everything else applies to both. Where the two differ, the text says which is which.
 
-**Synced with ClearDesk's `DESIGN.md` at commit `68bcce2` (2026-11-02).** The shared chapters (1–20) should differ from ClearDesk's only where a line says *Milestone*. After a change to ClearDesk's file, diff the two, copy what applies, and update this line. `tests/browser-checks.py` in ClearDesk fails when a token both apps define differs.
+**Synced with ClearDesk's `DESIGN.md` at commit `bf81593` (2026-11-02).** The shared chapters (1–20) should differ from ClearDesk's only where a line says *Milestone*. After a change to ClearDesk's file, diff the two, copy what applies, and update this line. `tests/browser-checks.py` in ClearDesk fails when a token both apps define differs.
 
 **Files in this folder**
 
@@ -316,7 +316,7 @@ An alert can open **over** a sheet (it stacks at a higher z-index and closes on 
 - Left: a **tinted sidebar**: a round close button where macOS puts its window controls, a capsule search field, the topics as inset rounded rows with the **solid accent on the current one**. Right: a **large title** that follows the topic ("Search results" while searching) and grouped content.
 - Content in **grouped cards**: each section's rows sit in one rounded, softly tinted list with hairlines between rows; a short icon on each row; keys shown as key caps in the system font on the right.
 - No header bar and no hairline between the halves. In a narrow window the sidebar becomes a strip across the top.
-- **Keyboard-driven:** opens with focus on the topic list; ↑/↓/Home/End switch topic, → or Tab enters the text, ← goes back; **/** jumps to search; Esc clears the search first, a second Esc closes.
+- **Keyboard-driven:** opens with focus in the search box; Tab reaches the topic list; ↑/↓/Home/End switch topic, → or Tab enters the text, ← goes back; **/** jumps to search; Esc clears the search first, a second Esc closes.
 - **About** is a button-less centred panel like macOS's: the real app icon (22% corner radius), name, tagline, credit line, privacy line, a round close control at the top-left. No version line unless the app has one.
 - Search reads the static HTML of the panes and marks the matching words; the dialog reopens on the topic last read.
 
