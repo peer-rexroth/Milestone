@@ -5720,12 +5720,17 @@ function currentZoomUncached() {
 }
 function hourZoomOn() { return currentZoom().id === 'hour'; }
 
+// Writing the same markup again still makes the browser lay the page out again (and drops focus and hover): a render only writes a piece of chrome (tabs, header, plan
+// rows) when its markup is not what it wrote last time.
+function setHtmlIfChanged(el, html) { if (!el || el._lastHtml === html) return false; el.innerHTML = html; el._lastHtml = html; return true; }
+let inRenderPass = false;   // (fitToolbar runs once at the end of a render pass, not again for each thing in it that could change the toolbar)
 function render() {
   pruneSelection();
   resetEffectiveCache();
   resetIdCache();
   _kidsCache = childMap();
-  try { renderPass(); } finally { _kidsCache = null; }
+  inRenderPass = true;
+  try { renderPass(); } finally { _kidsCache = null; inRenderPass = false; }
 }
 function renderPass() {
   updateProjectNameUI();
@@ -5767,9 +5772,9 @@ function emptyIcon(name) {   // the registry drawing at 0.9 stroke: the 2-unit s
   return `<svg class="empty-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width=".9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${(typeof ICONS === 'object' && ICONS[name]) || ''}</svg>`;
 }
 function renderMainViewTabs() {
-  document.getElementById('mainViewTabs').innerHTML = MAIN_VIEWS.map((v, i) =>
+  setHtmlIfChanged(document.getElementById('mainViewTabs'), MAIN_VIEWS.map((v, i) =>
     (i && MAIN_VIEWS[i - 1].group !== v.group ? '<span class="view-tab-sep" aria-hidden="true"></span>' : '') +
-    `<button class="view-tab${v.id === currentView ? ' active' : ''}" onclick="setView('${v.id}')" title="${v.label} (Alt+Cmd/Ctrl+${i + 1})" aria-pressed="${v.id === currentView}"${v.id === currentView ? ' aria-current="page"' : ''}${viewCount(v.id)}><i class="fa-solid ${v.icon}"></i><span>${v.label}</span></button>`).join('');
+    `<button class="view-tab${v.id === currentView ? ' active' : ''}" onclick="setView('${v.id}')" title="${v.label} (Alt+Cmd/Ctrl+${i + 1})" aria-pressed="${v.id === currentView}"${v.id === currentView ? ' aria-current="page"' : ''}${viewCount(v.id)}><i class="fa-solid ${v.icon}"></i><span>${v.label}</span></button>`).join(''));
   for (const g of document.querySelectorAll('#subbar [data-views]')) g.classList.toggle('hidden', !g.dataset.views.split(' ').includes(currentView));   // the toolbar belongs to the view
   document.getElementById('main').classList.toggle('view-tasks', currentView === 'tasks');
   document.getElementById('main').classList.toggle('view-gantt', currentView === 'gantt');
@@ -5783,11 +5788,11 @@ function renderSidebarPlans() {   // the plans as rows, so switching needs no me
   const el = document.getElementById('sbPlans'); if (!el) return;
   const idx = readPlansIndex() || { plans: [] }, list = idx.plans.filter(p => isSafeId(p.id));
   const count = p => { if (p.id === currentPlanId) return tasks.filter(t => !t.spacer).length; try { return (JSON.parse(localStorage.getItem(planDataKey(p.id))).tasks || []).filter(t => !t.spacer).length; } catch (e) { return ''; } };
-  el.innerHTML = list.map(p => {
+  setHtmlIfChanged(el, list.map(p => {
     const cur = p.id === currentPlanId, name = cur ? project.name : p.name;
     return `<div class="sb-plan-row${cur ? ' active' : ''}" role="listitem" data-plan-id="${p.id}"><button class="sb-plan-main" type="button"${cur ? ' aria-current="true"' : ''} onclick="switchPlan('${p.id}')" title="${escapeHtml(name)}"><i class="fa-regular fa-folder-open"></i><span>${escapeHtml(name)}</span><em>${count(p)}</em></button>` +
       (cur ? `<button class="icon-btn sb-mini sb-plan-more" id="planMenuBtn" type="button" onclick="togglePlanMenu()" title="Plan menu — rename, duplicate, link a folder, delete" aria-label="Plan menu" aria-haspopup="menu"><i class="fa-solid fa-ellipsis plan-ico"></i><span id="planBtnName" class="sr-only">${escapeHtml(name)}</span></button>` : '') + `</div>`;
-  }).join('');
+  }).join(''));
 }
 // The tab title is "<plan> · Milestone"; an installed app's window puts the app's name in front of the page title itself ("Milestone - <title>"), so there the plan's name is enough.
 function pageTitle() { return window.matchMedia && matchMedia('(display-mode: standalone), (display-mode: window-controls-overlay), (display-mode: minimal-ui)').matches ? project.name : project.name + ' · Milestone'; }
@@ -5807,7 +5812,7 @@ function renameProject(name) {
 function renderZoomTabs() {
   const el = document.getElementById('zoomTabs');
   const cur = currentZoom().id;
-  el.innerHTML = ZOOMS.filter(z => !z.minuteOnly || minuteModeActive()).map(z => `<button class="view-tab${z.id === zoom ? ' active' : ''}" onclick="setZoom('${z.id}')">${z.label}</button>`).join('');
+  setHtmlIfChanged(el, ZOOMS.filter(z => !z.minuteOnly || minuteModeActive()).map(z => `<button class="view-tab${z.id === zoom ? ' active' : ''}" onclick="setZoom('${z.id}')">${z.label}</button>`).join(''));
 }
 function setZoom(id) { zoom = id; save(); render(); }
 function updateCriticalPathUI() {
@@ -5841,7 +5846,7 @@ function updateSelectionUI() {
   document.getElementById('bulkEditBtn').title = nEdit > 1 ? `Change a field for all ${nEdit} selected tasks` : 'Edit the selected task (select several to change them together)';
   document.getElementById('selChip').innerHTML = `${n} selected <i class="fa-solid fa-xmark"></i>`;
   document.getElementById('selChip').classList.toggle('hidden', n < 2);   // one row: the row itself shows it (and the status bar says "1 selected"); the chip only earns its place for a multi-selection, where Clear matters
-  fitToolbar();   // the selection buttons come and go: the toolbar may need the More menu (or not) now
+  if (!inRenderPass) fitToolbar();   // the selection buttons come and go: the toolbar may need the More menu (or not) now (a render pass fits it once, at its end)
 }
 
 // A bar is coloured by STATUS only (complete / late / in progress / not started). A task's own colour is a label for its ROW (see taskColorVar):
@@ -6833,7 +6838,7 @@ function renderGrid() {
     ...Object.fromEntries(Object.keys(CUSTOM_FIELDS).map(id => [id, colHeadHtml(customFieldName(id), id)]))
   };
   applyColTemplate(cols);
-  document.getElementById('gridHeader').innerHTML = `<div class="id-head"><button class="id-toggle" id="collapseToggleBtn" onclick="toggleAllCollapsed()"><i class="fa-solid fa-angles-up"></i></button></div>${cols.map(c => HEAD[c]).join('')}`;
+  setHtmlIfChanged(document.getElementById('gridHeader'), `<div class="id-head"><button class="id-toggle" id="collapseToggleBtn" onclick="toggleAllCollapsed()"><i class="fa-solid fa-angles-up"></i></button></div>${cols.map(c => HEAD[c]).join('')}`);
   const list = displayRows();   // (the outline, or — grouped — the tasks under a header per value)
   const el = document.getElementById('gridRows');
   if (list.length === 0 && filtersActive() && tasks.length) { el.innerHTML = filterEmptyHtml(); return; }
