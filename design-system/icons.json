@@ -142,7 +142,7 @@
  "scale-balanced": "<path d=\"M12 5v14.5M8 19.5h8M7 7.5h10\"/><path d=\"M7 7.5 4.5 13a2.5 2.5 0 0 0 5 0zM17 7.5 14.5 13a2.5 2.5 0 0 0 5 0z\"/>",
  "scissors": "<circle cx=\"6.5\" cy=\"7\" r=\"2.5\"/><circle cx=\"6.5\" cy=\"17\" r=\"2.5\"/><path d=\"M8.7 8.3 19 17.5M8.7 15.7 19 6.5\"/>",
  "shapes": "<circle cx=\"8\" cy=\"8\" r=\"3.5\"/><rect x=\"12\" y=\"12\" width=\"7.5\" height=\"7.5\" rx=\"1.5\"/><path d=\"M4.5 19.5 8 13l3.5 6.5z\"/>",
- "sidebar": "<rect x=\"3.5\" y=\"5\" width=\"17\" height=\"14\" rx=\"4\"/><path d=\"M9.5 5v14\"/>",
+ "sidebar": "<rect x=\"2.25\" y=\"3.75\" width=\"19.5\" height=\"16.5\" rx=\"3.75\"/><path d=\"M9 3.75v16.5\"/>",
  "sitemap": "<g transform=\"translate(0.667 0.667) scale(0.944)\" stroke-width=\"2.118\"><rect x=\"9.5\" y=\"3.5\" width=\"5\" height=\"4.5\" rx=\"1.2\"/><rect x=\"3\" y=\"16\" width=\"5\" height=\"4.5\" rx=\"1.2\"/><rect x=\"16\" y=\"16\" width=\"5\" height=\"4.5\" rx=\"1.2\"/><path d=\"M12 8v4M5.5 16v-4h13v4\"/></g>",
  "sliders": "<path d=\"M4 7h9M17 7h3M4 17h3M11 17h9\"/><circle cx=\"15\" cy=\"7\" r=\"2\"/><circle cx=\"9\" cy=\"17\" r=\"2\"/>",
  "spinner": "<path d=\"M12 4.5v3M12 16.5v3M4.5 12h3M16.5 12h3M6.7 6.7l2.1 2.1M15.2 15.2l2.1 2.1M17.3 6.7l-2.1 2.1M8.8 15.2l-2.1 2.1\"/>",

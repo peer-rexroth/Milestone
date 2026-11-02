@@ -19,7 +19,7 @@
 // Font Awesome class names (<i class="fa-solid fa-trash">); this registry writes one `.fa-NAME { --fa: url(...) }` mask rule per name before first
 // paint, so every icon is drawn as an outline SVG. A name with no entry renders nothing. No icon font, no CDN.
 const ICONS = {
-  "sidebar": "<rect x=\"3.5\" y=\"5\" width=\"17\" height=\"14\" rx=\"4\"/><path d=\"M9.5 5v14\"/>",
+  "sidebar": "<rect x=\"2.25\" y=\"3.75\" width=\"19.5\" height=\"16.5\" rx=\"3.75\"/><path d=\"M9 3.75v16.5\"/>",
   "angles-down": "<path d=\"m7 6.5 5 5 5-5M7 13l5 5 5-5\"/>",
   "angles-up": "<path d=\"m7 11.5 5-5 5 5M7 18l5-5 5 5\"/>",
   "arrow-down": "<path d=\"M12 5v14M6.5 13.5 12 19l5.5-5.5\"/>",
@@ -581,7 +581,6 @@ html:has(.dropdown-menu.open) .sb-resizer { visibility: hidden; }   /* its accen
 .sb-head { display: flex; align-items: center; gap: 8px; height: 52px; flex: none; padding: 0 12px; }   /* just the round hide button (the views are rows below) */
 .sb-head #sidebarToggleBtn, .sb-float { background: var(--cap-fill); border-radius: 50%; width: 36px; height: 36px; flex: none; box-shadow: inset 0 1px 0 var(--sheen), 0 1px 4px var(--shadow-ink-soft); }   /* ClearDesk's round hide / show button: the same glyph (a 16px outline svg), the same lit edge */
 html[data-theme="dark"] .sb-head #sidebarToggleBtn, html[data-theme="dark"] .sb-float { --sheen: rgba(255,255,255,.22); }
-.sb-head #sidebarToggleBtn svg, .sb-float svg { width: 16px; height: 16px; flex: none; }
 .sb-head #sidebarToggleBtn:hover { background: var(--cap-hover); }
 .sidebar .view-tabs { display: flex; flex-direction: column; gap: 2px; padding: 0; background: none; border-radius: 0; }
 .sidebar .view-tab { display: flex; align-items: center; gap: 10px; width: 100%; height: auto; padding: 8px 10px; border: none; border-radius: var(--r-m); background: transparent; color: var(--text-2); font-size: var(--fs-14); font-weight: 500; text-align: left; }
