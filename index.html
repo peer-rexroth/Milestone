@@ -2417,7 +2417,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
       <button class="btn btn-sm ico" id="bulkEditBtn" data-more="3" onclick="editSelected()" title="Edit the selected task"><i class="fa-solid fa-pen"></i><span class="sr-only">Edit</span></button>
       <button class="btn btn-sm ico" id="cloneTaskBtn" data-more="8" onclick="cloneSelected()" title="Duplicate — an exact copy right below, with all its sub-tasks"><i class="fa-regular fa-duplicate"></i><span class="sr-only">Duplicate</span></button>
       <button class="btn btn-sm ico" id="copyBtn" data-more="9" onclick="copySelectionButton()" title="Copy the selected tasks (Ctrl/Cmd+C) — paste into Milestone or Excel"><i class="fa-regular fa-copy"></i><span class="sr-only">Copy</span></button>
-      <button class="btn btn-sm btn-danger ico" id="deleteTaskBtn" onclick="deleteSelected()" title="Delete the selected tasks (Delete)"><i class="fa-solid fa-trash"></i><span class="sr-only">Delete</span></button>
+      <button class="btn btn-sm btn-danger ico" id="deleteTaskBtn" onclick="deleteSelected()" title="Delete the selected tasks (⌫)"><i class="fa-solid fa-trash"></i><span class="sr-only">Delete</span></button>
     </div>
       <button class="sel-chip hidden" id="selChip" onclick="clearSelection()" title="Clear the selection (Esc)"></button>
   </div>
@@ -3279,7 +3279,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
             <span class="help-keycombo"><kbd>Esc</kbd></span><span>Cancel an edit, close a dialog or menu, or clear the selection</span>
             <span class="help-keycombo"><kbd>Ctrl/Cmd</kbd><span class="help-plus">+</span><kbd>A</kbd></span><span>Select all visible tasks</span>
             <span class="help-keycombo"><kbd>Ctrl/Cmd</kbd><span class="help-plus">+</span><kbd>C</kbd> <kbd>X</kbd> <kbd>V</kbd></span><span>Copy, cut and paste tasks (or rows from Excel)</span>
-            <span class="help-keycombo"><kbd>Delete</kbd></span><span>Delete the selected tasks (after asking)</span>
+            <span class="help-keycombo"><kbd>⌫</kbd></span><span>Delete the selected tasks (after asking)</span>
             <span class="help-keycombo"><kbd>Ctrl/Cmd</kbd><span class="help-plus">+</span><kbd>K</kbd> or <kbd>/</kbd></span><span>Find a task</span>
             <span class="help-keycombo"><kbd>Ctrl/Cmd</kbd><span class="help-plus">+</span><kbd>P</kbd></span><span>Print or save as PDF</span>
           </div>
@@ -14671,7 +14671,7 @@ const SHORTCUTS = [
     [['Mod+A'], 'Select every visible task'],
     [['Double-click'], 'Open the task'], [['Right-click'], 'Row menu'],
     [['Mod+C', 'Mod+X', 'Mod+V'], 'Copy / cut / paste tasks'],
-    [['Delete', 'Backspace'], 'Delete the selected tasks']]],
+    [['⌫'], 'Delete the selected tasks']]],
   ['Moving around the task list (Tasks and Gantt views)', [
     [['↑', '↓', '←', '→'], 'Move from cell to cell (the row becomes the selection)'], [['Shift+↑', 'Shift+↓'], 'Extend the selection'],
     [['Home', 'End'], 'First / last column'], [['Mod+Home', 'Mod+End'], 'First / last cell of the list'], [['PageUp', 'PageDown'], 'A page up / down'],

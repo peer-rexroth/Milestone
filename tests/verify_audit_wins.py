@@ -98,6 +98,12 @@ with sync_playwright() as p:
     ev("() => { const m = window.matchMedia.bind(window); window.matchMedia = q => q.includes('standalone') ? { matches: true, media: q, addEventListener() {}, removeEventListener() {} } : m(q); updateProjectNameUI(); }")
     inst = ev("() => document.title")
     check("the page title is '<plan> · Milestone' in a tab and just the plan in an installed window (the window adds 'Milestone - ' itself)", tab.endswith(" · Milestone") and inst == tab[:-len(" · Milestone")], [tab, inst])
+    # the Delete key is shown as ⌫ everywhere (row menu hint, toolbar tooltip, Shortcuts, Help), never as "Del" / "Delete" keycaps
+    ev("() => { openShortcuts(); }"); pg.wait_for_timeout(150)
+    sc = ev("() => [...document.querySelectorAll('#shortcutsBody kbd')].map(k => k.textContent)")
+    ev("() => document.querySelectorAll('.modal-bg.open').forEach(m => m.classList.remove('open'))")
+    help_k = ev("() => [...document.querySelectorAll('#helpModalBg kbd')].map(k => k.textContent)")
+    check("the Delete key is a backspace symbol in the toolbar tooltip, Shortcuts and Help", "⌫" in ev("() => document.getElementById('deleteTaskBtn').title") and "⌫" in sc and "⌫" in help_k and not [k for k in sc + help_k if k in ("Del", "Delete", "Backspace")], [sc[-3:], help_k[:3]])
     check("no page errors", not errors, errors[:3])
     b.close()
 print(f"{sum(results)}/{len(results)} passed"); raise SystemExit(0 if all(results) else 1)
