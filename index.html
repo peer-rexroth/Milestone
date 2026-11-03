@@ -5032,15 +5032,25 @@ function effectiveDates(id) {
     if (mo && result.start) { result.startTime = t.startTime || null; result.endTime = t.endTime || null; }
   }
   else {
-    let start = null, end = null, startTime = null, endTime = null, totalDur = 0, doneDur = 0;
+    let start = null, end = null, softMin = null, startTime = null, endTime = null, totalDur = 0, doneDur = 0;
     for (const k of kids) {
       const e = effectiveDates(k.id);
-      if (!e.start) continue;
+      if (!e.start) {   // a task with only ONE date known (the other is "TBD") still tells its group that date: a known finish pushes the group's end out
+        if (k.taskMode === 'manual' && !k.spacer && (k.startText != null) !== (k.endText != null) && !hasChildren(k.id)) {
+          const known = k.startText != null ? k.endDate : k.startDate, ex = k.startText != null ? 'end' : 'start';
+          if (ex === 'end') { if (end === null || dayNumber(known) > dayNumber(end)) end = known; }
+          else if (start === null || dayNumber(known) < dayNumber(start)) start = known;
+          if (softMin === null || dayNumber(known) < dayNumber(softMin)) softMin = known;
+        }
+        continue;
+      }
       if (start === null || (mo ? effM(e.start, e.startTime, false) < effM(start, startTime, false) : dayNumber(e.start) < dayNumber(start))) { start = e.start; startTime = e.startTime || null; }
       if (end === null || (mo ? effM(e.end, e.endTime, true) > effM(end, endTime, true) : dayNumber(e.end) > dayNumber(end))) { end = e.end; endTime = e.endTime || null; }
       const dur = dayNumber(e.end) - dayNumber(e.start) + 1;
       totalDur += dur; doneDur += dur * (e.progress / 100);
     }
+    if (end === null && start !== null) end = start;
+    if (start === null && end !== null) start = softMin;   // (only finishes are known: the group starts with the earliest of them)
     const progress = totalDur > 0 ? Math.round((doneDur / totalDur) * 100) : 0;
     if (t.taskMode === 'manual') {
       // A manually scheduled summary keeps its own dates instead of rolling

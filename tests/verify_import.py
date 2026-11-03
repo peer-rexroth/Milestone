@@ -148,5 +148,7 @@ with sync_playwright() as p:
     check("a file without tasks says so", "No tasks" in pg.inner_text("#toastMsg"), pg.inner_text("#toastMsg"))
     g = ev("""() => { const r = tasksFromTable([['Task Name','Outline Level','Start','Finish'],['Group','1','',''],['Sub','2','01.03.2027','05.03.2027'],['Lone','1','','']]); return r.tasks.map(t => [t.taskMode, t.startText || null]); }""")
     check("a row with subtasks and no dates of its own imports as Auto (it takes its dates from below), while a lone undated row stays a manual TBD", g[0] == ["auto", None] and g[2] == ["manual", "TBD"], g)
+    g = ev("""() => { const r = tasksFromTable([['Task Name','Outline Level','Start','Finish'],['Group','1','',''],['A','2','','30.11.2026'],['B','2','','16.11.2026'],['C','2','','']]); tasks = r.tasks; normalizeData(); const e = effectiveDates(tasks[0].id); return [e.start, e.end]; }""")
+    check("a group takes the finish dates of subtasks whose start is TBD: it ends on the latest, starts on the earliest", g == ["2026-11-16", "2026-11-30"], g)
     check("no console errors", not errors, errors[:5])
     print("console errors/warnings:", errors[:5]); print(f"{sum(results)}/{len(results)} passed"); b.close()
