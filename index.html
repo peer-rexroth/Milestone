@@ -11369,6 +11369,8 @@ function tasksFromTable(rows, opts = {}) {
     byRef.set(String(col('id') >= 0 ? cell(x.r, 'id').trim() : x.row), t);
     if (col('id') >= 0) byRef.set(String(x.row), byRef.get(String(x.row)) || t);
   });
+  // a row that has subtasks is a group: with no dates of its own it is Auto and takes its dates from what is below it (not a manual "TBD" that never follows them)
+  for (const { t, x } of made) if (kidCount.get(t.id) && t.taskMode === 'manual' && !parseTableDate(cell(x.r, 'start').trim(), fmt) && !parseTableDate(cell(x.r, 'end').trim(), fmt)) { t.taskMode = 'auto'; delete t.startText; delete t.endText; }
   // links (after every task exists): "3FS+2d" refers to the ID column, or to the row number
   for (const { t, x } of made) {
     const txt = cell(x.r, 'preds').trim(); if (!txt) continue;
