@@ -12318,7 +12318,9 @@ function scBuild(o) {
       for (const [a, above, anchor] of cands) { const b = a + w; if (a >= X0 && b <= X1 && !clash(a, b, above)) { pick = [a, above, anchor]; break; } }
       if (!pick) pick = [Math.min(Math.max(X0, x + d + 6), X1 - w), true, 'start'];
       const [a, above] = pick; labels.push([i, a, a + w, above]);
-      out.push(`<text x="${(a + (pick[2] === 'end' ? w : 0)).toFixed(1)}" y="${(cy + (above ? -rowH * .4 : f * .34)).toFixed(1)}" font-size="${f.toFixed(1)}" font-weight="600" fill="${INK}" text-anchor="${pick[2]}" stroke="${o.bg === 'white' ? '#fff' : '#fff'}" stroke-width="3.5" stroke-opacity="${o.bg === 'white' ? 1 : .85}" paint-order="stroke" stroke-linejoin="round">${esc(txt)}</text>`);
+      const tx = (a + (pick[2] === 'end' ? w : 0)).toFixed(1), ty = (cy + (above ? -rowH * .4 : f * .34)).toFixed(1), common = `x="${tx}" y="${ty}" font-size="${f.toFixed(1)}" font-weight="600" text-anchor="${pick[2]}"`;
+      // the white halo is its own text under the real one: paint-order is not understood by PowerPoint (it drew the halo OVER the letters)
+      out.push(`<text ${common} fill="#fff" fill-opacity="${o.bg === 'white' ? 1 : .85}" stroke="#fff" stroke-width="3.5" stroke-opacity="${o.bg === 'white' ? 1 : .85}" stroke-linejoin="round">${esc(txt)}</text><text ${common} fill="${INK}">${esc(txt)}</text>`);
     };
     chunk.forEach((r, i) => {
       const b = blocks[r.blk], col = colorOf(b), cy = ys[i] + rowH / 2, n = r.n;
@@ -14979,6 +14981,11 @@ function wireGlobalEvents() {
     if (!overlayOpen && !typing && (selectedTaskId || selectedTaskIds.size)) { setSelection([]); render(); }
   });
   document.getElementById('toastUndoBtn').addEventListener('click', triggerToastUndo);
+  // A drag that starts inside a dialog (selecting text in a field) and ends on the backdrop must not close it:
+  // the browser then fires "click" on the backdrop, so ignore clicks whose press began elsewhere.
+  let pressedOnBackdrop = true;
+  document.addEventListener('mousedown', e => { pressedOnBackdrop = !!(e.target.classList && e.target.classList.contains('modal-bg')); }, true);
+  document.addEventListener('click', e => { if(e.target.classList && e.target.classList.contains('modal-bg') && !pressedOnBackdrop){ e.stopPropagation(); e.preventDefault(); } }, true);
   document.addEventListener('mousedown', e => { mouseDownInEditor = !!(editingCell && e.target && e.target.closest && e.target.closest('.inline-edit, .inline-wrap')); }, true);
   document.addEventListener('copy', e => { if (clipboardActive(e) && selectedIds().length) { e.preventDefault(); copySelection(e.clipboardData, false); } });
   document.addEventListener('cut', e => { if (clipboardActive(e) && selectedIds().length) { e.preventDefault(); copySelection(e.clipboardData, true); } });
