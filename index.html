@@ -1667,7 +1667,7 @@ html.settings-switching .modal-bg { transition: none; }
 .alert-ico.danger { background: var(--red-bg); color: var(--red-text); }
 .modal.alert .modal-actions { align-self: stretch; display: flex; justify-content: center; gap: 8px; margin-top: 8px; }
 .modal.alert .modal-actions .btn { flex: 1; justify-content: center; }
-.modal.alert .modal-actions .btn:not(.btn-primary) { background: var(--bg-2); box-shadow: var(--elev-1); border-color: transparent; }
+.modal.alert .modal-actions .btn:not(.btn-primary) { background: var(--bg-3); border-color: var(--glass-edge); box-shadow: inset 0 1px 0 var(--glass-rim), 0 1px 4px var(--glass-lift-1); }
 .modal.alert .alert-info { align-self: stretch; text-align: left; font-size: var(--fs-12); color: var(--text-3); }
 .modal.roomy { width: 540px; max-height: 94vh; }
 /* dialog sizes: narrow 380 (questions), 480 (default), mid 520 (Baselines), wide 620 (Edit Task, Working calendar, imports — many fields side by side) */
@@ -1995,7 +1995,10 @@ html.time12 :is(#calendarModalBg) :is(.wh-day-row, .wh-break-add) input.dt-time 
 .modal-body { padding: 16px 24px 4px; overflow-y: auto;   /* (4px below: the 3px focus ring of a last row would be cut by the scroll box) */ display: flex; flex-direction: column; gap: 14px; color: var(--text-2); line-height: 1.6; }
 .modal-body :is(input, select, textarea, .field label) { line-height: normal; }
 .modal-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 16px 24px 24px; border-top: 0; }
-.modal-footer .btn:not(.btn-primary) { background: var(--bg-2); box-shadow: var(--elev-1); border-color: transparent; }
+.modal-footer .btn:not(.btn-primary) { background: var(--bg-3); border-color: var(--glass-edge); box-shadow: inset 0 1px 0 var(--glass-rim), 0 1px 4px var(--glass-lift-1); }
+:is(.modal-footer, .modal-actions) .btn:not(.btn-primary):hover { background: var(--hover); }
+/* Dialog footer and alert buttons are ClearDesk's (cross-app audit X2-03): 14px, regular weight, 35px high, a glass fill with a light rim. The dense buttons (toolbar, grid, Gantt, .btn-sm) keep 13px. */
+:is(.modal-footer, .modal-actions) .btn:not(.btn-sm):not(.btn-icon) { font-size: var(--fs-14); font-weight: 400; padding: 8px 14px; }
 .modal-tabs + .modal-body, .modal-tabs ~ .modal-body { padding-top: 16px; }
 
 /* The task dialog is a grouped inspector, like ClearDesk's task panel: tinted groups of rows (label left, value right, hairlines between, no boxes),
