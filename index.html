@@ -19,7 +19,7 @@
 // Font Awesome class names (<i class="fa-solid fa-trash">); this registry writes one `.fa-NAME { --fa: url(...) }` mask rule per name before first
 // paint, so every icon is drawn as an outline SVG. A name with no entry renders nothing. No icon font, no CDN.
 const ICONS = {
-  "sidebar": "<rect x=\"2.25\" y=\"3.75\" width=\"19.5\" height=\"16.5\" rx=\"3.75\"/><path d=\"M9 3.75v16.5\"/>",
+  "sidebar": "<rect x=\"3.5\" y=\"4.5\" width=\"17\" height=\"15\" rx=\"3.5\"/><path d=\"M9.5 4.5v15\"/>",
   "angles-down": "<path d=\"m7 6.5 5 5 5-5M7 13l5 5 5-5\"/>",
   "angles-up": "<path d=\"m7 11.5 5-5 5 5M7 18l5-5 5 5\"/>",
   "arrow-down": "<path d=\"M12 5v14M6.5 13.5 12 19l5.5-5.5\"/>",
@@ -1661,7 +1661,7 @@ html.settings-switching .modal-bg { transition: none; }
 /* alert shell (ClearDesk's DIALOG-SHELL): a question gets a round tinted icon, a centred title and sentence, full-width buttons */
 .modal.alert { width: 340px; text-align: center; align-items: center; gap: 12px; padding: 24px 24px 20px; }
 .modal.alert.alert-wide { width: 400px; }   /* three buttons */
-.modal.alert h3 { margin: 0; font-size: var(--fs-17); font-weight: 600; color: var(--text); }
+.modal.alert h3 { margin: 0; font-size: var(--fs-17); font-weight: 600; color: var(--text); line-height: 1.5; }   /* ClearDesk's alert title is 25.5px high */
 .modal.alert p, .modal.alert .alert-body { margin: 0; font-size: var(--fs-14); color: var(--text-2); line-height: 1.6; }
 .alert-ico { width: 40px; height: 40px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: var(--ico-18); background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); }
 .alert-ico.danger { background: var(--red-bg); color: var(--red-text); }
@@ -2218,7 +2218,7 @@ input.dt-time { width: 84px; flex: 0 0 84px; text-align: center; }
 
 #toast {
   position: fixed; bottom: 44px; right: 20px; transform: translateY(20px);
-  background: var(--glass-strong); color: var(--text); border: 1px solid var(--glass-edge); padding: 10px 16px; border-radius: var(--r-xl); font-size: var(--fs-13); font-weight: 500;
+  background: var(--glass-strong); color: var(--text); border: 1px solid var(--glass-edge); padding: 10px 16px; border-radius: var(--r-xl); font-size: var(--fs-13); font-weight: 500; line-height: 1.5;   /* ClearDesk's body line height: the toast is the same 41.5px high */
   backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
   display: flex; align-items: center; gap: 8px; opacity: 0; pointer-events: none; transition: opacity var(--dur-base) ease, transform var(--dur-base) ease; z-index: 300; box-shadow: inset 0 1px 0 var(--glass-rim), var(--glass-shadow);
 }
@@ -2575,7 +2575,7 @@ a[href], .btn-link { cursor: pointer; }   /* the hand is for links only; every c
         <div class="trow" id="taskActualFinishField" title="Recording an Actual Finish marks the task 100% complete"><label for="taskActualFinishInput">Actual Finish</label><div class="field-dt"><input type="text" class="dt-date" id="taskActualFinishInput" onchange="onActualFinishChange()"><input type="text" id="taskActualFinishTimeInput" class="task-time-input hidden dt-time" aria-label="Actual finish time" onchange="onActualFinishChange()"></div></div>
       </div>
       <div class="tgrp">
-        <div class="trow" title="Colours the task's row in the list (and its stripe in the chart)"><label>Color</label><div class="color-swatches" id="taskColorSwatches"></div></div>
+        <div class="trow" title="Colours the task's row in the list (and its stripe in the chart)"><label>Colour</label><div class="color-swatches" id="taskColorSwatches"></div></div>
         <div class="trow"><label for="taskOnSlideInput">On Slide</label><input type="checkbox" class="tsw" id="taskOnSlideInput" role="switch" title="The Chart for Slides can take just the tasks marked On Slide"></div>
         <div class="trow"><label for="taskSlideNameInput">Slide Name</label><input type="text" class="tin" id="taskSlideNameInput" maxlength="120" placeholder="Same as the name" title="The short label the Chart for Slides draws instead of the name"></div>
       </div>
@@ -12763,7 +12763,7 @@ function showRowMenu(x, y, onRow) {
     const m = same(t => t.taskMode || 'auto'), ty = same(t => (t.taskType === 'fixedDuration' || t.taskType === 'fixedWork') ? t.taskType : 'fixedUnits'), co = same(t => t.color || '');
     parts.push(rowSubMenu('fa-solid fa-thumbtack', 'Task Mode', TASK_MODES.map(x => [`<i class="fa-solid ${x.icon}"></i>`, x.label, `setSelectedMode('${x.id}')`, m === x.id])));
     if (ts.some(t => !t.milestone && !hasChildren(t.id))) parts.push(rowSubMenu('fa-solid fa-percent', 'Task Type', TASK_TYPES.map(x => [`<i class="fa-solid ${x.icon}"></i>`, x.label, `setSelectedType('${x.id}')`, ty === x.id])));
-    parts.push(rowSubMenu('fa-solid fa-palette', 'Color', [['<span class="sub-dot sub-none"></span>', 'No Color', "setSelectedColor('')", co === '']].concat(TASK_COLORS.map(c => [`<span class="sub-dot" style="background:var(--task-${c.id})"></span>`, c.label, `setSelectedColor('${c.id}')`, co === c.id]))));
+    parts.push(rowSubMenu('fa-solid fa-palette', 'Colour', [['<span class="sub-dot sub-none"></span>', 'No Colour', "setSelectedColor('')", co === '']].concat(TASK_COLORS.map(c => [`<span class="sub-dot" style="background:var(--task-${c.id})"></span>`, c.label, `setSelectedColor('${c.id}')`, co === c.id]))));
   }
   if (parts.length) parts.push(sep);   // (what you can do to this task, then what you can add)
   const addLabel = !n ? 'Add Task' : ids.length === 1 && hasChildren(ids[0]) ? 'Add Sub-task' : 'Add Task Below';   // (under a group the new task becomes its first sub-task)
@@ -14638,7 +14638,7 @@ function deleteCurrentPlan() {
       ? ` Its linked file <strong>${escapeHtml(file)}</strong> is <em>not</em> deleted — you can open it again any time with “Open file as plan”.`
       : ` It isn’t linked to a file, so this is the only copy — you can undo for a few seconds afterwards.`)
       + (last ? ' An empty plan takes its place.' : ''),
-    confirmLabel: 'Delete plan',
+    confirmLabel: 'Delete Plan',
     action: doDeleteCurrentPlan
   });
 }
