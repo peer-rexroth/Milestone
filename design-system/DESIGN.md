@@ -4,15 +4,15 @@ An Apple-style look for a web app (a PWA used mostly in desktop Chrome on macOS)
 
 **Two apps share this guide.** ClearDesk (tasks, notes, prompts) wrote it; Milestone (a Gantt planner) took it over and added section 21 plus a few lines marked *Milestone* in sections 1.5, 2.1, 2.3, 2.6, 6.2, 6.3, 12 and 14. Sections about the notes editor, the prompt editor, the board and the docked detail panel (5.8, 13, 19.2) describe ClearDesk only; everything else applies to both. Where the two differ, the text says which is which.
 
-**Synced with ClearDesk's `DESIGN.md` at commit `bf81593` (2026-11-02).** The shared chapters (1–20) should differ from ClearDesk's only where a line says *Milestone*. After a change to ClearDesk's file, diff the two, copy what applies, and update this line. `tests/browser-checks.py` in ClearDesk fails when a token both apps define differs.
+**Synced with ClearDesk's `DESIGN.md` at commit `5f12d19` (2026-11-12).** The shared chapters (1–20) should differ from ClearDesk's only where a line says *Milestone*. After a change to ClearDesk's file, diff the two, copy what applies, and update this line. `tests/browser-checks.py` in ClearDesk fails when a token both apps define differs.
 
 **Files in this folder**
 
 | File | What it is |
 |---|---|
 | `DESIGN.md` | this guide |
-| `tokens.css` | every colour, size, radius, shadow and motion token, light and dark, **extracted from the app** (this copy is Milestone's: 154 variables; ClearDesk's has 136) |
-| `icons.json` | the whole icon set (171 icons in Milestone, 116 of them shared with ClearDesk): name → inner SVG markup on a 24 grid |
+| `tokens.css` | every colour, size, radius, shadow and motion token, light and dark, **extracted from the app** (this copy is Milestone's: 148 variables; ClearDesk's has 143) |
+| `icons.json` | the whole icon set (171 icons in Milestone, 117 of them shared with ClearDesk): name → inner SVG markup on a 24 grid |
 | `icon-sheet.html` | a preview of every icon at 32px and the four drawn sizes (open it in a browser) |
 | `assets/` | the app-icon masters (`icon.svg`, `icon-maskable.svg`, `favicon.svg`) and `manifest.json`, as examples for section 14 |
 
@@ -68,6 +68,7 @@ Roles, not colours. Always use the token, never a literal. The only literals all
 - **Dark mode is a second full set of values**, not an inversion. Define the same variables in both blocks (a variable only the light block sets leaks into dark).
 - **Theme** follows the system live; the user may override with Light / Dark. It is a per-device preference, never synced.
 - **Neutral blue-grey** palette (a hint of blue in every grey: `#f2f3f7`, `#171925`), not pure grey.
+- **Folder colours** (`--fc-red … --fc-gray`, nine; yellow and green are brighter in dark): optional, none by default. A coloured folder draws its 14px icon in the colour on a soft square of it (20% of the colour, `--r-s`, 22px, laid out as the plain icon so rows do not shift), as the System Settings icons do but softer than their solid squares. They are chosen with the same 24px dots as note colours (`.nc-sw`), five to a row.
 
 ### 2.2 Typography
 
@@ -168,13 +169,18 @@ Roles, not colours. Always use the token, never a literal. The only literals all
 | New (compose) | a square with a pen | |
 | Prompts | `braces` | curly braces |
 | Compare | `diff` | a rounded square, a + above a − |
-| Swap / move sideways | `arrows-left-right` | only for "Distribute columns evenly" (it reads as swap) |
+| Swap / move sideways | `arrows-left-right` | a swap glyph; not used for "Distribute columns evenly" any more (that is `columns-equal`) |
+| Equal column widths / Distribute columns evenly | `columns-equal` | the table box with two dividers at thirds: the result, not an arrow |
+| Fit a column to its content | `fit-to-content` | square brackets closing in on a short dash ("exactly as wide as this"), no arrows; **not** an arrow icon, which read as a smaller Decrease Width (`tblInsIcon('narrow')`) at 16px |
 | New folder / subfolder | `folder-plus` | `folder-open` = link a file/folder, `folder` = plain |
 | Undo / Redo | `undo` / `redo` | hooked arrows; the circular arrow `rotate-left` is for *Restore* and *Reset* |
 | Lock / unlock | `lock` / `lock-open` | amber while locked |
 | Pin / Favourite | `thumbtack` / `star` | |
 | Show/hide panel | a framed box with a side column | |
 | Check / complete | `check`, `circle-check` | round checklist items match the icon |
+| Table row / column (a group of commands about one) | `table-row` / `table-column` | the table box with a bold band across (two touching 2-unit strokes, which draw as a solid band without a filled shape) horizontally / vertically; **not** `table-columns`, which is the Board view |
+| Sort ascending / descending | `arrow-down-wide-short` / `arrow-up-short-wide` | one icon per direction |
+| Clear contents | `xmark` | the cell is emptied, not removed |
 
 The icon set: `icons.json`, preview in `icon-sheet.html`. To add an icon: draw it on the 24 grid, add it to the registry under a name that states its meaning, never reuse another action's name.
 
@@ -238,6 +244,7 @@ One shape per job, so the same kind of thing always looks the same:
 - **Surface:** glass (2.4), `--r-xl`, 230px wide for the main menu, small option menus at a fixed `--submenu-w` 164px so Priority/Status/Due/Move look the same everywhere.
 - **Row:** 8px radius, a 22px tick column for the current value (✓ at the left for single-choice lists, at the right for toggle states), then a dot or 16px icon, then the label. **Hover fills the row with the accent and turns text white**, as in a macOS pop-up; a destructive item turns white on it too.
 - **A flyout is as wide as its longest label** (`width: max-content`, at least `--submenu-w`, at most 280px) so labels like "Plain Text (.txt)" never wrap onto a second line; it is measured while hidden and flips to the left when it would leave the window.
+- **Table menus** (cell, block, column, row, whole table) follow these rules: Cut / Copy / Paste (/ Clear Contents) first with their shortcut hints, then the commands that change the structure, then the colour dots (formatting comes last, as the tag dots do in Finder's menu: the last line of the body, above Delete), Delete the last group, red (Delete Table only in the table's own menu and the cell menu's Table submenu, never right under Delete Row / Column); at most three groups; commands that do not apply are left out. The most common edits, the four Insert commands, are one click away at the top of the cell menu (and not repeated in the submenus, which hold Duplicate, Sort, Align, Fit and Delete). The cell menu keeps the commands of each scope in one submenu (Row, Column, Table: `table-row`, `table-column`, `table-cells`), so the parent says what a command acts on; labels name their scope where it is not obvious ("Align Column Left", "Align Cells", "Column Colour"). The toolbar's table button opens the same popover when the caret is in a table.
 - **Context-menu rules:** Title-style labels ("Open Details", "Add Subtask", "Move to"); few items; **one level of submenu** (hover or click to open, flips left and nudges up when near the edge); **hide unavailable items** (do not dim); separators group (≤ 3 groups; the task row menu's four are a documented exception, U-07) and are cleaned up when a group empties; Delete is always its own last group, red; the ⌫ glyph hint, not "Del". A command that opens a dialog or asks for more input ends in an ellipsis ("Edit…", "Print / Save as PDF…"); a row that only acts does not. Move to lists its targets with an icon each (project icons in Tasks, the folder glyph in Notes and Prompts): icons on all rows or none.
 - **Coverage:** every row in the sidebar has a right-click menu: a project or folder (New Here, Edit…, Delete), a smart view or All / Pinned / Favorites row (New Task / Note / Prompt Here; Overdue also *Move All to Today*), and a Recently Deleted row (*Delete All…*, nothing while it is empty).
 - Every context-menu command also exists in a visible control (toolbar, panel, ⋯ button).
