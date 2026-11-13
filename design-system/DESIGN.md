@@ -12,7 +12,7 @@ An Apple-style look for a web app (a PWA used mostly in desktop Chrome on macOS)
 |---|---|
 | `DESIGN.md` | this guide |
 | `tokens.css` | every colour, size, radius, shadow and motion token, light and dark, **extracted from the app** (this copy is Milestone's: 148 variables; ClearDesk's has 143) |
-| `icons.json` | the whole icon set (171 icons in Milestone, 117 of them shared with ClearDesk): name → inner SVG markup on a 24 grid |
+| `icons.json` | the whole icon set (171 icons in Milestone, 119 of them shared with ClearDesk): name → inner SVG markup on a 24 grid |
 | `icon-sheet.html` | a preview of every icon at 32px and the four drawn sizes (open it in a browser) |
 | `assets/` | the app-icon masters (`icon.svg`, `icon-maskable.svg`, `favicon.svg`) and `manifest.json`, as examples for section 14 |
 
@@ -137,7 +137,7 @@ Roles, not colours. Always use the token, never a literal. The only literals all
 
 ### 4.1 The family
 
-- **Outline only.** 24×24 grid, **2-unit stroke**, round caps and joins, `currentColor`, `fill: none`. No filled glyphs (so a "star" is an outline; a favourite is shown by colour). Two allowed details: a dot (an ellipsis, a keyboard key, the exclamation point) is a zero-length stroke at 2–2.2 so it reads as a dot, and a drawing that had to be scaled to fit the visible window carries its own `<g transform>` with the stroke compensated back to 2 (the registry's 18 oversized drawings). Keep geometry inside 4–20 (the mask shows 2.5–21.5 including the stroke).
+- **Outline only.** 24×24 grid, **2-unit stroke**, round caps and joins, `currentColor`, `fill: none`. No filled glyphs (so a "star" is an outline; a favourite is shown by colour). Allowed details, each enforced by a scan (`tests/browser-checks.py` in ClearDesk): (1) a **dot** (an ellipsis, a grip, a bullet, the exclamation point, the centre of `circle-dot`) is a zero-length stroke (`M5.5 12h.01`) with its own `stroke-width`: 2 to 2.4 for small marks, 2.8 for the grip, 3.4 for the ellipsis, 5.2 for the centre of `circle-dot`, so it keeps the size it always had without being a filled shape; (2) a drawing that had to be scaled to fit the visible window carries its own `<g transform>` with the stroke compensated back to 2 (the registry's oversized drawings); (3) `check` is drawn at 2.6 so a tick stays visible at 12px; (4) the half disc of `circle-half-stroke` (In Progress) is the one filled shape: a half-filled circle is the only reading of "in progress". Keep geometry inside 4–20 (the mask shows 2.5–21.5 including the stroke).
 - Keep drawings inside the **3.5–20.5** box (the outline's centre line: with the 2-unit stroke the paint reaches 2.5–21.5) so optical size is the same across icons (a rounded square is `4.5…19.5`). Most of the set sits at 3.5–20.5 (circles, folders, envelopes); nothing goes past it. A scan with `getBBox()` over the registry is how to check a new icon.
 - **Four drawn sizes:** 12 (chevrons, tiny marks), 14 (badges, chips, row marks), 16 (lists, sidebar, menus, icon buttons, search fields), 18 (toolbars). Nothing else.
 - **Effective line weight scales with size** (as SF Symbols do): 1.17px at 14, 1.33px at 16, 1.5px at 18. Do not set a different stroke per context.
